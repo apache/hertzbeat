@@ -22,3 +22,10 @@ The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz
 4. Execute command in collector
 
 ```mvn clean package -Pcluster```
+
+
+### Build Native
+
+Execute command in manager
+
+```mvn native:compile -Pnative -Dmaven.test.skip=true```

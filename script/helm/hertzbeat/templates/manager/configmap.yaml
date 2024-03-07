@@ -188,14 +188,25 @@ data:
       - /api/summary/**===post===[admin,user]
       - /api/summary/**===put===[admin,user]
       - /api/summary/**===delete===[admin]
-    
+      - /api/collector/**===get===[admin,user,guest]
+      - /api/collector/**===post===[admin,user]
+      - /api/collector/**===put===[admin,user]
+      - /api/collector/**===delete===[admin]
+      - /api/status/page/**===get===[admin,user,guest]
+      - /api/status/page/**===post===[admin,user]
+      - /api/status/page/**===put===[admin,user]
+      - /api/status/page/**===delete===[admin]
+
+    # 需要被过滤保护的资源,不认证鉴权直接访问
+    # /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
     excludedResource:
+      - /api/alerts/report/**===*
       - /api/account/auth/**===*
       - /api/i18n/**===get
-      - /api/metrics===get
       - /api/apps/hierarchy===get
-      - /actuator/**===get
-      # web ui 
+      - /api/push/**===*
+      - /api/status/page/public/**===*
+      # web ui 前端静态资源
       - /===get
       - /dashboard/**===get
       - /monitors/**===get
@@ -203,6 +214,7 @@ data:
       - /account/**===get
       - /setting/**===get
       - /passport/**===get
+      - /status/**===get
       - /**/*.html===get
       - /**/*.js===get
       - /**/*.css===get
@@ -215,13 +227,18 @@ data:
       - /**/*.json===get
       - /**/*.woff===get
       - /**/*.eot===get
-      # swagger ui 
+      # swagger ui 资源
       - /swagger-resources/**===get
       - /v2/api-docs===get
       - /v3/api-docs===get
       # h2 database
       - /h2-console/**===*
-    
+
+    # 用户账户信息
+    # 下面有 admin tom lili 三个账户
+    # eg: admin 拥有[admin,user]角色,密码为hertzbeat
+    # eg: tom 拥有[user],密码为hertzbeat
+    # eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
     account:
       - appId: {{ .Values.manager.account.username }}
         credential: {{ .Values.manager.account.password }}
@@ -233,6 +250,9 @@ data:
         credential: hertzbeat
         role: [guest]
       - appId: lili
+        # 注意 Digest认证不支持加盐加密的密码账户
+        # 加盐加密的密码，通过 MD5(password+salt)计算
+        # 此账户的原始密码为 lili
         credential: 1A676730B0C7F54654B0E09184448289
         salt: 123
         role: [guest]

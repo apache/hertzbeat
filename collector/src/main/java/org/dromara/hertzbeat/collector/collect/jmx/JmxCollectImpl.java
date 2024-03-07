@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.dromara.hertzbeat.collector.collect.jmx;
 
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
@@ -35,6 +52,8 @@ public class JmxCollectImpl extends AbstractCollect {
     private static final String JMX_URL_PREFIX = "service:jmx:rmi:///jndi/rmi://";
 
     private static final String JMX_URL_SUFFIX = "/jmxrmi";
+    
+    private static final String IGNORED_STUB = "/stub/";
 
     private static final String SUB_ATTRIBUTE = "->";
 
@@ -95,7 +114,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     private Map<String, String> extractAttributeValue(AttributeList attributeList) {
-        if (attributeList == null || attributeList.size() == 0) {
+        if (attributeList == null || attributeList.isEmpty()) {
             throw new RuntimeException("attributeList is empty");
         }
         Map<String, String> attributeValueMap = new HashMap<>(attributeList.size());
@@ -132,9 +151,14 @@ public class JmxCollectImpl extends AbstractCollect {
         return attributeValueMap;
     }
 
-    private void validateParams(Metrics metrics) throws Exception {
+    private void validateParams(Metrics metrics) throws IllegalArgumentException {
         if (metrics == null || metrics.getJmx() == null) {
-            throw new Exception("JMX collect must has jmx params");
+            throw new IllegalArgumentException("JMX collect must has jmx params");
+        }
+        if (StringUtils.hasText(metrics.getJmx().getUrl())) {
+            if (metrics.getJmx().getUrl().contains(IGNORED_STUB)) {
+                throw new IllegalArgumentException("JMX url prohibit contains stub, please check");
+            }
         }
     }
 

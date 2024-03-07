@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.remoting;
 
 /**
  * remoting service interface
+ * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/RemotingService.java">RemotingService</a>
  */
 public interface RemotingService {
 

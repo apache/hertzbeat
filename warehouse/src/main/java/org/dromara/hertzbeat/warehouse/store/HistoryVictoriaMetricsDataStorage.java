@@ -49,7 +49,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * tdengine data storage
@@ -231,7 +230,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                     String[] contentJsonArr = responseEntity.getBody().split("\n");
                     List<VictoriaMetricsContent> contents = Arrays.stream(contentJsonArr).map(
                             item ->  JsonUtil.fromJson(item, VictoriaMetricsContent.class)
-                    ).collect(Collectors.toList());
+                    ).toList();
                     for (VictoriaMetricsContent content : contents) {
                         Map<String, String> labels = content.getMetric();
                         labels.remove(LABEL_KEY_NAME);
@@ -290,8 +289,13 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
             startTime = dateTime.toEpochSecond();
         }
-        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + app + SPILT + metrics + SPILT + metric + "\"" +
-                "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"";
+        String labelName = metrics + SPILT + metric;
+        if (CommonConstants.PROMETHEUS.equals(app)) {
+            labelName = metrics;
+        }
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\"" +
+                "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" +
+                "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -329,7 +333,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                             List<Value> valueList = instanceValuesMap.computeIfAbsent(labelStr, k -> new LinkedList<>());
                             for (Object[] valueArr : content.getValues()) {
                                 long timestamp = Long.parseLong(String.valueOf(valueArr[0]));
-                                String value = String.valueOf(valueArr[1]);
+                                String value = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
                                 // read timestamp here is s unit
                                 valueList.add(new Value(value, timestamp * 1000));   
                             }
@@ -366,7 +370,8 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                                 for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
                                     Value value = valueList.get(timestampIndex);
                                     Object[] valueArr = content.getValues().get(timestampIndex);
-                                    value.setMax(String.valueOf(valueArr[1]));
+                                    String maxValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                                    value.setMax(maxValue);
                                 }
                             }
                         }
@@ -400,7 +405,8 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                                 for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
                                     Value value = valueList.get(timestampIndex);
                                     Object[] valueArr = content.getValues().get(timestampIndex);
-                                    value.setMin(String.valueOf(valueArr[1]));
+                                    String minValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                                    value.setMin(minValue);
                                 }
                             }
                         }
@@ -434,7 +440,8 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                                 for (int timestampIndex = 0; timestampIndex < valueList.size(); timestampIndex++) {
                                     Value value = valueList.get(timestampIndex);
                                     Object[] valueArr = content.getValues().get(timestampIndex);
-                                    value.setMean(String.valueOf(valueArr[1]));
+                                    String avgValue = new BigDecimal(String.valueOf(valueArr[1])).setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+                                    value.setMean(avgValue);
                                 }
                             }
                         }

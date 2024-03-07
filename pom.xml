@@ -1,13 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one or more
+  ~ contributor license agreements.  See the NOTICE file distributed with
+  ~ this work for additional information regarding copyright ownership.
+  ~ The ASF licenses this file to You under the Apache License, Version 2.0
+  ~ (the "License"); you may not use this file except in compliance with
+  ~ the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.3</version>
+    </parent>
+
     <groupId>org.dromara.hertzbeat</groupId>
     <artifactId>hertzbeat</artifactId>
     <packaging>pom</packaging>
-    <version>1.0</version>
+    <version>2.0-SNAPSHOT</version>
     <modules>
         <module>manager</module>
         <module>alerter</module>
@@ -20,48 +42,43 @@
 
     <properties>
 
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <maven-pmd-plugin.version>3.12.0</maven-pmd-plugin.version>
+        <maven-pmd-plugin.version>3.21.0</maven-pmd-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!--hertzbeat 相关模块-->
-        <hertzbeat.version>1.0</hertzbeat.version>
+        <hertzbeat.version>2.0-SNAPSHOT</hertzbeat.version>
 
-        <spring-boot-dependencies.version>2.7.4</spring-boot-dependencies.version>
-        <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
-        <springdoc.version>1.6.11</springdoc.version>
-        <spring-boot-starter-sureness.version>1.0.8</spring-boot-starter-sureness.version>
+        <springdoc.version>1.7.0</springdoc.version>
+        <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
 
         <nekohtml.version>1.9.22</nekohtml.version>
-        <checker-qual.version>3.19.0</checker-qual.version>
-        <error_prone_annotations.version>2.14.0</error_prone_annotations.version>
         <json-path.version>2.7.0</json-path.version>
-
         <aviator.version>5.4.1</aviator.version>
-        <gson.version>2.8.9</gson.version>
-        <guava.version>32.0.0-jre</guava.version>
+        <gson.version>2.10.1</gson.version>
+        <guava.version>32.1.2-jre</guava.version>
         <protobuf.version>3.19.4</protobuf.version>
         <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
         <caffeine.version>2.9.3</caffeine.version>
-        <okio.version>2.8.0</okio.version>
+        <httpclient.version>4.5.14</httpclient.version>
 
-        <lombok.version>1.18.20</lombok.version>
-        <slf4j.version>1.7.36</slf4j.version>
+        <lombok.version>1.18.28</lombok.version>
+        <slf4j.version>2.0.9</slf4j.version>
         <xml.bind.version>2.3.0</xml.bind.version>
-        <snake.yaml.version>1.33</snake.yaml.version>
+        <snake.yaml.version>2.2</snake.yaml.version>
         <okhttp.version>4.12.0</okhttp.version>
         <kafka-clients.version>3.4.0</kafka-clients.version>
-
+        <netty.version>4.1.100.Final</netty.version>
         <mysql.version>8.0.30</mysql.version>
         <mssql-jdbc.version>10.2.0.jre8</mssql-jdbc.version>
         <ojdbc8.version>21.5.0.0</ojdbc8.version>
         <mongodb-driver.version>4.6.1</mongodb-driver.version>
-        <clickhouse.version>1.4.4</clickhouse.version>
+        <clickhouse.version>0.4.6</clickhouse.version>
         <damengc-driver.version>8.1.2.141</damengc-driver.version>
         <postgresql.version>42.5.1</postgresql.version>
         <h2.version>2.1.214</h2.version>
@@ -111,14 +128,6 @@
             </dependency>
             <!-- spring -->
             <dependency>
-                <!-- Import dependency management from Spring Boot -->
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot-dependencies.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-devtools</artifactId>
                 <version>${spring-boot-dependencies.version}</version>
@@ -166,6 +175,11 @@
                 <artifactId>commons-net</artifactId>
                 <version>${commons-net}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>${httpclient.version}</version>
+            </dependency>
             <!-- mysql -->
             <dependency>
                 <groupId>mysql</groupId>
@@ -197,8 +211,8 @@
             </dependency>
             <!-- clickhouse -->
             <dependency>
-                <groupId>cc.blynk.clickhouse</groupId>
-                <artifactId>clickhouse4j</artifactId>
+                <groupId>com.clickhouse</groupId>
+                <artifactId>clickhouse-jdbc</artifactId>
                 <version>${clickhouse.version}</version>
             </dependency>
             <!-- dm -->
@@ -235,23 +249,13 @@
             <!--sureness-->
             <dependency>
                 <groupId>com.usthe.sureness</groupId>
-                <artifactId>spring-boot-starter-sureness</artifactId>
+                <artifactId>spring-boot3-starter-sureness</artifactId>
                 <version>${spring-boot-starter-sureness.version}</version>
             </dependency>
             <dependency>
                 <groupId>net.sourceforge.nekohtml</groupId>
                 <artifactId>nekohtml</artifactId>
                 <version>${nekohtml.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.checkerframework</groupId>
-                <artifactId>checker-qual</artifactId>
-                <version>${checker-qual.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.errorprone</groupId>
-                <artifactId>error_prone_annotations</artifactId>
-                <version>${error_prone_annotations.version}</version>
             </dependency>
             <!--json path parser-->
             <dependency>
@@ -275,11 +279,6 @@
                         <artifactId>guava</artifactId>
                     </exclusion>
                 </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup.okio</groupId>
-                <artifactId>okio</artifactId>
-                <version>${okio.version}</version>
             </dependency>
             <!-- sms -->
             <dependency>
@@ -306,7 +305,18 @@
                 <artifactId>commons-collections4</artifactId>
                 <version>${commons-collections4.version}</version>
             </dependency>
-
+            <!-- LOG -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <!-- netty -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 

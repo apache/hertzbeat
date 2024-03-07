@@ -1430,7 +1430,8 @@
       "profile": "https://github.com/Calvin979",
       "contributions": [
         "doc",
-        "code"
+        "code",
+        "design"
       ]
     },
     {
@@ -1549,6 +1550,33 @@
       "name": "CharlieShi46",
       "avatar_url": "https://avatars.githubusercontent.com/u/149798885?v=4",
       "profile": "https://github.com/CharlieShi46",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Nctllnty",
+      "name": "Nctllnty",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33241818?v=4",
+      "profile": "https://github.com/Nctllnty",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Wang-Yonghao",
+      "name": "Wang-Yonghao",
+      "avatar_url": "https://avatars.githubusercontent.com/u/48146606?v=4",
+      "profile": "https://github.com/Wang-Yonghao",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "dudiao",
+      "name": "读钓",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38355949?v=4",
+      "profile": "https://www.yuque.com/dudiao/yy",
       "contributions": [
         "code"
       ]

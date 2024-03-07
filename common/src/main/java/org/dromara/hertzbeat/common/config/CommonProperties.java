@@ -46,30 +46,33 @@ public class CommonProperties {
         return secretKey;
     }
 
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
-    }
-
     public DataQueueProperties getQueue() {
         return queue;
-    }
-
-    public void setQueue(DataQueueProperties queue) {
-        this.queue = queue;
     }
 
     public SmsProperties getSms() {
         return sms;
     }
 
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    public void setQueue(DataQueueProperties queue) {
+        this.queue = queue;
+    }
+
     public void setSms(SmsProperties sms) {
         this.sms = sms;
     }
 
+    /**
+     * data queue properties
+     */
     public static class DataQueueProperties {
 
         private QueueType type = QueueType.Memory;
-        
+
         private KafkaProperties kafka;
 
         public QueueType getType() {
@@ -79,17 +82,20 @@ public class CommonProperties {
         public void setType(QueueType type) {
             this.type = type;
         }
-        
+
         public KafkaProperties getKafka() {
             return kafka;
         }
-        
+
         public void setKafka(KafkaProperties kafka) {
             this.kafka = kafka;
         }
     }
 
-    public static enum QueueType {
+    /**
+     * data queue type
+     */
+    public enum QueueType {
         /** in memory **/
         Memory,
         /** kafka **/
@@ -99,7 +105,10 @@ public class CommonProperties {
         /** rabbit mq **/
         Rabbit_Mq
     }
-    
+
+    /**
+     * kafka data queue properties
+     */
     public static class KafkaProperties {
         /**
          * kafka的连接服务器url
@@ -113,31 +122,35 @@ public class CommonProperties {
          * alerts data topic
          */
         private String alertsDataTopic;
+
         public String getServers() {
             return servers;
         }
-        
+
         public void setServers(String servers) {
             this.servers = servers;
         }
-        
+
         public String getMetricsDataTopic() {
             return metricsDataTopic;
         }
-        
+
         public void setMetricsDataTopic(String metricsDataTopic) {
             this.metricsDataTopic = metricsDataTopic;
         }
-        
+
         public String getAlertsDataTopic() {
             return alertsDataTopic;
         }
-        
+
         public void setAlertsDataTopic(String alertsDataTopic) {
             this.alertsDataTopic = alertsDataTopic;
         }
     }
 
+    /**
+     * sms properties
+     */
     public static class SmsProperties {
         private TencentSmsProperties tencent;
 
@@ -150,6 +163,9 @@ public class CommonProperties {
         }
     }
 
+    /**
+     * tencent sms properties
+     */
     public static class TencentSmsProperties {
 
         /**
@@ -177,14 +193,6 @@ public class CommonProperties {
          */
         private String templateId;
 
-        public String getAppId() {
-            return appId;
-        }
-
-        public void setAppId(String appId) {
-            this.appId = appId;
-        }
-
         public String getSecretId() {
             return secretId;
         }
@@ -199,6 +207,14 @@ public class CommonProperties {
 
         public void setSecretKey(String secretKey) {
             this.secretKey = secretKey;
+        }
+
+        public String getAppId() {
+            return appId;
+        }
+
+        public void setAppId(String appId) {
+            this.appId = appId;
         }
 
         public String getSignName() {

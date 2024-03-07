@@ -32,7 +32,7 @@ Even small corrections to typos are very welcome :)
 
 - Backend start   
 
-1. Requires `maven3+`, `java11` and `lombok` environments    
+1. Requires `maven3+`, `java17` and `lombok` environments    
 2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
 3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`   
 
@@ -176,7 +176,7 @@ Public WeChat: `tancloudtech`
 
 - 后端启动
 
-1. 需要`maven3+`, `java11`和`lombok`环境  
+1. 需要`maven3+`, `java17`和`lombok`环境  
 2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
 3. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`  
 

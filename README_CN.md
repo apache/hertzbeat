@@ -160,7 +160,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 ##### 方式三：本地代码启动
 
 1. 此为前后端分离项目，本地代码调试需要分别启动后端工程`manager`和前端工程`web-app`
-2. 后端：需要`maven3+`, `java11`和`lombok`环境，修改`YML`配置信息并启动`manager`服务
+2. 后端：需要`maven3+`, `java17`和`lombok`环境，修改`YML`配置信息并启动`manager`服务
 3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在`web-app`目录下启动 `ng serve --open`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
@@ -387,7 +387,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/1036664317"><img src="https://avatars.githubusercontent.com/u/7696697?v=4?s=100" width="100px;" alt="moghn"/><br /><sub><b>moghn</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=1036664317" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xiaoguolong"><img src="https://avatars.githubusercontent.com/u/33684988?v=4?s=100" width="100px;" alt="xiaoguolong"/><br /><sub><b>xiaoguolong</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=xiaoguolong" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Clownsw"><img src="https://avatars.githubusercontent.com/u/28394742?v=4?s=100" width="100px;" alt="Smliexx"/><br /><sub><b>Smliexx</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Clownsw" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Calvin979"><img src="https://avatars.githubusercontent.com/u/131688897?v=4?s=100" width="100px;" alt="Naruse"/><br /><sub><b>Naruse</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Calvin979" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=Calvin979" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Calvin979"><img src="https://avatars.githubusercontent.com/u/131688897?v=4?s=100" width="100px;" alt="Naruse"/><br /><sub><b>Naruse</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Calvin979" title="Documentation">📖</a> <a href="https://github.com/dromara/hertzbeat/commits?author=Calvin979" title="Code">💻</a> <a href="#design-Calvin979" title="Design">🎨</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/bbelide2"><img src="https://avatars.githubusercontent.com/u/26840796?v=4?s=100" width="100px;" alt="Bala Sukesh"/><br /><sub><b>Bala Sukesh</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=bbelide2" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jinyaoMa"><img src="https://avatars.githubusercontent.com/u/25066570?v=4?s=100" width="100px;" alt="Jinyao Ma"/><br /><sub><b>Jinyao Ma</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=jinyaoMa" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://linuxsuren.github.io/open-source-best-practice/"><img src="https://avatars.githubusercontent.com/u/1450685?v=4?s=100" width="100px;" alt="Rick"/><br /><sub><b>Rick</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=LinuxSuRen" title="Code">💻</a> <a href="https://github.com/dromara/hertzbeat/commits?author=LinuxSuRen" title="Tests">⚠️</a></td>
@@ -405,6 +405,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/avvCode"><img src="https://avatars.githubusercontent.com/u/113538532?v=4?s=100" width="100px;" alt="avv"/><br /><sub><b>avv</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=avvCode" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/yqxxgh"><img src="https://avatars.githubusercontent.com/u/42080876?v=4?s=100" width="100px;" alt="yqxxgh"/><br /><sub><b>yqxxgh</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=yqxxgh" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/CharlieShi46"><img src="https://avatars.githubusercontent.com/u/149798885?v=4?s=100" width="100px;" alt="CharlieShi46"/><br /><sub><b>CharlieShi46</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=CharlieShi46" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Nctllnty"><img src="https://avatars.githubusercontent.com/u/33241818?v=4?s=100" width="100px;" alt="Nctllnty"/><br /><sub><b>Nctllnty</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Nctllnty" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Wang-Yonghao"><img src="https://avatars.githubusercontent.com/u/48146606?v=4?s=100" width="100px;" alt="Wang-Yonghao"/><br /><sub><b>Wang-Yonghao</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Wang-Yonghao" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.yuque.com/dudiao/yy"><img src="https://avatars.githubusercontent.com/u/38355949?v=4?s=100" width="100px;" alt="读钓"/><br /><sub><b>读钓</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=dudiao" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -478,7 +481,7 @@ HertzBeat is built on so many great open source projects, thanks to them!
 <p align="left">
 <img src="./home/static/img/home/cncf-landscape-left-logo.svg" width="300">&nbsp;&nbsp;<img src="./home/static/img/home/cncf-right-logo.svg" width="345" />
 <br /><br />
-HertzBeat has been included in the <a href="https://landscape.cncf.io/card-mode?category=monitoring&grouping=category">
+HertzBeat has been included in the <a href="https://landscape.cncf.io/guide?item=observability-and-analysis--monitoring--hertzbeat#observability-and-analysis--monitoring">
 CNCF Observability And Analysis - Monitoring Landscape.</a>
 </p>
 

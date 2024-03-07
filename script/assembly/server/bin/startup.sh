@@ -103,7 +103,7 @@ if [ -f "./java/bin/java" ]; then
 else
     JAVA_EXIST=`which java | grep bin | wc -l`
     if [ $JAVA_EXIST -le 0 ]; then
-      echo -e "ERROR: there is no java11+ environment, please config java environment."
+      echo -e "ERROR: there is no java17+ environment, please config java environment."
       exit 1
     fi
     echo -e "Use the system environment jdk to start"

@@ -21,7 +21,7 @@ package org.dromara.hertzbeat.common.cache;
  * common cache service
  * @author ceilzcx
  */
-public interface ICacheService<K, V> {
+public interface CommonCacheService<K, V> {
 
     /**
      * get cache by key use clazz

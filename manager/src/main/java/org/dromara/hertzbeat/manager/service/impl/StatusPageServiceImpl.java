@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.dromara.hertzbeat.manager.service.impl;
 
 import org.dromara.hertzbeat.common.constants.CommonConstants;
@@ -22,6 +39,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * status page service implement.
@@ -104,29 +122,8 @@ public class StatusPageServiceImpl implements StatusPageService {
             long todayStartTimestamp = todayStartTime.toInstant(zoneOffset).toEpochMilli();
             List<StatusPageHistory> todayStatusPageHistoryList = statusPageHistoryDao
                     .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), todayStartTimestamp, nowTimestamp);
-            StatusPageHistory todayStatus = StatusPageHistory.builder().timestamp(nowTimestamp)
-                    .normal(0).abnormal(0).unknown(0)
-                    .componentId(component.getId()).state(component.getState()).build();
-            for (StatusPageHistory statusPageHistory : todayStatusPageHistoryList) {
-                if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
-                    todayStatus.setAbnormal(todayStatus.getAbnormal() + calculateStatus.getCalculateStatusIntervals());
-                } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                    todayStatus.setUnknown(todayStatus.getUnknown() + calculateStatus.getCalculateStatusIntervals());
-                } else {
-                    todayStatus.setNormal(todayStatus.getNormal() + calculateStatus.getCalculateStatusIntervals());
-                }
-            }
-            double uptime = (double) todayStatus.getNormal() / (double) (todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknown());
-            todayStatus.setUptime(uptime);
-            if (todayStatus.getAbnormal() > 0) {
-                todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);
-            } else if (todayStatus.getNormal() > 0) {
-                todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL);
-            } else {
-                todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN);
-            }
+            StatusPageHistory todayStatus = combineOneDayStatusPageHistory(todayStatusPageHistoryList, component, nowTimestamp);
             histories.add(todayStatus);
-
             // query 30d component status history
             LocalDateTime preTime = todayStartTime.minusDays(HISTORY_SPAN_DAYS);
             long preTimestamp = preTime.toInstant(zoneOffset).toEpochMilli();
@@ -139,14 +136,20 @@ public class StatusPageServiceImpl implements StatusPageService {
             for (int index = 0; index < HISTORY_SPAN_DAYS; index++) {
                 long startTimestamp = startTime.toInstant(zoneOffset).toEpochMilli();
                 long endTimestamp = endTime.toInstant(zoneOffset).toEpochMilli();
-                if (!historyList.isEmpty() && historyList.peekFirst().getTimestamp() >= startTimestamp
-                        && historyList.peekFirst().getTimestamp() <= endTimestamp) {
-                    StatusPageHistory statusPageHistory = historyList.pop();
-                    histories.add(statusPageHistory);
-                } else {
+                List<StatusPageHistory> thisDayHistory = historyList.stream().filter(item -> 
+                                item.getTimestamp() >= startTimestamp && item.getTimestamp() <= endTimestamp)
+                        .collect(Collectors.toList());
+                if (thisDayHistory.isEmpty()) {
                     StatusPageHistory statusPageHistory = StatusPageHistory.builder().timestamp(endTimestamp)
                             .componentId(component.getId()).state(CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN).build();
                     histories.add(statusPageHistory);
+                } else if (thisDayHistory.size() == 1) {
+                    histories.add(thisDayHistory.get(0));
+                } else {
+                    StatusPageHistory statusPageHistory = combineOneDayStatusPageHistory(thisDayHistory, component, endTimestamp);
+                    histories.add(statusPageHistory);
+                    statusPageHistoryDao.deleteAll(thisDayHistory);
+                    statusPageHistoryDao.save(statusPageHistory);
                 }
                 startTime = startTime.minusDays(1);
                 endTime = endTime.minusDays(1);
@@ -155,6 +158,39 @@ public class StatusPageServiceImpl implements StatusPageService {
             componentStatusList.add(componentStatus);
         }
         return componentStatusList;
+    }
+    
+    private StatusPageHistory combineOneDayStatusPageHistory(List<StatusPageHistory> statusPageHistories, StatusPageComponent component, long nowTimestamp) {
+        if (statusPageHistories.size() == 1) {
+            return statusPageHistories.get(0);
+        }
+        StatusPageHistory oldOne = statusPageHistories.get(0);
+        StatusPageHistory todayStatus = StatusPageHistory.builder().timestamp(nowTimestamp)
+                .normal(0).abnormal(0).unknown(0).gmtCreate(oldOne.getGmtCreate()).gmtUpdate(oldOne.getGmtUpdate())
+                .componentId(component.getId()).state(component.getState()).build();
+        for (StatusPageHistory statusPageHistory : statusPageHistories) {
+            if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
+                todayStatus.setAbnormal(todayStatus.getAbnormal() + calculateStatus.getCalculateStatusIntervals());
+            } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
+                todayStatus.setUnknown(todayStatus.getUnknown() + calculateStatus.getCalculateStatusIntervals());
+            } else {
+                todayStatus.setNormal(todayStatus.getNormal() + calculateStatus.getCalculateStatusIntervals());
+            }
+        }
+        double total = todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknown();
+        double uptime = 0;
+        if (total > 0) {
+            uptime = (double) todayStatus.getNormal() / total;
+        }
+        todayStatus.setUptime(uptime);
+        if (todayStatus.getAbnormal() > 0) {
+            todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);
+        } else if (todayStatus.getNormal() > 0) {
+            todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL);
+        } else {
+            todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN);
+        }
+        return todayStatus;
     }
 
     @Override
@@ -171,29 +207,8 @@ public class StatusPageServiceImpl implements StatusPageService {
         long todayStartTimestamp = todayStartTime.toInstant(zoneOffset).toEpochMilli();
         List<StatusPageHistory> todayStatusPageHistoryList = statusPageHistoryDao
                 .findStatusPageHistoriesByComponentIdAndTimestampBetween(component.getId(), todayStartTimestamp, nowTimestamp);
-        StatusPageHistory todayStatus = StatusPageHistory.builder().timestamp(nowTimestamp)
-                .normal(0).abnormal(0).unknown(0)
-                .componentId(component.getId()).state(component.getState()).build();
-        for (StatusPageHistory statusPageHistory : todayStatusPageHistoryList) {
-            if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
-                todayStatus.setAbnormal(todayStatus.getAbnormal() + calculateStatus.getCalculateStatusIntervals());
-            } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                todayStatus.setUnknown(todayStatus.getUnknown() + calculateStatus.getCalculateStatusIntervals());
-            } else {
-                todayStatus.setNormal(todayStatus.getNormal() + calculateStatus.getCalculateStatusIntervals());
-            }
-        }
-        double uptime = (double) todayStatus.getNormal() / (double) (todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknown());
-        todayStatus.setUptime(uptime);
-        if (todayStatus.getAbnormal() > 0) {
-            todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL);
-        } else if (todayStatus.getNormal() > 0) {
-            todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL);
-        } else {
-            todayStatus.setState(CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN);
-        }
+        StatusPageHistory todayStatus = combineOneDayStatusPageHistory(todayStatusPageHistoryList, component, nowTimestamp);
         histories.add(todayStatus);
-
         // query 30d component status history
         LocalDateTime preTime = todayStartTime.minusDays(HISTORY_SPAN_DAYS);
         long preTimestamp = preTime.toInstant(zoneOffset).toEpochMilli();
@@ -206,14 +221,20 @@ public class StatusPageServiceImpl implements StatusPageService {
         for (int index = 0; index < HISTORY_SPAN_DAYS; index++) {
             long startTimestamp = startTime.toInstant(zoneOffset).toEpochMilli();
             long endTimestamp = endTime.toInstant(zoneOffset).toEpochMilli();
-            if (!historyList.isEmpty() && historyList.peekFirst().getTimestamp() >= startTimestamp
-                    && historyList.peekFirst().getTimestamp() <= endTimestamp) {
-                StatusPageHistory statusPageHistory = historyList.pop();
-                histories.add(statusPageHistory);
-            } else {
+            List<StatusPageHistory> thisDayHistory = historyList.stream().filter(item ->
+                            item.getTimestamp() >= startTimestamp && item.getTimestamp() <= endTimestamp)
+                    .collect(Collectors.toList());
+            if (thisDayHistory.isEmpty()) {
                 StatusPageHistory statusPageHistory = StatusPageHistory.builder().timestamp(endTimestamp)
                         .componentId(component.getId()).state(CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN).build();
                 histories.add(statusPageHistory);
+            } else if (thisDayHistory.size() == 1) {
+                histories.add(thisDayHistory.get(0));
+            } else {
+                StatusPageHistory statusPageHistory = combineOneDayStatusPageHistory(thisDayHistory, component, endTimestamp);
+                histories.add(statusPageHistory);
+                statusPageHistoryDao.deleteAll(thisDayHistory);
+                statusPageHistoryDao.save(statusPageHistory);
             }
             startTime = startTime.minusDays(1);
             endTime = endTime.minusDays(1);
