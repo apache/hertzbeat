@@ -20,13 +20,16 @@
     <parent>
         <artifactId>hertzbeat</artifactId>
         <groupId>org.dromara.hertzbeat</groupId>
-        <version>1.0</version>
+        <version>2.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>hertzbeat-collector</artifactId>
     <name>${project.artifactId}</name>
     <properties>
+        <java.version>17</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
     </properties>
@@ -76,7 +79,6 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
         </dependency>
         <!--network-->
         <dependency>
@@ -111,9 +113,10 @@
         </dependency>
         <!-- clickhouse -->
         <dependency>
-            <groupId>cc.blynk.clickhouse</groupId>
-            <artifactId>clickhouse4j</artifactId>
+            <groupId>com.clickhouse</groupId>
+            <artifactId>clickhouse-jdbc</artifactId>
         </dependency>
+
         <!-- dm -->
         <dependency>
             <groupId>com.dameng</groupId>
@@ -179,6 +182,19 @@
             <artifactId>dnsjava</artifactId>
             <version>3.5.2</version>
         </dependency>
+
+        <!-- consul -->
+        <dependency>
+            <groupId>com.ecwid.consul</groupId>
+            <artifactId>consul-api</artifactId>
+            <version>1.4.5</version>
+        </dependency>
+        <!-- nacos -->
+        <dependency>
+            <groupId>com.alibaba.nacos</groupId>
+            <artifactId>nacos-client</artifactId>
+            <version>2.2.1</version>
+        </dependency>
     </dependencies>
     
     <profiles>
@@ -193,10 +209,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <source>11</source>
-                            <target>11</target>
-                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>

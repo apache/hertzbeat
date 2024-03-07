@@ -1,0 +1,155 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: service
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: httpsd
+# 监控类型国际化名称
+name:
+  zh-CN: HTTP SD监控
+  en-US: HTTP SD MONITORS
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 HTTP SD 的相关指标进行监测。
+  en-US: HertzBeat monitors related indicators of HTTP SD.
+  zh-TW: HertzBeat對HTTP SD相關名額進行監測。
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-字段名称标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: Host
+      en-US: Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  # field-param field key
+  # field-字段名称标识符
+  - field: port
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+  - field: discoveryClientTypeName
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 注册中心类型
+      en-US: Discovery Client Type
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: radio
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
+    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
+    options:
+      - label: Consul
+        value: Consul
+      - label: Nacos
+        value: Nacos
+
+metrics:
+  - name: server
+    i18n:
+      zh-CN: 注册中心信息
+      en-US: Discovery Client Info
+    priority: 0
+    fields:
+      - field: address
+        type: 1
+        i18n:
+          zh-CN: 注册中心地址
+          en-US: Address
+      - field: port
+        type: 1
+        i18n:
+          zh-CN: 注册中心端口
+          en-US: Port
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+    protocol: httpsd
+    httpsd:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      discoveryClientTypeName: ^_^discoveryClientTypeName^_^
+  - name: service
+    i18n:
+      zh-CN: 服务实例
+      en-US: Service Instance
+    priority: 1
+    # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+    # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+    # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+    fields:
+      - field: serviceId
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 服务实例id
+          en-US: Service Id
+      - field: serviceName
+        type: 1
+        i18n:
+          zh-CN: 服务实例名称
+          en-US: Service Name
+      - field: address
+        type: 1
+        i18n:
+          zh-CN: 主机地址
+          en-US: Address
+      - field: port
+        type: 0
+        i18n:
+          zh-CN: 端口
+          en-US: Port
+      - field: healthStatus
+        type: 1
+        i18n:
+          zh-CN: 服务健康状态
+          en-US: Health Status
+    protocol: httpsd
+    httpsd:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      discoveryClientTypeName: ^_^discoveryClientTypeName^_^
+
+

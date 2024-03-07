@@ -204,6 +204,10 @@ public class Metrics {
      * Monitoring configuration information using the public Nginx protocol
      */
     private Pop3Protocol pop3;
+    /**
+     * Monitoring configuration information using the public http_sd protocol
+     */
+    private HttpsdProtocol httpsd;
 
     /**
      * collector use - Temporarily store subTask metrics response data
@@ -283,6 +287,9 @@ public class Metrics {
         return Objects.hash(name);
     }
 
+    /**
+     * Metrics.Field
+     */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

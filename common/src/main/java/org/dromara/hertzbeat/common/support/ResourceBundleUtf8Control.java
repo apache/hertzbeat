@@ -17,6 +17,8 @@
 
 package org.dromara.hertzbeat.common.support;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -34,6 +36,7 @@ import java.util.ResourceBundle;
  * i18n resource bundle control
  * @author tom
  */
+@Slf4j
 public class ResourceBundleUtf8Control extends ResourceBundle.Control {
 
     private static final String JAVA_CLASS = "java.class";
@@ -49,7 +52,7 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
             try {
                 @SuppressWarnings("unchecked")
                 Class<? extends ResourceBundle> bundleClass
-                        = (Class<? extends ResourceBundle>)loader.loadClass(bundleName);
+                        = (Class<? extends ResourceBundle>) loader.loadClass(bundleName);
 
                 // If the class isn't a ResourceBundle subclass, throw a
                 // ClassCastException.
@@ -59,8 +62,7 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
                     throw new ClassCastException(bundleClass.getName()
                             + " cannot be cast to ResourceBundle");
                 }
-            } catch (ClassNotFoundException e) {
-            }
+            } catch (ClassNotFoundException ignored) {}
         } else if (JAVA_PROPERTIES.equals(format)) {
             final String resourceName = toResourceName0(bundleName, "properties");
             if (resourceName == null) {

@@ -19,8 +19,8 @@ package org.dromara.hertzbeat.common.support.valid;
 
 import org.dromara.hertzbeat.common.util.IpDomainUtil;
 
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 /**
  * Host Param Validator
@@ -36,10 +36,10 @@ public class HostParamValidator implements ConstraintValidator<HostValid, String
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        if(value != null && value.toLowerCase().contains(HTTP)){
+        if (value != null && value.toLowerCase().contains(HTTP)){
             value = value.replaceAll(PATTERN_HTTP, BLANK);
         }
-        if(value != null && value.toLowerCase().contains(HTTPS)){
+        if (value != null && value.toLowerCase().contains(HTTPS)){
             value = value.replace(PATTERN_HTTPS, BLANK);
         }
         return IpDomainUtil.validateIpDomain(value);

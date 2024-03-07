@@ -45,6 +45,7 @@ import java.util.concurrent.ThreadFactory;
 
 /**
  * netty client
+ * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingClient.java">NettyRemotingClient</a>
  */
 @Slf4j
 public class NettyRemotingClient extends NettyRemotingAbstract implements RemotingClient {

@@ -2,14 +2,14 @@
 
 ### Quickly Start   
 
-1. Need `Node Yarn` Environment, Make sure `Node.js >= 16.10.0`
+1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
 2. Execute `yarn install` in `web-app`   
 3. Install angular-cli : `yarn global add @angular/cli@15`    
 4. Start After Backend Server Available : `ng serve --open`
 
 ---
 
-1. 需要nodejs npm环境，下载地址：https://nodejs.org/en/download 确保你的版本 `Node.js >= 16.10.0`
+1. 需要nodejs npm环境，下载地址：https://nodejs.org/en/download 确保你的版本 `Node.js >= 18`
 2. 安装yarn `npm install -g yarn`
 3. 在前端工程目录web-app下执行 `yarn install --registry=https://registry.npmmirror.com`
 4. 全局安装angular-cli `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`

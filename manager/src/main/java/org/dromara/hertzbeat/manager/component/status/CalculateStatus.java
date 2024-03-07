@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.dromara.hertzbeat.manager.component.status;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -10,9 +27,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.ListJoin;
-import javax.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.ListJoin;
+import jakarta.persistence.criteria.Predicate;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.Executors;
@@ -157,7 +174,7 @@ public class CalculateStatus {
                 // combine pre day status history to one record
                 LocalDateTime nowTime = LocalDateTime.now();
                 ZoneOffset zoneOffset = ZoneId.systemDefault().getRules().getOffset(Instant.now());
-                LocalDateTime midnight = nowTime.withHour(20).withMinute(0).withSecond(0).withNano(0);
+                LocalDateTime midnight = nowTime.withHour(0).withMinute(0).withSecond(0).withNano(0);
                 LocalDateTime preNight = midnight.minusDays(1);
                 long midnightTimestamp = midnight.toInstant(zoneOffset).toEpochMilli();
                 long preNightTimestamp = preNight.toInstant(zoneOffset).toEpochMilli();

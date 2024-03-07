@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,7 +48,11 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(path = "/api/apps", produces = {APPLICATION_JSON_VALUE})
 public class AppController {
 
-    private static final String[] RISKY_STR_ARR = {"ScriptEngineManager", "URLClassLoader"};
+    private static final String[] RISKY_STR_ARR = {"ScriptEngineManager", "URLClassLoader", "!!",
+            "ClassLoader", "AnnotationConfigApplicationContext", "FileSystemXmlApplicationContext",
+            "GenericXmlApplicationContext", "GenericGroovyApplicationContext", "GroovyScriptEngine",
+            "GroovyClassLoader", "GroovyShell", "ScriptEngine", "ScriptEngineFactory", "XmlWebApplicationContext",
+            "ClassPathXmlApplicationContext", "MarshalOutputStream", "InflaterOutputStream", "FileOutputStream"};
 
     @Autowired
     private AppService appService;
