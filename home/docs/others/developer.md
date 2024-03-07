@@ -254,6 +254,7 @@ Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contr
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Nctllnty"><img src="https://avatars.githubusercontent.com/u/33241818?v=4?s=100" width="100px;" alt="Nctllnty"/><br /><sub><b>Nctllnty</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Nctllnty" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Wang-Yonghao"><img src="https://avatars.githubusercontent.com/u/48146606?v=4?s=100" width="100px;" alt="Wang-Yonghao"/><br /><sub><b>Wang-Yonghao</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=Wang-Yonghao" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://www.yuque.com/dudiao/yy"><img src="https://avatars.githubusercontent.com/u/38355949?v=4?s=100" width="100px;" alt="读钓"/><br /><sub><b>读钓</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=dudiao" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/starmilkxin"><img src="https://avatars.githubusercontent.com/u/55646681?v=4?s=100" width="100px;" alt="Xin"/><br /><sub><b>Xin</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=starmilkxin" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
