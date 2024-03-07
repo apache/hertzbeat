@@ -162,7 +162,7 @@ export class CollectorComponent implements OnInit {
         deleteCollectors$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.updatePageIndex(collectors.size)
+          this.updatePageIndex(collectors.size);
           this.loadCollectorsTable();
         } else {
           this.tableLoading = false;

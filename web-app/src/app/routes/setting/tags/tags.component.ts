@@ -101,7 +101,7 @@ export class SettingTagsComponent implements OnInit {
         deleteTags$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.updatePageIndex(tagIds.size)
+          this.updatePageIndex(tagIds.size);
           this.loadTagsTable();
         } else {
           this.tableLoading = false;
