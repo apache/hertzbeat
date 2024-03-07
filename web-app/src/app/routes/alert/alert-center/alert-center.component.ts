@@ -193,6 +193,7 @@ export class AlertCenterComponent implements OnInit {
         deleteAlerts$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+          this.updatePageIndex(alertIds.size);
           this.loadAlertsTable();
         } else {
           this.tableLoading = false;
@@ -205,6 +206,11 @@ export class AlertCenterComponent implements OnInit {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
+  }
+
+  updatePageIndex(delSize: number) {
+    const lastPage = Math.max(1, Math.ceil((this.total - delSize) / this.pageSize));
+    this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
   clearAllAlerts() {
