@@ -54,7 +54,7 @@
         <!--hertzbeat 相关模块-->
         <hertzbeat.version>2.0-SNAPSHOT</hertzbeat.version>
 
-        <springdoc.version>1.7.0</springdoc.version>
+        <springdoc.version>2.3.0</springdoc.version>
         <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
 
         <nekohtml.version>1.9.22</nekohtml.version>
@@ -140,7 +140,7 @@
             </dependency>
             <dependency>
                 <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-ui</artifactId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>${springdoc.version}</version>
             </dependency>
             <dependency>
