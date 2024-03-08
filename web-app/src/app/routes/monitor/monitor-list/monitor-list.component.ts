@@ -246,6 +246,7 @@ export class MonitorListComponent implements OnInit {
         deleteMonitors$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
+          this.updatePageIndex(monitors.size);
           this.loadMonitorTable();
         } else {
           this.tableLoading = false;
@@ -258,6 +259,11 @@ export class MonitorListComponent implements OnInit {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
+  }
+
+  updatePageIndex(delSize: number) {
+    const lastPage = Math.max(1, Math.ceil((this.total - delSize) / this.pageSize));
+    this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
   exportMonitors(type: string) {
