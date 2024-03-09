@@ -65,14 +65,14 @@ sidebar_label: 安装包方式部署
 1. **若您使用的是不含JDK的安装包，需您提前准备JAVA运行环境**
 
 安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
-要求：JAVA11环境   
+要求：JAVA17环境   
 下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)   
 安装后命令行检查是否成功安装
    ```
    $ java -version
-   java version "11.0.12"
-   Java(TM) SE Runtime Environment 18.9 (build 11.0.12+8-LTS-237)
-   Java HotSpot(TM) 64-Bit Server VM 18.9 (build 11.0.12+8-LTS-237, mixed mode)
+   java version "17.0.9"
+   Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
+   Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
 
    ```
 
