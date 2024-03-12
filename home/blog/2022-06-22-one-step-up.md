@@ -1,47 +1,46 @@
 ---
-title: 云监控系统 HertzBeat v1.1.0 发布！一条命令即可开启监控之旅！    
+title: HertzBeat Monitoring System v1.1.0 Released! Start Your Monitoring Journey with Just One Command!    
 author: tom  
 author_title: tom   
-author_url: https://github.com/tomsun28  
-author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
-tags: [opensource]  
+author_url: [https://github.com/tomsun28](https://github.com/tomsun28)  
+author_image_url: [https://avatars.githubusercontent.com/u/24788200?s=400&v=4](https://avatars.githubusercontent.com/u/24788200?s=400&v=4)  
+tags: [opensource]
 ---
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn) 开源的一个支持网站，API，PING，端口，数据库，全站，操作系统，中间件等监控类型，支持阈值告警，告警通知 (邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。  
+[HertzBeat](https://github.com/dromara/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project that supports website, API, PING, port, database, site-wide, operating system, middleware monitoring types, and more. It features threshold alarms, alarm notifications (email, webhook, DingTalk, WeChat Work, Feishu bot), and a user-friendly visual interface.
 
-**官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**  
+**Official Website: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
-大家好，HertzBeat v1.1.0 发布啦！这个版本我们支持了SNMP协议，并使用SNMP协议监控支持了windwos操作系统的应用监控。
-另一个重大变更是我们默认使用了H2数据库来替换MYSQL数据库作为存储，来方便使用者们的安装部署，现在只需要一条docker命令即可安装体验hertzbeat ： `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+Hello everyone, HertzBeat v1.1.0 is here! In this version, we've added support for the SNMP protocol and enabled application monitoring for Windows operating systems using SNMP.  
+Another major change is that we've switched from using MYSQL to H2 database by default for storage, making it easier for users to install and deploy. Now, you can get started with HertzBeat using just a single docker command: `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
 Let's Try It!
 
-感谢hertzbeat贡献者们的贡献！👍👍
+Thanks to all contributors of HertzBeat! 👍👍
 
-Feature：
+Features:
 
-1. [[monitor]feature: 支持SNMP协议和Windows操作系统监控 #192](https://github.com/dromara/hertzbeat/pull/192).  contribute by @ChineseTony
-2. [[monitor]默认使用H2数据库替换MYSQL数据库 #191](https://github.com/dromara/hertzbeat/pull/191)
-3. [[manager]支持监控参数的英文国际化，国际化更近一步 #184](https://github.com/dromara/hertzbeat/pull/184).
-4. [[script]支持了amd64和arm64版本的docker 镜像 #189](https://github.com/dromara/hertzbeat/pull/189).
-5. [[monitor]feature: 支持采集oracle多表空间指标数据 #163](https://github.com/dromara/hertzbeat/pull/163) contribute by @brave4Time
-7. [[monitor]数据库表统一添加前缀 hzb_ #193](https://github.com/dromara/hertzbeat/pull/193) issue from @shimingxy
+1. [[monitor]feature: Support for SNMP protocol and Windows operating system monitoring #192](https://github.com/dromara/hertzbeat/pull/192). Contributed by @ChineseTony
+2. [[monitor] Default switch to H2 database instead of MYSQL #191](https://github.com/dromara/hertzbeat/pull/191)
+3. [[manager] Support for English internationalization of monitoring parameters, making internationalization a step closer #184](https://github.com/dromara/hertzbeat/pull/184).
+4. [[script] Support for amd64 and arm64 versions of the docker image #189](https://github.com/dromara/hertzbeat/pull/189).
+5. [[monitor]feature: Support for collecting multiple tablespace metrics from Oracle #163](https://github.com/dromara/hertzbeat/pull/163) Contributed by @brave4Time
+6. [[monitor] Database tables now have a unified prefix hzb_ #193](https://github.com/dromara/hertzbeat/pull/193) Issue raised by @shimingxy
 
-Bugfix.
+Bugfixes:
 
-1. [[monitor]修改在tencent centos版本下无法采集CPU指标问题 #164](https://github.com/dromara/hertzbeat/pull/164) contribute by @wyt199905 .
-2. [[manager]修复oracle监控percentage指标采集问题 #168](https://github.com/dromara/hertzbeat/pull/168)
-3. [[monitor] bugfix: 修复elasticsearch监控在basic认证情况下采集失败 #174](https://github.com/dromara/hertzbeat/pull/174) contribute by @weifuqing
-4. [修改oracle监控参数[数据库名称]有歧义导致的监控失败 #182](https://github.com/dromara/hertzbeat/pull/182) @zklmcookle
+1. [[monitor] Fixed an issue where CPU metrics could not be collected on Tencent's CentOS version #164](https://github.com/dromara/hertzbeat/pull/164) Contributed by @wyt199905.
+2. [[manager] Fixed an issue with percentage metric collection for Oracle monitoring #168](https://github.com/dromara/hertzbeat/pull/168)
+3. [[monitor] bugfix: Fixed an issue with Elasticsearch monitoring failing under basic authentication #174](https://github.com/dromara/hertzbeat/pull/174) Contributed by @weifuqing
+4. [Fixed an issue where Oracle monitoring failed due to ambiguous database name parameter #182](https://github.com/dromara/hertzbeat/pull/182) @zklmcookle
 
-Online https://console.tancloud.cn.
+Online at [https://console.tancloud.cn](https://console.tancloud.cn).
 
 -----------------------
-Windows Monitor coming：
+Windows Monitor is coming:
 
-<img width="1444" alt="2022-06-19 11 30 57" src="https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png"/>
+![2022-06-19 11:30:57](https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png)
 
-
-⚠️ ⚠️⚠️⚠️请注意其它版本升级到v1.1.0需要先执行下面的SQL脚本.  现在我们的表名称有个统一前缀 hzb_ prefix.
+⚠️ ⚠️⚠️⚠️Please note that upgrading to v1.1.0 from other versions requires running the following SQL script. Now, our table names have a unified prefix hzb_prefix.
 
 ```
 ALTER  TABLE alert RENAME TO hzb_alert;
@@ -110,26 +109,23 @@ ALTER  TABLE tag_monitor_bind RENAME TO hzb_tag_monitor_bind;
 commit;
 ``` 
 
-Have Fun!  
+Have Fun!
 
+---
 
-----    
+> [HertzBeat](https://github.com/dromara/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project that supports monitoring types such as websites, APIs, PING, ports, databases, operating systems, etc., with a user-friendly and easy-to-use visual interface.  
+> We also offer a [SAAS cloud monitoring version](https://console.tancloud.cn) for small and medium teams and individuals, eliminating the need to deploy a complicated monitoring system to monitor their web resources. [Sign up to start](https://console.tancloud.cn) your monitoring journey for free.  
+> HertzBeat supports custom monitoring; by configuring the YML file, we can customize the required monitoring types and metrics to meet common personalized needs.  
+> HertzBeat is modular, with `manager, collector, scheduler, warehouse, alerter` modules decoupled, making it easy to understand and customize development.  
+> HertzBeat supports more flexible alarm configurations (calculation expressions) and alarm notifications, including alarm templates, emails, DingTalk, WeChat, Feishu, etc., for timely delivery of notifications.  
+> Welcome to log in to HertzBeat's [cloud environment TanCloud](https://console.tancloud.cn) to try and discover more.  
+> We are in rapid iteration and welcome participation in co-building the open-source ecosystem.
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库，操作系统等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
-> 当然，我们也提供了对应的[SAAS云监控版本](https://console.tancloud.cn)，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，[登录即可免费开始](https://console.tancloud.cn)监控之旅。  
-> HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
-> HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。    
-> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，邮件钉钉微信飞书等及时通知送达  
-> 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。   
-> 我们正在快速迭代中，欢迎参与加入共建项目开源生态。
+> HertzBeat's support for multiple types, easy expansion, and low coupling aims to help developers and small and medium teams quickly build their own monitoring systems.
 
-> `HertzBeat` 的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
+You can visually understand the features through the demo video: [https://www.bilibili.com/video/BV1DY4y1i7ts](https://www.bilibili.com/video/BV1DY4y1i7ts)
 
-老铁们可以通过演示视频来直观了解功能： [https://www.bilibili.com/video/BV1DY4y1i7ts](https://www.bilibili.com/video/BV1DY4y1i7ts)
-
-
-**仓库地址**
+**Repository Addresses**
 
 [Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
 [Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat
-
