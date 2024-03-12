@@ -49,6 +49,18 @@
             <nz-option [nzValue]="'Pacific/Kiritimati'" [nzLabel]="'Pacific/Kiritimati(UTC+14:00)'"></nz-option>
           </nz-select>
         </se>
+        <se [label]="'settings.system-config.theme' | i18n" [error]="'validation.required' | i18n">
+          <nz-select
+            [(ngModel)]="config.theme"
+            [ngModelOptions]="{ standalone: true }"
+            style="text-align: center; font-weight: bolder"
+            [nzDropdownStyle]="{ 'font-weight': 'bolder', 'font-size': 'larger' }"
+          >
+            <nz-option [nzValue]="'default'" [nzLabel]="'settings.system-config.theme.default' | i18n"></nz-option>
+            <nz-option [nzValue]="'dark'" [nzLabel]="'settings.system-config.theme.dark' | i18n"></nz-option>
+            <nz-option [nzValue]="'compact'" [nzLabel]="'settings.system-config.theme.compact' | i18n"></nz-option>
+          </nz-select>
+        </se>
         <se>
           <button nz-button nzType="primary" [disabled]="f.invalid">{{ 'settings.system-config.ok' | i18n }}</button>
         </se>

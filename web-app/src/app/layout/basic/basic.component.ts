@@ -88,13 +88,6 @@ import { CONSTANTS } from '../../shared/constants';
       </div>
     </global-footer>
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
-    <theme-btn
-      [types]="[
-        { key: 'default', text: 'app.theme.default' | i18n },
-        { key: 'dark', text: 'app.theme.dark' | i18n },
-        { key: 'compact', text: 'app.theme.compact' | i18n }
-      ]"
-    ></theme-btn>
   `
 })
 export class LayoutBasicComponent {
