@@ -21,11 +21,15 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * collector startup
  *
  */
+@ComponentScan(basePackages = {"org.dromara.hertzbeat"})
+@ConfigurationPropertiesScan(basePackages = {"org.dromara.hertzbeat"})
 @SpringBootApplication
 public class Collector {
     public static void main(String[] args) {
