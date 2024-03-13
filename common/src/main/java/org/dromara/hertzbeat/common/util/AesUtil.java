@@ -35,17 +35,17 @@ import java.util.Base64;
 public class AesUtil {
 
     /**
-     *  默认加密秘钥 AES加密秘钥为约定16位，大于小于16位会报错
+     *  Default encryption key The AES encryption key is 16 bits by default. If the AES encryption key is larger than or smaller than 16 bits, an error message is displayed
      */
     private static final String ENCODE_RULES = "tomSun28HaHaHaHa";
 
     /**
-     *  默认算法
+     *  Default algorithm
      */
     private static final String ALGORITHM_STR = "AES/CBC/PKCS5Padding";
 
     /**
-     * 加密秘钥 AES加密秘钥为约定16位，大于小于16位会报错
+     * Encryption key The AES encryption key is 16 bits. If the AES encryption key is larger than 16 bits, an error message is displayed
      */
     private static String secretKey = ENCODE_RULES;
 
@@ -68,11 +68,11 @@ public class AesUtil {
     }
 
     /**
-     * 加密明文 aes cbc模式
+     * Encrypted plaintext aes cbc mode
      *
-     * @param content 明文
-     * @param encryptKey 密钥
-     * @return 密文
+     * @param content content
+     * @param encryptKey secretKey
+     * @return ciphertext
      */
     public static String aesEncode(String content, String encryptKey) {
         try {
@@ -94,11 +94,11 @@ public class AesUtil {
     }
 
     /**
-     * 解密密文
+     * Decrypt ciphertext
      *
-     * @param content 密文
-     * @param decryptKey 密钥
-     * @return 明文
+     * @param content ciphertext
+     * @param decryptKey secretKey
+     * @return content
      */
     public static String aesDecode(String content, String decryptKey) {
         try {
@@ -125,7 +125,7 @@ public class AesUtil {
     }
 
     /**
-     * 判断是否已经被加密
+     * Determine whether it is encrypted
      * @param text text
      * @return true-是 false-否
      */

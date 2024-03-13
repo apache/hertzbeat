@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
+ * Ntp Protocol
  */
 @Data
 @Builder
@@ -31,17 +31,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class NtpProtocol {
     /**
-     * NTP主机ip或域名
+     * NTP host ip address or domain name
      */
     private String host;
 
     /**
-     * NTP主机端口
+     * NTP host port
      */
     private String port;
 
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
 }
