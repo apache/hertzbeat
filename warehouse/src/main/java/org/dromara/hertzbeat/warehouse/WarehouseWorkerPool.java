@@ -28,8 +28,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * warehouse Worker thread pool
- *
+ * warehouse 工作线程池
+ * warehouse worker thread pool
  *
  */
 @Component

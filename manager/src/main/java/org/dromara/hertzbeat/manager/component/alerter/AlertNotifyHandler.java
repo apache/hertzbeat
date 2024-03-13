@@ -23,7 +23,7 @@ import org.dromara.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.dromara.hertzbeat.manager.support.exception.AlertNoticeException;
 
 /**
- *
+ * AlertNotifyHandler interface
  */
 public interface AlertNotifyHandler {
 

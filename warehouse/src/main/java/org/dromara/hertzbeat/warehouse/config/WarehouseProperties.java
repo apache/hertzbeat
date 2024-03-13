@@ -23,20 +23,21 @@ import java.time.ZoneId;
 import java.util.List;
 
 /**
- * Data warehouse configuration properties
- *
+ * 数据仓储配置属性
+ * Data warehousing configuration properties
  *
  */
 @ConfigurationProperties(prefix = "warehouse")
 public class WarehouseProperties {
 
     /**
-     * Configure data entry properties
+     * 数据入口配置属性 Data entry configuration properties
      */
     private EntranceProperties entrance;
 
     /**
-     * Data store configuration properties
+     * 数据存储配置属性
+     * Datastore configuration properties
      */
     private StoreProperties store;
 
@@ -57,13 +58,16 @@ public class WarehouseProperties {
     }
 
     /**
-     * Configure data entry properties
-     * The entry point can be to get data from message-oriented middleware such as kafka rabbitmq rocketmq
+     * 数据入口配置属性
+     * 入口可以是从kafka rabbitmq rocketmq等消息中间件获取数据
+     * Data entry configuration properties
+     * The entrance can be to obtain data from message middleware such as kafka rabbitmq rocketmq
      */
     public static class EntranceProperties {
 
         /**
-         * KAFKA CONFIGURATION INFORMATION
+         * kafka配置信息
+         * kafka configuration information
          */
         private KafkaProperties kafka;
 
@@ -76,23 +80,28 @@ public class WarehouseProperties {
         }
 
         /**
-         * KAFKA CONFIGURATION INFORMATION
+         * kafka配置信息
+         * kafka configuration information
          */
         public static class KafkaProperties {
             /**
-             * Whether the kafka data entry is started
+             * kafka数据入口是否启动
+             * Whether kafka data entry is started
              */
             private boolean enabled = true;
 
             /**
-             * The connection server url for kafka
+             * kafka的连接服务器url
+             * kafka connection server url
              */
             private String servers = "127.0.0.1:9092";
             /**
-             * The name of the topic receiving the data
+             * 接收数据的topic名称
+             * Topic name to receive data
              */
             private String topic;
             /**
+             * 消费者组ID
              * Consumer group ID
              */
             private String groupId;
@@ -133,7 +142,8 @@ public class WarehouseProperties {
     }
 
     /**
-     * Configure scheduling data egress attributes
+     * 调度数据出口配置属性
+     * Scheduling data export configuration properties
      */
     public static class StoreProperties {
 
@@ -143,16 +153,19 @@ public class WarehouseProperties {
         private JpaProperties jpa;
 
         /**
-         * Memory stores configuration information
+         * 内存存储配置信息
+         * Memory storage configuration information
          */
         private MemoryProperties memory;
 
         /**
-         * INFLUXDB CONFIGURATION INFORMATION
+         * influxdb配置信息
+         * influxdb configuration information
          */
         private InfluxdbProperties influxdb;
         /**
-         * REDIS CONFIGURATION INFORMATION
+         * redis配置信息
+         * redis configuration information
          */
         private RedisProperties redis;
         /**
@@ -160,11 +173,13 @@ public class WarehouseProperties {
          */
         private VictoriaMetricsProperties victoriaMetrics;
         /**
-         * TdEngine Configuration information
+         * TdEngine配置信息
+         * TdEngine configuration information
          */
         private TdEngineProperties tdEngine;
         /**
-         * IoTDB Configuration information
+         * IoTDB配置信息
+         * IoTDB configuration information
          */
         private IotDbProperties iotDb;
         /**
@@ -237,15 +252,18 @@ public class WarehouseProperties {
         }
 
         /**
-         * Memory stores configuration information
+         * 内存存储配置信息
+         * Memory storage configuration information
          */
         public static class MemoryProperties {
             /**
-             * Memory Indicates whether the data store is started
+             * 内存数据存储是否启动
+             * Whether memory data storage is enabled
              */
             private boolean enabled = true;
             /**
-             * Memory map initialization size
+             * 内存存储map初始化大小
+             * Memory storage map initialization size
              */
             private Integer initSize = 1024;
 
@@ -267,6 +285,7 @@ public class WarehouseProperties {
         }
 
         /**
+         * JPA配置信息
          * JPA configuration information
          */
         public static class JpaProperties {
@@ -311,31 +330,38 @@ public class WarehouseProperties {
         }
 
         /**
-         * Influxdb Configuration information
+         * Influxdb配置信息
+         * Influxdb configuration information
          */
         public static class InfluxdbProperties {
             /**
-             * Influxdb Indicates whether the data store is started
+             * influxdb数据存储是否启动
+             * Is the influxdb data store started?
              */
             private boolean enabled = false;
             /**
-             * Influxdb's connection server url
+             * influxdb的连接服务器url
+             * Influxdb connection server url
              */
             private String serverUrl;
             /**
-             * UserName
+             * 用户名
+             * username
              */
             private String username;
             /**
-             * Password
+             * 密码
+             * passowrd
              */
             private String password;
             /**
-             * ExpirationTime
+             * 过期时间
+             * Expiration
              */
             private String expireTime = "30d";
             /**
-             * DuplicateNumber
+             * 副本数
+             * Number of copies
              */
             private int replication = 1;
 
@@ -389,7 +415,8 @@ public class WarehouseProperties {
         }
 
         /**
-         * TdEngine CONFIGURATION INFORMATION
+         * TdEngine配置信息
+         * TdEngine configuration information
          */
         public static class TdEngineProperties {
             /**
@@ -526,23 +553,28 @@ public class WarehouseProperties {
          */
         public static class RedisProperties {
             /**
+             * redis数据存储是否启动
              * Whether the redis data store is started
              */
             private boolean enabled = false;
             /**
+             * redis 主机host
              * redis host
              */
             private String host = "127.0.0.1";
             /**
-             * redis hostPort
+             * redis 主机端口
+             * redis host port
              */
             private Integer port = 6379;
             /**
-             * redis AccessPassword
+             * redis 访问密码
+             * redis password
              */
             private String password;
             /**
-             * redis USE DATABASE ,DEFAULT IS DB 0
+             * redis 使用数据库，默认为DB0
+             * redis uses the database, the default is DB0
              */
             private Integer db = 0;
 
@@ -588,7 +620,8 @@ public class WarehouseProperties {
         }
 
         /**
-         * IoTDB Configuration information
+         * IoTDB配置信息
+         * IoTDB configuration information
          */
         public static class IotDbProperties {
             /**
@@ -641,6 +674,11 @@ public class WarehouseProperties {
              * 注：这里为什么使用String而不是Long？
              *    At present, the set ttl of IoTDB only supports milliseconds as a unit, and other units may be added later, so the String type is used for compatibility
              *    目前IoTDB的set ttl只支持毫秒作为单位，后面可能会添加其他单位，为了兼容后面所以使用String类型
+             *
+             * Data storage time (unit: ms, -1 means never expires)
+             * Note: Why use String instead of Long here?
+             *  Currently, IoTDB's set ttl only supports milliseconds as the unit. Other units
+             *  may be added later. In order to be compatible with the future, the String type is used.
              */
             private String expireTime;
 
@@ -726,7 +764,8 @@ public class WarehouseProperties {
         }
 
         /**
-         * GrepTimeDB Configuration information
+         * GrepTimeDB配置信息
+         * GrepTimeDB configuration information
          */
         public static class GreptimeProperties {
             /**

@@ -44,7 +44,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 
 /**
- *
+ * Send alarm information through email
  */
 @Component
 @RequiredArgsConstructor

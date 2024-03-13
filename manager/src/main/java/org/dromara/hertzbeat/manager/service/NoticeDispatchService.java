@@ -19,7 +19,7 @@ package org.dromara.hertzbeat.manager.service;
 
 /**
  * 消息通知转发接口
- *
+ * Message notification forwarding interface
  *
  */
 public interface NoticeDispatchService {
