@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 /**
- * MetricsData redis 序列化
+ * MetricsData redis serialize
  *
  *
  */
