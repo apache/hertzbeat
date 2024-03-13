@@ -31,7 +31,7 @@ import java.util.Map;
 
 /**
  *
- * 腾讯云告警实体类
+ * Tencent cloud alarm entity class
  */
 @Data
 @AllArgsConstructor
@@ -157,18 +157,18 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
     }
 
     /**
-     * 事务告警
+     * Transaction alarm
      */
     private static final String EVENT = "event";
 
     /**
-     * 指标告警
+     * Indicator alarm
      */
     private static final String METRIC = "metric";
 
     /**
-     * 如果后续腾讯云告警类型增多的话，可以将该实体类拆分为一个父类和多个子类，然后在子类实现该方法即可
-     * 由于目前只有两种，暂不进行拆分
+     * If the following alarm types increase, the entity class can be divided into a parent class and multiple subclasses, and then the method can be implemented in the subclass
+     * Since there are only two, it will not be split for the time being
      */
     @Override
     public String getContent() {

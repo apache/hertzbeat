@@ -31,8 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  *
  *
- * 解析prometheus的exporter接口传递的数据 http:xxx/metrics
- * 参考: prometheus的text_parse.go的代码, 入口: TextToMetricFamilies
+ * Resolves the data passed by prometheus's exporter interface http:xxx/metrics
+ * Reference: prometheus text_parse.go code, entry: TextToMetricFamilies
  */
 @Slf4j
 public class TextParser {

@@ -35,7 +35,7 @@ public abstract class AbstractRealTimeDataStorage implements DisposableBean {
     protected boolean serverAvailable;
 
     /**
-     * @return data storage是否可用
+     * @return data Whether the storage is available
      */
     public boolean isServerAvailable() {
         return serverAvailable;

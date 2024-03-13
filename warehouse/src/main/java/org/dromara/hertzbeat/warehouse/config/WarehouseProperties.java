@@ -494,7 +494,7 @@ public class WarehouseProperties {
         }
 
         /**
-         * VictoriaMetrics配置信息
+         * VictoriaMetrics Configuration information
          */
         public static class VictoriaMetricsProperties {
             /**
@@ -549,7 +549,7 @@ public class WarehouseProperties {
         }
 
         /**
-         * Redis配置信息
+         * Redis Configuration information
          */
         public static class RedisProperties {
             /**
@@ -668,8 +668,11 @@ public class WarehouseProperties {
 
             /**
              * save data expire time(ms)，-1 means it never expires
+             * Data storage time (unit: ms,-1 means never expire)
              * 数据存储时间(单位：ms,-1代表永不过期)
+             * Note: Why is String used here instead of Long?
              * 注：这里为什么使用String而不是Long？
+             *    At present, the set ttl of IoTDB only supports milliseconds as a unit, and other units may be added later, so the String type is used for compatibility
              *    目前IoTDB的set ttl只支持毫秒作为单位，后面可能会添加其他单位，为了兼容后面所以使用String类型
              *
              * Data storage time (unit: ms, -1 means never expires)

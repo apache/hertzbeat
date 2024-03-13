@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
+ * Redis Protocol
  * @version 1.0
  */
 @Data
@@ -33,22 +33,22 @@ import lombok.NoArgsConstructor;
 public class RedisProtocol {
 
     /**
-     * 对端主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
 
     /**
-     * 端口号
+     * Port number
      */
     private String port;
 
     /**
-     * Redis用户名(可选)
+     * Redis User name (optional)
      */
     private String username;
 
     /**
-     * Redis密码(可选)
+     * Redis Password (optional)
      */
     private String password;
 
@@ -58,7 +58,7 @@ public class RedisProtocol {
     private String pattern;
 
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
 

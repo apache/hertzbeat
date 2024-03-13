@@ -32,22 +32,22 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class NginxProtocol {
     /**
-     * nginx主机ip或域名
+     * nginx Host ip address or domain name
      */
     private String host;
 
     /**
-     * nginx主机端口
+     * NGINX HOST PORT
      */
     private String port;
 
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
 
     /**
-     * 监控模块页面url
+     * Monitor module page url
      */
     private String url;
 

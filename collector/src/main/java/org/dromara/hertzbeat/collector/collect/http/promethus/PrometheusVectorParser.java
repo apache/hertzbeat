@@ -33,7 +33,7 @@ import java.util.List;
 /**
  *
  *
- * 处理prometheus返回类型为“vector”的响应格式
+ * Processing prometheus returns a response format of type "vector"
  */
 @NoArgsConstructor
 public class PrometheusVectorParser extends AbstractPrometheusParse {

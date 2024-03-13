@@ -61,9 +61,9 @@ public class WarehouseWorkerPool {
     }
 
     /**
-     * 运行warehouse任务
-     * @param runnable 任务
-     * @throws RejectedExecutionException when 线程池满
+     * Run warehouse task
+     * @param runnable task
+     * @throws RejectedExecutionException when THREAD POOL FULL
      */
     public void executeJob(Runnable runnable) throws RejectedExecutionException {
         workerExecutor.execute(runnable);

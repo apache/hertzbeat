@@ -22,7 +22,7 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
 /**
- *
+ * prometheus parse creater
  *
  */
 @Slf4j

@@ -47,7 +47,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- *
+ * Websocket Collect
  */
 @Slf4j
 public class WebsocketCollectImpl extends AbstractCollect {
