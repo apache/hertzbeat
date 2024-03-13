@@ -49,7 +49,8 @@ public class SnowFlakeIdWorker {
      * Maximum machine ID supported, 0-15
      * 支持的最大机器ID，0-15
      * <p>
-     * The source code of PS.Twitter is -1L ^ (-1L << workerIdBits); Here the final xor operation with -1, because of the particularity of -1's binary complement, it is equivalent to taking the inverse.
+     * The source code of PS.Twitter is -1L ^ (-1L << workerIdBits); Here the final xor operation with -1,
+     * because of the particularity of -1's binary complement, it is equivalent to taking the inverse.
      * PS. Twitter的源码是 -1L ^ (-1L << workerIdBits)；这里最后和-1进行异或运算，由于-1的二进制补码的特殊性，就相当于进行取反。
      */
     private static final long MAX_WORKER_ID = ~(-1L << WORKER_ID_BITS);
