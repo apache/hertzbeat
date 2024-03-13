@@ -19,7 +19,7 @@ package org.dromara.hertzbeat.collector.dispatch.unit;
 
 /**
  * the interface of unit convert
- * 单位转换的接口类，处理 org.dromara.hertzbeat.common.entity.job.Metrics#units
+ * Unit conversion interface classes and deal with mon. Org.dromara.hertzbeat.com entity. The job. The Metrics# units
  *
  *
  */

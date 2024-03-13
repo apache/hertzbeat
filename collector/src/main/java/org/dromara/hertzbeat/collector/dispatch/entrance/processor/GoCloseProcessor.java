@@ -29,7 +29,7 @@ import org.springframework.boot.SpringApplication;
 
 /**
  * handle collector close message
- * 注: 这里会关闭采集任务, 同时断开与Manager的连接
+ * Note: The collection task is closed and the connection to Manager is disconnected
  */
 @Slf4j
 public class GoCloseProcessor implements NettyRemotingProcessor {

@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
+ * Mongodb Protocol
  * @version 1.0
  */
 @Data
@@ -33,32 +33,32 @@ import lombok.NoArgsConstructor;
 public class MongodbProtocol {
 
     /**
-     * 对端主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
 
     /**
-     * 端口号
+     * Port number
      */
     private String port;
 
     /**
-     * Mongodb用户名(可选)
+     * Mongodb User name (optional)
      */
     private String username;
 
     /**
-     * Mongodb密码(可选)
+     * Mongodb Password (optional)
      */
     private String password;
 
     /**
-     * Mongodb数据库名(可选)
+     * Mongodb database name (optional)
      */
     private String database;
 
     /**
-     * Mongodb认证数据库名(可选)
+     * Mongodb Authentication Database name (optional)
      */
     private String authenticationDatabase;
 

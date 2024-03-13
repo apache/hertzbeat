@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.common.util;
 /**
  *
  *
+ * In order to avoid generating too many String objects in the way of subString during ExporterParser parsing, use this class control
  * 为了避免ExporterParser解析过程中, 使用subString的方式生成过多的String对象, 使用该类控制
  */
 public class StrBuffer {

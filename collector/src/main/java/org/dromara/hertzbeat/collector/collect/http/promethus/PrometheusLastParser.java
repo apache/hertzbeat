@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 
 /**
- *
+ * Prometheus Last Parser
  *
  */
 @Slf4j

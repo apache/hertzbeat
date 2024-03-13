@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
+ * Websocket Protocol
  */
 @Data
 @Builder
@@ -31,12 +31,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WebsocketProtocol {
     /**
-     * Websocket 主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
 
     /**
-     * Websocket 主机端口
+     * Port number
      */
     private String port;
 }

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- *
+ * Httpsd protocol
  */
 @Data
 @Builder

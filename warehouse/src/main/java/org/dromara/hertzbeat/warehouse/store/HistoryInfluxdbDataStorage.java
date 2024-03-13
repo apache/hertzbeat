@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * Influxdb Data Storage
  *
  */
 @Component

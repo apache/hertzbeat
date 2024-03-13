@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
+ *  memcached protocol
  */
 @Data
 @Builder
@@ -32,12 +32,12 @@ import lombok.NoArgsConstructor;
 public class MemcachedProtocol {
 
     /**
-     * Memcached 主机ip或域名
+     * MEMCACHED HOST IP ADDRESS OR DOMAIN NAME
      */
     private String host;
 
     /**
-     * Memcached 主机端口(默认11211)
+     * Memcached host port (default: 11211)
      */
     private String port;
 

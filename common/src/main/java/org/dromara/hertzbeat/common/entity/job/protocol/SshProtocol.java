@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * ssh 协议参数配置
+ * ssh Protocol parameter configuration
  *
  */
 @Data
@@ -33,32 +33,32 @@ import lombok.NoArgsConstructor;
 public class SshProtocol {
 
     /**
-     * 对端主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
 
     /**
-     * 对端主机端口
+     * Peer host port
      */
     private String port;
 
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
 
     /**
-     * 用户名
+     * UserName
      */
     private String username;
 
     /**
-     * 密码(可选)
+     * Password (optional)
      */
     private String password;
 
     /**
-     * 私钥(可选)
+     * Private key (optional)
      */
     private String privateKey;
     
@@ -68,12 +68,12 @@ public class SshProtocol {
     private String reuseConnection = "true";
 
     /**
-     * SSH执行脚本
+     * SSH execution script
      */
     private String script;
 
     /**
-     * 响应数据解析方式：oneRow, multiRow
+     * Response data parsing mode：oneRow, multiRow
      */
     private String parseType;
 }

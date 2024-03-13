@@ -27,7 +27,7 @@ import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
 /**
  * handle collector online message
- * 注: 这里不是重新打开与Manager的连接, 也做不到, 只是重新开启采集功能
+ * Note: This is not to re-open the connection with Manager, nor can it be done, just to re-open the collection function
  */
 @Slf4j
 public class GoOnlineProcessor implements NettyRemotingProcessor {

@@ -27,7 +27,7 @@ import org.dromara.hertzbeat.remoting.netty.NettyRemotingProcessor;
 
 /**
  * handle collector offline message
- * 注: 这里不关闭与Manager的连接, 只是关闭采集功能
+ * Note: The connection to Manager is not closed here, only the capture function is turned off
  */
 @Slf4j
 public class GoOfflineProcessor implements NettyRemotingProcessor {

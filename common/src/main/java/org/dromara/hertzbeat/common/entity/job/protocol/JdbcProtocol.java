@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 公共的jdbc规范实现的数据库配置信息
+ * Database configuration information implemented by the common jdbc specification
  *
  */
 @Data
@@ -32,35 +32,35 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class JdbcProtocol {
     /**
-     * 对端主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
     /**
-     * 端口号
+     * Port number
      */
     private String port;
     /**
-     * 数据库用户名(可选)
+     * Database user name (optional)
      */
     private String username;
     /**
-     * 数据库密码(可选)
+     * Database Password (optional)
      */
     private String password;
     /**
-     * 数据库
+     * Database
      */
     private String database;
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
     /**
-     * 数据库类型 mysql oracle ...
+     * TYPE OF DATABASE mysql oracle ...
      */
     private String platform;
     /**
-     * SQL查询方式： oneRow, multiRow, columns, runScript
+     * SQL query mode： oneRow, multiRow, columns, runScript
      */
     private String queryType;
     /**
@@ -68,7 +68,7 @@ public class JdbcProtocol {
      */
     private String sql;
     /**
-     * 数据库链接url eg: jdbc:mysql://localhost:3306/usthe
+     * DATABASE LINK URL eg: jdbc:mysql://localhost:3306/usthe
      */
     private String url;
 }

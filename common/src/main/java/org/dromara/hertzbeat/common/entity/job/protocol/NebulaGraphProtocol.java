@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
+ * NebulaGraph Protocol
  */
 @Data
 @Builder
@@ -31,29 +31,29 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class NebulaGraphProtocol {
     /**
-     * NebulaGraph 主机ip或域名
+     * NebulaGraph host ip or domain name
      */
     private String host;
 
     /**
-     * NebulaGraph Graph 服务端口默认为 19669
-     * NebulaGraph Storage 服务端口默认为 19779
+     * NebulaGraph Graph service port default is 19669
+     * NebulaGraph Storage service port is 19779 by default
      */
     private String port;
 
     /**
-     * NebulaGraph Graph 服务监控API为/stats
-     * NebulaGraph Storage 服务监控API为/rocksdb_stats
+     * NebulaGraph Graph service monitoring API is /stats
+     * NebulaGraph Storage's service monitoring API is /rocksdb_stats
      */
     private String url;
 
     /**
-     * NebulaGraph 监控时间间隔
+     * NebulaGraph monitors time intervals
      */
     private String timePeriod;
 
     /**
-     * 超时时间
+     * TIMEOUT PERIOD
      */
     private String timeout;
 

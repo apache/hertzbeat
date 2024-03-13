@@ -49,7 +49,7 @@ import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
- * 指标数据查询接口
+ * Interface for querying indicator data
  *
  *
  */
