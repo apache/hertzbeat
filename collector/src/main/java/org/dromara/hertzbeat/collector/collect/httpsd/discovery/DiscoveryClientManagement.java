@@ -8,7 +8,7 @@ import org.dromara.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 import java.util.Objects;
 
 /**
- *
+ * Discovery Client Management
  */
 public class DiscoveryClientManagement {
 

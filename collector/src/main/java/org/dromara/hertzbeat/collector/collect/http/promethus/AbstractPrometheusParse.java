@@ -23,14 +23,13 @@ import org.dromara.hertzbeat.common.entity.message.CollectRep;
 import java.util.List;
 
 /**
- *
- *
+ * prometheus parse abstract class
  * todo: string类型 和 scalar类型 响应格式解析
  */
 public abstract class AbstractPrometheusParse {
 
     /**
-     * 下游节点
+     * Downstream node
      */
     private AbstractPrometheusParse prometheusParse;
 
@@ -43,7 +42,7 @@ public abstract class AbstractPrometheusParse {
     }
 
     /**
-     * prom响应类型校验：string、matrix、vector、scalar
+     * prom response type check: string, matrix, vector, scalar
      * todo：string、scalar类型响应未实现
      * @param responseStr 返回字符串
      * @return return
@@ -51,7 +50,7 @@ public abstract class AbstractPrometheusParse {
     abstract Boolean checkType(String responseStr);
 
     /**
-     * 解析prom接口响应数据
+     * Parse the prom interface response data
      * @param resp 返回数据
      * @param aliasFields alias fields
      * @param http httpProtocol
@@ -61,7 +60,7 @@ public abstract class AbstractPrometheusParse {
                         CollectRep.MetricsData.Builder builder);
 
     /**
-     * 处理prom接口响应数据
+     * Processing prom interface response data
      * @param resp resp
      * @param aliasFields alias fields
      * @param http http
