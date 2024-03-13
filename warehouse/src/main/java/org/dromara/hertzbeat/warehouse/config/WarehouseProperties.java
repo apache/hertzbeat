@@ -24,19 +24,20 @@ import java.util.List;
 
 /**
  * 数据仓储配置属性
- *
+ * Data warehousing configuration properties
  *
  */
 @ConfigurationProperties(prefix = "warehouse")
 public class WarehouseProperties {
 
     /**
-     * 数据入口配置属性
+     * 数据入口配置属性 Data entry configuration properties
      */
     private EntranceProperties entrance;
 
     /**
      * 数据存储配置属性
+     * Datastore configuration properties
      */
     private StoreProperties store;
 
@@ -59,11 +60,14 @@ public class WarehouseProperties {
     /**
      * 数据入口配置属性
      * 入口可以是从kafka rabbitmq rocketmq等消息中间件获取数据
+     * Data entry configuration properties
+     * The entrance can be to obtain data from message middleware such as kafka rabbitmq rocketmq
      */
     public static class EntranceProperties {
 
         /**
          * kafka配置信息
+         * kafka configuration information
          */
         private KafkaProperties kafka;
 
@@ -77,23 +81,28 @@ public class WarehouseProperties {
 
         /**
          * kafka配置信息
+         * kafka configuration information
          */
         public static class KafkaProperties {
             /**
              * kafka数据入口是否启动
+             * Whether kafka data entry is started
              */
             private boolean enabled = true;
 
             /**
              * kafka的连接服务器url
+             * kafka connection server url
              */
             private String servers = "127.0.0.1:9092";
             /**
              * 接收数据的topic名称
+             * Topic name to receive data
              */
             private String topic;
             /**
              * 消费者组ID
+             * Consumer group ID
              */
             private String groupId;
 
@@ -134,6 +143,7 @@ public class WarehouseProperties {
 
     /**
      * 调度数据出口配置属性
+     * Scheduling data export configuration properties
      */
     public static class StoreProperties {
 
@@ -144,15 +154,18 @@ public class WarehouseProperties {
 
         /**
          * 内存存储配置信息
+         * Memory storage configuration information
          */
         private MemoryProperties memory;
 
         /**
          * influxdb配置信息
+         * influxdb configuration information
          */
         private InfluxdbProperties influxdb;
         /**
          * redis配置信息
+         * redis configuration information
          */
         private RedisProperties redis;
         /**
@@ -161,10 +174,12 @@ public class WarehouseProperties {
         private VictoriaMetricsProperties victoriaMetrics;
         /**
          * TdEngine配置信息
+         * TdEngine configuration information
          */
         private TdEngineProperties tdEngine;
         /**
          * IoTDB配置信息
+         * IoTDB configuration information
          */
         private IotDbProperties iotDb;
         /**
@@ -238,14 +253,17 @@ public class WarehouseProperties {
 
         /**
          * 内存存储配置信息
+         * Memory storage configuration information
          */
         public static class MemoryProperties {
             /**
              * 内存数据存储是否启动
+             * Whether memory data storage is enabled
              */
             private boolean enabled = true;
             /**
              * 内存存储map初始化大小
+             * Memory storage map initialization size
              */
             private Integer initSize = 1024;
 
@@ -268,6 +286,7 @@ public class WarehouseProperties {
 
         /**
          * JPA配置信息
+         * JPA configuration information
          */
         public static class JpaProperties {
             /**
@@ -312,30 +331,37 @@ public class WarehouseProperties {
 
         /**
          * Influxdb配置信息
+         * Influxdb configuration information
          */
         public static class InfluxdbProperties {
             /**
              * influxdb数据存储是否启动
+             * Is the influxdb data store started?
              */
             private boolean enabled = false;
             /**
              * influxdb的连接服务器url
+             * Influxdb connection server url
              */
             private String serverUrl;
             /**
              * 用户名
+             * username
              */
             private String username;
             /**
              * 密码
+             * passowrd
              */
             private String password;
             /**
              * 过期时间
+             * Expiration
              */
             private String expireTime = "30d";
             /**
              * 副本数
+             * Number of copies
              */
             private int replication = 1;
 
@@ -390,6 +416,7 @@ public class WarehouseProperties {
 
         /**
          * TdEngine配置信息
+         * TdEngine configuration information
          */
         public static class TdEngineProperties {
             /**
@@ -527,22 +554,27 @@ public class WarehouseProperties {
         public static class RedisProperties {
             /**
              * redis数据存储是否启动
+             * Whether the redis data store is started
              */
             private boolean enabled = false;
             /**
              * redis 主机host
+             * redis host
              */
             private String host = "127.0.0.1";
             /**
              * redis 主机端口
+             * redis host port
              */
             private Integer port = 6379;
             /**
              * redis 访问密码
+             * redis password
              */
             private String password;
             /**
              * redis 使用数据库，默认为DB0
+             * redis uses the database, the default is DB0
              */
             private Integer db = 0;
 
@@ -589,6 +621,7 @@ public class WarehouseProperties {
 
         /**
          * IoTDB配置信息
+         * IoTDB configuration information
          */
         public static class IotDbProperties {
             /**
@@ -638,6 +671,11 @@ public class WarehouseProperties {
              * 数据存储时间(单位：ms,-1代表永不过期)
              * 注：这里为什么使用String而不是Long？
              *    目前IoTDB的set ttl只支持毫秒作为单位，后面可能会添加其他单位，为了兼容后面所以使用String类型
+             *
+             * Data storage time (unit: ms, -1 means never expires)
+             * Note: Why use String instead of Long here?
+             *  Currently, IoTDB's set ttl only supports milliseconds as the unit. Other units
+             *  may be added later. In order to be compatible with the future, the String type is used.
              */
             private String expireTime;
 
@@ -724,6 +762,7 @@ public class WarehouseProperties {
 
         /**
          * GrepTimeDB配置信息
+         * GrepTimeDB configuration information
          */
         public static class GreptimeProperties {
             /**

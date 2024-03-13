@@ -26,7 +26,7 @@ import jakarta.validation.constraints.*;
 
 /**
  * 邮件账号配置dto
- *
+ * Email account configuration dto
  *
  */
 @Data

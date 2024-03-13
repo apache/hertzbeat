@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 
 /**
  * 消息通知配置实现
- *
+ * Message notification configuration implementation
  *
  */
 @Service

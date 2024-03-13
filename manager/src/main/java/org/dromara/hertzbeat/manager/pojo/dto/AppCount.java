@@ -22,7 +22,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
+ * AppCount class
  *
  */
 @AllArgsConstructor
