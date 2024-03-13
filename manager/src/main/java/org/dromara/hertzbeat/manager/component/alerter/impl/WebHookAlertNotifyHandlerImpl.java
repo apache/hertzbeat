@@ -34,7 +34,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- *
+ * Send alarm information through WebHookAlter
  */
 @Component
 @Slf4j

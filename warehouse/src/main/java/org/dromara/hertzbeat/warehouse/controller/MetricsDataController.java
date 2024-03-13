@@ -50,7 +50,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * 指标数据查询接口
- *
+ * Indicator data query interface
  *
  */
 @RestController

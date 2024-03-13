@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 分配的采集任务列表
- *
+ * List of assigned collection tasks
  */
 @Slf4j
 @Data

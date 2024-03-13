@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * 大屏仪表盘统计信息
- *
+ * Large screen dashboard statistics
  *
  */
 @Data

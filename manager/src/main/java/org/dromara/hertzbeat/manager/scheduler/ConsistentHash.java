@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 
 /**
  * 一致性hash实现的采集器与任务映射调度
+ *  Collector and task mapping scheduling implemented by consistent hashing
  *
  */
 @Slf4j

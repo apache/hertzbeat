@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
 /**
  * Server酱发送
  *
- *
+ * Send alarm information through Server
  */
 @Component
 @RequiredArgsConstructor

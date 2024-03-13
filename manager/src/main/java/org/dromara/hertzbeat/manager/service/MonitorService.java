@@ -35,7 +35,7 @@ import java.util.Set;
 
 /**
  * 监控管理服务
- *
+ * Monitoring and management services
  *
  */
 public interface MonitorService {

@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
 
 
 /**
- *
+ *  NebulaGraph collect
  */
 @Slf4j
 public class NebulaGraphCollectImpl extends AbstractCollect {

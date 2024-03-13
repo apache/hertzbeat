@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 import java.util.Map;
 
 /**
- * Prometheus 协议配置
+ * Prometheus Protocol configuration
  *
  */
 @Data
@@ -34,11 +34,11 @@ import java.util.Map;
 @NoArgsConstructor
 public class PrometheusProtocol {
     /**
-     * 对端主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
     /**
-     * 对端主机端口
+     * Peer host port
      */
     private String port;
     /**
@@ -46,43 +46,43 @@ public class PrometheusProtocol {
      */
     private String path;
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
     /**
-     * http是否使用链路加密ssl/tls,即是http还是https
+     * http Whether to use link-encrypted ssl/tls, that is, http or https
      */
     private String ssl = "false";
     /**
-     * http请求方法: get, post, put, delete, patch
+     * HTTP REQUEST METHOD: get, post, put, delete, patch
      */
     private String method;
     /**
-     * http请求携带头 eg: Content-Type = application/json
+     * HTTP REQUESTS CARRY HEADERS eg: Content-Type = application/json
      */
     private Map<String, String> headers;
     /**
-     * http请求携带查询参数 eg: localhost:80/api?paramKey=value
+     * HTTP REQUESTS CARRY QUERY PARAMETERS eg: localhost:80/api?paramKey=value
      */
     private Map<String, String> params;
     /**
-     * http请求携带的请求体
+     * The request body carried by an http request
      */
     private String payload;
     /**
-     * 认证信息
+     * Authentication information
      */
     private Authorization authorization;
 
     /**
-     * 认证信息
+     * Authentication information
      */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Authorization {
         /**
-         * 认证类型：Bearer Token, Basic Auth, Digest Auth
+         * Authentication type：Bearer Token, Basic Auth, Digest Auth
          */
         private String type;
         /**

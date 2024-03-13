@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *
+ * Smtp Protocol
  */
 @Data
 @Builder
@@ -31,27 +31,27 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SmtpProtocol {
     /**
-     * email主机ip或域名
+     * email Host ip address or domain name
      */
     private String host;
 
     /**
-     * email主机端口
+     * EMAIL HOST PORT
      */
     private String port;
 
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
 
     /**
-     * helo命令的测试者(email)
+     * helo command tester (email)
      */
     private String email;
 
     /**
-     * 发送的命令
+     * Sent command
      */
     private String cmd;
 }

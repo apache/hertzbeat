@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * icmp(即ping)协议配置
+ * ICMP (PING) PROTOCOL CONFIGURATION
  *
  */
 @Data
@@ -33,12 +33,12 @@ import lombok.NoArgsConstructor;
 public class IcmpProtocol {
 
     /**
-     * 对端主机ip或域名
+     * ip address or domain name of the peer host
      */
     private String host;
 
     /**
-     * 超时时间
+     * time out period
      */
     private String timeout;
 

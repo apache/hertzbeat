@@ -21,7 +21,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan;
 
 /**
- *
+ * WarehouseAutoConfiguration class
  * @version 2.1
  * Created by Musk.Chen on 2023/1/14
  */

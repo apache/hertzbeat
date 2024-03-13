@@ -44,7 +44,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- *
+ *  ntp collect
  */
 @Slf4j
 public class NtpCollectImpl extends AbstractCollect {

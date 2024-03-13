@@ -42,7 +42,7 @@ public class CommonUtil {
     private static final int PHONE_LENGTH = 11;
 
     /**
-     * 将字符串str转换为int数字类型
+     * Converts the string str to the int numeric type
      *
      * @param str string
      * @return double 数字
@@ -61,7 +61,7 @@ public class CommonUtil {
     }
 
     /**
-     * 将字符串str转换为double数字类型
+     * Converts the string str to the double number type
      *
      * @param str string
      * @return double 数字
@@ -80,7 +80,7 @@ public class CommonUtil {
     }
 
     /**
-     * 将时间字符串str转换为秒
+     * Converts the time string str to seconds
      *
      * @param str string
      * @return double 数字
@@ -99,12 +99,12 @@ public class CommonUtil {
     }
 
     /**
-     * 将字符串str,此字符串可能带单位,转换为double数字类型
-     * 将数值小数点限制到4位
+     * Converts the string str, which may contain units, to the double number type
+     * Limit numeric values to four decimal places
      *
      * @param str  string
-     * @param unit 字符串单位
-     * @return string格式的 double 数字 小数点最大到4位
+     * @param unit STRING UNIT
+     * @return DOUBLE DIGITS IN STRING FORMAT Decimal point up to 4 places
      */
     public static String parseDoubleStr(String str, String unit) {
         if (StringUtils.isBlank(str)) {
@@ -124,10 +124,10 @@ public class CommonUtil {
     }
 
     /**
-     * 邮箱格式校验
+     * Mailbox format check
      *
-     * @param email 邮箱
-     * @return 是否校验成功
+     * @param email email
+     * @return Is the verification successful
      */
     public static boolean validateEmail(final String email) {
         if (StringUtils.isBlank(email)) {
@@ -139,10 +139,10 @@ public class CommonUtil {
     }
 
     /**
-     * 手机号格式校验
+     * Mobile phone format verification
      *
-     * @param phoneNum 手机号
-     * @return 是否校验成功
+     * @param phoneNum mobilePhoneNumber
+     * @return Is the verification successful
      */
     public static boolean validatePhoneNum(final String phoneNum) {
         if (StringUtils.isBlank(phoneNum) || phoneNum.length() != PHONE_LENGTH) {

@@ -23,7 +23,7 @@ import org.dromara.hertzbeat.alert.util.DateUtil;
 import org.dromara.hertzbeat.common.entity.dto.AlertReport;
 
 /**
- * 通用云端告警实体类
+ * Generic cloud alarm entity class
  */
 @Data
 @AllArgsConstructor
@@ -32,17 +32,17 @@ import org.dromara.hertzbeat.common.entity.dto.AlertReport;
 public class GeneralCloudAlertReport extends AlertReport {
 
     /**
-     * 告警日期时间
+     * Alarm date and time
      */
     private String alertDateTime;
 
     /**
-     * 日期时间格式
+     * DATE TIME FORMAT
      */
     private String dateTimeFormat;
 
     /**
-     * 可通过增强属性刷新告警时间的时间戳
+     * You can refresh the timestamp of the alarm time with enhanced properties
      */
     public void refreshAlertTime() {
         // 有时间戳，取时间戳

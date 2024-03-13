@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * 实时数据存储抽象类
- *
+ * Real-time data storage abstract class
  *
  */
 @Slf4j
@@ -35,7 +35,7 @@ public abstract class AbstractRealTimeDataStorage implements DisposableBean {
     protected boolean serverAvailable;
 
     /**
-     * @return data storage是否可用
+     * @return data Whether the storage is available
      */
     public boolean isServerAvailable() {
         return serverAvailable;

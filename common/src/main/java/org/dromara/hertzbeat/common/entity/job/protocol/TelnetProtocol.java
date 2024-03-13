@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * telnet协议配置
+ * telnet Protocol configuration
  *
  */
 @Data
@@ -33,22 +33,22 @@ import lombok.NoArgsConstructor;
 public class TelnetProtocol {
 
     /**
-     * 对端主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
 
     /**
-     * 对端主机端口
+     * Peer host port
      */
     private String port;
 
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
 
     /**
-     * 发送的命令
+     * Sent command
      */
     private String cmd;
 
