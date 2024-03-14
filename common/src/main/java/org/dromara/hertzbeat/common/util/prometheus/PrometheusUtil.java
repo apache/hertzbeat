@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * prometheus metric sparser
  *
- * @author vinci
+ *
  */
 public class PrometheusUtil {
 

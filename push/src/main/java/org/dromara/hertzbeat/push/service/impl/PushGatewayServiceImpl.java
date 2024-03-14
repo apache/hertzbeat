@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * push gateway service impl
  *
- * @author vinci
+ *
  */
 
 @Slf4j

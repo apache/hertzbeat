@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 /**
  * prometheus label entity
  *
- * @author vinci
+ *
  */
 @Data
 @Builder

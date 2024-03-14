@@ -32,7 +32,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * push controller
  *
- * @author vinci
+ *
  */
 @Tag(name = "Metrics Push API | 监控数据推送API")
 @RestController

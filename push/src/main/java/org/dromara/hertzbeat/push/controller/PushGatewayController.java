@@ -17,7 +17,7 @@ import java.io.InputStream;
 /**
  * push gateway controller
  *
- * @author vinci
+ *
  */
 @Tag(name = "Metrics Push Gateway API | 监控数据推送网关API")
 @RestController
