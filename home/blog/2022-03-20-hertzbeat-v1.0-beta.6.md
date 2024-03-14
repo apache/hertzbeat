@@ -1,5 +1,5 @@
 ---
-title: HertzBeat赫兹节拍 v1.0.beta.6 发布，Linux监控来啦   
+title: HertzBeat Heartbeat v1.0.beta.6 Released, Linux Monitoring is Coming 
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
@@ -7,64 +7,68 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]  
 ---
 
-HertzBeat赫兹跳动是由Dromara孵化，TanCloud开源的一个支持网站，API，PING，端口，数据库，操作系统，全站等监控类型，支持阈值告警，告警通知(邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。
+HertzBeat Heartbeat, incubated by Dromara and open-sourced by TanCloud, is an open-source monitoring and alerting project that supports various monitoring types including websites, APIs, PING, ports, databases, operating systems, and full-site monitoring. It features threshold alarms and notification methods (email, webhook, DingTalk, WeChat Work, Feishu bots), and provides a user-friendly visual interface for easy operation.
 
-官网:hertzbeat.com | tancloud.cn
+Official websites: hertzbeat.com | tancloud.cn
 
-此升级版本包含了很多同学需要的Linux操作系统监控支持，支持其CPU，内存，磁盘，网络等指标，重要的是同步支持了SSH自定义，我们可以很方便的写脚本监控我们想要的Linux指标，也新增了对主流的数据库SqlServer监控支持等，更多功能欢迎使用。     
+This updated version includes much-requested support for Linux operating system monitoring, covering metrics such as CPU, memory, disk, network interfaces, and importantly, it also introduces SSH custom support. This makes it convenient to script and monitor the desired Linux metrics. Additionally, there's new support for mainstream database monitoring like Microsoft SQL Server, and more features are available for use.
 
-版本特性：
-1. feature 新增支持Linux操作系统监控类型(支持CPU内存磁盘网卡等监控指标) (#20)
-2. feature 新增支持microsoft sqlserver数据库监控类型 (#37)
-3. feature 添加docker-compose部署方案 (#27) 由 @jx10086 贡献 thanks
-4. feature 监控列表支持状态过滤和字段搜索功能 (#29)
-5. feature 新增mysql,postgresql等数据库查询超时时间设置 (#18) 由 @学习代码的小白 贡献
-6. [纳管]修改为[监控]表述,[探测]修改为[测试]表述
-7. feature add github build and translate action (#22)
-8. feature 新增贡献指南，本地代码启动文档
-9. docs 指定mysql和tdengine版本，避免环境问题
+Version Features:
 
-BUG修复
-1. fix 由于链接复用不佳造成创建过多链接监控异常 (#26)
-2. fix 页面全局监控搜索结果异常 (#28) issue by @Suremotoo
-3. 代码优化 #I4U9BT 由 @学习代码的小白 贡献
-4. fix 服务启动脚本偶现端口占用误判问题
-5. 时间本地时区格式化 (#35)
-6. fix 此版本引入问题jdbc解析异常 (#36)
-7. fix jdbc并发注册加载时由于spi机制加载死锁问题 (#40)
+Feature: Added support for Linux operating system monitoring type (supports monitoring metrics such as CPU, memory, disk, network cards) (#20)
+Feature: Added support for Microsoft SQL Server database monitoring type (#37)
+Feature: Added docker-compose deployment solution (#27) contributed by @jx10086, thanks
+Feature: Monitoring list now supports status filtering and field search functions (#29)
+Feature: Added timeout setting for database queries like MySQL, PostgreSQL, etc. (#18) contributed by @学习代码的小白
+Changed [纳管] to [监控] and [探测] to [测试] in the user interface
+Feature: Add GitHub build and translate action (#22)
+Feature: Added contribution guide, documentation for starting local code
+Docs: Specified MySQL and TDengine versions to avoid environmental issues
+Bug Fixes:
 
-欢迎在线试用 https://console.tancloud.cn.
+Fix: Issues with creating too many links due to poor link reuse leading to abnormal monitoring (#26)
+Fix: Global monitoring search result anomalies on the page (#28) issue by @Suremotoo
+Code optimization #I4U9BT contributed by @学习代码的小白
+Fix: Occasional misjudgment of port occupation by service startup scripts
+Timezone formatting to local timezone (#35)
+Fix: JDBC parsing exception introduced in this version (#36)
+Fix: Deadlock issue with concurrent JDBC registration loading due to SPI mechanism (#40)
+
+Welcome to try it online at https://console.tancloud.cn.
 
 -----------------------
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是由[Dromara](https://dromara.org)孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库，操作系统等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
-> 我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。     
-> HertzBeat 支持[自定义监控](https://hertzbeat.com/docs/advanced/extend-point) ,只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。   
-> HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。       
-> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，邮件钉钉微信飞书等及时通知送达          
-> 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。          
-> 我们正在快速迭代中，欢迎参与加入一起共建项目开源生态。
+> [HertzBeat](https://github.com/dromara/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project with a user-friendly visual interface that supports monitoring types such as websites, APIs, PING, ports, databases, operating systems, and more.
+> Of course, we also provide a corresponding [SAAS cloud monitoring version](https://console.tancloud.cn), so small and medium-sized teams and individuals no longer need to deploy a cumbersome monitoring system to monitor their website resources; you can [log in](https://console.tancloud.cn) to start monitoring for free.
 
-> `HertzBeat`的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
+> HertzBeat supports custom monitoring; by configuring the YML file, we can customize the required monitoring types and metrics to meet common personalized needs.
+> HertzBeat is modular, with manager, collector, scheduler, warehouse, alerter modules decoupled, making it easy to understand and customize for development.
+> HertzBeat supports more flexible alarm configurations (calculation expressions), supports alarm notifications, alarm templates, and timely delivery of notifications via email, DingTalk, WeChat, Feishu, etc.
+> Feel free to log in to HertzBeat's cloud environment, [TanCloud](https://console.tancloud.cn), to try it out and discover more.
+> We are rapidly iterating and welcome participation in joining and contributing to the open-source ecosystem.
 
-老铁们可以通过演示视频来直观了解功能： https://www.bilibili.com/video/BV1Vi4y1f7i8
+> The multi-type support, easy expansion, and low coupling of `HertzBeat` aim to help developers and small to medium-sized teams quickly build their own monitoring systems.
 
-##### 欢迎联系交流哦   
+You can get a clear understanding of the functionality through the demo video: [https://www.bilibili.com/video/BV1DY4y1i7ts](https://www.bilibili.com/video/BV1DY4y1i7ts)
 
-**微信交流群**   
 
-加微信号 tan-cloud 或 扫描下面账号二维码拉进微信群。   
+
+##### Welcome to contact us! 
+
+**WeChat Group**   
+
+Add WeChat `tan-cloud` or scan the QR code below to be added to the WeChat group. 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/tan-cloud-wechat.jpg" width="200"/>
 
-**QQ交流群**  
+**QQ Group**  
 
-加QQ群号 236915833 或 扫描下面的群二维码进群, 验证信息: tancloud
+Join QQ group `236915833` or scan the QR code below to join the
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>
 
-**仓库地址**      
+**Repository url**      
 
 [Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
 [Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat    
 
-看到这里不妨给个Star哦，灰常感谢，弯腰!!
+If you have read this far, why not give us a star? We would greatly appreciate it, thank you!
