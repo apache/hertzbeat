@@ -6,7 +6,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * prometheus metric sparser
+ *
+ * @author vinci
+ */
 public class PrometheusUtil {
 
     private static final int ERROR_FORMAT = -1; //解析过程中出现了未知格式数据，因为无法继续解析或已经到达输入流的末尾

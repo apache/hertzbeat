@@ -7,6 +7,11 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * prometheus metric line entity
+ *
+ * @author vinci
+ */
 @Data
 @Builder
 @NoArgsConstructor

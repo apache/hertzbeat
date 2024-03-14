@@ -5,6 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * prometheus label entity
+ *
+ * @author vinci
+ */
 @Data
 @Builder
 @NoArgsConstructor
