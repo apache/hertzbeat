@@ -31,12 +31,12 @@ public class PrometheusUtil {
             return COMMENT_LINE;
         }
 
-        while(i != -1) {
+        while (i != -1) {
             if (i == ' ' || i == '{') {
                 metricBuilder.metricName(stringBuilder.toString());
                 return i;
             }
-            stringBuilder.append((char)i);
+            stringBuilder.append((char) i);
             i = inputStream.read();
         }
 
@@ -50,7 +50,7 @@ public class PrometheusUtil {
         StringBuilder labelName = new StringBuilder();
         i = inputStream.read();
         while (i != -1 && i != '=') {
-            labelName.append((char)i);
+            labelName.append((char) i);
             i = inputStream.read();
         }
         if (i == -1) {
@@ -65,7 +65,7 @@ public class PrometheusUtil {
         StringBuilder labelValue = new StringBuilder();
         i = inputStream.read();
         while (i != -1 && i != ',' && i != '}') {
-            labelValue.append((char)i);
+            labelValue.append((char) i);
             i = inputStream.read();
         }
         if (i == -1 || labelValue.charAt(labelValue.length() - 1) != '\"') {
@@ -106,7 +106,7 @@ public class PrometheusUtil {
         StringBuilder stringBuilder = new StringBuilder();
         i = inputStream.read();
         while (i != -1 && i != ' ' && i != '\n') {
-            stringBuilder.append((char)i);
+            stringBuilder.append((char) i);
             i = inputStream.read();
         }
 
@@ -146,7 +146,7 @@ public class PrometheusUtil {
         StringBuilder stringBuilder = new StringBuilder();
         i = inputStream.read();
         while (i != -1 && i != '\n') {
-            stringBuilder.append((char)i);
+            stringBuilder.append((char) i);
             i = inputStream.read();
         }
 
@@ -214,7 +214,7 @@ public class PrometheusUtil {
         int i = parseMetric(inputStream, metricList);
         while (i == '\n' || i == COMMENT_LINE) {
             if (i == COMMENT_LINE) {
-                if(skipCommentLine(inputStream) == NORMAL_END) {
+                if (skipCommentLine(inputStream) == NORMAL_END) {
                     return metricList;
                 }
 
