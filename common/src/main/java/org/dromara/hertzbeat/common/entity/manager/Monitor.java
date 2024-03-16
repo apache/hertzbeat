@@ -17,6 +17,7 @@
 
 package org.dromara.hertzbeat.common.entity.manager;
 
+import org.dromara.hertzbeat.common.entity.grafana.Grafana;
 import org.dromara.hertzbeat.common.support.valid.HostValid;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -161,4 +162,11 @@ public class Monitor {
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
         inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
     private List<Tag> tags;
+
+    /**
+     * grafana dashboard
+     */
+    @Schema(title = "grafana dashboard")
+    @Transient
+    private Grafana grafana;
 }

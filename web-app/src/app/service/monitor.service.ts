@@ -13,6 +13,8 @@ const manage_monitors_uri = '/monitors/manage';
 const export_monitors_uri = '/monitors/export';
 const summary_uri = '/summary';
 const warehouse_storage_status_uri = '/warehouse/storage/status';
+const grafana_uri = '/grafana';
+const grafana_dashboard_uri = '/grafana/dashboard';
 
 @Injectable({
   providedIn: 'root'
@@ -192,5 +194,8 @@ export class MonitorService {
 
   public getWarehouseStorageServerStatus(): Observable<Message<any>> {
     return this.http.get<Message<any>>(warehouse_storage_status_uri);
+  }
+  public getGrafanaDashboardUrl(monitorId: number): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${grafana_dashboard_uri}/url?monitorId=${monitorId}`);
   }
 }

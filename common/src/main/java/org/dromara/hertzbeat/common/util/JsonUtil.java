@@ -29,6 +29,7 @@ import org.springframework.util.StringUtils;
 
 
 import javax.annotation.concurrent.ThreadSafe;
+import java.io.File;
 
 /**
  * json util
@@ -82,7 +83,32 @@ public class JsonUtil {
             return null;
         }
     }
-    
+
+    public static <T> T fromJson(File jsonFile, Class<T> clazz) {
+        if (!jsonFile.exists()) {
+            return null;
+        }
+        try {
+            return OBJECT_MAPPER.readValue(jsonFile, clazz);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
+    public static String fromJson(File jsonFile) {
+        if (!jsonFile.exists()) {
+            return null;
+        }
+        try {
+            Object object = OBJECT_MAPPER.readValue(jsonFile, Object.class);
+            return OBJECT_MAPPER.writeValueAsString(object);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            return null;
+        }
+    }
+
     public static JsonNode fromJson(String jsonStr) {
         if (!StringUtils.hasText(jsonStr)) {
             return null;

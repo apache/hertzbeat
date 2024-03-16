@@ -1,4 +1,5 @@
 import { Tag } from './Tag';
+import {Grafana} from "./Grafana";
 
 export class Monitor {
   id!: number;
@@ -14,4 +15,6 @@ export class Monitor {
   gmtCreate!: number;
   gmtUpdate!: number;
   tags!: Tag[];
+  grafana!: Grafana;
+
 }
