@@ -95,8 +95,7 @@ export class SystemConfigComponent implements OnInit {
     } else if (theme == 'compact') {
       style.id = 'compact-theme';
       style.href = 'assets/style.compact.css';
-    }
-    else {
+    } else {
       const dom = document.getElementById('dark-theme');
       if (dom) {
         dom.remove();
