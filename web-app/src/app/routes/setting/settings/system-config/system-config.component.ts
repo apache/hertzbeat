@@ -72,7 +72,6 @@ export class SystemConfigComponent implements OnInit {
             let language = this.config.locale.replace('_', '-');
             this.i18nSvc.loadLangData(language).subscribe(res => {
               this.i18nSvc.use(language, res);
-
               this.settings.setLayout('lang', language);
               setTimeout(() => this.doc.location.reload());
             });
