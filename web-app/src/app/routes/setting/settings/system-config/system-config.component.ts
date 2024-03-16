@@ -37,6 +37,7 @@ export class SystemConfigComponent implements OnInit {
         if (message.code === 0) {
           if (message.data) {
             this.config = message.data;
+            this.changeTheme(this.config.theme) // 刷新后更新主题
           } else {
             this.config = new SystemConfig();
           }
@@ -67,8 +68,6 @@ export class SystemConfigComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            // 保存系统配置成功后保存主题设置
-            this.changeTheme(this.config.theme);
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
             let language = this.config.locale.replace('_', '-');
             this.i18nSvc.loadLangData(language).subscribe(res => {
@@ -87,12 +86,10 @@ export class SystemConfigComponent implements OnInit {
       );
   }
   changeTheme(theme: string): void {
-    //const el = this.doc.querySelector<HTMLLinkElement>('#dark-theme');
     const style = this.doc.createElement('link');
     style.type = 'text/css';
     style.rel = 'stylesheet';
     if (theme == 'dark') {
-      //if (el) return;
       style.id = 'dark-theme';
       style.href = 'assets/style.dark.css';
     } else if (theme == 'compact') {
@@ -105,7 +102,6 @@ export class SystemConfigComponent implements OnInit {
         dom.remove();
       }
     }
-    // this.doc.head.appendChild(style);
     localStorage.setItem("theme", theme)
     this.doc.body.append(style);
   }
