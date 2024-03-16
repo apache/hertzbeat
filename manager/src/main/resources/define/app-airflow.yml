@@ -91,13 +91,25 @@ params:
 # 采集指标配置列表
 metrics:
   - name: airflow_health
+    i18n:
+      zh-CN: airflow健康状态
+      en-US: airflow health status
     priority: 0
     fields:
       - field: metadatabase
+        i18n:
+          zh-CN: metadatabase健康情况
+          en-US: metadatabase status
         type: 1
       - field: scheduler
+        i18n:
+          zh-CN: scheduler健康情况
+          en-US: scheduler status
         type: 1
       - field: triggerer
+        i18n:
+          zh-CN: triggerer健康情况
+          en-US: triggerer status
         type: 1
     aliasFields:
       - $.metadatabase.status
@@ -123,11 +135,20 @@ metrics:
       parseScript: '$'
 
   - name: airflow_version
+    i18n:
+      zh-CN: Airflow版本
+      en-US: airflow version
     priority: 1
     fields:
       - field: version
+        i18n:
+          zh-CN: Airflow版本
+          en-US: Airflow version
         type: 1
       - field: git_version
+        i18n:
+          zh-CN: Airflow git版本
+          en-US: git version
         type: 1
     protocol: http
     http:
