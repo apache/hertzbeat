@@ -12,6 +12,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NgxEchartsModule } from 'ngx-echarts';
 
+import { SafePipe } from '../SafePipe';
 import { MonitorDataChartComponent } from './monitor-data-chart/monitor-data-chart.component';
 import { MonitorDataTableComponent } from './monitor-data-table/monitor-data-table.component';
 import { MonitorDetailComponent } from './monitor-detail/monitor-detail.component';
@@ -19,7 +20,6 @@ import { MonitorEditComponent } from './monitor-edit/monitor-edit.component';
 import { MonitorListComponent } from './monitor-list/monitor-list.component';
 import { MonitorNewComponent } from './monitor-new/monitor-new.component';
 import { MonitorRoutingModule } from './monitor-routing.module';
-import {SafePipe} from "../SafePipe";
 
 const COMPONENTS: Array<Type<void>> = [
   MonitorNewComponent,

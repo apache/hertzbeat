@@ -4,10 +4,12 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzUploadFile } from 'ng-zorro-antd/upload';
 import { throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
+import { Grafana } from '../../../pojo/Grafana';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -17,8 +19,6 @@ import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { TagService } from '../../../service/tag.service';
-import {Grafana} from "../../../pojo/Grafana";
-import {NzUploadFile} from "ng-zorro-antd/upload";
 
 @Component({
   selector: 'app-monitor-modify',
