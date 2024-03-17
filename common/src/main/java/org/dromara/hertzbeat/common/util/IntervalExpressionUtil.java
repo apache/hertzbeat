@@ -43,9 +43,9 @@ public class IntervalExpressionUtil {
     private static final String POSITIVE = "+∞";
 
     /**
-     * 校验数值是否在区间范围
-     * @param numberValue 数值
-     * @param expression 区间表达式
+     * CHECK WHETHER THE VALUE IS IN AN INTERVAL RANGE
+     * @param numberValue NumericalValue
+     * @param expression INTERVAL EXPRESSION
      * @return true-是 false-否
      */
     public static boolean validNumberIntervalExpress(Double numberValue, String expression) {

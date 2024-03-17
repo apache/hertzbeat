@@ -19,7 +19,7 @@ package org.dromara.hertzbeat.manager.support.exception;
 
 /**
  * 描述：监控指标异常
- *
+ * Description: Abnormal monitoring indicators
  */
 public class MonitorMetricsException extends RuntimeException {
     public MonitorMetricsException(String message) {

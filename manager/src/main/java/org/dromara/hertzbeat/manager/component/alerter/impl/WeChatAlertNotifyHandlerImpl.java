@@ -30,7 +30,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 /**
- *
+ * Send alarm information through WeChat
  */
 final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     private static final Logger log = LoggerFactory.getLogger(WeChatAlertNotifyHandlerImpl.class);

@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 文件存储容器
- *
+ * file storage container
  *
  * Created by gcdd1993 on 2023/9/13
  */

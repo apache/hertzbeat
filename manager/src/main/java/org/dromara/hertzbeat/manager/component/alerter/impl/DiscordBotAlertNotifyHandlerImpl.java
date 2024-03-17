@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- *
+ * Send alarm information through Discord robot
  * Created by gcdd1993 on 2023/1/19
  */
 @Component

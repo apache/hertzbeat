@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * 系统配置
- *
+ * System Configuration
  *
  * @since 4/7/2023
  */

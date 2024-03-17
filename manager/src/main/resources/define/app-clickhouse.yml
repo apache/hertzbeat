@@ -141,6 +141,9 @@ metrics:
   # metrics - ping_available
   # 监控指标 - ping_available
   - name: ping_available
+    i18n:
+      zh-CN: ping的可用性
+      en-US: ping_available
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -154,6 +157,9 @@ metrics:
       - field: responseTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     # 采集协议, 目前支持sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -182,12 +188,21 @@ metrics:
 
   - name: system
     priority: 1
+    i18n:
+      zh-CN: system.metrics表的数据
+      en-US: Data in the system.metrics table
     fields:
       - field: metric
         type: 1
         label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: metric
       - field: value
         type: 0
+        i18n:
+          zh-CN: 指标值
+          en-US: value
 #      - field: description
 #        type: 1
     protocol: jdbc
@@ -204,12 +219,21 @@ metrics:
 
   - name: events
     priority: 2
+    i18n:
+      zh-CN: system.events表的数据
+      en-US: Data for the system.events table
     fields:
       - field: event
         type: 1
         label: true
+        i18n:
+          zh-CN: 事件信息
+          en-US: event
       - field: value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: value
 #      - field: description
 #        type: 1
     protocol: jdbc
@@ -226,12 +250,21 @@ metrics:
 
   - name: asynchronous
     priority: 3
+    i18n:
+      zh-CN: system.asynchronous_metrics表的数据
+      en-US: Data from the system.asynchronous_metrics table
     fields:
       - field: metric
         type: 1
         label: true
+        i18n:
+          zh-CN: 指标名称
+          en-US: metric
       - field: value
         type: 0
+        i18n:
+          zh-CN: 指标值
+          en-US: value
 #      - field: description
 #        type: 1
     protocol: jdbc

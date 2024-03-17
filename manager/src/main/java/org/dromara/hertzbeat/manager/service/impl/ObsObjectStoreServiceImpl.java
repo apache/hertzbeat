@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 /**
  * 华为云存储服务
- *
+ * Huawei cloud storage service
  *
  * Created by gcdd1993 on 2023/9/13
  */

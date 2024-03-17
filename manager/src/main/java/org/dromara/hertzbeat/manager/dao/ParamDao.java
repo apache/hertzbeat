@@ -25,7 +25,7 @@ import java.util.Set;
 
 /**
  * ParamDao 数据库操作
- *
+ * ParamDao database operations
  *
  *
  */

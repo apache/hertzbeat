@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 import java.util.Map;
 
 /**
- * snmp 协议配置
+ * snmp Protocol configuration
  *
  */
 @Data
@@ -34,11 +34,11 @@ import java.util.Map;
 @NoArgsConstructor
 public class SnmpProtocol {
     /**
-     * 对端主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
     /**
-     * 对端主机端口
+     * Peer host port
      */
     private String port;
     /**

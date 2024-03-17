@@ -28,7 +28,7 @@ import java.util.Collections;
 
 /**
  *
- *
+ * SecurityCorsConfiguration class
  */
 @Configuration
 public class SecurityCorsConfiguration {

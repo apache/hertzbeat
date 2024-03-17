@@ -34,61 +34,74 @@ import java.util.Random;
 public class SnowFlakeIdWorker {
 
     /**
+     * Start timestamp, in milliseconds; This is 2021-06-01
      * 开始时间戳，单位毫秒；这里是2021-06-01
      */
     private static final long TW_EPOCH = 1622476800000L;
 
     /**
+     * The number of bits occupied by the machine ID
      * 机器 ID 所占的位数
      */
     private static final long WORKER_ID_BITS = 4L;
 
     /**
+     * Maximum machine ID supported, 0-15
      * 支持的最大机器ID，0-15
      * <p>
+     * The source code of PS.Twitter is -1L ^ (-1L << workerIdBits); Here the final xor operation with -1,
+     * because of the particularity of -1's binary complement, it is equivalent to taking the inverse.
      * PS. Twitter的源码是 -1L ^ (-1L << workerIdBits)；这里最后和-1进行异或运算，由于-1的二进制补码的特殊性，就相当于进行取反。
      */
     private static final long MAX_WORKER_ID = ~(-1L << WORKER_ID_BITS);
 
     /**
+     * The number of bits the sequence occupies in the ID
      * 序列在 ID 中占的位数
      */
     private static final long SEQUENCE_BITS = 8L;
 
     /**
+     * Number of machine ID shifts left
      * 机器 ID 向左移位数
      */
     private static final long WORKER_ID_SHIFT = SEQUENCE_BITS;
 
     /**
+     * Time truncated left shift number
      * 时间截向左移位数
      */
     private static final long TIMESTAMP_LEFT_SHIFT = SEQUENCE_BITS + WORKER_ID_BITS;
 
     /**
+     * The maximum mask of the generated sequence, 256
      * 生成序列的掩码最大值，256
      */
     private static final long SEQUENCE_MASK = ~(-1L << SEQUENCE_BITS);
 
     /**
+     * Working machine ID(0~15)
      * 工作机器 ID(0~15)
      */
     private final long workerId;
 
     /**
+     * Millisecond sequence (0~256)
      * 毫秒内序列(0~256)
      */
     private long sequence = 0L;
 
     /**
+     * Timestamp of the last ID generated
      * 上次生成 ID 的时间戳
      */
     private long lastTimestamp = -1L;
 
     /**
+     * How to create an ID generator: Use the serial number range of the working machine [0, 15]
      * 创建 ID 生成器的方式: 使用工作机器的序号 范围是 [0, 15]
      *
-     * @param workerId 工作机器 ID
+     * @param workerId Working machine ID
      */
     public SnowFlakeIdWorker(long workerId) {
         if (workerId < 0 || workerId > MAX_WORKER_ID) {
@@ -100,6 +113,7 @@ public class SnowFlakeIdWorker {
     }
 
     /**
+     * How to create an ID generator: Create the generator using the local IP as the machine ID
      * 创建 ID 生成器的方式: 使用本地IP作为机器ID创建生成器
      */
     public SnowFlakeIdWorker() {

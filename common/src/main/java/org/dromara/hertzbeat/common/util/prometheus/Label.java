@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.collector.collect.httpsd.discovery;
+package org.dromara.hertzbeat.common.util.prometheus;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,13 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Server Info
+ * prometheus label entity
+ *
+ *
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ServerInfo {
-    private String address;
-    private String port;
+public class Label {
+    private String name;
+    private String value;
 }
