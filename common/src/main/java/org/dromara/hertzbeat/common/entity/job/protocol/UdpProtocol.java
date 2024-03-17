@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 使用socket实现的udp进行服务端口可用性探测
+ * Use udp implemented by socket for service port availability detection
  *
  */
 @Data
@@ -32,22 +32,22 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UdpProtocol {
     /**
-     * 对端主机ip或域名
+     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */
     private String host;
     
     /**
-     * 端口号
+     * Port number
      */
     private String port;
 
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
     
     /**
-     * 自定义协议数据包 hexString 16进制字符串
+     * Custom protocol packet hexString Hexadecimal character string
      */
     private String content;
 }

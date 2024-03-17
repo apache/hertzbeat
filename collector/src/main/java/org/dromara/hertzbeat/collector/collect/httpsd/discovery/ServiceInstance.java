@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- *
+ * Service Instance
  */
 @Data
 @Builder

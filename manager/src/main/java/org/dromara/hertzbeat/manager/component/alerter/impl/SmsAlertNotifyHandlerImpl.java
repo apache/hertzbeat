@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 import java.util.ResourceBundle;
 
 /**
- *
+ * Send alarm information through Sms
  */
 @Component
 @RequiredArgsConstructor

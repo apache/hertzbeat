@@ -32,32 +32,32 @@ import org.apache.commons.lang3.StringUtils;
 @NoArgsConstructor
 public class Pop3Protocol {
     /**
-     * 接收服务器地址
+     * Receiving server address
      */
     private String host;
 
     /**
-     * 接收服务器端口
+     * Receiving server port
      */
     private String port;
 
     /**
-     * 超时时间
+     * TIME OUT PERIOD
      */
     private String timeout;
 
     /**
-     * 是否开启SSL加密【邮箱传输】
+     * Whether to enable SSL encryption [Email Transmission]
      */
     private String ssl = "false";
 
     /**
-     * pop邮箱地址
+     * pop Email address
      */
     private String email;
 
     /**
-     * 授权码
+     * Authorization code
      */
     private String authorize;
 

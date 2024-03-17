@@ -1,5 +1,5 @@
 ---
-title: HertzBeat赫兹节拍 v1.0.beta.4 发布，易用友好的监控告警系统   
+title: HertzBeat Hertz Beat v1.0.beta.4 Released, User-Friendly Monitoring and Alert System   
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
@@ -7,79 +7,82 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]  
 ---
 
-HertzBeat赫兹跳动是由Dromara孵化，TanCloud开源的一个支持网站，API，PING，端口，数据库，全站等监控类型，支持阈值告警，告警通知(邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。
+HertzBeat is an open-source monitoring and alert project incubated by Dromara and released by TanCloud. It supports various monitoring types such as websites, APIs, PING, ports, databases, and full-site. It features threshold alarms and notification alerts (email, webhook, DingTalk, WeCom, Feishu/Lark robots), and has a user-friendly and easy-to-use visual interface.
 
-官网:hertzbeat.com | tancloud.cn
+Official Website: hertzbeat.com | tancloud.cn
 
-此升级版本包含了大量特性与修复，包括用户急需的账户用户配置，丰富了主流第三方告警通知(企业微信机器人，钉钉机器人，飞书机器人)，更好看的邮件模版，自定义邮件服务器等，欢迎使用。
+This upgrade version includes a large number of features and fixes, such as urgently needed account user configurations, enriched mainstream third-party notification alerts (WeCom robots, DingTalk robots, Feishu/Lark robots), better-looking email templates, and custom mail servers. Welcome to use.
 
-版本特性：
+Version Features:
 
-1. 告警通知：集成飞书官方WebHook实现推送告警信息 #PR9 由 @learning-code 贡献 thanks
-2. 告警通知：实现企业微信WebHook告警信息推送 #PR8 由 @learning-code 贡献 thanks
-3. 告警通知：告警邮件通知模版优化 由 @learning-code 贡献 thanks
-4. 告警通知：集成钉钉群机器人实现推送告警信息
-5. 账户：暴露支持YML文件配置登陆用户账户信息
-6. 支持自定义邮件服务器
-7. 新增帮助中心，监控告警等功能使用过程中的帮助文档. https://tancloud.cn/docs/help/guide
-8. DOC其它文档更新，本地启动帮助
-9. 新LOGO更新
-10. 监控采集间隔时间放开为7天
-11. 新增controller接口入参限定修饰符 由 @learning-code 贡献 thanks
+1. Alert Notifications: Integrated Feishu official WebHook to push alert information #PR9 contributed by @learning-code thanks
+2. Alert Notifications: Implemented WeCom WebHook for alert information push #PR8 contributed by @learning-code thanks
+3. Alert Notifications: Optimized alert email notification templates contributed by @learning-code thanks
+4. Alert Notifications: Integrated DingTalk group robot to push alert information
+5. Accounts: Exposed support for YML file configuration of login user account information
+6. Support for custom mail servers
+7. Added Help Center, help documentation for monitoring alerts and other functions during use. [https://tancloud.cn/docs/help/guide](https://tancloud.cn/docs/help/guide)
+8. DOC other document updates, local startup help
+9. New LOGO update
+10. Monitoring collection interval time extended to 7 days
+11. Added controller interface input parameter limiting modifier contributed by @learning-code thanks
 
-BUG修复
-1. 监控host参数修复校验.
-2. fixBug自定义邮件服务器未生效
-3. 邮件页面优化，fix告警级别未转译
-4. fix监控删除后告警定义关联未删除
-5. 调整jvm启动内存大小,fixOOM
-6. fixbug重启后状态异常监控无法触发恢复告警
+BUG Fixes
+1. Fixed the validation of the monitoring host parameter.
+2. fixBug with custom mail server not taking effect
+3. Email page optimization, fix alert level not translated
+4. fix after deleting monitoring, the associated alert definition was not deleted
+5. Adjusted JVM startup memory size, fix OOM
+6. fixbug after restart, the state of abnormal monitoring could not trigger recovery alerts
 7. fix pmd error
-8. bugfix告警设置确定后异常,按钮还在旋转
-9. fix多余租户ID依赖
-10. fix receiver的email类型错误，调整弹出框大小
-11. fixbug告警定义关联监控不存在时异常
+8. bugfix after setting alert, the button was still spinning
+9. fix redundant tenant ID dependency
+10. fix email type error in receiver, adjusted pop-up box size
+11. fixbug when alert definition association monitoring does not exist, an exception occurs
 
-欢迎在线试用 https://console.tancloud.cn
+Welcome to try it online at https://console.tancloud.cn
 
-版本升级注意⚠️
+Upgrade Notice ⚠️
 
-1.0-beta2升级上来，MYSQL的数据库需执行。   
+For upgrades from 1.0-beta2, the MYSQL database needs to execute:
 ALTER TABLE alert_define_monitor_bind DROP monitor_name;
 
-1.0-beta2,1.0-beta3升级上来，MYSQL的数据库需执行。   
+For upgrades from 1.0-beta2 and 1.0-beta3, the MYSQL database needs to execute:
 ALTER TABLE notice_receiver ADD access_token varchar(255);
 
 -----------------------
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是由[Dromara](https://dromara.org)孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
-> 我们也提供了对应的 **[SAAS版本监控云](https://console.tancloud.cn)**，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。     
-> HertzBeat 支持[自定义监控](https://hertzbeat.com/docs/advanced/extend-point) ,只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。   
-> HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。       
-> HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，邮件钉钉微信飞书等及时通知送达          
-> 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。          
-> 我们正在快速迭代中，欢迎参与加入一起共建项目开源生态。
+> [HertzBeat](https://github.com/dromara/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project with a user-friendly visual interface that supports monitoring types such as websites, APIs, PING, ports, databases, operating systems, and more.
+> Of course, we also provide a corresponding [SAAS cloud monitoring version](https://console.tancloud.cn), so small and medium-sized teams and individuals no longer need to deploy a cumbersome monitoring system to monitor their website resources; you can [log in](https://console.tancloud.cn) to start monitoring for free.
 
-> `HertzBeat`的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
+> HertzBeat supports custom monitoring; by configuring the YML file, we can customize the required monitoring types and metrics to meet common personalized needs.
+> HertzBeat is modular, with manager, collector, scheduler, warehouse, alerter modules decoupled, making it easy to understand and customize for development.
+> HertzBeat supports more flexible alarm configurations (calculation expressions), supports alarm notifications, alarm templates, and timely delivery of notifications via email, DingTalk, WeChat, Feishu, etc.
+> Feel free to log in to HertzBeat's cloud environment, [TanCloud](https://console.tancloud.cn), to try it out and discover more.
+> We are rapidly iterating and welcome participation in joining and contributing to the open-source ecosystem.
 
-老铁们可以通过演示视频来直观了解功能： https://www.bilibili.com/video/BV1Vi4y1f7i8
+> The multi-type support, easy expansion, and low coupling of `HertzBeat` aim to help developers and small to medium-sized teams quickly build their own monitoring systems.
 
-##### 欢迎联系交流哦   
+You can get a clear understanding of the functionality through the demo video: [https://www.bilibili.com/video/BV1DY4y1i7ts](https://www.bilibili.com/video/BV1DY4y1i7ts)
 
-**微信交流群**   
 
-加微信号 tan-cloud 或 扫描下面账号二维码拉进微信群。   
+
+##### Welcome to contact us!
+
+**WeChat Group**
+
+Add WeChat `tan-cloud` or scan the QR code below to be added to the WeChat group.
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/tan-cloud-wechat.jpg" width="200"/>
 
-**QQ交流群**  
+**QQ Group**
 
-加QQ群号 236915833 或 扫描下面的群二维码进群, 验证信息: tancloud
+Join QQ group `236915833` or scan the QR code below to join the
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>
 
-**仓库地址**      
+**Repository url**
 
 [Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
-[Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat    
+[Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat
 
-看到这里不妨给个Star哦，灰常感谢，弯腰!!
+If you have read this far, why not give us a star? We would greatly appreciate it, thank you!

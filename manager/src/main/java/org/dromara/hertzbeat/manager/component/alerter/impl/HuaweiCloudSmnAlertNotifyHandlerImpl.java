@@ -36,7 +36,7 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- *
+ * Send alarm information through Huawei CloudSmn
  */
 @Component
 @RequiredArgsConstructor

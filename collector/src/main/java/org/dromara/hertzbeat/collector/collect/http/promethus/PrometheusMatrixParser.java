@@ -33,7 +33,7 @@ import java.util.List;
 /**
  *
  *
- * 处理prometheus返回类型为“matrix”的响应格式
+ * Processing prometheus returns a response format of type "matrix"
  */
 @NoArgsConstructor
 public class PrometheusMatrixParser extends AbstractPrometheusParse {

@@ -38,7 +38,7 @@ import java.lang.reflect.Type;
 
 /**
  * 文件存储配置服务
- *
+ * File storage configuration service
  *
  * Created by gcdd1993 on 2023/9/13
  */

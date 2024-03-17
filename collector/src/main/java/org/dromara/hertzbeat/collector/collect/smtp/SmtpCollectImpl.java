@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- *
+ *  smtp collect
  */
 @Slf4j
 public class SmtpCollectImpl extends AbstractCollect {

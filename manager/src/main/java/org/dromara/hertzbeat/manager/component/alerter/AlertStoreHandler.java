@@ -21,7 +21,7 @@ import org.dromara.hertzbeat.common.entity.alerter.Alert;
 
 /**
  * 报警持久化
- *
+ * Alarm persistence
  *
  */
 public interface AlertStoreHandler {
@@ -29,7 +29,9 @@ public interface AlertStoreHandler {
     /**
      * 持久化报警记录
      * 需在持久化的同时对alert的标签信息tags关联赋值
-     *
+     * Persistent alarm records
+     * It is necessary to associate and assign values
+     * to the alert tag information tags while persisting.
      * @param alert 报警
      */
     void store(Alert alert);

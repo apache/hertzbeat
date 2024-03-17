@@ -19,7 +19,7 @@ package org.dromara.hertzbeat.manager.support.exception;
 
 /**
  * 探测失败异常
- *
+ * Detection failure exception
  *
  */
 public class MonitorDetectException extends RuntimeException {

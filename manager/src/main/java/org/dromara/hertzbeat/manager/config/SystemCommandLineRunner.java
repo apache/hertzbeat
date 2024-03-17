@@ -31,7 +31,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- *
+ * SystemCommandLineRunner class
  * @since 4/7/2023
  */
 @Component

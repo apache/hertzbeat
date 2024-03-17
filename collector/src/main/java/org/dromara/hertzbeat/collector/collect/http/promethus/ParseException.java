@@ -18,7 +18,7 @@
 package org.dromara.hertzbeat.collector.collect.http.promethus;
 
 /**
- *
+ * Parse Exception
  *
  */
 public class ParseException extends RuntimeException {

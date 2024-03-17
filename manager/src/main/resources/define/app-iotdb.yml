@@ -80,6 +80,9 @@ metrics:
   # metrics - cluster_node_status
   # 监控指标 - cluster_node_status
   - name: cluster_node_status
+    i18n:
+      zh-CN: 集群节点状态
+      en-US: Cluster Node Status
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
@@ -91,9 +94,15 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: name
         type: 1
         label: true
       - field: status
+        i18n:
+          zh-CN: 状态
+          en-US: status
         type: 0
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
@@ -124,14 +133,26 @@ metrics:
       parseType: prometheus
 
   - name: jvm_memory_committed_bytes
+    i18n:
+      zh-CN: JVM内存已提交
+      en-US: JVM memory committed bytes
     priority: 1
     fields:
       - field: area
+        i18n:
+          zh-CN: 区域
+          en-US: Area
         type: 1
       - field: id
+        i18n:
+          zh-CN: 内存块Id
+          en-US: Memory Block Id
         type: 1
         label: true
       - field: value
+        i18n:
+          zh-CN: JVM请求内存大小(当前)
+          en-US: JVM requests memory size (current)
         type: 0
         unit: MB
     units:
@@ -146,14 +167,26 @@ metrics:
       parseType: prometheus
 
   - name: jvm_memory_used_bytes
+    i18n:
+      zh-CN: JVM内存已使用
+      en-US: JVM memory used bytes
     priority: 1
     fields:
       - field: area
+        i18n:
+          zh-CN: 区域
+          en-US: Area
         type: 1
       - field: id
+        i18n:
+          zh-CN: 内存块Id
+          en-US: Memory Block Id
         type: 1
         label: true
       - field: value
+        i18n:
+          zh-CN: JVM已使用内存大小
+          en-US: JVM used memory size
         type: 0
         unit: MB
     units:
@@ -168,12 +201,21 @@ metrics:
       parseType: prometheus
 
   - name: jvm_threads_states_threads
+    i18n:
+      zh-CN: JVM线程状态
+      en-US: JVM thread state
     priority: 1
     fields:
       - field: state
+        i18n:
+          zh-CN: 线程状态
+          en-US: thread state
         type: 1
         label: true
       - field: count
+        i18n:
+          zh-CN: 线程数量
+          en-US: thread count
         type: 0
     aliasFields:
       - state
@@ -190,16 +232,31 @@ metrics:
       parseType: prometheus
 
   - name: quantity
+    i18n:
+      zh-CN: 数量
+      en-US: Quantity
     priority: 1
     fields:
       - field: id
+        i18n:
+          zh-CN: Id
+          en-US: Id
         type: 1
         label: true
       - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: Name
         type: 1
       - field: type
+        i18n:
+          zh-CN: 类型
+          en-US: Type
         type: 1
       - field: value
+        i18n:
+          zh-CN: 值
+          en-US: Value
         type: 0
     aliasFields:
       - name
@@ -217,12 +274,21 @@ metrics:
       parseType: prometheus
 
   - name: cache_hit
+    i18n:
+      zh-CN: 缓存命中率
+      en-US: Cache hit rate
     priority: 1
     fields:
       - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: Name
         type: 1
         label: true
       - field: value
+        i18n:
+          zh-CN: 命中率
+          en-US: Hit rate
         type: 0
     protocol: http
     http:
@@ -234,16 +300,31 @@ metrics:
       parseType: prometheus
 
   - name: queue
+    i18n:
+      zh-CN: 队列
+      en-US: Queue
     priority: 1
     fields:
       - field: id
+        i18n:
+          zh-CN: ID
+          en-US: ID
         type: 1
         label: true
       - field: name
+        i18n:
+          zh-CN: 队列名称
+          en-US: Queue name
         type: 1
       - field: status
+        i18n:
+          zh-CN: 状态
+          en-US: Status
         type: 1
       - field: value
+        i18n:
+          zh-CN: 当前队列任务数量
+          en-US: Number of tasks in queue
         type: 0
     aliasFields:
       - name
@@ -261,12 +342,21 @@ metrics:
       parseType: prometheus
 
   - name: thrift_connections
+    i18n:
+      zh-CN: Thrift连接数
+      en-US: Thrift connection number
     priority: 1
     fields:
       - field: name
+        i18n:
+          zh-CN: 连接名称
+          en-US: Connection name
         type: 1
         label: true
       - field: connection
+        i18n:
+          zh-CN: 连接数
+          en-US: Connection number
         type: 0
     aliasFields:
       - name

@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- *
+ *  memcached collect
  */
 @Slf4j
 public class MemcachedCollectImpl extends AbstractCollect {
