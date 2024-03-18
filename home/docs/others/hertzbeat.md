@@ -41,7 +41,7 @@ sidebar_label: HertzBeat 实时监控
 - 使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
 - 无监控数量`License`，监控类型等伪开源限制。
 - 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
-- 但开源不等同于免费，如果基于HertzBeat二次开发修改了logo，名称，版权等，[请找我们授权，否则会有法律风险](https://hertzbeat.com/docs/others/private)。
+- 但开源不等同于免费，基于HertzBeat二次开发需保留logo，名称，版权等。
 
 ### 强大的监控模版  
 

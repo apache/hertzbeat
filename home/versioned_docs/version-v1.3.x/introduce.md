@@ -39,9 +39,9 @@ slug: /
 ----   
 
 
-[![hertzbeat](/img/home/1.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/)
+![hertzbeat](/img/home/1.png)
 
-[![hertzbeat](/img/home/9.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/)
+![hertzbeat](/img/home/9.png)
 
 ----   
 
