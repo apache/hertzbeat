@@ -1,5 +1,5 @@
 ---
-title: 裸辞后我做了个开源监控告警系统   
+title: Open source monitoring and alarm project Hertz Beat is released and enters Dromara incubation   
 author: tom  
 author_title: tom   
 author_url: https://github.com/tomsun28  
@@ -7,64 +7,79 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]  
 ---
 
-# 裸辞后我做了个开源监控告警系统  
+# Open source monitoring and alarm project Hertz Beat is released and enters Dromara incubation  
 
-**官网: [hertzbeat.com](https://hertzBeat.com) | [tancloud.cn](https://tancloud.cn)**   
-**仓库: [https://github.com/dromara/hertzbeat](https://github.com/dromara/hertzbeat) | [https://gitee.com/dromara/hertzbeat](https://gitee.com/dromara/hertzbeat)**  
+**Official Website: [hertzbeat.com](https://hertzBeat.com) | [tancloud.cn](https://tancloud.cn)**   
+**Warehouse: [https://github.com/dromara/hertzbeat](https://github.com/dromara/hertzbeat) | [https://gitee.com/dromara/hertzbeat](https://gitee.com/dromara/hertzbeat)**  
 
-大家好，这里自荐一个我全职开发的监控告警项目-HertzBeat赫兹跳动，欢迎大家了解试用。  
-
-毕业后也投入很多业余时间也做了一些开源项目 [Sureness](https://github.com/dromara/sureness) , [Bootshiro](https://gitee.com/tomsun28/bootshiro) , [Issues-translate-action](https://github.com/usthe/issues-translate-action) ,
-当时上班有空就回答网友问题，下班回家写开源代码，远程帮人看问题(大年30也看过😂)，还总感觉时间不够用，当时想如果不去上班能做自己热爱的该多好，开源或者技术上能帮助别人感觉是作为程序员的一种成就感吧。        
-既然想做开源为啥不能全职去做呢，想着年轻就要折腾，何况还是自己很想做的。于是乎21年底放弃激励裸辞开始全职开源了，也是第一次全职创业(虽然大概率失败，但搏一搏，单车变摩托🤓)       
-自己在APM领域做了多年，当然这次创业加开源的方向也就是老本行监控系统，我们开发一个支持多种监控指标(更多监控类型指标正在适配中)，拥有自定义监控，支持阈值告警通知等功能，面向开发者友好的开源监控项目-HertzBeat赫兹跳动。   
-为了感谢老婆大人的全力支持，hertzbeat服务端口默认为**1157**(遥遥无期)-老婆叫尧尧，我个人希望未来的宝宝叫午期(没有话语权可能性不大😂)    
-想到很多开发者和团队拥有云上资源，可能只需要使用监控服务而并不想部署繁杂的监控系统(往往有时候那套监控系统比我们自身服务消耗的服务器资源还多😅)，我们也提供了可以直接登录使用的SAAS云监控版本-[TanCloud探云](https://console.tancloud.cn)。   
-希望老铁们多多支持了解试用点赞，非常感谢。     
+  Hello everyone, I would like to recommend a monitoring and alarm project that I developed full-time - HertzBeat. Everyone is welcome to learn about it and try it out.
 
 
-### 介绍下HertzBeat      
+After graduation, I also invested a lot of my spare time and worked on some open source projects [Sureness](https://github.com/dromara/sureness) , [Bootshiro](https://gitee.com/tomsun28/bootshiro) , [Issues-translate-action](https://github.com/usthe/issues-translate-action) ,
+At that time, I answered netizens’ questions when I had free time at get off work, wrote open source code when I got home from work, and helped people solve problems remotely (I also watched this on New Year’s Eve 😂). I always felt that I didn’t have enough time. At that time, I thought that if I didn’t go to work, I could do what I loved. How great. Being able to help others with open source or technology feels like a sense of accomplishment as a programmer.
 
-> HertzBeat赫兹跳动 是一个支持网站，API，PING，端口，全站，数据库等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。
+If you want to do open source, why can't you do it full-time? You have to worry about it when you are young, not to mention it is what you really want to do. So at the end of 21, I gave up incentives and started open source full-time. It was also the first time to start a full-time business (although there is a high probability of failure, but give it a try and the bicycle will become a motorcycle🤓)
 
-目前还在开发初期，后面会支持更多的监控类型。数据库，操作系统，云原生，中间件，应用服务等等通用的软件监控都计划安排上。     
-在监控领域，监控需求指标啊这些往往千奇百怪，作为一个面向开发者的开源软件，[自定义监控](https://hertzbeat.com/docs/advanced/extend-point) 肯定是要安排上的，大家可以只通过配置YML文件就可以自定义需要的监控类型和指标，来满足常见的个性化需求。   
-HertzBeat 也是模块化的，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解上手和定制开发。         
-我们也提供了更自由化的告警阈值配置，阈值触发表达式，三种告警级别，触发次数配置，支持告警通知模版，邮件webhook等方式告警通知，实时感知业务状态。              
-更多功能欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) https://console.tancloud.cn 试用发现。    
-项目正在快速迭代中，欢迎参与加入进来我们一起共建项目开源生态。           
+I have been working in the APM field for many years. Of course, the direction of starting this business and adding open source is the monitoring system of my old bank. We have developed a system that supports multiple monitoring indicators (more monitoring type indicators are being adapted), with customized monitoring and support Threshold alarm notification and other functions, a developer-friendly open source monitoring project - HertzBeat.
 
-**关于HertzBeat的云SAAS环境TanCloud - https://console.tancloud.cn**        
+In order to thank my wife for her full support, the hertzbeat service port defaults to **1157** (unexpectedly) - my wife’s name is Yaoyao, and I personally hope that the future baby will be named Wu Qie (it’s unlikely without the right to speak😂)
 
-我们很多开发者都会有自己的服务器，博客网站，数据库，云服务等云上资源。对于我们开发者或者中小团队，如何去花最小的精力去监控我们的云上资源，它们挂了或者异常能及时通知给我们进行处理，我感觉是值得探究的。  
-如果是去自己部署一套监控系统在服务器上自己用，抛开学习成本和时间成本，往往有时候，那套监控系统比我们的自身网站消耗的服务器资源还大，这让原本紧张的服务器资源就更紧张了。  
-
-对此，我们提供了一个SAAS云监控服务，我们开发者或者中小团队个人无需再为了监控自己的网站等云上资源，而去部署一套繁琐的监控系统。   
-[登录即可免费开始使用](https://console.tancloud.cn) https://console.tancloud.cn。目前云环境功能还在快速迭代中，租户，权限等功能都会安排上，欢迎试用提需求提意见。   
+Thinking that many developers and teams have cloud resources, they may only need to use monitoring services and do not want to deploy complex monitoring systems (often sometimes the monitoring system consumes more server resources than our own services😅), we also provide You can directly log in to the SAAS cloud monitoring version-[TanCloud](https://console.tancloud.cn).   
+I hope you guys will support me a lot and like the trial. Thank you very much.
+     
 
 
+### Introducing HertzBeat
 
-老铁们可以通过演示视频来直观了解功能： https://www.bilibili.com/video/BV1Vi4y1f7i8            
+> HertzBeat is an open source monitoring and alarm project that supports website, API, PING, port, full site, database and other monitoring types, and has an easy-to-use and friendly visual operation interface.
+
+
+It is still in the early stages of development and will support more monitoring types later. General software monitoring such as databases, operating systems, cloud native, middleware, application services, etc. are all planned and arranged.
+
+In the field of monitoring, monitoring demand indicators are often strange. As an open source software for developers,[Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point) must be arranged. You can customize the monitoring types and indicators you need just by configuring the YML file to meet common personalized needs.   
+HertzBeat is also modular. Each module of `manager, collector, scheduler, warehouse, alerter` is decoupled, making it easy to understand, get started and customize development.
+
+We also provide more liberal alarm threshold configurations, threshold trigger expressions, three alarm levels, and trigger number configurations. We support alarm notification templates, email webhooks and other methods of alarm notification to sense business status in real time.
+For more functions, please log in to HertzBeat’s [Cloud Environment TanCloud](https://console.tancloud.cn) https://console.tancloud.cn for trial discovery.
+
+The project is being rapidly iterated, and you are welcome to join us to build an open source ecosystem for the project.
+
+**About HertzBeat’s cloud SAAS environment TanCloud - https://console.tancloud.cn**        
+
+Many of our developers will have their own servers, blog sites, databases, cloud services and other cloud resources. For us developers or small and medium-sized teams, I think it is worth exploring how to spend the minimum effort to monitor our cloud resources. If they are down or abnormal, we can be notified in time for processing.
+
+If we deploy a monitoring system ourselves and use it on the server, regardless of the learning cost and time cost, sometimes the monitoring system consumes more server resources than our own website, which makes the originally tight server resources Even more nervous.
+
+In this regard, we provide a SAAS cloud monitoring service. Our developers or small and medium-sized teams no longer need to deploy a cumbersome monitoring system in order to monitor their own websites and other cloud resources.
+
+[Sign in to get started for free](https://console.tancloud.cn) https://console.tancloud.cn. At present, the cloud environment functions are still being rapidly iterated, and tenants, permissions and other functions will be arranged. Welcome to try it out and provide comments.
 
 
 
-##### 欢迎联系交流哦   
 
-**微信交流群**   
+Veterans can intuitively understand the functions through the demonstration video: https://www.bilibili.com/video/BV1Vi4y1f7i8            
 
-加微信号 tan-cloud 或 扫描下面账号二维码拉进微信群。   
+
+
+##### Welcome to contact us
+
+
+**WeChat Communication Group**   
+
+Add WeChat ID tan-cloud or scan the account QR code below to join the WeChat group.
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/tan-cloud-wechat.jpg" width="200"/>
 
-**QQ交流群**  
+**QQ Communication Group**  
 
-加QQ群号 236915833 或 扫描下面的群二维码进群, 验证信息: tancloud
+Add QQ group number 236915833 or scan the group QR code below to join the group, verification information: tancloud
 
 <img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/help/qq-qr.jpg" width="200"/>
 
-**仓库地址**      
+**Warehouse Address**      
 
 [Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
 [Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat    
 
-欢迎老铁们了解使用反馈意见，看到这里不妨给个Star哦，灰常感谢，弯腰！!                 
-如果有老哥老妹觉得不错可以投入，欢迎加入进来我们一起搞哦，现在急需懂前端，后台，运维的老哥老妹你了。   
+Veterans are welcome to provide feedback on usage. If you see this, you might as well give it a star. Thank you very much, bend down! !
+
+If there are brothers and sisters who think it is good and can invest, you are welcome to join us and let's do it together. Now we are in urgent need of brothers and sisters who understand the front-end, back-end, and operation and maintenance.
