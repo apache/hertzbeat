@@ -64,26 +64,56 @@ params:
     type: text
 metrics:
   - name: cluster
+    i18n:
+      zh-CN: 集群
+      en-US: cluster
     priority: 0
     fields:
       - field: BrokerId
+        i18n:
+          zh-CN: BrokerId
+          en-US: BrokerId
         type: 1
       - field: Address
+        i18n:
+          zh-CN: 地址
+          en-US: Address
         type: 1
         label: true
       - field: Version
+        i18n:
+          zh-CN: 版本
+          en-US: Version
         type: 1
       - field: Producer_Message_TPS
+        i18n:
+          zh-CN: 生产消息TPS
+          en-US: Producer_Message_TPS
         type: 0
       - field: Consumer_Message_TPS
+        i18n:
+          zh-CN: 消费消息TPS
+          en-US: Consumer_Message_TPS
         type: 0
       - field: Yesterday_Produce_Count
+        i18n:
+          zh-CN: 昨天生产消息数
+          en-US: Yesterday_Produce_Count
         type: 0
       - field: Yesterday_Consume_Count
+        i18n:
+          zh-CN: 昨天消费消息数
+          en-US: Yesterday_Consume_Count
         type: 0
       - field: Today_Produce_Count
+        i18n:
+          zh-CN: 今天生产消息数
+          en-US: Today_Produce_Count
         type: 0
       - field: Today_Consume_Count
+        i18n:
+          zh-CN: 今天消费消息数
+          en-US: Today_Consume_Count
         type: 0
     aliasFields:
       - brokerId
@@ -115,20 +145,41 @@ metrics:
       secretKey: ^_^secretKey^_^
       parseScript: $.clusterBrokerDataList.*
   - name: consumer
+    i18n:
+      zh-CN: 消费者
+      en-US: Consumer
     priority: 1
     fields:
       - field: Consumer_group
+        i18n:
+          zh-CN: 消费者组
+          en-US: Consumer_group
         type: 1
         label: true
       - field: Client_quantity
+        i18n:
+          zh-CN: 客户端数量
+          en-US: Client_quantity
         type: 0
       - field: Message_model
+        i18n:
+          zh-CN: 消息模式
+          en-US: Message_model
         type: 1
       - field: Consume_type
+        i18n:
+          zh-CN: 消费类型
+          en-US: Consume_type
         type: 1
       - field: Consume_tps
+        i18n:
+          zh-CN: 消费TPS
+          en-US: Consume_tps
         type: 0
       - field: Delay
+        i18n:
+          zh-CN: 延迟
+          en-US: Delay
         type: 0
     aliasFields:
       - consumerGroup
