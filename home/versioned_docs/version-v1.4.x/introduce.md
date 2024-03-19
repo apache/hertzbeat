@@ -36,7 +36,6 @@ slug: /
 
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.      
-> We also provide **[SaaS Monitoring Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started online for free](https://console.tancloud.cn)**.
 
 ----
 
@@ -149,7 +148,7 @@ In an isolated network where multiple networks are not connected, we need to dep
 - An open source collaboration product using the `Apache2` protocol, maintained by a free and open source community.
 - No monitoring number `License`, monitoring type and other pseudo-open source restrictions .
 - Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
-- Open source is not the same as free , can not modify logo, name, copyright based on HertzBeat etc.
+- Open source is not the same as free, dev based on HertzBeat must retain the logo, name, page footnotes, copyright, etc.
 
 
 **HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**

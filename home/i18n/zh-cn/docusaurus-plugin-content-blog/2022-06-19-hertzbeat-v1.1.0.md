@@ -125,7 +125,6 @@ Have Fun!
 
 > `HertzBeat` 的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
-老铁们可以通过演示视频来直观了解功能： [https://www.bilibili.com/video/BV1DY4y1i7ts](https://www.bilibili.com/video/BV1DY4y1i7ts)
 
 
 **仓库地址**

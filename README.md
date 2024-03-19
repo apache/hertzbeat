@@ -22,7 +22,6 @@
 
 **Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) Global | [hertzbeat.com](https://hertzbeat.com) China**
 
-**Cloud: [console.tancloud.cn](https://console.tancloud.cn)**
 
 ## 🎡 <font color="green">Introduction</font>
 
@@ -39,7 +38,6 @@
 * Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.      
-> We also provide **[SaaS Monitoring Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started online for free](https://console.tancloud.cn)**.
 
 ----
 
@@ -103,7 +101,6 @@
 
 ## 🐕 Quick Start   
 
-- If you prefer to use HertzBeat directly without deploying it, we provide SAAS Monitoring Cloud-TanCloud, **[Log In For Free](https://console.tancloud.cn)**.   
 - If you wish to deploy HertzBeat locally, please refer to the following Deployment Documentation for instructions.
 
 ### 🍞 Install HertzBeat   
@@ -122,7 +119,7 @@
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
 
-3. Deploy collector clusters 
+3. Deploy collector clusters (Optional)
 
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
@@ -140,7 +137,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)  
 3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`   
 4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
-5. Deploy collector clusters
+5. Deploy collector clusters (Optional)
     - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
     - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
       ```yaml
@@ -443,15 +440,6 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
-[Bilibili B站](https://space.bilibili.com/430192869)
-
-##### Public        
-
-<img alt="tan-cloud" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/wechat.png" width="300"/>       
-
-<br/>
-
-<img alt="planet" src="https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/planet.jpg" width="300"/>    
 
 ##### Friends   
 

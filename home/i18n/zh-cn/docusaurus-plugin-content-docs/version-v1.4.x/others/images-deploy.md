@@ -37,9 +37,9 @@ sidebar_label: HertzBeat 华为云镜像部署快速指引
 
 ----   
 
-[![hertzbeat](/img/home/1.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/)
+![hertzbeat](/img/home/1.png)
 
-[![hertzbeat](/img/home/9.png)](https://www.bilibili.com/video/BV1LY4y1m7rH/)
+![hertzbeat](/img/home/9.png)
 
 ## ⛄ Supported
 

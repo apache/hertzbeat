@@ -97,10 +97,6 @@ module.exports = {
               href: 'https://github.com/orgs/dromara/projects/6',
             },
             {
-              label: 'design',
-              to: '/docs/others/design',
-            },
-            {
               label: 'sponsor',
               to: '/docs/others/sponsor',
             },
@@ -130,12 +126,12 @@ module.exports = {
           type: 'localeDropdown',
           position: 'right',
         },
-        {
-          label: 'login',
-          href: 'https://console.tancloud.cn',
-          position: 'right',
-          className: 'header-console-link',
-        },
+        // {
+        //   label: 'login',
+        //   href: 'https://console.tancloud.cn',
+        //   position: 'right',
+        //   className: 'header-console-link',
+        // },
       ],
     },
     footer: {
@@ -207,8 +203,7 @@ module.exports = {
         href: 'https://github.com/dromara/hertzbeat',
       },
       copyright:
-        '<a target="_blank" href="https://beian.miit.gov.cn/">蜀ICP备2022002218号</a>' +
-        ` | Copyright © 2021-${new Date().getFullYear()} TANCLOUD`,
+        `Copyright © 2021-${new Date().getFullYear()} HertzBeat`,
     },
   },
   presets: [
