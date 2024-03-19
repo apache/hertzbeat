@@ -22,7 +22,6 @@
 
 **官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) 全球网络 | [hertzbeat.com](https://hertzbeat.com) 中国网络**
 
-**云服务: [console.tancloud.cn](https://console.tancloud.cn)**
 
 ## 🎡 <font color="green">介绍</font>
 
@@ -40,7 +39,6 @@
 
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助用户快速搭建自有监控系统。    
-> 当然我们也提供了对应的 **[SAAS版本监控云服务](https://console.tancloud.cn)**，中小团队和个人无需再为监控自有资源而去部署一套监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。
 
 ----   
 
@@ -102,7 +100,6 @@
 
 ## 🐕 快速开始  
 
-- 如果您不想部署而是直接使用，我们提供SAAS监控云服务-TanCloud探云，**[即刻登录注册免费使用](https://console.tancloud.cn)**。
 - 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。  
 
 ### 🍞 HertzBeat安装
@@ -120,7 +117,7 @@
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
-3. 部署采集器集群
+3. 部署采集器集群(可选)
 
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
@@ -138,7 +135,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
 3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
-5. 部署采集器集群
+5. 部署采集器集群(可选)
    - 下载采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
@@ -410,6 +407,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://www.yuque.com/dudiao/yy"><img src="https://avatars.githubusercontent.com/u/38355949?v=4?s=100" width="100px;" alt="读钓"/><br /><sub><b>读钓</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=dudiao" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/starmilkxin"><img src="https://avatars.githubusercontent.com/u/55646681?v=4?s=100" width="100px;" alt="Xin"/><br /><sub><b>Xin</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=starmilkxin" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/handy-git"><img src="https://avatars.githubusercontent.com/u/32837980?v=4?s=100" width="100px;" alt="handy"/><br /><sub><b>handy</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=handy-git" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
@@ -422,20 +422,13 @@ Thanks these wonderful people, welcome to join us:
 
 HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级项目。Gitee GVP。   
 
-##### 微信交流群
-
-加微信号 `tan-cloud` 或 扫描下面账号二维码拉您进微信群。   
-<img alt="tan-cloud" src="home/static/img/docs/help/tan-cloud-wechat.jpg" width="150"/>
-
-##### QQ交流群
-
-加QQ群号 `236915833` 或 扫描下面的群二维码进群。
-
-<img alt="tan-cloud" src="home/static/img/docs/help/qq-qr.jpg" width="150"/>          
-
 ##### Channel 
 
 **[Chat On Discord](https://discord.gg/Fb6M73htGr)**
+
+**微信交流群** : Add friend `tan-cloud` and will invite you to the group.
+
+[QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Group num `236915833`
 
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
@@ -444,16 +437,6 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 [Follow Us Twitter](https://twitter.com/hertzbeat1024)
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
-
-[Bilibili B站](https://space.bilibili.com/430192869)
-
-##### 公众号与星球     
-
-<img alt="tan-cloud" src="home/static/img/wechat.png" width="300"/>  
-
-<br/>
-
-<img alt="planet" src="home/static/img/planet.jpg" width="300"/>    
 
 ##### 友情链接   
 

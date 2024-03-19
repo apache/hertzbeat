@@ -2,8 +2,8 @@
 title: HertzBeat Monitoring System v1.1.0 Released! Start Your Monitoring Journey with Just One Command!    
 author: tom  
 author_title: tom   
-author_url: [https://github.com/tomsun28](https://github.com/tomsun28)  
-author_image_url: [https://avatars.githubusercontent.com/u/24788200?s=400&v=4](https://avatars.githubusercontent.com/u/24788200?s=400&v=4)  
+author_url: https://github.com/tomsun28
+author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]
 ---
 
@@ -122,8 +122,6 @@ Have Fun!
 > We are in rapid iteration and welcome participation in co-building the open-source ecosystem.
 
 > HertzBeat's support for multiple types, easy expansion, and low coupling aims to help developers and small and medium teams quickly build their own monitoring systems.
-
-You can visually understand the features through the demo video: [https://www.bilibili.com/video/BV1DY4y1i7ts](https://www.bilibili.com/video/BV1DY4y1i7ts)
 
 **Repository Addresses**
 

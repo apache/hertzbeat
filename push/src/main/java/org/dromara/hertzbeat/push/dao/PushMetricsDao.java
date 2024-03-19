@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface PushMetricsDao extends JpaRepository<PushMetrics, Long> {
     
     PushMetrics findFirstByMonitorIdOrderByTimeDesc(Long monitorId);
-    
-    @Transactional
+
+    @Transactional(rollbackFor = Exception.class)
     void deleteAllByTimeBefore(Long time);
 }

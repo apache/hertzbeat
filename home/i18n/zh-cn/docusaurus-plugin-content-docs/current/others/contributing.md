@@ -117,13 +117,9 @@ git pull upstream master
 
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
-[HertzBeat答疑网站](https://support.qq.com/products/379369)
-
 加微信号 `tan-cloud` 拉您进微信交流群
 
 加QQ群号 `236915833` 进QQ交流群, 验证信息: `tancloud`
-
-微信公众号: `tancloudtech`
 
 ### 模块
 
@@ -137,5 +133,3 @@ git pull upstream master
 > 告警计算触发，任务状态联动，告警配置，告警通知。
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
-
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/docs/hertzbeat-stru.svg)   
