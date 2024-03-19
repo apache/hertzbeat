@@ -24,7 +24,7 @@ sidebar_label: Quick Start
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 
-3. Deploy collector clusters
+3. Deploy collector clusters(Optional)
 
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
@@ -42,7 +42,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
 3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
 4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
-5. Deploy collector clusters
+5. Deploy collector clusters(Optional)
    - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
      ```yaml
