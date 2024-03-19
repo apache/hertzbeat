@@ -75,8 +75,6 @@ Redis monitor is coming：
 
 > The multi-type support, easy expansion, and low coupling of `HertzBeat` aim to help developers and small to medium-sized teams quickly build their own monitoring systems.
 
-You can get a clear understanding of the functionality through the demo video: [https://www.bilibili.com/video/BV1DY4y1i7ts](https://www.bilibili.com/video/BV1DY4y1i7ts)
-
 
 **Repository url**
 

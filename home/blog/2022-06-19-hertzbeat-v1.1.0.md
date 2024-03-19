@@ -127,8 +127,6 @@ Have Fun!
 
 > HertzBeat's support for multiple types, easy expansion, and low coupling hopes to help developers and small and medium teams quickly build their own monitoring systems.
 
-You can understand the features through a demo video: [https://www.bilibili.com/video/BV1DY4y1i7ts](https://www.bilibili.com/video/BV1DY4y1i7ts)
-
 **Repository Addresses**
 
 [Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      

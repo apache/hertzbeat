@@ -32,7 +32,6 @@ slug: /
 - 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。    
-> 当然我们也提供了对应的 **[SAAS版本监控云服务](https://console.tancloud.cn)**，中小团队和个人无需再为监控自有资源而去部署一套监控系统，**[登录即可免费开始](https://console.tancloud.cn)**。
 
 ----   
 
@@ -146,7 +145,7 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 - Dromara开源社区顶级项目，Gitee GVP，使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
 - 无监控数量`License`，监控类型等伪开源限制。
 - 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
-- 开源不等同于免费，不能基于HertzBeat二次开发修改logo，名称，版权等。
+- 开源不等同于免费，基于HertzBeat二次开发需保留logo，名称，页面脚注，版权等。
 
 **HertzBeat 已被 [CNCF云原生全景图](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category) 收录**
 

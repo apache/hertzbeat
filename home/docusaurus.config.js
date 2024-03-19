@@ -126,12 +126,12 @@ module.exports = {
           type: 'localeDropdown',
           position: 'right',
         },
-        {
-          label: 'login',
-          href: 'https://console.tancloud.cn',
-          position: 'right',
-          className: 'header-console-link',
-        },
+        // {
+        //   label: 'login',
+        //   href: 'https://console.tancloud.cn',
+        //   position: 'right',
+        //   className: 'header-console-link',
+        // },
       ],
     },
     footer: {
