@@ -6,7 +6,6 @@ sidebar_label: Quick Start
 
 ### 🐕 Quick Start
 
-- If you don’t want to deploy but use it directly, we provide [SAAS Monitoring Cloud-TanCloud](https://console.tancloud.cn), **[Log In And Register For Free](https://console.tancloud.cn)**.
 - If you want to deploy HertzBeat local, please refer to the following Deployment Documentation for operation.
 
 ### 🍞 Install HertzBeat

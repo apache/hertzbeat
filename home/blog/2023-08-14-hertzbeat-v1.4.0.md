@@ -24,7 +24,6 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.      
-> We also provide **[SaaS Monitoring Cloud](https://console.tancloud.cn)**, users no longer need to deploy a cumbersome monitoring system to monitor their resources. **[Get started online for free](https://console.tancloud.cn)**.
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
@@ -71,8 +70,6 @@ First of all, let's take a look at what open source can bring, or why open sourc
 
 The above points focus on community collaboration and product ecology. This is also the reason for the open source cluster version. Only open source products can be rolled into stronger product power. For example, the technical feature of cluster will naturally attract developers (and the cluster itself is The product of our community collaboration) will attract more users and contributors to use feedback and iterate together. The community drives and then positively promotes open source projects and satisfies user functional experience.
 As for open source commercialization, the premise of open source commercialization is to have a really good, popular, and widely used open source product, and then do commercialization on this basis to make money.
-
-By the way, let me say that open source does not mean free. If you modify the logo, name, copyright, etc. based on HertzBeat’s secondary development, please seek authorization from us first, otherwise there will be legal risks. We have the right to sue the team that destroys open source and makes profits. all illegal proceeds.
 
 ### Install quickly via docker
 
