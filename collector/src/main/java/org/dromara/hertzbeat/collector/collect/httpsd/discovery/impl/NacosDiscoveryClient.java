@@ -31,7 +31,7 @@ public class NacosDiscoveryClient implements DiscoveryClient {
     }
 
     @Override
-    public void connect(ConnectConfig connectConfig) {
+    public void initClient(ConnectConfig connectConfig) {
         try {
             localConnectConfig = connectConfig;
             namingService = NamingFactory.createNamingService(connectConfig.getHost() + ":" + connectConfig.getPort());
@@ -43,13 +43,17 @@ public class NacosDiscoveryClient implements DiscoveryClient {
     @Override
     public ServerInfo getServerInfo() {
         if (Objects.isNull(namingService)) {
-            return new ServerInfo();
+            throw new NullPointerException("NamingService is null");
         }
-
-        return ServerInfo.builder()
-                .address(localConnectConfig.getHost())
-                .port(String.valueOf(localConnectConfig.getPort()))
-                .build();
+        String serverStatus = namingService.getServerStatus();
+        return switch (serverStatus) {
+            case "UP" -> ServerInfo.builder()
+                    .address(localConnectConfig.getHost())
+                    .port(String.valueOf(localConnectConfig.getPort()))
+                    .build();
+            case "DOWN" -> throw new RuntimeException("Nacos connection failed");
+            default -> throw new RuntimeException("ServerStatus must be up or down");
+        };
     }
 
     @Override
@@ -57,7 +61,6 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         if (Objects.isNull(namingService)) {
             return Collections.emptyList();
         }
-
         List<ServiceInstance> serviceInstanceList = Lists.newArrayList();
         try {
             for (String serviceName : namingService.getServicesOfServer(0, 9999).getData()) {
