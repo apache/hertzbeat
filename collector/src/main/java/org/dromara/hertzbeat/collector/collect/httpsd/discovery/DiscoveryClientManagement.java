@@ -37,7 +37,7 @@ public class DiscoveryClientManagement {
                 return null;
         }
 
-        discoveryClient.connect(discoveryClient.buildConnectConfig(httpsdProtocol));
+        discoveryClient.initClient(discoveryClient.buildConnectConfig(httpsdProtocol));
         return discoveryClient;
     }
 }

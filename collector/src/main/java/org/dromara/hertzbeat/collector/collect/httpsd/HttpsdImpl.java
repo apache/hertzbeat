@@ -1,5 +1,6 @@
 package org.dromara.hertzbeat.collector.collect.httpsd;
 
+import com.ecwid.consul.transport.TransportException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
@@ -12,6 +13,7 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.job.Metrics;
 import org.dromara.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 import org.dromara.hertzbeat.common.entity.message.CollectRep;
+import org.dromara.hertzbeat.common.util.CommonUtil;
 
 import java.lang.reflect.Field;
 import java.util.Objects;
@@ -35,16 +37,23 @@ public class HttpsdImpl extends AbstractCollect {
             return;
         }
 
-        long beginTime = System.currentTimeMillis();
-
         try (DiscoveryClient discoveryClient = discoveryClientManagement.getClient(httpsdProtocol)) {
-            collectMetrics(builder, metrics, beginTime, discoveryClient);
-        }catch (Exception exception) {
-            log.error("Failed to connect server by discovery client or get instance info...");
+            collectMetrics(builder, metrics, discoveryClient);
+        } catch (TransportException e1) {
+            String errorMsg = "Consul " + CommonUtil.getMessageFromThrowable(e1);
+            log.error(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
+        } catch (Exception e) {
+            String errorMsg = CommonUtil.getMessageFromThrowable(e);
+            log.error(errorMsg, e);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         }
     }
 
-    private void collectMetrics(CollectRep.MetricsData.Builder builder, Metrics metrics, long beginTime, DiscoveryClient discoveryClient) {
+    private void collectMetrics(CollectRep.MetricsData.Builder builder, Metrics metrics, DiscoveryClient discoveryClient) {
+        long beginTime = System.currentTimeMillis();
         // Available and Server monitor
         if (StringUtils.equals(metrics.getName(), SERVER)) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();

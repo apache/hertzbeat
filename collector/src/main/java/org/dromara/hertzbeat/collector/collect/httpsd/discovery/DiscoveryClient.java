@@ -10,7 +10,7 @@ import java.util.List;
 public interface DiscoveryClient extends AutoCloseable {
     ConnectConfig buildConnectConfig(HttpsdProtocol httpsdProtocol);
 
-    void connect(ConnectConfig connectConfig);
+    void initClient(ConnectConfig connectConfig);
 
     ServerInfo getServerInfo();
 
