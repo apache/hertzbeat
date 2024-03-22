@@ -37,14 +37,12 @@ public class JdbcSpiLoader implements CommandLineRunner {
     public void run(String... args) throws Exception {
         log.info("start load jdbc drivers");
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
             Class.forName("org.postgresql.Driver");
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
-            Class.forName("oracle.jdbc.driver.OracleDriver");
             Class.forName("dm.jdbc.driver.DmDriver");
             Class.forName("com.clickhouse.jdbc.ClickHouseDriver");
         } catch (Exception e) {
-            log.error("load jdbc error: {}", e.getMessage(), e);
+            log.error("load jdbc error: {}", e.getMessage());
         }
         log.info("end load jdbc drivers");
     }
