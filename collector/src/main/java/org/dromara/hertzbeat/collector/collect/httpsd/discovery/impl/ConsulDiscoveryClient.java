@@ -32,7 +32,7 @@ public class ConsulDiscoveryClient implements DiscoveryClient {
     }
 
     @Override
-    public void connect(ConnectConfig connectConfig) {
+    public void initClient(ConnectConfig connectConfig) {
         consulClient = new ConsulClient(connectConfig.getHost(), connectConfig.getPort());
     }
 
@@ -51,15 +51,13 @@ public class ConsulDiscoveryClient implements DiscoveryClient {
         List<ServiceInstance> serviceInstanceList = Lists.newArrayListWithExpectedSize(serviceMap.size());
         Collection<Check> healthCheckList = consulClient.getAgentChecks().getValue().values();
 
-        serviceMap.forEach((serviceId, instance) -> {
-            serviceInstanceList.add(ServiceInstance.builder()
-                    .serviceId(serviceId)
-                    .serviceName(instance.getService())
-                    .address(instance.getAddress())
-                    .port(String.valueOf(instance.getPort()))
-                    .healthStatus(getHealthStatus(serviceId, healthCheckList))
-                    .build());
-        });
+        serviceMap.forEach((serviceId, instance) -> serviceInstanceList.add(ServiceInstance.builder()
+                .serviceId(serviceId)
+                .serviceName(instance.getService())
+                .address(instance.getAddress())
+                .port(String.valueOf(instance.getPort()))
+                .healthStatus(getHealthStatus(serviceId, healthCheckList))
+                .build()));
 
         return serviceInstanceList;
     }
