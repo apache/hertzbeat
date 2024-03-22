@@ -52,7 +52,7 @@ public class NacosDiscoveryClient implements DiscoveryClient {
                     .port(String.valueOf(localConnectConfig.getPort()))
                     .build();
             case "DOWN" -> throw new RuntimeException("Nacos connection failed");
-            default -> throw new RuntimeException("ServerStatus must be up or down");
+            default -> throw new RuntimeException("ServerStatus must be UP or DOWN");
         };
     }
 
