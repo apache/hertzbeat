@@ -51,7 +51,7 @@ import { CONSTANTS } from '../../shared/constants';
             </div>
             <div nz-menu-item routerLink="/setting/tags">
               <i nz-icon nzType="tag" class="mr-sm"></i>
-              <span style="margin-left: 4px">{{ 'menu.extras.tags' | i18n }}</span>
+              <span style="margin-left: 4px">{{ 'menu.advanced.tags' | i18n }}</span>
             </div>
             <div nz-menu-item>
               <header-i18n></header-i18n>

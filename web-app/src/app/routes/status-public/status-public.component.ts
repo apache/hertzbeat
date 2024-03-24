@@ -45,7 +45,7 @@ export class StatusPublicComponent implements OnInit {
         switchMap((message: Message<StatusPageOrg>) => {
           if (message.code === 0) {
             this.statusOrg = message.data;
-            this.titleService.setTitle(`${this.statusOrg.name} ${this.i18nSvc.fanyi('menu.extras.status')}`);
+            this.titleService.setTitle(`${this.statusOrg.name} ${this.i18nSvc.fanyi('menu.advanced.status')}`);
           } else {
             this.statusOrg = new StatusPageOrg();
             console.log(message.msg);

@@ -41,16 +41,19 @@
       "silence": "Alarm Silence",
       "dispatch": "Notification"
     },
-    "extras": {
-      "": "More",
+    "advanced": {
+      "": "Advanced",
       "collector": "Collector Cluster",
       "tags": "Tags Manage",
       "define": "Monitor Template",
+      "status": "Status Page"
+    },
+    "extras": {
+      "": "More",
       "help": "Help Center",
       "setting": "Setting",
       "settings": "Settings",
-      "about": "About",
-      "status": "Status Page"
+      "about": "About"
     },
     "more": "More"
   },
