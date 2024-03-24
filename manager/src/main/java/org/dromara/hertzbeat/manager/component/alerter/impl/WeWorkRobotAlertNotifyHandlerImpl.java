@@ -47,7 +47,7 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<WeWorkWebHookDto> httpEntity = new HttpEntity<>(weWorkWebHookDTO, headers);
-            String webHookUrl = alerterProperties.getWeWorkWebHookUrl() + receiver.getWechatId();
+            String webHookUrl = alerterProperties.getWeWorkWebhookUrl() + receiver.getWechatId();
             ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl, httpEntity, CommonRobotNotifyResp.class);
             if (entity.getStatusCode() == HttpStatus.OK) {
                 assert entity.getBody() != null;

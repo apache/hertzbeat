@@ -52,7 +52,7 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto> httpEntity = new HttpEntity<>(serverChanWebHookDto, headers);
-            String webHookUrl = String.format(alerterProperties.getServerChanNotifyUrl(), receiver.getServerChanToken());
+            String webHookUrl = String.format(alerterProperties.getServerChanWebhookUrl(), receiver.getServerChanToken());
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {

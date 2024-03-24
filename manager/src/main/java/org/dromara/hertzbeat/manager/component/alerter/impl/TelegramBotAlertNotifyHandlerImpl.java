@@ -45,7 +45,7 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         try {
-            String url = String.format(alerterProperties.getTelegramBotApiUrl(), receiver.getTgBotToken());
+            String url = String.format(alerterProperties.getTelegramWebhookUrl(), receiver.getTgBotToken());
             TelegramBotNotifyDTO notifyBody = TelegramBotNotifyDTO.builder()
                     .chatId(receiver.getTgUserId())
                     .text(renderContent(noticeTemplate, alert))
