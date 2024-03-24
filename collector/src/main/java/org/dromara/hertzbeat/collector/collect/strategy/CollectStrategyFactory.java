@@ -17,27 +17,33 @@
 
 package org.dromara.hertzbeat.collector.collect.strategy;
 
+import com.google.common.collect.Maps;
+import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
+import org.reflections.Reflections;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 
-import java.util.ServiceLoader;
-import java.util.concurrent.ConcurrentHashMap;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Specific metrics collection factory
  *
  */
+@Slf4j
 @Configuration
 @Order(value = Ordered.HIGHEST_PRECEDENCE + 1)
 public class CollectStrategyFactory implements CommandLineRunner {
+    private static final String COLLECTOR_PATH = "org.dromara.hertzbeat.collector.collect";
 
     /**
      * strategy container
      */
-    private static final ConcurrentHashMap<String, AbstractCollect> COLLECT_STRATEGY = new ConcurrentHashMap<>();
+    private static Map<String, AbstractCollect> COLLECT_STRATEGY;
 
     /**
      * get instance of this protocol collection
@@ -50,10 +56,18 @@ public class CollectStrategyFactory implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // spi load and registry protocol and collect instance
-        ServiceLoader<AbstractCollect> loader = ServiceLoader.load(AbstractCollect.class, AbstractCollect.class.getClassLoader());
-        for (AbstractCollect collect : loader) {
-            COLLECT_STRATEGY.put(collect.supportProtocol(), collect);
-        }
+        Reflections reflections = new Reflections(COLLECTOR_PATH);
+        Set<Class<? extends AbstractCollect>> concreteCollectorList = reflections.getSubTypesOf(AbstractCollect.class);
+        // in order to reduce total resize
+        COLLECT_STRATEGY = Maps.newHashMapWithExpectedSize(concreteCollectorList.size());
+
+        concreteCollectorList.forEach(collector -> {
+            try {
+                AbstractCollect abstractCollect = collector.getConstructor().newInstance();
+                COLLECT_STRATEGY.put(abstractCollect.supportProtocol(), abstractCollect);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                log.error("AbstractCollect <{}> could not be instantiate...", collector.getName());
+            }
+        });
     }
 }
