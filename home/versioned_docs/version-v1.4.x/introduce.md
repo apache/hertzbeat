@@ -16,7 +16,7 @@ slug: /
 [![QQ](https://img.shields.io/badge/QQ-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
-**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org)**
+**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) Global | [hertzbeat.com](https://hertzbeat.com) China**
 
 **Cloud: [console.tancloud.cn](https://console.tancloud.cn)**
 
