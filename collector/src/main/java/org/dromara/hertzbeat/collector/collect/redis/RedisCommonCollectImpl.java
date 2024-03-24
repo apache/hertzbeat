@@ -297,7 +297,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .ip(redisProtocol.getHost())
                 .port(redisProtocol.getPort())
                 .username(redisProtocol.getUsername())
-                .password(redisProtocol.getPassword())
+                .password(redisProtocol.getPassword()).customArg(redisProtocol.getPattern())
                 .build();
     }
 
