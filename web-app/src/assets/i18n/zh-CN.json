@@ -41,16 +41,19 @@
       "setting": "阈值规则",
       "dispatch": "消息通知"
     },
-    "extras": {
-      "": "更多",
+    "advanced": {
+      "": "高级",
       "collector": "采集集群",
       "tags": "标签管理",
       "define": "监控模版",
+      "status": "状态页面"
+    },
+    "extras": {
+      "": "更多",
       "help": "帮助中心",
       "setting": "设置",
       "settings": "系统设置",
-      "about": "关于",
-      "status": "状态页面"
+      "about": "关于"
     },
     "more": "更多"
   },
