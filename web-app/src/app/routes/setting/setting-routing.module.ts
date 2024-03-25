@@ -14,7 +14,7 @@ const routes: Routes = [
   { path: 'tags', component: SettingTagsComponent },
   { path: 'collector', component: CollectorComponent },
   { path: 'status', component: StatusComponent },
-  { path: 'define', component: DefineComponent, data: { titleI18n: 'menu.extras.define' } },
+  { path: 'define', component: DefineComponent, data: { titleI18n: 'menu.advanced.define' } },
   {
     path: 'settings',
     component: SettingsComponent,

@@ -154,14 +154,14 @@
       ]
     },
     {
-      "text": "More",
-      "i18n": "menu.extras",
+      "text": "Advanced",
+      "i18n": "menu.advanced",
       "group": true,
       "hideInBreadcrumb": true,
       "children": [
         {
           "text": "status",
-          "i18n": "menu.extras.status",
+          "i18n": "menu.advanced.status",
           "icon": "anticon-mobile",
           "link": "/setting/status",
           "badgeDot": true,
@@ -169,24 +169,32 @@
         },
         {
           "text": "collector",
-          "i18n": "menu.extras.collector",
+          "i18n": "menu.advanced.collector",
           "icon": "anticon-cluster",
           "link": "/setting/collector"
         },
         {
           "text": "tags",
-          "i18n": "menu.extras.tags",
+          "i18n": "menu.advanced.tags",
           "icon": "anticon-tags",
           "link": "/setting/tags"
         },
         {
           "text": "define",
-          "i18n": "menu.extras.define",
+          "i18n": "menu.advanced.define",
           "icon": "anticon-code",
           "link": "/setting/define",
           "badgeDot": true,
           "badge": 1
-        },
+        }
+      ]
+    },
+    {
+      "text": "More",
+      "i18n": "menu.extras",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
         {
           "text": "settings",
           "i18n": "menu.extras.settings",

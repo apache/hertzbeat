@@ -41,16 +41,19 @@
       "silence": "告警靜默",
       "dispatch": "消息通知"
     },
-    "extras": {
-      "": "更多",
+    "advanced": {
+      "": "高级",
       "collector": "採集集群",
       "tags": "標簽管理",
       "define": "監控模版",
+      "status": "狀態頁面"
+    },
+    "extras": {
+      "": "更多",
       "help": "幫助中心",
       "setting": "設置",
       "settings": "系統設置",
-      "about": "關於",
-      "status": "狀態頁面"
+      "about": "關於"
     },
     "more": "更多"
   },
