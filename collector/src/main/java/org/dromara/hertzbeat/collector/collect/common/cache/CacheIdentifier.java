@@ -37,6 +37,8 @@ public class CacheIdentifier {
     private String username;
 
     private String password;
+    
+    private String customArg;
 
     @Override
     public String toString() {
@@ -44,6 +46,7 @@ public class CacheIdentifier {
                 "ip='" + ip + '\'' +
                 ", port='" + port + '\'' +
                 ", username+password=>hash='" + Objects.hash(username, password) + '\'' +
+                ", customArg='" + customArg + '\'' +
                 '}';
     }
 }
