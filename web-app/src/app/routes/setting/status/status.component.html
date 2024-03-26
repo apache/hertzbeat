@@ -1,7 +1,7 @@
 <app-help-massage-show
   [help_massage_content]="'status.help' | i18n"
   [guild_link]="'status.help.link' | i18n"
-  [module_name]="'menu.extras.status'"
+  [module_name]="'menu.advanced.status'"
   [icon_name]="'mobile'"
 ></app-help-massage-show>
 <nz-divider></nz-divider>
@@ -134,7 +134,7 @@
       <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
         <a routerLink="/status" target="_blank">
           <i nz-icon nzType="link" nzTheme="outline"></i>
-          {{ statusOrg.name + ' ' + ('menu.extras.status' | i18n) }}
+          {{ statusOrg.name + ' ' + ('menu.advanced.status' | i18n) }}
         </a>
       </button>
     </div>
@@ -222,7 +222,7 @@
       <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
         <a routerLink="/status" target="_blank">
           <i nz-icon nzType="link" nzTheme="outline"></i>
-          {{ statusOrg.name + ' ' + ('menu.extras.status' | i18n) }}
+          {{ statusOrg.name + ' ' + ('menu.advanced.status' | i18n) }}
         </a>
       </button>
     </div>
