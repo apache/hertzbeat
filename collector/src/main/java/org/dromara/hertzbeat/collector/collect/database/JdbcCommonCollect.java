@@ -17,7 +17,6 @@
 
 package org.dromara.hertzbeat.collector.collect.database;
 
-import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import org.dromara.hertzbeat.collector.collect.AbstractCollect;
 import org.dromara.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.dromara.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
@@ -100,10 +99,6 @@ public class JdbcCommonCollect extends AbstractCollect {
                     builder.setMsg("Not support database query type: " + jdbcProtocol.getQueryType());
                     break;
             }
-        } catch (CommunicationsException communicationsException) {
-            log.warn("Jdbc sql error: {}, code: {}.", communicationsException.getMessage(), communicationsException.getErrorCode());
-            builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("Error: " + communicationsException.getMessage() + " Code: " + communicationsException.getErrorCode());
         } catch (PSQLException psqlException) {
             // for PostgreSQL 08001
             if (CollectorConstants.POSTGRESQL_UN_REACHABLE_CODE.equals(psqlException.getSQLState())) {

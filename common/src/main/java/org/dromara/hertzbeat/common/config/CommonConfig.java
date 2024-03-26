@@ -32,8 +32,8 @@ import org.springframework.context.annotation.Configuration;
 public class CommonConfig {
 
     public CommonConfig(CommonProperties commonProperties) {
-        if (commonProperties != null && commonProperties.getSecretKey() != null) {
-            AesUtil.setDefaultSecretKey(commonProperties.getSecretKey());
+        if (commonProperties != null && commonProperties.getSecret() != null) {
+            AesUtil.setDefaultSecretKey(commonProperties.getSecret());
         }
     }
 }

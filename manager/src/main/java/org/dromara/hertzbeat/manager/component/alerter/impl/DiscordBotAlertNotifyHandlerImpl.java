@@ -52,7 +52,7 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
                             .description(renderContent(noticeTemplate, alert))
                             .build()))
                     .build();
-            var url = String.format(alerterProperties.getDiscordNotifyUrl(), receiver.getDiscordChannelId());
+            var url = String.format(alerterProperties.getDiscordWebhookUrl(), receiver.getDiscordChannelId());
             var headers = new HttpHeaders();
             headers.add("Authorization", "Bot " + receiver.getDiscordBotToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
