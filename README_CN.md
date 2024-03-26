@@ -449,10 +449,6 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 - [WangMarket](http://www.wang.market/) : 开源 SAAS 云建站系统
 - [API Testing](https://github.com/LinuxSuRen/api-testing)：轻量级、可扩展的接口开发、测试工具
 
-##### 赞助     
-
-- 感谢 [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点
-
 ##### Open-Source Project Build From Open-Source
 
 HertzBeat is built on so many great open source projects, thanks to them!

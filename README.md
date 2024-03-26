@@ -441,7 +441,6 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 
 [Subscribe YouTube](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
-
 ##### Friends   
 
 - [Sa-Token](https://github.com/dromara/Sa-Token) : 一个轻量级 java 权限认证框架，让鉴权变得简单、优雅
@@ -451,11 +450,6 @@ HertzBeat is a top project under the [Dromara Open Source Community](https://dro
 - [ArgusDBM](https://github.com/zmops/ArgusDBM) : 开源数据库一体化监控平台，致力于监控所有数据库
 - [WangMarket](http://www.wang.market/) : 开源 SAAS 云建站系统
 - [API Testing](https://github.com/LinuxSuRen/api-testing)：轻量级、可扩展的接口开发、测试工具
-
-##### Sponsor     
-
-- Thanks [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) sponsored server node.         
-
 
 ##### Open-Source Project Build From Open-Source
 
