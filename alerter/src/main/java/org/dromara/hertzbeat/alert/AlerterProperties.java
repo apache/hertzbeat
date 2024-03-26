@@ -40,36 +40,36 @@ public class AlerterProperties {
     /**
      * WeWork webhook url
      */
-    private String weWorkWebHookUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
+    private String weWorkWebhookUrl = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
 
     /**
      * DingDing talk webhook url
      */
-    private String dingTalkWebHookUrl = "https://oapi.dingtalk.com/robot/send?access_token=";
+    private String dingTalkWebhookUrl = "https://oapi.dingtalk.com/robot/send?access_token=";
 
     /**
      * FlyBook webhook url
      */
-    private String flyBookWebHookUrl = "https://open.feishu.cn/open-apis/bot/v2/hook/";
+    private String flyBookWebhookUrl = "https://open.feishu.cn/open-apis/bot/v2/hook/";
 
     /**
      * Telegram Bot api url
      */
-    private String telegramBotApiUrl = "https://api.telegram.org/bot%s/sendMessage";
+    private String telegramWebhookUrl = "https://api.telegram.org/bot%s/sendMessage";
 
     /**
      * Discord Notify url
      */
-    private String discordNotifyUrl = "https://discord.com/api/v9/channels/%s/messages";
+    private String discordWebhookUrl = "https://discord.com/api/v9/channels/%s/messages";
 
     /**
      * ServerChan Notify url
      */
-    private String serverChanNotifyUrl = "https://sctapi.ftqq.com/%s.send";
+    private String serverChanWebhookUrl = "https://sctapi.ftqq.com/%s.send";
     /**
      * Gotify Notify url
      */
-    private String gotifyNotifyUrl = "https://push.example.de/message?token=";
+    private String gotifyWebhookUrl = "https://push.example.de/message?token=";
 
     /**
      * Data entry configuration properties

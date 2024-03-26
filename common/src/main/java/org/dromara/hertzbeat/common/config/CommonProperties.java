@@ -30,7 +30,7 @@ public class CommonProperties {
     /**
      * secret key for password aes entry, must 16 bits
      */
-    private String secretKey;
+    private String secret;
 
     /**
      * data queue impl
@@ -42,8 +42,8 @@ public class CommonProperties {
      */
     private SmsProperties sms;
 
-    public String getSecretKey() {
-        return secretKey;
+    public String getSecret() {
+        return secret;
     }
 
     public DataQueueProperties getQueue() {
@@ -54,8 +54,8 @@ public class CommonProperties {
         return sms;
     }
 
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
+    public void setSecret(String secret) {
+        this.secret = secret;
     }
 
     public void setQueue(DataQueueProperties queue) {

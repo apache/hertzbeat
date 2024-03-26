@@ -60,7 +60,7 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<GotifyWebHookDto> httpEntity = new HttpEntity<>(gotifyWebHookDto, headers);
-            String webHookUrl = String.format(alerterProperties.getGotifyNotifyUrl(), receiver.getGotifyToken());
+            String webHookUrl = String.format(alerterProperties.getGotifyWebhookUrl(), receiver.getGotifyToken());
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
