@@ -198,8 +198,8 @@ module.exports = {
         },
       ],
       logo: {
-        alt: 'TANCLOUD探云-易用友好的高性能监控云',
-        src: '/img/planet.jpg',
+        alt: 'HertzBeat',
+        src: '/img/hertzbeat-brand.svg',
         href: 'https://github.com/dromara/hertzbeat',
       },
       copyright:
