@@ -58,6 +58,9 @@ sureness:
              LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
              8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
+    
+common:
+  secret: 'LnfKeTjsIfJLBa2H'
 
 ---
 spring:
@@ -162,26 +165,26 @@ warehouse:
       host: 127.0.0.1
       port: 6379
       password: 123456
-      #redis使用数据库，默认为DB0
+      # redis db index, default: DB0
       db: 0
 
 alerter:
   # custom console url
   console-url: https://console.tancloud.cn
-  # 企业微信
-  wework-webHook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
-  # 钉钉
-  dingtalk-webhook-url: https://oapi.dingtalk.com/robot/send?access_token=
-  # 飞书
-  flybook-webhook-url: https://open.feishu.cn/open-apis/bot/v2/hook/
+  # we work
+  we-work-webhook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
+  # ding ding talk
+  ding-talk-webhook-url: https://oapi.dingtalk.com/robot/send?access_token=
+  # fei shu fly book
+  fly-book-webhook-url: https://open.feishu.cn/open-apis/bot/v2/hook/
   # telegram
-  telegram-bot-api-url: https://api.telegram.org/bot%s/sendMessage
+  telegram-webhook-url: https://api.telegram.org/bot%s/sendMessage
   # discord
-  discord-notify-url: https://discord.com/api/v9/channels/%s/messages
+  discord-webhook-url: https://discord.com/api/v9/channels/%s/messages
   # server酱
-  server-chan-notify-url: https://sctapi.ftqq.com/%s.send
+  server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
-  gotify-notify-url: http://127.0.0.1/message?token=%s
+  gotify-webhook-url: http://127.0.0.1/message?token=%s
 
 scheduler:
   server:

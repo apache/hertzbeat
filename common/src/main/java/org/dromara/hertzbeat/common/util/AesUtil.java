@@ -28,7 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
 /**
- * AES Util
+ * AES Decode Encode Util
  *
  */
 @Slf4j
@@ -43,6 +43,8 @@ public class AesUtil {
      *  Default algorithm
      */
     private static final String ALGORITHM_STR = "AES/CBC/PKCS5Padding";
+
+    private static final String AES = "AES";
 
     /**
      * Encryption key The AES encryption key is 16 bits. If the AES encryption key is larger than 16 bits, an error message is displayed
@@ -76,19 +78,20 @@ public class AesUtil {
      */
     public static String aesEncode(String content, String encryptKey) {
         try {
-            SecretKeySpec keySpec = new SecretKeySpec(encryptKey.getBytes(StandardCharsets.UTF_8), "AES");
-            //根据指定算法AES自成密码器
+            // todo consider not init cipher every time and test performance
+            SecretKeySpec keySpec = new SecretKeySpec(encryptKey.getBytes(StandardCharsets.UTF_8), AES);
+            // cipher based on the algorithm AES
             Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-            //初始化密码器，第一个参数为加密(Encrypt_mode)或者解密解密(Decrypt_mode)操作，第二个参数为使用的KEY
+            // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
             cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(encryptKey.getBytes(StandardCharsets.UTF_8)));
-            //获取加密内容的字节数组(这里要设置为utf-8)不然内容中如果有中文和英文混合中文就会解密为乱码
+            // get content bytes, must utf-8
             byte[] byteEncode = content.getBytes(StandardCharsets.UTF_8);
-            //根据密码器的初始化方式--加密：将数据加密
+            // encode content to byte array
             byte[] byteAes = cipher.doFinal(byteEncode);
-            //将加密后的byte[]数据转换为Base64字符串
+            // base64 encode content
             return new String(Base64.getEncoder().encode(byteAes), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            log.error("密文加密失败: {}", e.getMessage(), e);
+            log.error("aes encode content error: {}", e.getMessage(), e);
             return content;
         }
     }
@@ -102,24 +105,24 @@ public class AesUtil {
      */
     public static String aesDecode(String content, String decryptKey) {
         try {
-            SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), "AES");
-
-            //根据指定算法AES自成密码器
+            SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
+            // cipher based on the algorithm AES
             Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-            //初始化密码器，第一个参数为加密(Encrypt_mode)或者解密(Decrypt_mode)操作，第二个参数为使用的KEY
+            // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
             cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(decryptKey.getBytes(StandardCharsets.UTF_8)));
-            //8.将加密并编码base64后的字符串内容base64解码成字节数组
+            // base64 decode content
             byte[] bytesContent = Base64.getDecoder().decode(content);
+            // decode content to byte array
             byte[] byteDecode = cipher.doFinal(bytesContent);
             return new String(byteDecode, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
-            log.error("没有指定的加密算法::{}", e.getMessage(), e);
+            log.error("no such algorithm: {}", e.getMessage(), e);
         } catch (IllegalBlockSizeException e) {
-            log.error("非法的块大小::{}", e.getMessage(), e);
+            log.error("illegal block size: {}", e.getMessage(), e);
         } catch (NullPointerException e) {
-            log.error("秘钥解析空指针异常::{}", e.getMessage(), e);
+            log.error("null point exception: {}", e.getMessage(), e);
         } catch (Exception e) {
-            log.error("秘钥AES解析出现未知错误::{}", e.getMessage(), e);
+            log.error("aes decode error: {}", e.getMessage(), e);
         }
         return content;
     }
@@ -130,11 +133,11 @@ public class AesUtil {
      * @return true-是 false-否
      */
     public static boolean isCiphertext(String text, String decryptKey) {
-        // 先用是否被base64来判断是否已经被加密
+        // First use whether it is base64 to determine whether it has been encrypted
         if (Base64Util.isBase64(text)) {
-            // 若是base64 直接解密判断
+            // If it is base64, decrypt directly to determine
             try {
-                SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), "AES");
+                SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
                 Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
                 cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(decryptKey.getBytes(StandardCharsets.UTF_8)));
                 byte[] bytesContent = Base64.getDecoder().decode(text);
