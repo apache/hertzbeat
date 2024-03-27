@@ -110,17 +110,11 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion   
 
-[Gitter Channel](https://gitter.im/hertzbeat/community)
-
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
-
-[User Club](https://support.qq.com/products/379369)  
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.     
 
-QQ group number `236915833`, verify code: `tancloud`      
-
-Public WeChat: `tancloudtech`  
+QQ group number `236915833`, verify code: `tancloud`
 
 ## 🥐 Architecture
 
@@ -252,19 +246,11 @@ git pull upstream master
 
 通过上述步骤，您就是 HertzBeat 的贡献者了。重复前面的步骤，在社区中保持活跃，坚持下去，您就能成为 Committer！  
 
-### 加入讨论交流   
-
-[Gitter Channel](https://gitter.im/hertzbeat/community)
+### 加入讨论交流
 
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
-[HertzBeat答疑网站](https://support.qq.com/products/379369)
-
-加微信号 `tan-cloud` 拉您进微信交流群   
-
-加QQ群号 `236915833` 进QQ交流群, 验证信息: `tancloud`     
-
-微信公众号: `tancloudtech`  
+加微信号 `tan-cloud` 拉您进微信交流群
 
 ### 模块
 

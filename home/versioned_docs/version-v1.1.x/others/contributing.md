@@ -2,7 +2,7 @@
 id: contributing  
 title: 贡献者指南    
 sidebar_label: 贡献者指南    
----  
+---
 
 > 非常欢迎参与项目贡献，我们致力于维护一个互相帮助的快乐社区。
 
@@ -113,13 +113,9 @@ git pull upstream master
 
 ### 加入讨论交流
 
-[Gitter Channel](https://gitter.im/hertzbeat/community)
-
 [Github Discussion](https://github.com/usthe/hertzbeat/discussions)
 
 加微信号 `tan-cloud` 拉您进微信交流群
-
-加QQ群号 `236915833` 进QQ交流群, 验证信息: `tancloud`
 
 ### 模块
 

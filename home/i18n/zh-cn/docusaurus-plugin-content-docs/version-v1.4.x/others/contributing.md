@@ -113,13 +113,9 @@ git pull upstream master
 
 ### 加入讨论交流
 
-[Gitter Channel](https://gitter.im/hertzbeat/community)
-
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 加微信号 `tan-cloud` 拉您进微信交流群
-
-加QQ群号 `236915833` 进QQ交流群, 验证信息: `tancloud`
 
 ### 模块
 
