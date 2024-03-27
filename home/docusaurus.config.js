@@ -183,7 +183,7 @@ module.exports = {
         href: 'https://github.com/dromara/hertzbeat',
       },
       copyright:
-        `Copyright © 2021-${new Date().getFullYear()} HertzBeat`,
+        `Copyright © ${new Date().getFullYear()} HertzBeat`,
     },
   },
   presets: [
