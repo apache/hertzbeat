@@ -15,8 +15,8 @@
     --ifm-background-color: #fafafa;
     --ifm-code-font-size: 95%;
     --ifm-navbar-link-color: #000;
-    --ifm-font-family-base: 'IBM Plex Sans', PT Sans, Montserrat, Lato;
-    --ifm-font-family-monospace: 'IBM Plex Mono', PT Sans, Open Sans, Roboto Slab, Roboto Condensed;
+    --ifm-font-family-base: Verdana, Arial, Helvetica, sans-serif;
+    --ifm-font-family-monospace: sans-serif;
     --ifm-button-padding-horizontal: 0.55rem;
     --ifm-button-padding-vertical: .7rem;
     --ifm-menu-color: #000;
@@ -31,6 +31,22 @@
     --wdio-link-color: #000;
     --wdio-section-background-color: #fff;
     --wdio-dark-section-background-color: #b78af8;
+}
+
+h1, h2, h3 {
+    font-weight: 460;
+}
+
+h1 {
+    font-size: 2.0em;
+}
+
+h2 {
+    font-size: 1.6em;
+}
+
+h3 {
+    font-size: 1.3em;
 }
 
 html[data-theme=dark] {
@@ -57,6 +73,23 @@ html[data-theme=dark] {
     :root {
         --ifm-line-height-base: 1.85;
     }
+}
+
+.navbar__brand .navbar__title {
+    font-size: 24px;
+    margin-top: 4px;
+    display: none;
+}
+
+.navbar__logo {
+    flex: 0 0 auto;
+    height: 2.5rem;
+    margin-right: 0.5rem;
+}
+
+.navbar__link {
+    font-size: 18px;
+    font-weight: 500; 
 }
 
 .menu__link {
@@ -97,6 +130,11 @@ html[data-theme=dark] {
     color: var(--wdio-link-color);
 }
 
+.iconExternalLink_node_modules-\@docusaurus-theme-classic-lib-theme-Icon-ExternalLink-styles-module {
+    margin-left: 0.3rem;
+    display: none;
+}
+
 .footer__links {
     width: 100%;
     float: right;
@@ -120,8 +158,8 @@ footer > div{
    
 }
 .footer__title{
-    font-size: x-large;
-    font-weight: 800px;
+    font-size: large;
+    font-weight: bolder;
 }
 
 .footer__bottom > div {
@@ -222,12 +260,8 @@ img[alt^=Support] {
 
 article thead {
     background-color: var(--ifm-table-border-color);
-    font-family: 'IBM Plex Mono';
+    font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: left;
-}
-
-h1, h2, h3 {
-    font-weight: 400;
 }
 
 .prism-code > div {

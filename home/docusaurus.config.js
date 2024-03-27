@@ -63,7 +63,7 @@ module.exports = {
       title: 'HertzBeat',
       logo: {
         alt: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
-        src: '/img/tancloud-logo.svg',
+        src: '/img/hertzbeat-brand.svg',
       },
       items: [
         {

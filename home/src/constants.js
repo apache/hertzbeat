@@ -11,7 +11,7 @@ export const features = [
       <>
         <Translate
           values={{
-            docker: <code>{'docker run -d -p 1157:1157 -p 1158:1158 tancloud/hertzbeat'}</code>,
+            docker: <code>{'docker run -d -p 1157:1157 tancloud/hertzbeat'}</code>,
             console: (
               <a href={'https://www.console.tancloud.cn'}>
                 Login Now
@@ -211,7 +211,7 @@ export const dromaraFriends = [
   },
   {
     img: 'stream-query_logo.png',
-    remoteImg: 'https://waibi.oss-cn-chengdu.aliyuncs.com/picGo/logo.png',
+    remoteImg: 'https://plus.hutool.cn/images/dromara/stream-query.png',
     alt: 'stream-query',
     url: 'https://dromara.gitee.io/stream-query',
   },
