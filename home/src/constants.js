@@ -51,12 +51,7 @@ export const features = [
           values={{
             github: (
               <a href={'https://github.com/dromara/hertzbeat'}>
-                HertzBeat Code Github
-              </a>
-            ),
-            gitee: (
-              <a href={'https://gitee.com/dromara/hertzbeat'}>
-                HertzBeat Code Gitee
+                Github Repo
               </a>
             ),
             br: <br />,

@@ -54,7 +54,7 @@ module.exports = {
     announcementBar: {
       id: 'github-star',
       content:
-        '<font style="font-size: medium; font-weight: bolder">If you like HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">star us on GitHub </a> <font style="font-size: medium; font-weight: bolder"> or </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee! </a>⭐️⭐️',
+        '<font style="font-size: medium; font-weight: bolder">If you like HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">star us on GitHub</a>⭐️⭐️',
       backgroundColor: '#7228B5',
       textColor: '#fafbfc',
       isCloseable: true,
@@ -141,16 +141,8 @@ module.exports = {
           title: 'intro',
           items: [
             {
-              label: 'use',
-              to: '/docs/',
-            },
-            {
               label: 'quickstart',
               to: '/docs/start/quickstart',
-            },
-            {
-              label: 'custom',
-              to: '/docs/advanced/extend-point',
             },
             {
               label: 'help',
@@ -162,21 +154,13 @@ module.exports = {
           title: 'contact',
           items: [
             {
-              label: 'dromara',
-              href: 'https://dromara.org/',
+              label: 'discussion',
+              href: 'https://github.com/dromara/hertzbeat/discussions/',
             },
             {
-              label: 'discuss',
+              label: 'contact',
               to: '/docs/others/contact',
-            },
-            {
-              label: 'team',
-              href: 'https://support.qq.com/products/379369/team',
-            },
-            {
-              label: 'tancloud',
-              href: 'https://tancloud.cn',
-            },
+            }
           ],
         },
         {
@@ -185,10 +169,6 @@ module.exports = {
             {
               label: 'github',
               href: 'https://github.com/dromara/hertzbeat',
-            },
-            {
-              label: 'gitee',
-              href: 'https://gitee.com/dromara/hertzbeat',
             },
             {
               label: 'relate',
@@ -231,7 +211,7 @@ module.exports = {
           postsPerPage: 1,
           feedOptions: {
             type: 'all',
-            copyright: `Copyright © ${new Date().getFullYear()} TANCLOUD, Inc.`,
+            copyright: `Copyright © ${new Date().getFullYear()} HertzBeat.`,
           },
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,
