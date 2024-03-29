@@ -613,7 +613,7 @@
   "status.org.desc": "组织介绍",
   "status.org.desc.tip": "状态页面展示的组织信息介绍",
   "status.org.logo": "标志图片",
-  "status.org.logo.tip": "请配置组织Logo图片URL地址",
+  "status.org.logo.tip": "请配置组织Logo图片URL地址,建议SVG格式",
   "status.org.home": "网站链接",
   "status.org.home.tip": "请配置组织的网站主页地址",
   "status.org.feedback": "反馈地址",
