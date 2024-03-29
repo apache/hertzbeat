@@ -112,9 +112,7 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
-Add WeChat account `tan-cloud` to pull you into the WeChat group.     
-
-QQ group number `236915833`, verify code: `tancloud`
+Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
 ## 🥐 Architecture
 
