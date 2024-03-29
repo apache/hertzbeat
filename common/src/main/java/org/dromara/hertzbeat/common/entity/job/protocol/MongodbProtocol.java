@@ -67,4 +67,9 @@ public class MongodbProtocol {
      */
     private String command;
 
+    /**
+     * TIME OUT PERIOD
+     */
+    private String timeout;
+
 }
