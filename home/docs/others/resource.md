@@ -4,20 +4,16 @@ title: Related resources
 sidebar_label: Related resources     
 ---
 
-## HertzBeat Introduce PDF
-
-Download: [PDF](http://cdn.hertzbeat.com/hertzbeat.pdf)   
-
 ## Icon Resources 
 
-### TanCloud-HertzBeat Logo   
+### HertzBeat Logo   
 
-![logo](/img/tancloud-logo.svg)  
+![logo](/img/hertzbeat-logo.svg)  
 
-Download: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.jpg)     
+Download: [SVG](/img/hertzbeat-logo.svg)  [PNG](/img/hertzbeat-logo.png)     
 
-### TanCloud Brand Logo  
+### HertzBeat Brand Logo  
 
-![logo](/img/tancloud-brand.svg)  
+![logo](/img/hertzbeat-brand.svg)  
 
-Download: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-brand.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-brand.jpg)     
+Download: [SVG](/img/hertzbeat-brand.svg)  [JPG](/img/hertzbeat-brand.jpg)     

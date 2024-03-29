@@ -25,15 +25,13 @@ sidebar_label: Contributors
     </tr>
   </tbody>
 </table>
-
-<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>  
+ 
 
 
 ## ✨ HertzBeat Contributors
 
 Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contributing)  
 
-<img alt="cert" src="/img/docs/cert-contributor.png" width="400"/>  
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
