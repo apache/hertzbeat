@@ -19,6 +19,7 @@ package org.dromara.hertzbeat.common.util;
 
 import lombok.extern.slf4j.Slf4j;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.IvParameterSpec;
@@ -115,6 +116,13 @@ public class AesUtil {
             // decode content to byte array
             byte[] byteDecode = cipher.doFinal(bytesContent);
             return new String(byteDecode, StandardCharsets.UTF_8);
+        } catch (BadPaddingException e) {
+            if (!ENCODE_RULES.equals(decryptKey)) {
+                log.warn("There has default encode secret encode content, try to decode with default secret key");
+                return aesDecode(content, ENCODE_RULES);
+            }
+            log.error("aes decode content error: {}, please config right common secret key", e.getMessage());
+            return content;
         } catch (NoSuchAlgorithmException e) {
             log.error("no such algorithm: {}", e.getMessage(), e);
         } catch (IllegalBlockSizeException e) {
