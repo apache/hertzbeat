@@ -109,7 +109,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         CacheIdentifier identifier= null;
         try {
             identifier = getIdentifier(metrics.getMongodb());
-            mongoClient = getClient(metrics,identifier);
+            mongoClient = getClient(metrics, identifier);
             MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
             clientSession = mongoClient.startSession();
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -219,7 +219,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
                 .applyConnectionString(new ConnectionString(url))
                 .applyToClusterSettings(builder ->
                         // Set the timeout period for server selection
-                        builder.serverSelectionTimeout(Long.parseLong(mongodbProtocol.getTimeout()),MILLISECONDS))
+                        builder.serverSelectionTimeout(Long.parseLong(mongodbProtocol.getTimeout()), MILLISECONDS))
                 .build();
 
         // CREATE THE MONGO CLIENT USING THE CONFIGURATION
