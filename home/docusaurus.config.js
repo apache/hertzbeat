@@ -51,14 +51,6 @@ module.exports = {
       appId: 'JMM99UL1H5',
       contextualSearch: true,
     },
-    announcementBar: {
-      id: 'github-star',
-      content:
-        '<font style="font-size: medium; font-weight: bolder">If you like HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">star us on GitHub</a>⭐️⭐️',
-      backgroundColor: '#7228B5',
-      textColor: '#fafbfc',
-      isCloseable: true,
-    },
     navbar: {
       title: 'HertzBeat',
       logo: {
@@ -105,16 +97,6 @@ module.exports = {
               to: '/docs/others/resource',
             }
           ],
-        },
-        {
-          label: '开源之夏',
-          position: 'left',
-          href: 'https://summer-ospp.ac.cn/org/orgdetail/bef415f7-741e-4db8-a4ff-b3904c502471',
-        },
-        {
-          label: '华为云开源活动',
-          position: 'left',
-          to: '/docs/others/huaweicloud',
         },
         {
           type: 'docsVersionDropdown',
