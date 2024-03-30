@@ -61,7 +61,7 @@
     "": "监控",
     "availability": "监控可用性",
     "name": "任务名称",
-    "name.tip": "标识监控任务的名称,名称需要保证唯一性",
+    "name.tip": "标识监控任务的名称",
     "host": "目标Host",
     "host.tip": "被监控的对端IP或域名",
     "description": "描述备注",
