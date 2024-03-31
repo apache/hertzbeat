@@ -506,6 +506,9 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalCancel() {
+    this.cascadeValues = [];
+    this.alertRules = [{}];
+    this.isExpr = false;
     this.isManageModalVisible = false;
   }
   onManageModalOk() {
