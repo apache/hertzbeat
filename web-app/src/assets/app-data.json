@@ -24,6 +24,7 @@
       ]
     },
     {
+      "key": "monitoring",
       "text": "监控",
       "i18n": "menu.monitor",
       "group": true,

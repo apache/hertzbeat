@@ -75,6 +75,20 @@ export class StartupService {
               link: `/monitors?app=${app}`,
               i18n: `monitor.app.${app}`
             });
+          } else {
+            if (app != 'prometheus' && app != 'push') {
+              this.menuService.getItem('monitoring')?.children?.push({
+                text: app,
+                link: `/monitors?app=${app}`,
+                i18n: `monitor.app.${app}`,
+                icon: 'anticon-project'
+              });
+            }
+          }
+        });
+        this.menuService.getItem('monitoring')?.children?.forEach(item => {
+          if (item.key != null && (item.children == null || item.children.length == 0)) {
+            item.hide = true;
           }
         });
         this.storageService.putData('hierarchy', menuData.data);
