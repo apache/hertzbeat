@@ -374,7 +374,7 @@
   "monitors.search.tag": "Tag Filter",
   "monitors.total": "Total",
   "monitors.advanced": "Advanced",
-  "monitors.advanced.tip": "Setting Advanced Param",
+  "monitors.advanced.tip": "Advanced Setting Params",
   "monitors.detect": "Detect",
   "monitors.detect.success": "Detect Success",
   "monitors.detect.failed": "Detect Failed",
