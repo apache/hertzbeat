@@ -354,6 +354,7 @@
   "monitors.list": "Monitor List",
   "monitors.spinning-tip.detecting": "Available Detecting",
   "monitors.new": "New",
+  "monitors.new-monitor": "New Monitor",
   "monitors.new.success": "New Monitor Success",
   "monitors.new.failed": "New Monitor Failed",
   "monitors.edit": "Edit",

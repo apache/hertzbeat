@@ -354,6 +354,7 @@
   "monitors.list": "監控列表",
   "monitors.spinning-tip.detecting": "測試連接可用性",
   "monitors.new": "新增",
+  "monitors.new-monitor": "新增監控",
   "monitors.new.success": "新增監控成功",
   "monitors.new.failed": "新增監控失敗",
   "monitors.edit": "編輯",
