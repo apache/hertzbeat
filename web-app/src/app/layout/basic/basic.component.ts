@@ -15,11 +15,6 @@ import { CONSTANTS } from '../../shared/constants';
           <i nz-icon nzType="github"></i>
         </a>
       </layout-default-header-item>
-      <layout-default-header-item direction="left">
-        <a layout-default-header-item-trigger href="//gitee.com/dromara/hertzbeat" target="_blank">
-          <i nz-icon nzIconfont="icon-gitee"></i>
-        </a>
-      </layout-default-header-item>
 
       <layout-default-header-item direction="left" hidden="pc">
         <div layout-default-header-item-trigger (click)="searchToggleStatus = !searchToggleStatus">
