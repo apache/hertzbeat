@@ -617,7 +617,7 @@
   "status.org.desc": "Introduction",
   "status.org.desc.tip": "Introduction to the organization information displayed on the status page",
   "status.org.logo": "Logo Image",
-  "status.org.logo.tip": "Please config the organization logo image URL address",
+  "status.org.logo.tip": "Please config the organization logo image URL address, suggest svg",
   "status.org.home": "Website Link",
   "status.org.home.tip": "Please config the organization's website homepage address",
   "status.org.feedback": "Feedback Link",
