@@ -39,8 +39,11 @@ public class TemplateConfig {
      * value: app template config
      */
     private Map<String, AppTemplate> apps;
-    
-    
+
+
+    /**
+     * app template
+     */
     @Data
     @Builder
     @NoArgsConstructor
