@@ -11,6 +11,7 @@ import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { finalize } from 'rxjs/operators';
 
 import { Monitor } from '../../../pojo/Monitor';
+import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { formatTagName } from '../../../shared/utils/common-util';
@@ -18,7 +19,7 @@ import { formatTagName } from '../../../shared/utils/common-util';
 @Component({
   selector: 'app-monitor-list',
   templateUrl: './monitor-list.component.html',
-  styles: []
+  styleUrls: ['./monitor-list.component.less']
 })
 export class MonitorListComponent implements OnInit {
   constructor(
@@ -29,6 +30,7 @@ export class MonitorListComponent implements OnInit {
     private monitorSvc: MonitorService,
     private messageSvc: NzMessageService,
     private storageSvc: MemoryStorageService,
+    private appDefineSvc: AppDefineService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -47,6 +49,12 @@ export class MonitorListComponent implements OnInit {
   // 过滤搜索
   filterContent!: string;
   filterStatus: number = 9;
+  // app type search filter
+  appSwitchModalVisible = false;
+  appSearchContent = '';
+  appSearchOrigin: any[] = [];
+  appSearchResult: any[] = [];
+  appSearchLoading = false;
 
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
@@ -455,6 +463,64 @@ export class MonitorListComponent implements OnInit {
     const sortOrder = (currentSort && currentSort.value) || null;
     this.changeMonitorTable(sortField, sortOrder);
   }
+
+  // begin: app type search filter
+
+  onAppSwitchModalOpen() {
+    this.appSwitchModalVisible = true;
+    this.appSearchLoading = true;
+    const getHierarchy$ = this.appDefineSvc
+      .getAppHierarchy(this.i18nSvc.defaultLang)
+      .pipe(
+        finalize(() => {
+          getHierarchy$.unsubscribe();
+          this.appSearchLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.appSearchOrigin = [];
+            this.appSearchResult = [];
+            message.data.forEach((app: any) => {
+              app.categoryLabel = this.i18nSvc.fanyi(`monitor.category.${app.category}`);
+              this.appSearchOrigin.push(app);
+            });
+            this.appSearchOrigin = this.appSearchOrigin.sort((a, b) => a.category?.localeCompare(b.category));
+            this.appSearchResult = this.appSearchOrigin;
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          console.warn(error.msg);
+        }
+      );
+  }
+
+  onAppSwitchModalCancel() {
+    this.appSwitchModalVisible = false;
+  }
+
+  gotoMonitorAddDetail(app: string) {
+    this.router.navigateByUrl(`/monitors/new?app=${app}`);
+  }
+
+  searchSwitchApp() {
+    if (this.appSearchContent === '' || this.appSearchContent == null) {
+      this.appSearchResult = this.appSearchOrigin;
+    } else {
+      this.appSearchResult = this.appSearchOrigin.filter(
+        app =>
+          app.label.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
+          app.categoryLabel.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
+          app.value.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
+          app.category.toLowerCase().includes(this.appSearchContent.toLowerCase())
+      );
+    }
+  }
+
+  // end: app type search filter
 
   protected readonly sliceTagName = formatTagName;
 }
