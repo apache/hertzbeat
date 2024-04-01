@@ -37,6 +37,14 @@
           "link": "/monitors"
         },
         {
+          "text": "define",
+          "i18n": "menu.advanced.define",
+          "icon": "anticon-code",
+          "link": "/setting/define",
+          "badgeDot": true,
+          "badge": 1
+        },
+        {
           "text": "Prometheus",
           "i18n": "menu.monitor.prometheus",
           "icon": "anticon-insert-row-below",
@@ -179,14 +187,6 @@
           "i18n": "menu.advanced.tags",
           "icon": "anticon-tags",
           "link": "/setting/tags"
-        },
-        {
-          "text": "define",
-          "i18n": "menu.advanced.define",
-          "icon": "anticon-code",
-          "link": "/setting/define",
-          "badgeDot": true,
-          "badge": 1
         }
       ]
     },

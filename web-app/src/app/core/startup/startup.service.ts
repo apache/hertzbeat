@@ -65,7 +65,10 @@ export class StartupService {
         this.aclService.setFull(true);
         // Menu data, https://ng-alain.com/theme/menu
         this.menuService.add(appData.menu);
-        menuData.data.forEach((item: { category: string; value: string }) => {
+        menuData.data.forEach((item: { category: string; value: string; hide: boolean }) => {
+          if (item.hide) {
+            return;
+          }
           let category = item.category;
           let app = item.value;
           let menu: Menu | null = this.menuService.getItem(category);
