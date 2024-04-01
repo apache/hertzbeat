@@ -619,7 +619,7 @@
   "status.org.desc": "組織介紹",
   "status.org.desc.tip": "狀態頁面展示的組織信息介紹",
   "status.org.logo": "標誌圖片",
-  "status.org.logo.tip": "請配置組織Logo圖片URL地址",
+  "status.org.logo.tip": "請配置組織Logo圖片URL地址,建議SVG格式",
   "status.org.home": "網站鏈接",
   "status.org.home.tip": "請配置組織的網站主頁地址",
   "status.org.feedback": "反饋地址",
