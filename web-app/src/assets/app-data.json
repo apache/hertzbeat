@@ -40,9 +40,7 @@
           "text": "define",
           "i18n": "menu.advanced.define",
           "icon": "anticon-code",
-          "link": "/setting/define",
-          "badgeDot": true,
-          "badge": 1
+          "link": "/setting/define"
         },
         {
           "text": "Prometheus",
