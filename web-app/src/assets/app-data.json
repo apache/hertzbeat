@@ -24,6 +24,7 @@
       ]
     },
     {
+      "key": "monitoring",
       "text": "监控",
       "i18n": "menu.monitor",
       "group": true,
@@ -34,6 +35,12 @@
           "i18n": "menu.monitor.center",
           "icon": "anticon-laptop",
           "link": "/monitors"
+        },
+        {
+          "text": "define",
+          "i18n": "menu.advanced.define",
+          "icon": "anticon-code",
+          "link": "/setting/define"
         },
         {
           "text": "Prometheus",
@@ -178,14 +185,6 @@
           "i18n": "menu.advanced.tags",
           "icon": "anticon-tags",
           "link": "/setting/tags"
-        },
-        {
-          "text": "define",
-          "i18n": "menu.advanced.define",
-          "icon": "anticon-code",
-          "link": "/setting/define",
-          "badgeDot": true,
-          "badge": 1
         }
       ]
     },

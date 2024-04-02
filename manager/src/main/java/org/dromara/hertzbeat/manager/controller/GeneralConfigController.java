@@ -22,7 +22,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.dromara.hertzbeat.common.entity.dto.Message;
+import org.dromara.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.dromara.hertzbeat.manager.service.GeneralConfigService;
+import org.dromara.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,7 +57,7 @@ public class GeneralConfigController {
     }
 
     @PostMapping(path = "/{type}")
-    @Operation(summary = "Save the sender config", description = "保存公共配置")
+    @Operation(summary = "Save or update common config", description = "保存公共配置")
     public ResponseEntity<Message<String>> saveOrUpdateConfig(
             @Parameter(description = "Config Type", example = "email")
             @PathVariable("type") @NotNull final String type,
@@ -78,5 +80,26 @@ public class GeneralConfigController {
             throw new IllegalArgumentException("Not supported this config type: " + type);
         }
         return ResponseEntity.ok(Message.success(configService.getConfig()));
+    }
+
+    @PutMapping(path = "/template/{app}")
+    @Operation(summary = "Update the app template config")
+    public ResponseEntity<Message<Void>> updateTemplateAppConfig(
+            @PathVariable("app") @NotNull final String app,
+            @RequestBody TemplateConfig.AppTemplate template) {
+        GeneralConfigService configService = configServiceMap.get("template");
+        if (configService == null || !(configService instanceof TemplateConfigServiceImpl)) {
+            throw new IllegalArgumentException("Not supported this config type: template");
+        }
+        TemplateConfig config = ((TemplateConfigServiceImpl) configService).getConfig();
+        if (config == null) {
+            config = new TemplateConfig();
+        }
+        if (config.getApps() == null) {
+            config.setApps(new HashMap<>(8));
+        }
+        config.getApps().put(app, template);
+        configService.saveConfig(config);
+        return ResponseEntity.ok(Message.success());
     }
 }

@@ -484,6 +484,9 @@ export class MonitorListComponent implements OnInit {
             this.appSearchResult = [];
             message.data.forEach((app: any) => {
               app.categoryLabel = this.i18nSvc.fanyi(`monitor.category.${app.category}`);
+              if (app.categoryLabel == `monitor.category.${app.category}`) {
+                app.categoryLabel = this.i18nSvc.fanyi('monitor.category.custom');
+              }
               this.appSearchOrigin.push(app);
             });
             this.appSearchOrigin = this.appSearchOrigin.sort((a, b) => a.category?.localeCompare(b.category));

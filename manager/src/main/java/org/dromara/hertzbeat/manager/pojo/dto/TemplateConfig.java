@@ -22,29 +22,37 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
- * System Configuration
+ * App Template Config
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SystemConfig {
+public class TemplateConfig {
 
     /**
-     * system time zone
-     * 系统时区
+     * app template config map
+     * key: app name
+     * value: app template config
      */
-    private String timeZoneId;
+    private Map<String, AppTemplate> apps;
+
 
     /**
-     * system locale language region
-     * 系统语言地区
+     * app template
      */
-    private String locale;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AppTemplate {
 
-    /**
-     * layout ui theme
-     */
-    private String theme;
+        /**
+         * Is hide this app in main menus layout, only for app type, default true
+         */
+        private boolean hide = true;
+    }
 }
