@@ -6,7 +6,7 @@ sidebar_label: Design Document
 
 ### HertzBeat Architecture     
 
-![architecture](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-stru-en.svg)     
+![architecture](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)     
 
 ### TanCloud Architecture  
 

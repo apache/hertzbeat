@@ -56,7 +56,7 @@ slug: /
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)  
 
-![hertzBeat](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-stru.svg)   
+![hertzBeat](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-arch.svg)   
 
 ----
 

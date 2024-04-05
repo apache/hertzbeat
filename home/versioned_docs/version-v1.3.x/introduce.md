@@ -59,7 +59,7 @@ slug: /
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.   
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-stru-en.svg)     
+![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)     
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)  
 
