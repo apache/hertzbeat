@@ -114,11 +114,7 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion
 
-[Gitter Channel](https://gitter.im/hertzbeat/community)
-
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
-
-[User Club](https://support.qq.com/products/379369)
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
@@ -139,4 +135,4 @@ Public WeChat: `tancloudtech`
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-stru-en.svg)   
+![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)   

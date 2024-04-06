@@ -20,7 +20,7 @@
     "description": "Navbar item with label discuss"
   },
   "item.label.kanban": {
-    "message": "Dashboard",
+    "message": "Kanban",
     "description": "Navbar item with label kanban"
   },
   "item.label.about": {

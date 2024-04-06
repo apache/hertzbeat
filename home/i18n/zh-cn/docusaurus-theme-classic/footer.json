@@ -31,14 +31,6 @@
     "message": "交流联系",
     "description": "The label of footer link with label=discuss linking to /docs/others/contact"
   },
-  "link.item.label.team": {
-    "message": "我们的故事",
-    "description": "The label of footer link with label=team linking to https://support.qq.com/products/379369/team"
-  },
-  "link.item.label.tancloud": {
-    "message": "TanCloud探云",
-    "description": "The label of footer link with label=tancloud linking to https://tancloud.cn"
-  },
   "link.item.label.github": {
     "message": "Github仓库",
     "description": "The label of footer link with label=github linking to https://github.com/dromara/hertzbeat"
@@ -54,5 +46,13 @@
   "link.item.label.relate": {
     "message": "其它资源",
     "description": "The label of footer link with label=relate linking to /docs/others/resource"
+  },
+  "link.item.label.discussion": {
+    "message": "社区讨论",
+    "description": "The label of footer link with label=discussion linking to https://github.com/dromara/hertzbeat/discussions/"
+  },
+  "link.item.label.contact": {
+    "message": "联系交流",
+    "description": "The label of footer link with label=contact linking to /docs/others/contact"
   }
 }

@@ -15,8 +15,8 @@
     --ifm-background-color: #fafafa;
     --ifm-code-font-size: 95%;
     --ifm-navbar-link-color: #000;
-    --ifm-font-family-base: 'IBM Plex Sans', PT Sans, Montserrat, Lato;
-    --ifm-font-family-monospace: 'IBM Plex Mono', PT Sans, Open Sans, Roboto Slab, Roboto Condensed;
+    --ifm-font-family-base: Verdana, Arial, Helvetica, sans-serif;
+    --ifm-font-family-monospace: sans-serif;
     --ifm-button-padding-horizontal: 0.55rem;
     --ifm-button-padding-vertical: .7rem;
     --ifm-menu-color: #000;
@@ -31,6 +31,22 @@
     --wdio-link-color: #000;
     --wdio-section-background-color: #fff;
     --wdio-dark-section-background-color: #b78af8;
+}
+
+h1, h2, h3 {
+    font-weight: 460;
+}
+
+h1 {
+    font-size: 2.0em;
+}
+
+h2 {
+    font-size: 1.6em;
+}
+
+h3 {
+    font-size: 1.3em;
 }
 
 html[data-theme=dark] {
@@ -59,12 +75,25 @@ html[data-theme=dark] {
     }
 }
 
-.menu__link {
-    font-weight: bold;
+.navbar__brand .navbar__title {
+    font-size: 24px;
+    margin-top: 4px;
+    display: none;
+}
+
+.navbar__logo {
+    flex: 0 0 auto;
+    height: 2.5rem;
+    margin-right: 0.5rem;
+}
+
+.navbar__link {
+    font-size: 18px;
+    font-weight: 500; 
 }
 
 .menu__link {
-    font-size: 1.1em;
+    font-size: 1.0em;
 }
 
 .menu__list .menu__list {
@@ -93,8 +122,12 @@ html[data-theme=dark] {
 }
 
 .menu__list .menu__list .menu__list-item .menu__link--active {
-    font-weight: bold;
-    color: var(--wdio-link-color);
+    font-weight: 600;
+}
+
+.iconExternalLink_node_modules-\@docusaurus-theme-classic-lib-theme-Icon-ExternalLink-styles-module {
+    margin-left: 0.3rem;
+    display: none;
 }
 
 .footer__links {
@@ -120,8 +153,7 @@ footer > div{
    
 }
 .footer__title{
-    font-size: x-large;
-    font-weight: 800px;
+    font-weight: 500;
 }
 
 .footer__bottom > div {
@@ -137,8 +169,9 @@ html[data-theme=dark] footer{
 
 }
 .footer__copyright {
-    font-size: .8em;
+    font-size: xx-small;
     text-align: left;
+    font-weight: 100;
 }
 .footer__logo {
     margin-top: 1rem;
@@ -222,12 +255,8 @@ img[alt^=Support] {
 
 article thead {
     background-color: var(--ifm-table-border-color);
-    font-family: 'IBM Plex Mono';
+    font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: left;
-}
-
-h1, h2, h3 {
-    font-weight: 400;
 }
 
 .prism-code > div {
