@@ -22,8 +22,13 @@ import org.dromara.hertzbeat.common.constants.CommonConstants;
 import org.dromara.hertzbeat.common.entity.manager.GeneralConfig;
 import org.dromara.hertzbeat.manager.dao.GeneralConfigDao;
 import org.dromara.hertzbeat.manager.pojo.dto.SystemConfig;
+import org.dromara.hertzbeat.manager.pojo.dto.TemplateConfig;
+import org.dromara.hertzbeat.manager.service.AppService;
 import org.dromara.hertzbeat.manager.service.impl.SystemGeneralConfigServiceImpl;
+import org.dromara.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
@@ -31,16 +36,22 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * SystemCommandLineRunner class
- * @since 4/7/2023
+ * Common CommandLineRunner class
  */
 @Component
-public class SystemCommandLineRunner implements CommandLineRunner {
+@Order(value = Ordered.HIGHEST_PRECEDENCE + 2)
+public class CommonCommandLineRunner implements CommandLineRunner {
     
     private static final Integer LANG_REGION_LENGTH = 2;
     
     @Resource
     private SystemGeneralConfigServiceImpl systemGeneralConfigService;
+    
+    @Resource
+    private TemplateConfigServiceImpl templateConfigService;
+    
+    @Resource
+    private AppService appService;
     
     @Resource
     protected GeneralConfigDao generalConfigDao;
@@ -76,5 +87,8 @@ public class SystemCommandLineRunner implements CommandLineRunner {
                                                        .build();
             generalConfigDao.save(generalConfig2Save);
         }
+        // flush the template config in db to memory
+        TemplateConfig templateConfig = templateConfigService.getConfig();
+        appService.updateCustomTemplateConfig(templateConfig);
     }
 }

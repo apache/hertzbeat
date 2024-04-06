@@ -20,6 +20,7 @@ package org.dromara.hertzbeat.manager.service;
 import org.dromara.hertzbeat.common.entity.job.Job;
 import org.dromara.hertzbeat.common.entity.manager.ParamDefine;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
+import org.dromara.hertzbeat.manager.pojo.dto.TemplateConfig;
 
 import java.util.List;
 import java.util.Map;
@@ -27,9 +28,6 @@ import java.util.Optional;
 
 /**
  * Monitoring Type Management Interface
- * 监控类型管理接口
- *
- *
  */
 public interface AppService {
 
@@ -127,4 +125,10 @@ public interface AppService {
      * @param app app
      */
     void deleteMonitorDefine(String app);
+
+    /**
+     * update custom template config in memory
+     * @param config template config
+     */
+    void updateCustomTemplateConfig(TemplateConfig config);
 }

@@ -15,61 +15,44 @@
  * limitations under the License.
  */
 
-package org.dromara.hertzbeat.common.entity.job.protocol;
+package org.dromara.hertzbeat.manager.pojo.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
- * Mongodb Protocol
- * @version 1.0
+ * App Template Config
  */
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class MongodbProtocol {
+@AllArgsConstructor
+public class TemplateConfig {
 
     /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
+     * app template config map
+     * key: app name
+     * value: app template config
      */
-    private String host;
+    private Map<String, AppTemplate> apps;
+
 
     /**
-     * Port number
+     * app template
      */
-    private String port;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AppTemplate {
 
-    /**
-     * Mongodb User name (optional)
-     */
-    private String username;
-
-    /**
-     * Mongodb Password (optional)
-     */
-    private String password;
-
-    /**
-     * Mongodb database name (optional)
-     */
-    private String database;
-
-    /**
-     * Mongodb Authentication Database name (optional)
-     */
-    private String authenticationDatabase;
-
-    /**
-     * run command
-     */
-    private String command;
-
-    /**
-     * TIME OUT PERIOD
-     */
-    private String timeout;
-
+        /**
+         * Is hide this app in main menus layout, only for app type, default true
+         */
+        private boolean hide = true;
+    }
 }

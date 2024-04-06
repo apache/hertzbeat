@@ -55,6 +55,10 @@ public class Job {
      */
     private long monitorId;
     /**
+     * Is hide this app in main menus layout, only for app type, default true.
+     */
+    private boolean hide = true;
+    /**
      * Large categories of monitoring   
      * service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring...
      */

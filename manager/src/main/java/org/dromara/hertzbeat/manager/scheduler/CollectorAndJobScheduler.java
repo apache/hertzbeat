@@ -426,6 +426,9 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
     @Override
     public void cancelAsyncCollectJob(Long jobId) {
+        if (jobId == null) {
+            return;
+        }
         for (ConsistentHash.Node node : consistentHash.getAllNodes().values()) {
             AssignJobs assignJobs = node.getAssignJobs();
             if (assignJobs.getPinnedJobs().remove(jobId)
