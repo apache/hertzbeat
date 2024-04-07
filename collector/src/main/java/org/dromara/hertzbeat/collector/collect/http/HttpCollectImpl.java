@@ -78,6 +78,8 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -91,6 +93,8 @@ import static org.dromara.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
+
+    private final static String INFLUXDB_TEXT_PARAMETER = "\\s+(\\d+(?:\\.\\d+)?)";
     
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
@@ -144,6 +148,8 @@ public class HttpCollectImpl extends AbstractCollect {
                     parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
                     parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
+                } else if (DispatchConstants.PARSE_INFLUXDB_TEXT.equals(parseType)) {
+                  parseResponseByInfluxDbText(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 } else {
                     parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 }
@@ -365,6 +371,45 @@ public class HttpCollectImpl extends AbstractCollect {
                                        CollectRep.MetricsData.Builder builder) {
         AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
         prometheusParser.handle(resp, aliasFields, http, builder);
+    }
+
+    /**
+     *  Implement Influxdb Text matching
+     *  实现 Influxdb Text 文本匹配
+     * @param resp Request to return results 请求返回结果
+     * @param aliasFields Parameter alias 参数别名
+     * @param http http
+     * @param builder builder
+     * @param responseTime time of return 返回时间
+     */
+    private void parseResponseByInfluxDbText(String resp, List<String> aliasFields, HttpProtocol http,
+                                             CollectRep.MetricsData.Builder builder, Long responseTime) {
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        // todo 完成数据导入
+        for (String alias : aliasFields) {
+            // 构建匹配参数 Build matching parameters
+            String pattern = alias + INFLUXDB_TEXT_PARAMETER;
+            Pattern regexPattern = Pattern.compile(pattern);
+            Matcher matcher = regexPattern.matcher(resp);
+            String value = null;
+            if (matcher.find()) {
+                value = matcher.group(1);
+            } else {
+                log.info("parse error: {}.", builder.getMetrics());
+                builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+                builder.setMsg("parse error！");
+            }
+            if (value != null) {
+                valueRowBuilder.addColumns(value);
+            } else {
+                if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumns(responseTime.toString());
+                } else {
+                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                }
+            }
+        }
+        builder.addValues(valueRowBuilder.build());
     }
     
     private static final Map<Long, ExporterParser> EXPORTER_PARSER_TABLE = new ConcurrentHashMap<>();

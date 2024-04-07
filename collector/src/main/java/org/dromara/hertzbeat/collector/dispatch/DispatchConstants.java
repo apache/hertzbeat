@@ -164,6 +164,11 @@ public interface DispatchConstants {
      */
     String PARSE_WEBSITE = "website";
     /**
+     * Analysis method Text parsing for influxdb
+     * 解析方式 用于 influxdb 的文本解析
+     */
+    String PARSE_INFLUXDB_TEXT = "influxdb_text";
+    /**
      * Analysis method Sitemap site-wide availability monitoring rules
      * 解析方式 网站地图全站可用性监控规则
      */
