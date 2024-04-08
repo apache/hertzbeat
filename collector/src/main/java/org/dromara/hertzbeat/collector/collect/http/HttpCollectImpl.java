@@ -149,7 +149,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
                     parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                 } else if (DispatchConstants.PARSE_INFLUXDB_TEXT.equals(parseType)) {
-                  parseResponseByInfluxDbText(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                    parseResponseByInfluxDbText(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 } else {
                     parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 }
