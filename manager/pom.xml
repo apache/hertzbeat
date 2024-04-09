@@ -19,7 +19,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>hertzbeat</artifactId>
-        <groupId>org.dromara.hertzbeat</groupId>
+        <groupId>org.apache.hertzbeat</groupId>
         <version>2.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -43,7 +43,7 @@
     <dependencies>
         <!-- common -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
             <exclusions>
                 <exclusion>
@@ -54,17 +54,17 @@
         </dependency>
         <!-- data warehouse -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-warehouse</artifactId>
         </dependency>
         <!-- alerter -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-alerter</artifactId>
         </dependency>
         <!-- collector -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-collector</artifactId>
             <exclusions>
                 <exclusion>
@@ -75,12 +75,12 @@
         </dependency>
         <!-- remoting -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-remoting</artifactId>
         </dependency>
         <!-- push -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-push</artifactId>
         </dependency>
         <!-- spring -->
@@ -209,7 +209,7 @@
                         <addMavenDescriptor>false</addMavenDescriptor>
                         <manifest>
                             <!--项目启动类-->
-                            <mainClass>org.dromara.hertzbeat.manager.Manager</mainClass>
+                            <mainClass>org.apache.hertzbeat.manager.Manager</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
                             <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
                             <addClasspath>true</addClasspath>
