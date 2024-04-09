@@ -172,11 +172,23 @@
             <groupId>com.huaweicloud.sdk</groupId>
             <artifactId>huaweicloud-sdk-smn</artifactId>
             <version>${huawei.sdk.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.openeuler</groupId>
+                    <artifactId>bgmprovider</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.huaweicloud</groupId>
             <artifactId>esdk-obs-java</artifactId>
             <version>${huawei.obs.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.openeuler</groupId>
+                    <artifactId>bgmprovider</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
 

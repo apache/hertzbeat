@@ -6,10 +6,33 @@ name: Backend CI
 on:
   push:
     branches: [ master, dev ]
+    paths-ignore:
+      - '**.md'
+      - 'home/**'
+      - 'web-app/**'
+      - 'script/**'
+      - 'material/**'
   pull_request:
     branches: [ master, dev ]
+    paths-ignore:
+      - '**.md'
+      - 'home/**'
+      - 'web-app/**'
+      - 'script/**'
+      - 'material/**'
 
 jobs:
+  license-header:
+    if: github.repository == 'apache/incubator-hertzbeat'
+    name: License header
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Check license header
+        uses: apache/skywalking-eyes/header@main
   build:
     runs-on: ubuntu-latest
     steps:

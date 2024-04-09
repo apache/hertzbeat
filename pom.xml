@@ -86,7 +86,6 @@
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <commons-net>3.10.0</commons-net>
-        <license-maven-plugin.version>2.4.0</license-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -379,11 +378,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>${license-maven-plugin.version}</version>
             </plugin>
         </plugins>
     </build>
