@@ -199,3 +199,37 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+========================================================================
+MIT License
+========================================================================
+
+The following components are provided under the MIT License
+These files from https://github.com/ng-alain/ng-alain
+
+web-app/src/app/core/**
+web-app/src/app/layout/**
+web-app/src/app/routes/routes.module.ts
+web-app/src/app/routes/routes-routing.module.ts
+web-app/src/app/shared/json-schema/**
+web-app/src/app/shared/index.ts
+web-app/src/app/shared/shared.module.ts
+web-app/src/app/shared/shared-delon.module.ts
+web-app/src/app/shared/shared-zorro.module.ts
+web-app/src/app/app.module.ts
+web-app/src/app/app-component.ts
+web-app/src/app/global-config.module.ts
+web-app/src/app/icons-provider.module.ts
+web-app/src/assets/color.less
+web-app/src/assets/style.compact.less
+web-app/src/assets/style.dark.less
+web-app/src/environments/**
+web-app/src/styles/**
+web-app/src/index.html
+web-app/src/main.ts
+web-app/src/polyfills.ts
+web-app/src/style-icons.ts
+web-app/src/style-icons-auto.ts
+web-app/src/style.less
+web-app/src/test.ts
+web-app/src/typings.d.ts
