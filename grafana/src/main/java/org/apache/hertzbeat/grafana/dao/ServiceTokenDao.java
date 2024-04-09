@@ -1,6 +1,6 @@
 package org.apache.hertzbeat.grafana.dao;
 
-import org.dromara.hertzbeat.common.entity.grafana.ServiceToken;
+import org.apache.hertzbeat.common.entity.grafana.ServiceToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;

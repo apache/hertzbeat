@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.grafana.dao.DashboardDao;
-import org.dromara.hertzbeat.common.entity.grafana.Dashboard;
+import org.apache.hertzbeat.common.entity.grafana.Dashboard;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

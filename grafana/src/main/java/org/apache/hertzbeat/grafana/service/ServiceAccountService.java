@@ -11,8 +11,8 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.grafana.dao.ServiceAccountDao;
 import org.apache.hertzbeat.grafana.dao.ServiceTokenDao;
-import org.dromara.hertzbeat.common.entity.grafana.ServiceAccount;
-import org.dromara.hertzbeat.common.entity.grafana.ServiceToken;
+import org.apache.hertzbeat.common.entity.grafana.ServiceAccount;
+import org.apache.hertzbeat.common.entity.grafana.ServiceToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
