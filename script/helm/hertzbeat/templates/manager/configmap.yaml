@@ -120,7 +120,7 @@ data:
           rpc-port: 6667
           username: root
           password: root
-          # org.dromara.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
+          # org.apache.hertzbeat.warehouse.config.IotDbVersion: V_0_13 || V_1_0
           version: V_1_0
           query-timeout-in-ms: -1
           # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）

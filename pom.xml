@@ -26,7 +26,7 @@
         <version>3.2.3</version>
     </parent>
 
-    <groupId>org.dromara.hertzbeat</groupId>
+    <groupId>org.apache.hertzbeat</groupId>
     <artifactId>hertzbeat</artifactId>
     <packaging>pom</packaging>
     <version>2.0-SNAPSHOT</version>
@@ -92,37 +92,37 @@
         <dependencies>
             <!-- common -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-common</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- data warehouse -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-warehouse</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- alerter -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-alerter</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- collector -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-collector</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- remoting -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-remoting</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- push -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-push</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>

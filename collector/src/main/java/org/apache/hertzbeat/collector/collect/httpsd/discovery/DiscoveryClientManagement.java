@@ -1,0 +1,43 @@
+package org.apache.hertzbeat.collector.collect.httpsd.discovery;
+
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.ConsulDiscoveryClient;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.NacosDiscoveryClient;
+import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientInstance;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+
+import java.util.Objects;
+
+/**
+ * Discovery Client Management
+ */
+public class DiscoveryClientManagement {
+
+    public DiscoveryClient getClient(HttpsdProtocol httpsdProtocol) {
+        return createClient(httpsdProtocol, DiscoveryClientInstance.getByName(httpsdProtocol.getDiscoveryClientTypeName()));
+    }
+
+    private DiscoveryClient createClient(HttpsdProtocol httpsdProtocol, DiscoveryClientInstance discoveryClientInstance) {
+        if (Objects.equals(discoveryClientInstance, DiscoveryClientInstance.NOT_SUPPORT)) {
+            return null;
+        }
+
+        return doCreateClient(httpsdProtocol, discoveryClientInstance);
+    }
+
+    private DiscoveryClient doCreateClient(HttpsdProtocol httpsdProtocol, DiscoveryClientInstance discoveryClientInstance) {
+        DiscoveryClient discoveryClient;
+        switch (discoveryClientInstance) {
+            case CONSUL:
+                discoveryClient = new ConsulDiscoveryClient();
+                break;
+            case NACOS:
+                discoveryClient = new NacosDiscoveryClient();
+                break;
+            default:
+                return null;
+        }
+
+        discoveryClient.initClient(discoveryClient.buildConnectConfig(httpsdProtocol));
+        return discoveryClient;
+    }
+}
