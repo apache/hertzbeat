@@ -16,7 +16,7 @@ slug: /
 [![QQ](https://img.shields.io/badge/QQ-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
-**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) Global | [hertzbeat.com](https://hertzbeat.com) China**
+**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org)**
 
 ## 🎡 <font color="green">Introduction</font>
 
@@ -146,7 +146,7 @@ In an isolated network where multiple networks are not connected, we need to dep
 - An open source collaboration product using the `Apache2` protocol, maintained by a free and open source community.
 - No monitoring number `License`, monitoring type and other pseudo-open source restrictions .
 - Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
-- Open source is not the same as free, dev based on HertzBeat must retain the logo, name, page footnotes, copyright, etc.
+- Open source is not the same as free, dev based on HertzBeat must retain page footnotes, copyright, etc.
 
 
 **HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**
@@ -310,6 +310,5 @@ Built-in support for monitoring types include:
 
 ----- 
 
-**Home: https://hertzbeat.com/**    
 **Github: https://github.com/dromara/hertzbeat**      
 **Gitee: https://gitee.com/dromara/hertzbeat**

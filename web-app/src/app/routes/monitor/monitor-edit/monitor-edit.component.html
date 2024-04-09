@@ -26,8 +26,6 @@
         </nz-form-control>
       </nz-form-item>
 
-      <nz-divider></nz-divider>
-
       <nz-form-item *ngFor="let paramDefine of paramDefines; let i = index">
         <nz-form-label
           *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
@@ -164,7 +162,7 @@
         </nz-form-control>
       </nz-form-item>
 
-      <nz-collapse [nzGhost]="true">
+      <nz-collapse [nzGhost]="true" style="margin-bottom: 16px">
         <nz-collapse-panel [nzHeader]="extraColHeader" [nzShowArrow]="false">
           <nz-form-item *ngFor="let paramDefine of advancedParamDefines; let i = index">
             <nz-form-label
@@ -303,8 +301,6 @@
           <i nz-icon nzType="down-circle" nzTheme="outline"></i>
         </button>
       </ng-template>
-
-      <nz-divider></nz-divider>
 
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="collector" [nzTooltipTitle]="'monitor.collector.tip' | i18n">

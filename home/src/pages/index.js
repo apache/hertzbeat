@@ -18,9 +18,7 @@ import LogoCarousel from './components/LogoCarousel'
 import cdnTransfer from '../CdnTransfer'
 
 import styles from './styles.module.css'
-import {features, dromaraFriends, friendsLink, usersLink} from '../constants'
-import LogoCarouselStatic from './components/LogoCarouselStatic'
-import Sponsor from "./components/Sponsor";
+import {features, usersLink} from '../constants'
 import DiaLog from "./components/DiaLog";
 
 function Home() {
@@ -68,13 +66,13 @@ function Home() {
                     prevEl: '.user-swiper-button-prev',
                   }}
                   grabCursor
-                  // 轮播下用这个效果会失效
+                  // effect will disable when auto scroll
                   // effect={'fade'}
                   // fadeEffect={{
                   //   crossFade: true
                   // }}
                   // slidesPerView={1}
-                  // 自动轮播
+                  // auto scroll
                   loop={true}
                   speed={0}
                   autoplay={{
@@ -137,25 +135,6 @@ function Home() {
                   ))}
                 </Section>
             )}
-
-            {/*<Section>*/}
-            {/*  <Sponsor headerTitle={translate({ message: 'sponsor' })}/>*/}
-            {/*</Section>*/}
-
-            {/*Friend Links*/}
-            <Section>
-              <LogoCarousel
-                  logos={dromaraFriends}
-                  headerTitle={translate({ message: 'Dromara Friends' })}
-              />
-            </Section>
-            {/*/!*Friend Links*!/*/}
-            {/*<Section>*/}
-            {/*  <LogoCarouselStatic*/}
-            {/*      logos={friendsLink}*/}
-            {/*      headerTitle={translate({ message: 'Friends Link' })}*/}
-            {/*  />*/}
-            {/*</Section>*/}
           </main>
         </Layout>
         <DiaLog/>

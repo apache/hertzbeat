@@ -15,11 +15,6 @@ import { CONSTANTS } from '../../shared/constants';
           <i nz-icon nzType="github"></i>
         </a>
       </layout-default-header-item>
-      <layout-default-header-item direction="left">
-        <a layout-default-header-item-trigger href="//gitee.com/dromara/hertzbeat" target="_blank">
-          <i nz-icon nzIconfont="icon-gitee"></i>
-        </a>
-      </layout-default-header-item>
 
       <layout-default-header-item direction="left" hidden="pc">
         <div layout-default-header-item-trigger (click)="searchToggleStatus = !searchToggleStatus">
@@ -51,7 +46,7 @@ import { CONSTANTS } from '../../shared/constants';
             </div>
             <div nz-menu-item routerLink="/setting/tags">
               <i nz-icon nzType="tag" class="mr-sm"></i>
-              <span style="margin-left: 4px">{{ 'menu.extras.tags' | i18n }}</span>
+              <span style="margin-left: 4px">{{ 'menu.advanced.tags' | i18n }}</span>
             </div>
             <div nz-menu-item>
               <header-i18n></header-i18n>
@@ -88,13 +83,6 @@ import { CONSTANTS } from '../../shared/constants';
       </div>
     </global-footer>
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
-    <theme-btn
-      [types]="[
-        { key: 'default', text: 'app.theme.default' | i18n },
-        { key: 'dark', text: 'app.theme.dark' | i18n },
-        { key: 'compact', text: 'app.theme.compact' | i18n }
-      ]"
-    ></theme-btn>
   `
 })
 export class LayoutBasicComponent {

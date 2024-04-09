@@ -10,14 +10,14 @@ export default function DiaLog() {
     setVisible(false);
   }, []);
 
-  useEffect(() => {
-    if (sessionStorage.getItem("support-hertzbeat") == null) {
-      setTimeout(() => {
-        setVisible(true);
-      }, 10);
-      sessionStorage.setItem("support-hertzbeat", true);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (sessionStorage.getItem("support-hertzbeat") == null) {
+  //     setTimeout(() => {
+  //       setVisible(true);
+  //     }, 10);
+  //     sessionStorage.setItem("support-hertzbeat", true);
+  //   }
+  // }, []);
 
   return (
       <>

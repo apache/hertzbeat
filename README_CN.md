@@ -20,7 +20,7 @@
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
 
-**官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) 全球网络 | [hertzbeat.com](https://hertzbeat.com) 中国网络**
+**官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org)**
 
 
 ## 🎡 <font color="green">介绍</font>
@@ -409,6 +409,7 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/handy-git"><img src="https://avatars.githubusercontent.com/u/32837980?v=4?s=100" width="100px;" alt="handy"/><br /><sub><b>handy</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=handy-git" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/LiuTianyou"><img src="https://avatars.githubusercontent.com/u/30208283?v=4?s=100" width="100px;" alt="LiuTianyou"/><br /><sub><b>LiuTianyou</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=LiuTianyou" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -447,10 +448,6 @@ HertzBeat 赫兹跳动是 [Dromara开源社区](https://dromara.org/) 下顶级�
 - [ArgusDBM](https://github.com/zmops/ArgusDBM) : 开源数据库一体化监控平台，致力于监控所有数据库
 - [WangMarket](http://www.wang.market/) : 开源 SAAS 云建站系统
 - [API Testing](https://github.com/LinuxSuRen/api-testing)：轻量级、可扩展的接口开发、测试工具
-
-##### 赞助     
-
-- 感谢 [吉实信息(构建全新的微波+光交易网络)](https://www.flarespeed.com) 赞助服务器采集节点
 
 ##### Open-Source Project Build From Open-Source
 

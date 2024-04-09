@@ -33,7 +33,7 @@ const routes: Routes = [
   {
     path: 'status',
     component: LayoutBlankComponent,
-    children: [{ path: '', component: StatusPublicComponent, data: { titleI18n: 'menu.extras.status' } }]
+    children: [{ path: '', component: StatusPublicComponent, data: { titleI18n: 'menu.advanced.status' } }]
   },
   // passport
   {

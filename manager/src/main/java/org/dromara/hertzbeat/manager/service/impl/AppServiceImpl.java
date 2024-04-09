@@ -36,6 +36,7 @@ import org.dromara.hertzbeat.manager.dao.ParamDao;
 import org.dromara.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.dromara.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
+import org.dromara.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.dromara.hertzbeat.manager.service.AppService;
 import org.dromara.hertzbeat.manager.service.MonitorService;
 import org.dromara.hertzbeat.manager.service.ObjectStoreService;
@@ -256,6 +257,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             var hierarchyApp = new Hierarchy();
             hierarchyApp.setCategory(job.getCategory());
             hierarchyApp.setValue(job.getApp());
+            hierarchyApp.setHide(job.isHide());
             var nameMap = job.getName();
             if (nameMap != null && !nameMap.isEmpty()) {
                 var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, nameMap);
@@ -417,6 +419,29 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             defineAppFile.delete();
         }
         appDefines.remove(app.toLowerCase());
+    }
+
+    @Override
+    public void updateCustomTemplateConfig(TemplateConfig config) {
+        if (config == null) {
+            return;
+        }
+        Map<String, TemplateConfig.AppTemplate> templateMap = config.getApps();
+        if (templateMap == null || templateMap.isEmpty()) {
+            return;
+        }
+        for (var entry : templateMap.entrySet()) {
+            var app = entry.getKey().toLowerCase();
+            var appTemplate = entry.getValue();
+            if (appTemplate == null) {
+                continue;
+            }
+            var appDefine = appDefines.get(app);
+            if (appDefine == null) {
+                continue;
+            }
+            appDefine.setHide(appTemplate.isHide());
+        }
     }
 
     @Override

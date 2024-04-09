@@ -32,8 +32,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- *
- * @since 4/7/2023
+ * system config service impl
  */
 @Service
 public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<SystemConfig> {
@@ -77,14 +76,7 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
     public String type() {
         return "system";
     }
-
-    /**
-     * 该方法用于获取NoticeSender类型的TypeReference，以供后续处理。
-     * This method is used to get the TypeReference of NoticeSender type for subsequent processing.
-     *
-     * @return NoticeSender类型的TypeReference
-     * a TypeReference of NoticeSender type
-     */
+    
     @Override
     protected TypeReference<SystemConfig> getTypeReference() {
         return new TypeReference<>() {

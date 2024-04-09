@@ -145,7 +145,7 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 - Dromara开源社区顶级项目，Gitee GVP，使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
 - 无监控数量`License`，监控类型等伪开源限制。
 - 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
-- 开源不等同于免费，基于HertzBeat二次开发需保留logo，名称，页面脚注，版权等。
+- 开源不等同于免费，基于HertzBeat二次开发需保留页面脚注，版权等。
 
 **HertzBeat 已被 [CNCF云原生全景图](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category) 收录**
 
@@ -308,6 +308,5 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ----- 
 
-**官网: https://hertzbeat.com/**    
 **Github: https://github.com/dromara/hertzbeat**      
 **Gitee: https://gitee.com/dromara/hertzbeat**

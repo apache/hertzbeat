@@ -5,6 +5,7 @@ import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzCollapseModule } from 'ng-zorro-antd/collapse';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
+import { NzListModule } from 'ng-zorro-antd/list';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
@@ -45,6 +46,7 @@ const COMPONENTS: Array<Type<void>> = [
     NzCollapseModule,
     ClipboardModule,
     NzUploadModule,
+    NzListModule,
     SafePipe
   ],
   declarations: COMPONENTS

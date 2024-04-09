@@ -60,6 +60,12 @@ public class Hierarchy {
      */
     @Schema(description = "Is it a leaf node", example = "true", accessMode = READ_WRITE)
     Boolean isLeaf = false;
+
+    /**
+     * Is hide this app type in main menus layout
+     */
+    @Schema(description = "Is hide this app in main menus layout, only for app type, default true.", example = "true")
+    Boolean hide = true;
     
     /**
      * For leaf metric

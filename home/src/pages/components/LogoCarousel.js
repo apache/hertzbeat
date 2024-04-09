@@ -53,8 +53,7 @@ export default class LogoCarousel extends React.Component {
             <Slider {...settings}>
                 {this.props.logos.map((value, index) => (
                     <a key={index} href={value.url == null ? '#' : value.url} target="_blank" rel="noopener noreferrer">
-                        <img style={{ maxHeight: '100px', maxWidth: '120px' }} src={value.remoteImg == null ? iconCommonUrl + value.img : value.remoteImg}
-                             onError={(e) => e.target.src = iconCommonUrl + value.img} alt={value.alt} />
+                        <img style={{ maxHeight: '100px', maxWidth: '120px' }} src={value.remoteImg == null ? iconCommonUrl + value.img : value.remoteImg} alt={value.alt} />
                     </a>
                 ))}
             </Slider>
@@ -63,7 +62,7 @@ export default class LogoCarousel extends React.Component {
         return (
             <>
                 <div className={styles.companyUsage} ref={this.containerRef}>
-                    <h3>{this.props.headerTitle}</h3>
+                    <h3 style={{fontWeight: '520', fontSize: 'large'}}>{this.props.headerTitle}</h3>
                     <br/>
                     <div className={clsx(styles.logos)}>
                         {this.list()}
