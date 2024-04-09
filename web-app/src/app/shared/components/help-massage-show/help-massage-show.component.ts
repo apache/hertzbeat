@@ -23,17 +23,7 @@ export class HelpMassageShowComponent implements OnInit {
   module_name!: string;
   @Input()
   icon_name: string = 'home';
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private modal: NzModalService,
-    private notifySvc: NzNotificationService,
-    private monitorSvc: MonitorService,
-    private messageSvc: NzMessageService,
-    private rd2: Renderer2,
-    private el: ElementRef,
-    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
-  ) {}
+  constructor(private route: ActivatedRoute, private rd2: Renderer2, private el: ElementRef) {}
   isCollapsed: boolean = false;
   targetHeight: number = 140;
   collapse_expand: string = 'collapse';

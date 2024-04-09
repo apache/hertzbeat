@@ -51,19 +51,11 @@ module.exports = {
       appId: 'JMM99UL1H5',
       contextualSearch: true,
     },
-    announcementBar: {
-      id: 'github-star',
-      content:
-        '<font style="font-size: medium; font-weight: bolder">If you like HertzBeat,</font> <a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://github.com/dromara/hertzbeat">star us on GitHub </a> <font style="font-size: medium; font-weight: bolder"> or </font><a target="_blank" style="font-size: medium; font-weight: bolder" rel="noopener noreferrer" href="https://gitee.com/dromara/hertzbeat">Gitee! </a>⭐️⭐️',
-      backgroundColor: '#7228B5',
-      textColor: '#fafbfc',
-      isCloseable: true,
-    },
     navbar: {
       title: 'HertzBeat',
       logo: {
         alt: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
-        src: '/img/tancloud-logo.svg',
+        src: '/img/hertzbeat-brand.svg',
       },
       items: [
         {
@@ -107,16 +99,6 @@ module.exports = {
           ],
         },
         {
-          label: '开源之夏',
-          position: 'left',
-          href: 'https://summer-ospp.ac.cn/org/orgdetail/bef415f7-741e-4db8-a4ff-b3904c502471',
-        },
-        {
-          label: '华为云开源活动',
-          position: 'left',
-          to: '/docs/others/huaweicloud',
-        },
-        {
           type: 'docsVersionDropdown',
           position: 'right',
           // dropdownItemsAfter: [{to: '/versions', label: '所有版本'}],
@@ -141,16 +123,8 @@ module.exports = {
           title: 'intro',
           items: [
             {
-              label: 'use',
-              to: '/docs/',
-            },
-            {
               label: 'quickstart',
               to: '/docs/start/quickstart',
-            },
-            {
-              label: 'custom',
-              to: '/docs/advanced/extend-point',
             },
             {
               label: 'help',
@@ -162,21 +136,13 @@ module.exports = {
           title: 'contact',
           items: [
             {
-              label: 'dromara',
-              href: 'https://dromara.org/',
+              label: 'discussion',
+              href: 'https://github.com/dromara/hertzbeat/discussions/',
             },
             {
-              label: 'discuss',
+              label: 'contact',
               to: '/docs/others/contact',
-            },
-            {
-              label: 'team',
-              href: 'https://support.qq.com/products/379369/team',
-            },
-            {
-              label: 'tancloud',
-              href: 'https://tancloud.cn',
-            },
+            }
           ],
         },
         {
@@ -187,10 +153,6 @@ module.exports = {
               href: 'https://github.com/dromara/hertzbeat',
             },
             {
-              label: 'gitee',
-              href: 'https://gitee.com/dromara/hertzbeat',
-            },
-            {
               label: 'relate',
               to: '/docs/others/resource',
             },
@@ -198,12 +160,12 @@ module.exports = {
         },
       ],
       logo: {
-        alt: 'TANCLOUD探云-易用友好的高性能监控云',
-        src: '/img/planet.jpg',
+        alt: 'HertzBeat',
+        src: '/img/hertzbeat-brand.svg',
         href: 'https://github.com/dromara/hertzbeat',
       },
       copyright:
-        `Copyright © 2021-${new Date().getFullYear()} HertzBeat`,
+        `Copyright © ${new Date().getFullYear()} HertzBeat`,
     },
   },
   presets: [
@@ -231,7 +193,7 @@ module.exports = {
           postsPerPage: 1,
           feedOptions: {
             type: 'all',
-            copyright: `Copyright © ${new Date().getFullYear()} TANCLOUD, Inc.`,
+            copyright: `Copyright © ${new Date().getFullYear()} HertzBeat.`,
           },
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,

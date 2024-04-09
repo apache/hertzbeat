@@ -37,6 +37,7 @@ export class SystemConfigComponent implements OnInit {
         if (message.code === 0) {
           if (message.data) {
             this.config = message.data;
+            this.changeTheme(this.config.theme); // 刷新后更新主题
           } else {
             this.config = new SystemConfig();
           }
@@ -82,5 +83,23 @@ export class SystemConfigComponent implements OnInit {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
         }
       );
+  }
+  changeTheme(theme: string): void {
+    const style = this.doc.createElement('link');
+    style.type = 'text/css';
+    style.rel = 'stylesheet';
+    if (theme == 'dark') {
+      style.id = 'dark-theme';
+      style.href = 'assets/style.dark.css';
+    } else if (theme == 'compact') {
+      style.id = 'compact-theme';
+      style.href = 'assets/style.compact.css';
+    } else {
+      const dom = document.getElementById('dark-theme');
+      if (dom) {
+        dom.remove();
+      }
+    }
+    this.doc.body.append(style);
   }
 }

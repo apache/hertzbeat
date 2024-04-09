@@ -37,7 +37,7 @@ sidebar_label: 贡献者指南
 
 1. 需要`maven3+`, `java17`和`lombok`环境
 2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
-3. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`
+3. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
 
 - 前端启动
 
@@ -113,13 +113,9 @@ git pull upstream master
 
 ### 加入讨论交流
 
-[Gitter Channel](https://gitter.im/hertzbeat/community)
-
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
 加微信号 `tan-cloud` 拉您进微信交流群
-
-加QQ群号 `236915833` 进QQ交流群, 验证信息: `tancloud`
 
 ### 模块
 

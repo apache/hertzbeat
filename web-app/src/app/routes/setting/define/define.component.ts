@@ -8,6 +8,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { AppDefineService } from '../../../service/app-define.service';
+import { GeneralConfigService } from '../../../service/general-config.service';
 
 @Component({
   selector: 'app-define',
@@ -19,14 +20,14 @@ export class DefineComponent implements OnInit {
     private appDefineSvc: AppDefineService,
     private nzConfigService: NzConfigService,
     private notifySvc: NzNotificationService,
+    private configService: GeneralConfigService,
     private modal: NzModalService,
     private startUpSvc: StartupService,
     private route: ActivatedRoute,
-    private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
-  appMenus: Record<string, any[]> = {};
+  appMenusArr: any[][] = [];
   appLabel: Record<string, string> = {};
   loading = false;
   code: string = '';
@@ -59,21 +60,24 @@ export class DefineComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.appMenus = {};
+            let appMenus: Record<string, any[]> = {};
             message.data.forEach((app: any) => {
-              if (this.currentApp != null && this.currentApp === app.value) {
-                app.selected = true;
-              } else {
-                app.selected = false;
+              if (app.value == 'prometheus') {
+                return;
               }
+              app.selected = this.currentApp != null && this.currentApp === app.value;
               this.appLabel[app.value] = app.label;
-              let menus = this.appMenus[app.category];
+              let menus = appMenus[app.category];
               if (menus == undefined) {
                 menus = [app];
               } else {
                 menus.push(app);
               }
-              this.appMenus[app.category] = menus;
+              appMenus[app.category] = menus;
+            });
+            this.appMenusArr = Object.entries(appMenus);
+            this.appMenusArr.sort((a, b) => {
+              return b[1].length - a[1].length;
             });
           } else {
             console.warn(message.msg);
@@ -214,5 +218,40 @@ export class DefineComponent implements OnInit {
           console.warn(error.msg);
         }
       );
+  }
+
+  updateAppTemplateConfig(app: string, hide: boolean) {
+    this.saveLoading = true;
+    const updateAppTemplateConfig$ = this.configService
+      .updateAppTemplateConfig({ hide: hide }, app)
+      .pipe(
+        finalize(() => {
+          updateAppTemplateConfig$.unsubscribe();
+          this.saveLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.loadMenus();
+            this.startUpSvc.loadConfigResourceViaHttp().subscribe(() => {});
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
+          }
+        },
+        error => {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
+        }
+      );
+  }
+
+  renderCategoryName(category: string): string {
+    let label = this.i18nSvc.fanyi(`menu.monitor.${category}`);
+    if (label == `menu.monitor.${category}`) {
+      return category.toUpperCase();
+    } else {
+      return label;
+    }
   }
 }
