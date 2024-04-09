@@ -38,7 +38,7 @@ Even small corrections to typos are very welcome :)
 
 1. Requires `maven3+`, `java17` and `lombok` environments
 2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
-3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`
+3. Start `springboot manager` service `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
 
 - Front-web start
 
