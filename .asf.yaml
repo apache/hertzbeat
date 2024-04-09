@@ -42,4 +42,4 @@ notifications:
   issues: notifications@hertzbeat.apache.org
   pullrequests: notifications@hertzbeat.apache.org
   jobs: notifications@hertzbeat.apache.org
-  discussions:  dev@streampark.apache.org
+  discussions:  dev@hertzbeat.apache.org
