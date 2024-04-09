@@ -217,7 +217,7 @@ web-app/src/app/shared/shared.module.ts
 web-app/src/app/shared/shared-delon.module.ts
 web-app/src/app/shared/shared-zorro.module.ts
 web-app/src/app/app.module.ts
-web-app/src/app/app-component.ts
+web-app/src/app/app.component.ts
 web-app/src/app/global-config.module.ts
 web-app/src/app/icons-provider.module.ts
 web-app/src/assets/color.less
