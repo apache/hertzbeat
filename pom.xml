@@ -184,7 +184,6 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-devtools</artifactId>
-                <version>${spring-boot-dependencies.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
