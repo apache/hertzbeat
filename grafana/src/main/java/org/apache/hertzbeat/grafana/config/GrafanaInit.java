@@ -1,8 +1,8 @@
-package org.dromara.hertzbeat.grafana.config;
+package org.apache.hertzbeat.grafana.config;
 
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.grafana.service.DatasourceService;
-import org.dromara.hertzbeat.grafana.service.ServiceAccountService;
+import org.apache.hertzbeat.grafana.service.DatasourceService;
+import org.apache.hertzbeat.grafana.service.ServiceAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;

@@ -1,11 +1,11 @@
-package org.dromara.hertzbeat.grafana.controller;
+package org.apache.hertzbeat.grafana.controller;
 
 
 import com.dtflys.forest.http.ForestResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.dromara.hertzbeat.common.entity.dto.Message;
-import org.dromara.hertzbeat.grafana.service.ServiceAccountService;
+import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.grafana.service.ServiceAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
-import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**

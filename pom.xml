@@ -176,7 +176,7 @@
                 <version>${hertzbeat.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-grafana</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
