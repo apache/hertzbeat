@@ -174,8 +174,8 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
     /**
      * Export Configuration to Output Stream
-     * @param exportAlertDefineList
-     * @param os
+     * @param exportAlertDefineList 配置列表
+     * @param os          输出流
      */
     @Override
     void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
