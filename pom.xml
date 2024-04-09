@@ -30,6 +30,54 @@
     <artifactId>hertzbeat</artifactId>
     <packaging>pom</packaging>
     <version>2.0-SNAPSHOT</version>
+
+    <url>https://hertzbeat.apache.org/</url>
+
+    <description>
+        HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, 
+        custom monitoring and status page building capabilities.
+    </description>
+
+    <organization>
+        <name>Apache Software Foundation</name>
+        <url>https://www.apache.org</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/apache/incubator-hertzbeat.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-hertzbeat.git</developerConnection>
+        <url>scm:git:git@github.com:apache/incubator-hertzbeat.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/apache/incubator-hertzbeat/issues</url>
+    </issueManagement>
+
+    <mailingLists>
+        <mailingList>
+            <name>HertzBeat Developer List</name>
+            <post>dev@hertzbeat.apache.org</post>
+            <subscribe>dev-subscribe@hertzbeat.apache.org</subscribe>
+            <unsubscribe>dev-unsubscribe@hertzbeat.apache.org</unsubscribe>
+        </mailingList>
+        <mailingList>
+            <name>HertzBeat Commits List</name>
+            <post>commits@hertzbeat.apache.org</post>
+            <subscribe>commits-subscribe@hertzbeat.apache.org</subscribe>
+            <unsubscribe>commits-unsubscribe@hertzbeat.apache.org</unsubscribe>
+        </mailingList>
+    </mailingLists>
+    
+    
     <modules>
         <module>manager</module>
         <module>alerter</module>

@@ -34,7 +34,7 @@ Even small corrections to typos are very welcome :)
 
 1. Requires `maven3+`, `java17` and `lombok` environments    
 2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
-3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`   
+3. Start `springboot manager` service `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`   
 
 - Front-web start   
 
@@ -170,7 +170,7 @@ Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
 1. 需要`maven3+`, `java17`和`lombok`环境  
 2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
-3. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`  
+3. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`  
 
 - 前端启动
 
