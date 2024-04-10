@@ -35,9 +35,6 @@ const CODE_MESSAGE: { [key: number]: string } = {
   504: 'Gateway Timeout.'
 };
 
-/**
- * 默认HTTP拦截器，其注册细节见 `app.module.ts`
- */
 @Injectable()
 export class DefaultInterceptor implements HttpInterceptor {
   private notified = false;
