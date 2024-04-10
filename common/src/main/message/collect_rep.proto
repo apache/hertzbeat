@@ -16,7 +16,7 @@
  */
 
 syntax = "proto3";
-package org.dromara.hertzbeat.common.entity.message;
+package org.apache.hertzbeat.common.entity.message;
 
 message MetricsData
 {

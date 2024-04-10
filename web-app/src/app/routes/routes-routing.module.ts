@@ -2,16 +2,12 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { environment } from '@env/environment';
 
-// layout
 import { DetectAuthGuard } from '../core/guard/detect-auth-guard';
 import { LayoutBasicComponent } from '../layout/basic/basic.component';
 import { LayoutBlankComponent } from '../layout/blank/blank.component';
 import { LayoutPassportComponent } from '../layout/passport/passport.component';
-// dashboard pages
 import { DashboardComponent } from './dashboard/dashboard.component';
-// single pages
 import { UserLockComponent } from './passport/lock/lock.component';
-// passport pages
 import { UserLoginComponent } from './passport/login/login.component';
 import { StatusPublicComponent } from './status-public/status-public.component';
 
@@ -19,7 +15,6 @@ const routes: Routes = [
   {
     path: '',
     component: LayoutBasicComponent,
-    // 路由守卫 在路由之前判断是否有认证或者权限进入此路由
     canActivate: [DetectAuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -35,7 +30,6 @@ const routes: Routes = [
     component: LayoutBlankComponent,
     children: [{ path: '', component: StatusPublicComponent, data: { titleI18n: 'menu.advanced.status' } }]
   },
-  // passport
   {
     path: 'passport',
     component: LayoutPassportComponent,
@@ -51,8 +45,6 @@ const routes: Routes = [
   imports: [
     RouterModule.forRoot(routes, {
       useHash: environment.useHash,
-      // NOTICE: If you use `reuse-tab` component and turn on keepingScroll you can set to `disabled`
-      // Pls refer to https://ng-alain.com/components/reuse-tab
       scrollPositionRestoration: 'top'
     })
   ],
