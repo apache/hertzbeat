@@ -17,34 +17,34 @@
   -->
 <configuration scan="true">
     <springProperty scope="context" name="application_name" source="spring.application.name" defaultValue="collector"/>
-    <!-- 输出日志到控制台 ConsoleAppender -->
+    <!-- Output logs to ConsoleAppender -->
     <appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <!--<pattern>%d %p (%file:%line\)- %m%n</pattern>-->
-            <!--格式化输出：%d:表示日期    %thread:表示线程名     %-5level:级别从左显示5个字符宽度  %msg:日志消息    %n:是换行符-->
+            <!-- Format output: %d for date, %thread for thread name, %-5level for level with 5 character width, %msg for log message, %n for new line -->
             <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger - %msg%n</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
 
     <appender name="SystemOutFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+        <!-- Rolling policy for loggers, by date and by size -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- 归档的日志文件的路径。%d{yyyy-MM-dd}指定日期格式，%i指定索引 -->
+            <!-- Archive log file path. %d{yyyy-MM-dd} specifies date format, %i specifies index -->
             <fileNamePattern>logs/${application_name}-%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
-            <!--日志保留时长-->
+            <!-- Log retention duration -->
             <maxHistory>7</maxHistory>
-            <!--日志保留最大值-->
+            <!-- Maximum size of log retention -->
             <totalSizeCap>5GB</totalSizeCap>
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
-            <!-- 除按日志记录之外，还配置了日志文件不能超过200M，若超过200M，日志文件会以索引0开始 -->
+            <!-- Besides logging by day, log files cannot exceed 200M, if exceeded, log files will start from index 0 -->
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>50MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
-        <!-- 追加方式记录日志 -->
+        <!-- Append logs -->
         <append>true</append>
-        <!-- 日志文件的格式 -->
+        <!-- Log file format -->
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger Line:%-3L - %msg%n</pattern>
             <charset>utf-8</charset>
@@ -54,30 +54,30 @@
     <appender name="ErrOutFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>logs/${application_name}-%d{yyyy-MM-dd}-error.%i.log.zip</fileNamePattern>
-            <!--日志保留时长-->
+            <!-- Log retention duration -->
             <maxHistory>7</maxHistory>
-            <!--日志保留最大值-->
+            <!-- Maximum size of log retention -->
             <totalSizeCap>5GB</totalSizeCap>
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>50MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
-        <!-- 追加方式记录日志 -->
+        <!-- Append logs -->
         <append>true</append>
-        <!-- 日志文件的格式 -->
+        <!-- Log file format -->
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger Line:%-3L - %msg%n</pattern>
             <charset>utf-8</charset>
         </encoder>
-        <!-- 此日志文件记录error及以上级别的 -->
+        <!-- This log file records error and above levels -->
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
     </appender>
 
-    <!--这个logger的设置是：举例在org.springframework包下面的所有输出日志必须级别level在info及以上级别才会被输出！-->
-    <!--这样可以避免输出一些spring框架的许多常见debug信息!-->
+    <!-- Settings for this logger: for example, all output logs under the org.springframework package must be at level info or above to be output! -->
+    <!-- This can avoid outputting many common debug information of the spring framework! -->
     <logger name="org.springframework" level="info" />
     <logger name="org.json" level="error"/>
     <logger name="io.netty" level="info"/>
@@ -91,7 +91,7 @@
     <logger name="org.mongodb" level="warn"/>
     <logger name="io.greptime" level="warn"/>
 
-    <!-- 生产环境配置 -->
+    <!-- Production environment configuration -->
     <springProfile name="prod">
         <root level="INFO">
             <appender-ref ref="SystemOutFileAppender"/>
@@ -106,7 +106,7 @@
         </root>
     </springProfile>
 
-    <!-- 开发环境配置 -->
+    <!-- Development environment configuration -->
     <springProfile name="dev">
         <root level="INFO">
             <appender-ref ref="ConsoleAppender"/>
@@ -115,7 +115,7 @@
         </root>
     </springProfile>
 
-    <!-- 开发环境配置 -->
+    <!-- Development environment configuration -->
     <springProfile name="mysql">
         <root level="INFO">
             <appender-ref ref="ConsoleAppender"/>
