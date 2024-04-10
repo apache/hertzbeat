@@ -35,11 +35,11 @@
             <!--日志保留时长-->
             <maxHistory>7</maxHistory>
             <!--日志保留最大值-->
-            <totalSizeCap>10GB</totalSizeCap>
+            <totalSizeCap>5GB</totalSizeCap>
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
             <!-- 除按日志记录之外，还配置了日志文件不能超过200M，若超过200M，日志文件会以索引0开始 -->
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>200MB</maxFileSize>
+                <maxFileSize>50MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
         <!-- 追加方式记录日志 -->
@@ -57,10 +57,10 @@
             <!--日志保留时长-->
             <maxHistory>7</maxHistory>
             <!--日志保留最大值-->
-            <totalSizeCap>10GB</totalSizeCap>
+            <totalSizeCap>5GB</totalSizeCap>
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>200MB</maxFileSize>
+                <maxFileSize>50MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
         <!-- 追加方式记录日志 -->
@@ -94,7 +94,6 @@
     <!-- 生产环境配置 -->
     <springProfile name="prod">
         <root level="INFO">
-            <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
         </root>
