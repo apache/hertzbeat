@@ -39,7 +39,6 @@ const HEADER_COMPONENTS = [
   HeaderNotifyComponent
 ];
 
-// passport
 import { LayoutPassportComponent } from './passport/passport.component';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTagModule } from 'ng-zorro-antd/tag';
