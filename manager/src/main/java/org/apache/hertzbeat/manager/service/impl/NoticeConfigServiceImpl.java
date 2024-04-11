@@ -113,12 +113,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public void addNoticeRule(NoticeRule noticeRule) {
-//        ArrayList<String> list = new ArrayList<>();
-//        for (Long receiverId : noticeRule.getReceiverId()) {
-//            NoticeReceiver receiver = noticeReceiverDao.getReferenceById(receiverId);
-//            list.add(receiver.getName());
-//        }
-//        noticeRule.setReceiverName(list);
         noticeRuleDao.save(noticeRule);
         clearNoticeRulesCache();
     }

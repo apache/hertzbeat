@@ -140,14 +140,6 @@ public class NoticeConfigController {
             return predicate;
         };
         List<NoticeRule> receiverPage = noticeConfigService.getNoticeRules(specification);
-//        for (NoticeRule noticeRule : receiverPage) {
-//            List<String> receiverNameList = new ArrayList<>();
-//            for (Long receiverId : noticeRule.getReceiverId()) {
-//                String receiverName = noticeConfigService.getReceiverById(receiverId).getName();
-//                receiverNameList.add(receiverName);
-//            }
-//            noticeRule.setReceiverName(receiverNameList);
-//        }
         Message<List<NoticeRule>> message = Message.success(receiverPage);
         return ResponseEntity.ok(message);
     }
