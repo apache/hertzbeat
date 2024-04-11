@@ -439,10 +439,14 @@ export class AlertNoticeComponent implements OnInit {
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = false;
     this.receiversOption = [];
-    this.receiversOption.push({
-      value: rule.receiverId,
-      label: rule.receiverName
-    });
+
+    this.rule.receiverId.forEach(id => {
+      this.receiversOption.push({
+        value: id,
+        label: this.rule.receiverName[this.rule.receiverId.indexOf(id)]
+      });
+    })
+
     this.templatesOption = [];
     if (this.rule.templateId && this.rule.templateName) {
       this.templatesOption.push({
