@@ -69,15 +69,13 @@ public class NoticeRule {
             description = "接收人ID",
             example = "4324324", accessMode = READ_WRITE)
     @NotNull
-    @Convert(converter = JsonIdListAttributeConverter.class)
+    @Convert(converter = JsonLongListAttributeConverter.class)
     private List<Long> receiverId;
 
     @Schema(title = "Recipient identification",
             description = "接收人标识",
             example = "tom", accessMode = READ_WRITE)
-    @Length(max = 100)
-    @NotNull
-    @Convert(converter = JsonTagAttributeConverter.class)
+    @Convert(converter = JsonStringListAttributeConverter.class)
     private List<String> receiverName;
 
     @Schema(title = "Template ID",

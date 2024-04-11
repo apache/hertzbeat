@@ -492,9 +492,12 @@ export class AlertNoticeComponent implements OnInit {
 
   onSwitchReceiver() {
     this.receiversOption.forEach(option => {
-      if (option.value == this.rule.receiverId) {
-        this.switchReceiver = option.receiver;
-      }
+      this.rule.receiverId.forEach(id => {
+          if (option.value == id) {
+            this.switchReceiver = option.receiver;
+          }
+        }
+      )
     });
     this.rule.templateId = -1;
   }
@@ -685,10 +688,16 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageRuleModalOk() {
+    this.rule.receiverName = [];
     this.receiversOption.forEach(option => {
-      if (option.value == this.rule.receiverId) {
-        this.rule.receiverName = option.label;
-      }
+      this.rule.receiverId.forEach(
+        id => {
+          if (option.value == id) {
+            this.rule.receiverName.push(option.label);
+          }
+        }
+      )
+
     });
     // template model
     if (this.rule.templateId != null && this.rule.templateId >= 0) {
