@@ -6,6 +6,9 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 
 import java.util.List;
 
+/**
+ * Convert the list of strings to a JSON string
+ */
 public class JsonStringListAttributeConverter implements AttributeConverter<List<String>, String> {
     @Override
     public String convertToDatabaseColumn(List<String> attribute) {

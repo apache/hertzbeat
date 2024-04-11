@@ -445,7 +445,7 @@ export class AlertNoticeComponent implements OnInit {
         value: id,
         label: this.rule.receiverName[this.rule.receiverId.indexOf(id)]
       });
-    })
+    });
 
     this.templatesOption = [];
     if (this.rule.templateId && this.rule.templateName) {
@@ -497,11 +497,10 @@ export class AlertNoticeComponent implements OnInit {
   onSwitchReceiver() {
     this.receiversOption.forEach(option => {
       this.rule.receiverId.forEach(id => {
-          if (option.value == id) {
-            this.switchReceiver = option.receiver;
-          }
+        if (option.value == id) {
+          this.switchReceiver = option.receiver;
         }
-      )
+      });
     });
     this.rule.templateId = -1;
   }
@@ -694,14 +693,11 @@ export class AlertNoticeComponent implements OnInit {
   onManageRuleModalOk() {
     this.rule.receiverName = [];
     this.receiversOption.forEach(option => {
-      this.rule.receiverId.forEach(
-        id => {
-          if (option.value == id) {
-            this.rule.receiverName.push(option.label);
-          }
+      this.rule.receiverId.forEach(id => {
+        if (option.value == id) {
+          this.rule.receiverName.push(option.label);
         }
-      )
-
+      });
     });
     // template model
     if (this.rule.templateId != null && this.rule.templateId >= 0) {
