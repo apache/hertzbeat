@@ -201,7 +201,7 @@ metrics:
 
   - name: http_write_request_bytes
     i18n:
-      zh-CN: test
+      zh-CN: HTTP写入请求的字节数量
       en-US: http_write_request_bytes
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
@@ -215,17 +215,17 @@ metrics:
       # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: endpoint
         i18n:
-          zh-CN: 桶
+          zh-CN: 终点
           en-US: endpoint
         type: 1
       - field: org_id
         i18n:
-          zh-CN: 路径
+          zh-CN: 组织标识符
           en-US: org_id
         type: 1
       - field: status
         i18n:
-          zh-CN: status
+          zh-CN: 状态
           en-US: status
         type: 1
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
