@@ -24,7 +24,6 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.apache.hertzbeat.manager.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,8 +32,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.persistence.criteria.Predicate;
 import javax.validation.Valid;
-import java.util.AbstractList;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
