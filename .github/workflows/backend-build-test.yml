@@ -40,7 +40,7 @@ on:
 
 jobs:
   license-header:
-    if: github.repository == 'apache/incubator-hertzbeat'
+    if: github.repository == 'apache/hertzbeat'
     name: License header
     runs-on: ubuntu-latest
     timeout-minutes: 10
