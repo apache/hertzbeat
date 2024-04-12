@@ -20,8 +20,8 @@
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
 
-**官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org)**
-**邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至此订阅邮件列表</a>** ```dev-subscribe@hertzbeat.apache.org```
+**官网: [hertzbeat.dromara.org](https://hertzbeat.dromara.org)**    
+**邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至 ```dev-subscribe@hertzbeat.apache.org```</a>** 订阅[邮件列表](https://lists.apache.org/list.html?dev@hertzbeat.apache.org)
 
 
 ## 🎡 <font color="green">介绍</font>
@@ -425,7 +425,7 @@ Thanks these wonderful people, welcome to join us:
 
 ##### Channel 
 
-**<a href="mailto:dev-subscribe@hertzbeat.apache.org">订阅邮件列表</a>** : 发送邮件至 `dev-subscribe@hertzbeat.apache.org` 来订阅邮件列表.
+[订阅邮件列表](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : 发送邮件至 `dev-subscribe@hertzbeat.apache.org` 来订阅邮件列表.
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 

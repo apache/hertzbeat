@@ -20,7 +20,7 @@
 [![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
 
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**   
-**Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Send email to subscribe</a>** ```dev-subscribe@hertzbeat.apache.org```
+**Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe [mailing lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org)**
 
 
 ## 🎡 <font color="green">Introduction</font>
@@ -426,7 +426,7 @@ Thanks to these wonderful people, welcome to join us:
 
 ##### Channel
 
-**<a href="mailto:dev-subscribe@hertzbeat.apache.org">Join the Mailing Lists</a>** : Send email `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
+[Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 
