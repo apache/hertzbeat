@@ -22,8 +22,11 @@ public class JsonLongListAttributeConverter implements AttributeConverter<List<L
     public List<Long> convertToEntityAttribute(String dbData) {
         TypeReference<List<Long>> typeReference = new TypeReference<>() {};
         List<Long> longList = JsonUtil.fromJson(dbData, typeReference);
-        if (longList == null && !dbData.isEmpty() && StringUtils.isNumeric(dbData)) {
-            return List.of(Long.parseLong(dbData));
+        if (longList == null && !dbData.isEmpty()) {
+            if (StringUtils.isNumeric(dbData)){
+                return List.of(Long.parseLong(dbData));
+            }
+            else throw new NumberFormatException("String convert to Long error");
         }else return longList;
     }
 }
