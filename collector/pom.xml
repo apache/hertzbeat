@@ -19,7 +19,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>hertzbeat</artifactId>
-        <groupId>org.dromara.hertzbeat</groupId>
+        <groupId>org.apache.hertzbeat</groupId>
         <version>2.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -51,12 +51,12 @@
         </dependency>
         <!-- common -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
         </dependency>
         <!-- remoting -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-remoting</artifactId>
         </dependency>
         <!-- validation -->
@@ -263,7 +263,7 @@
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
                                     <!--项目启动类-->
-                                    <mainClass>org.dromara.hertzbeat.collector.Collector</mainClass>
+                                    <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
                                     <useUniqueVersions>false</useUniqueVersions>
                                     <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
                                     <addClasspath>true</addClasspath>

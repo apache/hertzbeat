@@ -26,10 +26,58 @@
         <version>3.2.3</version>
     </parent>
 
-    <groupId>org.dromara.hertzbeat</groupId>
+    <groupId>org.apache.hertzbeat</groupId>
     <artifactId>hertzbeat</artifactId>
     <packaging>pom</packaging>
     <version>2.0-SNAPSHOT</version>
+
+    <url>https://hertzbeat.apache.org/</url>
+
+    <description>
+        HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, 
+        custom monitoring and status page building capabilities.
+    </description>
+
+    <organization>
+        <name>Apache Software Foundation</name>
+        <url>https://www.apache.org</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/apache/incubator-hertzbeat.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-hertzbeat.git</developerConnection>
+        <url>scm:git:git@github.com:apache/incubator-hertzbeat.git</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/apache/incubator-hertzbeat/issues</url>
+    </issueManagement>
+
+    <mailingLists>
+        <mailingList>
+            <name>HertzBeat Developer List</name>
+            <post>dev@hertzbeat.apache.org</post>
+            <subscribe>dev-subscribe@hertzbeat.apache.org</subscribe>
+            <unsubscribe>dev-unsubscribe@hertzbeat.apache.org</unsubscribe>
+        </mailingList>
+        <mailingList>
+            <name>HertzBeat Commits List</name>
+            <post>commits@hertzbeat.apache.org</post>
+            <subscribe>commits-subscribe@hertzbeat.apache.org</subscribe>
+            <unsubscribe>commits-unsubscribe@hertzbeat.apache.org</unsubscribe>
+        </mailingList>
+    </mailingLists>
+    
+    
     <modules>
         <module>manager</module>
         <module>alerter</module>
@@ -81,7 +129,7 @@
         <clickhouse.version>0.4.6</clickhouse.version>
         <damengc-driver.version>8.1.2.141</damengc-driver.version>
         <postgresql.version>42.5.1</postgresql.version>
-        <h2.version>2.1.214</h2.version>
+        <h2.version>2.2.220</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <commons-collections4.version>4.4</commons-collections4.version>
@@ -92,37 +140,37 @@
         <dependencies>
             <!-- common -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-common</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- data warehouse -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-warehouse</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- alerter -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-alerter</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- collector -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-collector</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- remoting -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-remoting</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- push -->
             <dependency>
-                <groupId>org.dromara.hertzbeat</groupId>
+                <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-push</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>

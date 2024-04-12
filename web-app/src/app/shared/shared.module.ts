@@ -17,18 +17,9 @@ import { TimezonePipe } from './pipe/timezone.pipe';
 import { SHARED_DELON_MODULES } from './shared-delon.module';
 import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
 
-// #region third libs
-
 const ThirdModules: Array<Type<void>> = [];
-
-// #endregion
-
-// #region your components & directives
-
 const COMPONENTS: Array<Type<void>> = [KeyValueInputComponent, HelpMassageShowComponent, MetricsFieldInputComponent];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
-
-// #endregion
 
 @NgModule({
   imports: [
@@ -41,17 +32,11 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     DelonFormModule,
     ...SHARED_DELON_MODULES,
     ...SHARED_ZORRO_MODULES,
-    // third libs
     ...ThirdModules,
     NzBreadCrumbModule,
     NzTagModule
   ],
-  declarations: [
-    // your components
-    ...COMPONENTS,
-    ...DIRECTIVES,
-    HelpMassageShowComponent
-  ],
+  declarations: [...COMPONENTS, ...DIRECTIVES, HelpMassageShowComponent],
   exports: [
     CommonModule,
     FormsModule,
@@ -62,9 +47,7 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     DelonFormModule,
     ...SHARED_DELON_MODULES,
     ...SHARED_ZORRO_MODULES,
-    // third libs
     ...ThirdModules,
-    // your components
     ...COMPONENTS,
     ...DIRECTIVES
   ]

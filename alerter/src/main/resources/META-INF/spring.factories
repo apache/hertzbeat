@@ -14,4 +14,4 @@
 # limitations under the License.
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.dromara.hertzbeat.alert.config.AlerterAutoConfiguration
+org.apache.hertzbeat.alert.config.AlerterAutoConfiguration
