@@ -15,4 +15,4 @@
 
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.dromara.hertzbeat.common.config.CommonConfig
+org.apache.hertzbeat.common.config.CommonConfig
