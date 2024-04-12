@@ -4,10 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
 import org.apache.hertzbeat.common.util.JsonUtil;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
 
 /**
  * Convert the list of strings to a JSON string

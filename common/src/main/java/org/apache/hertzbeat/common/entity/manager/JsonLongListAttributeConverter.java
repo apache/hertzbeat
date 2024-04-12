@@ -2,7 +2,6 @@ package org.apache.hertzbeat.common.entity.manager;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import java.util.List;
@@ -11,7 +10,7 @@ import java.util.List;
 /**
  * json str to id list
  */
-@Slf4j
+
 public class JsonLongListAttributeConverter implements AttributeConverter<List<Long>, String> {
     @Override
     public String convertToDatabaseColumn(List<Long> attribute) {
