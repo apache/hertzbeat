@@ -470,7 +470,7 @@ CNCF Observability And Analysis - Monitoring Landscape.</a>
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=dromara/hertzbeat&type=Date)](https://star-history.com/#dromara/hertzbeat&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=apache/hertzbeat&type=Date)](https://star-history.com/#apache/hertzbeat&Date)
 
 
 ## 🛡️ License
