@@ -86,7 +86,7 @@ module.exports = {
             },
             {
               label: 'kanban',
-              href: 'https://github.com/orgs/dromara/projects/6',
+              href: 'https://github.com/orgs/apache/projects/6',
             },
             {
               label: 'sponsor',
@@ -101,7 +101,6 @@ module.exports = {
         {
           type: 'docsVersionDropdown',
           position: 'right',
-          // dropdownItemsAfter: [{to: '/versions', label: '所有版本'}],
           dropdownActiveClassDisabled: true,
         },
         {
