@@ -1,19 +1,19 @@
 const path = require('path')
 
-const organizationName = 'dromara' // Usually your GitHub name.
+const organizationName = 'apache' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
 const branch = 'master'
-const repoUrl = `https://github.com/dromara/${projectName}`
-const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages'
+const repoUrl = `https://github.com/apache/${projectName}`
+const cdnUrl = 'https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages'
 
 module.exports = {
   title: 'HertzBeat',
   tagline: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
-  url: 'https://hertzbeat.com',
+  url: 'https://hertzbeat.apache.org',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
-  favicon: '/img/tancloud-logo.svg',
+  favicon: '/img/hertzbeat-logo.svg',
   organizationName,
   projectName,
   customFields: {
@@ -25,7 +25,7 @@ module.exports = {
     locales: ['zh-cn', 'en'],
   },
   themeConfig: {
-    image: '/img/tancloud-logo.svg',
+    image: '/img/hertzbeat-logo.svg',
     liveCodeBlock: {
       playgroundPosition: 'bottom',
     },
@@ -107,13 +107,7 @@ module.exports = {
         {
           type: 'localeDropdown',
           position: 'right',
-        },
-        // {
-        //   label: 'login',
-        //   href: 'https://console.tancloud.cn',
-        //   position: 'right',
-        //   className: 'header-console-link',
-        // },
+        }
       ],
     },
     footer: {
@@ -137,7 +131,7 @@ module.exports = {
           items: [
             {
               label: 'discussion',
-              href: 'https://github.com/dromara/hertzbeat/discussions/',
+              href: 'https://github.com/apache/hertzbeat/discussions/',
             },
             {
               label: 'contact',
@@ -150,7 +144,7 @@ module.exports = {
           items: [
             {
               label: 'github',
-              href: 'https://github.com/dromara/hertzbeat',
+              href: 'https://github.com/apache/hertzbeat',
             },
             {
               label: 'relate',
@@ -162,7 +156,7 @@ module.exports = {
       logo: {
         alt: 'HertzBeat',
         src: '/img/hertzbeat-brand.svg',
-        href: 'https://github.com/dromara/hertzbeat',
+        href: 'https://github.com/apache/hertzbeat',
       },
       copyright:
         `Copyright © ${new Date().getFullYear()} HertzBeat`,
@@ -229,7 +223,7 @@ module.exports = {
           {
             tagName: 'link',
             rel: 'icon',
-            href: 'img/tancloud-logo.svg',
+            href: 'img/hertzbeat-logo.svg',
           },
           {
             tagName: 'link',
@@ -254,18 +248,18 @@ module.exports = {
           {
             tagName: 'link',
             rel: 'apple-touch-icon',
-            href: 'img/tancloud-logo.svg',
+            href: 'img/hertzbeat-logo.svg',
           },
           {
             tagName: 'link',
             rel: 'mask-icon',
-            href: 'img/tancloud-logo.svg',
+            href: 'img/hertzbeat-logo.svg',
             color: 'rgb(234, 90, 7)',
           },
           {
             tagName: 'meta',
             name: 'msapplication-TileImage',
-            content: 'img/tancloud-logo.svg',
+            content: 'img/hertzbeat-logo.svg',
           },
           {
             tagName: 'meta',

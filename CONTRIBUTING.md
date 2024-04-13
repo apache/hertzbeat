@@ -110,7 +110,7 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion   
 
-[Github Discussion](https://github.com/apache/hertzbeat/discussions)
+[Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
@@ -246,9 +246,9 @@ git pull upstream master
 
 ### 加入讨论交流
 
-[Github Discussion](https://github.com/apache/hertzbeat/discussions)
+[Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
-加微信号 `tan-cloud` 拉您进微信交流群
+Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
 ### 模块
 

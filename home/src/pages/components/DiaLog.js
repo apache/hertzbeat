@@ -33,7 +33,7 @@ export default function DiaLog() {
           maskClosable={false}
           style={{width: "600px", fontSize: "17px"}}
           icon={
-            <img src="/img/tancloud-logo.svg" alt="logo" />
+            <img src="/img/hertzbeat-logo.svg" alt="logo" />
           }
           footer={
             <div className={styles.goToGithubWrapper}>

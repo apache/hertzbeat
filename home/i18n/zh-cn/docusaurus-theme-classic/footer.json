@@ -33,7 +33,7 @@
   },
   "link.item.label.github": {
     "message": "Github仓库",
-    "description": "The label of footer link with label=github linking to https://github.com/dromara/hertzbeat"
+    "description": "The label of footer link with label=github linking to https://github.com/apache/hertzbeat"
   },
   "link.item.label.gitee": {
     "message": "Gitee仓库",
@@ -49,7 +49,7 @@
   },
   "link.item.label.discussion": {
     "message": "社区讨论",
-    "description": "The label of footer link with label=discussion linking to https://github.com/dromara/hertzbeat/discussions/"
+    "description": "The label of footer link with label=discussion linking to https://github.com/apache/hertzbeat/discussions/"
   },
   "link.item.label.contact": {
     "message": "联系交流",
