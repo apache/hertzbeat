@@ -69,6 +69,90 @@ module.exports = {
           to: '/blog/',
         },
         {
+          label: 'Community',
+          position: 'left',
+          items: [
+            {
+              label: 'Code of conduct',
+              to: 'https://www.apache.org/foundation/policies/conduct',
+            },
+            {
+              label: 'Join the mailing lists',
+              to: '/docs/community/mailing_lists',
+            },
+            {
+              label: 'Become A Committer',
+              to: '/docs/community/become_committer',
+            },
+            {
+              label: 'Become A PMC member',
+              href: '/docs/community/become_pmc_member',
+            },
+            {
+              label: 'New Committer Process',
+              to: '/docs/community/new_committer_process',
+            },
+            {
+              label: 'New PMC Member Process',
+              to: '/docs/community/new_pmc_ember_process',
+            },
+            {
+              label: 'Documentation Notice',
+              to: '/docs/community/document',
+            },
+            {
+              label: 'Submit Code',
+              to: '/docs/community/submit_code',
+            },
+            {
+              label: 'Code style and quality guide',
+              to: '/docs/community/code_style_and_quality_guide'
+            },
+            {
+              label: 'How to release',
+              to: '/docs/community/how_to_release'
+            },
+            {
+              label: 'How to Verify Release',
+              to: '/docs/community/how_to_verify_release'
+            }
+          ],
+        },
+        {
+          label: 'ASF',
+          position: 'left',
+          items: [
+            {
+              label: 'Foundation',
+              to: 'https://www.apache.org/',
+            },
+            {
+              label: 'License',
+              to: 'https://www.apache.org/licenses/',
+            },
+            {
+              label: 'Events',
+              to: 'https://eu.communityovercode.org/',
+            },
+            {
+              label: 'Security',
+              href: 'https://www.apache.org/security/',
+            },
+            {
+              label: 'Sponsorship',
+              to: 'https://www.apache.org/foundation/sponsorship.html',
+            },
+            {
+              label: 'Privacy',
+              to: 'https://privacy.apache.org/policies/privacy-policy-public.html',
+            },
+            {
+              label: 'Thanks',
+              to: 'https://www.apache.org/foundation/sponsors',
+            }
+          ],
+        },
+        {
           label: 'Others',
           position: 'left',
           items: [

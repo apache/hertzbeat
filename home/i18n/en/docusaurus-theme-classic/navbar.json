@@ -74,5 +74,85 @@
   "item.label.contributors": {
     "message": "Contributors",
     "description": "Navbar item with label contributors"
+  },
+  "item.label.Community": {
+    "message": "Community",
+    "description": "Navbar item with label Community"
+  },
+  "item.label.ASF": {
+    "message": "ASF",
+    "description": "Navbar item with label ASF"
+  },
+  "item.label.Code of conduct": {
+    "message": "Code of conduct",
+    "description": "Navbar item with label Code of conduct"
+  },
+  "item.label.Join the mailing lists": {
+    "message": "Join the mailing lists",
+    "description": "Navbar item with label Join the mailing lists"
+  },
+  "item.label.Become A Committer": {
+    "message": "Become A Committer",
+    "description": "Navbar item with label Become A Committer"
+  },
+  "item.label.Become A PMC member": {
+    "message": "Become A PMC member",
+    "description": "Navbar item with label Become A PMC member"
+  },
+  "item.label.New Committer Process": {
+    "message": "New Committer Process",
+    "description": "Navbar item with label New Committer Process"
+  },
+  "item.label.New PMC Member Process": {
+    "message": "New PMC Member Process",
+    "description": "Navbar item with label New PMC Member Process"
+  },
+  "item.label.Documentation Notice": {
+    "message": "Documentation Notice",
+    "description": "Navbar item with label Documentation Notice"
+  },
+  "item.label.Submit Code": {
+    "message": "Submit Code",
+    "description": "Navbar item with label Submit Code"
+  },
+  "item.label.Code style and quality guide": {
+    "message": "Code style and quality guide",
+    "description": "Navbar item with label Code style and quality guide"
+  },
+  "item.label.How to release": {
+    "message": "How to release",
+    "description": "Navbar item with label How to release"
+  },
+  "item.label.How to Verify Release": {
+    "message": "How to Verify Release",
+    "description": "Navbar item with label How to Verify Release"
+  },
+  "item.label.foundation": {
+    "message": "foundation",
+    "description": "Navbar item with label foundation"
+  },
+  "item.label.license": {
+    "message": "license",
+    "description": "Navbar item with label license"
+  },
+  "item.label.events": {
+    "message": "events",
+    "description": "Navbar item with label events"
+  },
+  "item.label.security": {
+    "message": "security",
+    "description": "Navbar item with label security"
+  },
+  "item.label.sponsorship": {
+    "message": "sponsorship",
+    "description": "Navbar item with label sponsorship"
+  },
+  "item.label.privacy": {
+    "message": "privacy",
+    "description": "Navbar item with label privacy"
+  },
+  "item.label.Thanks": {
+    "message": "Thanks",
+    "description": "Navbar item with label Thanks"
   }
 }
