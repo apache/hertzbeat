@@ -34,7 +34,7 @@
     <url>https://hertzbeat.apache.org/</url>
 
     <description>
-        HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, 
+        Apache HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, 
         custom monitoring and status page building capabilities.
     </description>
 
@@ -51,9 +51,9 @@
     </licenses>
 
     <scm>
-        <connection>scm:git:git://github.com/apache/incubator-hertzbeat.git</connection>
-        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/incubator-hertzbeat.git</developerConnection>
-        <url>scm:git:git@github.com:apache/incubator-hertzbeat.git</url>
+        <connection>scm:git:git://github.com/apache/hertzbeat.git</connection>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/hertzbeat.git</developerConnection>
+        <url>scm:git:git@github.com:apache/hertzbeat.git</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -71,9 +71,9 @@
         </mailingList>
         <mailingList>
             <name>HertzBeat Commits List</name>
-            <post>commits@hertzbeat.apache.org</post>
-            <subscribe>commits-subscribe@hertzbeat.apache.org</subscribe>
-            <unsubscribe>commits-unsubscribe@hertzbeat.apache.org</unsubscribe>
+            <post>notifications@hertzbeat.apache.org</post>
+            <subscribe>notifications-subscribe@hertzbeat.apache.org</subscribe>
+            <unsubscribe>notifications-unsubscribe@hertzbeat.apache.org</unsubscribe>
         </mailingList>
     </mailingLists>
     
