@@ -188,6 +188,26 @@ module.exports = {
         {
           type: 'localeDropdown',
           position: 'right',
+        }, 
+        {
+          href: repoUrl,
+          position: 'right',
+          className: 'header-github-link'
+        }, 
+        {
+          href: 'https://twitter.com/hertzbeat1024',
+          position: 'right',
+          className: 'header-twitter-link'
+        }, 
+        {
+          href: 'https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow',
+          position: 'right',
+          className: 'header-youtube-link'
+        }, 
+        {
+          href: 'https://discord.gg/Fb6M73htGr',
+          position: 'right',
+          className: 'header-discord-link'
         }
       ],
     },

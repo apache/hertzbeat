@@ -1,6 +1,6 @@
 ---
 id: introduce
-title: HertzBeat
+title: Apache HertzBeat
 sidebar_label: Introduce
 slug: /
 ---
