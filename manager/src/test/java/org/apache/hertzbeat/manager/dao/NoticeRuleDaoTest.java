@@ -53,10 +53,10 @@ class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
                 .modifier("mock")
                 .creator("mock")
                 .priorities(Collections.emptyList())
-                .receiverId(1L)
-                .receiverName("mock receiver")
+                .receiverId(List.of(1L))
+                .receiverName(List.of("mock receiver"))
                 .templateId(1L)
-                .receiverName("mock template")
+                .receiverName(List.of("mock template"))
                 .tags(Collections.emptyList())
                 .build();
         enabled = noticeRuleDao.saveAndFlush(enabled);
@@ -73,10 +73,10 @@ class NoticeRuleDaoTest extends AbstractSpringIntegrationTest {
                 .modifier("mock")
                 .creator("mock")
                 .priorities(Collections.emptyList())
-                .receiverId(1L)
-                .receiverName("mock receiver")
+                .receiverId(List.of(1L))
+                .receiverName(List.of("mock receiver"))
                 .templateId(1L)
-                .receiverName("mock template")
+                .receiverName(List.of("mock template"))
                 .tags(Collections.emptyList())
                 .build();
         disabled = noticeRuleDao.saveAndFlush(disabled);

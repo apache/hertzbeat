@@ -67,8 +67,8 @@ class NoticeConfigControllerTest {
         NoticeRule noticeRule = new NoticeRule();
         noticeRule.setId(87584674384L);
         noticeRule.setName("dispatch-1");
-        noticeRule.setReceiverId(4324324L);
-        noticeRule.setReceiverName("tom");
+        noticeRule.setReceiverId(List.of(4324324L));
+        noticeRule.setReceiverName(List.of("tom"));
         noticeRule.setTemplateId(4324324L);
         noticeRule.setTemplateName("test");
         noticeRule.setCreator("tom");
