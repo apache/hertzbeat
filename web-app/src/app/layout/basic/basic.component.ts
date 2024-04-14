@@ -11,7 +11,7 @@ import { CONSTANTS } from '../../shared/constants';
   template: `
     <layout-default [options]="options" [asideUser]="asideUserTpl" [nav]="navTpl" [content]="contentTpl" [customError]="null">
       <layout-default-header-item direction="left">
-        <a layout-default-header-item-trigger href="//github.com/dromara/hertzbeat" target="_blank">
+        <a layout-default-header-item-trigger href="//github.com/apache/hertzbeat" target="_blank">
           <i nz-icon nzType="github"></i>
         </a>
       </layout-default-header-item>
@@ -75,9 +75,9 @@ import { CONSTANTS } from '../../shared/constants';
     </layout-default>
     <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; margin:0;">
       <div style="margin-top: 30px">
-        HertzBeat {{ version }}<br />
-        Copyright &copy; 2021-{{ currentYear }}
-        <a href="https://hertzbeat.com" target="_blank">hertzbeat.com</a>
+        Apache HertzBeat {{ version }}<br />
+        Copyright &copy; {{ currentYear }}
+        <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat</a>
         <br />
         Licensed under the Apache License, Version 2.0
       </div>

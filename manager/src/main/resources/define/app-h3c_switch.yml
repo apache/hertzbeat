@@ -27,12 +27,12 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP 协议</a> 对 华三交换机 的通用指标(可用性，系统信息，端口流量等)进行采集监控。<br>您可以点击 “<i>新建 华三通用交换机</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring H3C Switch general performance metrics. <br>You can click the "<i>New H3C Switch</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.com/docs/advanced/extend-snmp'> SNMP 協議</a> 對 華三交換機 的通用指標(可用性，系統信息，端口流量等)進行采集監控。<br>您可以點擊 “<i>新建 華三通用交換機</i>” 並進行配置SNMP相關參數添加，或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 协议</a> 对 华三交换机 的通用指标(可用性，系统信息，端口流量等)进行采集监控。<br>您可以点击 “<i>新建 华三通用交换机</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring H3C Switch general performance metrics. <br>You can click the "<i>New H3C Switch</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 協議</a> 對 華三交換機 的通用指標(可用性，系統信息，端口流量等)進行采集監控。<br>您可以點擊 “<i>新建 華三通用交換機</i>” 並進行配置SNMP相關參數添加，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/h3c_switch
-  en-US: https://hertzbeat.com/docs/help/h3c_switch
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/h3c_switch
+  en-US: https://hertzbeat.apache.org/docs/help/h3c_switch
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

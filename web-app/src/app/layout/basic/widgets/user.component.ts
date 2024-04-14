@@ -61,38 +61,33 @@ import { CONSTANTS } from '../../../shared/constants';
           {{ 'about.help' | i18n }}
         </div>
         <div style="margin-top: 10px; font-weight: bolder; font-size: medium;">
-          <a [href]="'https://github.com/dromara/hertzbeat/releases/tag/' + version" target="_blank"> HertzBeat {{ version }} </a>
+          <a [href]="'https://github.com/apache/hertzbeat/releases/tag/' + version" target="_blank"> Apache HertzBeat {{ version }} </a>
         </div>
         <div style="margin-top: 10px; font-weight: normal; font-size: small;">
-          Copyright &copy; 2021-{{ currentYear }}
+          Copyright &copy; {{ currentYear }}
           <nz-divider nzType="vertical"></nz-divider>
-          <a href="https://hertzbeat.com" target="_blank">hertzbeat.com</a>
-          <nz-divider nzType="vertical"></nz-divider>
-          <a href="https://tancloud.cn" target="_blank">tancloud.cn</a>
+          <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat</a>
         </div>
         <nz-divider></nz-divider>
         <div style="margin-top: 10px; font-weight: bolder">
           <span nz-icon nzType="github"></span>
-          <a href="//github.com/dromara/hertzbeat" target="_blank"> {{ 'about.github' | i18n }} </a>
-          <nz-divider nzType="vertical"></nz-divider>
-          <span nz-icon nzIconfont="icon-gitee"></span>
-          <a href="//gitee.com/dromara/hertzbeat" target="_blank"> {{ 'about.gitee' | i18n }} </a>
+          <a href="//github.com/apache/hertzbeat" target="_blank"> {{ 'about.github' | i18n }} </a>
           <nz-divider nzType="vertical"></nz-divider>
           <span nz-icon nzType="bug"></span>
-          <a href="//github.com/dromara/hertzbeat/issues" target="_blank"> {{ 'about.issue' | i18n }} </a>
+          <a href="//github.com/apache/hertzbeat/issues" target="_blank"> {{ 'about.issue' | i18n }} </a>
           <nz-divider nzType="vertical"></nz-divider>
           <span nz-icon nzType="fork"></span>
-          <a href="//github.com/dromara/hertzbeat/pulls" target="_blank"> {{ 'about.pr' | i18n }} </a>
+          <a href="//github.com/apache/hertzbeat/pulls" target="_blank"> {{ 'about.pr' | i18n }} </a>
           <nz-divider nzType="vertical"></nz-divider>
           <span nz-icon nzType="message"></span>
           <a href="//discord.com/invite/Fb6M73htGr" target="_blank"> {{ 'about.discuss' | i18n }} </a>
           <nz-divider nzType="vertical"></nz-divider>
           <span nz-icon nzType="read"></span>
-          <a href="https://hertzbeat.com/docs/" target="_blank"> {{ 'about.doc' | i18n }} </a>
+          <a href="https://hertzbeat.apache.org/docs/" target="_blank"> {{ 'about.doc' | i18n }} </a>
           <nz-divider nzType="vertical"></nz-divider>
           <span nz-icon nzType="cloud-download"></span>
-          <a href="https://hertzbeat.com/docs/start/upgrade" target="_blank"> {{ 'about.upgrade' | i18n }} </a>
-          <a style="float: right" href="//github.com/dromara/hertzbeat" target="_blank"> {{ 'about.star' | i18n }} </a>
+          <a href="https://hertzbeat.apache.org/docs/start/upgrade" target="_blank"> {{ 'about.upgrade' | i18n }} </a>
+          <a style="float: right" href="//github.com/apache/hertzbeat" target="_blank"> {{ 'about.star' | i18n }} </a>
           <span style="float: right" nz-icon nzType="star" nzTheme="twotone"></span>
           <nz-divider style="float: right" nzType="vertical"></nz-divider>
         </div>

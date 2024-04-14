@@ -13,7 +13,7 @@ sidebar_label: 交流联系
 
 **微信交流群** 加微信号 tan-cloud 邀请您进微信群。
 
-**QQ交流群** 加QQ群号 236915833
+**QQ交流群** 加QQ群号 630061200
 
 ##### Github Discussion
 

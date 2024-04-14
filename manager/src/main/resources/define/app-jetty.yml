@@ -27,12 +27,12 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/advanced/extend-jmx'>JMX 协议</a> 对 Jetty 应用服务器的通用性能指标（内存信息，类加载，线程状态，JVM等）进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要在 Jetty 应用开启 JMX 服务, <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>点击查看开启步骤</a>。</span>
-  en-US: HertzBeat monitoring general performance metrics(memory pool, class loading, thread, jvm etc) of Jetty application server through <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/advanced/extend-jmx'>JMX protocol</a>. <br><span class='help_module_span'>Note⚠️:You should enable the JMX service in Jetty application. <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>Click here to view the specific steps.</a></span>
-  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/advanced/extend-jmx'>JMX 協議</a> 對 Jetty 應用服務器的通用性能指標（內存信息，類加載，線程狀態，JVM等）進行采集監控。<br><span class='help_module_span'>注意⚠️：您需要在 Jetty 應用開啓 JMX 服務, <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>點擊查看開啓步驟</a>。</span>
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'>JMX 协议</a> 对 Jetty 应用服务器的通用性能指标（内存信息，类加载，线程状态，JVM等）进行采集监控。<br><span class='help_module_span'>注意⚠️：您需要在 Jetty 应用开启 JMX 服务, <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>点击查看开启步骤</a>。</span>
+  en-US: HertzBeat monitoring general performance metrics(memory pool, class loading, thread, jvm etc) of Jetty application server through <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'>JMX protocol</a>. <br><span class='help_module_span'>Note⚠️:You should enable the JMX service in Jetty application. <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>Click here to view the specific steps.</a></span>
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'>JMX 協議</a> 對 Jetty 應用服務器的通用性能指標（內存信息，類加載，線程狀態，JVM等）進行采集監控。<br><span class='help_module_span'>注意⚠️：您需要在 Jetty 應用開啓 JMX 服務, <a class='help_module_content' href='https://eclipse.dev/jetty/documentation/jetty-10/operations-guide/index.html#og-jmx-remote'>點擊查看開啓步驟</a>。</span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/jetty/
-  en-US: https://hertzbeat.com/docs/help/jetty/
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/jetty/
+  en-US: https://hertzbeat.apache.org/docs/help/jetty/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

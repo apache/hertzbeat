@@ -89,7 +89,7 @@ github: https://github.com/dromara/hertzbeat
 
 For token configuration such as Dingding WeChat Feishu, please refer to the help document
 
-https://hertzbeat.com/docs/help/alert_dingtalk
+https://hertzbeat.apache.org/docs/help/alert_dingtalk
 
 > Alarm Notification -> New Alarm Notification Policy -> Enable Notification for the Recipient Just Configured
 
