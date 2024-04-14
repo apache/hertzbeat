@@ -4,8 +4,8 @@
   <ShortName>HertzBeat</ShortName>
   <Description>Search HertzBeat</Description>
   <InputEncoding>UTF-8</InputEncoding>
-  <Image width="16" height="16" type="image/x-icon">https://hertzbeat.com/zh-cn/img/tancloud-logo.svg</Image>
-  <Url type="text/html" method="get" template="https://hertzbeat.com/zh-cn/search?q={searchTerms}"/>
-  <Url type="application/opensearchdescription+xml" rel="self" template="https://hertzbeat.com/zh-cn/opensearch.xml" />
-  <moz:SearchForm>https://hertzbeat.com/zh-cn/</moz:SearchForm>
+  <Image width="16" height="16" type="image/x-icon">https://hertzbeat.apache.org/zh-cn/img/hertzbeat-logo.svg</Image>
+  <Url type="text/html" method="get" template="https://hertzbeat.apache.org/zh-cn/search?q={searchTerms}"/>
+  <Url type="application/opensearchdescription+xml" rel="self" template="https://hertzbeat.apache.org/zh-cn/opensearch.xml" />
+  <moz:SearchForm>https://hertzbeat.apache.org/zh-cn/</moz:SearchForm>
 </OpenSearchDescription>
