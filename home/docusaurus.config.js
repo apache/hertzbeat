@@ -2,6 +2,7 @@ const path = require('path')
 
 const organizationName = 'apache' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
+const deploymentBranch = 'asf-site' 
 const branch = 'master'
 const repoUrl = `https://github.com/apache/${projectName}`
 const cdnUrl = 'https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages'
@@ -15,7 +16,8 @@ module.exports = {
   onBrokenMarkdownLinks: 'throw',
   favicon: '/img/hertzbeat-logo.svg',
   organizationName,
-  projectName,
+  projectName, 
+  deploymentBranch,  
   customFields: {
     repoUrl,
     cdnUrl,
@@ -158,7 +160,7 @@ module.exports = {
         href: 'https://github.com/apache/hertzbeat',
       },
       copyright:
-        `Copyright © ${new Date().getFullYear()} HertzBeat`,
+        `Copyright © ${new Date().getFullYear()} Apache HertzBeat`,
     },
   },
   presets: [
@@ -186,7 +188,7 @@ module.exports = {
           postsPerPage: 1,
           feedOptions: {
             type: 'all',
-            copyright: `Copyright © ${new Date().getFullYear()} HertzBeat.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat.`,
           },
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,
