@@ -34,7 +34,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 - `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
 - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
-Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
+Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 ##### 2：Install via package
 
@@ -59,7 +59,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
    - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
    - Access `http://localhost:1157` and you will see the registered new collector in dashboard
 
-Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)
+Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apache.org/docs/start/package-deploy)
 
 ##### 3：Start via source code
 

@@ -31,8 +31,8 @@ help:
   en-US: HertzBeat collect and monitors SpringGateway through general performance metric that exposed by the SpringBoot Actuator. <br><span class='help_module_span'><br>Note⚠️:You should make sure that your SpringGateway application have already integrated and enabled the SpringBoot Actuator, <a class='help_module_content'  href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>click here to see the specific steps.</a></span>
   zh-TW: HertzBeat 對 <a class='help_module_content' href='http://www.tutorialspoint.com/spring_boot/spring_boot_actuator.htm'> SpringBoot Actuator </a>暴露的通用性能指標（globalfilters、routefilters、refresh、routes）進行採集監控。< span class='help_module_span'>注意⚠️：如果要監控SpringGateway中的指標，需要您的SpringGateway應用集成並開啟SpringBoot Actuator，<a class='help_module_content' href='https://cloud.spring.io/spring-cloud-gateway/multi/multi__actuator_api.html'>點擊查看具體步驟</a>。</span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/spring_gateway
-  en-US: https://hertzbeat.com/docs/help/spring_gateway
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/spring_gateway
+  en-US: https://hertzbeat.apache.org/docs/help/spring_gateway
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

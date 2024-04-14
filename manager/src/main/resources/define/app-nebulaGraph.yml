@@ -30,8 +30,8 @@ help:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/nebulagraph
-  en-US: https://hertzbeat.com/docs/help/nebulagraph
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nebulagraph
+  en-US: https://hertzbeat.apache.org/docs/help/nebulagraph
 # app api所需输入参数定义(根据定义渲染页面UI)
 # Input params define for app api(render web ui by the definition)
 params:

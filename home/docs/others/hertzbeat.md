@@ -280,6 +280,6 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 
 ----- 
 
-**官网: https://hertzbeat.com/**    
+**官网: https://hertzbeat.apache.org/**    
 **Github: https://github.com/dromara/hertzbeat**      
 **Gitee: https://gitee.com/dromara/hertzbeat**

@@ -29,8 +29,8 @@ help:
   en-US: Hertzbeat monitoring Doris DatabaseFE through general performance metric such as doris_fe connection total, doris_fe edit log clean, doris_fe image and doris_fe rps. The version we support is DORIS2.0.0. You could click the "<i>New Doris DatabaseFE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 Doris 資料庫FE的通用名額（doris_fe connection total、doris_fe edit log clean、doris_fe image、doris_fe rps等）進行量測監控，支持版本為DORIS2.0.0。<br>您可以點擊“<i>新建Doris DatabaseFE</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/doris_fe/
-  en-US: https://hertzbeat.com/docs/help/doris_fe/
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/doris_fe/
+  en-US: https://hertzbeat.apache.org/docs/help/doris_fe/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

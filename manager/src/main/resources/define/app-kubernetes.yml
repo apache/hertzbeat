@@ -27,12 +27,12 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 通过查询 Kubernetes ApiServer api 来对 kubernetes 的通用性能指标（nodes、namespaces、pods、services）进行采集监控。<br><span class='help_module_span'>注意⚠️：为了监控 Kubernetes 中的信息，则需要获取到可访问 Api Server 的授权 TOKEN，让采集请求获取到对应的信息，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes'>点击查看获取步骤</a>。</span>
-  en-US: HertzBeat monitoring Kubernetes general metrics such as nodes, namespaces and pods through querying data from Kubernetes ApiServer api. <br><span class='help_module_span'>Note⚠️:In order to monitor the information of Kubernetes, Hertzbeat need to obtain the authorized TOKEN that can access Api Server. <a class='help_module_content' href='https://hertzbeat.com/docs/help/kubernetes'>Click here to view the specific steps.</a></span>
-  zh-TW: HertzBeat 通過查詢 Kubernetes ApiServer api 來對 kubernetes 的通用性能指標（nodes、namespaces、pods、services）進行采集監控。<br><span class='help_module_span'>注意⚠️：爲了監控 Kubernetes 中的信息，則需要獲取到可訪問 Api Server 的授權 TOKEN，讓采集請求獲取到對應的信息，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/kubernetes'>點擊查看獲取步驟</a>。</span>
+  zh-CN: HertzBeat 通过查询 Kubernetes ApiServer api 来对 kubernetes 的通用性能指标（nodes、namespaces、pods、services）进行采集监控。<br><span class='help_module_span'>注意⚠️：为了监控 Kubernetes 中的信息，则需要获取到可访问 Api Server 的授权 TOKEN，让采集请求获取到对应的信息，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/kubernetes'>点击查看获取步骤</a>。</span>
+  en-US: HertzBeat monitoring Kubernetes general metrics such as nodes, namespaces and pods through querying data from Kubernetes ApiServer api. <br><span class='help_module_span'>Note⚠️:In order to monitor the information of Kubernetes, Hertzbeat need to obtain the authorized TOKEN that can access Api Server. <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/kubernetes'>Click here to view the specific steps.</a></span>
+  zh-TW: HertzBeat 通過查詢 Kubernetes ApiServer api 來對 kubernetes 的通用性能指標（nodes、namespaces、pods、services）進行采集監控。<br><span class='help_module_span'>注意⚠️：爲了監控 Kubernetes 中的信息，則需要獲取到可訪問 Api Server 的授權 TOKEN，讓采集請求獲取到對應的信息，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/kubernetes'>點擊查看獲取步驟</a>。</span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/kubernetes
-  en-US: https://hertzbeat.com/docs/help/kubernetes
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kubernetes
+  en-US: https://hertzbeat.apache.org/docs/help/kubernetes
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

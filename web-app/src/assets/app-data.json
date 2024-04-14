@@ -202,7 +202,7 @@
         },
         {
           "text": "helpCenter",
-          "externalLink": "https://hertzbeat.com/docs/help/guide",
+          "externalLink": "https://hertzbeat.apache.org/docs/help/guide",
           "target": "_blank",
           "i18n": "menu.extras.help",
           "icon": "anticon-global"

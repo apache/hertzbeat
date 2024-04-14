@@ -31,8 +31,8 @@ help:
   en-US: Prometheus Task Management, you can use this to monitor application that supports the Prometheus protocol, as convenient as Prometheus monitoring them, and it is a visual page operation. <br><span class='help_module_span'> The monitoring peer needs to provide the data interface of the prometheus metrics protocol. </span>
   zh-TW: Prometheus 任務管理，您可以透過此監控支援 Prometheus 協定的應用程式類型數據，像 Prometheus 監控它們一樣方便，並且是視覺化頁面的操作。 <br><span class='help_module_span'>⚠️注意：監控對端需要提供 prometheus metrics 協定的資料介面。 </span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/prometheus/
-  en-US: https://hertzbeat.com/docs/help/prometheus/
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/prometheus/
+  en-US: https://hertzbeat.apache.org/docs/help/prometheus/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
