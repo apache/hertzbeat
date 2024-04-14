@@ -5,10 +5,10 @@ const projectName = 'hertzbeat' // Usually your repo name.
 const deploymentBranch = 'asf-site' 
 const branch = 'master'
 const repoUrl = `https://github.com/apache/${projectName}`
-const cdnUrl = 'https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages'
+const cdnUrl = null
 
 module.exports = {
-  title: 'HertzBeat',
+  title: 'Apache HertzBeat',
   tagline: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
   url: 'https://hertzbeat.apache.org',
   baseUrl: '/',
