@@ -91,10 +91,6 @@ module.exports = {
               href: 'https://github.com/orgs/apache/projects/348',
             },
             {
-              label: 'sponsor',
-              to: '/docs/others/sponsor',
-            },
-            {
               label: 'resource',
               to: '/docs/others/resource',
             }

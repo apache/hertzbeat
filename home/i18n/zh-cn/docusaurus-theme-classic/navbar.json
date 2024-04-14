@@ -35,10 +35,6 @@
     "message": "设计文档",
     "description": "Navbar item with label design"
   },
-  "item.label.sponsor": {
-    "message": "赞助我们",
-    "description": "Navbar item with label sponsor"
-  },
   "item.label.resource": {
     "message": "相关资源",
     "description": "Navbar item with label resource"
