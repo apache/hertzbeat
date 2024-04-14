@@ -1557,7 +1557,7 @@
     pdfjs-dist "^2.0.0 || ^3.0.0"
     plyr "^3.7.3"
     tslib "^2.3.0"
-    xlsx "^0.18.5"
+    xlsx "^0.20.2"
 
 "@delon/acl@15.2.1", "@delon/acl@^15.2.1":
   version "15.2.1"
@@ -11990,9 +11990,9 @@ x-is-string@^0.1.0:
   resolved "https://registry.yarnpkg.com/x-is-string/-/x-is-string-0.1.0.tgz#474b50865af3a49a9c4657f05acd145458f77d82"
   integrity sha512-GojqklwG8gpzOVEVki5KudKNoq7MbbjYZCbyWzEz7tyPA7eleiE0+ePwOWQQRb5fm86rD3S8Tc0tSFf3AOv50w==
 
-xlsx@^0.18.5:
-  version "0.18.5"
-  resolved "https://registry.yarnpkg.com/xlsx/-/xlsx-0.18.5.tgz#16711b9113c848076b8a177022799ad356eba7d0"
+xlsx@^0.20.2:
+  version "0.20.2"
+  resolved "https://registry.yarnpkg.com/xlsx/-/xlsx-0.20.2.tgz#16711b9113c848076b8a177022799ad356eba7d0"
   integrity sha512-dmg3LCjBPHZnQp5/F/+nnTa+miPJxUXB6vtk42YjBBKayDNagxGEeIdWApkYPOf3Z3pm3k62Knjzp7lMeTEtFQ==
   dependencies:
     adler-32 "~1.3.0"
