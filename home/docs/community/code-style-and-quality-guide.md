@@ -26,53 +26,28 @@ sidebar_position: 3
 
 1. `ISSUE`/`PR`(pull request) driving and naming
 
-    - Ensure that `PR` corresponds to `ISSUE`.
-   > **Note**: `Hotfix` issue does not need to follow this rule, such as fixing spelling errors in `JavaDoc` or `document` files.
+    - After creating a new `PR`, you need to associate the existing corresponding `ISSUE` at the Github Development button on the `PR` page (if there is no corresponding ISSUE, it is recommended to create a new corresponding ISSUE).
 
     - Title naming format  
-      When naming `PR`, you can refer to the `[ISSUE-XXXX][Feature/Improve/Refactor/Bug/Cleanup] Title` of the pull request,
-      where `ISSUE-XXXX` should be replaced with the actual `ISSUE` number.
-        - The second part describes the type of `PR`, such as new features, improvement, refactor, etc.
-        - If all changes to `PR` are within a certain module or component, they can be indicated in the commit message.
+      `[feature/bugfix/doc/improve/refactor/bug/cleanup] title`
 
 2. Description
 
     - Please fill in the `PR` template to describe the contribution. So that the reviewer can understand the problem and solution from the description, rather than just from the code.
-    - Ensure that the description is sufficient to illustrate the problem addressed by the `PR`.
-    - Small changes do not require too much description.
-    - In an ideal scenario, the problem is described in `ISSUE`, and most of the description is copied from there.
+    - Check the CheckList
 
-3. Try to break down changes into pure types of changes
+3. It's recommended that `PR` should be arranged changes such as `cleanup`, `Refactor`, `improve`, and `feature` into separated `PRs`/`Commits`.
 
-    - It's recommended that `PR` should be arranged changes such as `Cleanup`, `Refactor`, `Improve`, and `Feature` into separated `PRs`/`Commits`.
-    - In this way, the reviewers can independently view cleaning and refactoring, and ensure that these changes do not change behavior.
-    - Then, the reviewer can independently review the core changes and ensure that they are a clean and robust change.
-    - In extreme cases, if a rollback commit is required, it can provide the optimal granularity for version rollback selection.
-    - In addition, significant contributions should be split into a set of independent changes that can be reviewed independently.
-
-4. Commit message  
-   The commit of messages should follow a pattern similar to the `PR`: `[ISSUE-XXXX][Feature/Improve/Refactor/Cleanup] Title of the pull request`.
-
-    - `[ISSUE-xxxx1][Improve(ment)] Improve ...`
-    - `[ISSUE-xxxx2][Refactor] Refactor ...`
-    - `[ISSUE-xxxx3][Feature] Support ...`
-    - `[ISSUE-xxxx4][Bug] Fix  ...`
-    - `[ISSUE-xxxx5][Feature][subtask] Support ...`
-    - `[Hotfix][module_name] Fix xxx comments ...`
-
-> **Note**: Try to use git history instead of annotated code (not mandatory)
+4. Commit message(English, lowercase, no special characters)  
+   The commit of messages should follow a pattern similar to the `[feature/bugfix/doc/improve/refactor/bug/cleanup] title`
 
 ## 2 Code Checkstyle
 
-- Backend code formatting Maven plugin: `spotless`
-  Just run `mvn spotless:apply` in the project repo root directory after installing the plugin.
-
 - Backend code specification Maven plugin: `checkstyle`
-  Just run `mvn checkstyle:checkstyle` after installing the plugin.
+  Just run `mvn checkstyle:checkstyle`.
 
 - Frontend code formatting plugin `eslint`
-    - The original command is `npx eslint --cache --max-warnings 0 "{src,mock}/**/*.{vue,ts,tsx}" --fix`
-    - Encapsulated as `npm run lint:eslint`
+  Just run `npm run lint:fix` in web-app
 
 ## 3 Programming Specification
 
@@ -100,52 +75,10 @@ sidebar_position: 3
    ```
    > Note: It is not necessary to strictly follow this rule in the `Builder` tool class.
 
-5. The methods name of basic `CRUD` of the database layer (non-service layer) should be uniformly standardized according to name `com.baomidou.mybatisplus.core.mapper.BaseMapper`:
-
-    - If performing a database query operation, the method name should start with `select`.
-
-      When querying a single record, you can use `selectXxx`, such as `selectApp`.
-
-      When querying multiple records, you can use `selectXxxs` to indicate a collection result, such as `selectApps`. If the entity ends with `s`, you can use `List`, such as `selectStatusList`.
-
-      If the result is paginated, you can use `selectPage`. If the result is a `Map`, it is recommended to follow the `Map` naming conventions, such as `selectIdUserMap`.
-
-      When the query includes specific conditions, you can use `selectXxxByXxx` naming, such as `listById` or `selectAppsByProjectId`.
-
-      > In cases of excessively long entity names, consider abbreviating judiciously. The principle is to be “clear and concise.” For example, `selectApplications` can be abbreviated to `selectApps`. However, if there is no suitable abbreviation, abbreviation is not recommended.
-      > For `Mapper` queries like `selectRecentK8sClusterIds`, you can also adopt the `selectList` naming convention.
-
-    - If perform a database <mark> update </mark> statement operation, the name of the method should be started with `update`
-    - If perform a database <mark> insert </mark> statement operation, the name of the method should be started with `insert`
-    - If perform a database <mark> delete </mark> statement operation, the name of the method should be started with `delete`
-
-6. The methods name of basic `CRUD` of the service layer should be named as `com.baomidou.mybatisplus.extension.service.IService`:
-
-    - If perform a database <mark> select </mark> operation to query multiple records, the name of the method should be started with a `list`, such as `listByIds`, `listByXxx`
-    - If perform a database <mark> select </mark> operation to query a single record, the name of the method should be started with get, such as `getByName` and `getOne`
-    - If perform a database <mark> update </mark> operation, the name of the method should be started with `update`
-    - If perform a database <mark> insert </mark> operation, the name of the method should be started with `save`
-    - If perform a database <mark> delete </mark> operation, the name of the method should be started with `remove`
-
-7. Naming of parameters
-
-    - It's best to maintain consistent parameter naming for parameters of the same type in the same interface.
-
+   
 ### 3.2 Constant Variables Definition
 
-1. Set the `serialVersionUID` of all classes to `1L`, following `Flink`'s `serialVersionUID`.
-
-    - Negative demo:
-      ```java
-        private static final long serialVersionUID = -8713837118340960775L;
-      ```
-
-    - Positive demo:
-      ```java
-       private static final long serialVersionUID = 1L;
-      ```
-
-2. Redundant strings should be extracted as constants  
+1. Redundant strings should be extracted as constants  
    >If a constant has been hardcoded twice or more times, please directly extract it as a constant and change the corresponding reference.
    In generally, constants in `log` can be ignored to extract.
 
@@ -195,15 +128,15 @@ sidebar_position: 3
         }
       ```
 
-3. Ensure code readability and intuitiveness
+2. Ensure code readability and intuitiveness
 
   - The string in the `annotation` symbol doesn't need to be extracted as constant.
 
   - The referenced `package` or `resource` name doesn't need to be extracted as constant.
 
-4. Variables that have not been reassigned must also be declared as <mark> final </mark> types.
+3. Variables that have not been reassigned must also be declared as <mark> final </mark> types.
 
-5. About the arrangement order of `constant/variable` lines  
+4. About the arrangement order of `constant/variable` lines  
 
    Sort the variable lines in the class in the order of
    1. `public static final V`, `static final V`,`protected static final V`, `private static final V`
@@ -574,37 +507,7 @@ to reduce code line depth and improve readability like follows:
     }
     ```
 
-## 4 Exception Processing
-
-This `hertzbeat-console-service` module is the core module for processing user requests.
-It's very necessary to strive to provide the best user experience.   
-So, we introduced the [AbstractApiException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AbstractApiException.java)
-and its subclasses to get more friendly interaction effect. Non-`AbstractApiException` is treated as internal server errors correspondingly, which needn't notify the interaction details to users.   
-Based on the above premise, we need to pay attention to the handling of `AbstractApiException`.    
-For example, we should throw an exception by one of followed subclasses of `AbstractApiException` when processing logic with the user operation errors or missing data errors:
-
-- [ApiDetailException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiDetailException.java)
-> An exception message that needs to be notified to front-end, is a detailed exception message, such as the stackTrace info, often accompanied by a large number of exception logs,
-> e.g: `Failed to start job`, need to display the exception(stackTrace info) to front-end.
-- [ApiAlertException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiAlertException.java)
-> An exception message that needs to be notified to front-end, usually a simple, clear message, e.g:
-> 1. Username already exists
-> 2. No permission, please contact the administrator
-> 3. ...
-
-- [AlertException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AlertException.java)
-> An exception message that needs to be notified to front-end when processing alert logic.
-- Or others exceptions used to get fine users interaction.
-
-In addition to handling the classification of exceptions, we'd better make the precise and concise exception message and try to ensure the follows in the exception:
-
-- Display the current status of the abnormal case.
-- Display the solutions to the abnormal case.
-- Or others information fit the pretty interaction.
-
-Please click [Issue-2325](https://github.com/apache/hertzbeat/issues/2325) for more details about the items if needed.
-
-## 5 Log
+## 4 Log
 
 1. Use `placeholders` for log output:
 
@@ -643,33 +546,14 @@ Please click [Issue-2325](https://github.com/apache/hertzbeat/issues/2325) for m
        }
        ```
 
-## 6 Testing
+## 5 Testing
 
-1. For some of the `code/variables` used for `testing`, you can use `@VisableForTesting` annotation to indicate that
+1. It's recommended to use `JUnit5` to develop test case preparation
 
-2. It's recommended to use `JUnit5` to develop test case preparation
-
-3. Using `AssertJ` to develop assertions statements.
-
-4. About the implementation of tests.
-
-    - If the test case only tests an `independent` class or method that does not require external components such as hadoop,
-      remote flink session cluster, etc., it can be written directly using `JUnit5` & `Mockito`.
-
-    - If the test case needs a `real database`, environment or backend environment,
-      but doesn't need to interact with external components, it's recommended to inherit directly from `SpringUnitTestBase`.
-
-    - If the test case requires `a real database, environment` or `backend environment`,
-      but needs to `interact with external components` (`Remote Flink session cluster`, `Hadoop cluster`),
-      it's recommended to write the test case by directly inheriting `SpringIntegrationTestBase`.
-
-5. It's only recommended to use integration tests on critical test links to avoid making the `CI` overhead time too long and the resource load too heavy.
-
+2. The implemented interface needs to write the `e2e` test case script under the `e2e` module.
 
 ## References
 - https://site.mockito.org/
-- https://flink.apache.org/zh/how-to-contribute/code-style-and-quality-preamble/
 - https://alibaba.github.io/p3c/
 - https://rules.sonarsource.com/java/
-- https://joel-costigliola.github.io/assertj/index.html
 - https://junit.org/junit5/

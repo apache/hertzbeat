@@ -26,53 +26,28 @@ sidebar_position: 3
 
 1. `ISSUE`/`PR`(拉取请求) 的引导和命名
 
-    - 确保 `PR` 与 `ISSUE` 相对应。
-   > **注意**：`Hotfix` 问题不需要遵循此规则，例如修复 `JavaDoc` 或 `document` 文件中的拼写错误。
+    - 新建 `PR` 后需要在 `PR` 页面的 Github Development 按钮处关联已存在的对应 `ISSUE`(若无建议新建对应ISSUE)
 
-    - 标题命名格式  
-      当命名 `PR` 时，可以参考拉取请求的 `[ISSUE-XXXX][Feature/Improve/Refactor/Bug/Cleanup] Title`，
-      其中 `ISSUE-XXXX` 应替换为实际的 `ISSUE` 编号。
-        - 第二部分描述了 `PR` 的类型，例如新功能、改进、重构等。
-        - 如果所有对 `PR` 的更改都在某个模块或组件内，则可以在提交消息中指示。
+    - 标题命名格式(英文，小写)   
+      `[feature/bugfix/doc/improve/refactor/bug/cleanup] title`
 
-2. 描述
+2. 添加描述信息
 
-    - 请填写 `PR` 模板以描述贡献。这样，审阅者可以从描述中，而不仅仅是从代码中，了解问题和解决方案。
-    - 确保描述足以说明 `PR` 所解决的问题。
-    - 小的更改不需要过多的描述。
-    - 在理想情况下，问题描述在 `ISSUE` 中，大部分描述都是从那里复制的。
+    - 新建 `PR` 时请仔细描述此贡献，描述文档和代码同样重要。审阅者可以从描述中，而不仅仅是从代码中，了解问题和解决方案。
+    - 勾选是否完成了对应的 Checklist。
 
-3. 尝试将更改分解为纯类型的更改
+3. 建议一次 `PR` 只包含一个功能/一种修复/一类改进/一种重构/一次清理/一类文档等
 
-    - 建议 `PR` 应将诸如 `Cleanup`、`Refactor`、`Improve` 和 `Feature` 之类的更改排列到分隔的 `PRs`/`Commits` 中。
-    - 这样，审阅者可以独立查看清理和重构，并确保这些更改不会更改行为。
-    - 然后，审阅者可以独立审查核心更改，并确保它们是干净和健壮的更改。
-    - 在极端情况下，如果需要回滚提交，它可以为版本回滚选择提供最佳的粒度。
-    - 此外，重大贡献应分解为一组可以独立审查的独立更改。
-
-4. 提交消息  
-   消息的提交应遵循与 `PR` 类似的模式：`[ISSUE-XXXX][Feature/Improve/Refactor/Cleanup] 拉取请求的标题`。
-
-    - `[ISSUE-xxxx1][Improve(ment)] 改进 ...`
-    - `[ISSUE-xxxx2][Refactor] 重构 ...`
-    - `[ISSUE-xxxx3][Feature] 支持 ...`
-    - `[ISSUE-xxxx4][Bug] 修复  ...`
-    - `[ISSUE-xxxx5][Feature][subtask] 支持 ...`
-    - `[Hotfix][module_name] 修复 xxx 注释 ...`
-
-> **注意**：尝试使用 git 历史记录而不是带注释的代码（不是强制的）
+4. 提交消息(英文，小写，无特殊字符)  
+   消息的提交应遵循与 `PR` 类似的模式：`[feature/bugfix/doc/improve/refactor/bug/cleanup] title` 
 
 ## 2 代码检查样式
 
-- 后端代码格式化 Maven 插件：`spotless`
-  在安装插件后，只需在项目仓库根目录中运行 `mvn spotless:apply`。
-
 - 后端代码规范 Maven 插件：`checkstyle`
-  在安装插件后，只需运行 `mvn checkstyle:checkstyle`。
+  后端运行 `mvn checkstyle:checkstyle`
 
 - 前端代码格式化插件 `eslint`
-    - 原始命令是 `npx eslint --cache --max-warnings 0 "{src,mock}/**/*.{vue,ts,tsx}" --fix`
-    - 封装为 `npm run lint:eslint`
+  前端运行 `npm run lint:fix`
 
 ## 3 编程规范
 
@@ -100,52 +75,11 @@ sidebar_position: 3
    ```
    > 注意：在 `Builder` 工具类中不必严格遵循这项规则。
 
-5. 数据库层（非服务层）的基本 `CRUD` 的方法名称应根据 `com.baomidou.mybatisplus.core.mapper.BaseMapper` 的名称统一标准化：
 
-   - 如果执行数据库查询操作，方法的名称应以 `select` 开头。
-
-     当查询单条记录时可以使用`selectXxx`，例如`selectApp`
-   
-     当查询多条记录时可以使用`selectXxxs`表示集合结果，例如`selectApps`，如果实体以`s`结尾，可以使用`List`如`selectStatusList`；
-
-     如果是分页结果，则可以使用`selectPage`；如果是`Map`结果，建议参考`Map`命名规则如`selectIdUserMap`
-   
-     当查询包含具体条件时可以使用`selectXxxByXxx`命名，例如`listById`、`selectAppsByProjectId`
-     
-     > 如遇到太长的实体可以酌情缩写，原则是“见名知意”且做到不啰嗦，例如`selectApplications`缩写为`selectApps`，但如果没有合适的缩写，不建议缩写
-     > 如果是`Mapper`查询`selectRecentK8sClusterIds`，则也可以采取`selectList`命名
-
-    - 如果执行数据库的 <mark> 更新 </mark> 语句操作，方法的名称应以 `update` 开头。
-    - 如果执行数据库的 <mark> 插入 </mark> 语句操作，方法的名称应以 `insert` 开头。
-    - 如果执行数据库的 <mark> 删除 </mark> 语句操作，方法的名称应以 `delete` 开头。
-
-6. 服务层的基本 `CRUD` 方法命名应参考 `com.baomidou.mybatisplus.extension.service.IService`：
-
-    - 如果执行数据库的 <mark> 选择 </mark> 操作来查询多个记录，方法的名称应以 `list` 开头，例如 `listByIds`、`listByXxx`。
-    - 如果执行数据库的 <mark> 选择 </mark> 操作查询单个记录，方法的名称应以 `get` 开头，例如 `getByName` 和 `getOne`。
-    - 如果执行数据库的 <mark> 更新 </mark> 操作，方法的名称应以 `update` 开头。
-    - 如果执行数据库的 <mark> 插入 </mark> 操作，方法的名称应以 `save` 开头。
-    - 如果执行数据库的 <mark> 删除 </mark> 操作，方法的名称应以 `remove` 开头。
-
-7. 参数的命名
-
-    - 最好保持同一接口中相同类型的参数的命名一致。
 
 ### 3.2 常量变量定义
 
-1. 将所有类的 `serialVersionUID` 设置为 `1L`，遵循 `Flink` 的 `serialVersionUID`。
-
-    - 负面示例：
-      ```java
-        private static final long serialVersionUID = -8713837118340960775L;
-      ```
-
-    - 正面示例：
-      ```java
-       private static final long serialVersionUID = 1L;
-      ```
-
-2. 多余的字符串应提取为常量
+1. 多余的字符串应提取为常量
    >如果一个常量被硬编码两次或多次，请直接提取它为常量并更改相应的引用。
    通常，`log` 中的常量可以忽略提取。
 
@@ -195,15 +129,15 @@ sidebar_position: 3
         }
       ```
 
-3. 确保代码的可读性和直观性
+2. 确保代码的可读性和直观性
 
 - `annotation` 符号中的字符串不需要提取为常量。
 
 - 被引用的 `package` 或 `resource` 名称不需要提取为常量。
 
-4. 未被重新分配的变量也必须声明为 <mark> final </mark> 类型。
+3. 未被重新分配的变量也必须声明为 <mark> final </mark> 类型。
 
-5. 关于 `constant/variable` 行的排序顺序
+4. 关于 `constant/variable` 行的排序顺序
 
    按以下顺序对类中的变量行进行排序：
     1. `public static final V`, `static final V`,`protected static final V`, `private static final V`
@@ -574,37 +508,7 @@ sidebar_position: 3
     }
     ```
 
-## 4 异常处理
-
-`hertzbeat-console-service` 模块是处理用户请求的核心模块。
-我们努力提供最好的用户体验是非常必要的。   
-因此，我们引入了 [AbstractApiException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AbstractApiException.java)
-及其子类以获得更友好的交互效果。非 `AbstractApiException` 被视为内部服务器错误，不需要通知用户交互细节。  
-基于上述前提，我们需要注意处理 `AbstractApiException`。  
-例如，在处理与用户操作错误或缺少数据错误的逻辑时，我们应该通过以下 `AbstractApiException` 的子类之一抛出异常：
-
-- [ApiDetailException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiDetailException.java)
-> 需要通知前端的异常消息，是一个详细的异常消息，例如 stackTrace 信息，通常伴随着大量的异常日志，
-> 例如：`Failed to start job`，需要在前端显示异常(stackTrace 信息)。
-- [ApiAlertException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiAlertException.java)
-> 需要通知前端的异常消息，通常是一个简单、清晰的消息，例如：
-> 1. 用户名已存在
-> 2. 没有权限，请联系管理员
-> 3. ...
-
-- [AlertException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AlertException.java)
-> 在处理警报逻辑时需要通知前端的异常消息。
-- 或者其他用于获得良好用户交互的异常。
-
-除了处理异常的分类，我们最好使异常消息准确而简洁，并试图确保异常中遵循以下几点：
-
-- 显示异常情况的当前状态。
-- 显示异常情况的解决方案。
-- 或其他适合的交互信息。
-
-如果需要，请点击 [Issue-2325](https://github.com/apache/hertzbeat/issues/2325) 以获取更多关于该项的详细信息。
-
-## 5 日志
+## 4 日志
 
 1. 使用 `占位符` 进行日志输出：
 
@@ -643,30 +547,15 @@ sidebar_position: 3
        }
        ```
 
-## 6 测试
+## 5 测试
 
-1. 对于用于 `测试` 的一些 `代码/变量`，您可以使用 `@VisableForTesting` 注解来指示。
+1. 建议使用 `JUnit5` 进行测试用例的准备。
 
-2. 建议使用 `JUnit5` 进行测试用例的准备。
+2. 实现的接口需在`e2e`模块下编写`e2e`测试用例脚本。
 
-3. 使用 `AssertJ` 进行断言语句的开发。
-
-4. 关于测试的实现。
-
-    - 如果测试用例只测试一个不需要如 hadoop、远程 flink 会话集群等外部组件的 `独立` 类或方法，可以直接使用 `JUnit5` 和 `Mockito` 进行编写。
-
-    - 如果测试用例需要一个 `真实的数据库`、环境或后端环境，
-      但不需要与外部组件进行交互，建议直接继承 `SpringUnitTestBase`。
-
-    - 如果测试用例需要 `真实的数据库、环境` 或 `后端环境`，
-      但需要与外部组件 (`远程 Flink 会话集群`、`Hadoop 集群`) 进行交互，建议通过直接继承 `SpringIntegrationTestBase` 来编写测试用例。
-
-5. 只建议在关键测试环节上使用集成测试，以避免使 `CI` 的开销时间过长和资源负荷过重。
 
 ## 参考资料
 - https://site.mockito.org/
-- https://flink.apache.org/zh/how-to-contribute/code-style-and-quality-preamble/
 - https://alibaba.github.io/p3c/
 - https://rules.sonarsource.com/java/
-- https://joel-costigliola.github.io/assertj/index.html
 - https://junit.org/junit5/
