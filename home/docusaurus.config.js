@@ -88,7 +88,7 @@ module.exports = {
             },
             {
               label: 'kanban',
-              href: 'https://github.com/orgs/apache/projects/6',
+              href: 'https://github.com/orgs/apache/projects/348',
             },
             {
               label: 'sponsor',
