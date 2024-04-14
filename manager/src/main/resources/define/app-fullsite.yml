@@ -31,8 +31,8 @@ help:
   en-US: HertzBeat monitoring all pages of website by URL path, HTTP status code, response times and request feedback. Due to the possibility that a website may have multiple pages provided by different services, Hertzbeat will collect <a class='help_module_content' href='https://en.wikipedia.org/wiki/Site_map'>SiteMap</a> which exposed by the website to monitor the entire site. <span class='help_module_span'><br>⚠️Note:HertzBeat support SiteMap in XML or TXT format.</span>
   zh-TW: HertzBeat對網站全部頁面的URL路徑、HTTP狀態碼、回應時間及請求迴響進行監測。 由於一個網站可能有多個不同服務提供的頁面，系統將採集網站暴露的<a class='help_ module_ content' href='https://en.wikipedia.org/wiki/Site_map'>網站地圖（SiteMap）</a>來監控全站。<span class='help_ module_ span'> <br>⚠️注意：此功能需要您的網站支持XML和TXT格式的SiteMap。</span>
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/guide/
-  en-US: https://hertzbeat.com/docs/help/guide/
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/guide/
+  en-US: https://hertzbeat.apache.org/docs/help/guide/
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

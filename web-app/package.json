@@ -5,12 +5,12 @@
   "author": "hertzbeat community",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dromara/hertzbeat.git"
+    "url": "git+https://github.com/apache/hertzbeat.git"
   },
   "bugs": {
-    "url": "https://github.com/dromara/hertzbeat/issues"
+    "url": "https://github.com/apache/hertzbeat/issues"
   },
-  "homepage": "https://hertzbeat.com",
+  "homepage": "https://hertzbeat.apache.org",
   "license": "Apache2.0",
   "keywords": [
     "monitor",

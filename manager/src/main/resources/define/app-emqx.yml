@@ -29,8 +29,8 @@ help:
   en-US: EMQX is an open source large-scale distributed MQTT message server. Hertzbeat measures and monitors common metrics of the EMQX message server 5.0+ version.<br>You can click "<i>New EMQX message server</i>" and configure it, or select "<i>More operations</i>", Import existing configuration.
   zh-TW: EMQX 是一款開源的大規模分散式 MQTT 訊息伺服器。 Hertzbeat對EMQX MQTT訊息伺服器 5.0+ 版本的通用指標進行測量監控，<br>您可以點擊“<i>新建 EMQX 訊息伺服器</i>” 並進行配置，或者選擇“<i>更多操作</i>” ，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/emqx
-  en-US: https://hertzbeat.com/docs/help/emqx
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/emqx
+  en-US: https://hertzbeat.apache.org/docs/help/emqx
 # Input params define for monitoring(render web ui by the definition)
 # 监控所需输入参数定义(根据定义渲染页面UI)
 params:

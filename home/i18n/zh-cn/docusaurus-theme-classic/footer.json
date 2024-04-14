@@ -23,21 +23,13 @@
     "message": "帮助文档",
     "description": "The label of footer link with label=help linking to /docs/help/guide"
   },
-  "link.item.label.dromara": {
-    "message": "Dromara开源社区",
-    "description": "The label of footer link with label=dromara linking to https://dromara.org/"
-  },
   "link.item.label.discuss": {
     "message": "交流联系",
     "description": "The label of footer link with label=discuss linking to /docs/others/contact"
   },
   "link.item.label.github": {
     "message": "Github仓库",
-    "description": "The label of footer link with label=github linking to https://github.com/dromara/hertzbeat"
-  },
-  "link.item.label.gitee": {
-    "message": "Gitee仓库",
-    "description": "The label of footer link with label=gitee linking to https://gitee.com/dromara/hertzbeat"
+    "description": "The label of footer link with label=github linking to https://github.com/apache/hertzbeat"
   },
   "link.title.resource": {
     "message": "相关资源",
@@ -49,7 +41,7 @@
   },
   "link.item.label.discussion": {
     "message": "社区讨论",
-    "description": "The label of footer link with label=discussion linking to https://github.com/dromara/hertzbeat/discussions/"
+    "description": "The label of footer link with label=discussion linking to https://github.com/apache/hertzbeat/discussions/"
   },
   "link.item.label.contact": {
     "message": "联系交流",

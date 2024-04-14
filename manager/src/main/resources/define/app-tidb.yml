@@ -31,8 +31,8 @@ help:
   en-US: HertzBeat monitors general performance metrics of TiDB through HTTP adn JDBC protocol. <br> You could click the "<i>New TiDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>".
   zh-TW: HertzBeat 使用 HTTP 和 JDBC 協議對 TiDB 的通用性能指標進行採集監控，點擊查看開啟步驟</a>。 <br>您可以點擊“<i>新建 TiDB 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/tidb
-  en-US: https://hertzbeat.com/docs/help/tidb
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/tidb
+  en-US: https://hertzbeat.apache.org/docs/help/tidb
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

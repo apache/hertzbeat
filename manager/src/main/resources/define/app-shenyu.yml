@@ -25,8 +25,8 @@ help:
   en-US: Hertzbeat monitors metrics of the ShenYu Gateway by calling the <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics Api</a>. <br>Note⚠️:You need to <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">enable ShenYu Metrics Plugin</a> in advance. You can click "<i>New ShenYu</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
   zh-TW: Hertzbeat 通過調用 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics 插件</a> 對 ShenYu 網關的通用指標 (請求量、執行時間、JVM、內存占用、線程信息等) 進行采集監控。<br>注意⚠️：需要您提前 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">開啓暴露 ShenYu Metrics 插件暴露其數據接口</a>。您可以點擊 “<i>新建 ShenYu</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/shenyu
-  en-US: https://hertzbeat.com/docs/help/shenyu
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/shenyu
+  en-US: https://hertzbeat.apache.org/docs/help/shenyu
 params:
   - field: host
     name:
