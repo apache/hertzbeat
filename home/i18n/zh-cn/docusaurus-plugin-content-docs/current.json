@@ -100,15 +100,15 @@
     "description": "The label for category Community in sidebar docs"
   },
   "sidebar.docs.category.contribution": {
-    "message": "贡献指导",
+    "message": "贡献指南",
     "description": "The label for category contribution in sidebar docs"
   },
   "sidebar.docs.category.submit": {
-    "message": "提交指导",
+    "message": "提交指南",
     "description": "The label for category submit in sidebar docs"
   },
   "sidebar.docs.category.release": {
-    "message": "发布",
+    "message": "发布指南",
     "description": "The label for category release in sidebar docs"
   }
 }

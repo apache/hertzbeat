@@ -21,7 +21,7 @@ sidebar_position: 5
     limitations under the License.
 -->
 
-This guideline is based on [apache newcommitter](https://community.apache.org/newcommitter.html#new-committer-process)
+[Apache New Committer Guideline](https://community.apache.org/newcommitter.html#new-committer-process)
 
 ## The process of new PMC member
 
@@ -78,8 +78,8 @@ ${Work list}[1]
 [1] https://github.com/apache/hertzbeat/commits?author=${NEW_PMC_NAME}
 ```
 
-Note that, Voting ends one week from today, i.e. [midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
-See voting [guidelines](https://community.apache.org/newcommitter.html)
+Note that, Voting ends one week from today, i.e. [midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[Apache Voting Guidelines](https://community.apache.org/newcommitter.html)
 
 
 ### Close Vote Template
@@ -117,7 +117,7 @@ HertzBeat proposes to invite ${NEW_PMC_NAME} to join the PMC.
 The vote result is available here: https://lists.apache.org/...
 ```
 
-See [newpmc](https://www.apache.org/dev/pmc.html#newpmc)
+[Apache New Pmc Guide](https://www.apache.org/dev/pmc.html#newpmc)
 
 ### PMC Member Invite Template
 

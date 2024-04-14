@@ -21,25 +21,20 @@ sidebar_position: 2
     limitations under the License.
 -->
 
-* First from the remote repository <https://github.com/apache/incubator-hertzbeat.git> fork a copy of the code into your own repository
+* First from the remote repository <https://github.com/apache/hertzbeat.git> fork a copy of the code into your own repository
 
-* There are currently three branches in the remote repository:
-    * **dev**   daily development branch
-      > Every day dev development branch, newly submitted code can pull request to this branch.
-
-    * **1.0.0-release** release version branch
-      > The release version branch, there will be 2.0...and other version branches in the future.
+* The remote dev and merge branch is `master`.
 
 * Clone your repository to your local
 
 ```shell
-    git clone git@github.com:apache/incubator-hertzbeat.git
+    git clone git@github.com:<Your Github ID>/hertzbeat.git
 ```
 
 * Add remote repository address, named upstream
 
 ```shell
-  git remote add upstream git@github.com:apache/incubator-hertzbeat.git
+  git remote add upstream git@github.com:apache/hertzbeat.git
 ```
 
 * View repository
@@ -63,26 +58,19 @@ sidebar_position: 2
     git merge --no-ff upstream/dev
     ```
 
-* If remote branch has a new branch such as `dev-1.0`, you need to synchronize this branch to the local repository
-
-    ```shell
-    git checkout -b dev-1.0 upstream/dev-1.0
-    git push --set-upstream origin dev-1.0
-    ```
+* **⚠️Note that you must create a new branch to develop features `git checkout -b feature-xxx`. It is not recommended to use the master branch for direct development**
 
 * After modifying the code locally, submit it to your own repository:
-
+    **Note that the submission information does not contain special characters**
     ```shell
     git commit -m 'commit content'
     git push
     ```
 
-* Submit changes to the remote repository
+* Submit changes to the remote repository, you can see a green button "Compare & pull request" on your repository page, click it.
 
-* On the github page, click "New pull request".
+* Select the modified local branch and the branch you want to merge with the past, you need input the message carefully, describe doc is important as code, click "Create pull request".
 
-* Select the modified local branch and the branch you want to merge with the past, click "Create pull request".
+* Then the community Committers will do CodeReview, and then he will discuss some details (design, implementation, performance, etc.) with you, afterward you can directly update the code in this branch according to the suggestions (no need to create a new PR). When this pr is approved, the commit will be merged into the master branch
 
-* Then the community Committers will do CodeReview, and then he will discuss some details (including design, implementation, performance, etc.) with you. When everyone on the team is satisfied with this modification, the commit will be merged into the dev branch
-
-* Finally, congratulations, you have become an official contributor to HertzBeat !
+* Finally, congratulations, you have become an official contributor to HertzBeat ! You will be added to the contributor wall, you can contact the community to obtain a contributor certificate.

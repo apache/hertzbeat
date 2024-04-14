@@ -578,21 +578,21 @@ sidebar_position: 3
 
 `hertzbeat-console-service` 模块是处理用户请求的核心模块。
 我们努力提供最好的用户体验是非常必要的。   
-因此，我们引入了 [AbstractApiException](https://github.com/apache/incubator-hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AbstractApiException.java)
+因此，我们引入了 [AbstractApiException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AbstractApiException.java)
 及其子类以获得更友好的交互效果。非 `AbstractApiException` 被视为内部服务器错误，不需要通知用户交互细节。  
 基于上述前提，我们需要注意处理 `AbstractApiException`。  
 例如，在处理与用户操作错误或缺少数据错误的逻辑时，我们应该通过以下 `AbstractApiException` 的子类之一抛出异常：
 
-- [ApiDetailException](https://github.com/apache/incubator-hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiDetailException.java)
+- [ApiDetailException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiDetailException.java)
 > 需要通知前端的异常消息，是一个详细的异常消息，例如 stackTrace 信息，通常伴随着大量的异常日志，
 > 例如：`Failed to start job`，需要在前端显示异常(stackTrace 信息)。
-- [ApiAlertException](https://github.com/apache/incubator-hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiAlertException.java)
+- [ApiAlertException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiAlertException.java)
 > 需要通知前端的异常消息，通常是一个简单、清晰的消息，例如：
 > 1. 用户名已存在
 > 2. 没有权限，请联系管理员
 > 3. ...
 
-- [AlertException](https://github.com/apache/incubator-hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AlertException.java)
+- [AlertException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AlertException.java)
 > 在处理警报逻辑时需要通知前端的异常消息。
 - 或者其他用于获得良好用户交互的异常。
 
@@ -602,7 +602,7 @@ sidebar_position: 3
 - 显示异常情况的解决方案。
 - 或其他适合的交互信息。
 
-如果需要，请点击 [Issue-2325](https://github.com/apache/incubator-hertzbeat/issues/2325) 以获取更多关于该项的详细信息。
+如果需要，请点击 [Issue-2325](https://github.com/apache/hertzbeat/issues/2325) 以获取更多关于该项的详细信息。
 
 ## 5 日志
 

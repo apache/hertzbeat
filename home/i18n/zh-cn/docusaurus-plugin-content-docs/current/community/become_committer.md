@@ -24,7 +24,7 @@ sidebar_position: 2
 
 ## 成为 Apache HertzBeat™ 的 Committer
 
-任何支持社区并在 CoPDoC 领域中工作的人都可以成为 Apache HertzBeat 的Committer。CoPDoC 是 ASF 的缩写，用来描述我们如何不仅仅通过代码来认识到您的贡献。
+任何支持社区并在 CoPDoC 领域中工作的人都可以成为 Apache HertzBeat 的 Committer。CoPDoC 是 ASF 的缩写，用来描述我们如何不仅仅通过代码来认识到您的贡献。
 
 - **Community** - 你可以通过我们的邮件列表、问题追踪器、讨论页面与社区成员互动，并分享愿景和知识。
 - **Project** - 需要明确的愿景和共识。
@@ -46,6 +46,7 @@ Committer 的候选人应该持续参与并为 HertzBeat 做出大量的贡献�
 - +1 个月的高度活动和参与。
 
 ### 贡献的质量
+
 - 对项目有深入的理解。
 - 经过充分测试、良好设计、遵循 Apache HertzBeat 的编码标准，及简单的修复补丁。
 - 井井有条的面向用户的详细文档。

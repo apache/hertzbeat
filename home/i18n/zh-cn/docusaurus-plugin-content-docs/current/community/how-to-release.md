@@ -129,11 +129,11 @@ gpg:              unchanged: 1
 
 或者进入 https://keyserver.ubuntu.com/ 网址，输入密钥的名称，然后点击'Search key'
 
-![图片](https://github.com/apache/incubator-hertzbeat/assets/19602424/b8fe193e-c137-42b0-a833-90a6d975f335)
+![图片](https://github.com/apache/hertzbeat/assets/19602424/b8fe193e-c137-42b0-a833-90a6d975f335)
 
 如果查询结果如下，表示密钥创建成功。
 
-![图片](https://github.com/apache/incubator-hertzbeat/assets/19602424/73ada3f2-2d2e-4b76-b25c-34a52db6a069)
+![图片](https://github.com/apache/hertzbeat/assets/19602424/73ada3f2-2d2e-4b76-b25c-34a52db6a069)
 
 #### 2.4 将 gpg 公钥添加到 Apache SVN 项目仓库的 KEYS 文件中
 
@@ -241,7 +241,7 @@ $ mvn --encrypt-password <apache passphrase>
 #### 3.2 克隆发布分支到本地
 
 ```shell
-git clone -b release-2.1.0-rc1 -c core.autocrlf=false git@github.com:apache/incubator-hertzbeat.git
+git clone -b release-2.1.0-rc1 -c core.autocrlf=false git@github.com:apache/hertzbeat.git
 ```
 
 #### 3.3 发布相关JAR到Apache Nexus
@@ -429,7 +429,7 @@ svn commit -m "release for HertzBeat 2.1.0"
 
 > 在浏览器中访问 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/
 
-![图片](https://github.com/apache/incubator-hertzbeat/assets/19602424/e4763537-af9f-4f2a-967d-912e6670b360)
+![图片](https://github.com/apache/hertzbeat/assets/19602424/e4763537-af9f-4f2a-967d-912e6670b360)
 
 ## 3. 进入社区投票阶段
 
@@ -458,7 +458,7 @@ Maven artifacts are available in a staging repository at:
 https://repository.apache.org/content/repositories/orgapachehertzbeat-1012/
 
 Git tag for the release:
-https://github.com/apache/incubator-hertzbeat/releases/tag/v2.1.0-rc1
+https://github.com/apache/hertzbeat/releases/tag/v2.1.0-rc1
 
 The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
@@ -490,7 +490,7 @@ https://hertzbeat.apache.org/community/release/how-to-verify
 
 How to Build:
 
-1.cd incubator-hertzbeat
+1.cd hertzbeat
 2.sh ./build.sh
 
 Thanks!
@@ -537,11 +537,11 @@ ChunJin Mu
 邮件内容中的一项是`Vote thread`，链接获取方式如下：<br />
 访问此地址 https://lists.apache.org/list.html?dev@hertzbeat.apache.org ， 找到邮件标题并点击显示投票内容
 
-![图片](https://github.com/apache/incubator-hertzbeat/assets/19602424/5755ed06-529f-4739-96a8-1ac13bbb21ea)
+![图片](https://github.com/apache/hertzbeat/assets/19602424/5755ed06-529f-4739-96a8-1ac13bbb21ea)
 
 右键点击标题，点击复制链接地址获取链接
 
-![图片](https://github.com/apache/incubator-hertzbeat/assets/19602424/1616da5b-7891-45cc-b956-a0ba5e7ce874)
+![图片](https://github.com/apache/hertzbeat/assets/19602424/1616da5b-7891-45cc-b956-a0ba5e7ce874)
 
 #### 3.2 发送孵化社区投票邮件
 
@@ -570,7 +570,7 @@ The release candidate:
 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/
 
 Git tag for the release:
-https://github.com/apache/incubator-hertzbeat/releases/tag/v2.1.0-rc1
+https://github.com/apache/hertzbeat/releases/tag/v2.1.0-rc1
 
 Maven artifacts are available in a staging repository at:
 https://repository.apache.org/content/repositories/orgapachehertzbeat-1012/
@@ -596,10 +596,10 @@ Steps to validate the release， Please refer to:
 How to Build:
 
 1) clone source code:
-> git clone -b v2.1.0-rc1 git@github.com:apache/incubator-hertzbeat.git
+> git clone -b v2.1.0-rc1 git@github.com:apache/hertzbeat.git
 
 2) build project:
-> cd incubator-hertzbeat && sh ./build.sh
+> cd hertzbeat && sh ./build.sh
 
 
 Thanks,
@@ -660,7 +660,7 @@ ChunJin Mu
 邮件内容中的一项是`Vote thread`，链接获取方式如下：<br />
 访问此地址 https://lists.apache.org/list.html?general@incubator.apache.org ， 找到邮件标题并点击显示投票内容
 
-![图片](https://github.com/apache/incubator-hertzbeat/assets/19602424/aea68925-7911-4413-8b2d-aea12685337f)
+![图片](https://github.com/apache/hertzbeat/assets/19602424/aea68925-7911-4413-8b2d-aea12685337f)
 
 右键点击标题，点击复制链接地址获取链接
 
@@ -712,7 +712,7 @@ svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1 http
 
 > 需要注意的是，下载链接可能需要一个小时后才会生效，请注意。
 
-![图片](https://github.com/apache/incubator-hertzbeat/assets/19602424/e7900fb2-7bfc-4fa1-bd40-9806e6a822ef)
+![图片](https://github.com/apache/hertzbeat/assets/19602424/e7900fb2-7bfc-4fa1-bd40-9806e6a822ef)
 
 #### 4.4 在github上生成release
 
@@ -730,7 +730,7 @@ Release-2.1.0-incubating
 release note: https://hertzbeat.apache.org/download/release-note/2.1.0
 ```
 
-![图片](https://github.com/apache/incubator-hertzbeat/assets/19602424/84723ff5-a295-471d-8265-1b8ef867c3d1)
+![图片](https://github.com/apache/hertzbeat/assets/19602424/84723ff5-a295-471d-8265-1b8ef867c3d1)
 
 然后点击`Publish release`按钮。
 
@@ -755,7 +755,7 @@ Download Links: https://hertzbeat.apache.org/download/
 Release Notes: https://hertzbeat.apache.org/download/release-note/2.1.0
 
 HertzBeat Resources:
-- Issue: https://github.com/apache/incubator-hertzbeat/issues
+- Issue: https://github.com/apache/hertzbeat/issues
 - Mailing list: dev@hertzbeat.apache.org
 
 - Apache HertzBeat Team

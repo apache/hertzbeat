@@ -21,7 +21,7 @@ sidebar_position: 4
     limitations under the License.
 -->
 
-此指南基于 [apache newcommitter](https://community.apache.org/newcommitter.html#new-committer-process)
+[官方指南](https://community.apache.org/newcommitter.html#new-committer-process)
 
 ## 提名新Committer的流程
 
@@ -41,7 +41,7 @@ sidebar_position: 4
 
   参见 **Committer接受模板**
 
-- 等待我们看到CLA的接收记录
+- 新Committer签署CLA，等待CLA的接收记录
 
 - 请求创建Committer账户
 
@@ -77,12 +77,12 @@ This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our new committer.
 
 ${Work list}[1]
 
-[1] https://github.com/apache/incubator-hertzbeat/commits?author=${NEW_COMMITTER_NAME}
+[1] https://github.com/apache/hertzbeat/commits?author=${NEW_COMMITTER_NAME}
 ```
 
 注意，投票将在今天一周后结束，即
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
-参考投票[指南](https://community.apache.org/newcommitter.html)
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[Apache投票指南](https://community.apache.org/newcommitter.html)
 
 ### 关闭投票模板
 

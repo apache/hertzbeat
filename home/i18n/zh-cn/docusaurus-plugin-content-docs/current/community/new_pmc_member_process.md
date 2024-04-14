@@ -75,12 +75,12 @@ This is a formal vote about inviting ${NEW_PMC_NAME} as our new PMC member.
 
 ${Work list}[1]
 
-[1] https://github.com/apache/incubator-hertzbeat/commits?author=${NEW_PMC_NAME}
+[1] https://github.com/apache/hertzbeat/commits?author=${NEW_PMC_NAME}
 ```
 
 注意，投票将在今天一周后结束，即
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
-参考投票[指南](https://community.apache.org/newcommitter.html)
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)   
+[Apache 参考投票指南](https://community.apache.org/newcommitter.html)
 
 
 ### Close Vote Template
@@ -118,7 +118,7 @@ HertzBeat proposes to invite ${NEW_PMC_NAME} to join the PMC.
 The vote result is available here: https://lists.apache.org/...
 ```
 
-参考 [newpmc](https://www.apache.org/dev/pmc.html#newpmc)
+[Apache New Pmc Guide](https://www.apache.org/dev/pmc.html#newpmc)
 
 ### PMC成员邀请模板
 

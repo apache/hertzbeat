@@ -578,21 +578,21 @@ to reduce code line depth and improve readability like follows:
 
 This `hertzbeat-console-service` module is the core module for processing user requests.
 It's very necessary to strive to provide the best user experience.   
-So, we introduced the [AbstractApiException](https://github.com/apache/incubator-hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AbstractApiException.java)
+So, we introduced the [AbstractApiException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AbstractApiException.java)
 and its subclasses to get more friendly interaction effect. Non-`AbstractApiException` is treated as internal server errors correspondingly, which needn't notify the interaction details to users.   
 Based on the above premise, we need to pay attention to the handling of `AbstractApiException`.    
 For example, we should throw an exception by one of followed subclasses of `AbstractApiException` when processing logic with the user operation errors or missing data errors:
 
-- [ApiDetailException](https://github.com/apache/incubator-hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiDetailException.java)
+- [ApiDetailException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiDetailException.java)
 > An exception message that needs to be notified to front-end, is a detailed exception message, such as the stackTrace info, often accompanied by a large number of exception logs,
 > e.g: `Failed to start job`, need to display the exception(stackTrace info) to front-end.
-- [ApiAlertException](https://github.com/apache/incubator-hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiAlertException.java)
+- [ApiAlertException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/ApiAlertException.java)
 > An exception message that needs to be notified to front-end, usually a simple, clear message, e.g:
 > 1. Username already exists
 > 2. No permission, please contact the administrator
 > 3. ...
 
-- [AlertException](https://github.com/apache/incubator-hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AlertException.java)
+- [AlertException](https://github.com/apache/hertzbeat/blob/dev/hertzbeat-console/hertzbeat-console-service/src/main/java/org/apache/hertzbeat/console/base/exception/AlertException.java)
 > An exception message that needs to be notified to front-end when processing alert logic.
 - Or others exceptions used to get fine users interaction.
 
@@ -602,7 +602,7 @@ In addition to handling the classification of exceptions, we'd better make the p
 - Display the solutions to the abnormal case.
 - Or others information fit the pretty interaction.
 
-Please click [Issue-2325](https://github.com/apache/incubator-hertzbeat/issues/2325) for more details about the items if needed.
+Please click [Issue-2325](https://github.com/apache/hertzbeat/issues/2325) for more details about the items if needed.
 
 ## 5 Log
 

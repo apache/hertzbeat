@@ -21,7 +21,7 @@ sidebar_position: 4
     limitations under the License.
 -->
 
-This guideline is based on [apache newcommitter](https://community.apache.org/newcommitter.html#new-committer-process)
+[Apache New Committer Guideline](https://community.apache.org/newcommitter.html#new-committer-process)
 
 ## The process of new Committer
 
@@ -37,11 +37,11 @@ This guideline is based on [apache newcommitter](https://community.apache.org/ne
 
   see **Committer Invite Template**
 
-- If accept, then: Accept the committer
+- If accepted, then: Accept the committer
 
   see **Committer Accept Template**
 
-- Wait until we see that receipt of CLA is recorded
+- New Committer sign CLA and wait for CLA is recorded
 
 - Request creation of the committer account
 
@@ -81,8 +81,8 @@ ${Work list}[1]
 ```
 
 Note that, Voting ends one week from today, i.e.
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
-See voting [guidelines](https://community.apache.org/newcommitter.html)
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[Apache Voting Guidelines](https://community.apache.org/newcommitter.html)
 
 ### Close Vote Template
 

@@ -21,25 +21,20 @@ sidebar_position: 2
     limitations under the License.
 -->
 
-* 首先从远程仓库 <https://github.com/apache/incubator-hertzbeat.git> 将代码的一份副本 fork 到您自己的仓库
+* 首先从远程仓库 <https://github.com/apache/hertzbeat.git> 将代码的一份副本 fork 到您自己的仓库
 
-* 远程仓库目前有三个分支：
-  * **dev** 每日开发分支
-    > 每天的 dev 开发分支，新提交的代码可以向这个分支发起 pull request。
+* 远程仓库开发合并分支：`master`
 
-  * **1.0.0-release** 发布版本分支
-    > 发布版本的分支，未来还会有 2.0... 等其他版本分支。
-
-* 将您的仓库clone到您的本地设备
+* 将您fork仓库clone到您的本地设备
 
     ```shell
-    git clone git@github.com:apache/incubator-hertzbeat.git
+    git clone git@github.com:<您的账户名>/hertzbeat.git
     ```
 
 * 添加远程仓库地址，命名为 upstream
 
     ```shell
-    git remote add upstream git@github.com:apache/incubator-hertzbeat.git
+    git remote add upstream git@github.com:apache/hertzbeat.git
     ```
 
 * 查看仓库
@@ -59,30 +54,23 @@ sidebar_position: 2
 * 将远程仓库代码同步到本地仓库
 
     ```shell
-    git checkout origin/dev
-    git merge --no-ff upstream/dev
+    git checkout origin/master
+    git merge --no-ff upstream/master
     ```
 
-* 如果远程分支有新的分支，如 `dev-1.0`，您需要将这个分支同步到本地仓库
-
-    ```shell
-    git checkout -b dev-1.0 upstream/dev-1.0
-    git push --set-upstream origin dev-1.0
-    ```
+* **⚠️注意一定要新建分支开发特性 `git checkout -b feature-xxx`，不建议使用master分支直接开发**
 
 * 在本地修改代码后，提交到自己的仓库：
-
+    **注意提交信息为英文，不包含特殊字符**   
     ```shell
-    git commit -m '提交内容'
+    git commit -m '[docs]necessary instructions'
     git push
     ```
 
-* 将更改提交到远程仓库
+* 将更改提交到远程仓库后，您可以在您的仓库页面上看到一个绿色的按钮“Compare & pull request”，点击它。
 
-* 在github页面，点击“New pull request”。
+* 这会弹出新建 Pull Request 页面，您需要这里仔细填写信息(英文)，描述和代码同样重要，然后点击“Create pull request”按钮。
 
-* 选择修改过的本地分支和过去要合并的分支，点击“Create pull request”。
+* 然后社区的 Committers 将进行 CodeReview，并与您讨论一些细节（包括设计、实现、性能等），之后您可以根据建议直接在这个分支更新代码(无需新建PR)。当社区 Committer approve之后，提交将被合并到 master 分支。
 
-* 然后社区的 Committers 将进行 CodeReview，并与您讨论一些细节（包括设计、实现、性能等）。当团队的每个成员都对此修改感到满意时，提交将被合并到 dev 分支。
-
-* 最后，恭喜您，您已经成为 HertzBeat 的官方贡献者！
+* 最后，恭喜您，您已经成为 HertzBeat 的官方贡献者，您会被加在贡献者墙上，您可以联系社区获取贡献者证书！

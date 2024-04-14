@@ -21,11 +21,9 @@ sidebar_position: 1
     limitations under the License.
 -->
 
-The HertzBeat developer mailing list is the preferred means for all your questions when using HertzBeat, which pushes your doubts out to the entire community.
-This is the best way to keep up-to-date with the community.
+The [Developer Mailing List](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) is the community-recommended way to communicate and obtain the latest information.
 
 Before you post anything to the mailing lists, be sure that you already **subscribe** to them.
-The currently available lists are listed in the below table.
 
 ## Usages
 
@@ -34,14 +32,18 @@ The currently available lists are listed in the below table.
 - Use this list for your HertzBeat questions
 - Used by HertzBeat contributors to discuss development of HertzBeat
 
-### Commits List
-
-- Notifications on changes to the HertzBeat codebase
 
 | List Name           | Address                      | Subscribe                                                  | Unsubscribe                                                    | Archive                                                                    |
 |---------------------|------------------------------|------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------------------|
 | **Developer List**  | dev@hertzbeat.apache.org     | [subscribe](mailto:dev-subscribe@hertzbeat.apache.org)     | [unsubscribe](mailto:dev-unsubscribe@hertzbeat.apache.org)     | [archive](https://lists.apache.org/list.html?dev@hertzbeat.apache.org)     |
-| **Commits List**    | commits@hertzbeat.apache.org | [subscribe](mailto:commits-subscribe@hertzbeat.apache.org) | [unsubscribe](mailto:commits-unsubscribe@hertzbeat.apache.org) | [archive](https://lists.apache.org/list.html?commits@hertzbeat.apache.org) |
+
+### Notification List
+
+- Notifications on changes to the HertzBeat codebase
+
+| List Name               | Address                            | Subscribe                                                        | Unsubscribe                                                          | Archive                                                                          |
+|-------------------------|------------------------------------|------------------------------------------------------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| **Notification List**   | notifications@hertzbeat.apache.org | [subscribe](mailto:notifications-subscribe@hertzbeat.apache.org) | [unsubscribe](mailto:notifications-unsubscribe@hertzbeat.apache.org) | [archive](https://lists.apache.org/list.html?notifications@hertzbeat.apache.org) |
 
 ## Steps for Subscription
 

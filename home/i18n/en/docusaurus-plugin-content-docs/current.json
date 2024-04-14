@@ -100,7 +100,7 @@
     "description": "The label for category submit in sidebar docs"
   },
   "sidebar.docs.category.release": {
-    "message": "Release",
+    "message": "Release Guide",
     "description": "The label for category release in sidebar docs"
   }
 }
