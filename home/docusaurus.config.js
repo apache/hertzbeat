@@ -75,47 +75,47 @@ module.exports = {
           position: 'left',
           items: [
             {
-              label: 'Code of conduct',
+              label: 'code_of_conduct',
               to: 'https://www.apache.org/foundation/policies/conduct',
             },
             {
-              label: 'Join the mailing lists',
+              label: 'join_the_mailing_lists',
               to: '/docs/community/mailing_lists',
             },
             {
-              label: 'Become A Committer',
+              label: 'become_committer',
               to: '/docs/community/become_committer',
             },
             {
-              label: 'Become A PMC member',
+              label: 'become_pmc_member',
               href: '/docs/community/become_pmc_member',
             },
             {
-              label: 'New Committer Process',
+              label: 'new_committer_process',
               to: '/docs/community/new_committer_process',
             },
             {
-              label: 'New PMC Member Process',
+              label: 'new_pmc_member_process',
               to: '/docs/community/new_pmc_ember_process',
             },
             {
-              label: 'Documentation Notice',
+              label: 'documentation_notice',
               to: '/docs/community/document',
             },
             {
-              label: 'Submit Code',
+              label: 'submit_code',
               to: '/docs/community/submit_code',
             },
             {
-              label: 'Code style and quality guide',
+              label: 'code_style_and_quality_guide',
               to: '/docs/community/code_style_and_quality_guide'
             },
             {
-              label: 'How to release',
+              label: 'how_to_release',
               to: '/docs/community/how_to_release'
             },
             {
-              label: 'How to Verify Release',
+              label: 'how_to_verify_release',
               to: '/docs/community/how_to_verify_release'
             }
           ],

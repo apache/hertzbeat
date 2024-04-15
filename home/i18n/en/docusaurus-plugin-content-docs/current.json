@@ -102,5 +102,9 @@
   "sidebar.docs.category.release": {
     "message": "Release Guide",
     "description": "The label for category release in sidebar docs"
+  },
+  "sidebar.docs.category.Community": {
+    "message": "Community",
+    "description": "The label for category Community in sidebar docs"
   }
 }
