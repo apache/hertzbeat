@@ -557,3 +557,4 @@ to reduce code line depth and improve readability like follows:
 - https://alibaba.github.io/p3c/
 - https://rules.sonarsource.com/java/
 - https://junit.org/junit5/
+- https://streampark.apache.org/

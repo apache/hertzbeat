@@ -61,3 +61,6 @@ sidebar_position: 1
 **不要使用 HTML 邮件**。
 HTML 邮件更有可能被视为垃圾邮件并被拒绝。
 通过不同的邮件客户端，它可能会出现格式错误，并且其他人不容易阅读。
+
+
+This doc refer from [Apache StreamPark](https://streampark.apache.org/)   

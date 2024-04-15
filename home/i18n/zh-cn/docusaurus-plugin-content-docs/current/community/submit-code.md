@@ -74,3 +74,5 @@ sidebar_position: 2
 * 然后社区的 Committers 将进行 CodeReview，并与您讨论一些细节（包括设计、实现、性能等），之后您可以根据建议直接在这个分支更新代码(无需新建PR)。当社区 Committer approve之后，提交将被合并到 master 分支。
 
 * 最后，恭喜您，您已经成为 HertzBeat 的官方贡献者，您会被加在贡献者墙上，您可以联系社区获取贡献者证书！
+
+This doc refer from [Apache StreamPark](https://streampark.apache.org/)   

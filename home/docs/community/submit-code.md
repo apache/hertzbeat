@@ -74,3 +74,6 @@ sidebar_position: 2
 * Then the community Committers will do CodeReview, and then he will discuss some details (design, implementation, performance, etc.) with you, afterward you can directly update the code in this branch according to the suggestions (no need to create a new PR). When this pr is approved, the commit will be merged into the master branch
 
 * Finally, congratulations, you have become an official contributor to HertzBeat ! You will be added to the contributor wall, you can contact the community to obtain a contributor certificate.
+
+
+This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
