@@ -50,7 +50,7 @@ export const features = [
         <Translate
           values={{
             github: (
-              <a href={'https://github.com/dromara/hertzbeat'}>
+              <a href={'https://github.com/apache/hertzbeat'}>
                 Github Repo
               </a>
             ),

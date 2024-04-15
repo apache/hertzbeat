@@ -29,8 +29,8 @@ help:
   en-US: The platform will invoke an HTTP API endpoint to verify its accessibility and monitor various metrics, including response time, measured in milliseconds (ms). <br>To set up this functionality, you could click the "Add HTTP API" button and proceed with the configuration or import an existing setup through the "More Actions" menu.
   zh-TW: Hertzbeat將調用HTTP API介面，查看介面是否可用，並以ms為名額組織對其回應時間等名額進行監測。 您可以先點擊“新增HTTP API”按鈕並進行配寘，或在“更多操作”中導入已有配寘。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/api
-  en-US: https://hertzbeat.com/docs/help/api
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/api
+  en-US: https://hertzbeat.apache.org/docs/help/api
 # app api所需输入参数定义(根据定义渲染页面UI)
 # Input params define for app api(render web ui by the definition)
 params:

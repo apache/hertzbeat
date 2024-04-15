@@ -54,7 +54,7 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
 
 ### Submit Pull Request  
 
-1. First you need to fork your target [hertzbeat repository](https://github.com/dromara/hertzbeat).   
+1. First you need to fork your target [hertzbeat repository](https://github.com/apache/hertzbeat).   
 2. Then download the code locally with git command:
 ```shell
 git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
@@ -99,7 +99,7 @@ git push origin --delete a-dev-branch
 On the master/main branch, you can do the following to sync the upstream repository:
 
 ```shell
-git remote add upstream https://github.com/dromara/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
+git remote add upstream https://github.com/apache/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
 git checkout master 
 git pull upstream master
 ```
@@ -110,21 +110,21 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion   
 
-[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
+[Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
 ## 🥐 Architecture
 
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
+- **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
 > Provides monitoring management, monitoring configuration management, system user management, etc.
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** Provide metrics data collection services.
+- **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
+- **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
 > Metrics data management, data query, calculation and statistics.
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** Provide alert service.
+- **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** Provide alert service.
 > Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
+- **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
 ![hertzBeat](home/static/img/docs/hertzbeat-arch.png)
@@ -190,7 +190,7 @@ Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
 ### 提交 Pull Request
 
-1. 首先您需要 Fork 目标仓库 [hertzbeat repository](https://github.com/dromara/hertzbeat).
+1. 首先您需要 Fork 目标仓库 [hertzbeat repository](https://github.com/apache/hertzbeat).
 2. 然后 用git命令 将代码下载到本地:  
 ```shell
 git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
@@ -235,7 +235,7 @@ git push origin --delete a-dev-branch
 在主分支上，您可以执行以下操作来同步上游仓库：  
 
 ```shell
-git remote add upstream https://github.com/dromara/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
+git remote add upstream https://github.com/apache/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
 git checkout master 
 git pull upstream master
 ```
@@ -246,21 +246,21 @@ git pull upstream master
 
 ### 加入讨论交流
 
-[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
+[Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
-加微信号 `tan-cloud` 拉您进微信交流群
+Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
 ### 模块
 
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
+- **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** 提供监控数据采集服务
+- **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
+- **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
+- **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** 提供告警服务
 > 告警计算触发，任务状态联动，告警配置，告警通知。
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
+- **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
 
 ![hertzBeat](home/static/img/docs/hertzbeat-arch.png)     

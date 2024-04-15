@@ -8,12 +8,6 @@
   "opensource": {
     "message": "拥抱开源"
   },
-  "Dromara Friends": {
-    "message": "Friends"
-  },
-  "Friends Link": {
-    "message": "友情链接"
-  },
   "theme.ErrorPageContent.title": {
     "message": "页面已崩溃。",
     "description": "The title of the fallback page when the page crashed"
@@ -450,9 +444,6 @@
   },
   "Who Use HertzBeat?": {
     "message": "Who Use HertzBeat?"
-  },
-  "sponsor": {
-    "message": "特别赞助"
   },
   "support hertzbeat": {
     "message": "支持 HertzBeat"

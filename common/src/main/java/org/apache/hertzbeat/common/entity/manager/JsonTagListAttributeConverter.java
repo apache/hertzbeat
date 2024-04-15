@@ -37,18 +37,19 @@ public class JsonTagListAttributeConverter implements AttributeConverter<List<Ta
 
     @Override
     public List<TagItem> convertToEntityAttribute(String dbData) {
-        try {
-            TypeReference<List<TagItem>> typeReference = new TypeReference<>() {};
-            return JsonUtil.fromJson(dbData, typeReference);
-        } catch (Exception e) {
-            // history data handler
-            TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
-            Map<String, String> map = JsonUtil.fromJson(dbData, typeReference);
+        TypeReference<List<TagItem>> typeReference = new TypeReference<>() {};
+        List<TagItem> tagItems = JsonUtil.fromJson(dbData, typeReference);
+        if (tagItems == null) {
+            TypeReference<Map<String, String>> mapTypeReference = new TypeReference<>() {};
+            Map<String, String> map = JsonUtil.fromJson(dbData, mapTypeReference);
             if (map != null) {
                 return map.entrySet().stream().map(entry -> new TagItem(entry.getKey(), entry.getValue())).collect(Collectors.toList());
             } else {
                 return null;
             }
+        } else {
+            return tagItems;
         }
+
     }
 }

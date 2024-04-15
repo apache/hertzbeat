@@ -20,8 +20,8 @@
 export class NoticeRule {
   id!: number;
   name!: string;
-  receiverId!: number;
-  receiverName!: string;
+  receiverId!: number[];
+  receiverName!: string[];
   templateId!: number | null;
   templateName!: string | null;
   enable: boolean = true;

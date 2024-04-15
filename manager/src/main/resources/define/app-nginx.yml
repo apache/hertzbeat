@@ -28,8 +28,8 @@ help:
   en-US: HertzBeat uses <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> to configure ngx_http_stub_status_module for collecting general metrics of Nginx (nginx_status, req_status.). <br>You can click "<i>New Nginx</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://www.tecmint.com/enable-nginx-status-page/'> Nginx </a> 通過配置 ngx_http_stub_status_module 對 Nginx 數據庫的通用性能指標(nginx信息、请求信息等)進行采集監控。<br>您可以點擊“<i>新建 Nginx</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/nginx
-  en-US: https://hertzbeat.com/docs/help/nginx
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nginx
+  en-US: https://hertzbeat.apache.org/docs/help/nginx
 # app api所需输入参数定义(根据定义渲染页面UI)
 # Input params define for app api(render web ui by the definition)
 params:

@@ -8,12 +8,12 @@
   "start_url": "./index.html",
   "icons": [
     {
-      "src": "img/tancloud-logo.svg",
+      "src": "img/hertzbeat-logo.svg",
       "sizes": "64x64",
       "type": "image/png"
     },
     {
-      "src": "img/tancloud-brand.svg",
+      "src": "img/hertzbeat-brand.svg",
       "sizes": "128x128",
       "type": "image/png"
     }
