@@ -1634,6 +1634,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "makechoicenow",
+      "name": "makechoicenow",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9911918?v=4",
+      "profile": "https://github.com/makechoicenow",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
