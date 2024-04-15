@@ -168,27 +168,27 @@ class NoticeConfigServiceTest {
                 .id(1L)
                 .filterAll(true)
                 .priorities(priorities)
-                .receiverId(1L)
+                .receiverId(List.of(1L))
                 .build();
         final NoticeRule rule2 = NoticeRule.builder()
                 .id(2L)
                 .filterAll(false)
                 .priorities(prioritiesFail)
-                .receiverId(2L)
+                .receiverId(List.of(2L))
                 .build();
         final NoticeRule rule3 = NoticeRule.builder()
                 .id(3L)
                 .filterAll(false)
                 .priorities(priorities)
                 .tags(tagsFail)
-                .receiverId(3L)
+                .receiverId(List.of(3L))
                 .build();
         final NoticeRule rule4 = NoticeRule.builder()
                 .id(4L)
                 .filterAll(false)
                 .priorities(priorities)
                 .tags(tags)
-                .receiverId(4L)
+                .receiverId(List.of(4L))
                 .build();
         final List<NoticeRule> rules = Lists.newArrayList(rule1, rule2, rule3, rule4);
 

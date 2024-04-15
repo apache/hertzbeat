@@ -52,7 +52,6 @@
     "@delon/acl": "15.2.1",
     "@delon/auth": "15.2.1",
     "@delon/cache": "15.2.1",
-    "@delon/chart": "15.2.1",
     "@delon/form": "15.2.1",
     "@delon/mock": "15.2.1",
     "@delon/theme": "15.2.1",

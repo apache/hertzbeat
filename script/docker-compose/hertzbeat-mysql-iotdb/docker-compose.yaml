@@ -25,6 +25,11 @@ services:
     container_name: compose-mysql
     hostname: mysql
     restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h 127.0.0.1 --silent']
+      interval: 3s
+      retries: 5
+      start_period: 3m
     ports:
       - "3306"
     environment:
@@ -41,6 +46,12 @@ services:
     container_name: compose-iotdb
     hostname: iotdb
     restart: always
+    healthcheck:
+      test: ["CMD", "ls", "/iotdb/data"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+      start_period: 30s
     environment:
       TZ: Asia/Shanghai
     ports:
@@ -60,8 +71,10 @@ services:
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
     depends_on:
-      - mysql
-      - iotdb
+      mysql:
+        condition: service_healthy
+      iotdb:
+        condition: service_healthy
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml

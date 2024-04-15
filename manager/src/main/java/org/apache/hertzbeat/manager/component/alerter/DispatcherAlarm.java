@@ -132,11 +132,17 @@ public class DispatcherAlarm implements InitializingBean {
                 for (NoticeRule rule : noticeRules) {
                     try {
                         if (rule.getTemplateId() == null) {
-                            sendNoticeMsg(getOneReceiverById(rule.getReceiverId()),
-                                    null, alert);
+                            List<Long> receiverIdList = rule.getReceiverId();
+                            for (Long receiverId : receiverIdList) {
+                                sendNoticeMsg(getOneReceiverById(receiverId),
+                                        null, alert);
+                            }
                         } else {
-                            sendNoticeMsg(getOneReceiverById(rule.getReceiverId()),
+                            List<Long> receiverIdList = rule.getReceiverId();
+                            for (Long receiverId : receiverIdList) {
+                                sendNoticeMsg(getOneReceiverById(receiverId),
                                     getOneTemplateById(rule.getTemplateId()), alert);
+                            }
                         }
                     } catch (AlertNoticeException e) {
                         log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
