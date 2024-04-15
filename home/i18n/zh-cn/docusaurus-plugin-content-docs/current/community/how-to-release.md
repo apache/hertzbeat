@@ -4,13 +4,13 @@ title: 如何进行版本发布
 sidebar_position: 4
 ---
 
-本教程详细描述了如何发布Apache HertzBeat，并以2.1.0版本的发布为例。
+本教程详细描述了如何发布Apache HertzBeat，并以1.6.0版本的发布为例。
 
 ## 1. 环境要求
 
 此发布过程在Ubuntu OS中进行操作，并需要以下环境：
 
-- JDK 1.8+
+- JDK 17
 - Apache Maven 3.x (此处使用 3.8.7)
 - GnuPG 2.x
 - Git
@@ -129,11 +129,11 @@ gpg:              unchanged: 1
 
 或者进入 https://keyserver.ubuntu.com/ 网址，输入密钥的名称，然后点击'Search key'
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/b8fe193e-c137-42b0-a833-90a6d975f335)
+![图片](https://github.com/apache/streampark/assets/19602424/b8fe193e-c137-42b0-a833-90a6d975f335)
 
 如果查询结果如下，表示密钥创建成功。
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/73ada3f2-2d2e-4b76-b25c-34a52db6a069)
+![图片](https://github.com/apache/streampark/assets/19602424/73ada3f2-2d2e-4b76-b25c-34a52db6a069)
 
 #### 2.4 将 gpg 公钥添加到 Apache SVN 项目仓库的 KEYS 文件中
 
@@ -537,11 +537,11 @@ ChunJin Mu
 邮件内容中的一项是`Vote thread`，链接获取方式如下：<br />
 访问此地址 https://lists.apache.org/list.html?dev@hertzbeat.apache.org ， 找到邮件标题并点击显示投票内容
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/5755ed06-529f-4739-96a8-1ac13bbb21ea)
+![图片](https://github.com/apache/streampark/assets/19602424/5755ed06-529f-4739-96a8-1ac13bbb21ea)
 
 右键点击标题，点击复制链接地址获取链接
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/1616da5b-7891-45cc-b956-a0ba5e7ce874)
+![图片](https://github.com/apache/streampark/assets/19602424/1616da5b-7891-45cc-b956-a0ba5e7ce874)
 
 #### 3.2 发送孵化社区投票邮件
 
@@ -660,7 +660,7 @@ ChunJin Mu
 邮件内容中的一项是`Vote thread`，链接获取方式如下：<br />
 访问此地址 https://lists.apache.org/list.html?general@incubator.apache.org ， 找到邮件标题并点击显示投票内容
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/aea68925-7911-4413-8b2d-aea12685337f)
+![图片](https://github.com/apache/streampark/assets/19602424/aea68925-7911-4413-8b2d-aea12685337f)
 
 右键点击标题，点击复制链接地址获取链接
 
@@ -730,7 +730,7 @@ Release-2.1.0-incubating
 release note: https://hertzbeat.apache.org/download/release-note/2.1.0
 ```
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/84723ff5-a295-471d-8265-1b8ef867c3d1)
+![图片](https://github.com/apache/streampark/assets/19602424/84723ff5-a295-471d-8265-1b8ef867c3d1)
 
 然后点击`Publish release`按钮。
 

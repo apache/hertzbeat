@@ -129,11 +129,11 @@ gpg:              unchanged: 1
 
 Or enter https://keyserver.ubuntu.com/ address in the browser, enter the name of the key and click 'Search key'
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/b8fe193e-c137-42b0-a833-90a6d975f335)
+![图片](https://github.com/apache/streampark/assets/19602424/b8fe193e-c137-42b0-a833-90a6d975f335)
 
 If the query results are as follows, it means that the key is successfully created.
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/73ada3f2-2d2e-4b76-b25c-34a52db6a069)
+![图片](https://github.com/apache/streampark/assets/19602424/73ada3f2-2d2e-4b76-b25c-34a52db6a069)
 
 #### 2.4 Add the gpg public key to the KEYS file of the Apache SVN project warehouse
 
@@ -429,7 +429,7 @@ svn commit -m "release for HertzBeat 2.1.0"
 
 > Visit the address https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/ in the browser
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/e4763537-af9f-4f2a-967d-912e6670b360)
+![图片](https://github.com/apache/streampark/assets/19602424/e4763537-af9f-4f2a-967d-912e6670b360)
 
 ## 3. Enter the community voting stage
 
@@ -536,10 +536,10 @@ ChunJin Mu
 
 One item of the email content is `Vote thread`, and the link is obtained as follows: <br />
 Visit this address https://lists.apache.org/list.html?dev@hertzbeat.apache.org, and find the mail title and click to display the voting content
-![图片](https://github.com/apache/hertzbeat/assets/19602424/5755ed06-529f-4739-96a8-1ac13bbb21ea)
+![图片](https://github.com/apache/streampark/assets/19602424/5755ed06-529f-4739-96a8-1ac13bbb21ea)
 
 Right-click the title and click Copy Link Address to get the link
-![图片](https://github.com/apache/hertzbeat/assets/19602424/1616da5b-7891-45cc-b956-a0ba5e7ce874)
+![图片](https://github.com/apache/streampark/assets/19602424/1616da5b-7891-45cc-b956-a0ba5e7ce874)
 
 #### 3.2 Send Incubator Community voting mail
 
@@ -657,7 +657,7 @@ ChunJin Mu
 
 One item of the email content is `Vote thread`, and the link is obtained as follows: <br />
 Visit this address https://lists.apache.org/list.html?general@incubator.apache.org, and find the mail title and click to display the voting content
-![图片](https://github.com/apache/hertzbeat/assets/19602424/aea68925-7911-4413-8b2d-aea12685337f)
+![图片](https://github.com/apache/streampark/assets/19602424/aea68925-7911-4413-8b2d-aea12685337f)
 Then right-click the title and click Copy Link Address to get the link.
 
 Wait a day to see if the tutor has any other comments, if not, send the following announcement email
@@ -707,7 +707,7 @@ The final file content is as follows
 Open the official website address https://hertzbeat.apache.org/download/ to see if there is a new version of the download
 > It should be noted that the download link may take effect after an hour, so please pay attention to it.
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/e7900fb2-7bfc-4fa1-bd40-9806e6a822ef)
+![图片](https://github.com/apache/streampark/assets/19602424/e7900fb2-7bfc-4fa1-bd40-9806e6a822ef)
 
 #### 4.4 Generate a release on github
 
@@ -724,7 +724,7 @@ Release-2.1.0-incubating
 release note: https://hertzbeat.apache.org/download/release-note/2.1.0
 ```
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/84723ff5-a295-471d-8265-1b8ef867c3d1)
+![图片](https://github.com/apache/streampark/assets/19602424/84723ff5-a295-471d-8265-1b8ef867c3d1)
 
 Then click the `Publish release` button.
 
