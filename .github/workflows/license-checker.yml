@@ -27,9 +27,8 @@ on:
     branches: [ master, dev ]
 
 jobs:
-  license-header:
-    if: github.repository == 'apache/hertzbeat'
-    name: License header
+  check-license-header:
+    name: check-license-header
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -37,4 +36,4 @@ jobs:
         with:
           submodules: true
       - name: Check license header
-        uses: apache/skywalking-eyes/header@main
+        uses: apache/skywalking-eyes@v0.6.0
