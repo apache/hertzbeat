@@ -25,6 +25,12 @@ services:
     container_name: compose-postgresql
     hostname: postgresql
     restart: always
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     ports:
       - '5432:5432'
     environment:
@@ -41,6 +47,12 @@ services:
     container_name: compose-iotdb
     hostname: iotdb
     restart: always
+    healthcheck:
+      test: ["CMD", "ls", "/iotdb/data"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     environment:
       TZ: Asia/Shanghai
     ports:
@@ -60,8 +72,10 @@ services:
       TZ: Asia/Shanghai
       LANG: zh_CN.UTF-8
     depends_on:
-      - postgres
-      - iotdb
+      postgres:
+        condition: service_healthy
+      iotdb:
+        condition: service_healthy
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
