@@ -160,6 +160,10 @@ public class StatusPageServiceImpl implements StatusPageService {
     }
     
     private StatusPageHistory combineOneDayStatusPageHistory(List<StatusPageHistory> statusPageHistories, StatusPageComponent component, long nowTimestamp) {
+        if (statusPageHistories.isEmpty()) {
+            return StatusPageHistory.builder().timestamp(nowTimestamp)
+                    .normal(0).abnormal(0).unknown(0).componentId(component.getId()).state(component.getState()).build();
+        }
         if (statusPageHistories.size() == 1) {
             return statusPageHistories.get(0);
         }
