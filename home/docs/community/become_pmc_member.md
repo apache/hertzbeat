@@ -82,5 +82,3 @@ of the main website or HertzBeat's GitHub repositories.
 - Be involved in the design road map discussions with a professional
   and diplomatic approach even if there is a disagreement
 - Promoting the project by writing articles or holding events
-
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
