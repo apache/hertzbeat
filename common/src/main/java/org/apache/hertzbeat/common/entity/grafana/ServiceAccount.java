@@ -1,15 +1,3 @@
-package org.apache.hertzbeat.common.entity.grafana;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -26,6 +14,20 @@ import lombok.NoArgsConstructor;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package org.apache.hertzbeat.common.entity.grafana;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+
+
 
 /**
  * Grafana service account entity
