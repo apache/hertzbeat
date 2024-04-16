@@ -23,7 +23,6 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { NzUploadFile } from 'ng-zorro-antd/upload';
 import { switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
