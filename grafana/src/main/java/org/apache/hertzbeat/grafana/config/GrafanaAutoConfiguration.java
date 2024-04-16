@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.grafana.config;
+package org.apache.hertzbeat.grafana.config;
 
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;

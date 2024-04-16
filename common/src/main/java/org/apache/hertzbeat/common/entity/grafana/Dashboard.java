@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.common.entity.grafana;
+package org.apache.hertzbeat.common.entity.grafana;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;

@@ -1,12 +1,12 @@
-package org.dromara.hertzbeat.grafana.controller;
+package org.apache.hertzbeat.grafana.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.common.entity.dto.Message;
-import org.dromara.hertzbeat.common.util.JsonUtil;
-import org.dromara.hertzbeat.grafana.config.GrafanaConfiguration;
-import org.dromara.hertzbeat.grafana.service.DashboardService;
+import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
+import org.apache.hertzbeat.grafana.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static org.dromara.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**

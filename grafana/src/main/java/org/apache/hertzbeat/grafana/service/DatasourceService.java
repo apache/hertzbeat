@@ -1,13 +1,13 @@
-package org.dromara.hertzbeat.grafana.service;
+package org.apache.hertzbeat.grafana.service;
 
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;
 import com.dtflys.forest.http.ForestResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.grafana.config.GrafanaConfiguration;
-import org.dromara.hertzbeat.grafana.dao.ServiceAccountDao;
-import org.dromara.hertzbeat.grafana.dao.ServiceTokenDao;
-import org.dromara.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
+import org.apache.hertzbeat.grafana.dao.ServiceAccountDao;
+import org.apache.hertzbeat.grafana.dao.ServiceTokenDao;
+import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

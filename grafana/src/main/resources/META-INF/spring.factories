@@ -14,4 +14,4 @@
 # limitations under the License.
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-org.dromara.hertzbeat.grafana.config.GrafanaAutoConfiguration
+org.apache.hertzbeat.grafana.config.GrafanaAutoConfiguration

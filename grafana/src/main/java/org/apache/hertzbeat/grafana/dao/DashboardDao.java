@@ -1,6 +1,6 @@
-package org.dromara.hertzbeat.grafana.dao;
+package org.apache.hertzbeat.grafana.dao;
 
-import org.dromara.hertzbeat.common.entity.grafana.Dashboard;
+import org.apache.hertzbeat.common.entity.grafana.Dashboard;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

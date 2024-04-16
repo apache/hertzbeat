@@ -19,7 +19,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.dromara.hertzbeat</groupId>
+        <groupId>org.apache.hertzbeat</groupId>
         <artifactId>hertzbeat</artifactId>
         <version>2.0-SNAPSHOT</version>
     </parent>
@@ -34,12 +34,12 @@
     <dependencies>
         <!-- hertzbeat common -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
         </dependency>
         <!-- hertzbeat warehouse -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-warehouse</artifactId>
         </dependency>
         <!-- jpa -->

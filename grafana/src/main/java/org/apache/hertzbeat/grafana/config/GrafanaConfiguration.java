@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.grafana.config;
+package org.apache.hertzbeat.grafana.config;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -78,3 +78,9 @@ scheduler:
   server:
     enabled: true
     port: 1158
+
+grafana:
+  enabled: false
+  url: http://127.0.0.1:3000
+  username: admin
+  password: admin

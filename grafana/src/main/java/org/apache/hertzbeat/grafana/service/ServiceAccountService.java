@@ -1,4 +1,4 @@
-package org.dromara.hertzbeat.grafana.service;
+package org.apache.hertzbeat.grafana.service;
 
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;
@@ -7,12 +7,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.dromara.hertzbeat.common.util.JsonUtil;
-import org.dromara.hertzbeat.grafana.config.GrafanaConfiguration;
-import org.dromara.hertzbeat.grafana.dao.ServiceAccountDao;
-import org.dromara.hertzbeat.grafana.dao.ServiceTokenDao;
-import org.dromara.hertzbeat.common.entity.grafana.ServiceAccount;
-import org.dromara.hertzbeat.common.entity.grafana.ServiceToken;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
+import org.apache.hertzbeat.grafana.dao.ServiceAccountDao;
+import org.apache.hertzbeat.grafana.dao.ServiceTokenDao;
+import org.apache.hertzbeat.common.entity.grafana.ServiceAccount;
+import org.apache.hertzbeat.common.entity.grafana.ServiceToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -85,7 +85,7 @@
         </dependency>
         <!-- grafana -->
         <dependency>
-            <groupId>org.dromara.hertzbeat</groupId>
+            <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-grafana</artifactId>
         </dependency>
         <!-- spring -->

@@ -17,12 +17,12 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
-import org.apache.hertzbeat.common.support.valid.HostValid;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.support.valid.HostValid;
 import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -161,12 +161,4 @@ public class Monitor {
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
         inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
     private List<Tag> tags;
-
-
-    /**
-     * grafana dashboard
-     */
-    @Schema(title = "grafana dashboard")
-    @Transient
-    private Grafana grafana;
 }
