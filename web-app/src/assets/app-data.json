@@ -24,6 +24,7 @@
       ]
     },
     {
+      "key": "monitoring",
       "text": "监控",
       "i18n": "menu.monitor",
       "group": true,
@@ -34,6 +35,12 @@
           "i18n": "menu.monitor.center",
           "icon": "anticon-laptop",
           "link": "/monitors"
+        },
+        {
+          "text": "define",
+          "i18n": "menu.advanced.define",
+          "icon": "anticon-code",
+          "link": "/setting/define"
         },
         {
           "text": "Prometheus",
@@ -154,14 +161,14 @@
       ]
     },
     {
-      "text": "More",
-      "i18n": "menu.extras",
+      "text": "Advanced",
+      "i18n": "menu.advanced",
       "group": true,
       "hideInBreadcrumb": true,
       "children": [
         {
           "text": "status",
-          "i18n": "menu.extras.status",
+          "i18n": "menu.advanced.status",
           "icon": "anticon-mobile",
           "link": "/setting/status",
           "badgeDot": true,
@@ -169,24 +176,24 @@
         },
         {
           "text": "collector",
-          "i18n": "menu.extras.collector",
+          "i18n": "menu.advanced.collector",
           "icon": "anticon-cluster",
           "link": "/setting/collector"
         },
         {
           "text": "tags",
-          "i18n": "menu.extras.tags",
+          "i18n": "menu.advanced.tags",
           "icon": "anticon-tags",
           "link": "/setting/tags"
-        },
-        {
-          "text": "define",
-          "i18n": "menu.extras.define",
-          "icon": "anticon-code",
-          "link": "/setting/define",
-          "badgeDot": true,
-          "badge": 1
-        },
+        }
+      ]
+    },
+    {
+      "text": "More",
+      "i18n": "menu.extras",
+      "group": true,
+      "hideInBreadcrumb": true,
+      "children": [
         {
           "text": "settings",
           "i18n": "menu.extras.settings",
@@ -195,7 +202,7 @@
         },
         {
           "text": "helpCenter",
-          "externalLink": "https://hertzbeat.com/docs/help/guide",
+          "externalLink": "https://hertzbeat.apache.org/docs/help/guide",
           "target": "_blank",
           "i18n": "menu.extras.help",
           "icon": "anticon-global"

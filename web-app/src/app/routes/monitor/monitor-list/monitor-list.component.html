@@ -1,3 +1,22 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
 <app-help-massage-show
   *ngIf="app != undefined"
   [help_massage_content]="'monitor.app.' + app + '.help' | i18n"
@@ -22,6 +41,11 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'monitors.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
     </a>
+  </button>
+
+  <button *ngIf="app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
+    <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+    {{ 'monitors.new-monitor' | i18n }}
   </button>
 
   <button nz-button nzType="primary" (click)="onEnableManageMonitors()" class="mobile-hide">
@@ -253,4 +277,56 @@
       </button>
     </p>
   </ng-container>
+</nz-modal>
+
+<!-- filter app type modal -->
+<nz-modal
+  [(nzVisible)]="appSwitchModalVisible"
+  (nzOnCancel)="onAppSwitchModalCancel()"
+  nzClosable="false"
+  nzWidth="30%"
+  [nzOkText]="null"
+  [nzCancelText]="null"
+  [nzOkLoading]="appSearchLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <div style="text-align: center">
+      <nz-input-group nzSize="large" nzSearch="true" style="width: 97%; border-radius: 12px" [nzPrefix]="suffixIconSearch">
+        <input
+          nz-input
+          type="text"
+          [placeholder]="'monitors.center.search.placeholder' | i18n"
+          nzSize="default"
+          (keyup.enter)="searchSwitchApp()"
+          [(ngModel)]="appSearchContent"
+        />
+      </nz-input-group>
+      <ng-template #suffixIconSearch>
+        <span nz-icon nzType="search"></span>
+      </ng-template>
+    </div>
+    <div style="min-height: 100px; margin-top: 20px">
+      <nz-list nzSplit="false" style="max-height: 400px; overflow-y: scroll">
+        <nz-spin [nzSpinning]="appSearchLoading">
+          <nz-list-item
+            *ngFor="let appItem of appSearchResult"
+            nzNoFlex="true"
+            class="switch-app"
+            routerLink="/monitors/new"
+            (keyup.enter)="gotoMonitorAddDetail(appItem.value)"
+            [queryParams]="{ app: appItem.value }"
+          >
+            <button nz-button nzType="default" style="margin-left: 24px">
+              <i nz-icon [nzType]="getAppIconName(appItem.value)" nzTheme="outline"></i>
+              {{ appItem.categoryLabel }}
+            </button>
+            <button nz-button nzType="default" style="left: 40%; position: absolute">
+              {{ appItem.label }}
+            </button>
+            <span style="right: 10px; position: absolute"><i nz-icon nzType="arrow-right" nzTheme="outline"></i></span>
+          </nz-list-item>
+        </nz-spin>
+      </nz-list>
+    </div>
+  </div>
 </nz-modal>

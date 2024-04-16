@@ -20,7 +20,7 @@
     "description": "Navbar item with label discuss"
   },
   "item.label.kanban": {
-    "message": "Dashboard",
+    "message": "Kanban",
     "description": "Navbar item with label kanban"
   },
   "item.label.about": {
@@ -34,10 +34,6 @@
   "item.label.design": {
     "message": "Design",
     "description": "Navbar item with label design"
-  },
-  "item.label.sponsor": {
-    "message": "Sponsor",
-    "description": "Navbar item with label sponsor"
   },
   "item.label.resource": {
     "message": "Resource",
@@ -54,14 +50,6 @@
   "item.label.enterprise": {
     "message": "Enterprise",
     "description": "Navbar item with label enterprise"
-  },
-  "item.label.开源之夏": {
-    "message": "OSPP",
-    "description": "Navbar item with label 开源之夏"
-  },
-  "item.label.华为云开源活动": {
-    "message": "HuaweiCloud Event",
-    "description": "Navbar item with label 华为云开源活动"
   },
   "item.label.Docs": {
     "message": "Docs",

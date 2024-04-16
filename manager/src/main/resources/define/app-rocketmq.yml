@@ -25,8 +25,8 @@ help:
   en-US: Hertzbeat monitors RocketMQ Message System general performance metrics. You could click the "<i>New RocketMQ</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 RocketMQ 消息系統的通用指標進行測量監控。<br>您可以點擊 “<i>新建 RocketMQ</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/rocketmq
-  en-US: https://hertzbeat.com/docs/help/rocketmq
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/rocketmq
+  en-US: https://hertzbeat.apache.org/docs/help/rocketmq
 params:
   # field-param field key
   # field-字段名称标识符

@@ -8,8 +8,7 @@ slug: /
 > 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力。
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
-[![Gitter](https://badges.gitter.im/hertzbeat/community.svg)](https://gitter.im/hertzbeat/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![QQ](https://img.shields.io/badge/qq-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
+[![QQ](https://img.shields.io/badge/qq-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
 ![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
@@ -57,7 +56,7 @@ slug: /
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)  
 
-![hertzBeat](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-stru.svg)   
+![hertzBeat](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-arch.svg)   
 
 ----
 

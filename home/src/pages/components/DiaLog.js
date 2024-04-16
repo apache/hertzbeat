@@ -10,14 +10,14 @@ export default function DiaLog() {
     setVisible(false);
   }, []);
 
-  useEffect(() => {
-    if (sessionStorage.getItem("support-hertzbeat") == null) {
-      setTimeout(() => {
-        setVisible(true);
-      }, 10);
-      sessionStorage.setItem("support-hertzbeat", true);
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (sessionStorage.getItem("support-hertzbeat") == null) {
+  //     setTimeout(() => {
+  //       setVisible(true);
+  //     }, 10);
+  //     sessionStorage.setItem("support-hertzbeat", true);
+  //   }
+  // }, []);
 
   return (
       <>
@@ -33,7 +33,7 @@ export default function DiaLog() {
           maskClosable={false}
           style={{width: "600px", fontSize: "17px"}}
           icon={
-            <img src="/img/tancloud-logo.svg" alt="logo" />
+            <img src="/img/hertzbeat-logo.svg" alt="logo" />
           }
           footer={
             <div className={styles.goToGithubWrapper}>

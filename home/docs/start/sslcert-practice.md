@@ -12,20 +12,16 @@ This article introduces how to use the hertzbeat monitoring tool to detect the v
 
 HertzBeat is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
 
-**Official website: https://hertzbeat.com | https://tancloud.cn**
 
 github: https://github.com/dromara/hertzbeat
-gitee: https://gitee.com/dromara/hertzbeat
 
 #### Install HertzBeat
 
-1. If you don't want to install, you can use the cloud service directly [TanCloud exploration cloud console.tancloud.cn](https://console.tancloud.cn)
-
-2. The `docker` environment can be installed with just one command
+1. The `docker` environment can be installed with just one command
 
 `docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
 
-3. After the installation is successful, the browser can access `localhost:1157` to start, the default account password is `admin/hertzbeat`
+2. After the installation is successful, the browser can access `localhost:1157` to start, the default account password is `admin/hertzbeat`
 
 #### Monitoring SSL certificates
 
@@ -93,8 +89,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 For token configuration such as Dingding WeChat Feishu, please refer to the help document
 
-https://hertzbeat.com/docs/help/alert_dingtalk
-https://tancloud.cn/docs/help/alert_dingtalk
+https://hertzbeat.apache.org/docs/help/alert_dingtalk
 
 > Alarm Notification -> New Alarm Notification Policy -> Enable Notification for the Recipient Just Configured
 

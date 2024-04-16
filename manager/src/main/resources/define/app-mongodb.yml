@@ -32,8 +32,8 @@ help:
   en-US: Hertzbeat monitors MongoDB general performance metrics. You could click the "<i>New MongoDB</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 MongoDB 數據庫的通用指標進行測量監控。<br>您可以點擊 “<i>新建 MongoDB 數據庫</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/mongodb
-  en-US: https://hertzbeat.com/docs/help/mongodb
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/mongodb
+  en-US: https://hertzbeat.apache.org/docs/help/mongodb
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
@@ -102,6 +102,24 @@ params:
     limit: 20
     required: true
     defaultValue: 'admin'
+  - field: timeout
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 连接超时时间(ms)
+      en-US: Connect Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,100000]'
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+    # default value 6000
+    # 默认值 6000
+    defaultValue: 6000
 # can get status information and other config params of MongoDB by running Diagnostic Commands
 # 可以通过执行 Diagnostic Commands 获取 mongodb 的状态信息以及一些性能、配置参数
 # https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/
@@ -182,6 +200,9 @@ metrics:
       authenticationDatabase: ^_^authenticationDatabase^_^
       #The buildInfo command is an administrative command which returns a build summary for the current mongod.
       command: buildInfo
+      # timeout unit：ms
+      # 超时时间 单位：ms
+      timeout: ^_^timeout^_^
 
   # https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
   - name: server_document
@@ -219,6 +240,7 @@ metrics:
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
       command: serverStatus.metrics.document
+      timeout: ^_^timeout^_^
 
   - name: server_operation
     priority: 1
@@ -245,6 +267,7 @@ metrics:
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
       command: serverStatus.metrics.operation
+      timeout: ^_^timeout^_^
 
   - name: server_ttl
     priority: 1
@@ -271,6 +294,7 @@ metrics:
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
       command: serverStatus.metrics.ttl
+      timeout: ^_^timeout^_^
 
   # https://www.mongodb.com/docs/manual/reference/command/hostInfo/
   - name: systemInfo
@@ -330,6 +354,7 @@ metrics:
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
       command: hostInfo.system
+      timeout: ^_^timeout^_^
 
   - name: os
     priority: 1
@@ -361,6 +386,7 @@ metrics:
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
       command: hostInfo.os
+      timeout: ^_^timeout^_^
 
   - name: extra
     priority: 1
@@ -417,3 +443,4 @@ metrics:
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
       command: hostInfo.extra.extra
+      timeout: ^_^timeout^_^

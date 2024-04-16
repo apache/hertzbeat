@@ -1,9 +1,28 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
 <nz-spin [nzSpinning]="loading" [nzTip]="'Loading...'" nzSize="large">
   <div class="status-header" [style]="'border-radius: 6px;margin-top: 10px;background:' + (statusOrg.color || '#e9f3d3')">
     <header-i18n showLangText="false" class="langs"></header-i18n>
     <div>
       <a [href]="statusOrg.home" target="_blank">
-        <img class="status-logo" [src]="statusOrg.logo" alt="" style="max-width: 100%; max-height: 100%; height: auto; width: auto" />
+        <img class="status-logo" [src]="statusOrg.logo" alt="" />
       </a>
     </div>
   </div>
@@ -214,7 +233,7 @@
 <div *ngIf="showMode == 'component'" style="margin-top: 10px; margin-bottom: 250px">
   <div style="width: 60%; margin: 0 auto">
     <div style="display: flex; justify-content: space-between; font-weight: lighter; font-size: small">
-      <a href="https://github.com/dromara/hertzbeat" target="_blank">
+      <a href="https://github.com/apache/hertzbeat" target="_blank">
         <button nzType="link" nz-button> {{ 'status.public.power-by' | i18n }} </button>
       </a>
       <button nzType="primary" (click)="showIncident()" nz-button>
@@ -230,7 +249,7 @@
       <button nzType="primary" (click)="showComponent()" nz-button>
         <span nz-icon nzType="left-circle"></span> {{ 'status.public.to-component' | i18n }}
       </button>
-      <a href="https://github.com/dromara/hertzbeat" target="_blank">
+      <a href="https://github.com/apache/hertzbeat" target="_blank">
         <button nzType="link" nz-button> {{ 'status.public.power-by' | i18n }} </button>
       </a>
     </div>

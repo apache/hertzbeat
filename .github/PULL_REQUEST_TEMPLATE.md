@@ -5,8 +5,7 @@
 
 ## Checklist
 
-- [x]  I hereby agree to the terms of the [HertzBeat CLA](https://gist.github.com/tomsun28/511c04e7643901cb550bb6ecc75a661b)
-- [ ]  I have read the [Contributing Guide](https://hertzbeat.com/docs/others/contributing/)
+- [ ]  I have read the [Contributing Guide](https://hertzbeat.apache.org/docs/community/code_style_and_quality_guide)
 - [ ]  I have written the necessary doc or comment.
 - [ ]  I have added the necessary unit tests and all cases have passed.
 

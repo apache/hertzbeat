@@ -1,3 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
 import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18NService } from '@core';
@@ -11,6 +30,7 @@ import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { finalize } from 'rxjs/operators';
 
 import { Monitor } from '../../../pojo/Monitor';
+import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { formatTagName } from '../../../shared/utils/common-util';
@@ -18,7 +38,7 @@ import { formatTagName } from '../../../shared/utils/common-util';
 @Component({
   selector: 'app-monitor-list',
   templateUrl: './monitor-list.component.html',
-  styles: []
+  styleUrls: ['./monitor-list.component.less']
 })
 export class MonitorListComponent implements OnInit {
   constructor(
@@ -29,6 +49,7 @@ export class MonitorListComponent implements OnInit {
     private monitorSvc: MonitorService,
     private messageSvc: NzMessageService,
     private storageSvc: MemoryStorageService,
+    private appDefineSvc: AppDefineService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -47,6 +68,12 @@ export class MonitorListComponent implements OnInit {
   // 过滤搜索
   filterContent!: string;
   filterStatus: number = 9;
+  // app type search filter
+  appSwitchModalVisible = false;
+  appSearchContent = '';
+  appSearchOrigin: any[] = [];
+  appSearchResult: any[] = [];
+  appSearchLoading = false;
 
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
@@ -455,6 +482,67 @@ export class MonitorListComponent implements OnInit {
     const sortOrder = (currentSort && currentSort.value) || null;
     this.changeMonitorTable(sortField, sortOrder);
   }
+
+  // begin: app type search filter
+
+  onAppSwitchModalOpen() {
+    this.appSwitchModalVisible = true;
+    this.appSearchLoading = true;
+    const getHierarchy$ = this.appDefineSvc
+      .getAppHierarchy(this.i18nSvc.defaultLang)
+      .pipe(
+        finalize(() => {
+          getHierarchy$.unsubscribe();
+          this.appSearchLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.appSearchOrigin = [];
+            this.appSearchResult = [];
+            message.data.forEach((app: any) => {
+              app.categoryLabel = this.i18nSvc.fanyi(`monitor.category.${app.category}`);
+              if (app.categoryLabel == `monitor.category.${app.category}`) {
+                app.categoryLabel = this.i18nSvc.fanyi('monitor.category.custom');
+              }
+              this.appSearchOrigin.push(app);
+            });
+            this.appSearchOrigin = this.appSearchOrigin.sort((a, b) => a.category?.localeCompare(b.category));
+            this.appSearchResult = this.appSearchOrigin;
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          console.warn(error.msg);
+        }
+      );
+  }
+
+  onAppSwitchModalCancel() {
+    this.appSwitchModalVisible = false;
+  }
+
+  gotoMonitorAddDetail(app: string) {
+    this.router.navigateByUrl(`/monitors/new?app=${app}`);
+  }
+
+  searchSwitchApp() {
+    if (this.appSearchContent === '' || this.appSearchContent == null) {
+      this.appSearchResult = this.appSearchOrigin;
+    } else {
+      this.appSearchResult = this.appSearchOrigin.filter(
+        app =>
+          app.label.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
+          app.categoryLabel.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
+          app.value.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
+          app.category.toLowerCase().includes(this.appSearchContent.toLowerCase())
+      );
+    }
+  }
+
+  // end: app type search filter
 
   protected readonly sliceTagName = formatTagName;
 }

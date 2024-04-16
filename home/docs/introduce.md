@@ -13,10 +13,10 @@ slug: /
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
-[![QQ](https://img.shields.io/badge/QQ-236915833-orange)](https://jq.qq.com/?_wv=1027&k=aVIVB2K9)
+[![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
-**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org) Global | [hertzbeat.com](https://hertzbeat.com) China**
+**Home: [hertzbeat.dromara.org](https://hertzbeat.dromara.org)**
 
 ## 🎡 <font color="green">Introduction</font>
 
@@ -54,42 +54,42 @@ Do you believe that users can just write a monitoring template on the UI page, c
 
 **There are a lot of built-in monitoring templates for users to add directly on the page, one monitoring type corresponds to one YML monitoring template**.
 
-- [Website](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-port.yml),
-  [Http Api](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ping.yml),
-  [Jvm](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-fullsite.yml),
-  [Ssl Certificate](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot2.yml),
-  [FTP Server](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml),
-  [Udp Port](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-udp.yml), [Dns](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dns.yml),
-  [Pop3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ntp.yml),
-  [Api Code](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-smtp.yml),
-  [Nginx](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-nginx.yml)
-- [Mysql](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-postgresql.yml),
-  [MariaDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis.yml),
-  [ElasticSearch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-sqlserver.yml),
-  [Oracle](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-oracle.yml), [MongoDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mongodb.yml),
-  [DM](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dm.yml), [OpenGauss](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opengauss.yml),
-  [ClickHouse](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-iotdb.yml),
-  [Redis Cluster](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml)
+- [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-port.yml),
+  [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ping.yml),
+  [Jvm](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-fullsite.yml),
+  [Ssl Certificate](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-springboot2.yml),
+  [FTP Server](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml),
+  [Udp Port](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-udp.yml), [Dns](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-dns.yml),
+  [Pop3](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ntp.yml),
+  [Api Code](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-smtp.yml),
+  [Nginx](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-nginx.yml)
+- [Mysql](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-postgresql.yml),
+  [MariaDB](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redis.yml),
+  [ElasticSearch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-sqlserver.yml),
+  [Oracle](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-oracle.yml), [MongoDB](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-mongodb.yml),
+  [DM](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-dm.yml), [OpenGauss](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-opengauss.yml),
+  [ClickHouse](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-iotdb.yml),
+  [Redis Cluster](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml)
   [Doris BE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_fe.yml),
   [Memcached](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-nebulaGraph.yml)
-- [Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml),
-  [CentOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-windows.yml),
-  [EulerOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml),
-  [OpenSUSE](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rockylinux.yml),
-  [Red Hat](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-freebsd.yml),
-  [AlmaLinux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-debian.yml)
-- [Tomcat](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-nacos.yml),
-  [Zookeeper](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rabbitmq.yml),
-  [Flink](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kafka.yml),
-  [ShenYu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dynamic_tp.yml),
-  [Jetty](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-activemq.yml),
-  [Spring Gateway](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-emqx.yml),
-  [AirFlow](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hive.yml),
-  [Spark](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hadoop.yml)
-- [Kubernetes](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-docker.yml)
-- [CiscoSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hpe_switch.yml),
-  [HuaweiSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tplink_switch.yml),
-  [H3cSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-h3c_switch.yml)
+- [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml),
+  [CentOS](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-windows.yml),
+  [EulerOS](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml),
+  [OpenSUSE](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-rockylinux.yml),
+  [Red Hat](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-freebsd.yml),
+  [AlmaLinux](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-debian.yml)
+- [Tomcat](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-nacos.yml),
+  [Zookeeper](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-rabbitmq.yml),
+  [Flink](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-kafka.yml),
+  [ShenYu](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-dynamic_tp.yml),
+  [Jetty](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-activemq.yml),
+  [Spring Gateway](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-emqx.yml),
+  [AirFlow](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-hive.yml),
+  [Spark](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-hadoop.yml)
+- [Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-docker.yml)
+- [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-hpe_switch.yml),
+  [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-tplink_switch.yml),
+  [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-h3c_switch.yml)
 - And More Your Custom Template.
 - Notified Support `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 
@@ -146,7 +146,7 @@ In an isolated network where multiple networks are not connected, we need to dep
 - An open source collaboration product using the `Apache2` protocol, maintained by a free and open source community.
 - No monitoring number `License`, monitoring type and other pseudo-open source restrictions .
 - Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
-- Open source is not the same as free, dev based on HertzBeat must retain the logo, name, page footnotes, copyright, etc.
+- Open source is not the same as free, dev based on HertzBeat must retain page footnotes, copyright, etc.
 
 
 **HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**
@@ -186,42 +186,42 @@ Browser access `http://localhost:1157` default account password `admin/hertzbeat
 
 Built-in support for monitoring types include:
 
-- [Website](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-port.yml),
-  [Http Api](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ping.yml),
-  [Jvm](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-fullsite.yml),
-  [Ssl Certificate](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot2.yml),
-  [FTP Server](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml),
-  [Udp Port](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-udp.yml), [Dns](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dns.yml),
-  [Pop3](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ntp.yml),
-  [Api Code](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-smtp.yml),
-  [Nginx](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-nginx.yml)
-- [Mysql](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-postgresql.yml),
-  [MariaDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis.yml),
-  [ElasticSearch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-sqlserver.yml),
-  [Oracle](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-oracle.yml), [MongoDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-mongodb.yml),
-  [DM](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dm.yml), [OpenGauss](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opengauss.yml),
-  [ClickHouse](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-iotdb.yml),
-  [Redis Cluster](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml)
+- [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-port.yml),
+  [Http Api](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-api.yml), [Ping Connect](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ping.yml),
+  [Jvm](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-jvm.yml), [SiteMap](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-fullsite.yml),
+  [Ssl Certificate](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ssl_cert.yml), [SpringBoot2](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-springboot2.yml),
+  [FTP Server](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml), [SpringBoot3](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml),
+  [Udp Port](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-udp.yml), [Dns](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-dns.yml),
+  [Pop3](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-pop3.yml), [Ntp](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ntp.yml),
+  [Api Code](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-api_code.yml), [Smtp](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-smtp.yml),
+  [Nginx](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-nginx.yml)
+- [Mysql](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-mysql.yml), [PostgreSQL](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-postgresql.yml),
+  [MariaDB](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-mariadb.yml), [Redis](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redis.yml),
+  [ElasticSearch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-elasticsearch.yml), [SqlServer](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-sqlserver.yml),
+  [Oracle](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-oracle.yml), [MongoDB](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-mongodb.yml),
+  [DM](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-dm.yml), [OpenGauss](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-opengauss.yml),
+  [ClickHouse](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-iotdb.yml),
+  [Redis Cluster](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml)
   [Doris BE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-doris_fe.yml),
   [Memcached](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/dromara/hertzbeat/blob/master/manager/src/main/resources/define/app-nebulaGraph.yml)
-- [Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml),
-  [CentOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-windows.yml),
-  [EulerOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml),
-  [OpenSUSE](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rockylinux.yml),
-  [Red Hat](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-freebsd.yml),
-  [AlmaLinux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-debian.yml)
-- [Tomcat](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-nacos.yml),
-  [Zookeeper](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-rabbitmq.yml),
-  [Flink](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kafka.yml),
-  [ShenYu](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-dynamic_tp.yml),
-  [Jetty](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-activemq.yml),
-  [Spring Gateway](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-emqx.yml),
-  [AirFlow](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hive.yml),
-  [Spark](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hadoop.yml)
-- [Kubernetes](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-docker.yml)
-- [CiscoSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-hpe_switch.yml),
-  [HuaweiSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-tplink_switch.yml),
-  [H3cSwitch](https://raw.githubusercontent.com/dromara/hertzbeat/master/manager/src/main/resources/define/app-h3c_switch.yml)
+- [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ubuntu.yml),
+  [CentOS](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-windows.yml),
+  [EulerOS](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-coreos.yml),
+  [OpenSUSE](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-opensuse.yml), [Rocky Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-rockylinux.yml),
+  [Red Hat](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redhat.yml), [FreeBSD](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-freebsd.yml),
+  [AlmaLinux](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-almalinux.yml), [Debian Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-debian.yml)
+- [Tomcat](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-tomcat.yml), [Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-nacos.yml),
+  [Zookeeper](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-zookeeper.yml), [RabbitMQ](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-rabbitmq.yml),
+  [Flink](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-flink.yml), [Kafka](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-kafka.yml),
+  [ShenYu](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-shenyu.yml), [DynamicTp](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-dynamic_tp.yml),
+  [Jetty](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-jetty.yml), [ActiveMQ](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-activemq.yml),
+  [Spring Gateway](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-spring_gateway.yml), [EMQX MQTT](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-emqx.yml),
+  [AirFlow](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-airflow.yml), [Hive](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-hive.yml),
+  [Spark](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-spark.yml), [Hadoop](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-hadoop.yml)
+- [Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-kubernetes.yml), [Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-docker.yml)
+- [CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-cisco_switch.yml), [HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-hpe_switch.yml),
+  [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-tplink_switch.yml),
+  [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-h3c_switch.yml)
 
 ![hertzbeat](/img/home/2.png)
 
@@ -310,6 +310,5 @@ Built-in support for monitoring types include:
 
 ----- 
 
-**Home: https://hertzbeat.com/**    
 **Github: https://github.com/dromara/hertzbeat**      
 **Gitee: https://gitee.com/dromara/hertzbeat**

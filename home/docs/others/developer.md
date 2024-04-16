@@ -25,15 +25,13 @@ sidebar_label: Contributors
     </tr>
   </tbody>
 </table>
-
-<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>  
+ 
 
 
 ## ✨ HertzBeat Contributors
 
 Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contributing)  
 
-<img alt="cert" src="/img/docs/cert-contributor.png" width="400"/>  
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -258,6 +256,8 @@ Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contr
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/handy-git"><img src="https://avatars.githubusercontent.com/u/32837980?v=4?s=100" width="100px;" alt="handy"/><br /><sub><b>handy</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=handy-git" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/LiuTianyou"><img src="https://avatars.githubusercontent.com/u/30208283?v=4?s=100" width="100px;" alt="LiuTianyou"/><br /><sub><b>LiuTianyou</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=LiuTianyou" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/WinterKi1ler"><img src="https://avatars.githubusercontent.com/u/160592092?v=4?s=100" width="100px;" alt="WinterKi1ler"/><br /><sub><b>WinterKi1ler</b></sub></a><br /><a href="https://github.com/dromara/hertzbeat/commits?author=WinterKi1ler" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

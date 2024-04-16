@@ -11,13 +11,8 @@ import { CONSTANTS } from '../../shared/constants';
   template: `
     <layout-default [options]="options" [asideUser]="asideUserTpl" [nav]="navTpl" [content]="contentTpl" [customError]="null">
       <layout-default-header-item direction="left">
-        <a layout-default-header-item-trigger href="//github.com/dromara/hertzbeat" target="_blank">
+        <a layout-default-header-item-trigger href="//github.com/apache/hertzbeat" target="_blank">
           <i nz-icon nzType="github"></i>
-        </a>
-      </layout-default-header-item>
-      <layout-default-header-item direction="left">
-        <a layout-default-header-item-trigger href="//gitee.com/dromara/hertzbeat" target="_blank">
-          <i nz-icon nzIconfont="icon-gitee"></i>
         </a>
       </layout-default-header-item>
 
@@ -51,7 +46,7 @@ import { CONSTANTS } from '../../shared/constants';
             </div>
             <div nz-menu-item routerLink="/setting/tags">
               <i nz-icon nzType="tag" class="mr-sm"></i>
-              <span style="margin-left: 4px">{{ 'menu.extras.tags' | i18n }}</span>
+              <span style="margin-left: 4px">{{ 'menu.advanced.tags' | i18n }}</span>
             </div>
             <div nz-menu-item>
               <header-i18n></header-i18n>
@@ -80,21 +75,14 @@ import { CONSTANTS } from '../../shared/constants';
     </layout-default>
     <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; margin:0;">
       <div style="margin-top: 30px">
-        HertzBeat {{ version }}<br />
-        Copyright &copy; 2021-{{ currentYear }}
-        <a href="https://hertzbeat.com" target="_blank">hertzbeat.com</a>
+        Apache HertzBeat {{ version }}<br />
+        Copyright &copy; {{ currentYear }}
+        <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat</a>
         <br />
         Licensed under the Apache License, Version 2.0
       </div>
     </global-footer>
     <setting-drawer *ngIf="showSettingDrawer"></setting-drawer>
-    <theme-btn
-      [types]="[
-        { key: 'default', text: 'app.theme.default' | i18n },
-        { key: 'dark', text: 'app.theme.dark' | i18n },
-        { key: 'compact', text: 'app.theme.compact' | i18n }
-      ]"
-    ></theme-btn>
   `
 })
 export class LayoutBasicComponent {

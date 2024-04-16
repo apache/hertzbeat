@@ -1,6 +1,6 @@
 {
   "projectName": "hertzbeat",
-  "projectOwner": "dromara",
+  "projectOwner": "apache",
   "repoType": "github",
   "repoHost": "https://github.com",
   "files": [
@@ -1595,6 +1595,24 @@
       "name": "handy",
       "avatar_url": "https://avatars.githubusercontent.com/u/32837980?v=4",
       "profile": "https://github.com/handy-git",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "LiuTianyou",
+      "name": "LiuTianyou",
+      "avatar_url": "https://avatars.githubusercontent.com/u/30208283?v=4",
+      "profile": "https://github.com/LiuTianyou",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "WinterKi1ler",
+      "name": "WinterKi1ler",
+      "avatar_url": "https://avatars.githubusercontent.com/u/160592092?v=4",
+      "profile": "https://github.com/WinterKi1ler",
       "contributions": [
         "code"
       ]

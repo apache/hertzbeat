@@ -38,7 +38,7 @@ Even small corrections to typos are very welcome :)
 
 1. Requires `maven3+`, `java17` and `lombok` environments
 2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
-3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`
+3. Start `springboot manager` service `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
 
 - Front-web start
 
@@ -114,17 +114,9 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion
 
-[Gitter Channel](https://gitter.im/hertzbeat/community)
-
 [Github Discussion](https://github.com/dromara/hertzbeat/discussions)
 
-[User Club](https://support.qq.com/products/379369)
-
 Add WeChat account `tan-cloud` to pull you into the WeChat group.
-
-QQ group number `236915833`, verify code: `tancloud`
-
-Public WeChat: `tancloudtech`
 
 ## 🥐 Architecture
 
@@ -139,4 +131,4 @@ Public WeChat: `tancloudtech`
 - **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-stru-en.svg)   
+![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)   

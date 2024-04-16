@@ -13,10 +13,7 @@ import { ICONS } from '../../../style-icons';
 import { ICONS_AUTO } from '../../../style-icons-auto';
 import { MemoryStorageService } from '../../service/memory-storage.service';
 import { I18NService } from '../i18n/i18n.service';
-/**
- * Used for application startup
- * Generally used to get the basic data of the application, like: Menu Data, User Data, etc.
- */
+
 @Injectable({
   providedIn: 'root'
 })
@@ -55,17 +52,15 @@ export class StartupService {
       map(([langData, appData, menuData]: [Record<string, string>, NzSafeAny, NzSafeAny]) => {
         // setting language data
         this.i18n.use(defaultLang, langData);
-
-        // Application data
         // Application information: including site name, description, year
         this.settingService.setApp(appData.app);
-        // https://ng-alain.com/theme/settings/zh
         // this.settingService.setLayout('collapsed', true);
-        // ACL: Set the permissions to full, https://ng-alain.com/acl/getting-started
         this.aclService.setFull(true);
-        // Menu data, https://ng-alain.com/theme/menu
         this.menuService.add(appData.menu);
-        menuData.data.forEach((item: { category: string; value: string }) => {
+        menuData.data.forEach((item: { category: string; value: string; hide: boolean }) => {
+          if (item.hide) {
+            return;
+          }
           let category = item.category;
           let app = item.value;
           let menu: Menu | null = this.menuService.getItem(category);
@@ -75,12 +70,24 @@ export class StartupService {
               link: `/monitors?app=${app}`,
               i18n: `monitor.app.${app}`
             });
+          } else {
+            if (app != 'prometheus' && app != 'push') {
+              this.menuService.getItem('monitoring')?.children?.push({
+                text: app,
+                link: `/monitors?app=${app}`,
+                i18n: `monitor.app.${app}`,
+                icon: 'anticon-project'
+              });
+            }
+          }
+        });
+        this.menuService.getItem('monitoring')?.children?.forEach(item => {
+          if (item.key != null && (item.children == null || item.children.length == 0)) {
+            item.hide = true;
           }
         });
         this.storageService.putData('hierarchy', menuData.data);
-        // flush menu
         this.menuService.resume();
-        // Can be set page suffix title, https://ng-alain.com/theme/title
         this.titleService.suffix = appData.app.name;
       })
     );
