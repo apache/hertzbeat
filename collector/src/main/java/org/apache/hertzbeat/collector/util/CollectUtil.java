@@ -311,7 +311,7 @@ public class CollectUtil {
                         Map<String, String> map = JsonUtil.fromJson(jsonValue, typeReference);
                         if (map != null) {
                             map.forEach((name, value) -> {
-                                if (name != null && !"".equals(name.trim())) {
+                                if (StringUtils.isEmpty(name)) {
                                     jsonObject.addProperty(name, value);
                                 }
                             });
