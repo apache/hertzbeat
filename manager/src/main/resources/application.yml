@@ -58,9 +58,6 @@ sureness:
              LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
              8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
-    
-common:
-  secret: 'LnfKeTjsIfJLBa2H'
 
 ---
 spring:

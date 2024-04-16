@@ -71,20 +71,104 @@ module.exports = {
           to: '/blog/',
         },
         {
-          label: 'Others',
+          label: 'Community',
           position: 'left',
           items: [
             {
               label: 'discuss',
-              to: '/docs/others/contact',
+              to: '/docs/community/contact',
             },
+            {
+              label: 'code_of_conduct',
+              to: 'https://www.apache.org/foundation/policies/conduct',
+            },
+            {
+              label: 'join_the_mailing_lists',
+              to: '/docs/community/mailing_lists',
+            },
+            {
+              label: 'become_committer',
+              to: '/docs/community/become_committer',
+            },
+            {
+              label: 'become_pmc_member',
+              href: '/docs/community/become_pmc_member',
+            },
+            {
+              label: 'new_committer_process',
+              to: '/docs/community/new_committer_process',
+            },
+            {
+              label: 'new_pmc_member_process',
+              to: '/docs/community/new_pmc_ember_process',
+            },
+            {
+              label: 'documentation_notice',
+              to: '/docs/community/document',
+            },
+            {
+              label: 'submit_code',
+              to: '/docs/community/submit_code',
+            },
+            {
+              label: 'code_style_and_quality_guide',
+              to: '/docs/community/code_style_and_quality_guide'
+            },
+            {
+              label: 'how_to_release',
+              to: '/docs/community/how_to_release'
+            },
+            {
+              label: 'how_to_verify_release',
+              to: '/docs/community/how_to_verify_release'
+            }
+          ],
+        },
+        {
+          label: 'ASF',
+          position: 'left',
+          items: [
+            {
+              label: 'Foundation',
+              to: 'https://www.apache.org/',
+            },
+            {
+              label: 'License',
+              to: 'https://www.apache.org/licenses/',
+            },
+            {
+              label: 'Events',
+              to: 'https://eu.communityovercode.org/',
+            },
+            {
+              label: 'Security',
+              href: 'https://www.apache.org/security/',
+            },
+            {
+              label: 'Sponsorship',
+              to: 'https://www.apache.org/foundation/sponsorship.html',
+            },
+            {
+              label: 'Privacy',
+              to: 'https://privacy.apache.org/policies/privacy-policy-public.html',
+            },
+            {
+              label: 'Thanks',
+              to: 'https://www.apache.org/foundation/sponsors',
+            }
+          ],
+        },
+        {
+          label: 'Others',
+          position: 'left',
+          items: [
             {
               label: 'contributors',
               to: '/docs/others/developer',
             },
             {
               label: 'contributing',
-              to: '/docs/others/contributing',
+              to: '/docs/community/mailing_lists',
             },
             {
               label: 'kanban',
@@ -104,6 +188,26 @@ module.exports = {
         {
           type: 'localeDropdown',
           position: 'right',
+        }, 
+        {
+          href: repoUrl,
+          position: 'right',
+          className: 'header-github-link'
+        }, 
+        {
+          href: 'https://twitter.com/hertzbeat1024',
+          position: 'right',
+          className: 'header-twitter-link'
+        }, 
+        {
+          href: 'https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow',
+          position: 'right',
+          className: 'header-youtube-link'
+        }, 
+        {
+          href: 'https://discord.gg/Fb6M73htGr',
+          position: 'right',
+          className: 'header-discord-link'
         }
       ],
     },

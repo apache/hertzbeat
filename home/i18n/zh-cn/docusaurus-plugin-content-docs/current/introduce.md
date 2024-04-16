@@ -1,6 +1,6 @@
 ---
 id: introduce  
-title: HertzBeat赫兹跳动     
+title: Apache HertzBeat     
 sidebar_label: 介绍
 slug: /
 ---

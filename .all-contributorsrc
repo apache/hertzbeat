@@ -1616,6 +1616,42 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "miki-hmt",
+      "name": "miki",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45377370?v=4",
+      "profile": "http://sharehoo.cn/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "alpha951",
+      "name": "Keshav Carpenter",
+      "avatar_url": "https://avatars.githubusercontent.com/u/85513042?v=4",
+      "profile": "https://codeflex.substack.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "makechoicenow",
+      "name": "makechoicenow",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9911918?v=4",
+      "profile": "https://github.com/makechoicenow",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "gjjjj0101",
+      "name": "Gao Jian",
+      "avatar_url": "https://avatars.githubusercontent.com/u/71874373?v=4",
+      "profile": "https://github.com/gjjjj0101",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
