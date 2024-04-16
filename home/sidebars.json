@@ -89,6 +89,7 @@
       "type": "category",
       "label": "Community",
       "items": [
+        "community/contact",
         {
           "type": "category",
           "label": "contribution",
@@ -255,7 +256,6 @@
       "items": [
         "others/developer",
         "others/contributing",
-        "others/contact",
         "others/resource"
       ]
     }

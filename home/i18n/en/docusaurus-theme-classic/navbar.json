@@ -16,7 +16,7 @@
     "description": "Navbar item with label blog"
   },
   "item.label.discuss": {
-    "message": "Discuss",
+    "message": "Contact Discuss",
     "description": "Navbar item with label discuss"
   },
   "item.label.kanban": {

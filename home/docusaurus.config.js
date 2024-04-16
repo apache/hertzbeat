@@ -75,6 +75,10 @@ module.exports = {
           position: 'left',
           items: [
             {
+              label: 'discuss',
+              to: '/docs/community/contact',
+            },
+            {
               label: 'code_of_conduct',
               to: 'https://www.apache.org/foundation/policies/conduct',
             },
@@ -159,16 +163,12 @@ module.exports = {
           position: 'left',
           items: [
             {
-              label: 'discuss',
-              to: '/docs/others/contact',
-            },
-            {
               label: 'contributors',
               to: '/docs/others/developer',
             },
             {
               label: 'contributing',
-              to: '/docs/others/contributing',
+              to: '/docs/community/mailing_lists',
             },
             {
               label: 'kanban',
