@@ -17,6 +17,7 @@
  * under the License.
  */
 
+import { Grafana } from './Grafana';
 import { Tag } from './Tag';
 
 export class Monitor {
