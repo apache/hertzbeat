@@ -19,7 +19,6 @@ package org.apache.hertzbeat.common.util;
 
 /**
  * In order to avoid generating too many String objects in the way of subString during ExporterParser parsing, use this class control
- * 为了避免ExporterParser解析过程中, 使用subString的方式生成过多的String对象, 使用该类控制
  */
 public class StrBuffer {
     private static final String POSITIVE_INF = "+inf";
@@ -38,9 +37,9 @@ public class StrBuffer {
     }
 
     /**
-     * 读取当前字符, left++
+     * Reading the current character, left++
      *
-     * @return 当前下标字符
+     * @return Current subscript character
      */
     public char read() {
         if (left > right) {
@@ -50,7 +49,7 @@ public class StrBuffer {
     }
 
     /**
-     * 回滚一个字符
+     * Rollback one character
      */
     public void rollback() {
         if (left > 0) {
@@ -59,10 +58,10 @@ public class StrBuffer {
     }
 
     /**
-     * 只查询left+i的下标字符, 不会进行left++的操作
+     * Only the index character of left+i is queried; there is no left++ operation
      *
-     * @param i 下标
-     * @return left+i下标对应的字符
+     * @param i index
+     * @return left+iThe character corresponding to the index
      */
     public char charAt(int i) {
         if (left + i > right) {
@@ -72,9 +71,9 @@ public class StrBuffer {
     }
 
     /**
-     * 转string对象
+     * Converting a string object
      *
-     * @return char数组对应的字符串
+     * @return charA string corresponding to an array
      */
     public String toStr() {
         StringBuilder builder = new StringBuilder();
@@ -85,9 +84,9 @@ public class StrBuffer {
     }
 
     /**
-     * 转double
+     * transition double
      *
-     * @return char数组对应的浮点数
+     * @return char double integer corresponding to the array
      */
     public double toDouble() {
         String s = toStr();
@@ -95,9 +94,9 @@ public class StrBuffer {
     }
 
     /**
-     * 转long
+     * transition long
      *
-     * @return char数组对应的长整数
+     * @return char the long integer corresponding to the array
      */
     public long toLong() {
         String s = toStr();
@@ -130,10 +129,10 @@ public class StrBuffer {
     }
 
     /**
-     * string -> long, 需要判断是否为INF
+     * string -> long, We need to determine if it's INF
      *
-     * @param s 字符串
-     * @return 长整数
+     * @param s string
+     * @return long
      */
     public static long parseLong(String s) {
         if (POSITIVE_INF.equalsIgnoreCase(s)) {
@@ -146,10 +145,10 @@ public class StrBuffer {
     }
 
     /**
-     * string -> double, 需要判断是否为INF
+     * string -> double, We need to determine if it's INF
      *
-     * @param s 字符串
-     * @return 浮点数
+     * @param s string
+     * @return double
      */
     public static double parseDouble(String s) {
         if (POSITIVE_INF.equalsIgnoreCase(s)) {

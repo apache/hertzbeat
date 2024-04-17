@@ -67,15 +67,13 @@ public class Job {
      */
     private String app;
     /**
-     * The internationalized name of the monitoring type   
-     * zh-CN: PING连通性
-     * en-US: PING CONNECT
+     * The internationalized name of the monitoring type
+     * PING CONNECT
      */
     private Map<String, String> name;
     /**
      * The description and help of the monitoring type
-     * zh-CN: PING连通性 - 支持您使用在线配置对端服务的IP或域名地址，监控本机网络与对端网络的PING可连通性。
-     * en-US: PING CONNECT - You can use the IP address or domain address of the peer service to monitor the PING connectivity between the local network and the peer network.
+     * PING CONNECT - You can use the IP address or domain address of the peer service to monitor the PING connectivity between the local network and the peer network.
      */
     private Map<String, String> help;
     /**
@@ -84,17 +82,14 @@ public class Job {
     private Map<String, String> helpLink;
     /**
      * Task dispatch start timestamp
-     * 任务派发开始时间戳
      */
     private long timestamp;
     /**
      * Task collection time interval (unit: second) eg: 30,60,600
-     * 任务采集时间间隔(单位秒) eg: 30,60,600
      */
     private long interval = 600L;
     /**
      * Whether it is a recurring periodic task true is yes, false is no
-     * 是否是循环周期性任务 true为是,false为否
      */
     private boolean isCyclic = false;
     /**
@@ -108,20 +103,17 @@ public class Job {
     private List<Metrics> metrics;
     /**
      * Monitoring configuration parameter properties and values eg: username password timeout host
-     * 监控配置参数属性及值 eg: username password timeout host
      */
     private List<Configmap> configmap;
 
     /**
      * the collect data response metrics as env configmap for other collect use. ^o^xxx^o^
-     * 优先级高的采集响应单行指标可以作为后续优先级采集配置的环境变量 ^o^xxx^o^
      */
     @JsonIgnore
     private Map<String, Configmap> envConfigmaps;
 
     /**
      * collector use - timestamp when the task was scheduled by the time wheel
-     * 任务被时间轮开始调度的时间戳
      */
     @JsonIgnore
     private transient long dispatchTime;
@@ -141,32 +133,27 @@ public class Job {
 
     /**
      * collector use - Temporarily store one-time task metrics response data
-     * collector使用 - 临时存储一次性任务响应数据
      */
     @JsonIgnore
     private transient List<CollectRep.MetricsData> responseDataTemp;
 
     /**
      * collector use - construct to initialize metrics execution view
-     * collector使用 - 构造初始化指标执行视图
      */
     public synchronized void constructPriorMetrics() {
         Map<Byte, List<Metrics>> map = metrics.stream()
                 .peek(metric -> {
                     // Determine whether to configure aliasFields If not, configure the default
-                    // 判断是否配置aliasFields 没有则配置默认
                     if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
                         metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
                     }
                     // Set the default metrics execution priority, if not filled, the default last priority
-                    // 设置默认执行优先级,不填则默认最后优先级
                     if (metric.getPriority() == null) {
                         metric.setPriority(Byte.MAX_VALUE);
                     }
                 })
                 .collect(Collectors.groupingBy(Metrics::getPriority));
         // Construct a linked list of task execution order of the metrics
-        // 构造采集任务执行顺序链表
         priorMetrics = new LinkedList<>();
         map.values().forEach(metric -> {
             Set<Metrics> metricsSet = Collections.synchronizedSet(new HashSet<>(metric));
@@ -185,18 +172,15 @@ public class Job {
 
     /**
      * collector use - to get the next set of priority metric group tasks
-     * collector使用 - 获取下一组优先级的采集任务
      *
      * @param metrics Current Metrics
      * @param first   Is it the first time to get  
      * @return Metrics Tasks       
      * Returning null means: the job has been completed, and the collection of all metrics has ended
-     * 返回null表示：job已完成,所有采集任务结束
      * Returning the empty set metrics that there are still metrics collection tasks at the current
      * level that have not been completed,and the next level metrics task collection cannot be performed.
-     * 返回empty的集合表示：当前级别下还有指标采集任务未结束,无法进行下一级别的任务采集
+     * The set returned empty means that there are still indicator collection tasks unfinished at the current level, and the task collection at the next level cannot be carried out
      * Returns a set of data representation: get the next set of priority index collcet tasks
-     * 返回有数据集合表示：获取到下一组优先级的采集任务
      */
     public synchronized Set<Metrics> getNextCollectMetrics(Metrics metrics, boolean first) {
         if (priorMetrics == null || priorMetrics.isEmpty()) {
@@ -250,7 +234,7 @@ public class Job {
 
     @Override
     public Job clone() {
-        // deep clone   深度克隆
+        // deep clone
         return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
     }
 }

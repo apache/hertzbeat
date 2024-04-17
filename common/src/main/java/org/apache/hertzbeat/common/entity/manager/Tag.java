@@ -46,30 +46,30 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Tag Entity | 标签实体")
+@Schema(description = "Tag Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class Tag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(title = "Tag主键索引ID", example = "87584674384", accessMode = READ_ONLY)
+    @Schema(title = "Tag Primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "Tag Field | 标签名称", example = "app", accessMode = READ_WRITE)
+    @Schema(title = "Tag Field", example = "app", accessMode = READ_WRITE)
     @NotNull
     private String name;
 
-    @Schema(title = "Tag Value | 标签值", example = "23", accessMode = READ_WRITE)
+    @Schema(title = "Tag Value", example = "23", accessMode = READ_WRITE)
     @Column(name = "`value`", length = 2048)
     private String value;
 
-    @Schema(title = "Tag Color | 标签颜色", example = "#ffff", accessMode = READ_WRITE)
+    @Schema(title = "Tag Color", example = "#ffff", accessMode = READ_WRITE)
     private String color;
 
-    @Schema(title = "Tag Color | 标签描述", example = "用于监控mysql", accessMode = READ_WRITE)
+    @Schema(title = "Tag Color", example = "Used for monitoring mysql", accessMode = READ_WRITE)
     private String description;
 
-    @Schema(title = "标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成 2: 系统预置", accessMode = READ_WRITE)
+    @Schema(title = "Tag type 0: Auto-generated monitor (monitorId,monitorName) 1: user-generated 2: system preset", accessMode = READ_WRITE)
     @Min(0)
     @Max(3)
     private byte type;

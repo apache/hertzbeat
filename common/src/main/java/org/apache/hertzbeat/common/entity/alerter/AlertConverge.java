@@ -50,28 +50,28 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Alert Converge Policy Entity | 告警收敛策略实体")
+@Schema(description = "Alert Converge Policy Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class AlertConverge {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Alert Converge Policy Entity Primary Key Index ID",
-            description = "告警收敛策略实体主键索引ID",
+            description = "Alert Converge Policy Entity Primary Key Index ID",
             example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "Policy name", description = "策略名称",
+    @Schema(title = "Policy name", description = "Policy name",
             example = "converge-1", accessMode = READ_WRITE)
     @Length(max = 100)
     @NotNull
     private String name;
 
-    @Schema(title = "Whether to enable this policy", description = "是否启用此策略",
+    @Schema(title = "Whether to enable this policy", description = "Whether to enable this policy",
             example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
     
-    @Schema(title = "Whether to match all", description = "是否应用匹配所有",
+    @Schema(title = "Whether to match all", description = "Whether to match all",
             example = "true", accessMode = READ_WRITE)
     private boolean matchAll = true;
 
@@ -80,7 +80,7 @@ public class AlertConverge {
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
 
-    @Schema(description = "匹配告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
+    @Schema(description = "Match the alarm information label(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonTagListAttributeConverter.class)
     @Column(length = 2048)

@@ -63,9 +63,6 @@ public class Metrics {
      * The collection task of the next priority metrics will be scheduled only after the scheduled collection with the higher priority is completed.
      * The default priority of the availability metrics is 0, and the range of other common metrics is 1-127, that is,
      * the subsequent metrics tasks will only be scheduled after the availability is collected successfully.
-     * 范围(0-127)调度优先级,数值越小优先级越高
-     * 优先级高的调度采集完成后才会调度下一优先级的采集任务
-     * 可用性指标(availability)默认优先级为0,其它普通指标采集范围为1-127,即需要等availability采集成功后才会调度后面的任务
      */
     private Byte priority;
     /**
@@ -75,17 +72,14 @@ public class Metrics {
     private boolean visible = true;
     /**
      * Public attribute - collection and monitoring final result attribute set eg: speed | times | size
-     * 公共属性-采集监控的最终结果属性集合 eg: speed | times | size
      */
     private List<Field> fields;
     /**
      * Public attribute - collection and monitoring pre-query attribute set eg: size1 | size2 | speedSize
-     * 公共属性-采集监控的前置查询属性集合 eg: size1 | size2 | speedSize
      */
     private List<String> aliasFields;
     /**
      * Public attribute - expression calculation, map the pre-query attribute (pre Fields) with the final attribute (fields), and calculate the final attribute (fields) value
-     * 公共属性-表达式计算，将前置查询属性(preFields)与最终属性(fields)映射,计算出最终属性(fields)值
      * eg: size = size1 + size2, speed = speedSize
      * <a href="https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m">www.yuque.com/boyan-avfmj/aviatorscript/ban32m</a>
      */
@@ -101,90 +95,74 @@ public class Metrics {
     private List<String> units;
     /**
      * Monitoring configuration information using the http protocol
-     * 使用http协议的监控配置信息
      */
     private HttpProtocol http;
     /**
      * Monitoring configuration information for ping using the icmp protocol
-     * 使用icmp协议进行ping的监控配置信息
      */
     private IcmpProtocol icmp;
     /**
      * Monitoring configuration information using the telnet protocol
-     * 使用telnet协议的监控配置信息
      */
     private TelnetProtocol telnet;
     /**
      * Monitoring configuration information using the public smtp protocol
-     * 使用smtp协议的监控配置信息
      */
     private SmtpProtocol smtp;
     /**
      * Monitoring configuration information using the public ntp protocol
-     * 使用ntp协议的监控配置信息
      */
     private NtpProtocol ntp;
     /**
      * Monitoring configuration information using the websocket protocol
-     * 使用websocket的监控配置信息
      */
     private WebsocketProtocol websocket;
     /**
      * Monitoring configuration information using the memcached protocol
-     * 使用memcached的监控配置信息
      */
     private MemcachedProtocol memcached;
     /**
      * Monitoring configuration information using the nebulaGraph protocol
-     * 使用nebulaGraph的监控配置信息
      */
     private NebulaGraphProtocol nebulaGraph;
     /**
      * Use udp implemented by socket for service port detection configuration information
-     * 使用socket实现的udp进行服务端口探测配置信息
      */
     private UdpProtocol udp;
     /**
      * Database configuration information implemented using the public jdbc specification
-     * 使用公共的jdbc规范实现的数据库配置信息
      */
     private JdbcProtocol jdbc;
     /**
      * Monitoring configuration information using the public ssh protocol
-     * 使用公共的ssh协议的监控配置信息
      */
     private SshProtocol ssh;
     /**
      * Monitoring configuration information using the public redis protocol
-     * 使用公共的redis协议的监控配置信息
      */
     private RedisProtocol redis;
     /**
      * Monitoring configuration information using the public mongodb protocol
-     * 使用公共的mongodb协议的监控配置信息
      */
     private MongodbProtocol mongodb;
     /**
      * Get monitoring configuration information using public JMX protocol
-     * 使用公共JMX协议获取监控配置信息
      */
     private JmxProtocol jmx;
     /**
      * Monitoring configuration information using the public snmp protocol
-     * 使用公共的snmp协议的监控配置信息
      */
     private SnmpProtocol snmp;
     /**
      * Monitoring configuration information using the public ftp protocol
-     * 使用公共的ftp协议的监控配置信息
      */
     private FtpProtocol ftp;
     /**
-     * Monitoring configuration information using the public rocketmq protocol 使用公共的rocketmq协议的监控配置信息
+     * Monitoring configuration information using the public rocketmq protocol
      */
     private RocketmqProtocol rocketmq;
     /**
-     * Monitoring configuration information using push style 使用push方式推送的监控配置信息
+     * Monitoring configuration information using push style
      */
     private PushProtocol push;
     /**
@@ -210,21 +188,18 @@ public class Metrics {
 
     /**
      * collector use - Temporarily store subTask metrics response data
-     * collector使用 - 临时存储分级任务指标响应数据
      */
     @JsonIgnore
     private transient AtomicReference<CollectRep.MetricsData> subTaskDataRef;
 
     /**
      * collector use - Temporarily store subTask running num
-     * collector使用 - 分级任务正在运行中的数量
      */
     @JsonIgnore
     private transient AtomicInteger subTaskNum;
 
     /**
      * collector use - Temporarily store subTask id
-     * collector使用 - 分级采集任务ID
      */
     @JsonIgnore
     private transient Integer subTaskId;
@@ -296,19 +271,15 @@ public class Metrics {
     public static class Field {
         /**
          * Metric name
-         * 指标名称
          */
         private String field;
         /**
          * metric field name's i18n value
-         * 指标的国际化名称
-         * zh-CN: CPU 版本号
-         * en-US: CPU Version
+         * CPU Version
          */
         private Map<String, String> i18n;
         /**
          * Metric type 0-number: number 1-string: string
-         * 指标类型 0-number:数字 1-string:字符串
          */
         private byte type = 1;
         /**
