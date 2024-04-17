@@ -10,7 +10,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ### What is HertzBeat?
 
-[HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities.
+[HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities.
 
 ### Features
 
@@ -25,9 +25,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### HertzBeat's 1.4.2 version release!
 
@@ -69,56 +69,56 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
 
-* bugfix counting wrong tasks num of collector by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1265
-* [ospp] add push style collector by @vinci-897 in https://github.com/dromara/hertzbeat/pull/1222
-* add 1.4.1 version doc by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1263
-* support using Huawei Cloud OBS to store custom define yml file by @gcdd1993 in https://github.com/dromara/hertzbeat/pull/1266
-* [doc] add more contact channel by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1272
-* bugfix app-tomcat memory_pool unit mb  by @rbsrcy in https://github.com/dromara/hertzbeat/pull/1268
-* add rbsrcy as a contributor for code by @allcontributors in https://github.com/dromara/hertzbeat/pull/1271
-* [doc] update docker.md by @ruanliang-hualun in https://github.com/dromara/hertzbeat/pull/1270
-* add ruanliang-hualun as a contributor for doc by @allcontributors in https://github.com/dromara/hertzbeat/pull/1274
-* bugfix jmx memory_pool unit and time unit error by @rbsrcy in https://github.com/dromara/hertzbeat/pull/1273
-* bugfix old version monitor alert has no monitor name by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1278
-* support edit monitor in monitor detail page by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1282
-* reset alert converge reduce cache when restored alert trigger by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1281
-* [ospp] add push style collector doc by @vinci-897 in https://github.com/dromara/hertzbeat/pull/1267
-* bugfix threshold availability automatically carries threshold parameters by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1285
-* [ospp] support custom notice template by @Eden4701 in https://github.com/dromara/hertzbeat/pull/1233
-* add Eden4701 as a contributor for code by @allcontributors in https://github.com/dromara/hertzbeat/pull/1287
-* bugfix AvailableAlertDefineInit - query did not return a unique result by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1288
-* upgrade to version angular 15 by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1291
-* support push style for multiple messages by @vinci-897 in https://github.com/dromara/hertzbeat/pull/1292
-* update hertzbeat upgrade help doc by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1294
-* feat alert converge, define, silence support search query by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1300
-* feature:support monitoring udp port availability by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1295
-* support emqx monitor by @vinci-897 in https://github.com/dromara/hertzbeat/pull/1302
-* add an explicit tag filter by @vinci-897 in https://github.com/dromara/hertzbeat/pull/1303
-* add hertzbeat icon by @zqr10159 in https://github.com/dromara/hertzbeat/pull/1305
-* [doc] update kafka help doc by @XiaTian688 in https://github.com/dromara/hertzbeat/pull/1308
-* add XiaTian688 as a contributor for doc by @allcontributors in https://github.com/dromara/hertzbeat/pull/1309
-* support webhook custom template by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1306
-* set ssh param connect reused default false by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1310
-* upgrade greptimedb to v0.4 by @liyin in https://github.com/dromara/hertzbeat/pull/1311
-* add liyin as a contributor for code by @allcontributors in https://github.com/dromara/hertzbeat/pull/1313
-* add some emqx monitoring metrics by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1312
-* feature: app-mysql.yml by @a-little-fool in https://github.com/dromara/hertzbeat/pull/1316
-* modify default IoTDB version config to V_1_0 by @Ceilzcx in https://github.com/dromara/hertzbeat/pull/1315
-* bugfix timestamp is null by @qyaaaa in https://github.com/dromara/hertzbeat/pull/1246
-* [hertzbeat] release hertzbeat version v1.4.2 by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1317
-* bugfix alarm time span match in silence and notice by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1318
-* update available alert threshold trigger times default 2 by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1324
-* bugfix rabbitmq contains duplicated metric by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1322
-* [alerter] optimize the encoding of how to add Extern Alarm Manage API(#1320) by @SurryChen in https://github.com/dromara/hertzbeat/pull/1325
-* bugfix webhook post body error and alarm recover exception by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1327
-* build hertzbeat package with jdk runtime by @tomsun28 in https://github.com/dromara/hertzbeat/pull/1328
+* bugfix counting wrong tasks num of collector by @tomsun28 in https://github.com/apache/hertzbeat/pull/1265
+* [ospp] add push style collector by @vinci-897 in https://github.com/apache/hertzbeat/pull/1222
+* add 1.4.1 version doc by @tomsun28 in https://github.com/apache/hertzbeat/pull/1263
+* support using Huawei Cloud OBS to store custom define yml file by @gcdd1993 in https://github.com/apache/hertzbeat/pull/1266
+* [doc] add more contact channel by @tomsun28 in https://github.com/apache/hertzbeat/pull/1272
+* bugfix app-tomcat memory_pool unit mb  by @rbsrcy in https://github.com/apache/hertzbeat/pull/1268
+* add rbsrcy as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1271
+* [doc] update docker.md by @ruanliang-hualun in https://github.com/apache/hertzbeat/pull/1270
+* add ruanliang-hualun as a contributor for doc by @allcontributors in https://github.com/apache/hertzbeat/pull/1274
+* bugfix jmx memory_pool unit and time unit error by @rbsrcy in https://github.com/apache/hertzbeat/pull/1273
+* bugfix old version monitor alert has no monitor name by @tomsun28 in https://github.com/apache/hertzbeat/pull/1278
+* support edit monitor in monitor detail page by @tomsun28 in https://github.com/apache/hertzbeat/pull/1282
+* reset alert converge reduce cache when restored alert trigger by @tomsun28 in https://github.com/apache/hertzbeat/pull/1281
+* [ospp] add push style collector doc by @vinci-897 in https://github.com/apache/hertzbeat/pull/1267
+* bugfix threshold availability automatically carries threshold parameters by @tomsun28 in https://github.com/apache/hertzbeat/pull/1285
+* [ospp] support custom notice template by @Eden4701 in https://github.com/apache/hertzbeat/pull/1233
+* add Eden4701 as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1287
+* bugfix AvailableAlertDefineInit - query did not return a unique result by @tomsun28 in https://github.com/apache/hertzbeat/pull/1288
+* upgrade to version angular 15 by @tomsun28 in https://github.com/apache/hertzbeat/pull/1291
+* support push style for multiple messages by @vinci-897 in https://github.com/apache/hertzbeat/pull/1292
+* update hertzbeat upgrade help doc by @tomsun28 in https://github.com/apache/hertzbeat/pull/1294
+* feat alert converge, define, silence support search query by @tomsun28 in https://github.com/apache/hertzbeat/pull/1300
+* feature:support monitoring udp port availability by @tomsun28 in https://github.com/apache/hertzbeat/pull/1295
+* support emqx monitor by @vinci-897 in https://github.com/apache/hertzbeat/pull/1302
+* add an explicit tag filter by @vinci-897 in https://github.com/apache/hertzbeat/pull/1303
+* add hertzbeat icon by @zqr10159 in https://github.com/apache/hertzbeat/pull/1305
+* [doc] update kafka help doc by @XiaTian688 in https://github.com/apache/hertzbeat/pull/1308
+* add XiaTian688 as a contributor for doc by @allcontributors in https://github.com/apache/hertzbeat/pull/1309
+* support webhook custom template by @tomsun28 in https://github.com/apache/hertzbeat/pull/1306
+* set ssh param connect reused default false by @tomsun28 in https://github.com/apache/hertzbeat/pull/1310
+* upgrade greptimedb to v0.4 by @liyin in https://github.com/apache/hertzbeat/pull/1311
+* add liyin as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1313
+* add some emqx monitoring metrics by @tomsun28 in https://github.com/apache/hertzbeat/pull/1312
+* feature: app-mysql.yml by @a-little-fool in https://github.com/apache/hertzbeat/pull/1316
+* modify default IoTDB version config to V_1_0 by @Ceilzcx in https://github.com/apache/hertzbeat/pull/1315
+* bugfix timestamp is null by @qyaaaa in https://github.com/apache/hertzbeat/pull/1246
+* [hertzbeat] release hertzbeat version v1.4.2 by @tomsun28 in https://github.com/apache/hertzbeat/pull/1317
+* bugfix alarm time span match in silence and notice by @tomsun28 in https://github.com/apache/hertzbeat/pull/1318
+* update available alert threshold trigger times default 2 by @tomsun28 in https://github.com/apache/hertzbeat/pull/1324
+* bugfix rabbitmq contains duplicated metric by @tomsun28 in https://github.com/apache/hertzbeat/pull/1322
+* [alerter] optimize the encoding of how to add Extern Alarm Manage API(#1320) by @SurryChen in https://github.com/apache/hertzbeat/pull/1325
+* bugfix webhook post body error and alarm recover exception by @tomsun28 in https://github.com/apache/hertzbeat/pull/1327
+* build hertzbeat package with jdk runtime by @tomsun28 in https://github.com/apache/hertzbeat/pull/1328
 
 ## New Contributors
-* @rbsrcy made their first contribution in https://github.com/dromara/hertzbeat/pull/1268
-* @XiaTian688 made their first contribution in https://github.com/dromara/hertzbeat/pull/1308
-* @liyin made their first contribution in https://github.com/dromara/hertzbeat/pull/1311
+* @rbsrcy made their first contribution in https://github.com/apache/hertzbeat/pull/1268
+* @XiaTian688 made their first contribution in https://github.com/apache/hertzbeat/pull/1308
+* @liyin made their first contribution in https://github.com/apache/hertzbeat/pull/1311
 
-**Full Changelog**: https://github.com/dromara/hertzbeat/compare/v1.4.1...v1.4.2
+**Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.4.1...v1.4.2
 
 ----
 
@@ -135,27 +135,27 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 ----
 
-**Github: https://github.com/dromara/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**  
+**Github: https://github.com/apache/hertzbeat**      
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
 
 ### **Download Link**
 
 **hertzbeat server**
 
-- ⬇️ [hertzbeat-1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.tar.gz)
-- ⬇️ [hertzbeat-1.4.2.zip](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.zip)
-- ⬇️ [hertzbeat-linux_amd64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_amd64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-linux_arm64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_arm64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-macos_arm64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_arm64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-macos_amd64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_amd64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-windows64_1.4.2.zip](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-windows64_1.4.2.zip)
+- ⬇️ [hertzbeat-1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.tar.gz)
+- ⬇️ [hertzbeat-1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.zip)
+- ⬇️ [hertzbeat-linux_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_amd64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-linux_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_arm64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-macos_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_arm64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-macos_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_amd64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-windows64_1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-windows64_1.4.2.zip)
 
 **hertzbeat collector**
 
-- ⬇️ [hertzbeat-collector-1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-1.4.2.zip](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.zip)
-- ⬇️ [hertzbeat-collector-linux_amd64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_amd64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-linux_arm64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_arm64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-macos_arm64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_arm64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-macos_amd64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_amd64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-windows64_1.4.2.zip](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-windows64_1.4.2.zip)
+- ⬇️ [hertzbeat-collector-1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.zip)
+- ⬇️ [hertzbeat-collector-linux_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_amd64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-linux_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_arm64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-macos_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_arm64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-macos_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_amd64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-windows64_1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-windows64_1.4.2.zip)

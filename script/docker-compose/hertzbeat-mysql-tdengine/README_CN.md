@@ -18,7 +18,7 @@
 ##### docker compose部署hertzbeat及其依赖服务     
 
 1. 下载hertzbeat-docker-compose安装部署脚本文件  
-   脚本文件位于代码仓库下`script/docker-compose/hertzbeat-mysql-tdengine` 链接 [script/docker-compose](https://gitee.com/dromara/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-tdengine)   
+   脚本文件位于代码仓库下`script/docker-compose/hertzbeat-mysql-tdengine` 链接 [script/docker-compose](https://gitee.com/hertzbeat/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-tdengine)   
 
 
 2. 进入部署脚本 docker-compose 目录, 执行  
