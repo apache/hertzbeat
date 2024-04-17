@@ -20,6 +20,8 @@ package org.apache.hertzbeat.collector.util;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.*;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -54,7 +56,7 @@ public class CollectUtil {
      * @return match num
      */
     public static int countMatchKeyword(String content, String keyword) {
-        if (content == null || "".equals(content) || keyword == null || "".equals(keyword.trim())) {
+        if (StringUtils.isAnyEmpty(content, keyword)) {
             return 0;
         }
         try {
@@ -71,7 +73,7 @@ public class CollectUtil {
     }
 
     public static DoubleAndUnit extractDoubleAndUnitFromStr(String str) {
-        if (str == null || "".equals(str)) {
+        if (StringUtils.isEmpty(str)) {
             return null;
         }
         DoubleAndUnit doubleAndUnit = new DoubleAndUnit();
@@ -151,7 +153,7 @@ public class CollectUtil {
      * @return timeout
      */
     public static int getTimeout(String timeout, int defaultTimeout) {
-        if (timeout == null || "".equals(timeout.trim())) {
+        if (StringUtils.isEmpty(timeout)) {
             return defaultTimeout;
         }
         try {
@@ -309,7 +311,7 @@ public class CollectUtil {
                         Map<String, String> map = JsonUtil.fromJson(jsonValue, typeReference);
                         if (map != null) {
                             map.forEach((name, value) -> {
-                                if (name != null && !"".equals(name.trim())) {
+                                if (!StringUtils.isEmpty(name)) {
                                     jsonObject.addProperty(name, value);
                                 }
                             });
@@ -424,7 +426,7 @@ public class CollectUtil {
      * @return byte[]
      */
     public static byte[] fromHexString(String hexString) {
-        if (null == hexString || "".equals(hexString.trim())) {
+        if (StringUtils.isEmpty(hexString)) {
             return null;
         }
         byte[] bytes = new byte[hexString.length() / HEX_STR_WIDTH];
