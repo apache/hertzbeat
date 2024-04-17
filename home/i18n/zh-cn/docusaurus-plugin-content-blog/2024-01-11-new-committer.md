@@ -131,7 +131,7 @@ keywords: [open source monitoring system, alerting system]
 
 ## 什么是 HertzBeat?
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，兼容 Prometheus，无需 Agent 的开源实时监控告警系统。
+[HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，兼容 Prometheus，无需 Agent 的开源实时监控告警系统。
 
 ### 特点
 
@@ -146,8 +146,8 @@ keywords: [open source monitoring system, alerting system]
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
 
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 欢迎更多小伙伴参与到HertzBeat的开源协作中来，不管是一个错别字还是标点符号我们都非常欢迎，大家一起学习进步，目标做一个世界级开源软件。

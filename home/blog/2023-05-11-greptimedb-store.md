@@ -23,7 +23,7 @@ Cloud: **[GreptimePlay](https://greptime.com/playground)**
 
 ### What is HertzBeat?
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source real-time monitoring and alerting tool with powerful customizable monitoring capabilities and no Agent required.
+> [HertzBeat](https://github.com/apache/hertzbeat) is an open source real-time monitoring and alerting tool with powerful customizable monitoring capabilities and no Agent required.
 
 - HertzBeat is an open source real-time monitoring and alerting tool with powerful customizable monitoring capabilities without the need for an agent. It integrates **Monitoring+Alerting+Notification** All in one, supports monitoring of application services, applications, databases, caching, operating systems, big data, middleware, web servers, cloud native, network, customization, etc., and notifies you of thresholds and alerts all in one step.
 - More liberalized threshold rules (calculation expressions), `Email` `Discord` `Slack` `Telegram` `Pinned` `Dingtalk` `WeChat` `Flybook` `SMS` `Webhook` and other ways to deliver in time.
@@ -79,7 +79,7 @@ $ docker run -d -p 1157:1157 \
 
 - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml` : Mount customized local configuration files to the container, i.e. use local configuration files to overwrite the container configuration files.
 
-Note that the ⚠️ local mount configuration file `application.yml` needs to exist in advance, and the full contents of the file can be found in the project repository [/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/ application.yml)
+Note that the ⚠️ local mount configuration file `application.yml` needs to exist in advance, and the full contents of the file can be found in the project repository [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/ application.yml)
 
 2. Go to http://ip:1157/ with the default account and password admin/hertzbeat to see if HertzBeat starts successfully.
 
@@ -87,7 +87,7 @@ Note that the ⚠️ local mount configuration file `application.yml` needs to e
 
 1. Modify the HertzBeat configuration file.
 
-Modify the locally mounted HertzBeat configuration file [application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml), in package mode modify `hertzbeat/ config/application.yml
+Modify the locally mounted HertzBeat configuration file [application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml), in package mode modify `hertzbeat/ config/application.yml
 
 **Modify the `warehouse.store.jpa.enabled` parameter in there to `false`, configure the `warehouse.store.greptime` datasource parameter in there, the URL account password, and enable `enabled` to `true`**.
 
@@ -124,11 +124,11 @@ Here's the picture: !
 ## Summary
 
 This article took us to experience how to use the open source time-series database GreptimeDB to store the metrics data of the open source real-time monitoring HertzBeat, in general, the two open source products is very simple to get started, the key is that if it is too much trouble do not want to deploy both of them still have cloud services 😂 let you toss.   
-As one of the developers of the feature [HertzBeat supports GreptimeDB](https://github.com/dromara/hertzbeat/pull/834), in the actual adaptation process, GreptimeDB's silky-smooth native SDK and relational database-like SQL, let us from other GreptimeDB native SDK and relational database-like SQL make it very easy to switch from other time-series databases like `TDengine, IotDB, InfluxDB` to GreptimeDB, and the experience is very smooth.
+As one of the developers of the feature [HertzBeat supports GreptimeDB](https://github.com/apache/hertzbeat/pull/834), in the actual adaptation process, GreptimeDB's silky-smooth native SDK and relational database-like SQL, let us from other GreptimeDB native SDK and relational database-like SQL make it very easy to switch from other time-series databases like `TDengine, IotDB, InfluxDB` to GreptimeDB, and the experience is very smooth.
 
 GreptimeDB Github: https://github.com/GreptimeTeam/greptimedb    
-HertzBeat Github: https://github.com/dromara/hertzbeat
+HertzBeat Github: https://github.com/apache/hertzbeat
 
 ** Finally, you are welcome to be more understanding, more use, more comments, more ISSUE, more PR, more Star support these two did not come out for a long time hope to get care of open source cattle are not afraid of difficulties a small star oh! Do open source, we are sincere, love 💗**
 
-Thanks to the contributors of this feature [HertzBeat support GreptimeDB](https://github.com/dromara/hertzbeat/pull/834) @zqr10159, @fengjiachun, @killme2008, @tomsun28
+Thanks to the contributors of this feature [HertzBeat support GreptimeDB](https://github.com/apache/hertzbeat/pull/834) @zqr10159, @fengjiachun, @killme2008, @tomsun28

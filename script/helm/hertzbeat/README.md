@@ -23,7 +23,7 @@
 
 ## Helm Chart for HertzBeat
 
-This [Helm](https://github.com/kubernetes/helm) chart installs [HertzBeat](https://github.com/dromara/hertzbeat) in a Kubernetes cluster. Welcome to [contribute](https://github.com/dromara/hertzbeat/tree/master/script/helm) to Helm Chart for HertzBeat.
+This [Helm](https://github.com/kubernetes/helm) chart installs [HertzBeat](https://github.com/apache/hertzbeat) in a Kubernetes cluster. Welcome to [contribute](https://github.com/apache/hertzbeat/tree/master/script/helm) to Helm Chart for HertzBeat.
 
 ## Prerequisites
 
@@ -154,7 +154,7 @@ The following table lists the configurable parameters of the HertzBeat chart and
 
 
 [resources]: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
-[hertzbeat]: https://github.com/dromara/hertzbeat/
+[hertzbeat]: https://github.com/apache/hertzbeat/
 [artifacthub]: https://artifacthub.io/
 [helm]: https://helm.sh/
 

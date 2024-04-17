@@ -386,6 +386,6 @@ HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数
 
 如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
 
-**github: https://github.com/dromara/hertzbeat**
+**github: https://github.com/apache/hertzbeat**
 
-**gitee: https://gitee.com/dromara/hertzbeat**
+**gitee: https://gitee.com/hertzbeat/hertzbeat**
