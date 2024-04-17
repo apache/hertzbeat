@@ -25,6 +25,9 @@ metadata:
   labels:
     {{- include "hertzbeat.labels" . | nindent 4 }}
 spec:
+  {{if .Values.expose.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.expose.ingress.ingressClassName }}
+  {{end}}
   rules:
     - host: {{ .Values.expose.ingress.host }}
       http:
