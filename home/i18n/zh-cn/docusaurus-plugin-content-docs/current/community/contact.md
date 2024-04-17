@@ -9,9 +9,11 @@ sidebar_label: 交流联系
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 
-微信交流群 : Add friend `tan-cloud` and invite you to the group.
+微信交流群 : 加 `tan-cloud` 好友邀请进群.
 
-[QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Group num `630061200`
+微信公众号 : 搜索 `Apache HertzBeat` or `usthecom`.
+
+[QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : 群号 `630061200`
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 
