@@ -43,8 +43,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Test case for {@link AlertDefineController}
- *
- *
  */
 @ExtendWith(MockitoExtension.class)
 class AlertDefineControllerTest {
@@ -63,7 +61,7 @@ class AlertDefineControllerTest {
 
     @BeforeEach
     void setUp() {
-        // standaloneSetup: 独立安装, 不集成web环境测试
+        // standaloneSetup
         this.mockMvc = MockMvcBuilders.standaloneSetup(alertDefineController).build();
 
         this.alertDefine = AlertDefine.builder()
@@ -99,7 +97,7 @@ class AlertDefineControllerTest {
 
     @Test
     void addNewAlertDefine() throws Exception {
-        // 模拟客户端往服务端发送请求
+        // mock http request
         mockMvc.perform(MockMvcRequestBuilders.post("/api/alert/define")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(JsonUtil.toJson(this.alertDefine)))
@@ -120,7 +118,7 @@ class AlertDefineControllerTest {
 
     @Test
     void getAlertDefine() throws Exception {
-        // 模拟getAlertDefine返回数据
+        // mock getAlertDefine return data
         Mockito.when(alertDefineService.getAlertDefine(this.alertDefine.getId()))
                 .thenReturn(this.alertDefine);
 

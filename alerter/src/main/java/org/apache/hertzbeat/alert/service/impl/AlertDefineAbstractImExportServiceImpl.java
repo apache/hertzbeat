@@ -74,17 +74,16 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
 
     /**
      * Parsing an input stream into a form
-     * 将输入流解析为表单
      *
-     * @param is 输入流
-     * @return 表单
+     * @param is input stream
+     * @return form list
      */
     abstract List<ExportAlertDefineDTO> parseImport(InputStream is);
 
     /**
      * Export Configuration to Output Stream
-     * @param exportAlertDefineList 配置列表
-     * @param os          输出流
+     * @param exportAlertDefineList configuration list
+     * @param os          output stream
      */
     abstract void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os);
 

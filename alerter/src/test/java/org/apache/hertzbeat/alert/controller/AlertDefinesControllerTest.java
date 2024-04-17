@@ -44,9 +44,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Test case for {@link AlertDefinesController}
- * 测试mock处的数据是否正确，测试返回的数据格式是否正确
- *
- *
  */
 @ExtendWith(MockitoExtension.class)
 class AlertDefinesControllerTest {
@@ -59,58 +56,36 @@ class AlertDefinesControllerTest {
     @Mock
     AlertDefineService alertDefineService;
 
-    // 参数如下，为了避免默认值干扰，默认值已经被替换
+    // replace default value
     List<Long> ids = Stream.of(6565463543L, 6565463544L).collect(Collectors.toList());
     Byte priority = Byte.parseByte("1");
     String sort = "gmtCreate";
     String order = "asc";
     Integer pageIndex = 1;
     Integer pageSize = 7;
-
-    // 参数集合
     Map<String, Object> content = new HashMap<String, Object>();
-
-    // 用于mock的对象
     PageRequest pageRequest;
-
-    // 由于specification被使用于动态代理，所以无法mock
-    // 缺失的调试参数是ids、priority
-    // 缺失部分已经通过手动输出测试
+    
+    // Since the specification is used for dynamic proxies, it cannot be mocked
+    //The missing debugging parameters are ids, priority
+    //The missing part has passed the manual output test
 
     @BeforeEach
     void setUp() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(alertDefinesController).build();
-
-        // 配置测试内容
         content.put("ids", ids);
         content.put("priority", priority);
         content.put("sort", sort);
         content.put("order", order);
         content.put("pageIndex", pageIndex);
         content.put("pageSize", pageSize);
-
-        // mock的pageRequest
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(content.get("order").toString()), content.get("sort").toString()));
         pageRequest = PageRequest.of(((Integer) content.get("pageIndex")).intValue(), ((Integer) content.get("pageSize")).intValue(), sortExp);
     }
 
-//    @Test
-// todo: fix this test
+    //    @Test
+    // todo: fix this test
     void getAlertDefines() throws Exception {
-        // 测试mock正确性
-        // 虽然无法mock对象，但是可以用class文件去存根
-//        Mockito.when(alertDefineService.getAlertDefines(Mockito.any(Specification.class), Mockito.argThat(new ArgumentMatcher<PageRequest>() {
-//            @Override
-//            public boolean matches(PageRequest pageRequestMidden) {
-//                // 看源码有三个方法要对比，分别是getPageNumber()、getPageSize()、getSort()
-//                if(pageRequestMidden.getPageSize() == pageRequest.getPageSize() &&
-//                        pageRequestMidden.getPageNumber() == pageRequest.getPageNumber() &&
-//                        pageRequestMidden.getSort().equals(pageRequest.getSort())) {
-//                    return true;
-//                }
-//                return false;
-//            }
-//        }))).thenReturn(new PageImpl<AlertDefine>(new ArrayList<AlertDefine>()));
         AlertDefine define = AlertDefine.builder().id(9L).app("linux").metric("disk").field("usage").expr("x").times(1).tags(new LinkedList<>()).build();
         Mockito.when(alertDefineService.getAlertDefines(Mockito.any(), Mockito.any())).thenReturn(new PageImpl<>(Collections.singletonList(define)));
 
