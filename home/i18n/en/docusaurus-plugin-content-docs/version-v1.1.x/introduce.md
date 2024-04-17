@@ -9,16 +9,16 @@ slug: /
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![QQ](https://img.shields.io/badge/qq-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/web-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/ping-connect.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/port-available.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/database-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/os-monitor.svg)
 ![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
 ![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/threshold.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/threshold.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/alert.svg)
 
 
 

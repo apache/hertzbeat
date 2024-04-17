@@ -32,7 +32,7 @@ Website: hertzbeat.com | tancloud.cn
 
 **Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### v1.3.2 
 
@@ -100,5 +100,5 @@ spring:
 ----
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**  
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
 

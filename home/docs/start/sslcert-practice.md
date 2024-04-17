@@ -106,4 +106,4 @@ The practice of monitoring SSL certificates is here. Of course, for hertzbeat, t
 
 **github: https://github.com/apache/hertzbeat**
 
-**gitee: https://gitee.com/dromara/hertzbeat**
+**gitee: https://gitee.com/hertzbeat/hertzbeat**

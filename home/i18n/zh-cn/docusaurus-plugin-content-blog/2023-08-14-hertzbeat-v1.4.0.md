@@ -30,7 +30,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 **Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### 集群版来啦   
 
@@ -178,5 +178,5 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 欢迎star一波来支持我们哦。
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**  
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
 

@@ -148,6 +148,6 @@ keywords: [open source monitoring system, alerting system]
 
 **Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 欢迎更多小伙伴参与到HertzBeat的开源协作中来，不管是一个错别字还是标点符号我们都非常欢迎，大家一起学习进步，目标做一个世界级开源软件。

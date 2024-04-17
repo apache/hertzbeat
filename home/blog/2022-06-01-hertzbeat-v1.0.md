@@ -79,5 +79,5 @@ Redis monitor is coming：
 **Repository url**
 
 [Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
-[Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) https://gitee.com/hertzbeat/hertzbeat
 

@@ -224,4 +224,4 @@ HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数
 
 **github: https://github.com/apache/hertzbeat**
 
-**gitee: https://gitee.com/dromara/hertzbeat**
+**gitee: https://gitee.com/hertzbeat/hertzbeat**

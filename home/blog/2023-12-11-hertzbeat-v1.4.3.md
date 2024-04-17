@@ -27,7 +27,7 @@ keywords: [open source monitoring system, alerting system]
 
 **Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### HertzBeat's 1.4.3 Version Release!
 
@@ -150,7 +150,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 ----
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**  
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
 
 ### **Download Link**
 

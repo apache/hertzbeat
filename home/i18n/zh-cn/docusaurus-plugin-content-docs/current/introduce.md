@@ -309,4 +309,4 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 ----- 
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**

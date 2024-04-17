@@ -148,6 +148,6 @@ Thanks to the authors of hertzbeat for the documentation and help. Thanks to my 
 
 **Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 Welcome more partners to participate in HertzBeat's open source collaboration, no matter a typo or punctuation we are very welcome, we learn together to make progress, the goal is to do a world-class open source software.

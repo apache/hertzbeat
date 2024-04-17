@@ -15,7 +15,7 @@ HertzBeat is a real-time monitoring tool with powerful custom monitoring capabil
 **Official website: https://hertzbeat.com | https://tancloud.cn**
 
 github: https://github.com/apache/hertzbeat
-gitee: https://gitee.com/dromara/hertzbeat
+gitee: https://gitee.com/hertzbeat/hertzbeat
 
 #### Install HertzBeat
 
@@ -111,4 +111,4 @@ The practice of monitoring SSL certificates is here. Of course, for hertzbeat, t
 
 **github: https://github.com/apache/hertzbeat**
 
-**gitee: https://gitee.com/dromara/hertzbeat**
+**gitee: https://gitee.com/hertzbeat/hertzbeat**

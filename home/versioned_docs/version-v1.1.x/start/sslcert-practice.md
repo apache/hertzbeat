@@ -16,7 +16,7 @@ HertzBeat 一个拥有强大自定义监控能力，无需Agent的实时监控�
 **官网: https://hertzbeat.com | https://tancloud.cn**
 
 github: https://github.com/apache/hertzbeat    
-gitee: https://gitee.com/dromara/hertzbeat
+gitee: https://gitee.com/hertzbeat/hertzbeat
 
 #### 安装 HertzBeat
 
@@ -116,4 +116,4 @@ https://tancloud.cn/docs/help/alert_dingtalk
 
 **github: https://github.com/apache/hertzbeat**
 
-**gitee: https://gitee.com/dromara/hertzbeat**
+**gitee: https://gitee.com/hertzbeat/hertzbeat**

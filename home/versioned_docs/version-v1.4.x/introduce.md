@@ -314,4 +314,4 @@ Built-in support for monitoring types include:
 
 **Home: https://hertzbeat.com/**    
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**

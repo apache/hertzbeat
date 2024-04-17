@@ -28,7 +28,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 **Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### v1.3.2 来了
 
@@ -75,5 +75,5 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 **欢迎star三连来支持我们**     
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**  
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
 

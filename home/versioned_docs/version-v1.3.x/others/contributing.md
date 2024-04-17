@@ -38,7 +38,7 @@ Even small corrections to typos are very welcome :)
 
 1. Requires `maven3+`, `java11` and `lombok` environments
 2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
-3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`
+3. Start `springboot manager` service `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
 
 - Front-web start
 
@@ -135,4 +135,4 @@ Public WeChat: `tancloudtech`
 - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)   
+![hertzBeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)   

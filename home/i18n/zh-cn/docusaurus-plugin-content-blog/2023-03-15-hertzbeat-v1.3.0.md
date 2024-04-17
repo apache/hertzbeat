@@ -31,7 +31,7 @@ keywords: [开源监控系统, 告警系统, Linux监控]
 
 **Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### v1.3.0 大版本来了
 
@@ -151,4 +151,4 @@ COMMIT;
 ----
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**

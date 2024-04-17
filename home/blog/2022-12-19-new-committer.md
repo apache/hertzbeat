@@ -110,7 +110,7 @@ github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 
 + 官网有非常完善的贡献者指南：[贡献者指南 | HertzBeat](https://hertzbeat.com/docs/others/contributing)
 
-+ Github issues：[Issues · dromara/hertzbeat (github.com)](https://github.com/apache/hertzbeat/issues)
++ Github issues：[Issues · apache/hertzbeat (github.com)](https://github.com/apache/hertzbeat/issues)
 
 + 如果是大的改动，建议提交前编写issues，在提交pr，同时请注意编码的规范，尽量减少bug和警告的产生
 

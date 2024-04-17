@@ -7,7 +7,7 @@ sidebar_label: Version Upgrade Guide
 **HertzBeat Release Version List**
 
 - [Github Release](https://github.com/apache/hertzbeat/releases)
-- [Gitee Release](https://gitee.com/dromara/hertzbeat/releases)
+- [Gitee Release](https://gitee.com/hertzbeat/hertzbeat/releases)
 - [DockerHub Release](https://hub.docker.com/r/tancloud/hertzbeat/tags)
 - [Docker quay.io Release](https://quay.io/repository/tancloud/hertzbeat?tab=tags)
 

@@ -15,7 +15,7 @@
 ##### docker compose deploys hertzbeat and its dependent services
 
 1. Download the hertzbeat-docker-compose installation deployment script file
-   The script file is located in `script/docker-compose/hertzbeat-mysql-victoria-metrics` link [script/docker-compose](https://gitee.com/dromara/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-victoria-metrics)
+   The script file is located in `script/docker-compose/hertzbeat-mysql-victoria-metrics` link [script/docker-compose](https://gitee.com/hertzbeat/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-victoria-metrics)
 
 
 2. Enter the deployment script docker-compose directory, execute

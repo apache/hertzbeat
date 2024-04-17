@@ -10,5 +10,5 @@ sidebar_label: Related resources
 
 ![logo](/img/hertzbeat-logo.svg)  
 
-Download: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/hertzbeat-logo.svg)  [PNG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/hertzbeat-logo.jpg)     
+Download: [SVG](https://gitee.com/hertzbeat/hertzbeat/raw/master/home/static/img/hertzbeat-logo.svg)  [PNG](https://gitee.com/hertzbeat/hertzbeat/raw/master/home/static/img/hertzbeat-logo.jpg)     
 

@@ -37,7 +37,7 @@ sidebar_label: 贡献者指南
 
 1. 需要`maven3+`, `java11`和`lombok`环境
 2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
-3. 启动`springboot manager`服务 `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`
+3. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
 
 - 前端启动
 

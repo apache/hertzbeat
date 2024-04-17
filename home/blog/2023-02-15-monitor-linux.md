@@ -136,7 +136,7 @@ This practical article took us to experience how to use the open source real-tim
 > The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.
 
 **Github: https://github.com/apache/hertzbeat**
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ## ⛄ Supported
 

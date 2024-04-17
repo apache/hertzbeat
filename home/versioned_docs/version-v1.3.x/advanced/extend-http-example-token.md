@@ -395,4 +395,4 @@ If you think hertzbeat is a good open source project, please star us on GitHub G
 
 **github: https://github.com/apache/hertzbeat**
 
-**gitee: https://gitee.com/dromara/hertzbeat**
+**gitee: https://gitee.com/hertzbeat/hertzbeat**

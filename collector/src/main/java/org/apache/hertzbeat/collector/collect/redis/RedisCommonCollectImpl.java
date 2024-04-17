@@ -312,7 +312,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .forEach(it -> {
                     result.put(it[0], it[1]);
                 });
-        // fix https://github.com/dromara/hertzbeat/pull/913
+        // fix https://github.com/apache/hertzbeat/pull/913
         if (result.size() < fieldTotalSize) {
             for (Metrics.Field field : metrics.getFields()) {
                 if (!result.containsKey(field.getField())) {
