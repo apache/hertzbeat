@@ -11,4 +11,4 @@
 
 ## Add or update API
 
-- [ ] I have added the necessary [e2e tests](../e2e) and all cases have passed.
+- [ ] I have added the necessary [e2e tests](https://github.com/apache/hertzbeat/tree/master/e2e) and all cases have passed.
