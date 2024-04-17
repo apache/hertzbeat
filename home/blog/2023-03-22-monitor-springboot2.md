@@ -22,7 +22,7 @@ keywords: [opensource monitoring, SpringBoot monitoring, alert]
 
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
 
-Github: https://github.com/dromara/hertzbeat
+Github: https://github.com/apache/hertzbeat
 
 ### Monitoring SpringBoot2 Metrics with HertzBeat in 5 minutes 
 
@@ -188,7 +188,7 @@ This practical article took us to experience how to use the open source real-tim
 
 ## What is HertzBeat?
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless.       
+> [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless.       
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
@@ -212,5 +212,5 @@ This practical article took us to experience how to use the open source real-tim
 
 ----
 
-**Github: https://github.com/dromara/hertzbeat**      
+**Github: https://github.com/apache/hertzbeat**      
 **Gitee: https://gitee.com/dromara/hertzbeat**

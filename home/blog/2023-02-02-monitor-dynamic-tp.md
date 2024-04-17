@@ -172,7 +172,7 @@ This practical article takes us to experience how to use HertzBeat to monitor Dy
 :::
 
 DynamicTp Github: https://github.com/dromara/dynamic-tp           
-HertzBeat Github: https://github.com/dromara/hertzbeat
+HertzBeat Github: https://github.com/apache/hertzbeat
 
 **Welcome to learn how to use Star Support!**
 

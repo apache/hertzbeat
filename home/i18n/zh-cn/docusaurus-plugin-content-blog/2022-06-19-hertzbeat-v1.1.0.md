@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]  
 ---
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn) 开源的一个支持网站，API，PING，端口，数据库，全站，操作系统，中间件等监控类型，支持阈值告警，告警通知 (邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。  
+[HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn) 开源的一个支持网站，API，PING，端口，数据库，全站，操作系统，中间件等监控类型，支持阈值告警，告警通知 (邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。  
 
 **官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**  
 
@@ -19,19 +19,19 @@ Let's Try It!
 
 Feature：
 
-1. [[monitor]feature: 支持SNMP协议和Windows操作系统监控 #192](https://github.com/dromara/hertzbeat/pull/192).  contribute by @ChineseTony
-2. [[monitor]默认使用H2数据库替换MYSQL数据库 #191](https://github.com/dromara/hertzbeat/pull/191)
-3. [[manager]支持监控参数的英文国际化，国际化更近一步 #184](https://github.com/dromara/hertzbeat/pull/184).
-4. [[script]支持了amd64和arm64版本的docker 镜像 #189](https://github.com/dromara/hertzbeat/pull/189).
-5. [[monitor]feature: 支持采集oracle多表空间指标数据 #163](https://github.com/dromara/hertzbeat/pull/163) contribute by @brave4Time
-7. [[monitor]数据库表统一添加前缀 hzb_ #193](https://github.com/dromara/hertzbeat/pull/193) issue from @shimingxy
+1. [[monitor]feature: 支持SNMP协议和Windows操作系统监控 #192](https://github.com/apache/hertzbeat/pull/192).  contribute by @ChineseTony
+2. [[monitor]默认使用H2数据库替换MYSQL数据库 #191](https://github.com/apache/hertzbeat/pull/191)
+3. [[manager]支持监控参数的英文国际化，国际化更近一步 #184](https://github.com/apache/hertzbeat/pull/184).
+4. [[script]支持了amd64和arm64版本的docker 镜像 #189](https://github.com/apache/hertzbeat/pull/189).
+5. [[monitor]feature: 支持采集oracle多表空间指标数据 #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
+7. [[monitor]数据库表统一添加前缀 hzb_ #193](https://github.com/apache/hertzbeat/pull/193) issue from @shimingxy
 
 Bugfix.
 
-1. [[monitor]修改在tencent centos版本下无法采集CPU指标问题 #164](https://github.com/dromara/hertzbeat/pull/164) contribute by @wyt199905 .
-2. [[manager]修复oracle监控percentage指标采集问题 #168](https://github.com/dromara/hertzbeat/pull/168)
-3. [[monitor] bugfix: 修复elasticsearch监控在basic认证情况下采集失败 #174](https://github.com/dromara/hertzbeat/pull/174) contribute by @weifuqing
-4. [修改oracle监控参数[数据库名称]有歧义导致的监控失败 #182](https://github.com/dromara/hertzbeat/pull/182) @zklmcookle
+1. [[monitor]修改在tencent centos版本下无法采集CPU指标问题 #164](https://github.com/apache/hertzbeat/pull/164) contribute by @wyt199905 .
+2. [[manager]修复oracle监控percentage指标采集问题 #168](https://github.com/apache/hertzbeat/pull/168)
+3. [[monitor] bugfix: 修复elasticsearch监控在basic认证情况下采集失败 #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
+4. [修改oracle监控参数[数据库名称]有歧义导致的监控失败 #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
 Online https://console.tancloud.cn.
 
@@ -72,19 +72,19 @@ Thanks to the contributors! 👍👍
 
 Feature：
 
-1. [[monitor]feature: support snmp collect protocol and windows monitor type #192](https://github.com/dromara/hertzbeat/pull/192).  contribute by @ChineseTony
-2. [[monitor]change default database mysql to h2 #191](https://github.com/dromara/hertzbeat/pull/191)
-3. [[manager]support monitor params name i18n #184](https://github.com/dromara/hertzbeat/pull/184).
-4. [[script]build multi cpu arch hertzbeat docker version #189](https://github.com/dromara/hertzbeat/pull/189).
-5.  [[monitor]feature: support oracle multi tablespaces #163](https://github.com/dromara/hertzbeat/pull/163) contribute by @brave4Time
-6. [[monitor]database tables append prefix hzb_ #193](https://github.com/dromara/hertzbeat/pull/193) issue from @shimingxy
+1. [[monitor]feature: support snmp collect protocol and windows monitor type #192](https://github.com/apache/hertzbeat/pull/192).  contribute by @ChineseTony
+2. [[monitor]change default database mysql to h2 #191](https://github.com/apache/hertzbeat/pull/191)
+3. [[manager]support monitor params name i18n #184](https://github.com/apache/hertzbeat/pull/184).
+4. [[script]build multi cpu arch hertzbeat docker version #189](https://github.com/apache/hertzbeat/pull/189).
+5.  [[monitor]feature: support oracle multi tablespaces #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
+6. [[monitor]database tables append prefix hzb_ #193](https://github.com/apache/hertzbeat/pull/193) issue from @shimingxy
 
 Bugfix.
 
-1. [[monitor]fix can not collect cpu metrics in tencent centos #164](https://github.com/dromara/hertzbeat/pull/164) contribute by @wyt199905 .
-2. [[manager]fix oracle config yml percentage error #168](https://github.com/dromara/hertzbeat/pull/168)
-3. [[monitor] bugfix: fix elasticsearch collect error when need basic auth #174](https://github.com/dromara/hertzbeat/pull/174) contribute by @weifuqing
-4. [Change the Oracle database name to the service name to reduce ambiguity #182](https://github.com/dromara/hertzbeat/pull/182) @zklmcookle
+1. [[monitor]fix can not collect cpu metrics in tencent centos #164](https://github.com/apache/hertzbeat/pull/164) contribute by @wyt199905 .
+2. [[manager]fix oracle config yml percentage error #168](https://github.com/apache/hertzbeat/pull/168)
+3. [[monitor] bugfix: fix elasticsearch collect error when need basic auth #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
+4. [Change the Oracle database name to the service name to reduce ambiguity #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
 Online https://console.tancloud.cn.
 
@@ -115,7 +115,7 @@ Have Fun!
 
 ----    
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库，操作系统等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
+> [HertzBeat赫兹跳动](https://github.com/apache/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库，操作系统等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
 > 当然，我们也提供了对应的[SAAS云监控版本](https://console.tancloud.cn)，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，[登录即可免费开始](https://console.tancloud.cn)监控之旅。  
 > HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
 > HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。    
@@ -129,6 +129,6 @@ Have Fun!
 
 **仓库地址**
 
-[Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
+[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
 [Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat
 

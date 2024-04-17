@@ -31,7 +31,7 @@ sidebar_label: 贡献者指南
 ### 让 HertzBeat 运行起来
 
 > 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。   
-> 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/dromara/hertzbeat/tree/master/manager) 和前端 [web-app](https://github.com/dromara/hertzbeat/tree/master/web-app) 分别启动生效。
+> 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
 
 - 后端启动
 
@@ -57,7 +57,7 @@ sidebar_label: 贡献者指南
 
 ### 提交 Pull Request
 
-1. 首先您需要 Fork 目标仓库 [hertzbeat repository](https://github.com/dromara/hertzbeat).
+1. 首先您需要 Fork 目标仓库 [hertzbeat repository](https://github.com/apache/hertzbeat).
 2. 然后 用git命令 将代码下载到本地:
 ```shell
 git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
@@ -102,7 +102,7 @@ git push origin --delete a-dev-branch
 在主分支上，您可以执行以下操作来同步上游仓库：
 
 ```shell
-git remote add upstream https://github.com/dromara/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
+git remote add upstream https://github.com/apache/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
 git checkout master 
 git pull upstream master
 ```
@@ -113,20 +113,20 @@ git pull upstream master
 
 ### 加入讨论交流
 
-[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
+[Github Discussion](https://github.com/apache/hertzbeat/discussions)
 
 加微信号 `tan-cloud` 拉您进微信交流群
 
 
 ### 模块
 
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
+- **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** 提供监控数据采集服务
+- **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
+- **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
+- **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** 提供告警服务
 > 告警计算触发，任务状态联动，告警配置，告警通知。
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
+- **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端

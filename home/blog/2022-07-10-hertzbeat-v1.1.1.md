@@ -20,25 +20,25 @@ Thanks to the contributors! 👍👍
 
 Feature：
 
-1. [[script] feature update docker base image to openjdk:11.0.15-jre-slim… #205](https://github.com/dromara/hertzbeat/pull/205)
-2. [[monitor] support use pre collect metrics data to replace next metrics config params #206](https://github.com/dromara/hertzbeat/pull/206).
-3. [[collector] use basic auth with raw HTTP headers instead of preemptive #212](https://github.com/dromara/hertzbeat/pull/212)
-4. [[manager,alerter] support wework, dingDing, flyBook webhook url config #213](https://github.com/dromara/hertzbeat/pull/213)
-5.  [[monitor] feature update numeric metrics all contain decimal points #217](https://github.com/dromara/hertzbeat/pull/217)
-6. [[web-app]feature:toggle [enable and cancel] button #218](https://github.com/dromara/hertzbeat/pull/218)
-7. [[manager] update define yml file name add prefix "app" or "param" #221](https://github.com/dromara/hertzbeat/pull/221)
+1. [[script] feature update docker base image to openjdk:11.0.15-jre-slim… #205](https://github.com/apache/hertzbeat/pull/205)
+2. [[monitor] support use pre collect metrics data to replace next metrics config params #206](https://github.com/apache/hertzbeat/pull/206).
+3. [[collector] use basic auth with raw HTTP headers instead of preemptive #212](https://github.com/apache/hertzbeat/pull/212)
+4. [[manager,alerter] support wework, dingDing, flyBook webhook url config #213](https://github.com/apache/hertzbeat/pull/213)
+5.  [[monitor] feature update numeric metrics all contain decimal points #217](https://github.com/apache/hertzbeat/pull/217)
+6. [[web-app]feature:toggle [enable and cancel] button #218](https://github.com/apache/hertzbeat/pull/218)
+7. [[manager] update define yml file name add prefix "app" or "param" #221](https://github.com/apache/hertzbeat/pull/221)
 
 Bugfix.
 
-1. [[update] docker-compose 添加jpa自动执行脚本,删除sql脚本 #198](https://github.com/dromara/hertzbeat/pull/198) contribute by @DevilX5  .
-2. [Doc#param names refactor #199](https://github.com/dromara/hertzbeat/pull/199) contribute by @DevilX5
-3. [[manager] bugfix oracle performance metrics collect error, update win name #201](https://github.com/dromara/hertzbeat/pull/201).
-4. [[common] bugfix alert status can not update #203](https://github.com/dromara/hertzbeat/pull/203)
-5. [[manager] bugfix update windows monitor type name #204](https://github.com/dromara/hertzbeat/pull/204)
-6. [fix time zone todo issue #210](https://github.com/dromara/hertzbeat/pull/210) contribute by @djzeng
-8. [[common] bugfix SnowFlakeId cannot exceed hexadecimal 0x1FFFFFFFFFFFFFF #211](https://github.com/dromara/hertzbeat/pull/211)
-9. [[manager] 修改监控页面取消监控功能再启动监控导致多生成jobId，原有监控项目并没有真实取消 #215](https://github.com/dromara/hertzbeat/pull/215) contribute by @yangshihui
-10. [[warehouse] bugfix exception when tdengine create table SQL contain special char #220](https://github.com/dromara/hertzbeat/pull/220)
+1. [[update] docker-compose 添加jpa自动执行脚本,删除sql脚本 #198](https://github.com/apache/hertzbeat/pull/198) contribute by @DevilX5  .
+2. [Doc#param names refactor #199](https://github.com/apache/hertzbeat/pull/199) contribute by @DevilX5
+3. [[manager] bugfix oracle performance metrics collect error, update win name #201](https://github.com/apache/hertzbeat/pull/201).
+4. [[common] bugfix alert status can not update #203](https://github.com/apache/hertzbeat/pull/203)
+5. [[manager] bugfix update windows monitor type name #204](https://github.com/apache/hertzbeat/pull/204)
+6. [fix time zone todo issue #210](https://github.com/apache/hertzbeat/pull/210) contribute by @djzeng
+8. [[common] bugfix SnowFlakeId cannot exceed hexadecimal 0x1FFFFFFFFFFFFFF #211](https://github.com/apache/hertzbeat/pull/211)
+9. [[manager] 修改监控页面取消监控功能再启动监控导致多生成jobId，原有监控项目并没有真实取消 #215](https://github.com/apache/hertzbeat/pull/215) contribute by @yangshihui
+10. [[warehouse] bugfix exception when tdengine create table SQL contain special char #220](https://github.com/apache/hertzbeat/pull/220)
 
 Online https://console.tancloud.cn.
 
@@ -46,7 +46,7 @@ Have Fun!
 
 ----    
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an opensource monitoring and alarm project incubated by [Dromara](https://dromara.org) and open sourced by [TanCloud](https://tancloud.cn), which supports Website, API, PING, Port, Database, OS Monitor etc.        
+> [HertzBeat](https://github.com/apache/hertzbeat) is an opensource monitoring and alarm project incubated by [Dromara](https://dromara.org) and open sourced by [TanCloud](https://tancloud.cn), which supports Website, API, PING, Port, Database, OS Monitor etc.        
 > We also provide **[Monitoring Cloud For Saas](https://console.tancloud.cn)**, people no longer need to deploy a cumbersome monitoring tool in order to monitor their website resources. **[Sign in to get started for free](https://console.tancloud.cn)**.   
 > HertzBeat supports more liberal threshold alarm configuration (calculation expression), supports alarm notification, alarm template, email, DingDing, WeChat FeiShu and WebHook.    
 > Most important is HertzBeat supports [Custom Monitoring](https://hertzbeat.com/docs/advanced/extend-point), just by configuring the YML file, we can customize the monitoring types and metrics what we need.      
@@ -58,6 +58,6 @@ Have Fun!
 
 **If you like HertzBeat, star us on GitHub**
 
-[Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
+[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
 [Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat
 

@@ -52,7 +52,7 @@ sidebar_label: Docker方式部署
    HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
    若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤    
    在主机目录下创建sureness.yml，eg:/opt/sureness.yml    
-   配置文件完整内容见项目仓库[/script/sureness.yml](https://github.com/dromara/hertzbeat/blob/master/script/sureness.yml)   
+   配置文件完整内容见项目仓库[/script/sureness.yml](https://github.com/apache/hertzbeat/blob/master/script/sureness.yml)   
    具体修改步骤参考 [配置修改账户密码](account-modify)   
 
 6. 启动HertzBeat Docker容器    

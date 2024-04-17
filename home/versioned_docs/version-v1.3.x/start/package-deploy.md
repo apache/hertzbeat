@@ -20,7 +20,7 @@ sidebar_label: Install via Package
 2. Download HertzBeat installation package    
    Download installation package corresponding to your system environment   
    - download from [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) repository 
-   - download from [GITHUB Release](https://github.com/dromara/hertzbeat/releases) repository
+   - download from [GITHUB Release](https://github.com/apache/hertzbeat/releases) repository
 
 3. Configure HertzBeat's configuration file(optional)        
    Unzip the installation package to the host eg: /opt/hertzbeat    

@@ -20,7 +20,7 @@ sidebar_label: HertzBeat 实时监控
 
 ## 🎡 <font color="green">介绍</font>
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
+[HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
 
 ### 特点
 
@@ -281,5 +281,5 @@ Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1
 ----- 
 
 **官网: https://hertzbeat.com/**    
-**Github: https://github.com/dromara/hertzbeat**      
+**Github: https://github.com/apache/hertzbeat**      
 **Gitee: https://gitee.com/dromara/hertzbeat**

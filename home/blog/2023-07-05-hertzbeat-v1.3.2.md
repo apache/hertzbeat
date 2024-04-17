@@ -16,7 +16,7 @@ Website: hertzbeat.com | tancloud.cn
 
 ### What is HertzBeat?
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentLess.
+> [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring system with custom-monitoring and agentLess.
 > **Monitoring+Alarm+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.      
 > Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
 > More flexible threshold rule, timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
@@ -30,7 +30,7 @@ Website: hertzbeat.com | tancloud.cn
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
 
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
 **Gitee: https://gitee.com/dromara/hertzbeat**
 
@@ -99,6 +99,6 @@ spring:
 
 ----
 
-**Github: https://github.com/dromara/hertzbeat**      
+**Github: https://github.com/apache/hertzbeat**      
 **Gitee: https://gitee.com/dromara/hertzbeat**  
 

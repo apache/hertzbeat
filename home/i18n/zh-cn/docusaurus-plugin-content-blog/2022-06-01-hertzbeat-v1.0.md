@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]  
 ---
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn) 开源的一个支持网站，API，PING，端口，数据库，全站，操作系统，中间件等监控类型，支持阈值告警，告警通知 (邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。  
+[HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn) 开源的一个支持网站，API，PING，端口，数据库，全站，操作系统，中间件等监控类型，支持阈值告警，告警通知 (邮箱，webhook，钉钉，企业微信，飞书机器人)，拥有易用友好的可视化操作界面的开源监控告警项目。  
 
 **官网: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**  
 
@@ -36,23 +36,23 @@ tags: [opensource]
 
 特性：
 
-1. [monitor feature:支持redis监控协议 #142](https://github.com/dromara/hertzbeat/pull/142)   contribute by @gcdd1993
+1. [monitor feature:支持redis监控协议 #142](https://github.com/apache/hertzbeat/pull/142)   contribute by @gcdd1993
 2. Copyright & NOTICE contribute by @shimingxy
-3. [alerter bugfix: 支持系统告警设置触发次数 #144](https://github.com/dromara/hertzbeat/pull/144).
-4. [collector feature: redis复用单连接 #146](https://github.com/dromara/hertzbeat/pull/146).
-5. [collector 隐藏日志中IP、账号与密码等敏感信息 #159](https://github.com/dromara/hertzbeat/pull/159) idea from @goo-kits
-6. [支持 zookeeper 监控帮助文档 #137](https://github.com/dromara/hertzbeat/pull/137) contributr by @wang1027-wqh
+3. [alerter bugfix: 支持系统告警设置触发次数 #144](https://github.com/apache/hertzbeat/pull/144).
+4. [collector feature: redis复用单连接 #146](https://github.com/apache/hertzbeat/pull/146).
+5. [collector 隐藏日志中IP、账号与密码等敏感信息 #159](https://github.com/apache/hertzbeat/pull/159) idea from @goo-kits
+6. [支持 zookeeper 监控帮助文档 #137](https://github.com/apache/hertzbeat/pull/137) contributr by @wang1027-wqh
 
 Bug修复.
 
-1. [[monitor]bugfix: 修复resource bundle在en.HK加载资源错误问题 #131](https://github.com/dromara/hertzbeat/pull/131).
-2. [[web-app]bugfix:修复当主题为dark时部分菜单不可见 #132](https://github.com/dromara/hertzbeat/pull/132).
-3. [[monitor]bugfix: 修复通知策略过滤标签时只能选择一个 #140](https://github.com/dromara/hertzbeat/pull/140).  issue by @daqianxiaoyao
-4. [[td-engine store]bugfix: 修复tdengine入库指标数据时无table报错日志#150](https://github.com/dromara/hertzbeat/pull/150). contribute by @ChineseTony
-5. [[collector]bugfix: 修复 warehouse data queue 未消费异常 #153](https://github.com/dromara/hertzbeat/pull/153).  issue by @daqianxiaoyao
-7. [[web-app]bugfix: 修复黑暗主题时页面输入框校验出错时不可见 #157](https://github.com/dromara/hertzbeat/pull/157). issue by @ConradWen
+1. [[monitor]bugfix: 修复resource bundle在en.HK加载资源错误问题 #131](https://github.com/apache/hertzbeat/pull/131).
+2. [[web-app]bugfix:修复当主题为dark时部分菜单不可见 #132](https://github.com/apache/hertzbeat/pull/132).
+3. [[monitor]bugfix: 修复通知策略过滤标签时只能选择一个 #140](https://github.com/apache/hertzbeat/pull/140).  issue by @daqianxiaoyao
+4. [[td-engine store]bugfix: 修复tdengine入库指标数据时无table报错日志#150](https://github.com/apache/hertzbeat/pull/150). contribute by @ChineseTony
+5. [[collector]bugfix: 修复 warehouse data queue 未消费异常 #153](https://github.com/apache/hertzbeat/pull/153).  issue by @daqianxiaoyao
+7. [[web-app]bugfix: 修复黑暗主题时页面输入框校验出错时不可见 #157](https://github.com/apache/hertzbeat/pull/157). issue by @ConradWen
 
-**Full Changelog**: https://github.com/dromara/hertzbeat/compare/v1.0-beta.8...v1.0
+**Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.0-beta.8...v1.0
 
 Online https://console.tancloud.cn.
 
@@ -65,7 +65,7 @@ Redis监控来啦：
 <img width="959" alt="2022-05-29 20 24 21" src="https://user-images.githubusercontent.com/24788200/170868094-3c4de70f-934a-4a13-ae1a-0744c30f14f3.png"/>
 
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库，操作系统等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
+> [HertzBeat赫兹跳动](https://github.com/apache/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库，操作系统等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
 > 当然，我们也提供了对应的[SAAS云监控版本](https://console.tancloud.cn)，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，[登录即可免费开始](https://console.tancloud.cn)监控之旅。  
 > HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
 > HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。    
@@ -78,6 +78,6 @@ Redis监控来啦：
 
 **仓库地址**
 
-[Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
+[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
 [Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat
 

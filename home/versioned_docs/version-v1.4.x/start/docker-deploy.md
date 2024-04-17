@@ -30,7 +30,7 @@ sidebar_label: Install via Docker
 
 3. Mounted HertzBeat configuration file (optional)    
    Download and config `application.yml` in the host directory, eg:`$(pwd)/application.yml`    
-   Download from [github/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml) or [gitee/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml).    
+   Download from [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml) or [gitee/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml).    
    You can modify the configuration yml file according to your needs.      
    - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`   
    - **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)  
@@ -41,7 +41,7 @@ sidebar_label: Install via Docker
    HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       
    If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.    
    Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`    
-   Download from [github/script/sureness.yml](https://github.com/dromara/hertzbeat/raw/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/sureness.yml)    
+   Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/sureness.yml)    
    For detail steps, please refer to [Configure Account Password](account-modify)    
 
 5. Start the HertzBeat Docker container    

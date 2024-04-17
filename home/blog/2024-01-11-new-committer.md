@@ -131,7 +131,7 @@ Thanks to the authors of hertzbeat for the documentation and help. Thanks to my 
 
 ## What is HertzBeat?
 
-[HertzBeat HertzBeat](https://github.com/dromara/hertzbeat) is an open source real-time monitoring and alerting system with powerful customizable monitoring capabilities, high performance clustering, Prometheus compatibility, and no Agent required.
+[HertzBeat HertzBeat](https://github.com/apache/hertzbeat) is an open source real-time monitoring and alerting system with powerful customizable monitoring capabilities, high performance clustering, Prometheus compatibility, and no Agent required.
 
 ### Features
 
@@ -146,7 +146,7 @@ Thanks to the authors of hertzbeat for the documentation and help. Thanks to my 
 > ``HertzBeat``s powerful customization, multi-type support, high performance, easy to extend, low coupling, hope to help developers and teams quickly build their own monitoring system.
 
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
 **Gitee: https://gitee.com/dromara/hertzbeat**
 
