@@ -24,7 +24,7 @@ import com.tencentcloudapi.sms.v20210111.models.SendSmsRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.support.exception.SendMessageException;
-import org.apache.hertzbeat.common.util.AliYunSendSMSUtil;
+import org.apache.hertzbeat.common.util.AliYunSendSmsUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -76,10 +76,10 @@ public class AliYunSmsClient {
      * @param templateId template id
      * @param templateValues template values
      * @param phones phones num
-     * @return true when send success
      */
-    public void sendMessage(String appId, String signName, String templateId,String secretId,String  secretKey,
+    public void sendMessage(String appId, String signName, String templateId, String secretId, String  secretKey,
                             String[] templateValues, String[] phones){
+
         LocalDateTime dateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         SendSmsRequest req = new SendSmsRequest();
@@ -94,8 +94,8 @@ public class AliYunSmsClient {
             param.put("taskName", templateValues[0]);
             param.put("alert", templateValues[1]);
             param.put("message", templateValues[2]);
-            param.put("sysTime",dateTime.format(formatter) );
-            SendSmsResponse smsResponse = AliYunSendSMSUtil.send(param, signName, templateId, phones[0], secretId, secretKey);
+            param.put("sysTime", dateTime.format(formatter));
+            SendSmsResponse smsResponse = AliYunSendSmsUtil.send(param, signName, templateId, phones[0], secretId, secretKey);
             String code = smsResponse.body.code;
             if (!RESPONSE_OK.equals(code)) {
                 throw new SendMessageException(code + ":" + smsResponse.body.message);
@@ -110,10 +110,9 @@ public class AliYunSmsClient {
      * Send a text message
      * @param templateValues template values
      * @param phones phones num
-     * @return true when send success
      */
     public void sendMessage(String[] templateValues, String[] phones) {
-        sendMessage(this.appId, this.signName, this.templateId,this.secretId,this.secretKey,templateValues, phones);
+        sendMessage(this.appId, this.signName, this.templateId, this.secretId, this.secretKey, templateValues, phones);
     }
 
 

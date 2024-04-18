@@ -145,6 +145,7 @@ public class CommonProperties {
             this.alertsDataTopic = alertsDataTopic;
         }
     }
+
     /**
      * sms properties
      */
@@ -241,6 +242,10 @@ public class CommonProperties {
             this.templateId = templateId;
         }
     }
+
+    /**
+     * aliYun sms properties
+     */
     public static class AliYunSmsProperties {
 
         /**
