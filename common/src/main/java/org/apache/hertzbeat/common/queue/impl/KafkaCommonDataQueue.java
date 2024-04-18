@@ -111,12 +111,14 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             
             Map<String, Object> metricsToPersistentConsumerConfig = new HashMap<>(consumerConfig);
             metricsToPersistentConsumerConfig.put("group.id", "metrics-persistent-consumer");
-            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(),
+                    new KafkaMetricsDataDeserializer());
             metricsDataToPersistentStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
             
             Map<String, Object> metricsToRealTimeConsumerConfig = new HashMap<>(consumerConfig);
             metricsToRealTimeConsumerConfig.put("group.id", "metrics-memory-consumer");
-            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(),
+                    new KafkaMetricsDataDeserializer());
             metricsDataToRealTimeStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);

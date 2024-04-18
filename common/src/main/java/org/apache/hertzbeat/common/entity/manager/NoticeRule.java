@@ -47,77 +47,79 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Notify Policy Entity | 通知策略实体")
+@Schema(description = "Notify Policy Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class NoticeRule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Notification Policy Entity Primary Key Index ID",
-            description = "通知策略实体主键索引ID",
+            description = "Notification Policy Entity Primary Key Index ID",
             example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     @Schema(title = "Policy name",
-            description = "策略名称",
+            description = "Policy name",
             example = "dispatch-1", accessMode = READ_WRITE)
     @Length(max = 100)
     @NotNull
     private String name;
 
     @Schema(title = "Recipient ID",
-            description = "接收人ID",
+            description = "Recipient ID",
             example = "4324324", accessMode = READ_WRITE)
     @NotNull
     @Convert(converter = JsonLongListAttributeConverter.class)
     private List<Long> receiverId;
 
     @Schema(title = "Recipient identification",
-            description = "接收人标识",
+            description = "Recipient identification",
             example = "tom", accessMode = READ_WRITE)
     @Convert(converter = JsonStringListAttributeConverter.class)
     private List<String> receiverName;
 
     @Schema(title = "Template ID",
-            description = "模板ID",
+            description = "Template ID",
             example = "4324324", accessMode = READ_WRITE)
     private Long templateId;
 
     @Schema(title = "Template identification",
-            description = "通知模板标识",
+            description = "Template identification",
             example = "demo", accessMode = READ_WRITE)
     @Length(max = 100)
     private String templateName;
 
     @Schema(title = "Whether to enable this policy",
-            description = "是否启用此策略",
+            description = "Whether to enable this policy",
             example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
 
     @Schema(title = "Whether to forward all",
-            description = "是否转发所有",
+            description = "Whether to forward all",
             example = "false", accessMode = READ_WRITE)
     private boolean filterAll = true;
 
-    @Schema(title = "过滤匹配告警级别，空为全部告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
+    @Schema(title = "Filter the matching alarm level, empty is all alarm level " +
+            "0: high -emergency- Urgent alarm - red 1: Medium -critical- Serious alarm - orange 2: Low -warning- Warning alarm - yellow",
             example = "[1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
 
-    @Schema(description = "告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
+    @Schema(description = "Alarm information label(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonTagListAttributeConverter.class)
     @Column(length = 2048)
     private List<TagItem> tags;
 
-    @Schema(title = "星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六", example = "[0,1]", accessMode = READ_WRITE)
+    @Schema(title = "Day of the week, multiple, all or empty is daily 7: Sunday 1: Monday 2: Tuesday 3: Wednesday 4: Thursday 5: Friday 6: Saturday",
+            example = "[0,1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> days;
 
-    @Schema(title = "限制时间段起始", example = "00:00:00", accessMode = READ_WRITE)
+    @Schema(title = "Limit time period start", example = "00:00:00", accessMode = READ_WRITE)
     private ZonedDateTime periodStart;
 
-    @Schema(title = "限制时间段截止", example = "23:59:59", accessMode = READ_WRITE)
+    @Schema(title = "Restricted time period end", example = "23:59:59", accessMode = READ_WRITE)
     private ZonedDateTime periodEnd;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
