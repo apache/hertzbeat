@@ -69,7 +69,8 @@ public class Tag {
     @Schema(title = "Tag Color", example = "Used for monitoring mysql", accessMode = READ_WRITE)
     private String description;
 
-    @Schema(title = "Tag type 0: Auto-generated monitor (monitorId,monitorName) 1: user-generated 2: system preset", accessMode = READ_WRITE)
+    @Schema(title = "Tag type 0: Auto-generated monitor (monitorId,monitorName) 1: user-generated 2: system preset",
+            accessMode = READ_WRITE)
     @Min(0)
     @Max(3)
     private byte type;

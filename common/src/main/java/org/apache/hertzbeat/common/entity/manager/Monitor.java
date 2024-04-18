@@ -148,7 +148,8 @@ public class Monitor {
     /**
      * For a many-to-many join, you need to set up a third join intermediate table, JoinTable
      * JoinTable name is the intermediate table name of the association relationship
-     *           joinColumns: The foreign key fields of the intermediate table relate the primary key fields of the table corresponding to the current entity class
+     *           joinColumns: The foreign key fields of the intermediate table relate the primary key fields of the table corresponding
+     *           to the current entity class
      *           inverseJoinColumn：The foreign key fields of the intermediate table relate to the primary key fields of the other table
      *           JoinColumn  name The associated field name of the intermediate table
      *                       referencedColumnName The mapping field name of the association table

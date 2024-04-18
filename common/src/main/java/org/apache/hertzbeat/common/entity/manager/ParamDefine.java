@@ -68,7 +68,8 @@ public class ParamDefine {
      * Parameter field external display name
      * Port
      */
-    @Schema(description = "The parameter field displays the internationalized name", example = "{zh-CN: '端口'}", accessMode = READ_WRITE)
+    @Schema(description = "The parameter field displays the internationalized name", example = "{zh-CN: '端口'}",
+            accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @SuppressWarnings("JpaAttributeTypeInspection")
     @Column(length = 2048)
@@ -114,7 +115,8 @@ public class ParamDefine {
     /**
      * When type is text, use limit to indicate the limit size of the string. The maximum is 255
      */
-    @Schema(title = "When type is text, use limit to indicate the limit size of the string. The maximum is 255", example = "30", accessMode = READ_WRITE)
+    @Schema(title = "When type is text, use limit to indicate the limit size of the string. The maximum is 255",
+            example = "30", accessMode = READ_WRITE)
     @Column(name = "param_limit")
     private Short limit;
 
@@ -127,7 +129,8 @@ public class ParamDefine {
      * key-Value display label
      * value-True value
      */
-    @Schema(description = "When the type is radio radio box, checkbox checkbox, options represents a list of optional values", example = "{key1,value1}", accessMode = READ_WRITE)
+    @Schema(description = "When the type is radio radio box, checkbox checkbox, options represents a list of optional values",
+            example = "{key1,value1}", accessMode = READ_WRITE)
     @Column(name = "param_options", length = 2048)
     @Convert(converter = JsonOptionListAttributeConverter.class)
     private List<Option> options;

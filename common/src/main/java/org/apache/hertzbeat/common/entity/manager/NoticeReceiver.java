@@ -65,7 +65,11 @@ public class NoticeReceiver {
 
     @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot " +
             "5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
-            description = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
+            description = "Notification information method: " +
+                    "0-SMS 1-Email 2-webhook 3-WeChat Official Account " +
+                    "4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot " +
+                    "7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise " +
+                    "WeChat app message",
             accessMode = READ_WRITE)
     @Min(0)
     @NotNull

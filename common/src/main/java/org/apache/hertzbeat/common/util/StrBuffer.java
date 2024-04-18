@@ -18,7 +18,8 @@
 package org.apache.hertzbeat.common.util;
 
 /**
- * In order to avoid generating too many String objects in the way of subString during ExporterParser parsing, use this class control
+ * In order to avoid generating too many String objects in the way of subString during ExporterParser parsing,
+ * use this class control
  */
 public class StrBuffer {
     private static final String POSITIVE_INF = "+inf";

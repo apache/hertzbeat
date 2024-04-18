@@ -99,7 +99,8 @@ public class NoticeRule {
             example = "false", accessMode = READ_WRITE)
     private boolean filterAll = true;
 
-    @Schema(title = "Filter the matching alarm level, empty is all alarm level 0: high -emergency- Urgent alarm - red 1: Medium -critical- Serious alarm - orange 2: Low -warning- Warning alarm - yellow",
+    @Schema(title = "Filter the matching alarm level, empty is all alarm level " +
+            "0: high -emergency- Urgent alarm - red 1: Medium -critical- Serious alarm - orange 2: Low -warning- Warning alarm - yellow",
             example = "[1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
@@ -110,7 +111,8 @@ public class NoticeRule {
     @Column(length = 2048)
     private List<TagItem> tags;
 
-    @Schema(title = "Day of the week, multiple, all or empty is daily 7: Sunday 1: Monday 2: Tuesday 3: Wednesday 4: Thursday 5: Friday 6: Saturday", example = "[0,1]", accessMode = READ_WRITE)
+    @Schema(title = "Day of the week, multiple, all or empty is daily 7: Sunday 1: Monday 2: Tuesday 3: Wednesday 4: Thursday 5: Friday 6: Saturday",
+            example = "[0,1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> days;
 

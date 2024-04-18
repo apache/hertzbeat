@@ -59,7 +59,8 @@ public class Job {
     private boolean hide = true;
     /**
      * Large categories of monitoring   
-     * service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring...
+     * service-application service monitoring db-database
+     * monitoring custom-custom monitoring os-operating system monitoring...
      */
     private String category;
     /**
@@ -73,7 +74,8 @@ public class Job {
     private Map<String, String> name;
     /**
      * The description and help of the monitoring type
-     * PING CONNECT - You can use the IP address or domain address of the peer service to monitor the PING connectivity between the local network and the peer network.
+     * PING CONNECT - You can use the IP address or
+     * domain address of the peer service to monitor the PING connectivity between the local network and the peer network.
      */
     private Map<String, String> help;
     /**
@@ -179,7 +181,8 @@ public class Job {
      * Returning null means: the job has been completed, and the collection of all metrics has ended
      * Returning the empty set metrics that there are still metrics collection tasks at the current
      * level that have not been completed,and the next level metrics task collection cannot be performed.
-     * The set returned empty means that there are still indicator collection tasks unfinished at the current level, and the task collection at the next level cannot be carried out
+     * The set returned empty means that there are still indicator collection tasks unfinished at the current level,
+     * and the task collection at the next level cannot be carried out
      * Returns a set of data representation: get the next set of priority index collcet tasks
      */
     public synchronized Set<Metrics> getNextCollectMetrics(Metrics metrics, boolean first) {

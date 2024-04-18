@@ -83,7 +83,8 @@ public class Param {
     /**
      * Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
      */
-    @Schema(title = "Parameter types 0: number 1: string 2: encrypted string 3:map mapped json string 4:arrays string", accessMode = READ_WRITE)
+    @Schema(title = "Parameter types 0: number 1: string 2: encrypted string 3:map mapped json string 4:arrays string",
+            accessMode = READ_WRITE)
     @Min(0)
     private byte type;
 

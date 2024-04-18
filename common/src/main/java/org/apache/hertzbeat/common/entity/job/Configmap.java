@@ -45,7 +45,8 @@ public class Configmap {
     private Object value;
 
     /**
-     * Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
+     * Parameter type
+     * 0: number 1: string 2: encrypted string 3: json string mapped by map
      * number,string,secret
      */
     private byte type = 1;
