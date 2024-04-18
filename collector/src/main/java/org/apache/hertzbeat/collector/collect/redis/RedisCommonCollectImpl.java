@@ -268,16 +268,16 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     private RedisURI redisUri(RedisProtocol redisProtocol) {
-        RedisURI redisUri = RedisURI.create(redisProtocol.getHost(), Integer.parseInt(redisProtocol.getPort()));
+        RedisURI.Builder redisUriBuilder = RedisURI.builder().withHost(redisProtocol.getHost()).withPort(Integer.parseInt(redisProtocol.getPort()));
         if (StringUtils.hasText(redisProtocol.getUsername())) {
-            redisUri.setUsername(redisProtocol.getUsername());
+            redisUriBuilder.withClientName(redisProtocol.getUsername());
         }
         if (StringUtils.hasText(redisProtocol.getPassword())) {
-            redisUri.setPassword(redisProtocol.getPassword().toCharArray());
+            redisUriBuilder.withPassword(redisProtocol.getPassword().toCharArray());
         }
         Duration timeout = Duration.ofMillis(CollectUtil.getTimeout(redisProtocol.getTimeout()));
-        redisUri.setTimeout(timeout);
-        return redisUri;
+        redisUriBuilder.withTimeout(timeout);
+        return redisUriBuilder.build();
     }
 
     private String removeCr(String value) {
