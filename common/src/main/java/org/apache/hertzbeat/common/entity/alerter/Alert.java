@@ -56,7 +56,8 @@ public class Alert {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "snow-flake-id")
-    @GenericGenerator(name = "snow-flake-id", strategy = "org.apache.hertzbeat.common.util.SnowFlakeIdGenerator")
+    @GenericGenerator(name = "snow-flake-id",
+            strategy = "org.apache.hertzbeat.common.util.SnowFlakeIdGenerator")
     @Schema(title = "Alarm record entity primary key index ID",
             description = "Alarm record entity primary key index ID",
             example = "87584674384", accessMode = READ_ONLY)
@@ -86,8 +87,16 @@ public class Alert {
     @Column(length = 4096)
     private String content;
 
-    @Schema(title = "Alarm status: 0-normal alarm (to be processed) 1-threshold triggered but not reached the number of alarms 2-recovered alarm 3-processed",
-            description = "Alarm status: 0-normal alarm (to be processed) 1-threshold triggered but not reached the number of alarms 2-recovered alarm 3-processed",
+    @Schema(title = "Alarm status: " +
+            "0-normal alarm (to be processed) " +
+            "1-threshold triggered but not reached the number of alarms " +
+            "2-recovered alarm " +
+            "3-processed",
+            description = "Alarm status: " +
+                    "0-normal alarm (to be processed) " +
+                    "1-threshold triggered but not reached the number of alarms " +
+                    "2-recovered alarm " +
+                    "3-processed",
             example = "1", accessMode = READ_WRITE)
     @Min(0)
     @Max(3)
@@ -114,7 +123,8 @@ public class Alert {
     @Transient
     private Integer triggerTimes;
 
-    @Schema(description = "Alarm information label(monitorId:xxx,monitorName:xxx)", example = "{key1:value1}", accessMode = READ_WRITE)
+    @Schema(description = "Alarm information label(monitorId:xxx,monitorName:xxx)",
+            example = "{key1:value1}", accessMode = READ_WRITE)
     @Convert(converter = JsonMapAttributeConverter.class)
     @SuppressWarnings("JpaAttributeTypeInspection")
     @Column(length = 2048)

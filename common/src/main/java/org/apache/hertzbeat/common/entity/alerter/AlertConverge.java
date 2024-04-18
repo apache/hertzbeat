@@ -75,7 +75,10 @@ public class AlertConverge {
             example = "true", accessMode = READ_WRITE)
     private boolean matchAll = true;
 
-    @Schema(title = "Alarm Level 0:High-Emergency-Critical Alarm 1:Medium-Critical-Critical Alarm 2:Low-Warning-Warning",
+    @Schema(title = "Alarm Level " +
+            "0:High-Emergency-Critical Alarm " +
+            "1:Medium-Critical-Critical Alarm " +
+            "2:Low-Warning-Warning",
             example = "[1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;

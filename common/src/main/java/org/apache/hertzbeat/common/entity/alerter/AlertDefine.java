@@ -90,7 +90,8 @@ public class AlertDefine {
     @Max(2)
     private byte priority;
 
-    @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached", example = "3", accessMode = READ_WRITE)
+    @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached",
+            example = "3", accessMode = READ_WRITE)
     @Min(0)
     @Max(10)
     private Integer times;
