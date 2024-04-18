@@ -71,7 +71,7 @@ class AlertsControllerTest {
     // todo: fix this test
     void getAlerts() throws Exception {
 
-        //定义要用到的测试值
+        // Define the test values
         String sortField = "id";
         String orderType = "asc";
         int pageIndex = 0;
@@ -80,7 +80,7 @@ class AlertsControllerTest {
         Page<Alert> alertPage = new PageImpl<>(Collections.singletonList(Alert.builder().build()));
 
 
-        //打桩
+        // Stubbing
         Mockito.when(
                         alertService.getAlerts(
                                 Mockito.any(Specification.class)
@@ -153,7 +153,7 @@ class AlertsControllerTest {
 
     @Test
     void getAlertsSummary() throws Exception {
-        //打桩
+        // Stubbing
         Mockito.when(alertService.getAlertsSummary()).thenReturn(new AlertSummary());
 
         mockMvc.perform(
