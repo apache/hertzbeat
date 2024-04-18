@@ -125,7 +125,7 @@ Content details: The status of IOTDB node 127.0.0.1 is monitored as OFFLINE, ple
 This practical article took us to experience that if HertzBeat is used to monitor the IoTDB database metric data, we can find that HertzBeat, which integrates monitoring-alarm-notification, is more convenient in operation and use, and IoTDB can be included in the monitoring with a simple click on the page, it is no longer necessary to deploy multiple components and write multiple YML configuration files with thresholds.
 
 IoTDB Github: https://github.com/apache/iotdb
-HertzBeat Github: https://github.com/dromara/hertzbeat
+HertzBeat Github: https://github.com/apache/hertzbeat
 
 **Welcome to learn about using Star Support! **
 

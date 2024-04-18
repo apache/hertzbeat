@@ -122,7 +122,7 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 :::
 
 Mysql Github: https://github.com/mysql/mysql-server                 
-HertzBeat Github: https://github.com/dromara/hertzbeat 
+HertzBeat Github: https://github.com/apache/hertzbeat 
 
 **欢迎了解使用支持Star哦！**
 

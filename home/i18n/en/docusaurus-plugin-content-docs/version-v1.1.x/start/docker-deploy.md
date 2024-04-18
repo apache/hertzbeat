@@ -21,7 +21,7 @@ sidebar_label: Install via Docker
    ```
 3. Configure HertzBeat's configuration file(optional)      
    Create application.yml in the host directory，eg:/opt/application.yml        
-   The configuration file content refer to project repository[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml)，modify service parameters, IP port account password in `td-engine`   
+   The configuration file content refer to project repository[/script/application.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/application.yml)，modify service parameters, IP port account password in `td-engine`   
    Note⚠️（If use email to alert, please replace the mail server parameter. If use MYSQL data source, replace the datasource parameters inside  refer to[H2 database switch to MYSQL](mysql-change)）       
    Specific replacement parameters is as follows:     
 ```yaml
@@ -60,7 +60,7 @@ spring:
    HertzBeat default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat      
    If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.    
    Create sureness.yml in the host directory，eg:/opt/sureness.yml    
-   The configuration file content refer to project repository[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)    
+   The configuration file content refer to project repository[/script/sureness.yml](https://gitee.com/hertzbeat/hertzbeat/blob/master/script/sureness.yml)    
    
 ```yaml
 

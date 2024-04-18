@@ -53,7 +53,6 @@ public class SnmpProtocol {
     private String version;
     /**
      * community name for v1 v2
-     * 团体字 v1 v2 版本需要
      */
     private String community;
     /**
@@ -84,13 +83,13 @@ public class SnmpProtocol {
 
     /**
      * authPasswordEncryption
-     * v3 需要
+     * v3 requires
      */
     private String authPasswordEncryption;
 
     /**
      * privPasswordEncryption
-     * v3 需要
+     * v3 requires
      */
     private String privPasswordEncryption;
 }

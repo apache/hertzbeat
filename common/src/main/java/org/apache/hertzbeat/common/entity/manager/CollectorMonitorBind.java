@@ -50,7 +50,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "slave collector monitor bind entity | 采集器与监控关联实体")
+@Schema(description = "slave collector monitor bind entity")
 @EntityListeners(AuditingEntityListener.class)
 public class CollectorMonitorBind {
 

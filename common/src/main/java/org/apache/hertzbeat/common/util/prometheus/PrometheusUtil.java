@@ -30,9 +30,12 @@ import java.util.List;
  */
 public class PrometheusUtil {
 
-    private static final int ERROR_FORMAT = -1; //解析过程中出现了未知格式数据，因为无法继续解析或已经到达输入流的末尾
+    //An unknown format occurred during parsing because parsing cannot continue
+    // or the end of the input stream has been reached
+    private static final int ERROR_FORMAT = -1;
 
-    private static final int NORMAL_END = -2; //输入流正常结束
+    //The input stream ends normally
+    private static final int NORMAL_END = -2;
 
     private static final int COMMENT_LINE = -3;
 

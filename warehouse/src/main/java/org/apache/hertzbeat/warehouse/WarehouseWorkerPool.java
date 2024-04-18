@@ -28,7 +28,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * warehouse 工作线程池
  * warehouse worker thread pool
  */
 @Component
@@ -42,7 +41,7 @@ public class WarehouseWorkerPool {
     }
 
     private void initWorkExecutor() {
-        // 线程工厂
+        // Thread factory
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("workerExecutor has uncaughtException.");

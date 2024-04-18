@@ -160,7 +160,7 @@ This hands-on article takes us through how to use HertzBeat to monitor Apache Sh
 :::
 
 Apache ShenYu Github: https://github.com/apache/shenyu        
-HertzBeat Github: https://github.com/dromara/hertzbeat
+HertzBeat Github: https://github.com/apache/hertzbeat
 
 **Welcome to learn about using Star Support Oh! **
 

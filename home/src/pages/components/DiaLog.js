@@ -40,7 +40,7 @@ export default function DiaLog() {
               <p >
                 👇  <b style={{ color: "#26B226"}}><Translate>click</Translate></b>
               </p>
-              <a href="https://github.com/dromara/hertzbeat" target="_blank">
+              <a href="https://github.com/apache/hertzbeat" target="_blank">
                 <Button type="primary" theme="solid">
                   <Translate>Go to Github</Translate>
                 </Button>
