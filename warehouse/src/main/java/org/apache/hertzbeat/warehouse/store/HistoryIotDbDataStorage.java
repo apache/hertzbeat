@@ -162,7 +162,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         }
         try {
             if (NEVER_EXPIRE.equals(expireTime)) {
-                // 删除原本可能已经存在的ttl
+                // DELETE TTL that might already exist
                 String cancelTtlSql = String.format(CANCEL_TTL, STORAGE_GROUP);
                 this.sessionPool.executeNonQueryStatement(cancelTtlSql);
             } else {
@@ -170,7 +170,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                 this.sessionPool.executeNonQueryStatement(sstTtlSql);
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
-            // 失败不影响主业务
+            // Failure does not affect the primary business
             log.error("IoTDB init ttl error, expireTime: {}, error: {}", expireTime, e.getMessage());
         }
     }
@@ -186,8 +186,8 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
         }
         List<MeasurementSchema> schemaList = new ArrayList<>();
 
-        // todo MeasurementSchema是在客户端生成的数据结构，编码和压缩没有作用
-        // todo 需要使用指定的数据结构，还是需要手动创建timeSeries或template
+        // todo Measurement schema is a data structure that is generated on the client side, and encoding and compression have no effect
+        // todo Do you want to use the specified data structure, or do you want to create a timeSeries or template manually
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         for (CollectRep.Field field : fieldsList) {
             MeasurementSchema schema = new MeasurementSchema();
@@ -214,7 +214,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                 String label = JsonUtil.toJson(labels);
                 String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), label, false);
                 if (tabletMap.containsKey(label)) {
-                    // 避免Time重复
+                    // Avoid Time repeats
                     now++;
                 } else {
                     tabletMap.put(label, new Tablet(deviceId, schemaList));
@@ -265,13 +265,13 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                 selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), deviceId, history);
                 handleHistorySelect(selectSql, "", instanceValuesMap);
             } else {
-                // 优先查询底下所有存在device, 如果存在底下所有device的数据, 否则查询deviceId的数据
+                // First query all the devices below, if there is data for all the devices below, otherwise query the data for the deviceId
                 List<String> devices = queryAllDevices(deviceId);
                 if (devices.isEmpty()) {
                     selectSql = String.format(QUERY_HISTORY_SQL, addQuote(metric), deviceId, history);
                     handleHistorySelect(selectSql, "", instanceValuesMap);
                 } else {
-                    // todo 改造成一个select查询: select device1.metric, device2.metric from xxx
+                    // todo Transform to a select query: Select Device 1.0. Metric, Device2. Metric from XXX
                     for (String device : devices) {
                         String prefixDeviceId = getDeviceId(app, metrics, monitorId, null, false);
                         String instanceId = device.substring(prefixDeviceId.length() + 1);
@@ -303,7 +303,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             }
         } finally {
             if (dataSet != null) {
-                // 需要关闭结果集！！！否则会造成服务端堆积
+                // need to close the result set! ! ! otherwise it will cause server-side heap
                 this.sessionPool.closeResultSet(dataSet);
             }
         }
@@ -377,7 +377,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             log.error(e.getMessage(), e);
         } finally {
             if (dataSet != null) {
-                // 需要关闭结果集！！！否则会造成服务端堆积
+                // need to close the result set! ! ! otherwise it will cause server-side heap
                 this.sessionPool.closeResultSet(dataSet);
             }
         }
@@ -403,7 +403,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
             log.error(e.getMessage(), e);
         } finally {
             if (dataSet != null) {
-                // 需要关闭结果集！！！否则会造成服务端堆积
+                // need to close the result set! ! ! otherwise it will cause server-side heap
                 this.sessionPool.closeResultSet(dataSet);
             }
         }
@@ -411,7 +411,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * 获取设备id
+     * gets the device ID
      * 有instanceId的使用 ${group}.${app}.${metrics}.${monitor}.${labels} 的方式
      * 否则使用 ${group}.${app}.${metrics}.${monitor} 的方式
      * 查询时可以通过 ${group}.${app}.${metrics}.${monitor}.* 的方式获取所有instance数据
@@ -428,7 +428,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * add quote，防止查询时关键字报错(eg: nodes)
+     * add quote，prevents keyword errors during queries(eg: nodes)
      */
     private String addQuote(String text) {
         if (text == null || text.isEmpty() || (text.startsWith(BACK_QUOTE) && text.endsWith(BACK_QUOTE))) {

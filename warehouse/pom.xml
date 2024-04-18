@@ -85,7 +85,7 @@
             <artifactId>iotdb-session</artifactId>
             <version>${iotdb-session.version}</version>
         </dependency>
-        <!-- influxdb 这里支持1.7版本因此使用influxdb-java, 完全支持2.x版本需要使用influxdb-client-java -->
+        <!-- Influxdb supports version 1.7 so use influxdb-java, full support for 2.0. The X version requires influxdb-client-java -->
         <dependency>
             <groupId>org.influxdb</groupId>
             <artifactId>influxdb-java</artifactId>
