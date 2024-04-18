@@ -109,7 +109,7 @@ public class CommonProperties {
      */
     public static class KafkaProperties {
         /**
-         * kafka的连接服务器url
+         * kafka's connection server url
          */
         private String servers;
         /**
@@ -167,27 +167,27 @@ public class CommonProperties {
     public static class TencentSmsProperties {
 
         /**
-         * 腾讯云账户访问密钥id
+         * Tencent cloud account secret id
          */
         private String secretId;
 
         /**
-         * 腾讯云账户访问密钥key
+         * Tencent cloud account secret key
          */
         private String secretKey;
 
         /**
-         * SMS短信应用app id
+         * SMS app id
          */
         private String appId;
 
         /**
-         * 短信签名
+         * SMS signature
          */
         private String signName;
 
         /**
-         * 短信模版ID
+         * SMS template ID
          */
         private String templateId;
 
