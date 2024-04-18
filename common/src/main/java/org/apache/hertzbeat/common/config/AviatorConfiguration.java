@@ -50,22 +50,22 @@ public class AviatorConfiguration {
     public AviatorEvaluatorInstance configAviatorEvaluator() {
         AviatorEvaluatorInstance instance = AviatorEvaluator.getInstance();
 
-        // 配置AviatorEvaluator使用LRU缓存编译后的表达式
+        // Configure AviatorEvaluator to cache compiled expressions using LRU
         instance
                 .useLRUExpressionCache(AVIATOR_LRU_CACHE_SIZE)
                 .addFunction(new StrEqualFunction());
 
-        // limit loop 限制循环次数
+        // limit loop Limit the number of loops
         instance.setOption(Options.MAX_LOOP_COUNT, 10);
         
-        // 启用部分Aviator语法特性集合
+        // Enables a partial Aviator syntax feature collection
         instance.setOption(Options.FEATURE_SET,
                 Feature.asSet(Feature.If,
                         Feature.Assignment,
                         Feature.Let,
                         Feature.StringInterpolation));
 
-        // 配置自定义aviator函数
+        // Configure the custom aviator function
         instance.addOpFunction(OperatorType.BIT_OR, new AbstractFunction() {
             @Override
             public AviatorObject call(final Map<String, Object> env, final AviatorObject arg1,
@@ -98,7 +98,7 @@ public class AviatorConfiguration {
     }
 
     /**
-     * 自定义aviator判断字符串是否相等函数
+     * Define a custom aviator string equality function
      */
     private static class StrEqualFunction extends AbstractFunction {
         @Override
@@ -123,7 +123,7 @@ public class AviatorConfiguration {
     }
 
     /**
-     * 自定义aviator判断字符串1是否包含字符串2 (case-insensitive)
+     * Custom aviator determines whether string 1 contains string 2 (case-insensitive)
      */
     private static class StrContainsFunction extends AbstractFunction {
         @Override
@@ -148,7 +148,7 @@ public class AviatorConfiguration {
     }
 
     /**
-     * 自定义aviator判断环境中此对象是否存在值
+     * Custom aviator determines if a value exists for this object in the environment
      */
     private static class ObjectExistsFunction extends AbstractFunction {
         @Override
@@ -172,8 +172,8 @@ public class AviatorConfiguration {
     }
 
     /**
-     * 自定义aviator判断字符串是否匹配regex
-     * - regex需要加上""或者''
+     * Custom aviator determines if a string matches a regex
+     * - regex You need to add "" or ''
      */
     private static class StrMatchesFunction extends AbstractFunction {
         @Override
