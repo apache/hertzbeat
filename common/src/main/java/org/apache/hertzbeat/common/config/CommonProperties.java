@@ -150,7 +150,10 @@ public class CommonProperties {
      * sms properties
      */
     public static class SmsProperties {
+        //Tencent cloud SMS configuration
         private TencentSmsProperties tencent;
+        //Ali cloud SMS configuration
+        private AliYunSmsProperties aliYun;
 
         public TencentSmsProperties getTencent() {
             return tencent;
@@ -158,6 +161,14 @@ public class CommonProperties {
 
         public void setTencent(TencentSmsProperties tencent) {
             this.tencent = tencent;
+        }
+
+        public AliYunSmsProperties getAliYun() {
+            return aliYun;
+        }
+
+        public void setAliYun(AliYunSmsProperties aliYun) {
+            this.aliYun = aliYun;
         }
     }
 
@@ -213,6 +224,77 @@ public class CommonProperties {
 
         public void setAppId(String appId) {
             this.appId = appId;
+        }
+
+        public String getSignName() {
+            return signName;
+        }
+
+        public void setSignName(String signName) {
+            this.signName = signName;
+        }
+
+        public String getTemplateId() {
+            return templateId;
+        }
+
+        public void setTemplateId(String templateId) {
+            this.templateId = templateId;
+        }
+    }
+
+    /**
+     * aliYun sms properties
+     */
+    public static class AliYunSmsProperties {
+
+        /**
+         * Aliyun account access key id
+         */
+        private String secretId;
+
+        /**
+         * Ali Cloud account access key
+         */
+        private String secretKey;
+
+        /**
+         *  SMS app id
+         */
+        private String appId;
+
+        /**
+         * SMS signature
+         */
+        private String signName;
+
+        /**
+         * ID of the SMS template
+         */
+        private String templateId;
+
+        public String getAppId() {
+            return appId;
+        }
+
+        public void setAppId(String appId) {
+            this.appId = appId;
+        }
+
+        public String getSecretId() {
+            return secretId;
+        }
+
+        public void setSecretId(String secretId) {
+            this.secretId = secretId;
+        }
+
+        public String getSecretKey() {
+            return secretKey;
+        }
+
+        public void setSecretKey(String secretKey) {
+            this.secretKey = secretKey;
         }
 
         public String getSignName() {
