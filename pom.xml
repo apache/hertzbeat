@@ -99,7 +99,7 @@
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <maven-pmd-plugin.version>3.21.0</maven-pmd-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!--hertzbeat 相关模块-->
+        <!--hertzbeat related modules-->
         <hertzbeat.version>2.0-SNAPSHOT</hertzbeat.version>
 
         <springdoc.version>2.3.0</springdoc.version>
