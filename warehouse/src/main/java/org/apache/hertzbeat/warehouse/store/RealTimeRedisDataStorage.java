@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * redis存储采集实时数据
  * redis storage collects real-time data
  */
 @Primary
