@@ -114,8 +114,8 @@ public class Pop3CollectImpl extends AbstractCollect {
      * @throws Exception exception
      */
     private void validateParams(Metrics metrics) throws Exception {
-        Pop3Protocol pop3Protocol = metrics.getPop3();
-        if (metrics == null || pop3Protocol == null || pop3Protocol.isInvalid()) {
+        Pop3Protocol pop3Protocol;
+        if (metrics == null || (pop3Protocol = metrics.getPop3()) == null || pop3Protocol.isInvalid()) {
             throw new Exception("Pop3 collect must has pop3 params");
         }
     }
