@@ -1,4 +1,3 @@
-
 The MIT License
 
 Copyright (c) 2013 Jake Rosoman <jkroso@gmail.com>
