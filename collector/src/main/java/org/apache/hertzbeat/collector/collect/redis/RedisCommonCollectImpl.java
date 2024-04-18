@@ -268,16 +268,16 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     private RedisURI redisUri(RedisProtocol redisProtocol) {
-        RedisURI redisUri = RedisURI.create(redisProtocol.getHost(), Integer.parseInt(redisProtocol.getPort()));
+        RedisURI.Builder redisUriBuilder = RedisURI.builder().withHost(redisProtocol.getHost()).withPort(Integer.parseInt(redisProtocol.getPort()));
         if (StringUtils.hasText(redisProtocol.getUsername())) {
-            redisUri.setUsername(redisProtocol.getUsername());
+            redisUriBuilder.withClientName(redisProtocol.getUsername());
         }
         if (StringUtils.hasText(redisProtocol.getPassword())) {
-            redisUri.setPassword(redisProtocol.getPassword().toCharArray());
+            redisUriBuilder.withPassword(redisProtocol.getPassword().toCharArray());
         }
         Duration timeout = Duration.ofMillis(CollectUtil.getTimeout(redisProtocol.getTimeout()));
-        redisUri.setTimeout(timeout);
-        return redisUri;
+        redisUriBuilder.withTimeout(timeout);
+        return redisUriBuilder.build();
     }
 
     private String removeCr(String value) {
@@ -312,7 +312,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .forEach(it -> {
                     result.put(it[0], it[1]);
                 });
-        // fix https://github.com/dromara/hertzbeat/pull/913
+        // fix https://github.com/apache/hertzbeat/pull/913
         if (result.size() < fieldTotalSize) {
             for (Metrics.Field field : metrics.getFields()) {
                 if (!result.containsKey(field.getField())) {

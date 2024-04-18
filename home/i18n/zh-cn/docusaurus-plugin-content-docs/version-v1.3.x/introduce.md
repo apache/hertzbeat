@@ -9,21 +9,21 @@ slug: /
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![QQ](https://img.shields.io/badge/qq-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/web-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/ping-connect.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/port-available.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/database-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/os-monitor.svg)
 ![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
 ![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
 ![hertzbeat](https://img.shields.io/badge/monitor-network-red)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/alert.svg)
 
 
 ## 🎡 <font color="green">介绍</font>
 
-> [HertzBeat赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警系统。     
+> [HertzBeat赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警系统。     
 > 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控，阈值告警通知一步到位。   
 > 易用友好，全 WEB 页面操作，鼠标点一点就能监控告警，零上手学习成本。  
 > 更自由化的阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。
@@ -45,15 +45,15 @@ slug: /
 
 ## 🥐 模块  
 
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
+- **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** 提供监控数据采集服务
+- **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
+- **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** 提供告警服务
+- **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** 提供告警服务
 > 告警计算触发，任务状态联动，告警配置，告警通知。
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
+- **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端(angular+ts+zorro)  
 
 ![hertzBeat](https://tancloud.gd2.qingstor.com/img/docs/hertzbeat-arch.svg)   

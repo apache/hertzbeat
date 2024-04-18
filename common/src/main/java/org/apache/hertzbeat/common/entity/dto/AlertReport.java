@@ -47,28 +47,41 @@ public class AlertReport {
     @Schema(title = "Alarm evaluation interval")
     private Integer alertDuration;
 
-    @Schema(title = "Time when the log service receives the alarm message", description = "日志服务接收到告警消息的时间",
+    @Schema(title = "Time when the log service receives the alarm message",
+            description = "Time when the log service receives the alarm message",
             example = "1694589491000", accessMode = READ_WRITE)
     private long alertTime;
 
-    @Schema(title = "Alarm priority. 0: high emergency alarm red 1: medium critical serious alarm Orange 2: low warning warning alarm yellow",
-            description = "告警严重度。0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色",
+    @Schema(title = "Alarm priority. " +
+            "0: high emergency alarm red " +
+            "1: medium critical serious alarm Orange " +
+            "2: low warning warning alarm yellow",
+            description = "Alarm priority. 0: high emergency alarm red " +
+                    "1: medium critical serious alarm Orange " +
+                    "2: low warning warning alarm yellow",
             example = "1", accessMode = READ_WRITE)
     private Integer priority;
 
     @Schema(title = "Alarm type. 0: the default 1 is business system exception reporting",
-            description = "告警类型。0:内部告警 1:外部系统上报", example = "0", accessMode = READ_WRITE)
+            description = "Alarm type. 0: the default 1 is business system exception reporting",
+            example = "0", accessMode = READ_WRITE)
     private Integer reportType;
 
-    @Schema(title = "Alarm tag information", description = "告警标签信息((monitorId:xxx,monitorName:xxx))",
+    @Schema(title = "Alarm tag information",
+            description = "Alarm label information((monitorId:xxx,monitorName:xxx))",
             example = "{\"key1\":\"value1\"}", accessMode = READ_WRITE)
     private Map<String, String> labels;
 
-    @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)", description = "告警标注", example ="{\"key1\":\"value1\"}"
+    @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)",
+            description = "Alarm labeling",
+            example ="{\"key1\":\"value1\"}"
             , accessMode = READ_WRITE)
     private Map<String, String> annotations;
 
-    @Schema(title = " Alarm content", description = "告警内容", example = "对外报警内容", accessMode = READ_WRITE)
+    @Schema(title = " Alarm content",
+            description = "Content of alarm",
+            example = "External alarm content",
+            accessMode = READ_WRITE)
     private String content;
 
 }

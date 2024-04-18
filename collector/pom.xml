@@ -259,15 +259,15 @@
                         <configuration>
                             <classesDirectory>target/classes/</classesDirectory>
                             <archive>
-                                <!--生成的jar包不包含maven描述相关文件-->
+                                <!--Generated JAR does not include Maven descriptor-related files-->
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
-                                    <!--项目启动类-->
+                                    <!--Project startup class-->
                                     <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
                                     <useUniqueVersions>false</useUniqueVersions>
-                                    <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
+                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
                                     <addClasspath>true</addClasspath>
-                                    <!--外部依赖jar包的位置-->
+                                    <!--Location of external dependency JARs-->
                                     <classpathPrefix>lib/</classpathPrefix>
                                 </manifest>
                                 <manifestEntries>
@@ -283,9 +283,9 @@
                         <executions>
                             <execution>
                                 <id>without-jdk</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -297,9 +297,9 @@
                             </execution>
                             <execution>
                                 <id>make-macos-arm64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -311,9 +311,9 @@
                             </execution>
                             <execution>
                                 <id>make-macos-amd64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -325,9 +325,9 @@
                             </execution>
                             <execution>
                                 <id>make-linux-arm64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -339,9 +339,9 @@
                             </execution>
                             <execution>
                                 <id>make-linux-amd64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -353,9 +353,9 @@
                             </execution>
                             <execution>
                                 <id>make-windows-64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>

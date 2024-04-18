@@ -236,7 +236,7 @@ module.exports = {
             },
             {
               label: 'contact',
-              to: '/docs/others/contact',
+              to: '/docs/community/contact',
             }
           ],
         },

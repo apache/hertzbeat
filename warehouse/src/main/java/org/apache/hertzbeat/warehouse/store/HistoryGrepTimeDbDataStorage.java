@@ -88,7 +88,6 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
 
     /**
      * Checks if the database exists; if not, creates the Database.
-     * 检查数据库是否存在；如果不存在，则创建该数据库
      */
     private boolean createDatabase() {
         // 查询现有数据库
@@ -108,8 +107,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
             }
 
         }
-        // Check if the database exists;
-        // 检查现有数据库是否包括“hertzbeat”
+        // Check if the existing database includes“Hertzbeat”
         boolean isDatabaseExist = false;
         if (result != null && result.isOk()) {
             QueryOk queryOk = result.getOk();
@@ -126,7 +124,6 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
             }
         }
         // If it does not exist, create database
-        // 如果“hertzbeat”数据库不存在，则创建该数据库
         if (!isDatabaseExist) {
             QueryRequest createDatabase = QueryRequest.newBuilder()
                     .exprType(SelectExprType.Sql)
@@ -339,7 +336,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                 log.error(e.getMessage(), e);
             }
         }
-        // TODO greptime未找到合适的sql函数处理，暂时使用代码实现，将来greptime更新文档改用sql实现
+        // TODO 'greptime' did not find the proper SQL function processing, temporarily using code implementation, future 'greptime' update documents using SQL implementation
         long endTime;
         long startTime = getExpireTimeFromToken(history);
 

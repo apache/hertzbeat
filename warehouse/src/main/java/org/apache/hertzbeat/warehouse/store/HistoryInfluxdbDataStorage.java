@@ -111,14 +111,14 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
             }
         }
 
-        // 创建数据库
+        // create the database
         String createDatabaseSql = String.format(CREATE_DATABASE, DATABASE);
         QueryResult createDatabaseResult = this.influxDb.query(new Query(createDatabaseSql));
         if (createDatabaseResult.hasError()) {
             log.error("create database {} in influxdb error, msg: {}", DATABASE, createDatabaseResult.getError());
             return false;
         }
-        // 设置过期时间
+        // set the expiration time
         String createRetentionPolicySql = String.format(CREATE_RETENTION_POLICY, DATABASE, DATABASE,
                 influxdbProperties.getExpireTime(), influxdbProperties.getReplication());
         QueryResult createRetentionPolicySqlResult = this.influxDb.query(new Query(createRetentionPolicySql));

@@ -61,7 +61,7 @@ public class TencentSmsClient {
     }
 
     /**
-     * 发送短信
+     * send text message
      * @param appId appId
      * @param signName sign name
      * @param templateId template id
@@ -89,7 +89,7 @@ public class TencentSmsClient {
     }
 
     /**
-     * 发送短信
+     * send text message
      * @param templateValues template values
      * @param phones phones num
      */

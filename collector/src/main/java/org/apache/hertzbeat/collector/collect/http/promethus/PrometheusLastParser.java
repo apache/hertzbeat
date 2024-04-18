@@ -40,8 +40,6 @@ public class PrometheusLastParser extends AbstractPrometheusParse {
     @Override
     public void parse(String resp, List<String> aliasFields, HttpProtocol http, CollectRep.MetricsData.Builder builder) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        for (String aliasField : aliasFields) {
-            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-        }
+        aliasFields.forEach(aliasField -> valueRowBuilder.addColumns(CommonConstants.NULL_VALUE));
     }
 }
