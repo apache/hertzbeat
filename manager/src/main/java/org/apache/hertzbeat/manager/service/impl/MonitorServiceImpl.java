@@ -360,7 +360,7 @@ public class MonitorServiceImpl implements MonitorService {
                 if (paramDefine.isRequired() && (param == null || param.getValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
-                if (param != null && param.getValue() != null && !"".equals(param.getValue())) {
+                if (param != null && StringUtils.hasText(param.getValue())) {
                     switch (paramDefine.getType()) {
                         case "number":
                             double doubleValue;

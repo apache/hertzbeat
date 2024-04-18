@@ -20,6 +20,7 @@ package org.apache.hertzbeat.warehouse.store;
 import io.greptime.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.flight.FlightRuntimeException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -317,7 +318,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                             for (io.greptime.models.Value value : values) {
                                 log.debug("value:{}", value.value());
                                 Object instanceValue = value.value();
-                                if (instanceValue == null || "".equals(instanceValue)) {
+                                if (StringUtils.isEmpty(instanceValue)) {
                                     instances.add("''");
                                 } else {
                                     instances.add(instanceValue.toString());

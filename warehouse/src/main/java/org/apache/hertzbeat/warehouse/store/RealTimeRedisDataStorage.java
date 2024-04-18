@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import io.lettuce.core.RedisClient;
@@ -106,7 +107,7 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
                 .withHost(redisProp.getHost())
                 .withPort(redisProp.getPort())
                 .withTimeout(Duration.of(10, ChronoUnit.SECONDS));
-        if (redisProp.getPassword() != null && !"".equals(redisProp.getPassword())) {
+        if (!StringUtils.isEmpty(redisProp.getPassword())) {
             uriBuilder.withPassword(redisProp.getPassword().toCharArray());
         }
         try {

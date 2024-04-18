@@ -22,6 +22,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 
+import com.aliyun.tea.utils.StringUtils;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -201,7 +203,7 @@ public class ConsistentHash {
      * @return 采集器节点
      */
     public Node dispatchJob(String dispatchKey, Long jobId) {
-        if (dispatchKey == null || "".equals(dispatchKey)) {
+        if (StringUtils.isEmpty(dispatchKey)) {
             log.error("The dispatch key can not null.");
             return null;
         }
@@ -216,7 +218,7 @@ public class ConsistentHash {
      * @return 采集器节点
      */
     public Node preDispatchJob(String dispatchKey) {
-        if (dispatchKey == null || "".equals(dispatchKey)) {
+        if (StringUtils.isEmpty(dispatchKey)) {
             log.error("The dispatch key can not null.");
             return null;
         }

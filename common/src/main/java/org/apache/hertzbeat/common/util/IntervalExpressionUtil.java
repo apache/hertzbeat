@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.common.util;
 
+import org.apache.commons.lang3.StringUtils;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -46,7 +48,7 @@ public class IntervalExpressionUtil {
      * @return true-yes false-no
      */
     public static boolean validNumberIntervalExpress(Double numberValue, String expression) {
-        if (expression == null || "".equals(expression)) {
+        if (StringUtils.isEmpty(expression)) {
             return true;
         }
         if (numberValue == null) {

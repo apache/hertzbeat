@@ -19,6 +19,7 @@ package org.apache.hertzbeat.warehouse.store;
 
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
@@ -253,7 +254,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                     continue;
                 }
                 String instanceValue = resultSet.getString(2);
-                if (instanceValue == null || "".equals(instanceValue)) {
+                if (StringUtils.isEmpty(instanceValue)) {
                     instanceValue = "";
                 }
                 double value = resultSet.getDouble(3);
@@ -297,7 +298,7 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
                 ResultSet resultSet = statement.executeQuery(queryInstanceSql);
                 while (resultSet.next()) {
                     String instanceValue = resultSet.getString(1);
-                    if (instanceValue == null || "".equals(instanceValue)) {
+                    if (StringUtils.isEmpty(instanceValue)) {
                         instances.add("''");
                     } else {
                         instances.add(instanceValue);

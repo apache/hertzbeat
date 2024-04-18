@@ -122,7 +122,7 @@ public class HttpCollectImpl extends AbstractCollect {
             // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
             // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            if (StringUtils.hasLength(resp)) {
+            if (!StringUtils.hasText(resp)) {
                 log.info("http response entity is empty, status: {}.", statusCode);
             }
             Long responseTime = System.currentTimeMillis() - startTime;
@@ -192,7 +192,7 @@ public class HttpCollectImpl extends AbstractCollect {
             throw new Exception("Http/Https collect must has http params");
         }
         HttpProtocol httpProtocol = metrics.getHttp();
-        if (StringUtils.hasLength(httpProtocol.getUrl())
+        if (!StringUtils.hasText(httpProtocol.getUrl())
                     || !httpProtocol.getUrl().startsWith(RIGHT_DASH)) {
             httpProtocol.setUrl(httpProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + httpProtocol.getUrl().trim());
         }

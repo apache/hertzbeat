@@ -30,6 +30,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.aliyun.tea.utils.StringUtils;
+
 import jakarta.persistence.criteria.Predicate;
 import javax.validation.Valid;
 import java.util.List;
@@ -178,7 +180,7 @@ public class NoticeConfigController {
 
         Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !"".equals(name)) {
+            if (!StringUtils.isEmpty(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }

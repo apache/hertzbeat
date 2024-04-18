@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.common.util;
 
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.http.conn.util.InetAddressUtils;
 
@@ -50,7 +52,7 @@ public class IpDomainUtil {
      * @return true-yes false-no
      */
     public static boolean validateIpDomain(String ipDomain) {
-        if (ipDomain == null || "".equals(ipDomain)) {
+        if (StringUtils.isEmpty(ipDomain)) {
             return false;
         }
         ipDomain = ipDomain.trim();
@@ -72,7 +74,7 @@ public class IpDomainUtil {
      * @return true or false
      */
     public static boolean isHasSchema(String domainIp) {
-        if (domainIp == null || "".equals(domainIp)) {
+        if (StringUtils.isEmpty(domainIp)) {
             return false;
         }
         return DOMAIN_SCHEMA.matcher(domainIp).matches();
