@@ -145,14 +145,13 @@ public class CommonProperties {
             this.alertsDataTopic = alertsDataTopic;
         }
     }
-
     /**
      * sms properties
      */
     public static class SmsProperties {
-        //腾讯云短信配置
+        //Tencent cloud SMS configuration
         private TencentSmsProperties tencent;
-        //阿里云短信配置
+        //Ali cloud SMS configuration
         private AliYunSmsProperties aliYun;
 
         public TencentSmsProperties getTencent() {
