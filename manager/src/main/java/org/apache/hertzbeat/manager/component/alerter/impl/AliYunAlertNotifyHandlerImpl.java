@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 import java.util.ResourceBundle;
 
 /**
- * @author lwq
+ * Send alarm information through Alibaba Cloud SMS
  */
 @Component
 @RequiredArgsConstructor
@@ -46,7 +46,7 @@ final class AliYunAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
-        // SMS notification 短信通知
+        // SMS notification
         try {
             String monitorName = null;
             if (alert.getTags() != null) {

@@ -23,7 +23,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
-public class AliYunSendSMS {
+/**
+ * Alibaba cloud send SMS util
+ */
+public class AliYunSendSMSUtil {
 
     public static  com.aliyun.dysmsapi20170525.Client createClient(String accessKeyId, String accessKeySecret) throws Exception {
         Config config = new Config();
@@ -38,7 +41,7 @@ public class AliYunSendSMS {
      * @throws Exception
      */
     public static SendSmsResponse send(Map<String, Object> map,String singName,String templateCode , String phone,String accessKeyId,String accessKeySecret) throws Exception {
-        com.aliyun.dysmsapi20170525.Client client = AliYunSendSMS.createClient(accessKeyId, accessKeySecret);
+        com.aliyun.dysmsapi20170525.Client client = AliYunSendSMSUtil.createClient(accessKeyId, accessKeySecret);
         // 1.Send a text message
         SendSmsRequest sendReq = new SendSmsRequest()
                 .setPhoneNumbers(phone)//The phone number that received the text message

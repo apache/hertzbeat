@@ -24,7 +24,7 @@ import com.tencentcloudapi.sms.v20210111.models.SendSmsRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.support.exception.SendMessageException;
-import org.apache.hertzbeat.common.util.AliYunSendSMS;
+import org.apache.hertzbeat.common.util.AliYunSendSMSUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +35,6 @@ import java.util.Map;
 
 /**
  * sms service client for aliyun cloud
- * @author lwq
  */
 @Component
 @ConditionalOnProperty("common.sms.aliyun.app-id")
@@ -91,12 +90,12 @@ public class AliYunSmsClient {
         req.setPhoneNumberSet(phones);
         try {
             Map<String, Object> param = new HashMap<>();
-            //taskName：监控名称alert：告警级别 message：告警信息 sysTime：系统时间
+            // taskName: monitoring name,  alert: alarm level, message: alarm content, sysTime:system time
             param.put("taskName", templateValues[0]);
             param.put("alert", templateValues[1]);
             param.put("message", templateValues[2]);
             param.put("sysTime",dateTime.format(formatter) );
-            SendSmsResponse smsResponse = AliYunSendSMS.send(param, signName, templateId, phones[0], secretId, secretKey);
+            SendSmsResponse smsResponse = AliYunSendSMSUtil.send(param, signName, templateId, phones[0], secretId, secretKey);
             String code = smsResponse.body.code;
             if (!RESPONSE_OK.equals(code)) {
                 throw new SendMessageException(code + ":" + smsResponse.body.message);
