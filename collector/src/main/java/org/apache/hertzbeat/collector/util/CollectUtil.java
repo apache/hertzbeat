@@ -26,6 +26,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -167,10 +168,7 @@ public class CollectUtil {
      * assert prom field
      */
     public static Boolean assertPromRequireField(String aliasField) {
-        if (CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField)) {
-            return true;
-        }
-        return false;
+        return CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField);
     }
 
 
