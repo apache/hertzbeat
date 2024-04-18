@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * http 协议配置
+ * http protocol configuration
  */
 @Data
 @Builder
@@ -34,59 +34,59 @@ import java.util.Map;
 @NoArgsConstructor
 public class HttpProtocol {
     /**
-     * 对端主机ip或域名
+     * Peer host ip or domain name
      */
     private String host;
     /**
-     * 对端主机端口
+     * port number
      */
     private String port;
     /**
-     * http/https 请求访问的url链接
+     * http/https The url link to which the request was made
      */
     private String url;
     /**
-     * 超时时间
+     * timeout
      */
     private String timeout;
     /**
-     * http是否使用链路加密ssl/tls,即是http还是https
+     * Whether http uses link encryption ssl/tls, i.e. http or https
      */
     private String ssl = "false";
     /**
-     * http请求方法: get, post, put, delete, patch
+     * http request methods: get, post, put, delete, patch
      */
     private String method;
     /**
-     * http请求携带头 eg: Content-Type = application/json
+     * http requests carry headers eg: Content-Type = application/json
      */
     private Map<String, String> headers;
     /**
-     * http请求携带查询参数 eg: localhost:80/api?paramKey=value
+     * http requests carry query parameters eg: localhost:80/api? paramKey=value
      */
     private Map<String, String> params;
     /**
-     * http请求携带的请求体
+     * The body carried by an http request
      */
     private String payload;
     /**
-     * 认证信息
+     * authentication information
      */
     private Authorization authorization;
     /**
-     * 响应数据解析方式
-     * default - 自有的数据解析规则
-     * json_path 自定义jsonPath脚本 <a href="https://www.jsonpath.cn/">...</a>
-     * xml_path 自定义xmlPath脚本
-     * prometheus Prometheus数据规则
+     * How response data is parsed
+     * default - Own rules for parsing data
+     * json_path Custom jsonPath scripts <a href="https://www.jsonpath.cn/">...</a>
+     * xml_path Custom xmlPath scripts
+     * prometheus Prometheus Data Rules
      */
     private String parseType;
     /**
-     * 数据解析脚本 当解析方式为 jsonPath or xmlPath时存在
+     * Data parsing scripts exist when parsed as jsonPath or xmlPath
      */
     private String parseScript;
     /**
-     * 内容关键字
+     * Content keywords
      */
     private String keyword;
 
@@ -97,14 +97,14 @@ public class HttpProtocol {
     private List<String> successCodes;
 
     /**
-     * 认证信息
+     * authentication information
      */
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Authorization {
         /**
-         * 认证类型：Bearer Token, Basic Auth, Digest Auth
+         * certification type：Bearer Token, Basic Auth, Digest Auth
          */
         private String type;
         /**

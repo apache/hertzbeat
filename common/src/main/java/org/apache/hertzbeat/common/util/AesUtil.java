@@ -35,7 +35,8 @@ import java.util.Base64;
 public class AesUtil {
 
     /**
-     *  Default encryption key The AES encryption key is 16 bits by default. If the AES encryption key is larger than or smaller than 16 bits, an error message is displayed
+     *  Default encryption key The AES encryption key is 16 bits by default.
+     *  If the AES encryption key is larger than or smaller than 16 bits, an error message is displayed
      */
     private static final String ENCODE_RULES = "tomSun28HaHaHaHa";
 
@@ -47,7 +48,8 @@ public class AesUtil {
     private static final String AES = "AES";
 
     /**
-     * Encryption key The AES encryption key is 16 bits. If the AES encryption key is larger than 16 bits, an error message is displayed
+     * Encryption key The AES encryption key is 16 bits.
+     * If the AES encryption key is larger than 16 bits, an error message is displayed
      */
     private static String secretKey = ENCODE_RULES;
 
