@@ -1,3 +1,19 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.apache.hertzbeat.common.util;
 
 import com.aliyun.dysmsapi20170525.models.SendSmsRequest;
@@ -16,19 +32,19 @@ public class AliYunSendSMS {
         return new com.aliyun.dysmsapi20170525.Client(config);
     }
     /**
-     * 发送短信方法，入参map格式
+     * Method for sending SMS messages: Enter the map format
      * @param map
      * @return
      * @throws Exception
      */
     public static SendSmsResponse send(Map<String, Object> map,String singName,String templateCode , String phone,String accessKeyId,String accessKeySecret) throws Exception {
         com.aliyun.dysmsapi20170525.Client client = AliYunSendSMS.createClient(accessKeyId, accessKeySecret);
-        // 1.发送短信
+        // 1.Send a text message
         SendSmsRequest sendReq = new SendSmsRequest()
-                .setPhoneNumbers(phone)//接收短信的手机号码
-                .setSignName(singName)//短信签名
-                .setTemplateCode(templateCode)//短信模板Code
-                .setTemplateParam(new ObjectMapper().writeValueAsString(map));//短信模板变量对应的实际值
+                .setPhoneNumbers(phone)//The phone number that received the text message
+                .setSignName(singName)//SMS signature
+                .setTemplateCode(templateCode)//SMS Template Code
+                .setTemplateParam(new ObjectMapper().writeValueAsString(map));//The actual value of the SMS template variable
         SendSmsResponse sendResp = client.sendSms(sendReq);
         return sendResp;
 

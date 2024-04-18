@@ -245,27 +245,27 @@ public class CommonProperties {
     public static class AliYunSmsProperties {
 
         /**
-         * 阿里云账户访问密钥id
+         * Aliyun account access key id
          */
         private String secretId;
 
         /**
-         * 阿里云账户访问密钥key
+         * Ali Cloud account access key
          */
         private String secretKey;
 
         /**
-         * SMS短信应用app id
+         *  SMS app id
          */
         private String appId;
 
         /**
-         * 短信签名
+         * SMS signature
          */
         private String signName;
 
         /**
-         * 短信模版ID
+         * ID of the SMS template
          */
         private String templateId;
 

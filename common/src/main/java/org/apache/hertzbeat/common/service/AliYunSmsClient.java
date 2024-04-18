@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.hertzbeat.common.service;
 
 import com.aliyun.dysmsapi20170525.models.SendSmsResponse;
@@ -17,7 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * sms service client for tencent cloud
+ * sms service client for aliyun cloud
  * @author lwq
  */
 @Component
@@ -54,7 +71,7 @@ public class AliYunSmsClient {
     }
 
     /**
-     * 阿里云发送短信
+     * Alibaba cloud sends SMS messages
      * @param appId appId
      * @param signName sign name
      * @param templateId template id
@@ -74,7 +91,7 @@ public class AliYunSmsClient {
         req.setPhoneNumberSet(phones);
         try {
             Map<String, Object> param = new HashMap<>();
-            //监控名称、告警级别、告警信息、系统时间
+            //taskName：监控名称alert：告警级别 message：告警信息 sysTime：系统时间
             param.put("taskName", templateValues[0]);
             param.put("alert", templateValues[1]);
             param.put("message", templateValues[2]);
@@ -91,7 +108,7 @@ public class AliYunSmsClient {
     }
 
     /**
-     * 发送短信
+     * Send a text message
      * @param templateValues template values
      * @param phones phones num
      * @return true when send success
