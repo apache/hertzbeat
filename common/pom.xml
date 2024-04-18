@@ -97,6 +97,10 @@
             <groupId>com.tencentcloudapi</groupId>
             <artifactId>tencentcloud-sdk-java-sms</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>dysmsapi20170525</artifactId>
+        </dependency>
         <!-- caffeine-->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>

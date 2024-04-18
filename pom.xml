@@ -112,6 +112,7 @@
         <guava.version>32.1.2-jre</guava.version>
         <protobuf.version>3.19.6</protobuf.version>
         <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
+        <aliYun-sdk-java-sms.version>2.0.24</aliYun-sdk-java-sms.version>
         <caffeine.version>2.9.3</caffeine.version>
         <httpclient.version>4.5.14</httpclient.version>
 
@@ -339,6 +340,11 @@
                 <groupId>com.tencentcloudapi</groupId>
                 <artifactId>tencentcloud-sdk-java-sms</artifactId>
                 <version>${tencentcloud-sdk-java-sms.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aliyun</groupId>
+                <artifactId>dysmsapi20170525</artifactId>
+                <version>${aliYun-sdk-java-sms.version}</version>
             </dependency>
             <!-- okhttp -->
             <dependency>
