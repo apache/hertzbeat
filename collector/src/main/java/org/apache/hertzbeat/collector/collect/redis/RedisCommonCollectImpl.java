@@ -270,10 +270,10 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     private RedisURI redisUri(RedisProtocol redisProtocol) {
         RedisURI.Builder redisUriBuilder = RedisURI.builder().withHost(redisProtocol.getHost()).withPort(Integer.parseInt(redisProtocol.getPort()));
         if (StringUtils.hasText(redisProtocol.getUsername())) {
-        	redisUriBuilder.withClientName(redisProtocol.getUsername());
+            redisUriBuilder.withClientName(redisProtocol.getUsername());
         }
         if (StringUtils.hasText(redisProtocol.getPassword())) {
-        	redisUriBuilder.withPassword(redisProtocol.getPassword().toCharArray());
+            redisUriBuilder.withPassword(redisProtocol.getPassword().toCharArray());
         }
         Duration timeout = Duration.ofMillis(CollectUtil.getTimeout(redisProtocol.getTimeout()));
         redisUriBuilder.withTimeout(timeout);
