@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.collect.http;
 
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -160,8 +161,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
             throw new Exception("Http/Https collect must has http params");
         }
         HttpProtocol httpProtocol = metrics.getHttp();
-        if (httpProtocol.getUrl() == null
-                || "".equals(httpProtocol.getUrl())
+        if (StringUtils.isEmpty(httpProtocol.getUrl())
                 || !httpProtocol.getUrl().startsWith(RIGHT_DASH)) {
             httpProtocol.setUrl(httpProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + httpProtocol.getUrl().trim());
         }

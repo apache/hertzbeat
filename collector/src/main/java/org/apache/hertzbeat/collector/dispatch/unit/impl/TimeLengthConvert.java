@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit.impl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.unit.TimeLengthUnit;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.springframework.stereotype.Component;
@@ -34,7 +35,7 @@ public final class TimeLengthConvert implements UnitConvert {
 
     @Override
     public String convert(String value, String originUnit, String newUnit) {
-        if (value == null || "".equals(value)) {
+        if (StringUtils.isEmpty(value)) {
             return null;
         }
         BigDecimal length = new BigDecimal(value);
@@ -52,7 +53,7 @@ public final class TimeLengthConvert implements UnitConvert {
 
     @Override
     public boolean checkUnit(String unit) {
-        if (unit == null || "".equals(unit)) {
+        if (StringUtils.isEmpty(unit)) {
             return false;
         }
         for (TimeLengthUnit timeUnit : TimeLengthUnit.values()) {

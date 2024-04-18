@@ -138,8 +138,7 @@ public class NginxCollectImpl extends AbstractCollect {
             throw new Exception("Nginx collect must has nginx params");
         }
         
-        if (nginxProtocol.getUrl() == null
-                || "".equals(nginxProtocol.getUrl())
+        if (StringUtils.isEmpty(nginxProtocol.getUrl())
                 || !nginxProtocol.getUrl().startsWith(RIGHT_DASH)) {
             nginxProtocol.setUrl(nginxProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + nginxProtocol.getUrl().trim());
         }

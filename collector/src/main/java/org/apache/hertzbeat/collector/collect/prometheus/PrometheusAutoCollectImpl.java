@@ -105,7 +105,7 @@ public class PrometheusAutoCollectImpl {
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             long collectTime = System.currentTimeMillis();
             builder.setTime(collectTime);
-            if (resp == null || "".equals(resp)) {
+            if (StringUtils.hasLength(resp)) {
                 log.error("http response content is empty, status: {}.", statusCode);
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("http response content is empty");
@@ -160,8 +160,7 @@ public class PrometheusAutoCollectImpl {
             throw new Exception("Prometheus collect must has prometheus params");
         }
         PrometheusProtocol protocol = metrics.getPrometheus();
-        if (protocol.getPath() == null
-                    || "".equals(protocol.getPath())
+        if (StringUtils.hasLength(protocol.getPath())
                     || !protocol.getPath().startsWith(RIGHT_DASH)) {
             protocol.setPath(protocol.getPath() == null ? RIGHT_DASH : RIGHT_DASH + protocol.getPath().trim());
         }
