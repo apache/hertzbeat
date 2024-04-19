@@ -1,6 +1,6 @@
 # Security Policy
 
-**[Version Releases](https://github.com/dromara/hertzbeat/releases)**
+**[Version Releases](https://github.com/apache/hertzbeat/releases)**
 
 ## Supported Versions
 
@@ -16,4 +16,4 @@ currently being supported with security updates.
 
 Use this section to tell people how to report a vulnerability.
 
-Please submit your security report by this way [reporting-a-security-vulnerability](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability#privately-reporting-a-security-vulnerability) 
+Please report vulnerability disclosures to `security@apache.org`.

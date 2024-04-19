@@ -1,21 +1,23 @@
 const path = require('path')
 
-const organizationName = 'dromara' // Usually your GitHub name.
+const organizationName = 'apache' // Usually your GitHub name.
 const projectName = 'hertzbeat' // Usually your repo name.
+const deploymentBranch = 'asf-site' 
 const branch = 'master'
-const repoUrl = `https://github.com/dromara/${projectName}`
-const cdnUrl = 'https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages'
+const repoUrl = `https://github.com/apache/${projectName}`
+const cdnUrl = null
 
 module.exports = {
-  title: 'HertzBeat',
+  title: 'Apache HertzBeat',
   tagline: 'An open source, real-time monitoring tool with custom-monitor and agentLess.',
-  url: 'https://hertzbeat.com',
+  url: 'https://hertzbeat.apache.org',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
-  favicon: '/img/tancloud-logo.svg',
+  favicon: '/img/hertzbeat-logo.svg',
   organizationName,
-  projectName,
+  projectName, 
+  deploymentBranch,  
   customFields: {
     repoUrl,
     cdnUrl,
@@ -25,7 +27,7 @@ module.exports = {
     locales: ['zh-cn', 'en'],
   },
   themeConfig: {
-    image: '/img/tancloud-logo.svg',
+    image: '/img/hertzbeat-logo.svg',
     liveCodeBlock: {
       playgroundPosition: 'bottom',
     },
@@ -69,28 +71,108 @@ module.exports = {
           to: '/blog/',
         },
         {
-          label: 'Others',
+          label: 'Community',
           position: 'left',
           items: [
             {
               label: 'discuss',
-              to: '/docs/others/contact',
+              to: '/docs/community/contact',
             },
+            {
+              label: 'code_of_conduct',
+              to: 'https://www.apache.org/foundation/policies/conduct',
+            },
+            {
+              label: 'join_the_mailing_lists',
+              to: '/docs/community/mailing_lists',
+            },
+            {
+              label: 'become_committer',
+              to: '/docs/community/become_committer',
+            },
+            {
+              label: 'become_pmc_member',
+              href: '/docs/community/become_pmc_member',
+            },
+            {
+              label: 'new_committer_process',
+              to: '/docs/community/new_committer_process',
+            },
+            {
+              label: 'new_pmc_member_process',
+              to: '/docs/community/new_pmc_ember_process',
+            },
+            {
+              label: 'documentation_notice',
+              to: '/docs/community/document',
+            },
+            {
+              label: 'submit_code',
+              to: '/docs/community/submit_code',
+            },
+            {
+              label: 'code_style_and_quality_guide',
+              to: '/docs/community/code_style_and_quality_guide'
+            },
+            {
+              label: 'how_to_release',
+              to: '/docs/community/how_to_release'
+            },
+            {
+              label: 'how_to_verify_release',
+              to: '/docs/community/how_to_verify_release'
+            }
+          ],
+        },
+        {
+          label: 'ASF',
+          position: 'left',
+          items: [
+            {
+              label: 'Foundation',
+              to: 'https://www.apache.org/',
+            },
+            {
+              label: 'License',
+              to: 'https://www.apache.org/licenses/',
+            },
+            {
+              label: 'Events',
+              to: 'https://eu.communityovercode.org/',
+            },
+            {
+              label: 'Security',
+              href: 'https://www.apache.org/security/',
+            },
+            {
+              label: 'Sponsorship',
+              to: 'https://www.apache.org/foundation/sponsorship.html',
+            },
+            {
+              label: 'Privacy',
+              to: 'https://privacy.apache.org/policies/privacy-policy-public.html',
+            },
+            {
+              label: 'Thanks',
+              to: 'https://www.apache.org/foundation/sponsors',
+            }
+          ],
+        },
+        {
+          label: 'Others',
+          position: 'left',
+          items: [
             {
               label: 'contributors',
               to: '/docs/others/developer',
             },
             {
               label: 'contributing',
-              to: '/docs/others/contributing',
+              to: '/docs/community/mailing_lists',
             },
             {
               label: 'kanban',
-              href: 'https://github.com/orgs/dromara/projects/6',
-            },
-            {
-              label: 'sponsor',
-              to: '/docs/others/sponsor',
+              href: 'https://github.com/orgs/apache/projects/348',
             },
             {
               label: 'resource',
@@ -101,19 +183,32 @@ module.exports = {
         {
           type: 'docsVersionDropdown',
           position: 'right',
-          // dropdownItemsAfter: [{to: '/versions', label: '所有版本'}],
           dropdownActiveClassDisabled: true,
         },
         {
           type: 'localeDropdown',
           position: 'right',
-        },
-        // {
-        //   label: 'login',
-        //   href: 'https://console.tancloud.cn',
-        //   position: 'right',
-        //   className: 'header-console-link',
-        // },
+        }, 
+        {
+          href: repoUrl,
+          position: 'right',
+          className: 'header-github-link'
+        }, 
+        {
+          href: 'https://twitter.com/hertzbeat1024',
+          position: 'right',
+          className: 'header-twitter-link'
+        }, 
+        {
+          href: 'https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow',
+          position: 'right',
+          className: 'header-youtube-link'
+        }, 
+        {
+          href: 'https://discord.gg/Fb6M73htGr',
+          position: 'right',
+          className: 'header-discord-link'
+        }
       ],
     },
     footer: {
@@ -137,11 +232,11 @@ module.exports = {
           items: [
             {
               label: 'discussion',
-              href: 'https://github.com/dromara/hertzbeat/discussions/',
+              href: 'https://github.com/apache/hertzbeat/discussions/',
             },
             {
               label: 'contact',
-              to: '/docs/others/contact',
+              to: '/docs/community/contact',
             }
           ],
         },
@@ -150,7 +245,7 @@ module.exports = {
           items: [
             {
               label: 'github',
-              href: 'https://github.com/dromara/hertzbeat',
+              href: 'https://github.com/apache/hertzbeat',
             },
             {
               label: 'relate',
@@ -162,10 +257,10 @@ module.exports = {
       logo: {
         alt: 'HertzBeat',
         src: '/img/hertzbeat-brand.svg',
-        href: 'https://github.com/dromara/hertzbeat',
+        href: 'https://github.com/apache/hertzbeat',
       },
       copyright:
-        `Copyright © ${new Date().getFullYear()} HertzBeat`,
+        `Copyright © ${new Date().getFullYear()} Apache HertzBeat`,
     },
   },
   presets: [
@@ -193,7 +288,7 @@ module.exports = {
           postsPerPage: 1,
           feedOptions: {
             type: 'all',
-            copyright: `Copyright © ${new Date().getFullYear()} HertzBeat.`,
+            copyright: `Copyright © ${new Date().getFullYear()} Apache HertzBeat.`,
           },
           // Please change this to your repo.
           editUrl: `${repoUrl}/edit/${branch}/home/`,
@@ -229,7 +324,7 @@ module.exports = {
           {
             tagName: 'link',
             rel: 'icon',
-            href: 'img/tancloud-logo.svg',
+            href: 'img/hertzbeat-logo.svg',
           },
           {
             tagName: 'link',
@@ -254,18 +349,18 @@ module.exports = {
           {
             tagName: 'link',
             rel: 'apple-touch-icon',
-            href: 'img/tancloud-logo.svg',
+            href: 'img/hertzbeat-logo.svg',
           },
           {
             tagName: 'link',
             rel: 'mask-icon',
-            href: 'img/tancloud-logo.svg',
+            href: 'img/hertzbeat-logo.svg',
             color: 'rgb(234, 90, 7)',
           },
           {
             tagName: 'meta',
             name: 'msapplication-TileImage',
-            content: 'img/tancloud-logo.svg',
+            content: 'img/hertzbeat-logo.svg',
           },
           {
             tagName: 'meta',

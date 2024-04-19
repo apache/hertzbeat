@@ -22,7 +22,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 ##### 2：Install via package
 
-1. Download the installation package [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+1. Download the installation package [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [GITHUB Release](https://github.com/apache/hertzbeat/releases)
 2. Need Jdk Environment, `jdk11`
 3. [optional]Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml`
 4. Run shell `$ ./startup.sh `
@@ -41,8 +41,8 @@ Detailed steps refer to [CONTRIBUTING](../others/contributing)
 
 ##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose   
 
-Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose).
+Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose).
 
-Detailed steps refer to [Install via Docker-Compose](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose)
+Detailed steps refer to [Install via Docker-Compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose)
 
 **HAVE FUN**  

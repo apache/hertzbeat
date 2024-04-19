@@ -31,8 +31,8 @@ help:
   en-US: Hertzbeat monitoring Flink Stream through general performance metric. You could click the "<i>New Flink Stream</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: Hertzbeat 對 Flink流引擎的通用名額進行量測監控。<br>您可以點擊“<i>新建Flink流引擎</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/flink
-  en-US: https://hertzbeat.com/docs/help/flink
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/flink
+  en-US: https://hertzbeat.apache.org/docs/help/flink
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

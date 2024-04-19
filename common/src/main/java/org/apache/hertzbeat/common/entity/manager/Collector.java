@@ -48,7 +48,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "slave collector entity | 注册采集器实体")
+@Schema(description = "slave collector entity")
 @EntityListeners(AuditingEntityListener.class)
 public class Collector {
 

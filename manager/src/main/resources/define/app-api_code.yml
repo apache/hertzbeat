@@ -30,8 +30,8 @@ help:
   en-US: Monitor HTTP API to monitor business-defined status codes (non-HTTP status codes) returned by API. To do this, you need to configure JsonPath to resolve the business status code path of your API. <br>You could click the "<i>New API Codes</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: 監控 HTTP API 接口，對 API 返回的業務自定義狀態碼(非 Http 狀態碼)進行監控。此需通過配置 JsonPath 來解析您 API 的業務狀態碼路徑。<br>您可以點擊“<i>新建API Code</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/api_code
-  en-US: https://hertzbeat.com/docs/help/api_code
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/api_code
+  en-US: https://hertzbeat.apache.org/docs/help/api_code
 # app api所需输入参数定义(根据定义渲染页面UI)
 # Input params define for app api(render web ui by the definition)
 params:

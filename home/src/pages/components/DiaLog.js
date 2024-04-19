@@ -33,14 +33,14 @@ export default function DiaLog() {
           maskClosable={false}
           style={{width: "600px", fontSize: "17px"}}
           icon={
-            <img src="/img/tancloud-logo.svg" alt="logo" />
+            <img src="/img/hertzbeat-logo.svg" alt="logo" />
           }
           footer={
             <div className={styles.goToGithubWrapper}>
               <p >
                 👇  <b style={{ color: "#26B226"}}><Translate>click</Translate></b>
               </p>
-              <a href="https://github.com/dromara/hertzbeat" target="_blank">
+              <a href="https://github.com/apache/hertzbeat" target="_blank">
                 <Button type="primary" theme="solid">
                   <Translate>Go to Github</Translate>
                 </Button>

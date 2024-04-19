@@ -44,7 +44,7 @@ public class CommonUtil {
      * Converts the string str to the int numeric type
      *
      * @param str string
-     * @return double 数字
+     * @return double number
      */
     public static Integer parseStrInteger(final String str) {
         if (StringUtils.isBlank(str)) {
@@ -63,7 +63,7 @@ public class CommonUtil {
      * Converts the string str to the double number type
      *
      * @param str string
-     * @return double 数字
+     * @return double number
      */
     public static Double parseStrDouble(final String str) {
         if (StringUtils.isBlank(str)) {
@@ -82,7 +82,7 @@ public class CommonUtil {
      * Converts the time string str to seconds
      *
      * @param str string
-     * @return double 数字
+     * @return double number
      */
     public static int parseTimeStrToSecond(final String str) {
         if (StringUtils.isEmpty(str)) {

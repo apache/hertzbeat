@@ -126,7 +126,7 @@ metricReporterList:
 这篇实践文章带我们体验了如何使用 HertzBeat 监控 IoTDB 数据库指标数据，可以发现将 监控-告警-通知 集一体的 HertzBeat 在操作与使用方面更加的便捷，在页面上简单点一点就能把 IoTDB 纳入监控，再也不需要部署多个组件，写多个有门槛的YML配置文件了。  
 
 IoTDB Github: https://github.com/apache/iotdb    
-HertzBeat Github: https://github.com/dromara/hertzbeat 
+HertzBeat Github: https://github.com/apache/hertzbeat 
 
 **欢迎了解使用Star支持哦！**
 

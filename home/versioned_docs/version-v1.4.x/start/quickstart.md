@@ -38,12 +38,12 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 ##### 2：Install via package
 
-1. Download the release package `hertzbeat-xx.tar.gz` [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+1. Download the release package `hertzbeat-xx.tar.gz` [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [GITHUB Release](https://github.com/apache/hertzbeat/releases)
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
 3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
 4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 5. Deploy collector clusters
-   - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+   - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [GITHUB Release](https://github.com/apache/hertzbeat/releases)
    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
      ```yaml
      collector:
@@ -72,9 +72,9 @@ Detailed steps refer to [CONTRIBUTING](../others/contributing)
 
 ##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose   
 
-Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose).
+Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose).
 
-Detailed steps refer to [Install via Docker-Compose](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose)
+Detailed steps refer to [Install via Docker-Compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose)
 
 ##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
 

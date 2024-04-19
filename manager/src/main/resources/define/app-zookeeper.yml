@@ -27,12 +27,12 @@ name:
 # The description and help of this monitoring type
 # 监控类型的帮助描述信息
 help:
-  zh-CN: HertzBeat 支持对 Zookeeper 的通用性能指标(conf、stats)进行采集监控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 来收集指标数据，您需要将 zookeeper 的四字命令加入白名单，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/zookeeper'>点击查看具体步骤</a>。
-  en-US: HertzBeat monitors Zookeeper general performance metrics such as status and configuration. <br><span class='help_module_span'>Note⚠️:Due to the need for four-letter-word provided by zookeeper to collect metric data, you should add the four-letter-word to the whitelist.<a class='help_module_content' href='https://hertzbeat.com/docs/help/zookeeper'>Click here to view the specific steps.</a>"
-  zh-TW: HertzBeat 支持對 Zookeeper 的通用性能指標(conf、stats)進行采集監控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 來收集指標數據，您需要將 zookeeper 的四字命令加入白名單，<a class='help_module_content' href='https://hertzbeat.com/zh-cn/docs/help/zookeeper'>點擊查看具體步驟</a>。
+  zh-CN: HertzBeat 支持对 Zookeeper 的通用性能指标(conf、stats)进行采集监控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 来收集指标数据，您需要将 zookeeper 的四字命令加入白名单，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper'>点击查看具体步骤</a>。
+  en-US: HertzBeat monitors Zookeeper general performance metrics such as status and configuration. <br><span class='help_module_span'>Note⚠️:Due to the need for four-letter-word provided by zookeeper to collect metric data, you should add the four-letter-word to the whitelist.<a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/zookeeper'>Click here to view the specific steps.</a>"
+  zh-TW: HertzBeat 支持對 Zookeeper 的通用性能指標(conf、stats)進行采集監控。<br><span class='help_module_span'>注意⚠️：由于需要 zookeeper 提供的四字命令 + netcat 來收集指標數據，您需要將 zookeeper 的四字命令加入白名單，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper'>點擊查看具體步驟</a>。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/zookeeper
-  en-US: https://hertzbeat.com/docs/help/zookeeper
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/zookeeper
+  en-US: https://hertzbeat.apache.org/docs/help/zookeeper
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

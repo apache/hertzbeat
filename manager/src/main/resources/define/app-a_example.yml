@@ -31,8 +31,8 @@ help:
   en-US: "HertzBeat supports custom monitoring, and you only need to configure the monitoring template YML to adapt to a custom monitoring type. <br>Definition process as follow: HertzBeat Pages -> Main Menu -> Monitor Template -> edit and save -> apply this template."
   zh-TW: HertzBeat支持自定義監控，您只需配寘監控模版YML就能適配一款自定義的監控類型。<br>定義流程如下：HertzBeat頁面->監控模版選單->新增監控類型->配寘自定義監控模版YML ->點擊保存應用->使用新監控類型添加監控。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/advanced/extend-point/
-  en-US: https://hertzbeat.com/docs/advanced/extend-point/
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-point/
+  en-US: https://hertzbeat.apache.org/docs/advanced/extend-point/
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key

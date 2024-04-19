@@ -390,6 +390,7 @@
             [(ngModel)]="rule.receiverId"
             (ngModelChange)="onSwitchReceiver()"
             [nzOptions]="receiversOption"
+            nzMode="multiple"
             id="receiver"
             name="receiver"
             nzPlaceHolder="Select a receiver"

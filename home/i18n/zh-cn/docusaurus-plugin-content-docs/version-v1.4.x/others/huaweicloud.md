@@ -8,11 +8,11 @@ sidebar_label: HertzBeat & HuaweiCloud
 
 > 欢迎大家对感兴趣的Issue领取贡献。
 
-- [Task] support using Huawei Cloud OBS to store custom define yml file [#841](https://github.com/dromara/hertzbeat/issues/841) 
-- [Task] support Huawei Cloud CCE metrics monitoring  [#839](https://github.com/dromara/hertzbeat/issues/839)
-- [Task] support EulerOS metrics monitoring [#838](https://github.com/dromara/hertzbeat/issues/838)
-- [Task] support using Huawei Cloud SMN send alarm notification message [#837](https://github.com/dromara/hertzbeat/issues/837)
-- [Task] support using GaussDB For Influx store history metrics data [#836](https://github.com/dromara/hertzbeat/issues/836)
+- [Task] support using Huawei Cloud OBS to store custom define yml file [#841](https://github.com/apache/hertzbeat/issues/841) 
+- [Task] support Huawei Cloud CCE metrics monitoring  [#839](https://github.com/apache/hertzbeat/issues/839)
+- [Task] support EulerOS metrics monitoring [#838](https://github.com/apache/hertzbeat/issues/838)
+- [Task] support using Huawei Cloud SMN send alarm notification message [#837](https://github.com/apache/hertzbeat/issues/837)
+- [Task] support using GaussDB For Influx store history metrics data [#836](https://github.com/apache/hertzbeat/issues/836)
 
 
 

@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 存储采集实时数据 - memory
  * Store and collect real-time data - memory
  */
 @Component

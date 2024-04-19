@@ -135,9 +135,9 @@ expose:
     sourceRanges: [ ]
   ingress:
     enabled: true
+    ingressClassName: ""
     host: "hertzbeat.domain"
     annotations: {}    
     tls:
-      enabled: false
-      tls:
-        - secretName: your-tls-secret 
+      enabled: true
+      secretName: your-tls-secret
