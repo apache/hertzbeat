@@ -109,6 +109,10 @@ public class AlertDefine {
     @Column(columnDefinition = "boolean default false")
     private boolean recoverNotice = false;
 
+    @Schema(title = "Is to process only the first item", example = "false", accessMode = READ_WRITE)
+    @Column(columnDefinition = "boolean default true")
+    private boolean onlyFirst = true;
+
     @Schema(title = "Alarm Template", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE)
     @Length(max = 2048)

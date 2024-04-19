@@ -156,6 +156,8 @@
   "alert.setting.rule.numeric-value.place-holder": "Please input numeric",
   "alert.setting.times": "Trigger Times",
   "alert.setting.times.tip": "Set how many times the threshold is triggered before sending an alert",
+  "alert.setting.only-first": "Only the first line is triggered",
+  "alert.setting.only-first.tip": "When multiple lines are returned, only the first line triggers an alarm",
   "alert.setting.template": "Notice Template",
   "alert.setting.template.tip": "Supported notification template environment variables",
   "alert.setting.template.label": "The notification information template sent after the alarm is triggered, see the template environment variable above",

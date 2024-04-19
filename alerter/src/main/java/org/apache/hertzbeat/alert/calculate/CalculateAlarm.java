@@ -223,8 +223,10 @@ public class CalculateAlarm {
                                 // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
                                 // 阈值规则匹配，判断已触发阈值次数，触发告警
                                 afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, tagBuilder.toString(), fieldValueMap, define);
-                                // 若此阈值已被触发，则其它数据行的触发忽略
-                                break;
+                                if (define.isOnlyFirst()){
+                                    // 若此阈值已被触发，则其它数据行的触发忽略
+                                    break;
+                                }
                             } else {
                                 String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
                                 triggeredAlertMap.remove(alarmKey);

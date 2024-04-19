@@ -155,6 +155,8 @@
   "alert.setting.rule.numeric-value.place-holder": "請輸入匹配數值",
   "alert.setting.times": "觸發次數",
   "alert.setting.times.tip": "設置觸發阈值多少次之後才會發送告警",
+  "alert.setting.only-first": "僅首行觸發",
+  "alert.setting.only-first.tip": "返回多行情況下僅首行觸發告警",
   "alert.setting.template": "通知模版",
   "alert.setting.template.tip": "支持的通知模版環境變量",
   "alert.setting.template.label": "告警觸發後發送的通知信息模版,模版環境變量見上方",

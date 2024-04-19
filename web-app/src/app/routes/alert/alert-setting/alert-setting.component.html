@@ -446,6 +446,14 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
+        <nz-form-label nzSpan="7" nzRequired="true" nzFor="only-first" [nzTooltipTitle]="'alert.setting.only-first.tip' | i18n">
+          {{ 'alert.setting.only-first' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-switch [(ngModel)]="define.onlyFirst" name="only-first" id="only-first"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
         <nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 12, offset: 7 }">
           <nz-collapse>
             <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.template.tip' | i18n">
