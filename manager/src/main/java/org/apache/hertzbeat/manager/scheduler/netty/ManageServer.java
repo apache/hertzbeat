@@ -67,6 +67,7 @@ public class ManageServer implements CommandLineRunner {
                         final CommonThreadPool threadPool) {
         this.collectorAndJobScheduler = collectorAndJobScheduler;
         this.collectorAndJobScheduler.setManageServer(this);
+        this.collectorAndJobScheduler.initServiceDiscoveryScheduler(this);
         this.init(schedulerProperties, threadPool);
     }
 

@@ -15,37 +15,36 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect;
+package org.apache.hertzbeat.common.entity.sd;
 
-
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Specific metrics collection implementation abstract class
+ * service discovery common field
  */
-public abstract class AbstractCollect {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ServiceDiscoveryProtocol {
+    private Long jobId;
+    private String monitorId;
+    /**
+     * sd type
+     */
+    private Type type;
+    /**
+     * Target sd sources by which collector updates SDCache.
+     */
+    private String sdSource;
 
     /**
-     * Real acquisition implementation interface
-     * @param builder response builder
-     * @param monitorId  monitor id   
-     * @param app monitor type 
-     * @param metrics metric configuration
+     * sd Type
      */
-    public abstract void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics);
-
-    /**
-     * the protocol this collect instance support
-     * @return protocol str
-     */
-    public abstract String supportProtocol();
-
-    /**
-     * get protocol class
-     * @return protocol class
-     */
-    public Class<?> getSupportProtocolClass() {
-        return null;
+    public enum Type {
+        HTTP_SD,
     }
 }

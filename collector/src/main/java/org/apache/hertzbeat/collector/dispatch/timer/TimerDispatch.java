@@ -21,6 +21,7 @@ package org.apache.hertzbeat.collector.dispatch.timer;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -69,4 +70,6 @@ public interface TimerDispatch {
      * @param metricsDataTemps collect data
      */
     void responseSyncJobData(long jobId, List<CollectRep.MetricsData> metricsDataTemps);
+
+    void updateJobSdCache(ServiceDiscoveryProtocol serviceDiscoveryProtocol);
 }

@@ -114,6 +114,15 @@ public final class ClusterMsg {
          * <code>GO_CLOSE = 8;</code>
          */
         GO_CLOSE(8),
+
+        /**
+         * <pre>
+         * notify collector to update sd cache for cyclic task
+         * </pre>
+         *
+         * <code>ISSUE_SD_UPDATE_TASK = 9;</code>
+         */
+        ISSUE_SD_UPDATE_TASK(9),
         UNRECOGNIZED(-1),
         ;
         

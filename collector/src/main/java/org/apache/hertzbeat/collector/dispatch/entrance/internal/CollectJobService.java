@@ -25,6 +25,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -137,6 +138,13 @@ public class CollectJobService {
      */
     public void addAsyncCollectJob(Job job) {
         timerDispatch.addJob(job.clone(), null);
+    }
+
+    /**
+     * Update Service Provider Cache for cyclic task
+     */
+    public void updateServiceProvider(ServiceDiscoveryProtocol serviceDiscoveryProtocol) {
+        timerDispatch.updateJobSdCache(serviceDiscoveryProtocol);
     }
 
     /**

@@ -96,6 +96,7 @@ public class CollectServer implements CommandLineRunner {
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_OFFLINE, new GoOfflineProcessor());
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_ONLINE, new GoOnlineProcessor());
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.GO_CLOSE, new GoCloseProcessor(this));
+        this.remotingClient.registerProcessor(ClusterMsg.MessageType.ISSUE_SD_UPDATE_TASK, new UpdateServiceDiscoveryProcessor(this));
     }
 
     public void shutdown() {

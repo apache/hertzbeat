@@ -17,13 +17,18 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.telnet.TelnetClient;
+import org.apache.hertzbeat.collector.collect.common.cache.sd.ConnectionConfig;
+import org.apache.hertzbeat.collector.collect.common.cache.sd.ServiceDiscoveryCache;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.apache.hertzbeat.collector.dispatch.entrance.sd.ServiceDiscoveryFetcher;
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
@@ -35,7 +40,9 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -175,7 +182,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         // Put each collect task into the thread pool for scheduling
         WheelTimerTask timerTask = (WheelTimerTask) timeout.task();
         Job job = timerTask.getJob();
+        // Nothing happen if failed to update sd cache
+        updateSdCacheGracefully(job);
         job.constructPriorMetrics();
+
         Set<Metrics> metricsSet = job.getNextCollectMetrics(null, true);
         metricsSet.forEach(metrics -> {
             MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
@@ -338,6 +348,38 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             timerDispatch.responseSyncJobData(job.getId(), metricsDataList);
         }
         
+    }
+
+    private void updateSdCacheGracefully(Job job) {
+        if (Objects.isNull(job.getSdProtocol())) {
+            return;
+        }
+
+        // fetch connection config
+        List<ConnectionConfig> configList = ServiceDiscoveryFetcher.doFetch(job.getSdProtocol());
+        List<ConnectionConfig> availableConfigList = Lists.newArrayListWithExpectedSize(configList.size());
+        // check if config is available
+        configList.forEach(config -> {
+            TelnetClient telnetClient = new TelnetClient("vt200");
+            telnetClient.setConnectTimeout(10_000);
+            try {
+                telnetClient.connect(config.getHost(), Integer.parseInt(config.getPort()));
+                if (telnetClient.isConnected()) {
+                    availableConfigList.add(config);
+                }
+            } catch (IOException ignore) {
+            } finally {
+                try {
+                    telnetClient.disconnect();
+                } catch (IOException ignore) {
+                }
+            }
+        });
+
+        if (!CollectionUtils.isEmpty(availableConfigList)) {
+            ServiceDiscoveryCache.removeConfig(job.getId());
+            ServiceDiscoveryCache.updateConfig(job.getId(), availableConfigList);
+        }
     }
 
     private List<Map<String, Configmap>> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {

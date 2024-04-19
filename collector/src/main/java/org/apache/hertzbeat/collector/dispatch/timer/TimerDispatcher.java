@@ -21,11 +21,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -145,7 +147,18 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             eventListener.response(metricsDataTemps);
         }
     }
-    
+
+    @Override
+    public void updateJobSdCache(ServiceDiscoveryProtocol serviceDiscoveryProtocol) {
+        final Timeout timeout = currentCyclicTaskMap.get(serviceDiscoveryProtocol.getJobId());
+        if (Objects.isNull(timeout)) {
+            return;
+        }
+
+        final WheelTimerTask wheelTimerTask = (WheelTimerTask) timeout.task();
+        wheelTimerTask.getJob().setSdProtocol(serviceDiscoveryProtocol);
+    }
+
     @Override
     public void destroy() throws Exception {
         this.wheelTimer.stop();

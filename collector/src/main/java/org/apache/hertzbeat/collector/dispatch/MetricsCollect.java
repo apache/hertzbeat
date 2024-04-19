@@ -21,6 +21,8 @@ import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.common.cache.sd.ConnectionConfig;
+import org.apache.hertzbeat.collector.collect.common.cache.sd.ServiceDiscoveryCache;
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
@@ -31,10 +33,13 @@ import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.CommonProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.Pair;
+import org.springframework.util.CollectionUtils;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,6 +61,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * Tenant ID
      */
     protected long tenantId;
+    protected long jobId;
     /**
      * Monitor ID
      */
@@ -105,6 +111,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.collectorIdentity = collectorIdentity;
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
+        this.jobId = job.getId();
         this.monitorId = job.getMonitorId();
         this.tenantId = job.getTenantId();
         this.app = job.getApp();
@@ -146,6 +153,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             response.setMsg("not support " + app + ", "
                     + metrics.getName() + ", " + metrics.getProtocol());
         } else {
+            // reset host and port if sd is available
+            resetHostAndPortBySd(abstractCollect);
+
             try {
                 abstractCollect.collect(response, monitorId, app, metrics);
             } catch (Exception e) {
@@ -169,6 +179,35 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
     }
 
+    /**
+     * reset host and port from {@link ServiceDiscoveryCache}
+     */
+    private void resetHostAndPortBySd(AbstractCollect abstractCollect) {
+        Class<?> supportProtocolClass = abstractCollect.getSupportProtocolClass();
+        final List<ConnectionConfig> configList = ServiceDiscoveryCache.getConfig(jobId);
+        if (Objects.isNull(supportProtocolClass) || CollectionUtils.isEmpty(configList)) {
+            return;
+        }
+        // selecting config strategy can be added here
+        ConnectionConfig connectionConfig = configList.get(0);
+
+        final List<Field> fieldList = Arrays.stream(metrics.getClass().getDeclaredFields())
+                .filter(field -> Objects.equals(supportProtocolClass, field.getType()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(fieldList)) {
+            return;
+        }
+
+        for (Field protocolField : fieldList) {
+            try {
+                protocolField.setAccessible(true);
+                final CommonProtocol commonProtocol = (CommonProtocol) protocolField.get(metrics);
+                commonProtocol.setHost(connectionConfig.getHost());
+                commonProtocol.setPort(connectionConfig.getPort());
+            } catch (IllegalAccessException ignore) {
+            }
+        }
+    }
 
     /**
      * Calculate the real metrics value according to the calculates and aliasFields configuration

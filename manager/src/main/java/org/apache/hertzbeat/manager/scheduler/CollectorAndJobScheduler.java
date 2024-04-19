@@ -24,6 +24,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -33,10 +34,12 @@ import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.apache.hertzbeat.common.util.sd.ServiceDiscoveryVerifier;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
+import org.apache.hertzbeat.manager.scheduler.sd.ServiceDiscoveryScheduler;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +52,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -88,6 +92,8 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
     @Autowired
     private ParamDao paramDao;
+
+    private ServiceDiscoveryScheduler serviceDiscoveryScheduler;
 
     private ManageServer manageServer;
 
@@ -290,6 +296,8 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .build();
             return Collections.singletonList(metricsData);
         }
+
+        this.initSdProtocol(job);
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             return collectJobService.collectSyncJobData(job);
         } else {
@@ -335,6 +343,8 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     .build();
             return Collections.singletonList(metricsData);
         }
+
+        this.initSdProtocol(job);
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             return collectJobService.collectSyncJobData(job);
         } else {
@@ -389,6 +399,10 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             }
             node.getAssignJobs().addPinnedJob(jobId);
         }
+
+        // create sd notifier
+        this.createSdScheduleIfNecessary(job);
+
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             collectJobService.addAsyncCollectJob(job);
         } else {
@@ -407,8 +421,10 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         // delete and add
         long preJobId = modifyJob.getId();
         long newJobId = addAsyncCollectJob(modifyJob, null);
+
         jobContentCache.remove(preJobId);
         cancelAsyncCollectJob(preJobId);
+        cancelSdScheduler(preJobId);
         return newJobId;
     }
 
@@ -417,8 +433,10 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         // delete and add
         long preJobId = modifyJob.getId();
         long newJobId = addAsyncCollectJob(modifyJob, collector);
+
         jobContentCache.remove(preJobId);
         cancelAsyncCollectJob(preJobId);
+        cancelSdScheduler(preJobId);
         return newJobId;
     }
 
@@ -464,4 +482,51 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         this.manageServer = manageServer;
     }
 
+    private void initSdProtocol(Job job) {
+        Configmap httpSdConfig = job.getConfigmap().stream()
+                .filter(config -> ServiceDiscoveryProtocol.Type.HTTP_SD.toString().equalsIgnoreCase(config.getKey()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(httpSdConfig)) {
+            return;
+        }
+        if (ServiceDiscoveryVerifier.isInvalidHttpSdConfig(httpSdConfig)) {
+            return;
+        }
+
+        job.setSdProtocol(ServiceDiscoveryProtocol.builder()
+                .jobId(job.getId())
+                .monitorId(String.valueOf(job.getMonitorId()))
+                .sdSource((String) httpSdConfig.getValue())
+                .type(ServiceDiscoveryProtocol.Type.HTTP_SD)
+                .build());
+    }
+
+    private void cancelSdScheduler(Long preJobId) {
+        serviceDiscoveryScheduler.removeSdProtocol(preJobId);
+    }
+
+    private void createSdScheduleIfNecessary(Job job) {
+        Configmap httpSdConfig = job.getConfigmap().stream()
+                .filter(config -> ServiceDiscoveryProtocol.Type.HTTP_SD.toString().equalsIgnoreCase(config.getKey()))
+                .findFirst()
+                .orElse(null);
+        if (Objects.isNull(httpSdConfig)) {
+            return;
+        }
+        if (ServiceDiscoveryVerifier.isInvalidHttpSdConfig(httpSdConfig)) {
+            return;
+        }
+
+        serviceDiscoveryScheduler.addSdProtocol(ServiceDiscoveryProtocol.builder()
+                .jobId(job.getId())
+                .monitorId(String.valueOf(job.getMonitorId()))
+                .sdSource((String) httpSdConfig.getValue())
+                .type(ServiceDiscoveryProtocol.Type.HTTP_SD)
+                .build());
+    }
+
+    public void initServiceDiscoveryScheduler(ManageServer manageServer) {
+        this.serviceDiscoveryScheduler = new ServiceDiscoveryScheduler(manageServer, consistentHash, collectJobService);
+    }
 }
