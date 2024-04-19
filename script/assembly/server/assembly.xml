@@ -82,5 +82,14 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <directory>../web-app/dist</directory>
             <outputDirectory>dist</outputDirectory>
         </fileSet>
+
+        <!-- external lib -->
+        <fileSet>
+            <directory>../ext-lib</directory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+            <outputDirectory>ext-lib</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>

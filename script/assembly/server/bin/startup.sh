@@ -17,10 +17,10 @@
 # limitations under the License.
 
 # 项目名称
-SERVER_NAME="${project.artifactId}"
+SERVER_NAME="hertzbeat-manager"
 
 # jar名称
-JAR_NAME="${project.build.finalName}.jar"
+JAR_NAME="hertzbeat.jar"
 
 # 进入bin目录
 cd `dirname $0`
@@ -73,13 +73,17 @@ if [ -n "$SERVER_PORT" ]; then
         fi
     fi
 fi
-
+MAIN_CLASS="org.apache.hertzbeat.manager.Manager"
+EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
+CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"
 # 项目日志输出绝对路径
 LOGS_DIR=$DEPLOY_DIR/logs
 # 如果logs文件夹不存在,则创建文件夹
 if [ ! -d $LOGS_DIR ]; then
     mkdir $LOGS_DIR
 fi
+
+
 
 # JVM Configuration
 JAVA_OPTS=" -Duser.timezone=Asia/Shanghai -Doracle.jdbc.timezoneAsRegion=false"
@@ -99,7 +103,7 @@ echo -e "Starting the HertzBeat $SERVER_NAME ..."
 
 if [ -f "./java/bin/java" ]; then
     echo -e "Use the inner package jdk to start"
-    nohup ./java/bin/java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >logs/startup.log 2>&1 &
+    nohup ./java/bin/java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -cp $CLASSPATH $MAIN_CLASS >logs/startup.log 2>&1 &
 else
     JAVA_EXIST=`which java | grep bin | wc -l`
     if [ $JAVA_EXIST -le 0 ]; then
@@ -107,7 +111,7 @@ else
       exit 1
     fi
     echo -e "Use the system environment jdk to start"
-    nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >logs/startup.log 2>&1 &  
+    nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -cp $CLASSPATH $MAIN_CLASS >logs/startup.log 2>&1 &
 fi
 
 COUNT=0
