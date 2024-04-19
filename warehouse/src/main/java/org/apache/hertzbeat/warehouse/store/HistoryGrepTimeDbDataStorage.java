@@ -28,6 +28,7 @@ import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 import io.greptime.GreptimeDB;
 import io.greptime.options.GreptimeOptions;
 
@@ -317,7 +318,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                             for (io.greptime.models.Value value : values) {
                                 log.debug("value:{}", value.value());
                                 Object instanceValue = value.value();
-                                if (instanceValue == null || "".equals(instanceValue)) {
+                                if (ObjectUtils.isEmpty(instanceValue)) {
                                     instances.add("''");
                                 } else {
                                     instances.add(instanceValue.toString());
