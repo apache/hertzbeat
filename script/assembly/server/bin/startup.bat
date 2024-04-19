@@ -19,9 +19,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set SERVER_NAME=hertzbeat-manager
+set SERVER_NAME=${project.artifactId}
 
-set JAR_NAME=hertzbeat.jar
+set JAR_NAME=${project.build.finalName}.jar
 
 rem enter the bin directory
 cd /d %~dp0

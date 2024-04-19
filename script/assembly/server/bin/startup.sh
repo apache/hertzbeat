@@ -17,10 +17,10 @@
 # limitations under the License.
 
 # 项目名称
-SERVER_NAME="hertzbeat-manager"
+SERVER_NAME="${project.artifactId}"
 
 # jar名称
-JAR_NAME="hertzbeat.jar"
+JAR_NAME="${project.build.finalName}.jar"
 
 # 进入bin目录
 cd `dirname $0`
