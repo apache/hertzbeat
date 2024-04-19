@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.internal;
 
+import org.apache.hertzbeat.collector.collect.common.cache.sd.ServiceDiscoveryCache;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
@@ -102,6 +103,8 @@ public class CollectJobService {
         } catch (Exception e) {
             log.info("The sync task runs for 120 seconds with no response and returns");
         }
+
+        ServiceDiscoveryCache.removeConfig(job.getId());
         return metricsData;
     }
 

@@ -17,13 +17,13 @@
 
 package org.apache.hertzbeat.collector.collect.common.cache.sd;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -31,10 +31,10 @@ import java.util.stream.Collectors;
  * SD Cache
  */
 public class ServiceDiscoveryCache {
-    private static final Cache<Long, List<ConnectionConfig>> sd = Caffeine.newBuilder().build();
+    private static final Map<Long, List<ConnectionConfig>> sd = Maps.newConcurrentMap();
 
     public static List<ConnectionConfig> getConfig(Long jobId) {
-        return sd.get(jobId, id -> Lists.newArrayList());
+        return sd.getOrDefault(jobId, Lists.newArrayList());
     }
 
     public static void updateConfig(Long jobId, List<ConnectionConfig> configList) {
@@ -48,6 +48,10 @@ public class ServiceDiscoveryCache {
     }
 
     public static void removeConfig(Long jobId) {
-        sd.invalidate(jobId);
+        sd.remove(jobId);
+    }
+
+    public static void clear() {
+        sd.clear();
     }
 }

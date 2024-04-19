@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.dispatch.timer;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.common.cache.sd.ServiceDiscoveryCache;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -126,6 +127,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         currentCyclicTaskMap.clear();
         currentTempTaskMap.forEach((key, value) -> value.cancel());
         currentTempTaskMap.clear();
+        ServiceDiscoveryCache.clear();
         started.set(true);
     }
     
@@ -136,6 +138,7 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         currentCyclicTaskMap.clear();
         currentTempTaskMap.forEach((key, value) -> value.cancel());
         currentTempTaskMap.clear();
+        ServiceDiscoveryCache.clear();
     }
     
     
