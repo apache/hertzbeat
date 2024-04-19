@@ -56,7 +56,7 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     }
 
     private Integer getRedisSelectDb(WarehouseProperties properties){
-        return properties.getStore().getRedis().getDb();
+        return properties.getStore().getRedis().db();
     }
 
     @Override
@@ -103,11 +103,11 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
         }
         WarehouseProperties.StoreProperties.RedisProperties redisProp = properties.getStore().getRedis();
         RedisURI.Builder uriBuilder = RedisURI.builder()
-                .withHost(redisProp.getHost())
-                .withPort(redisProp.getPort())
+                .withHost(redisProp.host())
+                .withPort(redisProp.port())
                 .withTimeout(Duration.of(10, ChronoUnit.SECONDS));
-        if (redisProp.getPassword() != null && !"".equals(redisProp.getPassword())) {
-            uriBuilder.withPassword(redisProp.getPassword().toCharArray());
+        if (redisProp.password() != null && !"".equals(redisProp.password())) {
+            uriBuilder.withPassword(redisProp.password().toCharArray());
         }
         try {
             redisClient = RedisClient.create(uriBuilder.build());
