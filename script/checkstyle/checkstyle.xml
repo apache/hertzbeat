@@ -228,7 +228,7 @@
             <property name="offset" value="0"/>
         </module>
         <module name="AtclauseOrder">
-            <property name="tagOrder" value="@param, @return, @throws, @deprecated, @author"/>
+            <property name="tagOrder" value="@param, @return, @throws, @deprecated"/>
             <property name="target"
                       value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
         </module>
@@ -275,6 +275,12 @@
             <property name="commentFormat" value="CHECKSTYLE.SUPPRESS\: ([\w\|]+)"/>
             <property name="checkFormat" value="$1"/>
             <property name="influenceFormat" value="1"/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format" 
+                      value="^.*(@author|@date).*" />
+            <property name="message" 
+                      value="Java file header cannot contain @author or @date" />
         </module>
     </module>
 </module>
