@@ -48,8 +48,8 @@ public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
     public RealTimeMemoryDataStorage(WarehouseProperties properties) {
         int initSize = DEFAULT_INIT_SIZE;
         if (properties != null && properties.getStore() != null && properties.getStore().getMemory() != null
-                && properties.getStore().getMemory().getInitSize() != null) {
-            initSize = properties.getStore().getMemory().getInitSize();
+                && properties.getStore().getMemory().initSize() != null) {
+            initSize = properties.getStore().getMemory().initSize();
         }
         monitorMetricsDataMap = new ConcurrentHashMap<>(initSize);
         this.serverAvailable = true;

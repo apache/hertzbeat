@@ -72,7 +72,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     private boolean initDbSession(WarehouseProperties.StoreProperties.GreptimeProperties properties) {
-        String endpoint = properties.getEndpoint();
+        String endpoint = properties.endpoint();
         GreptimeOptions opts = GreptimeOptions.newBuilder(endpoint)
                 .writeMaxRetries(1)
                 .readMaxRetries(2)

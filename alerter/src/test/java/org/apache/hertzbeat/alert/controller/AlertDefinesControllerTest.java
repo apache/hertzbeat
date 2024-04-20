@@ -45,8 +45,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Test case for {@link AlertDefinesController}
  * Test whether the data mocked at the mock is correct, and test whether the format of the returned data is correct
- *
- *
  */
 @ExtendWith(MockitoExtension.class)
 class AlertDefinesControllerTest {
@@ -66,7 +64,7 @@ class AlertDefinesControllerTest {
     String order = "asc";
     Integer pageIndex = 1;
     Integer pageSize = 7;
-
+  
     // Parameter collection
     Map<String, Object> content = new HashMap<String, Object>();
 
@@ -80,23 +78,20 @@ class AlertDefinesControllerTest {
     @BeforeEach
     void setUp() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(alertDefinesController).build();
-
-        // Configure test content
         content.put("ids", ids);
         content.put("priority", priority);
         content.put("sort", sort);
         content.put("order", order);
         content.put("pageIndex", pageIndex);
         content.put("pageSize", pageSize);
-
-        // Mocked pageRequest
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(content.get("order").toString()), content.get("sort").toString()));
         pageRequest = PageRequest.of(((Integer) content.get("pageIndex")).intValue(), ((Integer) content.get("pageSize")).intValue(), sortExp);
     }
 
-//    @Test
-// todo: fix this test
+    //    @Test
+    // todo: fix this test
     void getAlertDefines() throws Exception {
+
         // Test the correctness of the mock
         // Although objects cannot be mocked, stubs can be stored using class files
 //        Mockito.when(alertDefineService.getAlertDefines(Mockito.any(Specification.class), Mockito.argThat(new ArgumentMatcher<PageRequest>() {

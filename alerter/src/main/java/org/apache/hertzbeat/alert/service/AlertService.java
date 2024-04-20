@@ -49,7 +49,6 @@ public interface AlertService {
 
     /**
      * Delete alarms in batches according to the alarm ID list
-     * 根据告警ID列表批量删除告警
      * @param ids Alarm ID List 
      */
     void deleteAlerts(HashSet<Long> ids);
@@ -61,7 +60,6 @@ public interface AlertService {
 
     /**
      * Update the alarm status according to the alarm ID-status value
-     * 根据告警ID-状态值 更新告警状态
      * @param status Alarm status to be modified  
      * @param ids    Alarm ID List to be modified   
      */

@@ -96,7 +96,6 @@ public interface AlertDefineService {
 
     /**
      * Query the alarm definitions that match the specified metrics associated with the monitoring ID
-     * 查询与此监控任务ID关联的指定指标匹配的告警定义
      * @param monitorId Monitor the ID 
      * @param app Monitoring type 
      * @param metrics metrics
@@ -106,7 +105,6 @@ public interface AlertDefineService {
 
     /**
      * Query the alarm definitions that match the specified metrics associated with the monitoring ID
-     * 查询与此监控任务ID关联的可用性告警定义
      * @param monitorId Monitor the ID 
      * @param app Monitoring type 
      * @param metrics metrics
@@ -124,7 +122,6 @@ public interface AlertDefineService {
 
     /**
      * Query the associated monitoring list information based on the alarm definition ID
-     * 根据告警定义ID查询其关联的监控列表关联信息
      * @param alertDefineId Alarm Definition ID 
      * @return Associated information about the monitoring list 
      */
@@ -132,7 +129,6 @@ public interface AlertDefineService {
 
     /**
      * Export file configuration of specified type based on ID list and export file type
-     * 根据ID列表、导出文件类型导出指定类型文件配置
      * @param ids AlertDefine ID
      * @param type File Type
      * @param res Response
@@ -142,7 +138,6 @@ public interface AlertDefineService {
 
     /**
      * Add alarm threshold rules based on the uploaded alarm threshold file
-     * 根据上传的告警阀值文件，增加告警阀值规则
      * @param file Upload File
      * @throws Exception An exception was thrown during the importConfig
      */

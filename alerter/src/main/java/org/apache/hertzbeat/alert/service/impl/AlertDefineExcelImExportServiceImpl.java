@@ -42,7 +42,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
     /**
      * Export file type
-     * @return 文件类型
+     * @return file type
      */
     @Override
     public String type() {
@@ -51,7 +51,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
     /**
      * Get Export File Name
-     * @return 文件名
+     * @return file name
      */
     @Override
     public String getFileName() {
@@ -61,8 +61,8 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
     /**
      * Parsing an input stream into a form
-     * @param is 输入流
-     * @return 表单
+     * @param is input stream
+     * @return form list
      */
     @Override
     List<ExportAlertDefineDTO> parseImport(InputStream is) {
@@ -174,8 +174,8 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
     /**
      * Export Configuration to Output Stream
-     * @param exportAlertDefineList 配置列表
-     * @param os          输出流
+     * @param exportAlertDefineList exportAlertDefineList
+     * @param os          output stream
      */
     @Override
     void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
@@ -186,16 +186,16 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
             sheet.setDefaultColumnWidth(20);
             sheet.setColumnWidth(9, 40 * 256);
             sheet.setColumnWidth(10, 40 * 256);
-            // 设置表头样式
+            // set header style
             CellStyle headerCellStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
             headerCellStyle.setFont(headerFont);
             headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
-            // 设置表格内容样式
+            // set cell style
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
-            // 设置表头
+            // set header
             String[] headers = {"app", "metric", "field", "preset", "expr", "priority", "times", "tags",
                     "enable", "recoverNotice", "template"};
             Row headerRow = sheet.createRow(0);
@@ -205,14 +205,12 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                 cell.setCellStyle(headerCellStyle);
             }
 
-            // 遍历阀值规则列表，每个阀值规则对象对应一行数据
+            // Traverse the threshold rule list, each threshold rule object corresponds to a row of data
             int rowIndex = 1;
             for (ExportAlertDefineDTO alertDefine : exportAlertDefineList) {
-                // 获取阀值规则信息
                 AlertDefineDTO alertDefineDTO = alertDefine.getAlertDefine();
-                // 阀值规则信息一行中
                 Row row = sheet.createRow(rowIndex++);
-                // 阀值规则信息只需要写一次
+                // Threshold rule information only needs to be written once
                 Cell appCell = row.createCell(0);
                 appCell.setCellValue(alertDefineDTO.getApp());
                 appCell.setCellStyle(cellStyle);
@@ -235,9 +233,9 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
                 Cell timesCell = row.createCell(6);
                 timesCell.setCellValue(alertDefineDTO.getTimes());
                 Cell tagCell = row.createCell(7);
-                // 获取标签信息
+                // get tags
                 List<TagItem> tagList = alertDefineDTO.getTags();
-                String tagValue = tagList == null || tagList.size() == 0 ? "" : JsonUtil.toJson(tagList);
+                String tagValue = tagList == null || tagList.isEmpty() ? "" : JsonUtil.toJson(tagList);
                 tagCell.setCellValue(tagValue);
                 tagCell.setCellStyle(cellStyle);
                 Cell enableCell = row.createCell(8);

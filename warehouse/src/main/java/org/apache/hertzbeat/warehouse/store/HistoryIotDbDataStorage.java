@@ -90,32 +90,32 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {
         SessionPool.Builder builder = new SessionPool.Builder();
-        builder.host(properties.getHost());
-        if (properties.getRpcPort() != null) {
-            builder.port(properties.getRpcPort());
+        builder.host(properties.host());
+        if (properties.rpcPort() != null) {
+            builder.port(properties.rpcPort());
         }
-        if (properties.getUsername() != null) {
-            builder.user(properties.getUsername());
+        if (properties.username() != null) {
+            builder.user(properties.username());
         }
-        if (properties.getPassword() != null) {
-            builder.password(properties.getPassword());
+        if (properties.password() != null) {
+            builder.password(properties.password());
         }
-        if (properties.getNodeUrls() != null && !properties.getNodeUrls().isEmpty()) {
-            builder.nodeUrls(properties.getNodeUrls());
+        if (properties.nodeUrls() != null && !properties.nodeUrls().isEmpty()) {
+            builder.nodeUrls(properties.nodeUrls());
         }
-        if (properties.getZoneId() != null) {
-            builder.zoneId(properties.getZoneId());
+        if (properties.zoneId() != null) {
+            builder.zoneId(properties.zoneId());
         }
-        if (properties.getVersion() != null) {
-            this.version = properties.getVersion();
+        if (properties.version() != null) {
+            this.version = properties.version();
         }
-        this.queryTimeoutInMs = properties.getQueryTimeoutInMs();
+        this.queryTimeoutInMs = properties.queryTimeoutInMs();
         this.sessionPool = builder.build();
         boolean available = checkConnection();
         if (available) {
             available = this.createDatabase();
             if (available) {
-                this.initTtl(properties.getExpireTime());
+                this.initTtl(properties.expireTime());
                 log.info("IotDB session pool init success");
             }
         }

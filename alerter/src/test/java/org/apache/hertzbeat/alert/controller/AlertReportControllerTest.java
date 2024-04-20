@@ -39,7 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * unit test for {@link AlertReportController }
- *
  */
 @ExtendWith(MockitoExtension.class)
 class AlertReportControllerTest {
@@ -63,8 +62,8 @@ class AlertReportControllerTest {
         dimensions.setUnInstanceId("3333");
 
         TenCloudAlertReport.AlarmObjInfo alarmObjInfo = new TenCloudAlertReport.AlarmObjInfo();
-        alarmObjInfo.setRegion("广东");
-        alarmObjInfo.setNamespace("广州节点1");
+        alarmObjInfo.setRegion("Guangzhou");
+        alarmObjInfo.setNamespace("Guangzhou1");
         alarmObjInfo.setAppId("1111");
         alarmObjInfo.setUin("2222");
         alarmObjInfo.setDimensions(dimensions);
@@ -78,13 +77,13 @@ class AlertReportControllerTest {
         conditions.setCurrentValue("b");
         conditions.setCalcUnit("bb");
         conditions.setProductName("guangzhou");
-        conditions.setProductShowName("广州");
+        conditions.setProductShowName("Guangzhou1");
         conditions.setEventName("CVS");
-        conditions.setEventShowName("内核异常");
+        conditions.setEventShowName("Core error");
 
         TenCloudAlertReport.AlarmPolicyInfo alarmPolicyInfo = new TenCloudAlertReport.AlarmPolicyInfo();
         alarmPolicyInfo.setPolicyTypeCname("x");
-        alarmPolicyInfo.setPolicyName("测试1");
+        alarmPolicyInfo.setPolicyName("Test1");
         alarmPolicyInfo.setConditions(conditions);
 
         TenCloudAlertReport report = TenCloudAlertReport.builder()
