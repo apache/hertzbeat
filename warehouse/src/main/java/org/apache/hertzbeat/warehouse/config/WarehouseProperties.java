@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.warehouse.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 import java.time.ZoneId;
 import java.util.List;
@@ -99,36 +100,21 @@ public class WarehouseProperties {
                 return enabled;
             }
 
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
             public String getServers() {
                 return servers;
-            }
-
-            public void setServers(String servers) {
-                this.servers = servers;
             }
 
             public String getTopic() {
                 return topic;
             }
 
-            public void setTopic(String topic) {
-                this.topic = topic;
-            }
-
             public String getGroupId() {
                 return groupId;
-            }
-
-            public void setGroupId(String groupId) {
-                this.groupId = groupId;
             }
         }
 
     }
+
 
     /**
      * Scheduling data export configuration properties
@@ -236,551 +222,106 @@ public class WarehouseProperties {
 
         /**
          * Memory storage configuration information
+         * @param enabled Whether memory data storage is enabled
+         * @param initSize Memory storage map initialization size
          */
-        public static class MemoryProperties {
-            /**
-             * Whether memory data storage is enabled
-             */
-            private boolean enabled = true;
-            /**
-             * Memory storage map initialization size
-             */
-            private Integer initSize = 1024;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public Integer getInitSize() {
-                return initSize;
-            }
-
-            public void setInitSize(Integer initSize) {
-                this.initSize = initSize;
-            }
-        }
+        public record MemoryProperties(
+            @DefaultValue("true") boolean enabled,
+            @DefaultValue("1024") Integer initSize
+        ){}
 
         /**
          * JPA configuration information
+         * @param enabled use mysql/h2 jpa store metrics history data
+         * @param expireTime save data expire time(ms)
+         * @param maxHistoryRecordNum The maximum number of history records retained
          */
-        public static class JpaProperties {
-            /**
-             * use mysql/h2 jpa store metrics history data
-             */
-            private boolean enabled = true;
-
-            /**
-             * save data expire time(ms)
-             */
-            private String expireTime = "1h";
-
-            /**
-             * The maximum number of history records retained
-             */
-            private Integer maxHistoryRecordNum = 20_000;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getExpireTime() {
-                return expireTime;
-            }
-
-            public void setExpireTime(String expireTime) {
-                this.expireTime = expireTime;
-            }
-
-            public Integer getMaxHistoryRecordNum() {
-                return maxHistoryRecordNum;
-            }
-
-            public void setMaxHistoryRecordNum(Integer maxHistoryRecordNum) {
-                this.maxHistoryRecordNum = maxHistoryRecordNum;
-            }
-        }
+        public record JpaProperties(
+            @DefaultValue("true") boolean enabled,
+            @DefaultValue("1h") String expireTime,
+            @DefaultValue("20000") Integer maxHistoryRecordNum
+        ) {}
 
         /**
          * Influxdb configuration information
          */
-        public static class InfluxdbProperties {
-            /**
-             * Is the influxdb data store started?
-             */
-            private boolean enabled = false;
-            /**
-             * Influxdb connection server url
-             */
-            private String serverUrl;
-            /**
-             * username
-             */
-            private String username;
-            /**
-             * password
-             */
-            private String password;
-            /**
-             * Expiration
-             */
-            private String expireTime = "30d";
-            /**
-             * Number of copies
-             */
-            private int replication = 1;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getServerUrl() {
-                return serverUrl;
-            }
-
-            public void setServerUrl(String serverUrl) {
-                this.serverUrl = serverUrl;
-            }
-
-            public String getUsername() {
-                return username;
-            }
-
-            public void setUsername(String username) {
-                this.username = username;
-            }
-
-            public String getPassword() {
-                return password;
-            }
-
-            public void setPassword(String password) {
-                this.password = password;
-            }
-
-            public String getExpireTime() {
-                return expireTime;
-            }
-
-            public void setExpireTime(String expireTime) {
-                this.expireTime = expireTime;
-            }
-            
-            public int getReplication() {
-                return replication;
-            }
-            
-            public void setReplication(int replication) {
-                this.replication = replication;
-            }
-        }
+        public record InfluxdbProperties(
+            @DefaultValue("false") boolean enabled,
+            String serverUrl,
+            String username,
+            String password,
+            @DefaultValue("30d") String expireTime,
+            @DefaultValue("1") int replication) {}
 
         /**
-         * TdEngine configuration information
+         *
+         * @param enabled Whether the TdEngine data store is enabled
+         * @param url TdEngine connect url
+         * @param driverClassName tdengine driver, default restful driver
+         * @param username tdengine username
+         * @param password  tdengine password
+         * @param tableStrColumnDefineMaxLength auto create table's string column define max length : NCHAR(200)
          */
-        public static class TdEngineProperties {
-            /**
-             * Whether the TdEngine data store is enabled
-             */
-            private boolean enabled = false;
-            /**
-             * TdEngine connect url
-             */
-            private String url = "jdbc:TAOS-RS://localhost:6041/demo";
-            /**
-             * tdengine driver, default restful driver
-             */
-            private String driverClassName = "com.taosdata.jdbc.rs.RestfulDriver";
-            /**
-             * tdengine username
-             */
-            private String username;
-            /**
-             * tdengine password
-             */
-            private String password;
-            /**
-             * auto create table's string column define max length : NCHAR(200)
-             */
-            private int tableStrColumnDefineMaxLength = 200;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getUrl() {
-                return url;
-            }
-
-            public void setUrl(String url) {
-                this.url = url;
-            }
-
-            public String getDriverClassName() {
-                return driverClassName;
-            }
-
-            public void setDriverClassName(String driverClassName) {
-                this.driverClassName = driverClassName;
-            }
-
-            public String getUsername() {
-                return username;
-            }
-
-            public void setUsername(String username) {
-                this.username = username;
-            }
-
-            public String getPassword() {
-                return password;
-            }
-
-            public void setPassword(String password) {
-                this.password = password;
-            }
-
-            public int getTableStrColumnDefineMaxLength() {
-                return tableStrColumnDefineMaxLength;
-            }
-
-            public void setTableStrColumnDefineMaxLength(int tableStrColumnDefineMaxLength) {
-                this.tableStrColumnDefineMaxLength = tableStrColumnDefineMaxLength;
-            }
-        }
+        public record TdEngineProperties(
+            @DefaultValue("false") boolean enabled,
+            @DefaultValue("jdbc:TAOS-RS://localhost:6041/demo") String url,
+            @DefaultValue("com.taosdata.jdbc.rs.RestfulDriver") String driverClassName,
+            String username,
+            String password,
+            @DefaultValue("200") int tableStrColumnDefineMaxLength) {}
 
         /**
-         * VictoriaMetrics Configuration information
+         * Victoriametrics configuration information
          */
-        public static class VictoriaMetricsProperties {
-            /**
-             * Whether the VictoriaMetrics data store is enabled
-             */
-            private boolean enabled = false;
-            /**
-             * VictoriaMetrics connect url
-             */
-            private String url = "http://localhost:8428";
-            /**
-             * VictoriaMetrics username
-             */
-            private String username;
-            /**
-             * VictoriaMetrics password
-             */
-            private String password;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getUrl() {
-                return url;
-            }
-
-            public void setUrl(String url) {
-                this.url = url;
-            }
-
-            public String getUsername() {
-                return username;
-            }
-
-            public void setUsername(String username) {
-                this.username = username;
-            }
-
-            public String getPassword() {
-                return password;
-            }
-
-            public void setPassword(String password) {
-                this.password = password;
-            }
-            
-        }
+        public record VictoriaMetricsProperties(
+            @DefaultValue("false") boolean enabled,
+            @DefaultValue("http://localhost:8428") String url,
+            String username,
+            String password)
+        {}
 
         /**
-         * Redis Configuration information
+         * Redis configuration information
          */
-        public static class RedisProperties {
-            /**
-             * Whether the redis data store is started
-             */
-            private boolean enabled = false;
-            /**
-             * redis host
-             */
-            private String host = "127.0.0.1";
-            /**
-             * redis host port
-             */
-            private Integer port = 6379;
-            /**
-             * redis password
-             */
-            private String password;
-            /**
-             * redis uses the database, the default is DB0
-             */
-            private Integer db = 0;
-
-            public Integer getDb() {
-                return db;
-            }
-
-            public void setDb(Integer db) {
-                this.db = db;
-            }
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getHost() {
-                return host;
-            }
-
-            public void setHost(String host) {
-                this.host = host;
-            }
-
-            public Integer getPort() {
-                return port;
-            }
-
-            public void setPort(Integer port) {
-                this.port = port;
-            }
-
-            public String getPassword() {
-                return password;
-            }
-
-            public void setPassword(String password) {
-                this.password = password;
-            }
-        }
+        public record RedisProperties(
+            @DefaultValue("false") boolean enabled,
+            @DefaultValue("127.0.0.1") String host,
+            @DefaultValue("6379") Integer port,
+            String password,
+            @DefaultValue("0") Integer db) {}
 
         /**
-         * IoTDB configuration information
+         * IotDB configuration information
+         * @param enabled Whether the iotDB data store is enabled
+         * @param host iotDB host
+         * @param expireTime save data expire time(ms)，-1 means it never expires Data storage time (unit: ms,-1 means never expire)
+         *                   Note: Why is String used here instead of Long? At present, the set ttl of IoTDB only supports milliseconds as a unit,
+         *                   and other units may be added later, so the String type is used for compatibility Data storage time (unit: ms, -1 means never expires)
+         *
+         *                   Note: Why use String instead of Long here? Currently, IoTDB's set ttl only supports milliseconds as the unit.
+         *                   Other units may be added later. In order to be compatible with the future, the String type is used.
          */
-        public static class IotDbProperties {
-            /**
-             * Whether the iotDB data store is enabled
-             */
-            private boolean enabled = false;
-
-            /**
-             * iotDB host
-             */
-            private String host = "127.0.0.1";
-
-            /**
-             * iotDB rpc port
-             */
-            private Integer rpcPort = 6667;
-
-            /**
-             * iotDB username
-             */
-            private String username;
-
-            /**
-             * iotDB password
-             */
-            private String password;
-
-            /**
-             * cluster node url list
-             */
-            private List<String> nodeUrls;
-
-            private ZoneId zoneId;
-
-            /**
-             * the version of IotDb
-             */
-            private IotDbVersion version;
-
-            /**
-             * query timeout(ms)
-             */
-            private long queryTimeoutInMs;
-
-            /**
-             * save data expire time(ms)，-1 means it never expires
-             * Data storage time (unit: ms,-1 means never expire)
-             * Note: Why is String used here instead of Long?
-             *    At present, the set ttl of IoTDB only supports milliseconds as a unit, and other units may be added later, so the String type is used for compatibility
-             *
-             * Data storage time (unit: ms, -1 means never expires)
-             * Note: Why use String instead of Long here?
-             *  Currently, IoTDB's set ttl only supports milliseconds as the unit. Other units
-             *  may be added later. In order to be compatible with the future, the String type is used.
-             */
-            private String expireTime;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getUsername() {
-                return username;
-            }
-
-            public void setUsername(String username) {
-                this.username = username;
-            }
-
-            public String getPassword() {
-                return password;
-            }
-
-            public void setPassword(String password) {
-                this.password = password;
-            }
-
-            public String getHost() {
-                return host;
-            }
-
-            public void setHost(String host) {
-                this.host = host;
-            }
-
-            public Integer getRpcPort() {
-                return rpcPort;
-            }
-
-            public void setRpcPort(Integer rpcPort) {
-                this.rpcPort = rpcPort;
-            }
-
-            public List<String> getNodeUrls() {
-                return nodeUrls;
-            }
-
-            public void setNodeUrls(List<String> nodeUrls) {
-                this.nodeUrls = nodeUrls;
-            }
-
-            public IotDbVersion getVersion() {
-                return version;
-            }
-
-            public void setVersion(IotDbVersion version) {
-                this.version = version;
-            }
-
-            public ZoneId getZoneId() {
-                return zoneId;
-            }
-
-            public void setZoneId(ZoneId zoneId) {
-                this.zoneId = zoneId;
-            }
-
-            public long getQueryTimeoutInMs() {
-                return queryTimeoutInMs;
-            }
-
-            public void setQueryTimeoutInMs(long queryTimeoutInMs) {
-                this.queryTimeoutInMs = queryTimeoutInMs;
-            }
-
-            public String getExpireTime() {
-                return expireTime;
-            }
-
-            public void setExpireTime(String expireTime) {
-                this.expireTime = expireTime;
-            }
-        }
+        public record IotDbProperties(
+            @DefaultValue("false") boolean enabled,
+            @DefaultValue("127.0.0.1") String host,
+            @DefaultValue("6667") Integer rpcPort,
+            String username,
+            String password,
+            List<String> nodeUrls,
+            ZoneId zoneId,
+            IotDbVersion version,
+            long queryTimeoutInMs,
+            String expireTime) {}
 
         /**
          * GrepTimeDB configuration information
          */
-        public static class GreptimeProperties {
-            /**
-             * Whether the GrepTimeDB data store is enabled
-             */
-            private boolean enabled = false;
+        public record GreptimeProperties(
+            @DefaultValue("false") boolean enabled,
+            @DefaultValue("127.0.0.1:4001") String endpoint,
+            String username,
+            String password) {}
 
-            /**
-             * GrepTimeDB endpoint
-             */
-            private String endpoint = "127.0.0.1:4001";
-
-            /**
-             * GrepTimeDB username
-             */
-            private String username;
-
-            /**
-             * GrepTimeDB password
-             */
-            private String password;
-
-            public boolean isEnabled() {
-                return enabled;
-            }
-
-            public void setEnabled(boolean enabled) {
-                this.enabled = enabled;
-            }
-
-            public String getEndpoint() {
-                return endpoint;
-            }
-
-            public void setEndpoint(String endpoint) {
-                this.endpoint = endpoint;
-            }
-
-            public String getUsername() {
-                return username;
-            }
-
-            public void setUsername(String username) {
-                this.username = username;
-            }
-
-            public String getPassword() {
-                return password;
-            }
-
-            public void setPassword(String password) {
-                this.password = password;
-            }
-        }
     }
 
 }

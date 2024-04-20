@@ -74,17 +74,17 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
-        tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().getTableStrColumnDefineMaxLength();
+        tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().tableStrColumnDefineMaxLength();
         serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
     }
 
     private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
         HikariConfig config = new HikariConfig();
         // jdbc properties
-        config.setJdbcUrl(tdEngineProperties.getUrl());
-        config.setUsername(tdEngineProperties.getUsername());
-        config.setPassword(tdEngineProperties.getPassword());
-        config.setDriverClassName(tdEngineProperties.getDriverClassName());
+        config.setJdbcUrl(tdEngineProperties.url());
+        config.setUsername(tdEngineProperties.username());
+        config.setPassword(tdEngineProperties.password());
+        config.setDriverClassName(tdEngineProperties.driverClassName());
         //minimum number of idle connection
         config.setMinimumIdle(10);
         //maximum number of connection in the pool
