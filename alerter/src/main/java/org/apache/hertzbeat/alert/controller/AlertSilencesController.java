@@ -43,7 +43,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Silence the batch API for alarms
  */
-@Tag(name = "Alert Silence Batch API | 告警静默管理API")
+@Tag(name = "Alert Silence Batch API")
 @RestController
 @RequestMapping(path = "/api/alert/silences", produces = {APPLICATION_JSON_VALUE})
 public class AlertSilencesController {
@@ -52,15 +52,15 @@ public class AlertSilencesController {
     private AlertSilenceService alertSilenceService;
 
     @GetMapping
-    @Operation(summary = "Query the alarm silence list ｜ 查询告警静默列表",
-            description = "You can obtain the list of alarm silence by querying filter items ｜ 根据查询过滤项获取告警静默信息列表")
+    @Operation(summary = "Query the alarm silence list",
+            description = "You can obtain the list of alarm silence by querying filter items")
     public ResponseEntity<Message<Page<AlertSilence>>> getAlertSilences(
-            @Parameter(description = "Alarm Silence ID ｜ 告警静默ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
-            @Parameter(description = "Search Name ｜ 模糊查询-名称", example = "x") @RequestParam(required = false) String search,
-            @Parameter(description = "Sort field, default id ｜ 排序字段，默认id", example = "id") @RequestParam(defaultValue = "id") String sort,
-            @Parameter(description = "Sort mode: asc: ascending, desc: descending ｜ 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") String order,
-            @Parameter(description = "List current page ｜ 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(description = "Number of list pages ｜ 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
+            @Parameter(description = "Alarm Silence ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
+            @Parameter(description = "Search Name", example = "x") @RequestParam(required = false) String search,
+            @Parameter(description = "Sort field, default id", example = "id") @RequestParam(defaultValue = "id") String sort,
+            @Parameter(description = "Sort mode: asc: ascending, desc: descending", example = "desc") @RequestParam(defaultValue = "desc") String order,
+            @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
+            @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
 
         Specification<AlertSilence> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
@@ -91,10 +91,10 @@ public class AlertSilencesController {
     }
 
     @DeleteMapping
-    @Operation(summary = "Delete alarm silence in batches ｜ 批量删除告警静默",
-            description = "Delete alarm silence in batches based on the alarm silence ID list ｜ 根据告警静默ID列表批量删除告警静默")
+    @Operation(summary = "Delete alarm silence in batches",
+            description = "Delete alarm silence in batches based on the alarm silence ID list")
     public ResponseEntity<Message<Void>> deleteAlertDefines(
-            @Parameter(description = "Alarm Silence IDs ｜ 告警静默IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @Parameter(description = "Alarm Silence IDs", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             alertSilenceService.deleteAlertSilences(new HashSet<>(ids));
