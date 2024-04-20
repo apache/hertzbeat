@@ -36,7 +36,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Alarm Silence management API
  */
-@Tag(name = "Alert Silence API | 告警静默管理API")
+@Tag(name = "Alert Silence API")
 @RestController
 @RequestMapping(path = "/api/alert/silence", produces = {APPLICATION_JSON_VALUE})
 public class AlertSilenceController {
@@ -45,7 +45,7 @@ public class AlertSilenceController {
     private AlertSilenceService alertSilenceService;
 
     @PostMapping
-    @Operation(summary = "New Alarm Silence | 新增告警静默", description = "Added an alarm Silence | 新增一个告警静默")
+    @Operation(summary = "New Alarm Silence", description = "Added an alarm Silence")
     public ResponseEntity<Message<Void>> addNewAlertSilence(@Valid @RequestBody AlertSilence alertSilence) {
         alertSilenceService.validate(alertSilence, false);
         alertSilenceService.addAlertSilence(alertSilence);
@@ -53,7 +53,7 @@ public class AlertSilenceController {
     }
 
     @PutMapping
-    @Operation(summary = "Modifying an Alarm Silence | 修改告警静默", description = "Modify an existing alarm Silence | 修改一个已存在告警静默")
+    @Operation(summary = "Modifying an Alarm Silence", description = "Modify an existing alarm Silence")
     public ResponseEntity<Message<Void>> modifyAlertSilence(@Valid @RequestBody AlertSilence alertSilence) {
         alertSilenceService.validate(alertSilence, true);
         alertSilenceService.modifyAlertSilence(alertSilence);
@@ -61,10 +61,10 @@ public class AlertSilenceController {
     }
 
     @GetMapping(path = "/{id}")
-    @Operation(summary = "Querying Alarm Silence | 查询告警静默",
-            description = "You can obtain alarm Silence information based on the alarm Silence ID | 根据告警静默ID获取告警静默信息")
+    @Operation(summary = "Querying Alarm Silence",
+            description = "You can obtain alarm Silence information based on the alarm Silence ID")
     public ResponseEntity<Message<AlertSilence>> getAlertSilence(
-            @Parameter(description = "Alarm Silence ID ｜ 告警静默ID", example = "6565463543") @PathVariable("id") long id) {
+            @Parameter(description = "Alarm Silence ID", example = "6565463543") @PathVariable("id") long id) {
         AlertSilence alertSilence = alertSilenceService.getAlertSilence(id);
         if (alertSilence == null) {
             return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertSilence not exist."));

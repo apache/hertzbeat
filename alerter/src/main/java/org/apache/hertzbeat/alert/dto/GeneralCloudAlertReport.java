@@ -45,28 +45,23 @@ public class GeneralCloudAlertReport extends AlertReport {
      * You can refresh the timestamp of the alarm time with enhanced properties
      */
     public void refreshAlertTime() {
-        // 有时间戳，取时间戳
         if (getAlertTime() != 0L) {
             return;
         }
-        // 没有时间戳，判断是否有字符串配置
         if (StringUtils.isNotBlank(alertDateTime)) {
             Long timeStamp = null;
-            // 优先用户配置
             if (StringUtils.isNotBlank(dateTimeFormat)) {
                 timeStamp = DateUtil.getTimeStampFromFormat(alertDateTime, dateTimeFormat);
             }
-            // 默认支持日期格式
             if (timeStamp == null) {
                 timeStamp = DateUtil.getTimeStampFromSomeFormats(alertDateTime);
             }
-            // 解析成功
             if (timeStamp != null) {
                 setAlertTime(timeStamp);
                 return;
             }
         }
-        throw new RuntimeException("告警时间解析异常");
+        throw new RuntimeException("parse alarm time error");
     }
 
 }
