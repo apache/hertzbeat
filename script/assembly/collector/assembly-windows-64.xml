@@ -75,5 +75,14 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <directory>../jdk/windows-64</directory>
             <outputDirectory>java</outputDirectory>
         </fileSet>
+
+        <!-- external lib -->
+        <fileSet>
+            <directory>../ext-lib</directory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+            <outputDirectory>ext-lib</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>

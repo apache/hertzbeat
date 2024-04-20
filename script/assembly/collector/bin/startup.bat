@@ -41,8 +41,10 @@ for /f "tokens=1-5" %%i in ('netstat -ano^|findstr "0.0.0.0:%SERVER_PORT%"') do 
 	echo exit!
     goto q
 )
-
+set MAIN_CLASS=org.apache.hertzbeat.collector.Collector
 set LOGS_DIR=%DEPLOY_DIR%\logs
+set EXT_LIB_PATH=%DEPLOY_DIR%\ext-lib
+set CLASSPATH=%DEPLOY_DIR%\%JAR_NAME%;%EXT_LIB_PATH%\*
 
 if not exist %LOGS_DIR% (
     mkdir %LOGS_DIR%
@@ -64,12 +66,12 @@ set INNER_EXE=%DEPLOY_DIR%\java\bin\javaw.exe
 if not exist %INNER_EXE% (
     echo "Use the system environment jdk to start"
 
-    start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME%
+    start javaw %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -cp %CLASSPATH% %MAIN_CLASS%
 
 ) else (
     echo "Use the inner package jdk to start"
 
-    start %INNER_EXE% %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -jar %DEPLOY_DIR%\%JAR_NAME%
+    start %INNER_EXE% %JAVA_OPTS% %JAVA_MEM_OPTS% %CONFIG_FILES% -cp %CLASSPATH% %MAIN_CLASS%
 )
 
 echo "Service Start Success!"
