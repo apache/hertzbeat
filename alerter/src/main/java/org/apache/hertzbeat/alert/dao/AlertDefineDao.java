@@ -39,7 +39,6 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
 
     /**
      * Query the default alarm thresholds based on the monitoring metrics type
-     * 根据监控指标类型查询对应默认告警定义阈值
      * @param app monitoring type
      * @param metric metrics
      * @return alarm defines
@@ -56,7 +55,6 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
 
     /**
      * Query the alarm definition list associated with the monitoring ID
-     * 根据监控任务ID查询与之关联的告警定义列表
      * @param monitorId monitor id
      * @param app monitor type
      * @param metrics metrics

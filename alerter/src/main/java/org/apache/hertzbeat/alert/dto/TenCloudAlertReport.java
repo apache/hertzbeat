@@ -100,7 +100,7 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Conditions {
-        // 指标告警的参数
+        // alarm metrics parameters
         private String metricName;
         private String metricShowName;
         private String calcType;
@@ -114,7 +114,7 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         private String alarmNotifyType;
         private long alarmNotifyPeriod;
 
-        // 事件告警的参数
+        // alarm event parameters
         private String productName;
         private String productShowName;
         private String eventName;

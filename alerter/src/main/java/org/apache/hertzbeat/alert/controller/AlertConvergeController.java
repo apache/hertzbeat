@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * Alarm Converge management API
  */
-@Tag(name = "Alert Converge API | 告警收敛管理API")
+@Tag(name = "Alert Converge API")
 @RestController
 @RequestMapping(path = "/api/alert/converge", produces = {APPLICATION_JSON_VALUE})
 public class AlertConvergeController {
@@ -44,7 +44,7 @@ public class AlertConvergeController {
     private AlertConvergeService alertConvergeService;
 
     @PostMapping
-    @Operation(summary = "New Alarm Converge | 新增告警收敛", description = "Added an alarm Converge | 新增一个告警收敛")
+    @Operation(summary = "New Alarm Converge", description = "Added an alarm Converge")
     public ResponseEntity<Message<Void>> addNewAlertConverge(@Valid @RequestBody AlertConverge alertConverge) {
         alertConvergeService.validate(alertConverge, false);
         alertConvergeService.addAlertConverge(alertConverge);
@@ -52,7 +52,7 @@ public class AlertConvergeController {
     }
 
     @PutMapping
-    @Operation(summary = "Modifying an Alarm Converge | 修改告警收敛", description = "Modify an existing alarm Converge | 修改一个已存在告警收敛")
+    @Operation(summary = "Modifying an Alarm Converge", description = "Modify an existing alarm Converge")
     public ResponseEntity<Message<Void>> modifyAlertConverge(@Valid @RequestBody AlertConverge alertConverge) {
         alertConvergeService.validate(alertConverge, true);
         alertConvergeService.modifyAlertConverge(alertConverge);
@@ -60,10 +60,10 @@ public class AlertConvergeController {
     }
 
     @GetMapping(path = "/{id}")
-    @Operation(summary = "Querying Alarm Converge | 查询告警收敛",
-            description = "You can obtain alarm Converge information based on the alarm Converge ID | 根据告警收敛ID获取告警收敛信息")
+    @Operation(summary = "Querying Alarm Converge",
+            description = "You can obtain alarm Converge information based on the alarm Converge ID")
     public ResponseEntity<Message<AlertConverge>> getAlertConverge(
-            @Parameter(description = "Alarm Converge ID ｜ 告警收敛ID", example = "6565463543") @PathVariable("id") long id) {
+            @Parameter(description = "Alarm Converge ID", example = "6565463543") @PathVariable("id") long id) {
         AlertConverge alertConverge = alertConvergeService.getAlertConverge(id);
         if (alertConverge == null) {
             return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertConverge not exist."));
