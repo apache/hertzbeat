@@ -41,7 +41,7 @@ slug: /
 
 > Before we discuss the customizable monitoring capabilities of HertzBeat, which we mentioned at the beginning, let's introduce the different monitoring templates of HertzBeat. And it is because of this monitoring template design that the advanced features come later.
 
-HertzBeat itself did not create a data collection protocol for the monitoring client to adapt to. Instead, HertzBeat makes full use of the existing ecosystem, `SNMP protocol` to collect information from network switches and routers, `JMX specification` to collect information from Java applications, `JDBC specification` to collect information from datasets, `SSH` to directly connect to scripts to get the display information, `HTTP+ (JsonPath | prometheus, etc.) ` to parse the information from API interfaces, `IPMI protocol to collect server information, and so on.   
+HertzBeat itself did not create a data collection protocol for the monitoring client to adapt to. Instead, HertzBeat makes full use of the existing ecosystem, `SNMP protocol` to collect information from network switches and routers, `JMX specification` to collect information from Java applications, `JDBC specification` to collect information from datasets, `SSH` to directly connect to scripts to get the display information, `HTTP+ (JsonPath | prometheus, etc.) ` to parse the information from API interfaces, `IPMI protocol` to collect server information, and so on.   
 HertzBeat uses these existing standard protocols or specifications, makes them abstractly configurable, and finally makes them all available in the form of YML format monitoring templates that can be written to create templates that use these protocols to collect any desired metrics data.
 ![hertzbeat](/img/blog/multi-protocol.png)
 
