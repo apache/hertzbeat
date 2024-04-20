@@ -44,20 +44,20 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Tag Bind Monitor | 标签与监控关联实体")
+@Schema(description = "Tag Bind Monitor")
 @EntityListeners(AuditingEntityListener.class)
 public class TagMonitorBind {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(title = "主键索引ID", example = "87584674384", accessMode = READ_ONLY)
+    @Schema(title = "The primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     @Schema(title = "TAG ID", example = "87432674384", accessMode = READ_WRITE)
     @Column(name = "tag_id")
     private Long tagId;
 
-    @Schema(title = "监控任务ID", example = "87432674336", accessMode = READ_WRITE)
+    @Schema(title = "Monitor task ID", example = "87432674336", accessMode = READ_WRITE)
     @Column(name = "monitor_id")
     private Long monitorId;
 

@@ -61,7 +61,7 @@ class AlertDefineControllerTest {
 
     @BeforeEach
     void setUp() {
-        // standaloneSetup
+        // standaloneSetup: Standalone setup, not integrated with a web environment for testing
         this.mockMvc = MockMvcBuilders.standaloneSetup(alertDefineController).build();
 
         this.alertDefine = AlertDefine.builder()
@@ -97,7 +97,7 @@ class AlertDefineControllerTest {
 
     @Test
     void addNewAlertDefine() throws Exception {
-        // mock http request
+        // Simulate the client sending a request to the server
         mockMvc.perform(MockMvcRequestBuilders.post("/api/alert/define")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(JsonUtil.toJson(this.alertDefine)))
@@ -118,7 +118,7 @@ class AlertDefineControllerTest {
 
     @Test
     void getAlertDefine() throws Exception {
-        // mock getAlertDefine return data
+        // Simulate returning data from getAlertDefine
         Mockito.when(alertDefineService.getAlertDefine(this.alertDefine.getId()))
                 .thenReturn(this.alertDefine);
 

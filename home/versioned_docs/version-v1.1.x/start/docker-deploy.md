@@ -42,7 +42,7 @@ sidebar_label: Docker方式部署
 
 4. 配置挂载的HertzBeat的配置文件(可选)      
    在主机目录下创建application.yml，eg:/opt/application.yml        
-   配置文件完整内容见项目仓库[/script/application.yml](https://gitee.com/dromara/hertzbeat/raw/master/script/application.yml) 您可以根据需求修改配置文件
+   配置文件完整内容见项目仓库[/script/application.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/application.yml) 您可以根据需求修改配置文件
    - 若需使用邮件发送告警，需替换`application.yml`里面的邮件服务器参数
    - **推荐**若需使用外置Mysql数据库替换内置H2数据库，需替换`application.yml`里面的`spring.datasource`参数 具体步骤参见 [H2数据库切换为MYSQL](mysql-change)）       
    - **推荐**若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.td-engine`参数 具体步骤参见 [使用TDengine存储指标数据](tdengine-init)   
@@ -52,7 +52,7 @@ sidebar_label: Docker方式部署
    HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
    若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤    
    在主机目录下创建sureness.yml，eg:/opt/sureness.yml    
-   配置文件完整内容见项目仓库[/script/sureness.yml](https://github.com/dromara/hertzbeat/blob/master/script/sureness.yml)   
+   配置文件完整内容见项目仓库[/script/sureness.yml](https://github.com/apache/hertzbeat/blob/master/script/sureness.yml)   
    具体修改步骤参考 [配置修改账户密码](account-modify)   
 
 6. 启动HertzBeat Docker容器    

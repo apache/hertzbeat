@@ -32,7 +32,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 /**
  * push controller
  */
-@Tag(name = "Metrics Push API | 监控数据推送API")
+@Tag(name = "Metrics Push API")
 @RestController
 @RequestMapping(value = "/api/push", produces = {APPLICATION_JSON_VALUE})
 public class PushController {
@@ -41,17 +41,17 @@ public class PushController {
     private PushService pushService;
 
     @PostMapping
-    @Operation(summary = "Push metric data to hertzbeat", description = "推送监控数据到hertzbeat")
+    @Operation(summary = "Push metric data to hertzbeat", description = "Push metric data to hertzbeat")
     public ResponseEntity<Message<Void>> pushMetrics(@RequestBody PushMetricsDto pushMetricsDto) {
         pushService.pushMetricsData(pushMetricsDto);
         return ResponseEntity.ok(Message.success("Push success"));
     }
 
     @GetMapping()
-    @Operation(summary = "Get metric data for hertzbeat", description = "获取监控数据")
+    @Operation(summary = "Get metric data for hertzbeat", description = "Get metric data for hertzbeat")
     public ResponseEntity<Message<PushMetricsDto>> getMetrics(
-            @Parameter(description = "监控id", example = "6565463543") @RequestParam("id") final Long id,
-            @Parameter(description = "上一次拉取的时间", example = "6565463543") @RequestParam("time") final Long time) {
+            @Parameter(description = "Monitor ID", example = "6565463543") @RequestParam("id") final Long id,
+            @Parameter(description = "Last pull time", example = "6565463543") @RequestParam("time") final Long time) {
         PushMetricsDto pushMetricsDto = pushService.getPushMetricData(id, time);
         return ResponseEntity.ok(Message.success(pushMetricsDto));
     }

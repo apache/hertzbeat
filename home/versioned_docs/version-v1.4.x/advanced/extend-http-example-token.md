@@ -393,6 +393,6 @@ This is the end of the practice of custom monitoring of the HTTP protocol. The H
 
 If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.  
 
-**github: https://github.com/dromara/hertzbeat**
+**github: https://github.com/apache/hertzbeat**
 
-**gitee: https://gitee.com/dromara/hertzbeat**
+**gitee: https://gitee.com/hertzbeat/hertzbeat**

@@ -44,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Test case for {@link AlertDefinesController}
+ * Test whether the data mocked at the mock is correct, and test whether the format of the returned data is correct
  */
 @ExtendWith(MockitoExtension.class)
 class AlertDefinesControllerTest {
@@ -56,19 +57,23 @@ class AlertDefinesControllerTest {
     @Mock
     AlertDefineService alertDefineService;
 
-    // replace default value
+    // Parameters to avoid default values interference, default values have been replaced
     List<Long> ids = Stream.of(6565463543L, 6565463544L).collect(Collectors.toList());
     Byte priority = Byte.parseByte("1");
     String sort = "gmtCreate";
     String order = "asc";
     Integer pageIndex = 1;
     Integer pageSize = 7;
+  
+    // Parameter collection
     Map<String, Object> content = new HashMap<String, Object>();
+
+    // Object for mock
     PageRequest pageRequest;
-    
-    // Since the specification is used for dynamic proxies, it cannot be mocked
-    //The missing debugging parameters are ids, priority
-    //The missing part has passed the manual output test
+
+    // Since the specification is used in dynamic proxy, it cannot be mocked
+    // Missing debugging parameters are ids, priority
+    // The missing part has been manually output for testing
 
     @BeforeEach
     void setUp() {
@@ -86,6 +91,21 @@ class AlertDefinesControllerTest {
     //    @Test
     // todo: fix this test
     void getAlertDefines() throws Exception {
+
+        // Test the correctness of the mock
+        // Although objects cannot be mocked, stubs can be stored using class files
+//        Mockito.when(alertDefineService.getAlertDefines(Mockito.any(Specification.class), Mockito.argThat(new ArgumentMatcher<PageRequest>() {
+//            @Override
+//            public boolean matches(PageRequest pageRequestMidden) {
+//                // There are three methods in the source code that need to be compared, namely getPageNumber(), getPageSize(), getSort()
+//                if(pageRequestMidden.getPageSize() == pageRequest.getPageSize() &&
+//                        pageRequestMidden.getPageNumber() == pageRequest.getPageNumber() &&
+//                        pageRequestMidden.getSort().equals(pageRequest.getSort())) {
+//                    return true;
+//                }
+//                return false;
+//            }
+//        }))).thenReturn(new PageImpl<AlertDefine>(new ArrayList<AlertDefine>()));
         AlertDefine define = AlertDefine.builder().id(9L).app("linux").metric("disk").field("usage").expr("x").times(1).tags(new LinkedList<>()).build();
         Mockito.when(alertDefineService.getAlertDefines(Mockito.any(), Mockito.any())).thenReturn(new PageImpl<>(Collections.singletonList(define)));
 
