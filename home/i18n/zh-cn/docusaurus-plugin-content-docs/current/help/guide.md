@@ -57,6 +57,10 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[Docker](docker) <br />
   &emsp;&#x1F449;&emsp;[Kubernetes](kubernetes) <br />
 
+### 大数据监控
+
+  &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
+
 ## 💡 告警服务  
 
 > 更自由化的阈值告警配置，支持邮箱，短信，webhook，钉钉，企业微信，飞书机器人等告警通知。     
