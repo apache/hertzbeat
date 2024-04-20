@@ -14,12 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 package org.apache.hertzbeat.common.entity.manager;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -27,6 +30,8 @@ import java.util.List;
 /**
  * Convert the list of strings to a JSON string
  */
+@Converter
+@Component
 public class JsonStringListAttributeConverter implements AttributeConverter<List<String>, String> {
     @Override
     public String convertToDatabaseColumn(List<String> attribute) {
@@ -36,10 +41,14 @@ public class JsonStringListAttributeConverter implements AttributeConverter<List
 
     @Override
     public List<String> convertToEntityAttribute(String dbData) {
-        TypeReference<List<String>> typeReference = new TypeReference<>() {};
+        if (StringUtils.isBlank(dbData)) {
+            return List.of();
+        }
+        TypeReference<List<String>> typeReference = new TypeReference<>() {
+        };
         List<String> stringList = JsonUtil.fromJson(dbData, typeReference);
         if (stringList == null && !dbData.isEmpty()) {
             return List.of(dbData);
-        }else return stringList;
+        } else return stringList;
     }
 }

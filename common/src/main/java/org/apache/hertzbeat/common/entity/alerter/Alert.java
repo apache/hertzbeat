@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.common.entity.alerter;
 
+import jakarta.validation.constraints.Size;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -55,9 +54,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 public class Alert {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "snow-flake-id")
-    @GenericGenerator(name = "snow-flake-id",
-            strategy = "org.apache.hertzbeat.common.util.SnowFlakeIdGenerator")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Alarm record entity primary key index ID",
             description = "Alarm record entity primary key index ID",
             example = "87584674384", accessMode = READ_ONLY)
@@ -66,7 +63,7 @@ public class Alert {
     @Schema(title = "Alert target object: monitor availability-available metrics-app.metrics.field",
             description = "Alert target object: monitor availability-available metrics-app.metrics.field",
             example = "1", accessMode = READ_WRITE)
-    @Length(max = 255)
+    @Size(max = 255)
     private String target;
 
     @Schema(title = "Alarm definition ID associated with the alarm",

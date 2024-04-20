@@ -18,11 +18,11 @@
 package org.apache.hertzbeat.common.entity.manager;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -68,7 +68,7 @@ public class Param {
      * Parameter Field Identifier
      */
     @Schema(title = "Parameter identifier field", example = "port", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String field;
 
@@ -76,7 +76,7 @@ public class Param {
      * Param Value
      */
     @Schema(title = "parameter values", example = "8080", accessMode = READ_WRITE)
-    @Length(max = 8126)
+    @Size(max = 8126)
     @Column(name = "`value`", length = 8126)
     private String value;
 

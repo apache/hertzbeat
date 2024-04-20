@@ -138,11 +138,6 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
         </dependency>
-        <!-- validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
         <!--sureness-->
         <dependency>
             <groupId>com.usthe.sureness</groupId>

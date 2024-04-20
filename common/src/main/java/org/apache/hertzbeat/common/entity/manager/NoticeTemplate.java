@@ -18,11 +18,11 @@
 package org.apache.hertzbeat.common.entity.manager;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -62,7 +62,7 @@ public class NoticeTemplate {
     @Schema(title = "Template name",
             description = "Template name",
             example = "dispatch-1", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotBlank
     private String name;
 
@@ -93,7 +93,7 @@ public class NoticeTemplate {
                     "${priorityLabel} : ${priority}\n" +
                     "${triggerTimeLabel} : ${triggerTime}\n" +
                     "${contentLabel} : ${content}", accessMode = READ_WRITE)
-    @Length(max = 60000)
+    @Size(max = 60000)
     @Lob
     @NotBlank
     private String content;

@@ -17,13 +17,13 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import jakarta.validation.constraints.Size;
 import org.apache.hertzbeat.common.support.valid.HostValid;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -72,7 +72,7 @@ public class Monitor {
      * Monitor Name
      */
     @Schema(title = "task name", example = "Api-TanCloud.cn", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     private String name;
 
     /**
@@ -80,7 +80,7 @@ public class Monitor {
      * 监控的类型:linux,mysql,jvm...
      */
     @Schema(title = "Type of monitoring", example = "TanCloud", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     private String app;
 
     /**
@@ -88,7 +88,7 @@ public class Monitor {
      * 监控的对端host:ipv4,ipv6,域名
      */
     @Schema(title = "The host to monitor", example = "192.167.25.11", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @HostValid
     private String host;
 
@@ -114,7 +114,7 @@ public class Monitor {
      * 监控备注描述
      */
     @Schema(title = "Monitor note description", example = "Availability monitoring of the SAAS website TanCloud", accessMode = READ_WRITE)
-    @Length(max = 255)
+    @Size(max = 255)
     private String description;
 
     /**

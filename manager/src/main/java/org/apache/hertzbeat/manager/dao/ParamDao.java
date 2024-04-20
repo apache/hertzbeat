@@ -35,7 +35,7 @@ public interface ParamDao extends JpaRepository<Param, Long> {
      * @param monitorId Monitor ID          监控任务ID
      * @return list of parameter values     参数值列表
      */
-    List<Param> findParamsByMonitorId(long monitorId);
+    List<Param> findParamsByMonitorId(Long monitorId);
 
     /**
      * Remove the parameter list associated with the monitoring ID based on it

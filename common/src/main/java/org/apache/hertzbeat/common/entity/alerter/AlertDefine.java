@@ -19,13 +19,13 @@ package org.apache.hertzbeat.common.entity.alerter;
 
 import com.google.common.base.Objects;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -63,24 +63,24 @@ public class AlertDefine {
     private Long id;
 
     @Schema(title = "Monitoring Type", example = "linux", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String app;
 
     @Schema(title = "Monitoring Metrics", example = "cpu", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String metric;
 
     @Schema(title = "Monitoring Metrics Field", example = "usage", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     private String field;
 
     @Schema(title = "Is Apply All Default", example = "false", accessMode = READ_WRITE)
     private boolean preset;
 
     @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
-    @Length(max = 2048)
+    @Size(max = 2048)
     @Column(length = 2048)
     private String expr;
 
@@ -111,7 +111,7 @@ public class AlertDefine {
 
     @Schema(title = "Alarm Template", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE)
-    @Length(max = 2048)
+    @Size(max = 2048)
     @Column(length = 2048)
     private String template;
 

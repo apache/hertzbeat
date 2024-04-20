@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.entity.alerter;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,7 +26,6 @@ import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonByteListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -63,7 +63,7 @@ public class AlertConverge {
 
     @Schema(title = "Policy name", description = "Policy name",
             example = "converge-1", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String name;
 
