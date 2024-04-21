@@ -6,6 +6,7 @@
   "files": [
     "README.md",
     "README_CN.md",
+    "home/src/pages/team/index.jsx",
     "home/docs/others/developer.md",
     "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/others/developer.md"
   ],
