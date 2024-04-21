@@ -138,7 +138,8 @@
             "help/nginx",
             "help/pop3",
             "help/smtp",
-            "help/ntp"
+            "help/ntp",
+            "help/dns"
           ]
         },
         {
