@@ -25,14 +25,12 @@ import java.util.regex.Pattern;
 
 /**
  * Alarm template keyword matching replacement engine tool
- * 告警模版关键字匹配替换引擎工具
  */
 @Slf4j
 public class AlertTemplateUtil {
 
     /**
      * Match the variable ${key}
-     * 匹配 ${key} 的变量
      * eg: Alert, the instance: ${instance} metrics: ${metrics} is over flow.
      */
     private static final Pattern PATTERN = Pattern.compile("\\$\\{(\\w+)\\}");

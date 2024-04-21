@@ -442,7 +442,7 @@ metrics:
       - index=ifIndex
       - descr=ifDescr
       - mtu=ifMtu
-      - speed=ifSpeed / 1024 / 1024
+      - speed=ifSpeed / 8 / 1024 / 1024
       - in_octets=ifInOctets / 1024 / 1024
       - in_discards=ifInDiscards
       - in_errors=ifInErrors

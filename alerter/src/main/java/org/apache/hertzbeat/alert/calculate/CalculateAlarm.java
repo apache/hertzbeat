@@ -64,9 +64,8 @@ public class CalculateAlarm {
 
     /**
      * The alarm in the process is triggered
-     * 触发中告警信息
-     * key - monitorId+alertDefineId+tags 为普通阈值告警 ｜ The alarm is a common threshold alarm
-     * key - monitorId 为任务状态可用性可达性告警 ｜ Indicates the monitoring status availability reachability alarm
+     * key - monitorId+alertDefineId+tags ｜ The alarm is a common threshold alarm
+     * key - monitorId ｜ Indicates the monitoring status availability reachability alarm
      */
     private final Map<String, Alert>  triggeredAlertMap;
     /**
@@ -163,9 +162,8 @@ public class CalculateAlarm {
                         try {
                             if (match) {
                                 // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                                // 阈值规则匹配，判断已触发阈值次数，触发告警
                                 afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, "", fieldValueMap, define);
-                                // 若此阈值已被触发，则其它数据行的触发忽略
+                                // if the threshold is triggered, ignore other data rows
                                 continue;
                             } else {
                                 String alarmKey = String.valueOf(monitorId) + define.getId();
@@ -177,7 +175,7 @@ public class CalculateAlarm {
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
-                    } catch (Exception ignored) {} 
+                    } catch (Exception ignored) {}
                 }
                 for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
 
@@ -221,17 +219,14 @@ public class CalculateAlarm {
                         try {
                             if (match) {
                                 // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                                // 阈值规则匹配，判断已触发阈值次数，触发告警
                                 afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, tagBuilder.toString(), fieldValueMap, define);
-                                // 若此阈值已被触发，则其它数据行的触发忽略
-                                break;
                             } else {
                                 String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
                                 triggeredAlertMap.remove(alarmKey);
                                 if (define.isRecoverNotice()) {
                                     handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
                                 }
-                            }   
+                            }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
@@ -261,7 +256,7 @@ public class CalculateAlarm {
         }
     }
 
-    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, String tagStr, 
+    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, String tagStr,
                                          Map<String, Object> fieldValueMap, AlertDefine define) {
         String alarmKey = String.valueOf(monitorId) + define.getId() + tagStr;
         Alert triggeredAlert = triggeredAlertMap.get(alarmKey);
@@ -380,7 +375,7 @@ public class CalculateAlarm {
                     notRecoveredAlertMap.put(notResolvedAlertKey, alertBuilder.build());
                     alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build());
                 } else {
-                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());   
+                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
                 }
             } else {
                 int times = preAlert.getTriggerTimes() + 1;
@@ -399,7 +394,6 @@ public class CalculateAlarm {
         } else {
             // Check whether an availability or unreachable alarm is generated before the association monitoring
             // and send a clear alarm to clear the monitoring status
-            // 判断关联监控之前是否有可用性或者不可达告警,发送恢复告警进行任务状态恢复
             triggeredAlertMap.remove(String.valueOf(monitorId));
             String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
             Alert notResolvedAlert = notRecoveredAlertMap.remove(notResolvedAlertKey);
@@ -422,7 +416,7 @@ public class CalculateAlarm {
                         .build();
                 alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
                 Runnable updateStatusJob = () -> {
-                    // todo update pre all type alarm status 
+                    // todo update pre all type alarm status
                     updateAvailabilityAlertStatus(monitorId, resumeAlert);
                 };
                 workerPool.executeJob(updateStatusJob);
