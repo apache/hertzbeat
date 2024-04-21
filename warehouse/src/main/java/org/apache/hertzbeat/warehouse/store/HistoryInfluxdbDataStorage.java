@@ -65,9 +65,9 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
             "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE instance = '%s' and time >= now() - %s GROUP BY time(4h)";
 
     private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %d DEFAULT";
-    
+
     private static final String QUERY_INSTANCE_SQL = "show tag values from %s with key = \"instance\"";
-    
+
     private InfluxDB influxDb;
 
     public HistoryInfluxdbDataStorage(WarehouseProperties properties) {
@@ -85,7 +85,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         client.hostnameVerifier(noopHostnameVerifier());
 
         WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.getStore().getInfluxdb();
-        this.influxDb = InfluxDBFactory.connect(influxdbProperties.getServerUrl(), influxdbProperties.getUsername(), influxdbProperties.getPassword(), client);
+        this.influxDb = InfluxDBFactory.connect(influxdbProperties.serverUrl(), influxdbProperties.username(), influxdbProperties.password(), client);
         // Close it if your application is terminating, or you are not using it anymore.
         Runtime.getRuntime().addShutdownHook(new Thread(influxDb::close));
 
@@ -120,7 +120,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         }
         // set the expiration time
         String createRetentionPolicySql = String.format(CREATE_RETENTION_POLICY, DATABASE, DATABASE,
-                influxdbProperties.getExpireTime(), influxdbProperties.getReplication());
+                influxdbProperties.expireTime(), influxdbProperties.replication());
         QueryResult createRetentionPolicySqlResult = this.influxDb.query(new Query(createRetentionPolicySql));
         if (createRetentionPolicySqlResult.hasError()) {
             log.error("create retention policy in influxdb error, msg: {}", createDatabaseResult.getError());

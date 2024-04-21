@@ -30,10 +30,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class AlertTemplateUtilTest {
 
-    class TemplateValue {
-
-    }
-
     @BeforeEach
     void setUp() {
     }

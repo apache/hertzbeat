@@ -80,7 +80,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         scheduledExecutor.scheduleAtFixedRate(() -> {
             log.warn("[jpa-metrics-store]-start running expired data cleaner." +
                     "Please use time series db instead of jpa for better performance");
-            String expireTimeStr = jpaProperties.getExpireTime();
+            String expireTimeStr = jpaProperties.expireTime();
             long expireTime = 0;
             try {
                 if (NumberUtils.isParsable(expireTimeStr)) {
@@ -100,8 +100,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 int rows = historyDao.deleteHistoriesByTimeBefore(expireTime);
                 log.info("[jpa-metrics-store]-delete {} rows.", rows);
                 long total = historyDao.count();
-                if (total > jpaProperties.getMaxHistoryRecordNum()) {
-                    rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.getMaxHistoryRecordNum() / 2);
+                if (total > jpaProperties.maxHistoryRecordNum()) {
+                    rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.maxHistoryRecordNum() / 2);
                     log.warn("[jpa-metrics-store]-force delete {} rows due too many. Please use time series db instead of jpa for better performance.", rows);
                 }
             } catch (Exception e) {
