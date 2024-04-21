@@ -19,14 +19,21 @@ package org.apache.hertzbeat.collector.dispatch;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
-import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
-import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
 import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
+import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
+import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
+import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -34,9 +41,6 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.Pair;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * metrics collection

@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.List;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +32,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * Send alarm information through Discord robot

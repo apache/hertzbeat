@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import io.lettuce.core.codec.RedisCodec;
-import lombok.extern.slf4j.Slf4j;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * MetricsData redis serialization

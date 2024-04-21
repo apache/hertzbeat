@@ -17,17 +17,16 @@
 
 package org.apache.hertzbeat.manager.dao;
 
-import org.apache.hertzbeat.manager.pojo.dto.AppCount;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * AuthResources 数据库操作

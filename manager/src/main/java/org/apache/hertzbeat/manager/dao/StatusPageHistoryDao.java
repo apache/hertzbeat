@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
-import java.util.List;
 
 /**
  * StatusPageOrg DAO interface.

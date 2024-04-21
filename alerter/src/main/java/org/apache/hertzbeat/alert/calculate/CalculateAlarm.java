@@ -17,17 +17,34 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_CODE_NOT_REACH;
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_CODE_PENDING;
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_CODE_SOLVED;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_METRIC;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_METRICS;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_APP;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_ID;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_NAME;
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.Expression;
 import com.googlecode.aviator.exception.CompileExpressionErrorException;
 import com.googlecode.aviator.exception.ExpressionRuntimeException;
 import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
-import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -46,12 +63,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import jakarta.persistence.criteria.Predicate;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import static org.apache.hertzbeat.common.constants.CommonConstants.*;
 
 /**
  * Calculate alarms based on the alarm definition rules and collected data
@@ -67,7 +78,7 @@ public class CalculateAlarm {
      * key - monitorId+alertDefineId+tags ｜ The alarm is a common threshold alarm
      * key - monitorId ｜ Indicates the monitoring status availability reachability alarm
      */
-    private final Map<String, Alert>  triggeredAlertMap;
+    private final Map<String, Alert> triggeredAlertMap;
     /**
      * The not recover alert
      * key - monitorId + alertDefineId + tags
@@ -100,7 +111,7 @@ public class CalculateAlarm {
                 tags.put(TAG_MONITOR_NAME, monitor.getName());
                 tags.put(TAG_MONITOR_APP, monitor.getApp());
                 this.notRecoveredAlertMap.put(monitor.getId() + CommonConstants.AVAILABILITY,
-                        Alert.builder().tags(tags).target(AVAILABILITY).status(ALERT_STATUS_CODE_PENDING).build());
+                        Alert.builder().tags(tags).target(CommonConstants.AVAILABILITY).status(ALERT_STATUS_CODE_PENDING).build());
             }
         }
         startCalculate();
@@ -175,7 +186,7 @@ public class CalculateAlarm {
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
-                    } catch (Exception ignored) {} 
+                    } catch (Exception ignored) {}
                 }
                 for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
 
@@ -220,15 +231,13 @@ public class CalculateAlarm {
                             if (match) {
                                 // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
                                 afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, tagBuilder.toString(), fieldValueMap, define);
-                                // if the threshold is triggered, ignore other data rows
-                                break;
                             } else {
                                 String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
                                 triggeredAlertMap.remove(alarmKey);
                                 if (define.isRecoverNotice()) {
                                     handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
                                 }
-                            }   
+                            }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
@@ -258,7 +267,7 @@ public class CalculateAlarm {
         }
     }
 
-    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, String tagStr, 
+    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, String tagStr,
                                          Map<String, Object> fieldValueMap, AlertDefine define) {
         String alarmKey = String.valueOf(monitorId) + define.getId() + tagStr;
         Alert triggeredAlert = triggeredAlertMap.get(alarmKey);
@@ -377,7 +386,7 @@ public class CalculateAlarm {
                     notRecoveredAlertMap.put(notResolvedAlertKey, alertBuilder.build());
                     alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build());
                 } else {
-                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());   
+                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
                 }
             } else {
                 int times = preAlert.getTriggerTimes() + 1;
@@ -418,7 +427,7 @@ public class CalculateAlarm {
                         .build();
                 alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
                 Runnable updateStatusJob = () -> {
-                    // todo update pre all type alarm status 
+                    // todo update pre all type alarm status
                     updateAvailabilityAlertStatus(monitorId, resumeAlert);
                 };
                 workerPool.executeJob(updateStatusJob);

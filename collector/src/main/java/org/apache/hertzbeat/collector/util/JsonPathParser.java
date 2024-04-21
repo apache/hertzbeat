@@ -17,12 +17,15 @@
 
 package org.apache.hertzbeat.collector.util;
 
-import com.jayway.jsonpath.*;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.ParseContext;
+import com.jayway.jsonpath.TypeRef;
 import com.jayway.jsonpath.spi.cache.CacheProvider;
 import com.jayway.jsonpath.spi.cache.LRUCache;
-
-import java.util.*;
-
+import java.util.Collections;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 /**

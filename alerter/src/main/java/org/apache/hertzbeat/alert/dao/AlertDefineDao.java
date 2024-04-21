@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import java.util.List;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * AlertDefine Dao

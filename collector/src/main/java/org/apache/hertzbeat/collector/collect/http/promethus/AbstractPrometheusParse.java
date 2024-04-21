@@ -17,10 +17,9 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import java.util.List;
 
 /**
  * prometheus parse abstract class

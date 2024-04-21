@@ -19,6 +19,8 @@ package org.apache.hertzbeat.manager.scheduler.netty.process;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.channel.ChannelHandlerContext;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -26,9 +28,6 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.ProtoJsonUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * handle one-time collect data response message

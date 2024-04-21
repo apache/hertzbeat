@@ -17,10 +17,10 @@
 
 package org.apache.hertzbeat.collector.collect.common.cache;
 
+import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Objects;
 
 /**
  * resource identifier in cache

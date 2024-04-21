@@ -17,15 +17,14 @@
 
 package org.apache.hertzbeat.common.entity.dto;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 
 /**
