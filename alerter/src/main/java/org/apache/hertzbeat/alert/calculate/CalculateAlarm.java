@@ -186,7 +186,7 @@ public class CalculateAlarm {
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
-                    } catch (Exception ignored) {} 
+                    } catch (Exception ignored) {}
                 }
                 for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
 
@@ -231,15 +231,13 @@ public class CalculateAlarm {
                             if (match) {
                                 // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
                                 afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, tagBuilder.toString(), fieldValueMap, define);
-                                // if the threshold is triggered, ignore other data rows
-                                break;
                             } else {
                                 String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
                                 triggeredAlertMap.remove(alarmKey);
                                 if (define.isRecoverNotice()) {
                                     handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
                                 }
-                            }   
+                            }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
                         }
@@ -269,7 +267,7 @@ public class CalculateAlarm {
         }
     }
 
-    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, String tagStr, 
+    private void afterThresholdRuleMatch(long currentTimeMilli, long monitorId, String app, String metrics, String tagStr,
                                          Map<String, Object> fieldValueMap, AlertDefine define) {
         String alarmKey = String.valueOf(monitorId) + define.getId() + tagStr;
         Alert triggeredAlert = triggeredAlertMap.get(alarmKey);
@@ -388,7 +386,7 @@ public class CalculateAlarm {
                     notRecoveredAlertMap.put(notResolvedAlertKey, alertBuilder.build());
                     alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build());
                 } else {
-                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());   
+                    triggeredAlertMap.put(String.valueOf(monitorId), alertBuilder.build());
                 }
             } else {
                 int times = preAlert.getTriggerTimes() + 1;
@@ -429,7 +427,7 @@ public class CalculateAlarm {
                         .build();
                 alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
                 Runnable updateStatusJob = () -> {
-                    // todo update pre all type alarm status 
+                    // todo update pre all type alarm status
                     updateAvailabilityAlertStatus(monitorId, resumeAlert);
                 };
                 workerPool.executeJob(updateStatusJob);

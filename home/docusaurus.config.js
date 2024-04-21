@@ -125,6 +125,11 @@ module.exports = {
           ],
         },
         {
+          label : 'Team',
+          position: 'left',
+          to : '/team/'
+        },
+        {
           label: 'ASF',
           position: 'left',
           items: [
