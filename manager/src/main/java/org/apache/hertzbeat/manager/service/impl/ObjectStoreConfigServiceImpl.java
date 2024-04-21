@@ -82,12 +82,9 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
     public void handler(ObjectStoreDTO<T> config) {
         // 初始化文件存储服务
         if (config != null) {
-            switch (config.getType()) {
-                case OBS:
-                    initObs(config);
-                    break;
+            if (config.getType() == ObjectStoreDTO.Type.OBS) {
+                initObs(config);
                 // case other object store service
-                default:
             }
             ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
         }

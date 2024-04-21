@@ -78,24 +78,18 @@ public class JdbcCommonCollect extends AbstractCollect {
             statement = getConnection(jdbcProtocol.getUsername(),
                     jdbcProtocol.getPassword(), databaseUrl, timeout);
             switch (jdbcProtocol.getQueryType()) {
-                case QUERY_TYPE_ONE_ROW:
-                    queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                    break;
-                case QUERY_TYPE_MULTI_ROW:
-                    queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                    break;
-                case QUERY_TYPE_COLUMNS:
-                    queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                    break;
-                case RUN_SCRIPT:
+                case QUERY_TYPE_ONE_ROW -> queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_MULTI_ROW -> queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_COLUMNS -> queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case RUN_SCRIPT -> {
                     Connection connection = statement.getConnection();
                     FileSystemResource rc = new FileSystemResource(jdbcProtocol.getSql());
                     ScriptUtils.executeSqlScript(connection, rc);
-                    break;
-                default:
+                }
+                default -> {
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("Not support database query type: " + jdbcProtocol.getQueryType());
-                    break;
+                }
             }
         } catch (PSQLException psqlException) {
             // for PostgreSQL 08001
@@ -290,39 +284,28 @@ public class JdbcCommonCollect extends AbstractCollect {
             // when has config jdbc url, use it 
             return jdbcProtocol.getUrl();
         }
-        String url;
-        switch (jdbcProtocol.getPlatform()) {
-            case "mysql":
-            case "mariadb":
-                url = "jdbc:mysql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
-                        + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
-                break;
-            case "postgresql":
-                url = "jdbc:postgresql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-                break;
-            case "clickhouse":
-                url = "jdbc:clickhouse://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-                break;
-            case "sqlserver":
-                url = "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase())
-                        + ";trustServerCertificate=true;";
-                break;
-            case "oracle":
-                url = "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-                break;
-            case "dm":
-                url = "jdbc:dm://" + jdbcProtocol.getHost() + ":" +jdbcProtocol.getPort();
-                break;
-            default:
-                throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
-
-        }
-        return url;
+        return switch (jdbcProtocol.getPlatform()) {
+            case "mysql", "mariadb" ->
+                    "jdbc:mysql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
+                    + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
+            case "postgresql" ->
+                    "jdbc:postgresql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+            case "clickhouse" ->
+                    "jdbc:clickhouse://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+            case "sqlserver" ->
+                    "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase())
+                    + ";trustServerCertificate=true;";
+            case "oracle" ->
+                    "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+            case "dm" ->
+                    "jdbc:dm://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort();
+            default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
+        };
     }
 
     private void validateParams(Metrics metrics) throws IllegalArgumentException {

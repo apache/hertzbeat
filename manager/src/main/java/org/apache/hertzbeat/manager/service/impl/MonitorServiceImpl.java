@@ -725,17 +725,10 @@ public class MonitorServiceImpl implements MonitorService {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
             appCount.setApp(item.getApp());
             switch (item.getStatus()) {
-                case CommonConstants.AVAILABLE_CODE:
-                    appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
-                    break;
-                case CommonConstants.UN_AVAILABLE_CODE:
-                    appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
-                    break;
-                case CommonConstants.UN_MANAGE_CODE:
-                    appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
-                    break;
-                default:
-                    break;
+                case CommonConstants.AVAILABLE_CODE -> appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
+                case CommonConstants.UN_AVAILABLE_CODE -> appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
+                case CommonConstants.UN_MANAGE_CODE -> appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
+                default -> {}
             }
             appCountMap.put(item.getApp(), appCount);
         }

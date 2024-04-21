@@ -146,50 +146,36 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 
                     if (CommonConstants.NULL_VALUE.equals(columnValue)) {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER: {
+                            case CommonConstants.TYPE_NUMBER -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                         .dou(null);
-                                break;
                             }
-
-                            case CommonConstants.TYPE_STRING: {
+                            case CommonConstants.TYPE_STRING -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_STRING)
                                         .str(null);
-                                break;
                             }
-
-                            case CommonConstants.TYPE_TIME: {
+                            case CommonConstants.TYPE_TIME -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_TIME)
                                         .int32(null);
-                                break;
                             }
-                            default:
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
-                                break;
+                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
                         }
                     } else {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER: {
+                            case CommonConstants.TYPE_NUMBER -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                         .dou(Double.parseDouble(columnValue));
-                                break;
                             }
-
-                            case CommonConstants.TYPE_STRING: {
+                            case CommonConstants.TYPE_STRING -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_STRING)
                                         .str(formatStrValue(columnValue));
-                                break;
                             }
-
-                            case CommonConstants.TYPE_TIME: {
+                            case CommonConstants.TYPE_TIME -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_TIME)
                                         .int32(Integer.parseInt(columnValue));
-                                break;
                             }
-                            default:
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                        .dou(Double.parseDouble(columnValue));
-                                break;
+                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                                    .dou(Double.parseDouble(columnValue));
                         }
 
                         if (field.getLabel()) {
