@@ -265,6 +265,7 @@ Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contr
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://jangto.tistory.com/"><img src="https://avatars.githubusercontent.com/u/37864182?v=4?s=100" width="100px;" alt="Hyeon Sung"/><br /><sub><b>Hyeon Sung</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=dukbong" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://crossoverjie.top/"><img src="https://avatars.githubusercontent.com/u/15684156?v=4?s=100" width="100px;" alt="crossoverJie"/><br /><sub><b>crossoverJie</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=crossoverJie" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

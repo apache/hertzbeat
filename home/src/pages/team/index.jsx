@@ -121,10 +121,7 @@ export default function () {
             <span className="desc"><Translate>team.thanks</Translate></span>
 
             <div className="row" style={{marginTop: '20px', marginLeft: '20px'}}>
-              {/*
-              <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
+              
               <table>
   <tbody>
     <tr>
@@ -357,12 +354,7 @@ export default function () {
     </tr>
   </tbody>
 </table>
-
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->
-              */}
+              
             </div>
 
           </div>
