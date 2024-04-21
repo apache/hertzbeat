@@ -125,9 +125,10 @@ module.exports = {
           ],
         },
         {
-          label : 'Team',
+          label : 'team',
           position: 'left',
-          to : '/team/'
+          to : '/team/',
+          activeBaseRegex: `/team`,
         },
         {
           label: 'ASF',
