@@ -18,17 +18,16 @@
 package org.apache.hertzbeat.collector.collect.http.promethus;
 
 import com.google.gson.JsonElement;
+import java.math.BigDecimal;
+import java.util.List;
+import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.PromVectorOrMatrix;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Processing prometheus returns a response format of type "matrix"

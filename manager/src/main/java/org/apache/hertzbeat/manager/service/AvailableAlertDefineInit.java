@@ -17,18 +17,17 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import java.util.List;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
-import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * available alert define database record init

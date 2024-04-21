@@ -17,9 +17,8 @@
 
 package org.apache.hertzbeat.warehouse.service;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
 import java.util.List;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * service for warehouse

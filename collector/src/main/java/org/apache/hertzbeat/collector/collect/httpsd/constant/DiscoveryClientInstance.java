@@ -19,9 +19,8 @@
 
 package org.apache.hertzbeat.collector.collect.httpsd.constant;
 
-import org.apache.commons.lang3.StringUtils;
-
 import java.util.Arrays;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Discovery Client Instance Name For Httpsd monitor

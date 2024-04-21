@@ -19,9 +19,8 @@
 
 package org.apache.hertzbeat.collector.collect.httpsd.discovery;
 
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
-
 import java.util.List;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 
 /**
  * DiscoveryClient interface

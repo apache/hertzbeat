@@ -24,16 +24,15 @@ import com.ecwid.consul.v1.agent.model.Check;
 import com.ecwid.consul.v1.agent.model.Self;
 import com.ecwid.consul.v1.agent.model.Service;
 import com.google.common.collect.Lists;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.ConnectConfig;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServerInfo;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServiceInstance;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * DiscoveryClient impl of Consul

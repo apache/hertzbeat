@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Message notification configuration interface

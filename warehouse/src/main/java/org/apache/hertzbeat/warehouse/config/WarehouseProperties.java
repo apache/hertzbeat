@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.warehouse.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.bind.DefaultValue;
-
 import java.time.ZoneId;
 import java.util.List;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * Data warehouse configuration properties

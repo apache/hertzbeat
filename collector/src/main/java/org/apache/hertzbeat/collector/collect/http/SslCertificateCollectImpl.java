@@ -17,20 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.http;
 
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.IpDomainUtil;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
+import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.ConnectException;
@@ -39,8 +26,19 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
-
-import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
 
 
 /**

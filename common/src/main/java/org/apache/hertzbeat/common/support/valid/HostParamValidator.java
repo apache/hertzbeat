@@ -17,10 +17,9 @@
 
 package org.apache.hertzbeat.common.support.valid;
 
-import org.apache.hertzbeat.common.util.IpDomainUtil;
-
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
 
 /**
  * Host Param Validator

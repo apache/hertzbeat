@@ -35,13 +35,12 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import java.util.concurrent.ThreadFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
-
-import java.util.concurrent.ThreadFactory;
 
 /**
  * netty client
