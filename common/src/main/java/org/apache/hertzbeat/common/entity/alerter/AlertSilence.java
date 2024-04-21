@@ -50,41 +50,41 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Alert Silence Policy Entity | 告警静默策略实体")
+@Schema(description = "Alert Silence Policy Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class AlertSilence {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Alert Silence Policy Entity Primary Key Index ID",
-            description = "告警静默策略实体主键索引ID",
+            description = "Alert Silence Policy Entity Primary Key Index ID",
             example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     @Schema(title = "Policy name",
-            description = "策略名称",
+            description = "Policy name",
             example = "silence-1", accessMode = READ_WRITE)
     @Length(max = 100)
     @NotNull
     private String name;
 
     @Schema(title = "Whether to enable this policy",
-            description = "是否启用此策略",
+            description = "Whether to enable this policy",
             example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
     
     @Schema(title = "Whether to match all",
-            description = "是否应用匹配所有",
+            description = "Whether to match all",
             example = "true", accessMode = READ_WRITE)
     private boolean matchAll = true;
 
     @Schema(title = "Silence type 0: once, 1:cyc",
-            description = "静默类型 0:一次性静默 1:周期性静默", accessMode = READ_WRITE)
+            description = "Silence type 0: once, 1:cyc", accessMode = READ_WRITE)
     @NotNull
     private Byte type;
 
     @Schema(title = "Silenced alerts num",
-            description = "已静默告警次数", accessMode = READ_WRITE)
+            description = "Silenced alerts num", accessMode = READ_WRITE)
     private Integer times;
 
     @Schema(title = "Alarm Level 0:High-Emergency-Critical Alarm 1:Medium-Critical-Critical Alarm 2:Low-Warning-Warning",
@@ -92,20 +92,23 @@ public class AlertSilence {
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
 
-    @Schema(description = "匹配告警信息标签(monitorId:xxx,monitorName:xxx)", example = "{name: key1, value: value1}",
+    @Schema(description = "Match the alarm information label(monitorId:xxx,monitorName:xxx)",
+            example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
     @Convert(converter = JsonTagListAttributeConverter.class)
     @Column(length = 2048)
     private List<TagItem> tags;
 
-    @Schema(title = "周期性静默时有效 星期几,多选,全选或空则为每天 7:周日 1:周一 2:周二 3:周三 4:周四 5:周五 6:周六", example = "[0,1]", accessMode = READ_WRITE)
+    @Schema(title = "The day of the WEEK is valid in periodic silence, multiple," +
+            " all or empty is daily 7: Sunday 1: Monday 2: Tuesday 3: Wednesday 4: Thursday 5: Friday 6: Saturday",
+            example = "[0,1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> days;
 
-    @Schema(title = "限制时间段起始", example = "00:00:00", accessMode = READ_WRITE)
+    @Schema(title = "Limit time period start", example = "00:00:00", accessMode = READ_WRITE)
     private ZonedDateTime periodStart;
 
-    @Schema(title = "限制时间段截止", example = "23:59:59", accessMode = READ_WRITE)
+    @Schema(title = "Restricted time period end", example = "23:59:59", accessMode = READ_WRITE)
     private ZonedDateTime periodEnd;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)

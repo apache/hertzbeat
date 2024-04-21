@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * lru hash map
- * 最近最少使用淘汰算法map
+ * The least recently used elimination algorithm map
  */
 public class LruHashMap<K, V> extends LinkedHashMap<K, V> {
 

@@ -49,12 +49,11 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
- * 指标数据查询接口
  * Indicator data query interface
  */
 @RestController
 @RequestMapping(produces = {APPLICATION_JSON_VALUE})
-@Tag(name = "Metrics Data API | 监控指标数据API")
+@Tag(name = "Metrics Data API | The API for monitoring metric data")
 public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
@@ -70,7 +69,7 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/warehouse/storage/status")
-    @Operation(summary = "Query Warehouse Storage Server Status", description = "查询仓储下存储服务的可用性状态")
+    @Operation(summary = "Query Warehouse Storage Server Status", description = "Query the availability status of the storage service under the warehouse")
     public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus() {
         boolean available = false;
         if (historyDataStorages != null) {
@@ -84,7 +83,7 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metrics/{metrics}")
-    @Operation(summary = "Query Real Time Metrics Data", description = "查询监控指标的实时指标数据")
+    @Operation(summary = "Query Real Time Metrics Data", description = "Query real-time metrics data of monitoring indicators")
     public ResponseEntity<Message<MetricsData>> getMetricsData(
             @Parameter(description = "Monitor Id", example = "343254354")
             @PathVariable Long monitorId,
@@ -144,17 +143,17 @@ public class MetricsDataController {
     }
 
     @GetMapping("/api/monitor/{monitorId}/metric/{metricFull}")
-    @Operation(summary = "查询监控的指定指标的历史数据", description = "查询监控下的指定指标的历史数据")
+    @Operation(summary = "Queries historical data for a specified metric for monitoring", description = "Queries historical data for a specified metric under monitoring")
     public ResponseEntity<Message<MetricsHistoryData>> getMetricHistoryData(
-            @Parameter(description = "监控任务ID", example = "343254354")
+            @Parameter(description = "monitor the task ID", example = "343254354")
             @PathVariable Long monitorId,
-            @Parameter(description = "监控指标全路径", example = "linux.cpu.usage")
+            @Parameter(description = "monitor metric full path", example = "linux.cpu.usage")
             @PathVariable() String metricFull,
-            @Parameter(description = "标签过滤,默认空", example = "disk2")
+            @Parameter(description = "label filter, empty by default", example = "disk2")
             @RequestParam(required = false) String label,
-            @Parameter(description = "查询历史时间段,默认6h-6小时:s-秒、m-分, h-小时, d-天, w-周", example = "6h")
+            @Parameter(description = "query historical time period, default 6h-6 hours: s-seconds, M-minutes, h-hours, d-days, w-weeks", example = "6h")
             @RequestParam(required = false) String history,
-            @Parameter(description = "是否计算聚合数据,需查询时间段大于1周以上,默认不开启,聚合降样时间窗口默认为4小时", example = "false")
+            @Parameter(description = "aggregate data calc. off by default; 4-hour window, query limit >1 week", example = "false")
             @RequestParam(required = false) Boolean interval
     ) {
         AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream()

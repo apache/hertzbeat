@@ -20,7 +20,7 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
    $ docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
    ```
    use```$ docker ps```to check if the database started successfully
-3. Create database in container manually or with [script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgresql-iotdb/conf/sql/schema.sql).
+3. Create database in container manually or with [script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgresql-iotdb/conf/sql/schema.sql).
 
 ### Database creation
 1. Enter postgreSQL or use the client to connect postgreSQL service   

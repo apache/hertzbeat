@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]
 ---
 
-[HertzBeat](https://github.com/dromara/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project that supports various monitoring types such as websites, APIs, PING, ports, databases, entire sites, operating systems, middleware, etc. It features threshold alarms, notification alerts (email, webhook, DingTalk, WeChat Work, Lark robots), and a user-friendly visual interface.
+[HertzBeat](https://github.com/apache/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project that supports various monitoring types such as websites, APIs, PING, ports, databases, entire sites, operating systems, middleware, etc. It features threshold alarms, notification alerts (email, webhook, DingTalk, WeChat Work, Lark robots), and a user-friendly visual interface.
 
 **Official Website: [hertzbeat.com](https://hertzbeat.com) | [tancloud.cn](https://tancloud.cn)**
 
@@ -19,19 +19,19 @@ Thanks to all HertzBeat contributors! 👍👍
 
 Features:
 
-1. [[monitor]feature: Support for SNMP protocol and Windows OS monitoring #192](https://github.com/dromara/hertzbeat/pull/192). Contributed by @ChineseTony
-2. [[monitor] Default use of H2 database instead of MYSQL #191](https://github.com/dromara/hertzbeat/pull/191)
-3. [[manager] Support for internationalization of monitoring parameters, making internationalization more accessible #184](https://github.com/dromara/hertzbeat/pull/184).
-4. [[script] Support for amd64 and arm64 versions of Docker images #189](https://github.com/dromara/hertzbeat/pull/189).
-5. [[monitor]feature: Support for collecting multiple tablespaces metrics from Oracle #163](https://github.com/dromara/hertzbeat/pull/163) Contributed by @brave4Time
-6. [[monitor] Unified prefix "hzb_" added to database tables #193](https://github.com/dromara/hertzbeat/pull/193) Issue from @shimingxy
+1. [[monitor]feature: Support for SNMP protocol and Windows OS monitoring #192](https://github.com/apache/hertzbeat/pull/192). Contributed by @ChineseTony
+2. [[monitor] Default use of H2 database instead of MYSQL #191](https://github.com/apache/hertzbeat/pull/191)
+3. [[manager] Support for internationalization of monitoring parameters, making internationalization more accessible #184](https://github.com/apache/hertzbeat/pull/184).
+4. [[script] Support for amd64 and arm64 versions of Docker images #189](https://github.com/apache/hertzbeat/pull/189).
+5. [[monitor]feature: Support for collecting multiple tablespaces metrics from Oracle #163](https://github.com/apache/hertzbeat/pull/163) Contributed by @brave4Time
+6. [[monitor] Unified prefix "hzb_" added to database tables #193](https://github.com/apache/hertzbeat/pull/193) Issue from @shimingxy
 
 Bugfixes:
 
-1. [[monitor] Fix for the inability to collect CPU metrics on Tencent's CentOS version #164](https://github.com/dromara/hertzbeat/pull/164) Contributed by @wyt199905.
-2. [[manager] Fix for Oracle monitoring percentage metric collection issue #168](https://github.com/dromara/hertzbeat/pull/168)
-3. [[monitor] bugfix: Fix for Elasticsearch monitoring failure under basic authentication #174](https://github.com/dromara/hertzbeat/pull/174) Contributed by @weifuqing
-4. [Fix for monitoring failure due to ambiguous Oracle monitoring parameter "database name" #182](https://github.com/dromara/hertzbeat/pull/182) @zklmcookle
+1. [[monitor] Fix for the inability to collect CPU metrics on Tencent's CentOS version #164](https://github.com/apache/hertzbeat/pull/164) Contributed by @wyt199905.
+2. [[manager] Fix for Oracle monitoring percentage metric collection issue #168](https://github.com/apache/hertzbeat/pull/168)
+3. [[monitor] bugfix: Fix for Elasticsearch monitoring failure under basic authentication #174](https://github.com/apache/hertzbeat/pull/174) Contributed by @weifuqing
+4. [Fix for monitoring failure due to ambiguous Oracle monitoring parameter "database name" #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
 Online at https://console.tancloud.cn.
 
@@ -71,19 +71,19 @@ Thanks to the contributors! 👍👍
 
 Feature：
 
-1. [[monitor]feature: support snmp collect protocol and windows monitor type #192](https://github.com/dromara/hertzbeat/pull/192).  contribute by @ChineseTony
-2. [[monitor]change default database mysql to h2 #191](https://github.com/dromara/hertzbeat/pull/191)
-3. [[manager]support monitor params name i18n #184](https://github.com/dromara/hertzbeat/pull/184).
-4. [[script]build multi cpu arch hertzbeat docker version #189](https://github.com/dromara/hertzbeat/pull/189).
-5.  [[monitor]feature: support oracle multi tablespaces #163](https://github.com/dromara/hertzbeat/pull/163) contribute by @brave4Time
-6. [[monitor]database tables append prefix hzb_ #193](https://github.com/dromara/hertzbeat/pull/193) issue from @shimingxy
+1. [[monitor]feature: support snmp collect protocol and windows monitor type #192](https://github.com/apache/hertzbeat/pull/192).  contribute by @ChineseTony
+2. [[monitor]change default database mysql to h2 #191](https://github.com/apache/hertzbeat/pull/191)
+3. [[manager]support monitor params name i18n #184](https://github.com/apache/hertzbeat/pull/184).
+4. [[script]build multi cpu arch hertzbeat docker version #189](https://github.com/apache/hertzbeat/pull/189).
+5.  [[monitor]feature: support oracle multi tablespaces #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
+6. [[monitor]database tables append prefix hzb_ #193](https://github.com/apache/hertzbeat/pull/193) issue from @shimingxy
 
 Bugfix.
 
-1. [[monitor]fix can not collect cpu metrics in tencent centos #164](https://github.com/dromara/hertzbeat/pull/164) contribute by @wyt199905 .
-2. [[manager]fix oracle config yml percentage error #168](https://github.com/dromara/hertzbeat/pull/168)
-3. [[monitor] bugfix: fix elasticsearch collect error when need basic auth #174](https://github.com/dromara/hertzbeat/pull/174) contribute by @weifuqing
-4. [Change the Oracle database name to the service name to reduce ambiguity #182](https://github.com/dromara/hertzbeat/pull/182) @zklmcookle
+1. [[monitor]fix can not collect cpu metrics in tencent centos #164](https://github.com/apache/hertzbeat/pull/164) contribute by @wyt199905 .
+2. [[manager]fix oracle config yml percentage error #168](https://github.com/apache/hertzbeat/pull/168)
+3. [[monitor] bugfix: fix elasticsearch collect error when need basic auth #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
+4. [Change the Oracle database name to the service name to reduce ambiguity #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
 Online https://console.tancloud.cn.
 
@@ -117,7 +117,7 @@ Have Fun!
 
 ----
 
-> [HertzBeat](https://github.com/dromara/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source project supporting monitoring for websites, APIs, PING, ports, databases, operating systems, and more, with a user-friendly visual interface.  
+> [HertzBeat](https://github.com/apache/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source project supporting monitoring for websites, APIs, PING, ports, databases, operating systems, and more, with a user-friendly visual interface.  
 > We also offer a [SAAS cloud monitoring version](https://console.tancloud.cn), allowing small and medium teams and individuals to start monitoring their web resources without deploying a complicated monitoring system, simply [log in to start](https://console.tancloud.cn) your monitoring journey for free.  
 > HertzBeat supports custom monitoring; you can customize the monitoring types and metrics you need through configuration of the YML file to meet common personalized needs.  
 > HertzBeat is modular, with `manager, collector, scheduler, warehouse, alerter` modules decoupled, facilitating understanding and custom development.  
@@ -129,5 +129,5 @@ Have Fun!
 
 **Repository Addresses**
 
-[Github](https://github.com/dromara/hertzbeat) https://github.com/dromara/hertzbeat      
-[Gitee](https://gitee.com/dromara/hertzbeat) https://gitee.com/dromara/hertzbeat
+[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) https://gitee.com/hertzbeat/hertzbeat

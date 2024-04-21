@@ -1644,8 +1644,8 @@ public final class ClusterMsg {
                                      });
         internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor =
                 getDescriptor().getMessageTypes().get(0);
-        internal_static_org_dromara_hertzbeat_common_entity_message_Message_fieldAccessorTable = new
-                                                                                                         com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_org_dromara_hertzbeat_common_entity_message_Message_fieldAccessorTable =
+                new com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
                 internal_static_org_dromara_hertzbeat_common_entity_message_Message_descriptor,
                 new String[]{"Identity", "Direction", "Type", "Msg",});
     }
