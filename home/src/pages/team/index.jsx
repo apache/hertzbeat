@@ -1,3 +1,4 @@
+
 import React from 'react';
 import BrowserOnly from '@docusaurus/BrowserOnly';
 import config from "./member.json";
@@ -8,6 +9,9 @@ import AOS from 'aos';
 import 'aos/dist/aos.css';
 import Translate from '@docusaurus/Translate'
 
+/**
+ * refer from https://github.com/apache/incubator-streampark-website/tree/dev/src/pages/team 
+ */
 export default function () {
   const dataSource = config;
 
