@@ -170,7 +170,8 @@ module.exports = {
           items: [
             {
               label: 'contributors',
-              to: '/docs/others/developer',
+              to : '/team/',
+              activeBaseRegex: `/team`,
             },
             {
               label: 'contributing',
