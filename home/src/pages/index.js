@@ -168,7 +168,7 @@ function Home() {
                 <li className="footer__item">
                   <div className="footer-left-box">
                     <div className="flex align-center footer-system">
-                      <span className="system-title">About StreamPark</span>
+                      <span className="system-title">About Hertzbeat</span>
                     </div>
                     <p>
                       Make stream processing easier! Easy-to-use streaming
@@ -189,7 +189,7 @@ function Home() {
                 </li>
                 <li className="footer__item">
                   <a
-                    href="https://github.com/apache/incubator-streampark/releases"
+                    href="https://github.com/apache/incubator-Hertzbeat/releases"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer__link-item"
@@ -211,7 +211,7 @@ function Home() {
                 </li>
                 <li className="footer__item">
                   <a
-                    href="https://github.com/apache/incubator-streampark/issues/507"
+                    href="https://github.com/apache/incubator-Hertzbeat/issues/507"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer__link-item"
@@ -238,7 +238,7 @@ function Home() {
               <ul className="footer__items clean-list">
                 <li className="footer__item">
                   <a
-                    href="https://github.com/apache/incubator-streampark"
+                    href="https://github.com/apache/incubator-Hertzbeat"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer__link-item"
@@ -260,7 +260,7 @@ function Home() {
                 </li>
                 <li className="footer__item">
                   <a
-                    href="https://github.com/apache/incubator-streampark/issues"
+                    href="https://github.com/apache/incubator-Hertzbeat/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer__link-item"
@@ -282,7 +282,7 @@ function Home() {
                 </li>
                 <li className="footer__item">
                   <a
-                    href="https://github.com/apache/incubator-streampark/pulls"
+                    href="https://github.com/apache/incubator-Hertzbeat/pulls"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="footer__link-item"
@@ -326,7 +326,7 @@ function Home() {
                         <a
                           className="btn btn-white m-0"
                           type="submit"
-                          href="mailto:dev-subscribe@streampark.apache.org"
+                          href="mailto:dev-subscribe@Hertzbeat.apache.org"
                         >
                           <span>
                             <i className="fa fa-paper-plane text-white"></i>
@@ -383,7 +383,7 @@ function Home() {
                   </div>
                   <div>
                     <p style="font-family: Avenir-Medium;font-size: 14px;color: #999;line-height: 25px;">
-                      Apache StreamPark is an effort undergoing incubation at
+                      Apache Hertzbeat is an effort undergoing incubation at
                       The Apache Software Foundation (ASF), sponsored by the
                       Apache Incubator. Incubation is required of all newly
                       accepted projects until a further review indicates that
@@ -400,7 +400,7 @@ function Home() {
                 <div style="border-top: 1px solid #525252;min-height: 60px;line-height: 25px;text-align: left;font-family: Avenir-Medium;font-size: 14px;color: #999;display: flex;align-items: center;">
                   <span>
                     Copyright © 2022-2024 The Apache Software Foundation. Apache
-                    StreamPark, StreamPark, and its feather logo are trademarks
+                    Hertzbeat, Hertzbeat, and its feather logo are trademarks
                     of The Apache Software Foundation.
                   </span>
                 </div>

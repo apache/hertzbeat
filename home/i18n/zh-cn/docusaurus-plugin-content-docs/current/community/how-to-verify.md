@@ -231,4 +231,4 @@ I  checked:
 mvnw是Maven Wrapper的缩写。它可以支持运行 Maven 项目，而无需安装 Maven 并配置环境变量。如果找不到它，它会根据配置文件，下载对应的 Maven 版本
 </font>
 
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
+This doc refer from [Apache Hertzbeat](https://Hertzbeat.apache.org/)   
