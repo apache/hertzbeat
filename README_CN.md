@@ -426,6 +426,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xuziyang"><img src="https://avatars.githubusercontent.com/u/8465969?v=4?s=100" width="100px;" alt="xuziyang"/><br /><sub><b>xuziyang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xuziyang" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lwqzz"><img src="https://avatars.githubusercontent.com/u/62584513?v=4?s=100" width="100px;" alt="lwqzz"/><br /><sub><b>lwqzz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lwqzz" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/YxYL6125"><img src="https://avatars.githubusercontent.com/u/91076160?v=4?s=100" width="100px;" alt="YxYL"/><br /><sub><b>YxYL</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=YxYL6125" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
