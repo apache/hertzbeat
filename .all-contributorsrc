@@ -6,7 +6,7 @@
   "files": [
     "README.md",
     "README_CN.md",
-    "home/src/pages/team/index.jsx",
+    "home/src/pages/team/index.jsx"
   ],
   "imageSize": 100,
   "commit": true,
@@ -1666,6 +1666,15 @@
       "name": "crossoverJie",
       "avatar_url": "https://avatars.githubusercontent.com/u/15684156?v=4",
       "profile": "https://crossoverjie.top/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "PeixyJ",
+      "name": "PeixyJ",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45998593?v=4",
+      "profile": "https://github.com/PeixyJ",
       "contributions": [
         "code"
       ]
