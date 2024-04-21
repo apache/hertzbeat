@@ -18,10 +18,9 @@
 package org.apache.hertzbeat.manager.service;
 
 import freemarker.template.TemplateException;
+import java.io.IOException;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-
-import java.io.IOException;
 
 /**
  * Email delivery service  邮箱发送服务

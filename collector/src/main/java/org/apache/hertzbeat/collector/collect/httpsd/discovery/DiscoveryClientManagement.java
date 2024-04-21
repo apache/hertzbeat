@@ -19,12 +19,11 @@
 
 package org.apache.hertzbeat.collector.collect.httpsd.discovery;
 
+import java.util.Objects;
+import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientInstance;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.ConsulDiscoveryClient;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.NacosDiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientInstance;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
-
-import java.util.Objects;
 
 /**
  * Discovery Client Management

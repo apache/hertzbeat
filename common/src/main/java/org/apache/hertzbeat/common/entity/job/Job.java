@@ -19,6 +19,16 @@ package org.apache.hertzbeat.common.entity.job;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,9 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Collect task details

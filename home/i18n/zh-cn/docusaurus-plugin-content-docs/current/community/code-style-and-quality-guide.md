@@ -43,6 +43,21 @@ sidebar_position: 3
 
 ## 2 代码检查样式
 
+### 2.1 配置 Checkstyle
+
+1. 安装 Checkstyle-IDEA 插件.
+2. 打开 Checkstyle 设置. 点击 **Settings** → **Tools** → **Checkstyle**。
+3. 设置 **Checkstyle version** 的版本为： **10.14.2**。
+4. 设置 **Scan scope** 为 **Only Java sources (including tests)**。
+5. 点击 **+** 按钮在 **Configuration** 部分打开一个对话框选择 checkstyle 配置文件。
+   1. 输入描述名称，比如：hertzbeat。
+   2. 选择 **Use a local checkstyle file**。
+   3. 设置 **File** 路径为： **script/checkstyle/checkstyle.xml**。
+   4. 选择 **Store relative to project location**。
+   5. 点击 **Next** → **Next** → **Finish**。
+6. 激活刚才的 **Checkstyle** 配置。
+7. 点击 **OK**。
+
 - 后端代码规范 Maven 插件：`checkstyle`
   后端运行 `mvn checkstyle:checkstyle`
 

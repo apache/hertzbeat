@@ -18,9 +18,8 @@
 package org.apache.hertzbeat.alert.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.apache.hertzbeat.common.entity.dto.AlertReport;
-
 import java.util.Map;
+import org.apache.hertzbeat.common.entity.dto.AlertReport;
 
 /**
  * Abstract parent of cloud service alarm information

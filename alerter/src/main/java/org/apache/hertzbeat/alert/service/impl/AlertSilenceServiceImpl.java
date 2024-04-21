@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import java.util.Arrays;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
@@ -30,9 +32,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Arrays;
-import java.util.Set;
 
 /**
  * management interface service implement for alert silence

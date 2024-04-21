@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.collector.collect.redis;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -26,9 +28,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Test case for {@link RedisCommonCollectImpl}

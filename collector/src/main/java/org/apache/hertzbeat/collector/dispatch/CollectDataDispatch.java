@@ -18,11 +18,10 @@
 package org.apache.hertzbeat.collector.dispatch;
 
 
+import java.util.List;
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import java.util.List;
 
 /**
  * Collection data scheduler interface

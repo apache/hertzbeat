@@ -17,10 +17,9 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
+import java.util.UUID;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
-
-import java.util.UUID;
 
 /**
  */

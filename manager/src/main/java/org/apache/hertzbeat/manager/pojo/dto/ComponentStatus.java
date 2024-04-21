@@ -18,13 +18,12 @@
 package org.apache.hertzbeat.manager.pojo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
-
-import java.util.List;
 
 /**
  * status page's component status dto

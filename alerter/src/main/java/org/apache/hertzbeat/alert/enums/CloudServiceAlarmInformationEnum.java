@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.alert.enums;
 
+import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.hertzbeat.alert.dto.CloudAlertReportAbstract;
 import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
-
-import java.util.Arrays;
 
 /**
  * Cloud server alarm enum

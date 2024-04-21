@@ -17,10 +17,9 @@
 
 package org.apache.hertzbeat.collector.collect.prometheus.parser;
 
+import java.util.List;
 import lombok.Data;
 import lombok.ToString;
-
-import java.util.List;
 
 /**
  * metric family
