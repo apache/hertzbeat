@@ -22,6 +22,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[SSL证书有效期](ssl_cert) <br />
   &emsp;&#x1F449;&emsp;[JVM虚拟机](jvm) <br />
   &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
+  &emsp;&#x1F449;&emsp;[DNS服务器](dns) <br />
 
 ### 数据库监控  
 
