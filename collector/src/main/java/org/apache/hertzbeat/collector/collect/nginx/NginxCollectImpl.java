@@ -76,7 +76,7 @@ public class NginxCollectImpl extends AbstractCollect {
 
 
     public NginxCollectImpl() {
-
+        
     }
 
     @Override
@@ -135,9 +135,9 @@ public class NginxCollectImpl extends AbstractCollect {
         if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
             throw new Exception("Nginx collect must has nginx params");
         }
-        
+
         if (nginxProtocol.getUrl() == null
-                || "".equals(nginxProtocol.getUrl())
+                || nginxProtocol.getUrl().isEmpty()
                 || !nginxProtocol.getUrl().startsWith(RIGHT_DASH)) {
             nginxProtocol.setUrl(nginxProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + nginxProtocol.getUrl().trim());
         }
@@ -238,10 +238,10 @@ public class NginxCollectImpl extends AbstractCollect {
         //server_name     d.123.sogou.com 478     115M    2850G   30218726        115     39M
         //server_name     dl.pinyin.sogou.com     913     312M    8930G   35345453        225     97M
         //server_name     download.ie.sogou.com   964     275M    7462G   7979817 297     135M
-        List<ReqStatusResponse> reqStatusRespons = regexReqStatusMatch(resp);
+        List<ReqStatusResponse> reqStatusResponses = regexReqStatusMatch(resp);
         List<String> aliasFields = metrics.getAliasFields();
 
-        for (ReqStatusResponse reqStatusResponse : reqStatusRespons) {
+        for (ReqStatusResponse reqStatusResponse : reqStatusResponses) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equals(alias)) {
@@ -293,7 +293,7 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     private List<ReqStatusResponse> regexReqStatusMatch(String resp) {
-        List<ReqStatusResponse> reqStatusRespons = new ArrayList<>();
+        List<ReqStatusResponse> reqStatusResponses = new ArrayList<>();
 
         String[] lines = resp.split(REGEX_SPLIT);
         for (int i = 1; i < lines.length; i++) {
@@ -308,9 +308,9 @@ public class NginxCollectImpl extends AbstractCollect {
                     .active(values[6])
                     .bandwidth(values[7])
                     .build();
-            reqStatusRespons.add(reqStatusResponse);
+            reqStatusResponses.add(reqStatusResponse);
         }
-        return reqStatusRespons;
+        return reqStatusResponses;
     }
 
     @Data
