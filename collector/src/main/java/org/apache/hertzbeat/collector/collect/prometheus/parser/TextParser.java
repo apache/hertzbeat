@@ -143,14 +143,9 @@ public class TextParser {
         if (buffer.isEmpty()) return;
         c = buffer.read();
         switch (c) {
-            case COMMA:
-                startReadLabelName(metric, buffer);
-                break;
-            case RIGHT_CURLY_BRACKET:
-                readLabelValue(metric, buffer);
-                break;
-            default:
-                throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
+            case COMMA -> startReadLabelName(metric, buffer);
+            case RIGHT_CURLY_BRACKET -> readLabelValue(metric, buffer);
+            default -> throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
         }
     }
 
@@ -222,15 +217,9 @@ public class TextParser {
             // 处理 '\\' 转义
             if (escaped) {
                 switch (c) {
-                    case QUOTES:
-                    case '\\':
-                        builder.append(c);
-                        break;
-                    case 'n':
-                        builder.append('\n');
-                        break;
-                    default:
-                        throw new ParseException("parse label value error");
+                    case QUOTES, '\\' -> builder.append(c);
+                    case 'n' -> builder.append('\n');
+                    default -> throw new ParseException("parse label value error");
                 }
                 escaped = false;
             } else {

@@ -76,8 +76,8 @@ public class ConnectionCommonCache {
                 .maximumWeightedCapacity(DEFAULT_MAX_CAPACITY)
                 .listener((key, value) -> {
                     timeoutMap.remove(key);
-                    if (value instanceof CacheCloseable) {
-                        ((CacheCloseable) value).close();
+                    if (value instanceof CacheCloseable closeable) {
+                        closeable.close();
                     }
                     log.info("connection common cache discard key: {}, value: {}.", key, value);
                 }).build();
@@ -108,8 +108,8 @@ public class ConnectionCommonCache {
                         || cacheTime[0] + cacheTime[1] < currentTime) {
                     cacheMap.remove(key);
                     timeoutMap.remove(key);
-                    if (value instanceof CacheCloseable) {
-                        ((CacheCloseable) value).close();
+                    if (value instanceof CacheCloseable closeable) {
+                        closeable.close();
                     }
 
                 }
@@ -135,9 +135,9 @@ public class ConnectionCommonCache {
                     log.warn("[connection common cache] clean the timeout cache, key {}", key);
                     timeoutMap.remove(key);
                     cacheMap.remove(key);
-                    if (value instanceof CacheCloseable) {
+                    if (value instanceof CacheCloseable closeable) {
                         log.warn("[connection common cache] close the timeout cache, key {}", key);
-                        ((CacheCloseable) value).close();
+                        closeable.close();
                     }
                 }
             });
@@ -213,8 +213,8 @@ public class ConnectionCommonCache {
     public void removeCache(Object key) {
         timeoutMap.remove(key);
         Object value = cacheMap.remove(key);
-        if (value instanceof CacheCloseable) {
-            ((CacheCloseable) value).close();
+        if (value instanceof CacheCloseable closeable) {
+            closeable.close();
         }
     }
 
