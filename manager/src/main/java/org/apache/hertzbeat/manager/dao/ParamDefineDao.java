@@ -17,10 +17,9 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
 
 /**
  * Param Define Database Operations

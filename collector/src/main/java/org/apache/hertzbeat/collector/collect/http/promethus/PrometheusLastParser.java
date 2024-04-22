@@ -17,13 +17,12 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus;
 
-import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
+import java.util.List;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * Prometheus Last Parser

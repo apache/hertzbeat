@@ -19,13 +19,12 @@ package org.apache.hertzbeat.collector.dispatch.entrance.processor;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.channel.ChannelHandlerContext;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
-
-import java.util.List;
 
 /**
  * handle delete cyclic task message

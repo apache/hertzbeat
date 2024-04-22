@@ -22,6 +22,12 @@ import cn.afterturn.easypoi.excel.annotation.Excel;
 import cn.afterturn.easypoi.excel.annotation.ExcelTarget;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.annotation.Resource;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
@@ -31,13 +37,6 @@ import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.CollectionUtils;
-
-import jakarta.annotation.Resource;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Configuration Import Export
@@ -74,17 +73,16 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
 
     /**
      * Parsing an input stream into a form
-     * 将输入流解析为表单
      *
-     * @param is 输入流
-     * @return 表单
+     * @param is input stream
+     * @return form list
      */
     abstract List<ExportAlertDefineDTO> parseImport(InputStream is);
 
     /**
      * Export Configuration to Output Stream
-     * @param exportAlertDefineList 配置列表
-     * @param os          输出流
+     * @param exportAlertDefineList configuration list
+     * @param os          output stream
      */
     abstract void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os);
 

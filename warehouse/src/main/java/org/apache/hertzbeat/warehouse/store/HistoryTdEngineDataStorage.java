@@ -17,18 +17,8 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import org.apache.hertzbeat.common.entity.dto.Value;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
@@ -36,8 +26,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
 
 /**
  * tdengine data storage
@@ -70,21 +73,21 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private final int tableStrColumnDefineMaxLength;
 
     public HistoryTdEngineDataStorage(WarehouseProperties properties) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getTdEngine() == null) {
+        if (properties == null || properties.store() == null || properties.store().tdEngine() == null) {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
-        tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().getTableStrColumnDefineMaxLength();
-        serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
+        tableStrColumnDefineMaxLength = properties.store().tdEngine().tableStrColumnDefineMaxLength();
+        serverAvailable = initTdEngineDatasource(properties.store().tdEngine());
     }
 
     private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
         HikariConfig config = new HikariConfig();
         // jdbc properties
-        config.setJdbcUrl(tdEngineProperties.getUrl());
-        config.setUsername(tdEngineProperties.getUsername());
-        config.setPassword(tdEngineProperties.getPassword());
-        config.setDriverClassName(tdEngineProperties.getDriverClassName());
+        config.setJdbcUrl(tdEngineProperties.url());
+        config.setUsername(tdEngineProperties.username());
+        config.setPassword(tdEngineProperties.password());
+        config.setDriverClassName(tdEngineProperties.driverClassName());
         //minimum number of idle connection
         config.setMinimumIdle(10);
         //maximum number of connection in the pool

@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.TagMonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
-import java.util.Set;
 
 /**
  * TagMonitorBindDao repository

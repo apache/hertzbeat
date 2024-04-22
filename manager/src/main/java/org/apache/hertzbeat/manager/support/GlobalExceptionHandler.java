@@ -17,13 +17,19 @@
 
 package org.apache.hertzbeat.manager.support;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.DETECT_FAILED_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_CONFLICT_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.PARAM_INVALID_CODE;
+import java.util.Objects;
+import javax.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
+import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.manager.support.exception.MonitorMetricsException;
-import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,11 +41,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
-
-import javax.validation.ConstraintViolationException;
-import java.util.Objects;
-
-import static org.apache.hertzbeat.common.constants.CommonConstants.*;
 
 /**
  * controller exception handler
@@ -137,8 +138,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleInputValidException(Exception e) {
         StringBuffer errorMessage = new StringBuffer();
-        if (e instanceof MethodArgumentNotValidException) {
-            MethodArgumentNotValidException exception = (MethodArgumentNotValidException) e;
+        if (e instanceof MethodArgumentNotValidException exception) {
             exception.getBindingResult().getAllErrors().forEach(error -> {
                 try {
                     String field = Objects.requireNonNull(error.getCodes())[0];
@@ -147,8 +147,7 @@ public class GlobalExceptionHandler {
                     errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR);
                 }
             });
-        } else if (e instanceof BindException) {
-            BindException exception = (BindException) e;
+        } else if (e instanceof BindException exception) {
             exception.getAllErrors().forEach(error ->
                     errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR));
         }

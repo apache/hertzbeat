@@ -21,7 +21,6 @@ import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Alert auto configuration.
- * @version 2.1
  */
 @ComponentScan(basePackages = "org.apache.hertzbeat.alert")
 public class AlerterAutoConfiguration {

@@ -138,7 +138,8 @@
             "help/nginx",
             "help/pop3",
             "help/smtp",
-            "help/ntp"
+            "help/ntp",
+            "help/dns"
           ]
         },
         {
@@ -203,7 +204,8 @@
             "help/hadoop",
             "help/iotdb",
             "help/hive",
-            "help/airflow"
+            "help/airflow",
+            "help/clickhouse"
           ]
         },
         {
@@ -254,7 +256,6 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/developer",
         "others/contributing",
         "others/resource"
       ]

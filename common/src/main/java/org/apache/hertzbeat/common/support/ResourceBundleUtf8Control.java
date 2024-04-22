@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.common.support;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,6 +29,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * i18n resource bundle control

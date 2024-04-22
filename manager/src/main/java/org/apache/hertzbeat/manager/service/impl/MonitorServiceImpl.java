@@ -18,6 +18,19 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.servlet.http.HttpServletResponse;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -33,7 +46,16 @@ import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
-import org.apache.hertzbeat.common.util.*;
+import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.apache.hertzbeat.manager.dao.CollectorDao;
+import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.MonitorDao;
+import org.apache.hertzbeat.manager.dao.ParamDao;
+import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
@@ -41,14 +63,9 @@ import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.service.ImExportService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.service.TagService;
+import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.apache.hertzbeat.manager.support.exception.MonitorMetricsException;
-import org.apache.hertzbeat.manager.dao.CollectorDao;
-import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
-import org.apache.hertzbeat.manager.dao.MonitorDao;
-import org.apache.hertzbeat.manager.dao.ParamDao;
-import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
-import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -61,13 +78,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import jakarta.servlet.http.HttpServletResponse;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 监控管理服务实现
@@ -715,17 +725,10 @@ public class MonitorServiceImpl implements MonitorService {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
             appCount.setApp(item.getApp());
             switch (item.getStatus()) {
-                case CommonConstants.AVAILABLE_CODE:
-                    appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
-                    break;
-                case CommonConstants.UN_AVAILABLE_CODE:
-                    appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
-                    break;
-                case CommonConstants.UN_MANAGE_CODE:
-                    appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
-                    break;
-                default:
-                    break;
+                case CommonConstants.AVAILABLE_CODE -> appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
+                case CommonConstants.UN_AVAILABLE_CODE -> appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
+                case CommonConstants.UN_MANAGE_CODE -> appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
+                default -> {}
             }
             appCountMap.put(item.getApp(), appCount);
         }

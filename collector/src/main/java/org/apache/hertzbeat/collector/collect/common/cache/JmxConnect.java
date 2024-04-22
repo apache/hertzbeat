@@ -17,9 +17,8 @@
 
 package org.apache.hertzbeat.collector.collect.common.cache;
 
-import lombok.extern.slf4j.Slf4j;
-
 import javax.management.remote.JMXConnector;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * jmx connect object

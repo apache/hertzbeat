@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.collector.collect.strategy;
 
+import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-
-import java.util.ServiceLoader;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Specific metrics collection factory

@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.alert.service;
 
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.util.Set;
 
 /**
  * management interface service for alert silence

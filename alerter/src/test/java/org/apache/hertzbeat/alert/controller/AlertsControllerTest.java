@@ -70,17 +70,12 @@ class AlertsControllerTest {
 //    @Test
     // todo: fix this test
     void getAlerts() throws Exception {
-
-        // Define the test values
         String sortField = "id";
         String orderType = "asc";
         int pageIndex = 0;
         int pageSize = 10;
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, Sort.by(new Sort.Order(Sort.Direction.fromString(orderType), sortField)));
         Page<Alert> alertPage = new PageImpl<>(Collections.singletonList(Alert.builder().build()));
-
-
-        // Stubbing
         Mockito.when(
                         alertService.getAlerts(
                                 Mockito.any(Specification.class)
@@ -153,7 +148,6 @@ class AlertsControllerTest {
 
     @Test
     void getAlertsSummary() throws Exception {
-        // Stubbing
         Mockito.when(alertService.getAlertsSummary()).thenReturn(new AlertSummary());
 
         mockMvc.perform(

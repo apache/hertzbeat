@@ -19,15 +19,14 @@ package org.apache.hertzbeat.alert.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.alert.util.DateUtil;
-
-import java.io.Serializable;
-import java.util.Map;
 
 /**
  *
@@ -100,7 +99,7 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Conditions {
-        // 指标告警的参数
+        // alarm metrics parameters
         private String metricName;
         private String metricShowName;
         private String calcType;
@@ -114,7 +113,7 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
         private String alarmNotifyType;
         private long alarmNotifyPeriod;
 
-        // 事件告警的参数
+        // alarm event parameters
         private String productName;
         private String productShowName;
         private String eventName;
