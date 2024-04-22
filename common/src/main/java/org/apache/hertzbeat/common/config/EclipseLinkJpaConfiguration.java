@@ -56,7 +56,6 @@ public class EclipseLinkJpaConfiguration extends JpaBaseConfiguration {
         HashMap<String, Object> map = new HashMap<>(8);
         map.put(PersistenceUnitProperties.DDL_GENERATION, "create-or-extend-tables");
         map.put(PersistenceUnitProperties.SESSION_CUSTOMIZER, "org.apache.hertzbeat.common.config.EclipseLinkCustomizer");
-        map.put(PersistenceUnitProperties.LOGGING_LEVEL, SessionLog.FINE_LABEL);
         map.put(PersistenceUnitProperties.ALLOW_NATIVE_SQL_QUERIES, "true");
         map.put(PersistenceUnitProperties.WEAVING, "true");
         return map;

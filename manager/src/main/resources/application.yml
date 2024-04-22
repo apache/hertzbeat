@@ -75,9 +75,12 @@ spring:
 
   jpa:
     show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: h2
     properties:
       eclipselink:
-        weaving: true
+        logging:
+          level: SEVERE
   # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:

@@ -50,3 +50,4 @@ node_modules
 # debug env
 application-dev.yml
 application-mysql.yml
+application-pg.yml
