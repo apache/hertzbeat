@@ -139,7 +139,8 @@
             "help/pop3",
             "help/smtp",
             "help/ntp",
-            "help/dns"
+            "help/dns",
+            "help/ftp"
           ]
         },
         {
@@ -205,7 +206,8 @@
             "help/iotdb",
             "help/hive",
             "help/airflow",
-            "help/clickhouse"
+            "help/clickhouse",
+            "help/elasticsearch"
           ]
         },
         {
