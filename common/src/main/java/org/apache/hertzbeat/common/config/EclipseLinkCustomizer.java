@@ -37,7 +37,7 @@ public class EclipseLinkCustomizer implements SessionCustomizer {
             for (DatabaseMapping mapping : descriptor.getMappings()) {
                 if (mapping.isDirectToFieldMapping()) {
                     // update the column name to lower case with underscore
-                    if (!mapping.getField().getName().equalsIgnoreCase(mapping.getAttributeName())) {
+                    if (mapping.getField().getName().equalsIgnoreCase(mapping.getAttributeName())) {
                         // already custom define the column name, ignore
                         continue;
                     }

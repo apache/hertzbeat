@@ -20,7 +20,9 @@
 package org.apache.hertzbeat.common.config;
 
 import org.eclipse.persistence.config.PersistenceUnitProperties;
+import org.eclipse.persistence.logging.SessionLog;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +38,7 @@ import java.util.Map;
  * jpa eclipselink impl config
  */
 @Configuration
+@EnableAutoConfiguration
 public class EclipseLinkJpaConfiguration extends JpaBaseConfiguration {
 
     protected EclipseLinkJpaConfiguration(DataSource dataSource, JpaProperties properties, 
@@ -53,8 +56,9 @@ public class EclipseLinkJpaConfiguration extends JpaBaseConfiguration {
         HashMap<String, Object> map = new HashMap<>(8);
         map.put(PersistenceUnitProperties.DDL_GENERATION, "create-or-extend-tables");
         map.put(PersistenceUnitProperties.SESSION_CUSTOMIZER, "org.apache.hertzbeat.common.config.EclipseLinkCustomizer");
-        map.put(PersistenceUnitProperties.LOGGING_LEVEL,"WARNING");
+        map.put(PersistenceUnitProperties.LOGGING_LEVEL, SessionLog.FINE_LABEL);
         map.put(PersistenceUnitProperties.ALLOW_NATIVE_SQL_QUERIES, "true");
+        map.put(PersistenceUnitProperties.WEAVING, "true");
         return map;
     }
 }

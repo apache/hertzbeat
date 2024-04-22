@@ -74,8 +74,10 @@ spring:
       max-lifetime: 120000
 
   jpa:
-    hibernate:
-      ddl-auto: update
+    show-sql: false
+    properties:
+      eclipselink:
+        weaving: true
   # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:
