@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.manager.service.TagService;
+import org.eclipse.persistence.internal.jpa.querydef.PredicateImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -104,12 +105,12 @@ public class TagController {
             Predicate[] orPredicates = new Predicate[orList.size()];
             Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
 
-            if (andPredicate.getExpressions().isEmpty() && orPredicate.getExpressions().isEmpty()) {
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
                 return query.where().getRestriction();
-            } else if (andPredicate.getExpressions().isEmpty()) {
-                return query.where(orPredicate).getRestriction();
-            } else if (orPredicate.getExpressions().isEmpty()) {
-                return query.where(andPredicate).getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
             } else {
                 return query.where(andPredicate, orPredicate).getRestriction();
             }
