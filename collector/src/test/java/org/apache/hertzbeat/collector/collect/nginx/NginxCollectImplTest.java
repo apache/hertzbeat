@@ -17,46 +17,284 @@
 
 package org.apache.hertzbeat.collector.collect.nginx;
 
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
+import static org.apache.hertzbeat.common.constants.CommonConstants.TYPE_STRING;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.entity.ContentType;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicStatusLine;
+import org.apache.http.protocol.HttpContext;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test case for {@link NginxCollectImpl}
- *
  */
+@ExtendWith(MockitoExtension.class)
 public class NginxCollectImplTest {
+
+    @InjectMocks
     private NginxCollectImpl nginxCollect;
-    private NginxProtocol nginxProtocol;
+
+    @Mock
+    private CloseableHttpClient client;
+
+    @Mock
+    private CloseableHttpResponse mockHttpResponse;
 
     @BeforeEach
     public void setup() {
-        nginxCollect = new NginxCollectImpl();
-        nginxProtocol = NginxProtocol.builder()
+    }
+
+
+    @Test
+    public void testNginxCollectFail() throws IOException {
+        NginxProtocol nginxProtocol = NginxProtocol.builder()
                 .host("127.0.0.1")
-                .port("80")
+                .port("8080")
                 .timeout("6000")
                 .url("/nginx-status")
                 .build();
+
+        try (MockedStatic<CommonHttpClient> mockStatic = Mockito.mockStatic(CommonHttpClient.class)) {
+            mockStatic.when(() -> CommonHttpClient.getHttpClient()).thenReturn(client);
+            Mockito.when(client.execute(Mockito.any(HttpUriRequest.class), Mockito.any(HttpContext.class)))
+                    .thenReturn(mockHttpResponse);
+
+            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("http", 1, 1),
+                    500, "fail");
+            Mockito.when(mockHttpResponse.getStatusLine()).thenReturn(statusLine);
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            long monitorId = 999;
+            String app = "testNginx";
+            Metrics metrics = new Metrics();
+            metrics.setName("nginx_status");
+            metrics.setNginx(nginxProtocol);
+            nginxCollect.collect(builder, monitorId, app, metrics);
+            assertEquals(builder.getCode(), CollectRep.Code.FAIL);
+        }
+
     }
 
     @Test
-    public void testNginxCollect() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        long monitorId = 999;
-        String app = "testNginx";
+    public void testNginxStatusCollect() throws IOException {
+        NginxProtocol nginxProtocol = NginxProtocol.builder()
+                .host("127.0.0.1")
+                .port("8080")
+                .timeout("6000")
+                .url("/nginx-status")
+                .build();
 
-        Metrics metrics = new Metrics();
-        metrics.setNginx(nginxProtocol);
-        nginxCollect.collect(builder, monitorId, app, metrics);
+        try (MockedStatic<CommonHttpClient> mockedStatic = Mockito.mockStatic(CommonHttpClient.class)) {
+            mockedStatic.when(() -> CommonHttpClient.getHttpClient()).thenReturn(client);
+
+            Mockito.when(client.execute(Mockito.any(HttpUriRequest.class), Mockito.any(HttpContext.class)))
+                    .thenReturn(mockHttpResponse);
+
+            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("http", 1, 1),
+                    200, "OK");
+            Mockito.when(mockHttpResponse.getStatusLine()).thenReturn(statusLine);
+
+            String responseTemp = """
+                    Active connections: %s\s
+                    server accepts handled requests
+                     5 5 5\s
+                    Reading: %s Writing: 1 Waiting: 1\s
+                    """;
+            String connections = "2";
+            String reading = "1";
+            String response = String.format(responseTemp, connections, reading);
+            HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
+            Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
+
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            long monitorId = 999;
+            String app = "testNginx";
+
+            Metrics metrics = new Metrics();
+            List<String> aliasField = new ArrayList<>();
+            aliasField.add("active");
+            aliasField.add("reading");
+
+            List<Metrics.Field> fields = new ArrayList<>();
+            fields.add(Metrics.Field.builder()
+                    .field("active")
+                    .type(TYPE_STRING)
+                    .build());
+            fields.add(Metrics.Field.builder()
+                    .field("reading")
+                    .type(TYPE_STRING)
+                    .build());
+
+            metrics.setAliasFields(aliasField);
+            metrics.setFields(fields);
+            metrics.setName("nginx_status");
+            metrics.setNginx(nginxProtocol);
+            nginxCollect.collect(builder, monitorId, app, metrics);
+            assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
+            for (CollectRep.ValueRow row : builder.getValuesList()) {
+                assertEquals(row.getColumnsCount(), 2);
+                assertEquals(row.getColumns(0), connections);
+                assertEquals(row.getColumns(1), reading);
+            }
+        }
     }
+
+    @Test
+    public void testNginxReqStatusCollect() throws IOException {
+        NginxProtocol nginxProtocol = NginxProtocol.builder()
+                .host("127.0.0.1")
+                .port("8080")
+                .timeout("6000")
+                .url("/req-status")
+                .build();
+
+        try (MockedStatic<CommonHttpClient> mockedStatic = Mockito.mockStatic(CommonHttpClient.class)) {
+            mockedStatic.when(() -> CommonHttpClient.getHttpClient()).thenReturn(client);
+
+            Mockito.when(client.execute(Mockito.any(HttpUriRequest.class), Mockito.any(HttpContext.class)))
+                    .thenReturn(mockHttpResponse);
+
+            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("http", 1, 1),
+                    200, "OK");
+            Mockito.when(mockHttpResponse.getStatusLine()).thenReturn(statusLine);
+
+            String responseTemp = """
+                    zone_name       key     max_active      max_bw  traffic requests        active  bandwidth
+                    imgstore_appid  43    27      6M      63G     %s  0        %s
+                    imgstore_appid  53    329     87M     2058G   %s 50      %s
+                    """;
+            String request0 = "374063";
+            String bandwidth0 = "0";
+            String request1 = "7870529";
+            String bandwidth1 = "25M";
+            String response = String.format(responseTemp, request0, bandwidth0, request1, bandwidth1);
+            HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
+            Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
+
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            long monitorId = 999;
+            String app = "testNginx";
+
+            Metrics metrics = new Metrics();
+            List<String> aliasField = new ArrayList<>();
+            aliasField.add("requests");
+            aliasField.add("bandwidth");
+
+            List<Metrics.Field> fields = new ArrayList<>();
+            fields.add(Metrics.Field.builder()
+                    .field("requests")
+                    .type(TYPE_STRING)
+                    .build());
+            fields.add(Metrics.Field.builder()
+                    .field("bandwidth")
+                    .type(TYPE_STRING)
+                    .build());
+
+            metrics.setAliasFields(aliasField);
+            metrics.setFields(fields);
+            metrics.setName("req_status");
+            metrics.setNginx(nginxProtocol);
+            nginxCollect.collect(builder, monitorId, app, metrics);
+            assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
+            assertEquals(builder.getValuesCount(), 2);
+            for (int i = 0; i < builder.getValuesList().size(); i++) {
+                CollectRep.ValueRow row = builder.getValues(i);
+                assertEquals(row.getColumnsCount(), 2);
+                if (i == 0) {
+                    assertEquals(row.getColumns(0), request0);
+                    assertEquals(row.getColumns(1), bandwidth0);
+                } else {
+                    assertEquals(row.getColumns(0), request1);
+                    assertEquals(row.getColumns(1), bandwidth1);
+                }
+            }
+
+        }
+    }
+
+    static class CustomHttpEntity implements HttpEntity {
+
+        private final String content;
+        private final ContentType contentType;
+
+        public CustomHttpEntity(String content, ContentType contentType) {
+            this.content = content;
+            this.contentType = contentType;
+        }
+
+        @Override
+        public boolean isRepeatable() {
+            return true;
+        }
+
+        @Override
+        public boolean isChunked() {
+            return false;
+        }
+
+        @Override
+        public boolean isStreaming() {
+            return false;
+        }
+
+        @Override
+        public void consumeContent() {
+
+        }
+
+        @Override
+        public long getContentLength() {
+            return content.getBytes(contentType.getCharset()).length;
+        }
+
+        @Override
+        public InputStream getContent() {
+            return new ByteArrayInputStream(content.getBytes(contentType.getCharset()));
+        }
+
+        @Override
+        public void writeTo(OutputStream outStream) throws IOException {
+            outStream.write(content.getBytes(contentType.getCharset()));
+            outStream.flush();
+        }
+
+        @Override
+        public Header getContentEncoding() {
+            return null;
+        }
+
+        @Override
+        public Header getContentType() {
+            return contentType != null ? new BasicHeader("Content-Type", contentType.toString()) : null;
+        }
+
+    }
+
 
     @Test
     public void testNginxStatusMatch() {
