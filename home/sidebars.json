@@ -248,6 +248,13 @@
             "help/alert_smn"
           ]
         },
+        { 
+          "type": "category", 
+          "label": "network", 
+          "items": [ 
+            "help/huawei_switch" 
+          ] 
+        }, 
         "help/issue"
       ]
     },

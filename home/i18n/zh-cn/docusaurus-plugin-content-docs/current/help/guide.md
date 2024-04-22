@@ -60,6 +60,10 @@ sidebar_label: 帮助入门
 ### 大数据监控
 
   &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
+  
+### 网络监控 
+ 
+  &emsp;&#x1F449;&emsp;[华为通用交换机](huawei_switch) <br /> 
 
 ## 💡 告警服务  
 

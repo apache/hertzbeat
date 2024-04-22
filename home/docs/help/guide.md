@@ -60,6 +60,12 @@ sidebar_label: Help Center
 ### Bigdata monitoring
 
 &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
+
+### Network monitoring
+
+&emsp;&#x1F449;&emsp;[Huawei-switch](huawei_switch) <br /> 
+
+
 ***
 
 ## 💡 Alarm service  
