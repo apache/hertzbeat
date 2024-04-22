@@ -19,10 +19,9 @@
 
 package org.apache.hertzbeat.push.service;
 
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.io.InputStream;
+import org.springframework.stereotype.Service;
 
 /**
  * push gateway metrics

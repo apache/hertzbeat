@@ -17,10 +17,17 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.serialize.AlertDeserializer;
 import org.apache.hertzbeat.common.serialize.AlertSerializer;
 import org.apache.hertzbeat.common.serialize.KafkaMetricsDataDeserializer;
@@ -34,15 +41,9 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
 
 
 /**

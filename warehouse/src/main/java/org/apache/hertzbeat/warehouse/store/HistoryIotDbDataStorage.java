@@ -17,13 +17,20 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.config.IotDbVersion;
 import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
@@ -34,10 +41,6 @@ import org.apache.iotdb.tsfile.write.record.Tablet;
 import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.*;
 
 /**
  * IoTDB data storage
@@ -90,32 +93,32 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {
         SessionPool.Builder builder = new SessionPool.Builder();
-        builder.host(properties.getHost());
-        if (properties.getRpcPort() != null) {
-            builder.port(properties.getRpcPort());
+        builder.host(properties.host());
+        if (properties.rpcPort() != null) {
+            builder.port(properties.rpcPort());
         }
-        if (properties.getUsername() != null) {
-            builder.user(properties.getUsername());
+        if (properties.username() != null) {
+            builder.user(properties.username());
         }
-        if (properties.getPassword() != null) {
-            builder.password(properties.getPassword());
+        if (properties.password() != null) {
+            builder.password(properties.password());
         }
-        if (properties.getNodeUrls() != null && !properties.getNodeUrls().isEmpty()) {
-            builder.nodeUrls(properties.getNodeUrls());
+        if (properties.nodeUrls() != null && !properties.nodeUrls().isEmpty()) {
+            builder.nodeUrls(properties.nodeUrls());
         }
-        if (properties.getZoneId() != null) {
-            builder.zoneId(properties.getZoneId());
+        if (properties.zoneId() != null) {
+            builder.zoneId(properties.zoneId());
         }
-        if (properties.getVersion() != null) {
-            this.version = properties.getVersion();
+        if (properties.version() != null) {
+            this.version = properties.version();
         }
-        this.queryTimeoutInMs = properties.getQueryTimeoutInMs();
+        this.queryTimeoutInMs = properties.queryTimeoutInMs();
         this.sessionPool = builder.build();
         boolean available = checkConnection();
         if (available) {
             available = this.createDatabase();
             if (available) {
-                this.initTtl(properties.getExpireTime());
+                this.initTtl(properties.expireTime());
                 log.info("IotDB session pool init success");
             }
         }

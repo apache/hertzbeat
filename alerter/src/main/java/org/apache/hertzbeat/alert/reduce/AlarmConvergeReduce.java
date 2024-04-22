@@ -17,6 +17,11 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.hertzbeat.alert.dao.AlertConvergeDao;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
@@ -25,12 +30,6 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.springframework.stereotype.Service;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * alarm converge

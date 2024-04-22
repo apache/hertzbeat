@@ -18,22 +18,21 @@
 package org.apache.hertzbeat.manager.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Resource;
+import java.util.Locale;
+import java.util.TimeZone;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.AppService;
-import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.service.impl.SystemGeneralConfigServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import jakarta.annotation.Resource;
-import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * Common CommandLineRunner class

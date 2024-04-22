@@ -73,7 +73,9 @@ if [ -n "$SERVER_PORT" ]; then
         fi
     fi
 fi
-
+MAIN_CLASS="org.apache.hertzbeat.collector.Collector"
+EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
+CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"
 # 项目日志输出绝对路径
 LOGS_DIR=$DEPLOY_DIR/logs
 # 如果logs文件夹不存在,则创建文件夹
@@ -99,7 +101,7 @@ echo -e "Starting the HertzBeat $SERVER_NAME ..."
 
 if [ -f "./java/bin/java" ]; then
     echo -e "Use the inner package jdk to start"
-    nohup ./java/bin/java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >logs/startup.log 2>&1 &
+    nohup ./java/bin/java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES $CLASSPATH $MAIN_CLASS >logs/startup.log 2>&1 &
 else
     JAVA_EXIST=`which java | grep bin | wc -l`
     if [ $JAVA_EXIST -le 0 ]; then
@@ -107,7 +109,7 @@ else
       exit 1
     fi
     echo -e "Use the system environment jdk to start"
-    nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES -jar $DEPLOY_DIR/$JAR_NAME >logs/startup.log 2>&1 & 
+    nohup java $JAVA_OPTS $JAVA_MEM_OPTS $CONFIG_FILES $CLASSPATH $MAIN_CLASS >logs/startup.log 2>&1 &
 fi
 
 COUNT=0

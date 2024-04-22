@@ -18,6 +18,21 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import jakarta.persistence.criteria.Predicate;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -33,18 +48,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
-
-import jakarta.persistence.criteria.Predicate;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAmount;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * data storage by mysql/h2 - jpa
@@ -80,7 +83,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         scheduledExecutor.scheduleAtFixedRate(() -> {
             log.warn("[jpa-metrics-store]-start running expired data cleaner." +
                     "Please use time series db instead of jpa for better performance");
-            String expireTimeStr = jpaProperties.getExpireTime();
+            String expireTimeStr = jpaProperties.expireTime();
             long expireTime = 0;
             try {
                 if (NumberUtils.isParsable(expireTimeStr)) {
@@ -100,8 +103,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 int rows = historyDao.deleteHistoriesByTimeBefore(expireTime);
                 log.info("[jpa-metrics-store]-delete {} rows.", rows);
                 long total = historyDao.count();
-                if (total > jpaProperties.getMaxHistoryRecordNum()) {
-                    rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.getMaxHistoryRecordNum() / 2);
+                if (total > jpaProperties.maxHistoryRecordNum()) {
+                    rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.maxHistoryRecordNum() / 2);
                     log.warn("[jpa-metrics-store]-force delete {} rows due too many. Please use time series db instead of jpa for better performance.", rows);
                 }
             } catch (Exception e) {

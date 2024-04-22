@@ -19,17 +19,16 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Resource;
+import java.lang.reflect.Type;
+import java.util.Locale;
+import java.util.TimeZone;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
-
-import jakarta.annotation.Resource;
-import java.lang.reflect.Type;
-import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * system config service impl

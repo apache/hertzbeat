@@ -17,14 +17,31 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.http.ssl.SSLContexts;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
 import org.influxdb.dto.BatchPoints;
@@ -33,14 +50,6 @@ import org.influxdb.dto.Query;
 import org.influxdb.dto.QueryResult;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-
-import javax.net.ssl.*;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * HistoryInfluxdbDataStorage class
@@ -65,9 +74,9 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
             "SELECT FIRST(%s), MEAN(%s), MAX(%s), MIN(%s) FROM %s WHERE instance = '%s' and time >= now() - %s GROUP BY time(4h)";
 
     private static final String CREATE_RETENTION_POLICY = "CREATE RETENTION POLICY \"%s_retention\" ON \"%s\" DURATION %s REPLICATION %d DEFAULT";
-    
+
     private static final String QUERY_INSTANCE_SQL = "show tag values from %s with key = \"instance\"";
-    
+
     private InfluxDB influxDb;
 
     public HistoryInfluxdbDataStorage(WarehouseProperties properties) {
@@ -85,7 +94,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         client.hostnameVerifier(noopHostnameVerifier());
 
         WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.getStore().getInfluxdb();
-        this.influxDb = InfluxDBFactory.connect(influxdbProperties.getServerUrl(), influxdbProperties.getUsername(), influxdbProperties.getPassword(), client);
+        this.influxDb = InfluxDBFactory.connect(influxdbProperties.serverUrl(), influxdbProperties.username(), influxdbProperties.password(), client);
         // Close it if your application is terminating, or you are not using it anymore.
         Runtime.getRuntime().addShutdownHook(new Thread(influxDb::close));
 
@@ -120,7 +129,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         }
         // set the expiration time
         String createRetentionPolicySql = String.format(CREATE_RETENTION_POLICY, DATABASE, DATABASE,
-                influxdbProperties.getExpireTime(), influxdbProperties.getReplication());
+                influxdbProperties.expireTime(), influxdbProperties.replication());
         QueryResult createRetentionPolicySqlResult = this.influxDb.query(new Query(createRetentionPolicySql));
         if (createRetentionPolicySqlResult.hasError()) {
             log.error("create retention policy in influxdb error, msg: {}", createDatabaseResult.getError());

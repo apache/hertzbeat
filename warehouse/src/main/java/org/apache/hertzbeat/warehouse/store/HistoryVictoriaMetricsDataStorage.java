@@ -18,6 +18,20 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,21 +48,15 @@ import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAmount;
-import java.util.*;
 
 /**
  * tdengine data storage
@@ -78,7 +86,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private static final String BASIC = "Basic";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
-    
+
     private final WarehouseProperties.StoreProperties.VictoriaMetricsProperties victoriaMetricsProp;
     
     private final RestTemplate restTemplate;
@@ -96,7 +104,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private boolean checkVictoriaMetricsDatasourceAvailable() {
         // check server status
         try {
-            String result = restTemplate.getForObject(victoriaMetricsProp.getUrl() + STATUS_PATH, String.class);
+            String result = restTemplate.getForObject(victoriaMetricsProp.url() + STATUS_PATH, String.class);
 
             JsonNode jsonNode = JsonUtil.fromJson(result);
             if (jsonNode != null && STATUS_SUCCESS.equalsIgnoreCase(jsonNode.get(STATUS).asText())) {
@@ -169,14 +177,14 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                                 .build();
                         HttpHeaders headers = new HttpHeaders();
                         headers.setContentType(MediaType.APPLICATION_JSON);
-                        if (StringUtils.hasText(victoriaMetricsProp.getUsername())
-                                && StringUtils.hasText(victoriaMetricsProp.getPassword())) {
-                            String authStr = victoriaMetricsProp.getUsername() + ":" + victoriaMetricsProp.getPassword();
+                        if (StringUtils.hasText(victoriaMetricsProp.username())
+                                && StringUtils.hasText(victoriaMetricsProp.password())) {
+                            String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
                             String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
                             headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
                         }
                         HttpEntity<VictoriaMetricsContent> httpEntity = new HttpEntity<>(content, headers);
-                        ResponseEntity<String> responseEntity = restTemplate.postForEntity(victoriaMetricsProp.getUrl() + IMPORT_PATH,
+                        ResponseEntity<String> responseEntity = restTemplate.postForEntity(victoriaMetricsProp.url() + IMPORT_PATH,
                                 httpEntity, String.class);
                         if (responseEntity.getStatusCode().is2xxSuccessful()) {
                             log.debug("insert metrics data to victoria-metrics success. {}", content);
@@ -209,14 +217,14 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(victoriaMetricsProp.getUsername())
-                    && StringUtils.hasText(victoriaMetricsProp.getPassword())) {
-                String authStr = victoriaMetricsProp.getUsername() + ":" + victoriaMetricsProp.getPassword();
+            if (StringUtils.hasText(victoriaMetricsProp.username())
+                    && StringUtils.hasText(victoriaMetricsProp.password())) {
+                String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
                 String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
                 headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + EXPORT_PATH)
+            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + EXPORT_PATH)
                     .queryParam(URLEncoder.encode("match[]", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("start", URLEncoder.encode("now-" + history, StandardCharsets.UTF_8))
                     .queryParam("end", "now")
@@ -300,14 +308,14 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(List.of(MediaType.APPLICATION_JSON));
-            if (StringUtils.hasText(victoriaMetricsProp.getUsername())
-                    && StringUtils.hasText(victoriaMetricsProp.getPassword())) {
-                String authStr = victoriaMetricsProp.getUsername() + ":" + victoriaMetricsProp.getPassword();
+            if (StringUtils.hasText(victoriaMetricsProp.username())
+                    && StringUtils.hasText(victoriaMetricsProp.password())) {
+                String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
                 String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
                 headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
-            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + QUERY_RANGE_PATH)
+            URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -343,7 +351,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                 log.error("query metrics data from victoria-metrics failed. {}", responseEntity);
             }
             // max
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -378,7 +386,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                 }
             }
             // min
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)
@@ -413,7 +421,7 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
                 }
             }
             // avg
-            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.getUrl() + QUERY_RANGE_PATH)
+            uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)
                     .queryParam(URLEncoder.encode("query", StandardCharsets.UTF_8), URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h")
                     .queryParam("start", startTime)

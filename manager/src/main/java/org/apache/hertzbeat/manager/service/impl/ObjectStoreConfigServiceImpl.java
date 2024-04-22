@@ -20,6 +20,8 @@ package org.apache.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.obs.services.ObsClient;
+import java.lang.reflect.Type;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
@@ -32,9 +34,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-
-import javax.annotation.Resource;
-import java.lang.reflect.Type;
 
 /**
  * 文件存储配置服务
