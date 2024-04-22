@@ -139,7 +139,8 @@
             "help/pop3",
             "help/smtp",
             "help/ntp",
-            "help/dns"
+            "help/dns",
+            "help/ftp"
           ]
         },
         {

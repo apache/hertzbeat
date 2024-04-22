@@ -23,6 +23,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[JVM虚拟机](jvm) <br />
   &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
   &emsp;&#x1F449;&emsp;[DNS服务器](dns) <br />
+  &emsp;&#x1F449;&emsp;[FTP服务器](ftp) <br />
 
 ### 数据库监控  
 

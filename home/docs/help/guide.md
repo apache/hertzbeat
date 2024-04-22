@@ -23,6 +23,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[JVM monitoring](jvm) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
 &emsp;&#x1F449;&emsp;[DNS monitoring](dns) <br />
+&emsp;&#x1F449;&emsp;[FTP monitoring](ftp) <br />
 
 ### Database monitoring  
 
