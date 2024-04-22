@@ -17,10 +17,9 @@
 
 package org.apache.hertzbeat.alert.util;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * date time common util

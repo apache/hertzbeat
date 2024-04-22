@@ -17,17 +17,16 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
 /**
  * Store and collect real-time data - memory

@@ -17,13 +17,18 @@
 
 package org.apache.hertzbeat.alert.controller;
 
-import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
-import org.apache.hertzbeat.alert.service.AlertDefineService;
-import org.apache.hertzbeat.common.entity.dto.Message;
+import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
+import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,14 +39,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.validation.Valid;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Alarm definition management API

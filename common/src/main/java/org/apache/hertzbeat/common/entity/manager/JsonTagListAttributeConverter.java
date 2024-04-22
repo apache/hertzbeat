@@ -19,14 +19,13 @@ package org.apache.hertzbeat.common.entity.manager;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.Converter;
-import org.apache.hertzbeat.common.util.JsonUtil;
-
 import jakarta.persistence.AttributeConverter;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.hertzbeat.common.util.JsonUtil;
 
 /**
  * json str to tag list

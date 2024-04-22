@@ -23,9 +23,7 @@ import jakarta.persistence.Converter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
-
 
 /**
  * Convert the list of strings to a JSON string

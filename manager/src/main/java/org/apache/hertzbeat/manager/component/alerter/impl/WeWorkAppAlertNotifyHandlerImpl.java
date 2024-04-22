@@ -18,7 +18,12 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
@@ -30,8 +35,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Objects;
 
 /**
  * WeChat app alert notify impl

@@ -17,11 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus.exporter;
 
-import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
-import org.apache.hertzbeat.common.util.StrBuffer;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +24,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
+import org.apache.hertzbeat.common.util.StrBuffer;
+import org.springframework.util.StringUtils;
 
 /**
  * Resolves the data passed by prometheus's exporter interface http:xxx/metrics

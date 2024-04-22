@@ -17,13 +17,12 @@
 
 package org.apache.hertzbeat.collector.util;
 
-import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Objects;
+import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * private key util

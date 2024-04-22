@@ -18,11 +18,10 @@
 package org.apache.hertzbeat.common.serialize;
 
 
+import java.util.Map;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serializer;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import java.util.Map;
 
 
 /**

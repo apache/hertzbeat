@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.manager.dao;
 
-import org.apache.hertzbeat.common.entity.manager.Param;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 import java.util.Set;
+import org.apache.hertzbeat.common.entity.manager.Param;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
  * ParamDao 数据库操作

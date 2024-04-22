@@ -228,7 +228,7 @@
             <property name="offset" value="0"/>
         </module>
         <module name="AtclauseOrder">
-            <property name="tagOrder" value="@param, @return, @throws, @deprecated, @author"/>
+            <property name="tagOrder" value="@param, @return, @throws, @deprecated"/>
             <property name="target"
                       value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF"/>
         </module>
@@ -276,5 +276,53 @@
             <property name="checkFormat" value="$1"/>
             <property name="influenceFormat" value="1"/>
         </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format" 
+                      value="^.*(@author|@date).*" />
+            <property name="message" 
+                      value="Java file header cannot contain @author or @date" />
+        </module>
+
+        <!--
+
+        IMPORT CHECKS
+
+        -->
+
+        <module name="RedundantImport">
+            <!-- Checks for redundant import statements. -->
+            <property name="severity" value="error"/>
+            <message key="import.redundancy"
+                     value="Redundant import {0}."/>
+        </module>
+
+        <module name="ImportOrder">
+            <property name="severity" value="error"/>
+            <!-- This ensures that static imports go first. -->
+            <property name="option" value="top"/>
+            <property name="sortStaticImportsAlphabetically" value="true"/>
+            <property name="tokens" value="STATIC_IMPORT, IMPORT"/>
+            <message key="import.ordering"
+                     value="Import {0} appears after other imports that it should precede"/>
+        </module>
+
+        <module name="AvoidStarImport">
+            <property name="severity" value="error"/>
+        </module>
+
+        <module name="RedundantModifier">
+            <!-- Checks for redundant modifiers on various symbol definitions.
+              See: http://checkstyle.sourceforge.net/config_modifier.html#RedundantModifier
+            -->
+            <property name="tokens" value="METHOD_DEF, VARIABLE_DEF, ANNOTATION_FIELD_DEF, INTERFACE_DEF, CLASS_DEF, ENUM_DEF"/>
+        </module>
+
+        <module name="UnusedImports">
+            <property name="severity" value="error"/>
+            <property name="processJavadoc" value="true"/>
+            <message key="import.unused"
+                     value="Unused import: {0}."/>
+        </module>
+
     </module>
 </module>

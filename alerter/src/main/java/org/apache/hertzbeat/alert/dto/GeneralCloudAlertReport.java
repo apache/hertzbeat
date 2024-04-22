@@ -17,7 +17,10 @@
 
 package org.apache.hertzbeat.alert.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.util.DateUtil;
 import org.apache.hertzbeat.common.entity.dto.AlertReport;

@@ -20,11 +20,11 @@ package org.apache.hertzbeat.common.entity.alerter;
 import jakarta.persistence.Converter;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
-
 import jakarta.persistence.AttributeConverter;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import org.apache.hertzbeat.common.util.JsonUtil;
 
 /**
  * json map converter

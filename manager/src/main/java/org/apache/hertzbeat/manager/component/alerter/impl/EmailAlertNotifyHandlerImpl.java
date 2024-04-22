@@ -18,6 +18,10 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.mail.internet.MimeMessage;
+import java.util.Date;
+import java.util.Properties;
+import java.util.ResourceBundle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -26,10 +30,10 @@ import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
+import org.apache.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.apache.hertzbeat.manager.service.MailService;
-import org.apache.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
@@ -37,11 +41,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
-
-import jakarta.mail.internet.MimeMessage;
-import java.util.Date;
-import java.util.Properties;
-import java.util.ResourceBundle;
 
 /**
  * Send alarm information through email

@@ -17,15 +17,13 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import jakarta.validation.constraints.NotBlank;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 
 /**
  * monitor define

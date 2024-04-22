@@ -19,7 +19,25 @@ package org.apache.hertzbeat.common.entity.manager;
 
 import jakarta.validation.constraints.Size;
 import org.apache.hertzbeat.common.support.valid.HostValid;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.ConstraintMode;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,14 +47,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Monitor Entity
