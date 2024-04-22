@@ -84,7 +84,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
     private GreptimeDB greptimeDb;
 
     public HistoryGrepTimeDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initDbSession(properties.getStore().getGreptime());
+        this.serverAvailable = this.initDbSession(properties.store().greptime());
     }
 
     private boolean initDbSession(WarehouseProperties.StoreProperties.GreptimeProperties properties) {

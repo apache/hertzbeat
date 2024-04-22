@@ -73,12 +73,12 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private final int tableStrColumnDefineMaxLength;
 
     public HistoryTdEngineDataStorage(WarehouseProperties properties) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getTdEngine() == null) {
+        if (properties == null || properties.store() == null || properties.store().tdEngine() == null) {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
-        tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().tableStrColumnDefineMaxLength();
-        serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
+        tableStrColumnDefineMaxLength = properties.store().tdEngine().tableStrColumnDefineMaxLength();
+        serverAvailable = initTdEngineDatasource(properties.store().tdEngine());
     }
 
     private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
