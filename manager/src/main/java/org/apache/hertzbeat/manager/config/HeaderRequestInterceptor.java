@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import java.io.IOException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
-
-import java.io.IOException;
 
 /**
  * Rest Template interceptor adds request header information

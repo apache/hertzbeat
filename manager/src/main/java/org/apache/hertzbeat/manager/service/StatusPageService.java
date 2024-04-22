@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
-
-import java.util.List;
 
 /**
  * status page service interface.

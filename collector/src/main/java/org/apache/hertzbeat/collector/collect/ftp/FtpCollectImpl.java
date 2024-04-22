@@ -17,21 +17,20 @@
 
 package org.apache.hertzbeat.collector.collect.ftp;
 
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.ftp.FTPClient;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * ftp protocol collection implementation

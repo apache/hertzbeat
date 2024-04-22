@@ -17,22 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import org.apache.hertzbeat.alert.dao.AlertDao;
-import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
-import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
-import org.apache.hertzbeat.alert.dto.AlertSummary;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.alert.service.AlertService;
-import org.apache.hertzbeat.common.entity.dto.AlertReport;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -41,6 +25,21 @@ import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.dao.AlertDao;
+import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
+import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.service.AlertService;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.dto.AlertReport;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Realization of Alarm Information Service
@@ -90,17 +89,10 @@ public class AlertServiceImpl implements AlertService {
             for (AlertPriorityNum priorityNum : priorityNums) {
                 switch (priorityNum.getPriority()) {
                     case CommonConstants
-                            .ALERT_PRIORITY_CODE_WARNING:
-                        alertSummary.setPriorityWarningNum(priorityNum.getNum());
-                        break;
-                    case CommonConstants.ALERT_PRIORITY_CODE_CRITICAL:
-                        alertSummary.setPriorityCriticalNum(priorityNum.getNum());
-                        break;
-                    case CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY:
-                        alertSummary.setPriorityEmergencyNum(priorityNum.getNum());
-                        break;
-                    default:
-                        break;
+                            .ALERT_PRIORITY_CODE_WARNING -> alertSummary.setPriorityWarningNum(priorityNum.getNum());
+                    case CommonConstants.ALERT_PRIORITY_CODE_CRITICAL -> alertSummary.setPriorityCriticalNum(priorityNum.getNum());
+                    case CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY -> alertSummary.setPriorityEmergencyNum(priorityNum.getNum());
+                    default -> {}
                 }
             }
         }

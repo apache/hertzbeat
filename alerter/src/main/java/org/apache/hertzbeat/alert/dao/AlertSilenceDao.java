@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
-
-import java.util.Set;
 
 /**
  * AlertSilence Dao

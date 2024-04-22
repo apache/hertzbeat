@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.common.util;
 
-import org.apache.hertzbeat.common.support.ResourceBundleUtf8Control;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.support.ResourceBundleUtf8Control;
 
 /**
  * i18n ResourceBundle util

@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import java.util.Iterator;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -29,9 +31,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * Send alarm information through WebHookAlter

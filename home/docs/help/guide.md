@@ -22,6 +22,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[SSL Cert monitoring](ssl_cert) <br />
 &emsp;&#x1F449;&emsp;[JVM monitoring](jvm) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
+&emsp;&#x1F449;&emsp;[DNS monitoring](dns) <br />
 
 ### Database monitoring  
 

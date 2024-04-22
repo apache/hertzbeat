@@ -22,15 +22,14 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.epoll.Epoll;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.util.NetworkUtil;
 import org.apache.hertzbeat.remoting.RemotingService;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * netty remote abstract

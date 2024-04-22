@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.warehouse.service;
 
+import java.util.Collections;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.store.AbstractRealTimeDataStorage;
 import org.apache.hertzbeat.warehouse.store.RealTimeMemoryDataStorage;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * warehouse service impl
