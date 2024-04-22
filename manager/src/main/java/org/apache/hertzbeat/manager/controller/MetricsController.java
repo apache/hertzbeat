@@ -46,8 +46,8 @@ public class MetricsController {
     @Operation(summary = "Get Hertzbeat Metrics Data")
     public ResponseEntity<Message<Map<String, Object>>> getMetricsInfo() {
         Map<String, Object> metricsInfo = new HashMap<>(8);
-        if (commonDataQueue instanceof InMemoryCommonDataQueue) {
-            Map<String, Integer> queueInfo = ((InMemoryCommonDataQueue) commonDataQueue).getQueueSizeMetricsInfo();
+        if (commonDataQueue instanceof InMemoryCommonDataQueue dataQueue) {
+            Map<String, Integer> queueInfo = dataQueue.getQueueSizeMetricsInfo();
             metricsInfo.putAll(queueInfo);
         }
         return ResponseEntity.ok(Message.success(metricsInfo));

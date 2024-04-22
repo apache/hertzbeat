@@ -139,15 +139,13 @@ public class JmxCollectImpl extends AbstractCollect {
             if (value instanceof Number || value instanceof  String || value instanceof ObjectName
                     || value instanceof Boolean || value instanceof Date || value instanceof TimeUnit) {
                 attributeValueMap.put(attribute.getName(), value.toString());
-            } else if (value instanceof CompositeData) {
-                CompositeData compositeData = (CompositeData) value;
+            } else if (value instanceof CompositeData compositeData) {
                 CompositeType compositeType = compositeData.getCompositeType();
                 for (String typeKey : compositeType.keySet()) {
                     Object fieldValue = compositeData.get(typeKey);
                     attributeValueMap.put(attribute.getName() + SUB_ATTRIBUTE + typeKey, fieldValue.toString());
                 }
-            } else if (value instanceof String[]) {
-                String[] values = (String[]) value;
+            } else if (value instanceof String[] values) {
                 StringBuilder builder = new StringBuilder();
                 for (int index = 0; index < values.length; index++) {
                     builder.append(values[index]);

@@ -138,8 +138,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleInputValidException(Exception e) {
         StringBuffer errorMessage = new StringBuffer();
-        if (e instanceof MethodArgumentNotValidException) {
-            MethodArgumentNotValidException exception = (MethodArgumentNotValidException) e;
+        if (e instanceof MethodArgumentNotValidException exception) {
             exception.getBindingResult().getAllErrors().forEach(error -> {
                 try {
                     String field = Objects.requireNonNull(error.getCodes())[0];
@@ -148,8 +147,7 @@ public class GlobalExceptionHandler {
                     errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR);
                 }
             });
-        } else if (e instanceof BindException) {
-            BindException exception = (BindException) e;
+        } else if (e instanceof BindException exception) {
             exception.getAllErrors().forEach(error ->
                     errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR));
         }

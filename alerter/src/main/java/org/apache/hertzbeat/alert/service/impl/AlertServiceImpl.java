@@ -89,17 +89,10 @@ public class AlertServiceImpl implements AlertService {
             for (AlertPriorityNum priorityNum : priorityNums) {
                 switch (priorityNum.getPriority()) {
                     case CommonConstants
-                            .ALERT_PRIORITY_CODE_WARNING:
-                        alertSummary.setPriorityWarningNum(priorityNum.getNum());
-                        break;
-                    case CommonConstants.ALERT_PRIORITY_CODE_CRITICAL:
-                        alertSummary.setPriorityCriticalNum(priorityNum.getNum());
-                        break;
-                    case CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY:
-                        alertSummary.setPriorityEmergencyNum(priorityNum.getNum());
-                        break;
-                    default:
-                        break;
+                            .ALERT_PRIORITY_CODE_WARNING -> alertSummary.setPriorityWarningNum(priorityNum.getNum());
+                    case CommonConstants.ALERT_PRIORITY_CODE_CRITICAL -> alertSummary.setPriorityCriticalNum(priorityNum.getNum());
+                    case CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY -> alertSummary.setPriorityEmergencyNum(priorityNum.getNum());
+                    default -> {}
                 }
             }
         }
