@@ -20,10 +20,10 @@ package org.apache.hertzbeat.common.entity.manager;
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Component;
-import java.util.List;
 
 /**
  * Convert the list of strings to a JSON string

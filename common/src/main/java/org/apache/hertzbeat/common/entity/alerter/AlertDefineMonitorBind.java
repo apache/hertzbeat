@@ -85,6 +85,6 @@ public class AlertDefineMonitorBind {
     @JoinColumn(name = "monitor_id", referencedColumnName = "id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
             insertable = false, updatable = false)
     // todo instead of @NotFound
-//    @NotFound(action = NotFoundAction.IGNORE)
+    // @NotFound(action = NotFoundAction.IGNORE)
     private Monitor monitor;
 }

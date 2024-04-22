@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.manager.service.TagService;
-import org.eclipse.persistence.internal.jpa.querydef.PredicateImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

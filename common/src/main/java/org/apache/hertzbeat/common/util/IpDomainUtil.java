@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.common.util;
 
 
-import org.springframework.util.StringUtils;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -28,6 +27,7 @@ import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.http.conn.util.InetAddressUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * ipv4 ipv6 domain util
