@@ -205,7 +205,8 @@
             "help/iotdb",
             "help/hive",
             "help/airflow",
-            "help/clickhouse"
+            "help/clickhouse",
+            "help/elasticsearch"
           ]
         },
         {
