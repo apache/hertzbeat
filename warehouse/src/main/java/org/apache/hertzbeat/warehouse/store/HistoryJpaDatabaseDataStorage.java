@@ -64,7 +64,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
                                          HistoryDao historyDao) {
-        this.jpaProperties = properties.getStore().getJpa();
+        this.jpaProperties = properties.store().jpa();
         this.serverAvailable = true;
         this.historyDao = historyDao;
         expiredDataCleaner();
