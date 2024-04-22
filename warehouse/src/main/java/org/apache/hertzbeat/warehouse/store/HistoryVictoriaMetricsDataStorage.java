@@ -92,12 +92,12 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private final RestTemplate restTemplate;
 
     public HistoryVictoriaMetricsDataStorage(WarehouseProperties properties, RestTemplate restTemplate) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getVictoriaMetrics() == null) {
+        if (properties == null || properties.store() == null || properties.store().victoriaMetrics() == null) {
             log.error("init error, please config Warehouse victoriaMetrics props in application.yml");
             throw new IllegalArgumentException("please config Warehouse victoriaMetrics props");
         }
         this.restTemplate = restTemplate;
-        victoriaMetricsProp = properties.getStore().getVictoriaMetrics();
+        victoriaMetricsProp = properties.store().victoriaMetrics();
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
     }
 

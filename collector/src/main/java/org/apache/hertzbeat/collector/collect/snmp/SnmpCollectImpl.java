@@ -155,8 +155,8 @@ public class SnmpCollectImpl extends AbstractCollect {
                         continue;
                     }
                     Variable variable = binding.getVariable();
-                    if (variable instanceof TimeTicks) {
-                        String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
+                    if (variable instanceof TimeTicks timeTicks) {
+                        String value = timeTicks.toString(FORMAT_PATTERN);
                         oidsValueMap.put(binding.getOid().toDottedString(), value);
                     } else {
                         oidsValueMap.put(binding.getOid().toDottedString(), binding.toValueString());
@@ -196,8 +196,8 @@ public class SnmpCollectImpl extends AbstractCollect {
                             continue;
                         }
                         Variable variable = binding.getVariable();
-                        if (variable instanceof TimeTicks) {
-                            String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
+                        if (variable instanceof TimeTicks timeTicks) {
+                            String value = timeTicks.toString(FORMAT_PATTERN);
                             oidsValueMap.put(binding.getOid().trim().toDottedString(), value);
                         } else {
                             oidsValueMap.put(binding.getOid().trim().toDottedString(), bingdingHexValueToString(binding));

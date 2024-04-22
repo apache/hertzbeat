@@ -93,7 +93,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         client.sslSocketFactory(defaultSslSocketFactory(), defaultTrustManager());
         client.hostnameVerifier(noopHostnameVerifier());
 
-        WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.getStore().getInfluxdb();
+        WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.store().influxdb();
         this.influxDb = InfluxDBFactory.connect(influxdbProperties.serverUrl(), influxdbProperties.username(), influxdbProperties.password(), client);
         // Close it if your application is terminating, or you are not using it anymore.
         Runtime.getRuntime().addShutdownHook(new Thread(influxDb::close));

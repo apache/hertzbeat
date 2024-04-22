@@ -88,7 +88,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private long queryTimeoutInMs;
 
     public HistoryIotDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initIotDbSession(properties.getStore().getIotDb());
+        this.serverAvailable = this.initIotDbSession(properties.store().iotDb());
     }
 
     private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {

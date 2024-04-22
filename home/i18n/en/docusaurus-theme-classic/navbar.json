@@ -138,5 +138,13 @@
   "item.label.Privacy": {
     "message": "Privacy",
     "description": "Navbar item with label Privacy"
+  },
+  "item.label.team": {
+    "message": "Team",
+    "description": "Navbar item with label team"
+  },
+  "item.label.Thanks": {
+    "message": "Thanks",
+    "description": "Navbar item with label Thanks"
   }
 }

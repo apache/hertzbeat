@@ -213,13 +213,13 @@ public class DnsCollectImpl extends AbstractCollect {
         private List<String> additionalList;
 
         public List<String> getList(String metricsName) {
-            switch (metricsName) {
-                case QUESTION: return questionList;
-                case ANSWER: return answerList;
-                case AUTHORITY: return authorityList;
-                case ADDITIONAL: return additionalList;
-                default: return Collections.emptyList();
-            }
+            return switch (metricsName) {
+                case QUESTION -> questionList;
+                case ANSWER -> answerList;
+                case AUTHORITY -> authorityList;
+                case ADDITIONAL -> additionalList;
+                default -> Collections.emptyList();
+            };
         }
     }
 }

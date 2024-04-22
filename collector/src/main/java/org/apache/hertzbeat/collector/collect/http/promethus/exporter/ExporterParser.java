@@ -110,13 +110,9 @@ public class ExporterParser {
         this.currentMetricFamily = metricMap.computeIfAbsent(metricName, key -> new MetricFamily());
         this.currentMetricFamily.setName(metricName);
         switch (token) {
-            case HELP:
-                this.parseHelp(buffer);
-                break;
-            case TYPE:
-                this.parseType(buffer);
-                break;
-            default:
+            case HELP -> this.parseHelp(buffer);
+            case TYPE -> this.parseType(buffer);
+            default -> {}
         }
     }
 
@@ -217,14 +213,9 @@ public class ExporterParser {
         if (buffer.isEmpty()) return;
         c = buffer.read();
         switch (c) {
-            case COMMA:
-                this.startReadLabelName(metric, buffer);
-                break;
-            case RIGHT_CURLY_BRACKET:
-                this.readLabelValue(metric, label, buffer);
-                break;
-            default:
-                throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
+            case COMMA -> this.startReadLabelName(metric, buffer);
+            case RIGHT_CURLY_BRACKET -> this.readLabelValue(metric, label, buffer);
+            default -> throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
         }
     }
 
@@ -232,27 +223,27 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         switch (this.currentMetricFamily.getMetricType()) {
-            case INFO:
+            case INFO -> {
                 MetricFamily.Info info = new MetricFamily.Info();
                 info.setValue(buffer.toDouble());
                 metric.setInfo(info);
-                break;
-            case COUNTER:
+            }
+            case COUNTER -> {
                 MetricFamily.Counter counter = new MetricFamily.Counter();
                 counter.setValue(buffer.toDouble());
                 metric.setCounter(counter);
-                break;
-            case GAUGE:
+            }
+            case GAUGE -> {
                 MetricFamily.Gauge gauge = new MetricFamily.Gauge();
                 gauge.setValue(buffer.toDouble());
                 metric.setGauge(gauge);
-                break;
-            case UNTYPED:
+            }
+            case UNTYPED -> {
                 MetricFamily.Untyped untyped = new MetricFamily.Untyped();
                 untyped.setValue(buffer.toDouble());
                 metric.setUntyped(untyped);
-                break;
-            case SUMMARY:
+            }
+            case SUMMARY -> {
                 MetricFamily.Summary summary = metric.getSummary();
                 if (summary == null) {
                     summary = new MetricFamily.Summary();
@@ -274,8 +265,8 @@ public class ExporterParser {
                     quantile.setValue(buffer.toDouble());
                     quantileList.add(quantile);
                 }
-                break;
-            case HISTOGRAM:
+            }
+            case HISTOGRAM -> {
                 MetricFamily.Histogram histogram = metric.getHistogram();
                 if (histogram == null) {
                     histogram = new MetricFamily.Histogram();
@@ -294,9 +285,8 @@ public class ExporterParser {
                     bucket.setCumulativeCount(buffer.toLong());
                     bucketList.add(bucket);
                 }
-                break;
-            default:
-                throw new ParseException("no such type in metricFamily");
+            }
+            default -> throw new ParseException("no such type in metricFamily");
         }
     }
 
@@ -380,15 +370,9 @@ public class ExporterParser {
             // 处理 '\\' 转义
             if (escaped) {
                 switch (c) {
-                    case QUOTES:
-                    case '\\':
-                        builder.append(c);
-                        break;
-                    case 'n':
-                        builder.append('\n');
-                        break;
-                    default:
-                        throw new ParseException("parse label value error");
+                    case QUOTES, '\\' -> builder.append(c);
+                    case 'n' -> builder.append('\n');
+                    default -> throw new ParseException("parse label value error");
                 }
                 escaped = false;
             } else {
