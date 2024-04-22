@@ -142,5 +142,9 @@
   "item.label.how_to_verify_release": {
     "message": "如何验证版本",
     "description": "Navbar item with label how_to_verify_release"
+  },
+  "item.label.team": {
+    "message": "团队",
+    "description": "Navbar item with label team"
   }
 }
