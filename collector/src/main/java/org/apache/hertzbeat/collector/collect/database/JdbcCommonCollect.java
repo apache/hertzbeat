@@ -94,7 +94,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         } catch (PSQLException psqlException) {
             // for PostgreSQL 08001
             if (CollectorConstants.POSTGRESQL_UN_REACHABLE_CODE.equals(psqlException.getSQLState())) {
-                // 对端链接失败 不可达
+                // Peer connection failed, unreachable
                 builder.setCode(CollectRep.Code.UN_REACHABLE);
             } else {
                 builder.setCode(CollectRep.Code.FAIL);

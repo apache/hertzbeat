@@ -31,6 +31,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -164,7 +165,7 @@ public class DnsCollectImpl extends AbstractCollect {
 
         Message response = res.send(query);
         responseTimeStopWatch.stop();
-        return resolve(response, responseTimeStopWatch.getLastTaskTimeMillis());
+        return resolve(response, responseTimeStopWatch.lastTaskInfo().getTimeMillis());
     }
 
     private DnsResolveResult resolve(Message message, Long responseTime) {
@@ -193,7 +194,8 @@ public class DnsCollectImpl extends AbstractCollect {
 
     private List<String> getSectionInfo(Message message, int section) {
         List<RRset> currentSetList = message.getSectionRRsets(section);
-        if (currentSetList == null || currentSetList.size() <= 0) {
+        
+        if (CollectionUtils.isEmpty(currentSetList)) {
             return Lists.newArrayList();
         }
 
