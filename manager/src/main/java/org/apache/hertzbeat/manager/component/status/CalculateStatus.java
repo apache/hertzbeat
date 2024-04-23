@@ -117,7 +117,7 @@ public class CalculateStatus {
                                                     .getList("tags", Tag.class), JoinType.LEFT);
                                     if (StringUtils.hasText(tagItem.getValue())) {
                                         andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
-                                        andList.add(criteriaBuilder.equal(tagJoin.get("value"), tagItem.getValue()));
+                                        andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagItem.getValue()));
                                     } else {
                                         andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
                                     }

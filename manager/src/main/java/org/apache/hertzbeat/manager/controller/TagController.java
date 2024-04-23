@@ -98,7 +98,7 @@ public class TagController {
             if (search != null && !search.isEmpty()) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
                 orList.add(predicateName);
-                Predicate predicateValue = criteriaBuilder.like(root.get("value"), "%" + search + "%");
+                Predicate predicateValue = criteriaBuilder.like(root.get("tagValue"), "%" + search + "%");
                 orList.add(predicateValue);
             }
             Predicate[] orPredicates = new Predicate[orList.size()];

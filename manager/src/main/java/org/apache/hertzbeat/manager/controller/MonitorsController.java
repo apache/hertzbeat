@@ -105,7 +105,7 @@ public class MonitorsController {
                 if (tagArr.length == TAG_LENGTH) {
                     String tagValue = tagArr[1];
                     andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
-                    andList.add(criteriaBuilder.equal(tagJoin.get("value"), tagValue));
+                    andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagValue));
                 } else {
                     andList.add(criteriaBuilder.equal(tagJoin.get("name"), tag));
                 }

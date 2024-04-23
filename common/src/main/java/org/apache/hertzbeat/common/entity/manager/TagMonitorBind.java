@@ -55,7 +55,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class TagMonitorBind {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Schema(title = "The primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 

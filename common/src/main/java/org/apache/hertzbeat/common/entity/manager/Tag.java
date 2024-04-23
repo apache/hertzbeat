@@ -56,7 +56,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class Tag {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Schema(title = "Tag Primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 

@@ -59,7 +59,7 @@ public class ParamDefine {
      * Parameter Structure ID
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Schema(title = "Parameter structure ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
