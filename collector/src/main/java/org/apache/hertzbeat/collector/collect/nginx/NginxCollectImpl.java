@@ -132,14 +132,14 @@ public class NginxCollectImpl extends AbstractCollect {
 
     private void validateParams(Metrics metrics) throws Exception {
         final NginxProtocol nginxProtocol;
-
         if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
             throw new Exception("Nginx collect must has nginx params");
         }
         
-        if (StringUtils.isEmpty(nginxProtocol.getUrl())
-                || !nginxProtocol.getUrl().startsWith(RIGHT_DASH)) {
-            nginxProtocol.setUrl(nginxProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + nginxProtocol.getUrl().trim());
+        String url = nginxProtocol.getUrl();
+        
+        if (StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
+            nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
     }
 
