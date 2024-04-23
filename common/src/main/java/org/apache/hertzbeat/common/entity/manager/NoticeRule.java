@@ -29,6 +29,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -36,7 +37,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -67,7 +67,7 @@ public class NoticeRule {
     @Schema(title = "Policy name",
             description = "Policy name",
             example = "dispatch-1", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String name;
 
@@ -92,7 +92,7 @@ public class NoticeRule {
     @Schema(title = "Template identification",
             description = "Template identification",
             example = "demo", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     private String templateName;
 
     @Schema(title = "Whether to enable this policy",
@@ -123,9 +123,11 @@ public class NoticeRule {
     private List<Byte> days;
 
     @Schema(title = "Limit time period start", example = "00:00:00", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodStart;
 
     @Schema(title = "Restricted time period end", example = "23:59:59", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodEnd;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)

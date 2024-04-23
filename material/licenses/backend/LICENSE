@@ -482,6 +482,8 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://mvnrepository.com/artifact/jakarta.transaction/jakarta.transaction-api/2.0.1 
     https://mvnrepository.com/artifact/org.eclipse.angus/jakarta.mail/2.0.2 
     https://mvnrepository.com/artifact/org.aspectj/aspectjweaver/1.9.21
+    https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.jpa/4.0.2
+    https://mvnrepository.com/artifact/org.eclipse.persistence/eclipselink/4.0.2
 
 
 ========================================================================
@@ -533,7 +535,5 @@ LGPL-2.1 licenses
 The following components are provided under the LGPL-2.1 License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://mvnrepository.com/artifact/org.hibernate.common/hibernate-commons-annotations/6.0.6.Final LGPL-2.1
-    https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core/6.4.4.Final LGPL-2.1
     https://mvnrepository.com/artifact/com.googlecode.aviator/aviator/5.4.1 http://www.gnu.org/licenses/lgpl.html
 

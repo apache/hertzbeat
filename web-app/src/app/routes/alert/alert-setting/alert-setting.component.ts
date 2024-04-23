@@ -650,8 +650,8 @@ export class AlertSettingComponent implements OnInit {
   onTagManageModalOk() {
     this.isTagManageModalOkLoading = true;
     this.checkedTags.forEach(item => {
-      if (this.define.tags.find(tag => tag.name == item.name && tag.value == item.value) == undefined) {
-        this.define.tags.push(item);
+      if (this.define.tags.find(tag => tag.name == item.name && tag.value == item.tagValue) == undefined) {
+        this.define.tags.push({ name: item.name, value: item.tagValue });
       }
     });
     this.isTagManageModalOkLoading = false;
