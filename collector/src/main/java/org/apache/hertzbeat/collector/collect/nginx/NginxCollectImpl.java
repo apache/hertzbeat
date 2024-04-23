@@ -60,19 +60,19 @@ import org.apache.http.util.EntityUtils;
 @Slf4j
 public class NginxCollectImpl extends AbstractCollect {
 
-    private final static int SUCCESS_CODE = 200;
-    private final static String NGINX_STATUS_NAME = "nginx_status";
-    private final static String REQ_STATUS_NAME = "req_status";
-    private final static String AVAILABLE = "available";
-    private final static String CONNECTIONS = "connections";
-    private final static String ACTIVE = "active";
-    private final static String GET = "get";
-    private final static String FIELD_SPLIT = "_";
-    private final static String REGEX_KEYS = "server\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)";
-    private final static String REGEX_VALUES = "(\\d+) (\\d+) (\\d+)";
-    private final static String REGEX_SERVER = "(\\w+): (\\d+)";
-    private final static String REGEX_SPLIT = "\\r?\\n";
-    private final static String REGEX_LINE_SPLIT = "\\s+";
+    private static final int SUCCESS_CODE = 200;
+    private static final String NGINX_STATUS_NAME = "nginx_status";
+    private static final String REQ_STATUS_NAME = "req_status";
+    private static final String AVAILABLE = "available";
+    private static final String CONNECTIONS = "connections";
+    private static final String ACTIVE = "active";
+    private static final String GET = "get";
+    private static final String FIELD_SPLIT = "_";
+    private static final String REGEX_KEYS = "server\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)";
+    private static final String REGEX_VALUES = "(\\d+) (\\d+) (\\d+)";
+    private static final String REGEX_SERVER = "(\\w+): (\\d+)";
+    private static final String REGEX_SPLIT = "\\r?\\n";
+    private static final String REGEX_LINE_SPLIT = "\\s+";
 
 
     public NginxCollectImpl() {

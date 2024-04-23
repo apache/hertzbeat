@@ -105,8 +105,8 @@ public class NoticeRule {
             example = "false", accessMode = READ_WRITE)
     private boolean filterAll = true;
 
-    @Schema(title = "Filter the matching alarm level, empty is all alarm level " +
-            "0: high -emergency- Urgent alarm - red 1: Medium -critical- Serious alarm - orange 2: Low -warning- Warning alarm - yellow",
+    @Schema(title = "Filter the matching alarm level, empty is all alarm level "
+            + "0: high -emergency- Urgent alarm - red 1: Medium -critical- Serious alarm - orange 2: Low -warning- Warning alarm - yellow",
             example = "[1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
