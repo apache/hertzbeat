@@ -31,12 +31,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -74,7 +74,7 @@ public class Param {
      * Parameter Field Identifier
      */
     @Schema(title = "Parameter identifier field", example = "port", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String field;
 
@@ -82,9 +82,9 @@ public class Param {
      * Param Value
      */
     @Schema(title = "parameter values", example = "8080", accessMode = READ_WRITE)
-    @Length(max = 8126)
-    @Column(name = "`value`", length = 8126)
-    private String value;
+    @Size(max = 8126)
+    @Column(length = 8126)
+    private String paramValue;
 
     /**
      * Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map

@@ -29,12 +29,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -63,7 +63,7 @@ public class NoticeReceiver {
 
     @Schema(title = "Recipient name", description = "Recipient name",
             example = "tom", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String name;
 
@@ -82,33 +82,33 @@ public class NoticeReceiver {
     @Schema(title = "Mobile number: Valid when the notification method is SMS",
             description = "Mobile number: Valid when the notification method is SMS",
             example = "18923435643", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     private String phone;
 
     @Schema(title = "Email account: Valid when the notification method is email",
             description = "Email account: Valid when the notification method is email",
             example = "tom@qq.com", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     private String email;
 
     @Schema(title = "URL address: The notification method is valid for webhook",
             description = "URL address: The notification method is valid for webhook",
             example = "https://www.tancloud.cn", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String hookUrl;
 
     @Schema(title = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
             description = "openId : The notification method is valid for WeChat official account, enterprise WeChat robot or FlyBook robot",
             example = "343432", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String wechatId;
 
     @Schema(title = "Access token : The notification method is valid for DingTalk robot",
             description = "Access token : The notification method is valid for DingTalk robot",
             example = "34823984635647", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String accessToken;
 
@@ -125,7 +125,7 @@ public class NoticeReceiver {
     @Schema(title = "URL address: The notification method is valid for Slack",
             description = "URL address: The notification method is valid for Slack",
             example = "https://hooks.slack.com/services/XXXX/XXXX/XXXX", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String slackWebHookUrl;
 
@@ -147,63 +147,63 @@ public class NoticeReceiver {
     @Schema(title = "Discord channel id: The notification method is valid for Discord",
             description = "Discord channel id: The notification method is valid for Discord",
             example = "1065303416030642266", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String discordChannelId;
 
     @Schema(title = "Discord bot token: The notification method is valid for Discord",
             description = "Discord bot token: The notification method is valid for Discord",
             example = "MTA2NTMwMzU0ODY4Mzg4MjUzNw.xxxxx.xxxxxxx", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String discordBotToken;
 
     @Schema(title = "huawei cloud SMN ak: If the notification method is valid for huawei cloud SMN",
             description = "huawei cloud SMN ak: If the notification method is valid for huawei cloud SMN",
             example = "NCVBODJOEYHSW3VNXXXX", accessMode = READ_WRITE)
-    @Length(max = 22)
+    @Size(max = 22)
     @Column(length = 22)
     private String smnAk;
 
     @Schema(title = "huawei cloud SMN sk: If the notification method is valid for huawei cloud SMN",
             description = "huawei cloud SMN sk: If the notification method is valid for huawei cloud SMN",
             example = "nmSNhUJN9MlpPl8lfCsgdA0KvHCL9JXXXX", accessMode = READ_WRITE)
-    @Length(max = 42)
+    @Size(max = 42)
     @Column(length = 42)
     private String smnSk;
 
     @Schema(title = "huawei cloud SMN projectId: If the notification method is valid for huawei cloud SMN",
             description = "huawei cloud SMN projectId: If the notification method is valid for huawei cloud SMN",
             example = "320c2fb11edb47a481c299c1XXXXXX", accessMode = READ_WRITE)
-    @Length(max = 32)
+    @Size(max = 32)
     @Column(length = 32)
     private String smnProjectId;
 
     @Schema(title = "huawei cloud SMN region: If the notification method is valid for huawei cloud SMN",
             description = "huawei cloud SMN region: If the notification method is valid for huawei cloud SMN",
             example = "cn-east-3", accessMode = READ_WRITE)
-    @Length(max = 32)
+    @Size(max = 32)
     @Column(length = 32)
     private String smnRegion;
 
     @Schema(title = "huawei cloud SMN TopicUrn: If the notification method is valid for huawei cloud SMN",
             description = "huawei cloud SMN TopicUrn: If the notification method is valid for huawei cloud SMN",
             example = "urn:smn:cn-east-3:xxx:hertzbeat_test", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String smnTopicUrn;
 
     @Schema(title = "serverChanToken : The notification method is valid for ServerChan",
             description = "serverChanToken : The notification method is valid for ServerChan",
             example = "SCT193569TSNm6xIabdjqeZPtOGOWcvU1e", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String serverChanToken;
 
     @Schema(title = "Gotify token : The notification method is valid for Gotify",
             description = "Gotify token : The notification method is valid for Gotify",
             example = "A845h__ZMqDxZlO", accessMode = READ_WRITE)
-    @Length(max = 300)
+    @Size(max = 300)
     @Column(length = 300)
     private String gotifyToken;
 

@@ -48,7 +48,7 @@ class TagDaoTest extends AbstractSpringIntegrationTest {
     void setUp() {
         Tag tag = Tag.builder()
                 .name("mock tag")
-                .value("mock value")
+                .tagValue("mock value")
                 .color("mock color")
                 .type((byte) 1)
                 .creator("mock creator")
