@@ -92,6 +92,10 @@ public class DnsCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+        // compatible with monitoring template configurations of older versions
+        if (StringUtils.isBlank(metrics.getDns().getQueryClass())) {
+            metrics.getDns().setQueryClass(DClass.string(DClass.IN));
+        }
         // check params
         if (checkDnsProtocolFailed(metrics.getDns())) {
             builder.setCode(CollectRep.Code.FAIL);
