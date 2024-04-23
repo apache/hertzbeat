@@ -163,7 +163,9 @@
             "help/oracle",
             "help/dm",
             "help/opengauss",
-            "help/nebulaGraph"
+            "help/nebulaGraph",
+            "help/tidb"
+
           ]
         },
         {
@@ -192,7 +194,8 @@
             "help/shenyu",
             "help/rabbitmq",
             "help/activemq",
-            "help/spring_gateway"
+            "help/spring_gateway",
+            "help/nacos"
           ]
         },
         {
@@ -251,6 +254,13 @@
             "help/alert_smn"
           ]
         },
+        {
+          "type": "category",
+          "label": "Network",
+          "items": [
+            "help/huawei_switch"
+          ]
+        },
         "help/issue"
       ]
     },
@@ -258,9 +268,11 @@
       "type": "category",
       "label": "Others",
       "items": [
+        "others/developer",
         "others/contributing",
         "others/resource"
       ]
     }
   ]
 }
+

@@ -31,6 +31,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.AllArgsConstructor;
@@ -38,8 +39,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -61,9 +60,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class Alert {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "snow-flake-id")
-    @GenericGenerator(name = "snow-flake-id",
-            strategy = "org.apache.hertzbeat.common.util.SnowFlakeIdGenerator")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Alarm record entity primary key index ID",
             description = "Alarm record entity primary key index ID",
             example = "87584674384", accessMode = READ_ONLY)
@@ -72,7 +69,7 @@ public class Alert {
     @Schema(title = "Alert target object: monitor availability-available metrics-app.metrics.field",
             description = "Alert target object: monitor availability-available metrics-app.metrics.field",
             example = "1", accessMode = READ_WRITE)
-    @Length(max = 255)
+    @Size(max = 255)
     private String target;
 
     @Schema(title = "Alarm definition ID associated with the alarm",
@@ -93,16 +90,16 @@ public class Alert {
     @Column(length = 4096)
     private String content;
 
-    @Schema(title = "Alarm status: " +
-            "0-normal alarm (to be processed) " +
-            "1-threshold triggered but not reached the number of alarms " +
-            "2-recovered alarm " +
-            "3-processed",
-            description = "Alarm status: " +
-                    "0-normal alarm (to be processed) " +
-                    "1-threshold triggered but not reached the number of alarms " +
-                    "2-recovered alarm " +
-                    "3-processed",
+    @Schema(title = "Alarm status: "
+            + "0-normal alarm (to be processed) "
+            + "1-threshold triggered but not reached the number of alarms "
+            + "2-recovered alarm "
+            + "3-processed",
+            description = "Alarm status: "
+                    + "0-normal alarm (to be processed) "
+                    + "1-threshold triggered but not reached the number of alarms "
+                    + "2-recovered alarm "
+                    + "3-processed",
             example = "1", accessMode = READ_WRITE)
     @Min(0)
     @Max(3)

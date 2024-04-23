@@ -74,7 +74,7 @@ class MonitorControllerTest {
         List<Param> params = new ArrayList<>();
         Param param = new Param();
         param.setField("host");
-        param.setValue("124.222.98.77");
+        param.setParamValue("124.222.98.77");
         params.add(param);
 
         MonitorDto monitorDto = new MonitorDto();

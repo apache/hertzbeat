@@ -46,7 +46,7 @@ class ParamDaoTest extends AbstractSpringIntegrationTest {
     void setUp() {
         Param param = Param.builder()
                 .field("mock field")
-                .value("mock value")
+                .paramValue("mock value")
                 .gmtCreate(LocalDateTime.now())
                 .gmtUpdate(LocalDateTime.now())
                 .monitorId(1L)

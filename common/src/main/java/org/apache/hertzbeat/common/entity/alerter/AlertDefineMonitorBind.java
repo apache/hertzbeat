@@ -39,8 +39,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.hibernate.annotations.NotFound;
-import org.hibernate.annotations.NotFoundAction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -86,6 +84,7 @@ public class AlertDefineMonitorBind {
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "monitor_id", referencedColumnName = "id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
             insertable = false, updatable = false)
-    @NotFound(action = NotFoundAction.IGNORE)
+    // todo instead of @NotFound
+    // @NotFound(action = NotFoundAction.IGNORE)
     private Monitor monitor;
 }

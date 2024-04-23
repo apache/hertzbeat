@@ -145,9 +145,9 @@ public class ExporterParser {
         // todo 这里可能存在问题, 目前逻辑是HISTOGRAM和SUMMARY只创建一个metric
         //  相比源码有所改动: 源码通过属性存储解析结果; 这边通过参数传递
         MetricFamily.Metric metric;
-        if (!metricList.isEmpty() &&
-                (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
-                        this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
+        if (!metricList.isEmpty()
+                && (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM)
+                || this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
             metric = metricList.get(0);
         } else {
             metric = new MetricFamily.Metric();

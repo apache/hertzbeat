@@ -53,19 +53,19 @@ import org.apache.http.util.EntityUtils;
  */
 @Slf4j
 public class NebulaGraphCollectImpl extends AbstractCollect {
-    private final static int SUCCESS_CODE = 200;
+    private static final int SUCCESS_CODE = 200;
 
-    private final static String[] TIME_RANGE = new String[]{"5", "60", "600", "3600"};
+    private static final String[] TIME_RANGE = new String[]{"5", "60", "600", "3600"};
 
-    private final static String REGEX = "\\.%s\\=";
+    private static final String REGEX = "\\.%s\\=";
 
-    private final static String STR_SPLIT = "\n";
+    private static final String STR_SPLIT = "\n";
 
-    private final static String STORAGE_SPLIT_KEY_VALUE = "=";
+    private static final String STORAGE_SPLIT_KEY_VALUE = "=";
 
-    private final static String GRAPH_API = "/stats";
+    private static final String GRAPH_API = "/stats";
 
-    private final static String STORAGE_API = "/rocksdb_stats";
+    private static final String STORAGE_API = "/rocksdb_stats";
 
 
     @Override
@@ -79,7 +79,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         NebulaGraphProtocol nebulaGraph = metrics.getNebulaGraph();
         String timePeriod = nebulaGraph.getTimePeriod();
 
-        if (!Objects.isNull(nebulaGraph.getTimePeriod())&&!Arrays.asList(TIME_RANGE).contains(timePeriod)) {
+        if (!Objects.isNull(nebulaGraph.getTimePeriod()) && !Arrays.asList(TIME_RANGE).contains(timePeriod)) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("The time range for metric statistics, currently supporting 5 seconds, 60 seconds, 600 seconds, and 3600 seconds.");
             return;

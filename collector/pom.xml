@@ -59,11 +59,6 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-remoting</artifactId>
         </dependency>
-        <!-- validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
         <!-- run sql script-->
         <dependency>
             <groupId>org.springframework</groupId>

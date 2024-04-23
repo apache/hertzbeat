@@ -126,7 +126,7 @@ public class DnsCollectImpl extends AbstractCollect {
             // add header columns
             Map<String, String> headerInfo = dnsResolveResult.getHeaderInfo();
             metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumns(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
-        }else {
+        } else {
             // add question/answer/authority/additional columns
             List<String> currentMetricsResolveResultList = dnsResolveResult.getList(metrics.getName());
             for (int index = 0; index < metrics.getAliasFields().size(); index++) {

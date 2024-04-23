@@ -63,7 +63,7 @@ class TagControllerTest {
         Tag tag = new Tag();
         tag.setId(87584674384L);
         tag.setName("app");
-        tag.setValue("23");
+        tag.setTagValue("23");
         tag.setColor("#ffff");
         tag.setType((byte) 1);
         tag.setCreator("tom");
@@ -88,7 +88,7 @@ class TagControllerTest {
         Tag tag = new Tag();
         tag.setId(87584674384L);
         tag.setName("app");
-        tag.setValue("23");
+        tag.setTagValue("23");
         tag.setColor("#ffff");
         tag.setType((byte) 1);
         tag.setCreator("tom");

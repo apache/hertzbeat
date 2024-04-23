@@ -230,7 +230,7 @@ public class PrometheusUtil {
     }
 
     public static List<Metric> parseMetrics(InputStream inputStream) throws IOException {
-        List<Metric> metricList= new ArrayList<>();
+        List<Metric> metricList = new ArrayList<>();
         int i = parseMetric(inputStream, metricList);
         while (i == '\n' || i == COMMENT_LINE) {
             if (i == COMMENT_LINE) {
