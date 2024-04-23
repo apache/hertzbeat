@@ -146,9 +146,9 @@ public class ExporterParser {
         // compared to the source code, there is a slight modification: the source code stores parsing results in a property
         // here, the results are passed through parameters.
         MetricFamily.Metric metric;
-        if (!metricList.isEmpty() &&
-                (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
-                        this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
+        if (!metricList.isEmpty()
+                && (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM)
+                || this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
             metric = metricList.get(0);
         } else {
             metric = new MetricFamily.Metric();

@@ -93,6 +93,10 @@ public class DnsCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+        // compatible with monitoring template configurations of older versions
+        if (StringUtils.isBlank(metrics.getDns().getQueryClass())) {
+            metrics.getDns().setQueryClass(DClass.string(DClass.IN));
+        }
         // check params
         if (checkDnsProtocolFailed(metrics.getDns())) {
             builder.setCode(CollectRep.Code.FAIL);
@@ -123,7 +127,7 @@ public class DnsCollectImpl extends AbstractCollect {
             // add header columns
             Map<String, String> headerInfo = dnsResolveResult.getHeaderInfo();
             metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumns(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
-        }else {
+        } else {
             // add question/answer/authority/additional columns
             List<String> currentMetricsResolveResultList = dnsResolveResult.getList(metrics.getName());
             for (int index = 0; index < metrics.getAliasFields().size(); index++) {

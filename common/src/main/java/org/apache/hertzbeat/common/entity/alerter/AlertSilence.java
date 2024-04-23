@@ -107,8 +107,8 @@ public class AlertSilence {
     @Column(length = 2048)
     private List<TagItem> tags;
 
-    @Schema(title = "The day of the WEEK is valid in periodic silence, multiple," +
-            " all or empty is daily 7: Sunday 1: Monday 2: Tuesday 3: Wednesday 4: Thursday 5: Friday 6: Saturday",
+    @Schema(title = "The day of the WEEK is valid in periodic silence, multiple,"
+            + " all or empty is daily 7: Sunday 1: Monday 2: Tuesday 3: Wednesday 4: Thursday 5: Friday 6: Saturday",
             example = "[0,1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> days;

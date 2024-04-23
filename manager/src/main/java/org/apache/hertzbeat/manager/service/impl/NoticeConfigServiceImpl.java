@@ -182,12 +182,12 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                     }
                     // filter time
                     LocalTime nowTime = nowDate.toLocalTime();
-                    boolean startMatch = rule.getPeriodStart() == null || 
-                            nowTime.isAfter(rule.getPeriodStart().toLocalTime()) ||
-                            (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd()) 
+                    boolean startMatch = rule.getPeriodStart() == null
+                            || nowTime.isAfter(rule.getPeriodStart().toLocalTime())
+                            || (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd())
                                     && nowTime.isBefore(rule.getPeriodStart().toLocalTime()));
-                    boolean endMatch = rule.getPeriodEnd() == null ||
-                            nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
+                    boolean endMatch = rule.getPeriodEnd() == null
+                            || nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
                     return startMatch && endMatch;
                 })
                 .collect(Collectors.toList());

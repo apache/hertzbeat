@@ -113,7 +113,29 @@ params:
     # default value false
     # 默认值 false
     defaultValue: false
-
+  - field: queryClass
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 查询类别
+      en-US: Query Class
+    type: radio
+    required: true
+    options:
+      - label: IN
+        value: IN
+      - label: CHAOS
+        value: CHAOS
+      - label: HESIOD
+        value: HESIOD
+      - label: NONE
+        value: NONE
+      - label: ANY
+        value: ANY
+    # default value IN
+    # 默认值 IN
+    defaultValue: IN
+    hide: true
 # collect metrics config list
 # 采集指标配置列表
 metrics:
@@ -194,6 +216,9 @@ metrics:
       # 是否使用tcp协议
       # Use TCP Protocol
       tcp: ^_^tcp^_^
+      # 查询类别
+      # Query Class
+      queryClass: ^_^queryClass^_^
 
   # metrics - question
   # 监控指标 - question
@@ -236,6 +261,9 @@ metrics:
       # 是否使用tcp协议
       # Use TCP Protocol
       tcp: ^_^tcp^_^
+      # 查询类别
+      # Query Class
+      queryClass: ^_^queryClass^_^
 
   # metrics - answer
   # 监控指标 - answer
@@ -323,6 +351,9 @@ metrics:
       # 是否使用tcp协议
       # Use TCP Protocol
       tcp: ^_^tcp^_^
+      # 查询类别
+      # Query Class
+      queryClass: ^_^queryClass^_^
 
   # metrics - authority
   # 监控指标 - authority
@@ -410,6 +441,9 @@ metrics:
       # 是否使用tcp协议
       # Use TCP Protocol
       tcp: ^_^tcp^_^
+      # 查询类别
+      # Query Class
+      queryClass: ^_^queryClass^_^
 
   # metrics - additional
   # 监控指标 - additional
@@ -497,3 +531,6 @@ metrics:
       # 是否使用tcp协议
       # Use TCP Protocol
       tcp: ^_^tcp^_^
+      # 查询类别
+      # Query Class
+      queryClass: ^_^queryClass^_^

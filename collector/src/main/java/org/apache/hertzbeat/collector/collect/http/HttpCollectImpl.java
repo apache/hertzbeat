@@ -293,8 +293,8 @@ public class HttpCollectImpl extends AbstractCollect {
                 if (CollectorConstants.URL.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(siteUrl);
                 } else if (CollectorConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(statusCode == null ?
-                                                       CommonConstants.NULL_VALUE : String.valueOf(statusCode));
+                    valueRowBuilder.addColumns(statusCode == null
+                            ? CommonConstants.NULL_VALUE : String.valueOf(statusCode));
                 } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(String.valueOf(responseTime));
                 } else if (CollectorConstants.ERROR_MSG.equalsIgnoreCase(alias)) {
@@ -455,8 +455,8 @@ public class HttpCollectImpl extends AbstractCollect {
             if (StringUtils.hasText(auth.getDigestAuthUsername())
                         && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
-                UsernamePasswordCredentials credentials
-                        = new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
+                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(auth.getDigestAuthUsername(),
+                        auth.getDigestAuthPassword());
                 provider.setCredentials(AuthScope.ANY, credentials);
                 AuthCache authCache = new BasicAuthCache();
                 authCache.put(new HttpHost(httpProtocol.getHost(), Integer.parseInt(httpProtocol.getPort())), new DigestScheme());
