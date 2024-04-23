@@ -60,6 +60,7 @@ sidebar_label: 帮助入门
 ### 大数据监控
 
   &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
+  &emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
   
 ### 网络监控 
  
