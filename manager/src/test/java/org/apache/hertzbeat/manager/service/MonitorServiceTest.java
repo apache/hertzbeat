@@ -231,7 +231,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(null)
+                .paramValue(null)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -264,7 +264,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value("str")
+                .paramValue("str")
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -300,7 +300,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value("1150")
+                .paramValue("1150")
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -336,7 +336,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value("1150")
+                .paramValue("1150")
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -380,7 +380,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -425,7 +425,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -472,7 +472,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -501,7 +501,7 @@ class MonitorServiceTest {
         } catch (IllegalArgumentException e) {
             if (checkException) {
                 assertEquals("Params field " + field + " value "
-                        + param.getValue() + " is invalid option value", e.getMessage());
+                        + param.getParamValue() + " is invalid option value", e.getMessage());
             }
         }
     }
@@ -523,7 +523,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -558,9 +558,6 @@ class MonitorServiceTest {
 
     @Test
     void modifyMonitor() {
-        /**
-         * 修改一个DB中不存在的的monitor
-         */
         String value = "value";
 
         MonitorDto dto = new MonitorDto();
@@ -568,7 +565,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);

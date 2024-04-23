@@ -15,32 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.alerter;
+package org.apache.hertzbeat.common.entity.manager;
 
-
-
-import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import java.util.Map;
-import org.apache.hertzbeat.common.util.JsonUtil;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import org.springframework.stereotype.Component;
 
 /**
- * json map converter
+ * zone data time to OffsetDateTime
  */
 @Converter
 @Component
-public class JsonMapAttributeConverter implements AttributeConverter<Map<String, String>, String> {
+public class ZonedDateTimeAttributeConverter implements AttributeConverter<ZonedDateTime, OffsetDateTime> {
 
     @Override
-    public String convertToDatabaseColumn(Map<String, String> attribute) {
-        return JsonUtil.toJson(attribute);
+    public OffsetDateTime convertToDatabaseColumn(ZonedDateTime attribute) {
+        if (attribute == null) {
+            return null;
+        }
+        return attribute.toOffsetDateTime();
     }
 
     @Override
-    public Map<String, String> convertToEntityAttribute(String dbData) {
-        TypeReference<Map<String, String>> typeReference = new TypeReference<>() {};
-        return JsonUtil.fromJson(dbData, typeReference);
+    public ZonedDateTime convertToEntityAttribute(OffsetDateTime dbData) {
+        if (dbData == null) {
+            return null;
+        }
+        return dbData.toZonedDateTime();
     }
 }

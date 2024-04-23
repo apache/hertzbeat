@@ -139,7 +139,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     appDefine.setTimestamp(System.currentTimeMillis());
                     List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                     List<Configmap> configmaps = params.stream()
-                            .map(param -> new Configmap(param.getField(), param.getValue(),
+                            .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                     param.getType())).collect(Collectors.toList());
                     List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                             .filter(item -> StringUtils.hasText(item.getDefaultValue()))

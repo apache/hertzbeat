@@ -31,12 +31,12 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -67,7 +67,7 @@ public class NoticeTemplate {
     @Schema(title = "Template name",
             description = "Template name",
             example = "dispatch-1", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotBlank
     private String name;
 
@@ -98,7 +98,7 @@ public class NoticeTemplate {
                     "${priorityLabel} : ${priority}\n" +
                     "${triggerTimeLabel} : ${triggerTime}\n" +
                     "${contentLabel} : ${content}", accessMode = READ_WRITE)
-    @Length(max = 60000)
+    @Size(max = 60000)
     @Lob
     @NotBlank
     private String content;

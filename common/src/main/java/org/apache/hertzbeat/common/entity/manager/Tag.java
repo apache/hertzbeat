@@ -65,8 +65,8 @@ public class Tag {
     private String name;
 
     @Schema(title = "Tag Value", example = "23", accessMode = READ_WRITE)
-    @Column(name = "`value`", length = 2048)
-    private String value;
+    @Column(length = 2048)
+    private String tagValue;
 
     @Schema(title = "Tag Color", example = "#ffff", accessMode = READ_WRITE)
     private String color;
@@ -105,13 +105,13 @@ public class Tag {
             return false;
         }
         Tag tag = (Tag) o;
-        return Objects.equals(name, tag.name) && Objects.equals(value, tag.value);
+        return Objects.equals(name, tag.name) && Objects.equals(tagValue, tag.tagValue);
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 13 * hash + (name == null ? 0 : name.hashCode()) + (value == null ? 0 : value.hashCode());
+        hash = 13 * hash + (name == null ? 0 : name.hashCode()) + (tagValue == null ? 0 : tagValue.hashCode());
         return hash;
     }
 }

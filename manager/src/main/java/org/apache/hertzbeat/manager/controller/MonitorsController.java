@@ -105,7 +105,7 @@ public class MonitorsController {
                 if (tagArr.length == TAG_LENGTH) {
                     String tagValue = tagArr[1];
                     andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
-                    andList.add(criteriaBuilder.equal(tagJoin.get("value"), tagValue));
+                    andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagValue));
                 } else {
                     andList.add(criteriaBuilder.equal(tagJoin.get("name"), tag));
                 }
@@ -125,12 +125,12 @@ public class MonitorsController {
             Predicate[] orPredicates = new Predicate[orList.size()];
             Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
 
-            if (andPredicate.getExpressions().isEmpty() && orPredicate.getExpressions().isEmpty()) {
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
                 return query.where().getRestriction();
-            } else if (andPredicate.getExpressions().isEmpty()) {
-                return query.where(orPredicate).getRestriction();
-            } else if (orPredicate.getExpressions().isEmpty()) {
-                return query.where(andPredicate).getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
             } else {
                 return query.where(andPredicate, orPredicate).getRestriction();
             }
