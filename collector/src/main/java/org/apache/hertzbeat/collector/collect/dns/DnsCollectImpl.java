@@ -57,6 +57,7 @@ import org.xbill.DNS.Type;
  */
 @Slf4j
 public class DnsCollectImpl extends AbstractCollect {
+    
     /*
      each part of dig command output
      */
@@ -88,17 +89,21 @@ public class DnsCollectImpl extends AbstractCollect {
     private static final String ANSWER_ROW_COUNT = "answerRowCount";
     private static final String AUTHORITY_ROW_COUNT = "authorityRowCount";
     private static final String ADDITIONAL_ROW_COUNT = "additionalRowCount";
-
-
+    
+    
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+        // compatible with monitoring template configurations of older versions
+        if (StringUtils.isBlank(metrics.getDns().getQueryClass())) {
+            metrics.getDns().setQueryClass(DClass.string(DClass.IN));
+        }
         // check params
         if (checkDnsProtocolFailed(metrics.getDns())) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("DNS collect must have a valid DNS protocol param! ");
             return;
         }
-
+        
         DnsResolveResult dnsResolveResult;
         try {
             // run dig command
@@ -115,64 +120,64 @@ public class DnsCollectImpl extends AbstractCollect {
             builder.setMsg(errorMsg);
             return;
         }
-
+        
         // build dns metrics data
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         if (StringUtils.equals(HEADER, metrics.getName())) {
             // add header columns
             Map<String, String> headerInfo = dnsResolveResult.getHeaderInfo();
             metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumns(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
-        }else {
+        } else {
             // add question/answer/authority/additional columns
             List<String> currentMetricsResolveResultList = dnsResolveResult.getList(metrics.getName());
             for (int index = 0; index < metrics.getAliasFields().size(); index++) {
                 valueRowBuilder.addColumns(index >= currentMetricsResolveResultList.size()
-                        ? CommonConstants.NULL_VALUE
-                        : currentMetricsResolveResultList.get(index));
+                    ? CommonConstants.NULL_VALUE
+                    : currentMetricsResolveResultList.get(index));
             }
         }
-
+        
         builder.addValues(valueRowBuilder.build());
     }
-
+    
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_DNS;
     }
-
+    
     private boolean checkDnsProtocolFailed(DnsProtocol dnsProtocol) {
         return Objects.isNull(dnsProtocol) || dnsProtocol.isInvalid();
     }
-
+    
     /**
      * run dig command
      */
     private DnsResolveResult dig(DnsProtocol dns) throws IOException {
         StopWatch responseTimeStopWatch = new StopWatch("responseTime");
         responseTimeStopWatch.start();
-
+        
         Name name = Name.fromString(dns.getAddress(), Name.root);
-        Message query = Message.newQuery(Record.newRecord(name, Type.ANY, DClass.ANY));
+        Message query = Message.newQuery(Record.newRecord(name, Type.ANY, DClass.value(dns.getQueryClass())));
         Resolver res = new SimpleResolver(dns.getDnsServerIP());
         res.setTimeout(Duration.of(Long.parseLong(dns.getTimeout()), ChronoUnit.MILLIS));
         res.setTCP(Boolean.parseBoolean(dns.getTcp()));
         res.setPort(Integer.parseInt(dns.getPort()));
-
+        
         Message response = res.send(query);
         responseTimeStopWatch.stop();
         return resolve(response, responseTimeStopWatch.getLastTaskTimeMillis());
     }
-
+    
     private DnsResolveResult resolve(Message message, Long responseTime) {
         return DnsResolveResult.builder()
-                .headerInfo(getHeaderInfo(message, responseTime))
-                .questionList(getSectionInfo(message, Section.QUESTION))
-                .answerList(getSectionInfo(message, Section.ANSWER))
-                .authorityList(getSectionInfo(message, Section.AUTHORITY))
-                .additionalList(getSectionInfo(message, Section.ADDITIONAL))
-                .build();
+            .headerInfo(getHeaderInfo(message, responseTime))
+            .questionList(getSectionInfo(message, Section.QUESTION))
+            .answerList(getSectionInfo(message, Section.ANSWER))
+            .authorityList(getSectionInfo(message, Section.AUTHORITY))
+            .additionalList(getSectionInfo(message, Section.ADDITIONAL))
+            .build();
     }
-
+    
     private Map<String, String> getHeaderInfo(Message message, Long responseTime) {
         Map<String, String> resultMap = Maps.newHashMap();
         resultMap.put(RESPONSE_TIME, String.valueOf(responseTime));
@@ -183,35 +188,38 @@ public class DnsCollectImpl extends AbstractCollect {
         resultMap.put(ANSWER_ROW_COUNT, String.valueOf(message.getHeader().getCount(Section.ANSWER)));
         resultMap.put(AUTHORITY_ROW_COUNT, String.valueOf(message.getHeader().getCount(Section.AUTHORITY)));
         resultMap.put(ADDITIONAL_ROW_COUNT, String.valueOf(message.getHeader().getCount(Section.ADDITIONAL)));
-
+        
         return resultMap;
     }
-
+    
     private List<String> getSectionInfo(Message message, int section) {
         List<RRset> currentSetList = message.getSectionRRsets(section);
         if (currentSetList == null || currentSetList.size() <= 0) {
             return Lists.newArrayList();
         }
-
+        
         List<String> infoList = Lists.newArrayListWithCapacity(currentSetList.size());
         currentSetList.forEach(res -> infoList.add(res.toString()));
-
+        
         return infoList;
     }
-
-
+    
+    
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     private static class DnsResolveResult {
+        
         private Map<String, String> headerInfo;
-        /** example: www.google.com.		140	IN	A	192.133.77.133 **/
+        /**
+         * example: www.google.com.		140	IN	A	192.133.77.133
+         **/
         private List<String> questionList;
         private List<String> answerList;
         private List<String> authorityList;
         private List<String> additionalList;
-
+        
         public List<String> getList(String metricsName) {
             return switch (metricsName) {
                 case QUESTION -> questionList;
