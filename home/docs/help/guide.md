@@ -33,6 +33,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[DM database monitoring](dm) <br />
 &emsp;&#x1F449;&emsp;[OpenGauss database monitoring](opengauss) <br />
 &emsp;&#x1F449;&emsp;[IoTDB database monitoring](iotdb) <br />
+&emsp;&#x1F449;&emsp;[TiDB database monitoring](tidb) <br />
 
 ### Operating system monitoring     
 
