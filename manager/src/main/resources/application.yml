@@ -84,9 +84,9 @@ spring:
     # Attention: this is not email account password, this requires an email authorization code
     # 请注意此非邮箱账户密码 此需填写邮箱授权码
     password: your-password
-    #Attention: Tencent mail smtps 465,smtp 587
-    #请注意腾讯邮箱465为smtps,587为smtp
-    port: 587
+    # Attention: qq mailbox default is 465 port, if you use 587 port, please configure port: 587 in application.yml
+    #请注意腾讯邮箱默认为465端口，如果使用587端口请在application.yml中配置port: 587
+    port: 465
     properties:
       mail:
         smtp:
