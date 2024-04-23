@@ -48,6 +48,6 @@ public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecut
      * @param value tag value
      * @return tag
      */
-    Optional<Tag> findTagByNameAndValue(String name, String value);
+    Optional<Tag> findTagByNameAndTagValue(String name, String value);
     
 }

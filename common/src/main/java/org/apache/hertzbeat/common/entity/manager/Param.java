@@ -83,8 +83,8 @@ public class Param {
      */
     @Schema(title = "parameter values", example = "8080", accessMode = READ_WRITE)
     @Size(max = 8126)
-    @Column(name = "`value`", length = 8126)
-    private String value;
+    @Column(length = 8126)
+    private String paramValue;
 
     /**
      * Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map

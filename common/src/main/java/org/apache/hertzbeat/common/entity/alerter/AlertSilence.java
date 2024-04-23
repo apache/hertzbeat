@@ -40,6 +40,7 @@ import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonByteListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
+import org.apache.hertzbeat.common.entity.manager.ZonedDateTimeAttributeConverter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -113,9 +114,11 @@ public class AlertSilence {
     private List<Byte> days;
 
     @Schema(title = "Limit time period start", example = "00:00:00", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodStart;
 
     @Schema(title = "Restricted time period end", example = "23:59:59", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodEnd;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)

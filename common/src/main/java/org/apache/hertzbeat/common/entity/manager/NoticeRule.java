@@ -123,9 +123,11 @@ public class NoticeRule {
     private List<Byte> days;
 
     @Schema(title = "Limit time period start", example = "00:00:00", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodStart;
 
     @Schema(title = "Restricted time period end", example = "23:59:59", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodEnd;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)

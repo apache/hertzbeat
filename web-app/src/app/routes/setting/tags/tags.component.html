@@ -92,7 +92,7 @@
         </a>
       </td>
       <td nzAlign="center">{{ data.name }}</td>
-      <td nzAlign="center">{{ data.value }}</td>
+      <td nzAlign="center">{{ data.tagValue }}</td>
       <td nzAlign="center">
         <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger">{{ data.color }}</nz-tag>
       </td>
@@ -133,7 +133,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="value">{{ 'tag.value' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="tag.value" nz-input name="value" type="text" id="value" />
+          <input [(ngModel)]="tag.tagValue" nz-input name="value" type="text" id="value" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
@@ -160,8 +160,8 @@
       <nz-form-item *ngIf="tag.name != undefined">
         <nz-form-label [nzSpan]="7" nzFor="color">{{ 'tag.display' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-tag *ngIf="tag.value == undefined || tag.value.trim() == ''" [nzColor]="tag.color">{{ tag.name }}</nz-tag>
-          <nz-tag *ngIf="tag.value != undefined && tag.value.trim() != ''" [nzColor]="tag.color">{{ tag.name + ':' + tag.value }}</nz-tag>
+          <nz-tag *ngIf="tag.tagValue == undefined || tag.tagValue.trim() == ''" [nzColor]="tag.color">{{ tag.name }}</nz-tag>
+          <nz-tag *ngIf="tag.tagValue != undefined && tag.tagValue.trim() != ''" [nzColor]="tag.color">{{ tag.name + ':' + tag.tagValue }}</nz-tag>
         </nz-form-control>
       </nz-form-item>
     </form>
