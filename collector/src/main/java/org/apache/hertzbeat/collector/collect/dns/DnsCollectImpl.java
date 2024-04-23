@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.dns;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -26,11 +24,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -51,6 +46,15 @@ import org.xbill.DNS.Resolver;
 import org.xbill.DNS.Section;
 import org.xbill.DNS.SimpleResolver;
 import org.xbill.DNS.Type;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * dns protocol collection implementation
@@ -160,7 +164,7 @@ public class DnsCollectImpl extends AbstractCollect {
 
         Message response = res.send(query);
         responseTimeStopWatch.stop();
-        return resolve(response, responseTimeStopWatch.getLastTaskTimeMillis());
+        return resolve(response, responseTimeStopWatch.lastTaskInfo().getTimeMillis());
     }
 
     private DnsResolveResult resolve(Message message, Long responseTime) {
@@ -189,7 +193,8 @@ public class DnsCollectImpl extends AbstractCollect {
 
     private List<String> getSectionInfo(Message message, int section) {
         List<RRset> currentSetList = message.getSectionRRsets(section);
-        if (currentSetList == null || currentSetList.size() <= 0) {
+        
+        if (CollectionUtils.isEmpty(currentSetList)) {
             return Lists.newArrayList();
         }
 

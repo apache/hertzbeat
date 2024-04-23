@@ -142,8 +142,9 @@ public class ExporterParser {
             metricList = new ArrayList<>();
             this.currentMetricFamily.setMetricList(metricList);
         }
-        // todo 这里可能存在问题, 目前逻辑是HISTOGRAM和SUMMARY只创建一个metric
-        //  相比源码有所改动: 源码通过属性存储解析结果; 这边通过参数传递
+        // TODO: This part may have issues. The current logic creates only one metric for both HISTOGRAM and SUMMARY
+        // compared to the source code, there is a slight modification: the source code stores parsing results in a property
+        // here, the results are passed through parameters.
         MetricFamily.Metric metric;
         if (!metricList.isEmpty() &&
                 (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
@@ -249,15 +250,15 @@ public class ExporterParser {
                     summary = new MetricFamily.Summary();
                     metric.setSummary(summary);
                 }
-                // 处理 xxx_sum 的数据
+                // Process data for xxx_sum
                 if (label != null && this.isSum(label.getName())) {
                     summary.setSum(buffer.toDouble());
                 }
-                // 处理 xxx_count 的数据
+                // Process data for xxx_count
                 else if (label != null && this.isCount(label.getName())) {
                     summary.setCount(buffer.toLong());
                 }
-                // 处理 "xxx{quantile=\"0\"} 0" 的格式
+                // Handle format for "xxx{quantile=\"0\"} 0"
                 else if (StringUtils.hasText(this.currentQuantile)) {
                     List<MetricFamily.Quantile> quantileList = summary.getQuantileList();
                     MetricFamily.Quantile quantile = new MetricFamily.Quantile();
@@ -277,7 +278,7 @@ public class ExporterParser {
                 } else if (label != null && this.isCount(label.getName())) {
                     histogram.setCount(buffer.toLong());
                 }
-                // 处理 "xxx{quantile=\"0\"} 0" 的格式
+                // Process the format "xxx{quantile=\"0\"} 0"
                 else if (StringUtils.hasText(this.currentBucket)) {
                     List<MetricFamily.Bucket> bucketList = histogram.getBucketList();
                     MetricFamily.Bucket bucket = new MetricFamily.Bucket();
@@ -291,9 +292,9 @@ public class ExporterParser {
     }
 
     /**
-     * 读取第一个空格符前的token
+     * Reads the token before the first whitespace
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return token unit
      */
     private String readTokenUnitWhitespace(StrBuffer buffer) {
@@ -309,9 +310,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取指标的名称
+     * Gets the name of the metric
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return token name
      */
     private String readTokenAsMetricName(StrBuffer buffer) {
@@ -332,9 +333,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取label的名称
+     * Gets the name of the label
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return label name
      */
     private String readTokenAsLabelName(StrBuffer buffer) {
@@ -357,9 +358,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取Label的值
+     * Gets the value of the label
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return label value
      */
     private String readTokenAsLabelValue(StrBuffer buffer) {
@@ -367,7 +368,7 @@ public class ExporterParser {
         boolean escaped = false;
         while (!buffer.isEmpty()) {
             char c = buffer.read();
-            // 处理 '\\' 转义
+            // Handle '\\' escape sequences
             if (escaped) {
                 switch (c) {
                     case QUOTES, '\\' -> builder.append(c);
@@ -393,9 +394,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合metric name首字符规则
+     * Checks whether a character conforms to the first character rule for metric names
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidMetricNameStart(char c) {
@@ -403,9 +404,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合metric name除首字符其他字符规则
+     * Checks whether a character conforms to rules for metric name characters other than the first
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidMetricNameContinuation(char c) {
@@ -413,9 +414,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合label name首字符规则
+     * Checks whether a character conforms to the first character rule for label names
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidLabelNameStart(char c) {
@@ -423,9 +424,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合label name除首字符其他字符规则
+     * Checks whether a character conforms to rules for label name characters other than the first
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidLabelNameContinuation(char c) {
@@ -433,7 +434,7 @@ public class ExporterParser {
     }
 
     /**
-     * 检测是否是有效的utf8编码的字符串
+     * Checks if a string is a valid UTF-8 encoded string
      *
      * @param s label value
      * @return true/false
