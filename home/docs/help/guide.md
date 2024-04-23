@@ -22,6 +22,8 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[SSL Cert monitoring](ssl_cert) <br />
 &emsp;&#x1F449;&emsp;[JVM monitoring](jvm) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
+&emsp;&#x1F449;&emsp;[DNS monitoring](dns) <br />
+&emsp;&#x1F449;&emsp;[FTP monitoring](ftp) <br />
 
 ### Database monitoring  
 
@@ -62,6 +64,7 @@ sidebar_label: Help Center
 ### Bigdata monitoring
 
 &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
+&emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
 
 ### Network monitoring
 
@@ -167,7 +170,8 @@ sidebar_label: Help Center
 
 &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
 &emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
-***
+
+
 
 ## 💡 Alarm service  
 
