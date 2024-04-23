@@ -108,16 +108,18 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         BeanUtils.copyProperties(dto.getMonitor(), monitor);
         if (!CollectionUtils.isEmpty(dto.getMonitor().getTags())) {
             monitor.setTags(dto.getMonitor().getTags().stream()
-                    .map(Tag::getId).collect(Collectors.toUnmodifiableList()));
+                    .map(Tag::getId).toList());
         }
         exportMonitor.setMonitor(monitor);
         exportMonitor.setParams(dto.getParams().stream()
                 .map(it -> {
                     var param = new ParamDTO();
-                    BeanUtils.copyProperties(it, param);
+                    param.setField(it.getField());
+                    param.setType(it.getType());
+                    param.setValue(it.getParamValue());
                     return param;
                 })
-                .collect(Collectors.toUnmodifiableList()));
+                .toList());
         exportMonitor.setMetrics(dto.getMetrics());
         exportMonitor.setDetected(false);
         exportMonitor.getMonitor().setCollector(dto.getCollector());
@@ -153,10 +155,12 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
             monitorDto.setParams(exportMonitor.params.stream()
                     .map(it -> {
                         var param = new Param();
-                        BeanUtils.copyProperties(it, param);
+                        param.setField(it.field);
+                        param.setType(it.type);
+                        param.setParamValue(it.value);
                         return param;
                     })
-                    .collect(Collectors.toUnmodifiableList()));
+                    .toList());
         } else {
             monitorDto.setParams(Collections.emptyList());
         }

@@ -161,7 +161,9 @@
         <nz-form-label [nzSpan]="7" nzFor="color">{{ 'tag.display' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-tag *ngIf="tag.tagValue == undefined || tag.tagValue.trim() == ''" [nzColor]="tag.color">{{ tag.name }}</nz-tag>
-          <nz-tag *ngIf="tag.tagValue != undefined && tag.tagValue.trim() != ''" [nzColor]="tag.color">{{ tag.name + ':' + tag.tagValue }}</nz-tag>
+          <nz-tag *ngIf="tag.tagValue != undefined && tag.tagValue.trim() != ''" [nzColor]="tag.color">{{
+            tag.name + ':' + tag.tagValue
+          }}</nz-tag>
         </nz-form-control>
       </nz-form-item>
     </form>
