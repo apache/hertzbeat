@@ -53,6 +53,7 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.springframework.util.ObjectUtils;
 
 /**
  * nginx collect
@@ -135,9 +136,8 @@ public class NginxCollectImpl extends AbstractCollect {
         if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
             throw new Exception("Nginx collect must has nginx params");
         }
-
-        if (nginxProtocol.getUrl() == null
-                || nginxProtocol.getUrl().isEmpty()
+        
+        if (StringUtils.isEmpty(nginxProtocol.getUrl())
                 || !nginxProtocol.getUrl().startsWith(RIGHT_DASH)) {
             nginxProtocol.setUrl(nginxProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + nginxProtocol.getUrl().trim());
         }
