@@ -17,19 +17,19 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.manager.service.AppService;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
+import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.Map;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Internationalization I 18 N

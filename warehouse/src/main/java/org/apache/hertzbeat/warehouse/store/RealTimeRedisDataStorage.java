@@ -17,24 +17,23 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Primary;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
 /**
  * redis storage collects real-time data
@@ -56,7 +55,7 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     }
 
     private Integer getRedisSelectDb(WarehouseProperties properties){
-        return properties.getStore().getRedis().db();
+        return properties.store().redis().db();
     }
 
     @Override
@@ -97,11 +96,11 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     }
 
     private boolean initRedisClient(WarehouseProperties properties) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getRedis() == null) {
+        if (properties == null || properties.store() == null || properties.store().redis() == null) {
             log.error("init error, please config Warehouse redis props in application.yml");
             return false;
         }
-        WarehouseProperties.StoreProperties.RedisProperties redisProp = properties.getStore().getRedis();
+        WarehouseProperties.StoreProperties.RedisProperties redisProp = properties.store().redis();
         RedisURI.Builder uriBuilder = RedisURI.builder()
                 .withHost(redisProp.host())
                 .withPort(redisProp.port())

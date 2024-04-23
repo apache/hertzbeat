@@ -17,33 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.nginx;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.IpDomainUtil;
-
+import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -53,8 +27,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 
 /**
  * nginx collect
@@ -78,7 +76,7 @@ public class NginxCollectImpl extends AbstractCollect {
 
 
     public NginxCollectImpl() {
-
+        
     }
 
     @Override
@@ -137,9 +135,9 @@ public class NginxCollectImpl extends AbstractCollect {
         if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
             throw new Exception("Nginx collect must has nginx params");
         }
-        
+
         if (nginxProtocol.getUrl() == null
-                || "".equals(nginxProtocol.getUrl())
+                || nginxProtocol.getUrl().isEmpty()
                 || !nginxProtocol.getUrl().startsWith(RIGHT_DASH)) {
             nginxProtocol.setUrl(nginxProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + nginxProtocol.getUrl().trim());
         }
@@ -240,18 +238,18 @@ public class NginxCollectImpl extends AbstractCollect {
         //server_name     d.123.sogou.com 478     115M    2850G   30218726        115     39M
         //server_name     dl.pinyin.sogou.com     913     312M    8930G   35345453        225     97M
         //server_name     download.ie.sogou.com   964     275M    7462G   7979817 297     135M
-        List<ReqSatusResponse> reqSatusResponses = regexReqStatusMatch(resp);
+        List<ReqStatusResponse> reqStatusResponses = regexReqStatusMatch(resp);
         List<String> aliasFields = metrics.getAliasFields();
 
-        for (ReqSatusResponse reqSatusResponse : reqSatusResponses) {
+        for (ReqStatusResponse reqStatusResponse : reqStatusResponses) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equals(alias)) {
                     valueRowBuilder.addColumns(String.valueOf(responseTime));
                 } else {
                     try {
-                        String methodName = reqSatusResponse.getFieldMethodName(alias);
-                        Object value = reflect(reqSatusResponse, methodName);
+                        String methodName = reqStatusResponse.getFieldMethodName(alias);
+                        Object value = reflect(reqStatusResponse, methodName);
                         value = value == null ? CommonConstants.NULL_VALUE : value;
                         valueRowBuilder.addColumns(String.valueOf(value));
                     } catch (Exception e) {
@@ -266,10 +264,10 @@ public class NginxCollectImpl extends AbstractCollect {
         }
     }
 
-    private Object reflect(ReqSatusResponse reqSatusResponse, String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Class<?> clazz = reqSatusResponse.getClass();
+    private Object reflect(ReqStatusResponse reqStatusResponse, String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Class<?> clazz = reqStatusResponse.getClass();
         Method method = clazz.getMethod(methodName);
-        return method.invoke(reqSatusResponse);
+        return method.invoke(reqStatusResponse);
     }
 
     private Map<String, Object> regexNginxStatusMatch(String resp, Integer aliasFieldsSize) {
@@ -294,13 +292,13 @@ public class NginxCollectImpl extends AbstractCollect {
         return metricsMap;
     }
 
-    private List<ReqSatusResponse> regexReqStatusMatch(String resp) {
-        List<ReqSatusResponse> reqSatusResponses = new ArrayList<>();
+    private List<ReqStatusResponse> regexReqStatusMatch(String resp) {
+        List<ReqStatusResponse> reqStatusResponses = new ArrayList<>();
 
         String[] lines = resp.split(REGEX_SPLIT);
         for (int i = 1; i < lines.length; i++) {
             String[] values = lines[i].split(REGEX_LINE_SPLIT);
-            ReqSatusResponse reqSatusResponse = ReqSatusResponse.builder()
+            ReqStatusResponse reqStatusResponse = ReqStatusResponse.builder()
                     .zoneName(values[0])
                     .key(values[1])
                     .maxActive(values[2])
@@ -310,16 +308,16 @@ public class NginxCollectImpl extends AbstractCollect {
                     .active(values[6])
                     .bandwidth(values[7])
                     .build();
-            reqSatusResponses.add(reqSatusResponse);
+            reqStatusResponses.add(reqStatusResponse);
         }
-        return reqSatusResponses;
+        return reqStatusResponses;
     }
 
     @Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    static class ReqSatusResponse {
+    static class ReqStatusResponse {
         private String zoneName; // zone_name
 
         private String maxActive; // max_active

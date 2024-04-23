@@ -17,17 +17,15 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
-import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.Param;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+import lombok.Data;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.Param;
 
 /**
  * Monitoring Information External Interaction Entities

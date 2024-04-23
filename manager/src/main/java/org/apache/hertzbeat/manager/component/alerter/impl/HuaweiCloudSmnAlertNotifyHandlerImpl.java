@@ -22,6 +22,9 @@ import com.huaweicloud.sdk.smn.v2.SmnClient;
 import com.huaweicloud.sdk.smn.v2.model.PublishMessageRequest;
 import com.huaweicloud.sdk.smn.v2.model.PublishMessageRequestBody;
 import com.huaweicloud.sdk.smn.v2.region.SmnRegion;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -30,10 +33,6 @@ import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
-import java.util.ResourceBundle;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Send alarm information through Huawei CloudSmn

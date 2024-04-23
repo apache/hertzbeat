@@ -125,9 +125,10 @@ module.exports = {
           ],
         },
         {
-          label : 'Team',
+          label : 'team',
           position: 'left',
-          to : '/team/'
+          to : '/team/',
+          activeBaseRegex: `/team`,
         },
         {
           label: 'ASF',
@@ -169,7 +170,8 @@ module.exports = {
           items: [
             {
               label: 'contributors',
-              to: '/docs/others/developer',
+              to : '/team/',
+              activeBaseRegex: `/team`,
             },
             {
               label: 'contributing',

@@ -18,6 +18,21 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import jakarta.persistence.criteria.Predicate;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -34,18 +49,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
-import jakarta.persistence.criteria.Predicate;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAmount;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-
 /**
  * data storage by mysql/h2 - jpa
  */
@@ -61,7 +64,7 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 
     public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
                                          HistoryDao historyDao) {
-        this.jpaProperties = properties.getStore().getJpa();
+        this.jpaProperties = properties.store().jpa();
         this.serverAvailable = true;
         this.historyDao = historyDao;
         expiredDataCleaner();
@@ -143,50 +146,36 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 
                     if (CommonConstants.NULL_VALUE.equals(columnValue)) {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER: {
+                            case CommonConstants.TYPE_NUMBER -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                         .dou(null);
-                                break;
                             }
-
-                            case CommonConstants.TYPE_STRING: {
+                            case CommonConstants.TYPE_STRING -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_STRING)
                                         .str(null);
-                                break;
                             }
-
-                            case CommonConstants.TYPE_TIME: {
+                            case CommonConstants.TYPE_TIME -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_TIME)
                                         .int32(null);
-                                break;
                             }
-                            default:
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
-                                break;
+                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
                         }
                     } else {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER: {
+                            case CommonConstants.TYPE_NUMBER -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                         .dou(Double.parseDouble(columnValue));
-                                break;
                             }
-
-                            case CommonConstants.TYPE_STRING: {
+                            case CommonConstants.TYPE_STRING -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_STRING)
                                         .str(formatStrValue(columnValue));
-                                break;
                             }
-
-                            case CommonConstants.TYPE_TIME: {
+                            case CommonConstants.TYPE_TIME -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_TIME)
                                         .int32(Integer.parseInt(columnValue));
-                                break;
                             }
-                            default:
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                        .dou(Double.parseDouble(columnValue));
-                                break;
+                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                                    .dou(Double.parseDouble(columnValue));
                         }
 
                         if (field.getLabel()) {

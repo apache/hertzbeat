@@ -17,14 +17,22 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance;
 
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.Channel;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
-import org.apache.hertzbeat.collector.dispatch.entrance.processor.*;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
-import org.apache.hertzbeat.collector.dispatch.entrance.processor.*;
+import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.CollectCyclicDataProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.CollectOneTimeDataProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.DeleteCyclicTaskProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoCloseProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOfflineProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOnlineProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.HeartbeatProcessor;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
@@ -40,11 +48,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * collect server

@@ -17,28 +17,47 @@
 
 package org.apache.hertzbeat.collector.collect.http;
 
+import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.net.ssl.SSLException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.util.Base64;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
 import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreater;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.ExporterParser;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.MetricFamily;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.util.Base64;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -65,23 +84,6 @@ import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-
-import javax.net.ssl.SSLException;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 
 /**
@@ -342,8 +344,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     }
                 }
                 builder.addValues(valueRowBuilder.build());
-            } else if (objectValue instanceof String) {
-                String stringValue = (String) objectValue;
+            } else if (objectValue instanceof String stringValue) {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : aliasFields) {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {

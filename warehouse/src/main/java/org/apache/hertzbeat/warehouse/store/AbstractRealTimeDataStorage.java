@@ -17,12 +17,11 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.lang.NonNull;
-
-import java.util.List;
 
 /**
  * Real-time data storage abstract class

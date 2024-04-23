@@ -17,25 +17,23 @@
 
 package org.apache.hertzbeat.collector.collect.pop3;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.pop3.POP3MessageInfo;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import org.apache.commons.net.pop3.POP3SClient;
-import org.apache.commons.net.pop3.POP3Client;
-import org.apache.hertzbeat.common.util.CommonUtil;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.pop3.POP3Client;
+import org.apache.commons.net.pop3.POP3MessageInfo;
+import org.apache.commons.net.pop3.POP3SClient;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 
 /**
@@ -114,8 +112,8 @@ public class Pop3CollectImpl extends AbstractCollect {
      * @throws Exception exception
      */
     private void validateParams(Metrics metrics) throws Exception {
-        Pop3Protocol pop3Protocol = metrics.getPop3();
-        if (metrics == null || pop3Protocol == null || pop3Protocol.isInvalid()) {
+        Pop3Protocol pop3Protocol;
+        if (metrics == null || (pop3Protocol = metrics.getPop3()) == null || pop3Protocol.isInvalid()) {
             throw new Exception("Pop3 collect must has pop3 params");
         }
     }

@@ -17,29 +17,45 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import io.greptime.models.*;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.flight.FlightRuntimeException;
-import org.apache.hertzbeat.common.entity.dto.Value;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import io.greptime.GreptimeDB;
+import io.greptime.models.ColumnDataType;
+import io.greptime.models.Err;
+import io.greptime.models.QueryOk;
+import io.greptime.models.QueryRequest;
+import io.greptime.models.Result;
+import io.greptime.models.Row;
+import io.greptime.models.SelectExprType;
+import io.greptime.models.SelectRows;
+import io.greptime.models.SemanticType;
+import io.greptime.models.TableName;
+import io.greptime.models.TableSchema;
+import io.greptime.models.WriteOk;
+import io.greptime.models.WriteRows;
 import io.greptime.options.GreptimeOptions;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.flight.FlightRuntimeException;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.TimePeriodUtil;
+import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 
 /**
  * greptimeDB data storage
@@ -68,7 +84,7 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
     private GreptimeDB greptimeDb;
 
     public HistoryGrepTimeDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initDbSession(properties.getStore().getGreptime());
+        this.serverAvailable = this.initDbSession(properties.store().greptime());
     }
 
     private boolean initDbSession(WarehouseProperties.StoreProperties.GreptimeProperties properties) {
