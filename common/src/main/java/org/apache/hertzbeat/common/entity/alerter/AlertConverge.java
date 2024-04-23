@@ -61,7 +61,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class AlertConverge {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Alert Converge Policy Entity Primary Key Index ID",
             description = "Alert Converge Policy Entity Primary Key Index ID",
             example = "87584674384", accessMode = READ_ONLY)

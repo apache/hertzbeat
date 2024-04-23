@@ -58,7 +58,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class NoticeTemplate {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Notification Template Entity Primary Key Index ID",
             description = "Notification Template Entity Primary Key Index ID",
             example = "87584674384", accessMode = READ_ONLY)

@@ -60,7 +60,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class Alert {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Alarm record entity primary key index ID",
             description = "Alarm record entity primary key index ID",
             example = "87584674384", accessMode = READ_ONLY)

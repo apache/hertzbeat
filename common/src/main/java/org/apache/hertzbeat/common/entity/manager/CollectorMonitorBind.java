@@ -54,7 +54,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class CollectorMonitorBind {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "primary id", example = "23")
     private Long id;
 

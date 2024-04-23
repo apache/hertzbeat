@@ -52,7 +52,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class Collector {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "primary id", example = "2")
     private Long id;
 

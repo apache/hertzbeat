@@ -62,7 +62,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class AlertDefineMonitorBind {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "id", example = "74384", accessMode = READ_ONLY)
     private Long id;
 

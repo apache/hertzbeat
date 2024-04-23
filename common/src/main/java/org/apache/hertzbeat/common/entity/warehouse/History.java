@@ -50,7 +50,7 @@ import lombok.NoArgsConstructor;
 public class History {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(description = "Metric data history entity primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 

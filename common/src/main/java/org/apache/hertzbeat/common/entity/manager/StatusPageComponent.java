@@ -51,7 +51,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class StatusPageComponent {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "ID", example = "87584674384")
     private Long id;
     

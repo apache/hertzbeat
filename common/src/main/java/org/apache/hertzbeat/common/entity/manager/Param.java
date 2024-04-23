@@ -60,7 +60,7 @@ public class Param {
      * Parameter primary key index ID
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Parameter primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
