@@ -84,7 +84,7 @@ public class NginxCollectImpl extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
-        // 校验参数
+        // validate parameters
         try {
             validateParams(metrics);
         } catch (Exception e) {
@@ -96,7 +96,7 @@ public class NginxCollectImpl extends AbstractCollect {
         HttpContext httpContext = createHttpContext(metrics.getNginx());
         HttpUriRequest request = createHttpRequest(metrics.getNginx());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)){
-            // 发起http请求，获取响应数据
+            // send an HTTP request and get the response data
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
@@ -106,8 +106,8 @@ public class NginxCollectImpl extends AbstractCollect {
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
 
             Long responseTime = System.currentTimeMillis() - startTime;
-            // 根据metrics name选择调用不同解析方法
-            if (NGINX_STATUS_NAME.equals(metrics.getName()) || AVAILABLE.equals(metrics.getName())) {
+            // call different parsing methods based on the metrics name
+            if (StringUtils.equalsAny(metrics.getName(), NGINX_STATUS_NAME, AVAILABLE)) {
                 parseNginxStatusResponse(builder, resp, metrics, responseTime);
             } else if (REQ_STATUS_NAME.equals(metrics.getName())) {
                 parseReqStatusResponse(builder, resp, metrics, responseTime);
@@ -132,6 +132,7 @@ public class NginxCollectImpl extends AbstractCollect {
 
     private void validateParams(Metrics metrics) throws Exception {
         final NginxProtocol nginxProtocol;
+        
         if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
             throw new Exception("Nginx collect must has nginx params");
         }
@@ -152,22 +153,22 @@ public class NginxCollectImpl extends AbstractCollect {
 
     private HttpUriRequest createHttpRequest(NginxProtocol nginxProtocol) {
         RequestBuilder requestBuilder = RequestBuilder.get();
-        // uri
-        String uri = CollectUtil.replaceUriSpecialChar(nginxProtocol.getUrl());
-        if (IpDomainUtil.isHasSchema(nginxProtocol.getHost())) {
-            requestBuilder.setUri(nginxProtocol.getHost() + ":" + nginxProtocol.getPort() + uri);
+        String portWithUri = nginxProtocol.getPort() + CollectUtil.replaceUriSpecialChar(nginxProtocol.getUrl());
+        String host = nginxProtocol.getHost();
+        
+        if (IpDomainUtil.isHasSchema(host)) {
+            requestBuilder.setUri(host + ":" + portWithUri);
         } else {
-            String ipAddressType = IpDomainUtil.checkIpAddressType(nginxProtocol.getHost());
+            String ipAddressType = IpDomainUtil.checkIpAddressType(host);
             String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
-                    ? String.format("[%s]:%s", nginxProtocol.getHost(), nginxProtocol.getPort() + uri)
-                    : String.format("%s:%s", nginxProtocol.getHost(), nginxProtocol.getPort() + uri);
+                    ? String.format("[%s]:%s", host, portWithUri)
+                    : String.format("%s:%s", host, portWithUri);
 
             requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
         }
 
         requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
-
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/plain");
 
         int timeout = Integer.parseInt(nginxProtocol.getTimeout());
@@ -183,7 +184,7 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 解析nginx自带ngx_http_stub_status_module模块暴露信息
+     * analyze the information exposed by nginx's built-in ngx_http_stub_status_module
      *
      * @param builder builder
      * @param resp resp
@@ -199,7 +200,7 @@ public class NginxCollectImpl extends AbstractCollect {
         //Reading: 0 Writing: 1 Waiting: 1
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, Object> metricMap = regexNginxStatusMatch(resp, metrics.getAliasFields().size());
-        // 返回数据
+        // Returned data
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
             Object value = metricMap.get(alias);
