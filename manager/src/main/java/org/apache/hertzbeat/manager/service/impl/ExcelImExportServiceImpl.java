@@ -177,14 +177,11 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         if (cell == null) {
             return null;
         }
-        switch (cell.getCellType()) {
-            case STRING:
-                return cell.getStringCellValue();
-            case NUMERIC:
-                return String.valueOf(cell.getNumericCellValue());
-            default:
-                return null;
-        }
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue();
+            case NUMERIC -> String.valueOf(cell.getNumericCellValue());
+            default -> null;
+        };
     }
     
     private boolean getCellValueAsBoolean(Cell cell) {

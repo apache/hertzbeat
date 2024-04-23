@@ -344,8 +344,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     }
                 }
                 builder.addValues(valueRowBuilder.build());
-            } else if (objectValue instanceof String) {
-                String stringValue = (String) objectValue;
+            } else if (objectValue instanceof String stringValue) {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : aliasFields) {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {

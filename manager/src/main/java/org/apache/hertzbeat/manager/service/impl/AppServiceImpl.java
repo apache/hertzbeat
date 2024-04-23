@@ -469,13 +469,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         if (objectStoreConfig == null) {
             appDefineStore = new LocalFileAppDefineStoreImpl();
         } else {
-            switch (objectStoreConfig.getType()) {
-                case OBS:
-                    appDefineStore = new ObjectStoreAppDefineStoreImpl();
-                    break;
-                case FILE:
-                default:
-                    appDefineStore = new LocalFileAppDefineStoreImpl();
+            if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
+                appDefineStore = new ObjectStoreAppDefineStoreImpl();
+            } else {
+                appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
         var success = appDefineStore.loadAppDefines();

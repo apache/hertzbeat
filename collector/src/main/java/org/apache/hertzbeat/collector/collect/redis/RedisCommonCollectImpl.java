@@ -330,9 +330,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     private void preCheck(Metrics metrics) {
-        if (metrics == null || metrics.getRedis() == null) {
-            throw new IllegalArgumentException("Redis collect must has redis params");
-        }
+    	Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
         RedisProtocol redisProtocol = metrics.getRedis();
         Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
         Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
