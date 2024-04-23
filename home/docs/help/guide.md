@@ -51,6 +51,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
 &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
 &emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
+&emsp;&#x1F449;&emsp;[Nacos](nacos) <br />
 
 ### CloudNative monitoring
 
