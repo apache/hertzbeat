@@ -90,16 +90,16 @@ public class Alert {
     @Column(length = 4096)
     private String content;
 
-    @Schema(title = "Alarm status: " +
-            "0-normal alarm (to be processed) " +
-            "1-threshold triggered but not reached the number of alarms " +
-            "2-recovered alarm " +
-            "3-processed",
-            description = "Alarm status: " +
-                    "0-normal alarm (to be processed) " +
-                    "1-threshold triggered but not reached the number of alarms " +
-                    "2-recovered alarm " +
-                    "3-processed",
+    @Schema(title = "Alarm status: "
+            + "0-normal alarm (to be processed) "
+            + "1-threshold triggered but not reached the number of alarms "
+            + "2-recovered alarm "
+            + "3-processed",
+            description = "Alarm status: "
+                    + "0-normal alarm (to be processed) "
+                    + "1-threshold triggered but not reached the number of alarms "
+                    + "2-recovered alarm "
+                    + "3-processed",
             example = "1", accessMode = READ_WRITE)
     @Min(0)
     @Max(3)

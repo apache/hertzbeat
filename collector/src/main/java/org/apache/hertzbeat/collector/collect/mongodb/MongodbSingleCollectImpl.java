@@ -102,7 +102,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         }
         ClientSession clientSession = null;
         MongoClient mongoClient;
-        CacheIdentifier identifier= null;
+        CacheIdentifier identifier = null;
         try {
             identifier = getIdentifier(metrics.getMongodb());
             mongoClient = getClient(metrics, identifier);

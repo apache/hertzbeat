@@ -41,7 +41,7 @@ public class JsonLongListAttributeConverter implements AttributeConverter<List<L
     @Override
     public List<Long> convertToEntityAttribute(String dbData) {
         if (StringUtils.isBlank(dbData)) {
-            return List.of();   
+            return List.of();
         }
         TypeReference<List<Long>> typeReference = new TypeReference<>() {
         };
@@ -49,7 +49,11 @@ public class JsonLongListAttributeConverter implements AttributeConverter<List<L
         if (longList == null && !dbData.isEmpty()) {
             if (StringUtils.isNumeric(dbData)) {
                 return List.of(Long.parseLong(dbData));
-            } else throw new NumberFormatException("String convert to Long error");
-        } else return longList;
+            } else {
+                throw new NumberFormatException("String convert to Long error");
+            }
+        } else {
+            return longList;
+        }
     }
 }

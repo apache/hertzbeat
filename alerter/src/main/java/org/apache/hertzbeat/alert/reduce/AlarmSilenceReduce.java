@@ -87,10 +87,8 @@ public class AlarmSilenceReduce {
                 LocalDateTime nowDate = LocalDateTime.now();
                 if (alertSilence.getType() == 0) {
                     // once time
-                    boolean startMatch = alertSilence.getPeriodStart() == null ||
-                            nowDate.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
-                    boolean endMatch = alertSilence.getPeriodEnd() == null ||
-                            nowDate.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+                    boolean startMatch = alertSilence.getPeriodStart() == null || nowDate.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+                    boolean endMatch = alertSilence.getPeriodEnd() == null || nowDate.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
                     if (startMatch && endMatch) {
                         int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
                         alertSilence.setTimes(times + 1);
@@ -104,10 +102,8 @@ public class AlarmSilenceReduce {
                         boolean dayMatch = alertSilence.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
                         if (dayMatch) {
                             LocalTime nowTime = nowDate.toLocalTime();
-                            boolean startMatch = alertSilence.getPeriodStart() == null ||
-                                    nowTime.isAfter(alertSilence.getPeriodStart().toLocalTime());
-                            boolean endMatch = alertSilence.getPeriodEnd() == null ||
-                                    nowTime.isBefore(alertSilence.getPeriodEnd().toLocalTime());
+                            boolean startMatch = alertSilence.getPeriodStart() == null || nowTime.isAfter(alertSilence.getPeriodStart().toLocalTime());
+                            boolean endMatch = alertSilence.getPeriodEnd() == null || nowTime.isBefore(alertSilence.getPeriodEnd().toLocalTime());
                             if (startMatch && endMatch) {
                                 int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
                                 alertSilence.setTimes(times + 1);
