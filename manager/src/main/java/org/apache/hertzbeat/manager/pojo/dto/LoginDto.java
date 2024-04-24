@@ -19,13 +19,13 @@ package org.apache.hertzbeat.manager.pojo.dto;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
-import org.hibernate.validator.constraints.Range;
 
 /**
  * Login registered account information transfer body username phone email
@@ -43,7 +43,7 @@ public class LoginDto {
      * 1. Account (email username and mobile phone number) password login 2. github login 3. WeChat login
      */
     @Schema(description = "类型", example = "1", accessMode = READ_ONLY)
-    @Range(min = 0, max = 4, message = "1.账户(邮箱用户名手机号)密码登录 2.github登录 3.微信登录")
+    @Max(value = 4, message = "1. Account (email username and mobile phone number) password login 2. github login 3. WeChat login")
     private Byte type;
 
     /**
@@ -58,7 +58,7 @@ public class LoginDto {
      */
     @Schema(description = "密钥", example = "1", accessMode = READ_ONLY)
     @NotBlank(message = "Credential can not null")
-    @Length(max = 512, message = "credential max length 512")
+    @Size(max = 512, message = "credential max length 512")
     private String credential;
 
 }

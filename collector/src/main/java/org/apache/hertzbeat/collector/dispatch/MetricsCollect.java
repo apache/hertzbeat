@@ -399,8 +399,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     }
 
     private void setNewThreadName(long monitorId, String app, long startTime, Metrics metrics) {
-        String builder = monitorId + "-" + app + "-" + metrics.getName() +
-                "-" + String.valueOf(startTime).substring(9);
+        String builder = monitorId + "-" + app + "-" + metrics.getName()
+                + "-" + String.valueOf(startTime).substring(9);
         Thread.currentThread().setName(builder);
     }
 

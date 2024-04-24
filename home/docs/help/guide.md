@@ -22,6 +22,8 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[SSL Cert monitoring](ssl_cert) <br />
 &emsp;&#x1F449;&emsp;[JVM monitoring](jvm) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
+&emsp;&#x1F449;&emsp;[DNS monitoring](dns) <br />
+&emsp;&#x1F449;&emsp;[FTP monitoring](ftp) <br />
 
 ### Database monitoring  
 
@@ -33,6 +35,8 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[DM database monitoring](dm) <br />
 &emsp;&#x1F449;&emsp;[OpenGauss database monitoring](opengauss) <br />
 &emsp;&#x1F449;&emsp;[IoTDB database monitoring](iotdb) <br />
+&emsp;&#x1F449;&emsp;[TiDB database monitoring](tidb) <br />
+&emsp;&#x1F449;&emsp;[MongoDB database monitoring](mongodb) <br />
 
 ### Operating system monitoring     
 
@@ -51,6 +55,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
 &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
 &emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
+&emsp;&#x1F449;&emsp;[Nacos](nacos) <br />
 
 ### CloudNative monitoring
 
@@ -60,6 +65,7 @@ sidebar_label: Help Center
 ### Bigdata monitoring
 
 &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
+&emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
 
 ### Network monitoring
 
@@ -165,7 +171,8 @@ sidebar_label: Help Center
 
 &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
 &emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
-***
+
+
 
 ## 💡 Alarm service  
 

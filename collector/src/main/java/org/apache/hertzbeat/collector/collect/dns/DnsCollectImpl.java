@@ -31,6 +31,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -92,6 +93,10 @@ public class DnsCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+        // compatible with monitoring template configurations of older versions
+        if (StringUtils.isBlank(metrics.getDns().getQueryClass())) {
+            metrics.getDns().setQueryClass(DClass.string(DClass.IN));
+        }
         // check params
         if (checkDnsProtocolFailed(metrics.getDns())) {
             builder.setCode(CollectRep.Code.FAIL);
@@ -122,7 +127,7 @@ public class DnsCollectImpl extends AbstractCollect {
             // add header columns
             Map<String, String> headerInfo = dnsResolveResult.getHeaderInfo();
             metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumns(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
-        }else {
+        } else {
             // add question/answer/authority/additional columns
             List<String> currentMetricsResolveResultList = dnsResolveResult.getList(metrics.getName());
             for (int index = 0; index < metrics.getAliasFields().size(); index++) {
@@ -160,7 +165,7 @@ public class DnsCollectImpl extends AbstractCollect {
 
         Message response = res.send(query);
         responseTimeStopWatch.stop();
-        return resolve(response, responseTimeStopWatch.getLastTaskTimeMillis());
+        return resolve(response, responseTimeStopWatch.lastTaskInfo().getTimeMillis());
     }
 
     private DnsResolveResult resolve(Message message, Long responseTime) {
@@ -189,7 +194,8 @@ public class DnsCollectImpl extends AbstractCollect {
 
     private List<String> getSectionInfo(Message message, int section) {
         List<RRset> currentSetList = message.getSectionRRsets(section);
-        if (currentSetList == null || currentSetList.size() <= 0) {
+        
+        if (CollectionUtils.isEmpty(currentSetList)) {
             return Lists.newArrayList();
         }
 

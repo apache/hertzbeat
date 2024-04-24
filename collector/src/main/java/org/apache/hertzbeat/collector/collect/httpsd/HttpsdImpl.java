@@ -41,7 +41,7 @@ import org.apache.hertzbeat.common.util.CommonUtil;
  */
 @Slf4j
 public class HttpsdImpl extends AbstractCollect {
-    private final static String SERVER = "server";
+    private static final  String SERVER = "server";
     private final DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
 
     @Override
@@ -78,13 +78,13 @@ public class HttpsdImpl extends AbstractCollect {
             metrics.getAliasFields().forEach(fieldName -> {
                 if (StringUtils.equalsAnyIgnoreCase(CollectorConstants.RESPONSE_TIME, fieldName)) {
                     valueRowBuilder.addColumns(String.valueOf(System.currentTimeMillis() - beginTime));
-                }else {
+                } else {
                     addColumnIfMatched(fieldName, serverInfo, valueRowBuilder);
                 }
             });
 
             builder.addValues(valueRowBuilder.build());
-        }else {
+        } else {
             // Service instances monitor
             discoveryClient.getServices().forEach(serviceInstance -> {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();

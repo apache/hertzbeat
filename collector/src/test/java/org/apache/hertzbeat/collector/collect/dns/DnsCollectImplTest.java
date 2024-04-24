@@ -38,6 +38,7 @@ public class DnsCollectImplTest {
         dnsCollect = new DnsCollectImpl();
         dnsProtocol = DnsProtocol.builder()
                 .dnsServerIP("8.8.8.8")
+                .queryClass("IN")
                 .address("www.google.com")
                 .build();
     }

@@ -14,20 +14,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 package org.apache.hertzbeat.common.entity.manager;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.stereotype.Component;
 
 
 /**
  * json str to id list
  */
-
+@Converter
+@Component
 public class JsonLongListAttributeConverter implements AttributeConverter<List<Long>, String> {
     @Override
     public String convertToDatabaseColumn(List<Long> attribute) {
@@ -37,13 +40,20 @@ public class JsonLongListAttributeConverter implements AttributeConverter<List<L
 
     @Override
     public List<Long> convertToEntityAttribute(String dbData) {
-        TypeReference<List<Long>> typeReference = new TypeReference<>() {};
+        if (StringUtils.isBlank(dbData)) {
+            return List.of();
+        }
+        TypeReference<List<Long>> typeReference = new TypeReference<>() {
+        };
         List<Long> longList = JsonUtil.fromJson(dbData, typeReference);
         if (longList == null && !dbData.isEmpty()) {
-            if (StringUtils.isNumeric(dbData)){
+            if (StringUtils.isNumeric(dbData)) {
                 return List.of(Long.parseLong(dbData));
+            } else {
+                throw new NumberFormatException("String convert to Long error");
             }
-            else throw new NumberFormatException("String convert to Long error");
-        }else return longList;
+        } else {
+            return longList;
+        }
     }
 }

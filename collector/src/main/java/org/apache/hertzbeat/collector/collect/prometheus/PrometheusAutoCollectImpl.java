@@ -223,8 +223,8 @@ public class PrometheusAutoCollectImpl {
             if (StringUtils.hasText(auth.getDigestAuthUsername())
                         && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
-                UsernamePasswordCredentials credentials
-                        = new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
+                UsernamePasswordCredentials credentials =
+                        new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
                 provider.setCredentials(AuthScope.ANY, credentials);
                 AuthCache authCache = new BasicAuthCache();
                 authCache.put(new HttpHost(protocol.getHost(), Integer.parseInt(protocol.getPort())), new DigestScheme());

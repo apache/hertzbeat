@@ -33,6 +33,8 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[达梦数据库监控](dm) <br />
   &emsp;&#x1F449;&emsp;[OpenGauss数据库监控](opengauss) <br />
   &emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
+  &emsp;&#x1F449;&emsp;[TiDB数据库监控](tidb) <br />
+  &emsp;&#x1F449;&emsp;[MongoDB数据库监控](mongodb) <br />
 
 ### 操作系统监控     
 
@@ -51,6 +53,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
   &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
   &emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
+  &emsp;&#x1F449;&emsp;[Nacos](nacos) <br />
 
 ### 云原生监控
 
@@ -60,6 +63,7 @@ sidebar_label: 帮助入门
 ### 大数据监控
 
   &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
+  &emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
   
 ### 网络监控 
  
@@ -135,6 +139,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[达梦数据库监控](dm) <br />
   &emsp;&#x1F449;&emsp;[OpenGauss数据库监控](opengauss) <br />
   &emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
+  &emsp;&#x1F449;&emsp;[MongoDB数据库监控](mongodb) <br />
 
 ### 操作系统监控     
 

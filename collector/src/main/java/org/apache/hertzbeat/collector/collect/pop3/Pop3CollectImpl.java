@@ -42,8 +42,8 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 @Slf4j
 public class Pop3CollectImpl extends AbstractCollect {
 
-    private final static String EMAIL_COUNT = "email_count";
-    private final static String MAILBOX_SIZE = "mailbox_size";
+    private static final String EMAIL_COUNT = "email_count";
+    private static final String MAILBOX_SIZE = "mailbox_size";
 
     public Pop3CollectImpl() {
 
@@ -107,7 +107,7 @@ public class Pop3CollectImpl extends AbstractCollect {
     }
 
     /**
-     * 校验参数
+     * validate parameters
      * @param metrics metrics
      * @throws Exception exception
      */
@@ -119,7 +119,7 @@ public class Pop3CollectImpl extends AbstractCollect {
     }
 
     /**
-     * 创建POP3连接【支持SSL加密】
+     * create a POP3 connection【 with SSL encryption support 】
      * @param pop3Protocol pop3 Protocol
      * @param ssl ssl
      * @return return
@@ -127,23 +127,23 @@ public class Pop3CollectImpl extends AbstractCollect {
      */
     private POP3Client createPOP3Client(Pop3Protocol pop3Protocol, boolean ssl) throws Exception {
         POP3Client pop3Client = null;
-        // 判断是否启用 SSL 加密连接
+        // determine whether to use SSL-encrypted connections
         if (ssl) {
             pop3Client = new POP3SClient(true);
         } else {
             pop3Client = new POP3Client();
         }
-        // 设置超时时间
+        // set timeout
         int timeout = Integer.parseInt(pop3Protocol.getTimeout());
         if (timeout > 0) {
             pop3Client.setConnectTimeout(timeout);
         }
         pop3Client.setCharset(StandardCharsets.UTF_8);
-        // 连接到POP3服务器
+        // connect to the POP3 server
         String host = pop3Protocol.getHost();
         int port = Integer.parseInt(pop3Protocol.getPort());
         pop3Client.connect(host, port);
-        // 验证凭据
+        // validate credentials
         String email = pop3Protocol.getEmail();
         String authorize = pop3Protocol.getAuthorize();
         boolean isAuthenticated = pop3Client.login(email, authorize);
@@ -154,7 +154,7 @@ public class Pop3CollectImpl extends AbstractCollect {
     }
 
     /**
-     * 获取Pop3指标信息
+     * retrieve Pop3 metric information
      * @param builder builder
      * @param pop3Client pop3 client
      * @param aliasFields alias Fields
@@ -187,7 +187,7 @@ public class Pop3CollectImpl extends AbstractCollect {
         double mailboxSize = 0.0;
         if (status != null) {
             emailCount = status.number;
-            // byte -> kb
+            // bytes to KB
             mailboxSize = (double) status.size / 1024.0;
             pop3Metrics.put(EMAIL_COUNT, emailCount);
             pop3Metrics.put(MAILBOX_SIZE, mailboxSize);
