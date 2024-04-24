@@ -305,7 +305,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     private Map<String, String> parseInfo(String info, Metrics metrics) {
-        // yml配置的指标总和
+        // total of metrics configured in yml
         int fieldTotalSize = metrics.getFields().size();
         String[] lines = info.split(SignConstants.LINE_FEED);
         Map<String, String> result = new HashMap<>(MapCapUtil.calInitMap(fieldTotalSize));
