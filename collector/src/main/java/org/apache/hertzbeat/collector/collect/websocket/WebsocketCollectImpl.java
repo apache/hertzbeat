@@ -44,6 +44,7 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.springframework.util.Assert;
 
 /**
  * Websocket Collect
@@ -62,6 +63,11 @@ public class WebsocketCollectImpl extends AbstractCollect {
             return;
         }
         WebsocketProtocol websocketProtocol = metrics.getWebsocket();
+        // Compatible with monitoring templates without path parameters
+        if (StringUtils.isBlank(websocketProtocol.getPath())) {
+            websocketProtocol.setPath("/");
+        }
+        checkParam(websocketProtocol);
         String host = websocketProtocol.getHost();
         String port = websocketProtocol.getPort();
         Socket socket = null;
@@ -75,7 +81,7 @@ public class WebsocketCollectImpl extends AbstractCollect {
                 OutputStream out = socket.getOutputStream();
                 InputStream in = socket.getInputStream();
                 
-                send(out);
+                send(out, websocketProtocol);
                 Map<String, String> resultMap = readHeaders(in);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
@@ -117,10 +123,10 @@ public class WebsocketCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_WEBSOCKET;
     }
 
-    private static void send(OutputStream out) throws IOException {
+    private static void send(OutputStream out, WebsocketProtocol websocketProtocol) throws IOException {
         byte[] key = generateRandomKey();
         String base64Key = base64Encode(key);
-        String requestLine = "GET / HTTP/1.1\r\n";
+        String requestLine = "GET " + websocketProtocol.getPath() + " HTTP/1.1\r\n";
         out.write(requestLine.getBytes());
         String hostName = InetAddress.getLocalHost().getHostAddress();
         out.write(("Host:" + hostName + "\r\n").getBytes());
@@ -152,13 +158,13 @@ public class WebsocketCollectImpl extends AbstractCollect {
                 // Cut HTTP/1.1, 101, Switching Protocols
                 String[] parts = line.split("\\s+", 3);
                 if (parts.length == 3) {
-                    for (int i = 0; i < parts.length; i++) {
-                        if (parts[i].startsWith("HTTP")) {
-                            map.put("httpVersion", parts[i]);
-                        } else if (Character.isDigit(parts[i].charAt(0))) {
-                            map.put("responseCode", parts[i]);
+                    for (String part : parts) {
+                        if (part.startsWith("HTTP")) {
+                            map.put("httpVersion", part);
+                        } else if (StringUtils.isNotBlank(part) && Character.isDigit(part.charAt(0))) {
+                            map.put("responseCode", part);
                         } else {
-                            map.put("statusMessage", parts[i]);
+                            map.put("statusMessage", part);
                         }
                     }
                 }
@@ -174,6 +180,12 @@ public class WebsocketCollectImpl extends AbstractCollect {
         return key;
     }
 
+    private void checkParam(WebsocketProtocol protocol) {
+        Assert.hasText(protocol.getHost(), "Websocket Protocol host is required.");
+        Assert.hasText(protocol.getPort(), "Websocket Protocol port is required.");
+        Assert.hasText(protocol.getPath(), "Websocket Protocol path is required.");
+    }
+    
     private static String base64Encode(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
     }
