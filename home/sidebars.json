@@ -166,7 +166,8 @@
             "help/dm",
             "help/opengauss",
             "help/nebulaGraph",
-            "help/tidb"
+            "help/tidb",
+            "help/mongodb"
 
           ]
         },
@@ -270,7 +271,6 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/developer",
         "others/contributing",
         "others/resource"
       ]
