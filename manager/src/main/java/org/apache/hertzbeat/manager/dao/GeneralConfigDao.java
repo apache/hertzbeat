@@ -25,17 +25,15 @@ import org.springframework.stereotype.Component;
 /**
  * Public server configuration Dao
  * todo common config data cache
- * <p>该接口继承了JpaRepository和JpaSpecificationExecutor两个接口，提供基本的CRUD操作和规范查询能力。</p>
  * <p>This interface inherits the two interfaces JpaRepository and JpaSpecificationExecutor, providing basic CRUD operations and specification query capabilities.</p>
  */
 @Component
 public interface GeneralConfigDao extends JpaRepository<GeneralConfig, Long>, JpaSpecificationExecutor<GeneralConfig> {
     
     /**
-     * 通过类型查询
      * Query by type
-     * @param type 类型
-     * @return 返回查询到的配置信息 Return the queried configuration information
+     * @param type type
+     * @return Return the queried configuration information
      */
     GeneralConfig findByType(String type);
 }

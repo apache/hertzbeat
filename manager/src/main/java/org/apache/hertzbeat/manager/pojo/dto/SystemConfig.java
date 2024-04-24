@@ -33,13 +33,11 @@ public class SystemConfig {
 
     /**
      * system time zone
-     * 系统时区
      */
     private String timeZoneId;
 
     /**
      * system locale language region
-     * 系统语言地区
      */
     private String locale;
 

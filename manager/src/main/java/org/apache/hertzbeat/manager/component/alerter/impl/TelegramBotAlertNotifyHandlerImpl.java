@@ -36,7 +36,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Send alarm information by Telegram Bot
- * 通过Telegram Bot发送告警信息
  */
 @Component
 @Slf4j

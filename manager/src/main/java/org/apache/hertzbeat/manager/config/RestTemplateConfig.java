@@ -28,7 +28,7 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * restTemplate config
- * todo 连接池
+ * todo thread pool
  */
 @Configuration
 public class RestTemplateConfig {
