@@ -149,7 +149,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param ->
-                new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // To detect availability, you only need to collect the set of availability metrics with a priority of 0.
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
@@ -181,8 +181,8 @@ public class MonitorServiceImpl implements MonitorService {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type((byte) 0).build());
         // Construct the collection task Job entity     
         Job appDefine = appService.getAppDefine(monitor.getApp());
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
@@ -194,7 +194,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param -> {
             param.setMonitorId(monitorId);
-            return new Configmap(param.getField(), param.getValue(), param.getType());
+            return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
 
@@ -229,8 +229,8 @@ public class MonitorServiceImpl implements MonitorService {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type((byte) 0).build());
         Job appDefine = appService.getAppDefine(monitor.getApp());
         //设置用户可选指标
         List<Metrics> metricsDefine = appDefine.getMetrics();
@@ -249,7 +249,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param -> {
             param.setMonitorId(monitorId);
-            return new Configmap(param.getField(), param.getValue(), param.getType());
+            return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // Send the collection task to get the job ID
@@ -327,8 +327,8 @@ public class MonitorServiceImpl implements MonitorService {
                 .stream()
                 .peek(param -> {
                     param.setMonitorId(monitor.getId());
-                    String value = param.getValue() == null ? null : param.getValue().trim();
-                    param.setValue(value);
+                    String value = param.getParamValue() == null ? null : param.getParamValue().trim();
+                    param.setParamValue(value);
                 })
                 .collect(Collectors.toMap(Param::getField, param -> param));
         // Check name uniqueness and can not equal app type    
@@ -367,15 +367,15 @@ public class MonitorServiceImpl implements MonitorService {
             for (ParamDefine paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 Param param = paramMap.get(field);
-                if (paramDefine.isRequired() && (param == null || param.getValue() == null)) {
+                if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
-                if (param != null && param.getValue() != null && !"".equals(param.getValue())) {
+                if (param != null && param.getParamValue() != null && !"".equals(param.getParamValue())) {
                     switch (paramDefine.getType()) {
                         case "number":
                             double doubleValue;
                             try {
-                                doubleValue = Double.parseDouble(param.getValue());
+                                doubleValue = Double.parseDouble(param.getParamValue());
                             } catch (Exception e) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
                                         + paramDefine.getType() + " is invalid.");
@@ -391,20 +391,20 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "textarea":
                             Short textareaLimit = paramDefine.getLimit();
-                            if (textareaLimit != null && param.getValue().length() > textareaLimit) {
+                            if (textareaLimit != null && param.getParamValue().length() > textareaLimit) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
-                                        + paramDefine.getType() + " over limit " + param.getValue());
+                                        + paramDefine.getType() + " over limit " + param.getParamValue());
                             }
                             break;
                         case "text":
                             Short textLimit = paramDefine.getLimit();
-                            if (textLimit != null && param.getValue().length() > textLimit) {
+                            if (textLimit != null && param.getParamValue().length() > textLimit) {
                                 throw new IllegalArgumentException("Params field " + field + " type "
                                         + paramDefine.getType() + " over limit " + textLimit);
                             }
                             break;
                         case "host":
-                            String hostValue = param.getValue();
+                            String hostValue = param.getParamValue();
                             if (hostValue.toLowerCase().contains(HTTP)) {
                                 hostValue = hostValue.replaceAll(PATTERN_HTTP, BLANK);
                             }
@@ -419,16 +419,16 @@ public class MonitorServiceImpl implements MonitorService {
                         case "password":
                             // The plaintext password needs to be encrypted for transmission and storage
                             // 明文密码需加密传输存储
-                            String passwordValue = param.getValue();
+                            String passwordValue = param.getParamValue();
                             if (!AesUtil.isCiphertext(passwordValue)) {
                                 passwordValue = AesUtil.aesEncode(passwordValue);
-                                param.setValue(passwordValue);
+                                param.setParamValue(passwordValue);
                             }
                             param.setType(CommonConstants.PARAM_TYPE_PASSWORD);
                             break;
                         case "boolean":
                             // boolean check
-                            String booleanValue = param.getValue();
+                            String booleanValue = param.getParamValue();
                             if (!"true".equalsIgnoreCase(booleanValue) && !"false".equalsIgnoreCase(booleanValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
                                         + booleanValue + " is invalid boolean value.");
@@ -440,7 +440,7 @@ public class MonitorServiceImpl implements MonitorService {
                             boolean invalid = true;
                             if (options != null) {
                                 for (ParamDefine.Option option : options) {
-                                    if (param.getValue().equalsIgnoreCase(option.getValue())) {
+                                    if (param.getParamValue().equalsIgnoreCase(option.getValue())) {
                                         invalid = false;
                                         break;
                                     }
@@ -448,7 +448,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             if (invalid) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + param.getValue() + " is invalid option value");
+                                        + param.getParamValue() + " is invalid option value");
                             }
                             break;
                         case "checkbox":
@@ -456,7 +456,7 @@ public class MonitorServiceImpl implements MonitorService {
                             boolean checkboxInvalid = true;
                             if (checkboxOptions != null) {
                                 for (ParamDefine.Option option : checkboxOptions) {
-                                    if (param.getValue().equalsIgnoreCase(option.getValue())) {
+                                    if (param.getParamValue().equalsIgnoreCase(option.getValue())) {
                                         checkboxInvalid = false;
                                         break;
                                     }
@@ -464,25 +464,25 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             if (checkboxInvalid) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + param.getValue() + " is invalid checkbox value");
+                                        + param.getParamValue() + " is invalid checkbox value");
                             }
                             break;
                         case "metrics-field":
                         case "key-value":
-                            if (JsonUtil.fromJson(param.getValue(), new TypeReference<>() {
+                            if (JsonUtil.fromJson(param.getParamValue(), new TypeReference<>() {
                             }) == null) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
-                                        + param.getValue() + " is invalid key-value value");
+                                        + param.getParamValue() + " is invalid key-value value");
                             }
                             break;
                         case "array":
-                            String[] arrays = param.getValue().split(",");
+                            String[] arrays = param.getParamValue().split(",");
                             if (arrays.length == 0) {
                                 throw new IllegalArgumentException("Param field" + field + " value "
-                                        + param.getValue() + " is invalid arrays value");
+                                        + param.getParamValue() + " is invalid arrays value");
                             }
-                            if (param.getValue().startsWith("[") && param.getValue().endsWith("]")) {
-                                param.setValue(param.getValue().substring(1, param.getValue().length() - 1));
+                            if (param.getParamValue().startsWith("[") && param.getParamValue().endsWith("]")) {
+                                param.setParamValue(param.getParamValue().substring(1, param.getParamValue().length() - 1));
                             }
                             break;
                         // todo More parameter definitions and actual value format verification
@@ -520,7 +520,7 @@ public class MonitorServiceImpl implements MonitorService {
         }
         for (Tag tag : tags) {
             if (CommonConstants.TAG_MONITOR_NAME.equals(tag.getName())) {
-                tag.setValue(monitor.getName());
+                tag.setTagValue(monitor.getName());
             }
         }
         if (preMonitor.getStatus() != CommonConstants.UN_MANAGE_CODE) {
@@ -537,7 +537,7 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setTimestamp(System.currentTimeMillis());
             if (params != null) {
                 List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                        new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
                 appDefine.setConfigmap(configmaps);
             }
             long newJobId;
@@ -688,7 +688,7 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                        new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
                         .collect(Collectors.toList());
@@ -791,7 +791,7 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
-                        param.getValue(), param.getType())).collect(Collectors.toList());
+                        param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
                         .collect(Collectors.toList());

@@ -117,7 +117,7 @@ public class CalculateStatus {
                                                     .getList("tags", Tag.class), JoinType.LEFT);
                                     if (StringUtils.hasText(tagItem.getValue())) {
                                         andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
-                                        andList.add(criteriaBuilder.equal(tagJoin.get("value"), tagItem.getValue()));
+                                        andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagItem.getValue()));
                                     } else {
                                         andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
                                     }
@@ -199,13 +199,13 @@ public class CalculateStatus {
                 for (StatusPageHistory statusPageHistory : statusPageHistoryList) {
                     statusPageHistory.setNormal(0);
                     statusPageHistory.setAbnormal(0);
-                    statusPageHistory.setUnknown(0);
+                    statusPageHistory.setUnknowing(0);
                     if (statusPageHistoryMap.containsKey(statusPageHistory.getComponentId())) {
                         StatusPageHistory history = statusPageHistoryMap.get(statusPageHistory.getComponentId());
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                             history.setAbnormal(history.getAbnormal() + intervals);
                         } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                            history.setUnknown(history.getUnknown() + intervals);
+                            history.setUnknowing(history.getUnknowing() + intervals);
                         } else {
                             history.setNormal(history.getNormal() + intervals);
                         }
@@ -214,7 +214,7 @@ public class CalculateStatus {
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                             statusPageHistory.setAbnormal(intervals);
                         } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                            statusPageHistory.setUnknown(intervals);
+                            statusPageHistory.setUnknowing(intervals);
                         } else {
                             statusPageHistory.setNormal(intervals);
                         }
@@ -223,7 +223,7 @@ public class CalculateStatus {
                 }
                 statusPageHistoryDao.deleteAll(statusPageHistoryList);
                 for (StatusPageHistory history : statusPageHistoryMap.values()) {
-                    double total = history.getNormal() + history.getAbnormal() + history.getUnknown();
+                    double total = history.getNormal() + history.getAbnormal() + history.getUnknowing();
                     double uptime = 0;
                     if (total > 0) {
                         uptime = (double) history.getNormal() / total;

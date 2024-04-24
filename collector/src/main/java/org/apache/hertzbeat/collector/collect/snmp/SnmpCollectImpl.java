@@ -75,10 +75,10 @@ public class SnmpCollectImpl extends AbstractCollect {
     private static final String OPERATION_WALK = "walk";
     private static final String HEX_SPLIT = ":";
     private static final String FORMAT_PATTERN =
-            "{0,choice,0#|1#1 day, |1<{0,number,integer} days, }" +
-                    "{1,choice,0#|1#1 hour, |1<{1,number,integer} hours, }" +
-                    "{2,choice,0#|1#1 minute, |1<{2,number,integer} minutes, }" +
-                    "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
+            "{0,choice,0#|1#1 day, |1<{0,number,integer} days, }"
+                    + "{1,choice,0#|1#1 hour, |1<{1,number,integer} hours, }"
+                    + "{2,choice,0#|1#1 minute, |1<{2,number,integer} minutes, }"
+                    + "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
 
     private final Map<Integer, Snmp> versionSnmpService = new ConcurrentHashMap<>(3);
 

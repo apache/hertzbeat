@@ -121,10 +121,12 @@ public class HttpCollectImpl extends AbstractCollect {
                 builder.setMsg("StatusCode " + statusCode);
                 return;
             }
-            // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
-            // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
+            // todo This code converts an InputStream directly to a String. For large data in Prometheus exporters,
+            // this could create large objects, potentially impacting JVM memory space significantly.
+            // Option 1: Parse using InputStream, but this requires significant code changes; 
+            // Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            if (resp == null || "".equals(resp)) {
+            if (StringUtils.hasText(resp)) {
                 log.info("http response entity is empty, status: {}.", statusCode);
             }
             Long responseTime = System.currentTimeMillis() - startTime;
@@ -193,11 +195,12 @@ public class HttpCollectImpl extends AbstractCollect {
         if (metrics == null || metrics.getHttp() == null) {
             throw new Exception("Http/Https collect must has http params");
         }
+        
         HttpProtocol httpProtocol = metrics.getHttp();
-        if (httpProtocol.getUrl() == null
-                    || "".equals(httpProtocol.getUrl())
-                    || !httpProtocol.getUrl().startsWith(RIGHT_DASH)) {
-            httpProtocol.setUrl(httpProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + httpProtocol.getUrl().trim());
+        String url = httpProtocol.getUrl();
+        
+        if (StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
+            httpProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
         
         if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
@@ -235,9 +238,9 @@ public class HttpCollectImpl extends AbstractCollect {
                 NodeList childNodes = urlNode.getChildNodes();
                 for (int k = 0; k < childNodes.getLength(); k++) {
                     Node currentNode = childNodes.item(k);
-                    // 区分出text类型的node以及element类型的node
+                    // distinguish between text nodes and element nodes
                     if (currentNode.getNodeType() == Node.ELEMENT_NODE && "loc".equals(currentNode.getNodeName())) {
-                        //获取了loc节点的值
+                        // retrieves the value of the loc node
                         siteUrls.add(currentNode.getFirstChild().getNodeValue());
                         break;
                     }
@@ -247,11 +250,11 @@ public class HttpCollectImpl extends AbstractCollect {
             log.warn(e.getMessage());
             isXmlFormat = false;
         }
-        // 若xml解析失败 用txt格式解析
+        // if XML parsing fails, parse in TXT format
         if (!isXmlFormat) {
             try {
                 String[] urls = resp.split("\n");
-                // 校验是否是URL
+                // validate whether the given value is a URL
                 if (IpDomainUtil.isHasSchema(urls[0])) {
                     siteUrls.addAll(Arrays.asList(urls));
                 }
@@ -259,7 +262,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 log.warn(e.getMessage(), e);
             }
         }
-        // 开始循环访问每个site url 采集其 http status code, responseTime, 异常信息
+        // start looping through each site URL to collect its HTTP status code, response time, and exception information
         for (String siteUrl : siteUrls) {
             String errorMsg = "";
             Integer statusCode = null;
@@ -290,8 +293,8 @@ public class HttpCollectImpl extends AbstractCollect {
                 if (CollectorConstants.URL.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(siteUrl);
                 } else if (CollectorConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(statusCode == null ?
-                                                       CommonConstants.NULL_VALUE : String.valueOf(statusCode));
+                    valueRowBuilder.addColumns(statusCode == null
+                            ? CommonConstants.NULL_VALUE : String.valueOf(statusCode));
                 } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(String.valueOf(responseTime));
                 } else if (CollectorConstants.ERROR_MSG.equalsIgnoreCase(alias)) {
@@ -314,7 +317,7 @@ public class HttpCollectImpl extends AbstractCollect {
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (int i = 0; i < results.size(); i++) {
             Object objectValue = results.get(i);
-            // 监控目标版本问题可能出现属性不存在，为空时过滤。参考app-elasticsearch.yml的name: nodes
+            // if a property is missing or empty due to target version issues, filter it. Refer to the app-elasticsearch.yml configuration under name: nodes
             if (objectValue == null) {
                 continue;
             }
@@ -452,8 +455,8 @@ public class HttpCollectImpl extends AbstractCollect {
             if (StringUtils.hasText(auth.getDigestAuthUsername())
                         && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
-                UsernamePasswordCredentials credentials
-                        = new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
+                UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(auth.getDigestAuthUsername(),
+                        auth.getDigestAuthPassword());
                 provider.setCredentials(AuthScope.ANY, credentials);
                 AuthCache authCache = new BasicAuthCache();
                 authCache.put(new HttpHost(httpProtocol.getHost(), Integer.parseInt(httpProtocol.getPort())), new DigestScheme());

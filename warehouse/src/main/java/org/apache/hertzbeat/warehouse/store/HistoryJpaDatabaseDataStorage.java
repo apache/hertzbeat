@@ -81,8 +81,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 .build();
         ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
         scheduledExecutor.scheduleAtFixedRate(() -> {
-            log.warn("[jpa-metrics-store]-start running expired data cleaner." +
-                    "Please use time series db instead of jpa for better performance");
+            log.warn("[jpa-metrics-store]-start running expired data cleaner."
+                    + "Please use time series db instead of jpa for better performance");
             String expireTimeStr = jpaProperties.expireTime();
             long expireTime = 0;
             try {

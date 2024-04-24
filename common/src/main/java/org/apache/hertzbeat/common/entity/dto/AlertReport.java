@@ -51,13 +51,13 @@ public class AlertReport {
             example = "1694589491000", accessMode = READ_WRITE)
     private long alertTime;
 
-    @Schema(title = "Alarm priority. " +
-            "0: high emergency alarm red " +
-            "1: medium critical serious alarm Orange " +
-            "2: low warning warning alarm yellow",
-            description = "Alarm priority. 0: high emergency alarm red " +
-                    "1: medium critical serious alarm Orange " +
-                    "2: low warning warning alarm yellow",
+    @Schema(title = "Alarm priority. "
+            + "0: high emergency alarm red "
+            + "1: medium critical serious alarm Orange "
+            + "2: low warning warning alarm yellow",
+            description = "Alarm priority. 0: high emergency alarm red "
+                    + "1: medium critical serious alarm Orange "
+                    + "2: low warning warning alarm yellow",
             example = "1", accessMode = READ_WRITE)
     private Integer priority;
 
@@ -73,7 +73,7 @@ public class AlertReport {
 
     @Schema(title = " Alarm marking (monitorId:xxx,monitorName:xxx)",
             description = "Alarm labeling",
-            example ="{\"key1\":\"value1\"}"
+            example = "{\"key1\":\"value1\"}"
             , accessMode = READ_WRITE)
     private Map<String, String> annotations;
 

@@ -42,8 +42,8 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 @Slf4j
 public class Pop3CollectImpl extends AbstractCollect {
 
-    private final static String EMAIL_COUNT = "email_count";
-    private final static String MAILBOX_SIZE = "mailbox_size";
+    private static final String EMAIL_COUNT = "email_count";
+    private static final String MAILBOX_SIZE = "mailbox_size";
 
     public Pop3CollectImpl() {
 

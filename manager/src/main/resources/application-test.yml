@@ -23,8 +23,13 @@ spring:
     hikari:
       max-lifetime: 120000
   jpa:
-    hibernate:
-      ddl-auto: update
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: h2
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
   mail:
     host: smtp.exmail.qq.com
     username: example@tancloud.cn
