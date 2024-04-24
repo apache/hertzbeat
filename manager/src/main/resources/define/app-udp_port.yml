@@ -30,8 +30,8 @@ help:
   en-US: UDP is a connectionless transport layer protocol. We can judge its port availability status by sending a request message at the application layer and getting a response. We need to input the application layer hexadecimal message content that enables the peer to respond. Suggest using wireshark to capture packets to obtain the send package content. <br>You could click the "<i>New UDP Port</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: UDP 是面向無連接的傳輸層協議，其連接埠可用性狀態我們透過在應用層發送請求封包獲得回應來判斷，設定指標我們需要填充能使對端回應的應用層16進位封包 內容。建議使用wireshark抓包來取得報文內容。<br>您可以點選“<i>新 UDP連接埠可用性</i>”並進行配置，或選擇“<i>更多操作</i>”，匯入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/port
-  en-US: https://hertzbeat.apache.org/docs/help/port
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/udp_port
+  en-US: https://hertzbeat.apache.org/docs/help/udp_port
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
