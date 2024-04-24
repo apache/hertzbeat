@@ -74,13 +74,12 @@ public class WebsocketCollectImpl extends AbstractCollect {
                 long responseTime = System.currentTimeMillis() - startTime;
                 OutputStream out = socket.getOutputStream();
                 InputStream in = socket.getInputStream();
-
-
+                
                 send(out);
                 Map<String, String> resultMap = readHeaders(in);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
-                //  关闭输出流和Socket连接
+                // Close the output stream and socket connection
                 in.close();
                 out.close();
                 socket.close();
@@ -135,7 +134,7 @@ public class WebsocketCollectImpl extends AbstractCollect {
         out.flush();
     }
 
-    // 读取响应头
+    // Read response headers
     private static Map<String, String> readHeaders(InputStream in) throws IOException {
 
         Map<String, String> map = new HashMap<>(8);
@@ -147,10 +146,10 @@ public class WebsocketCollectImpl extends AbstractCollect {
             if (separatorIndex != -1) {
                 String key = line.substring(0, separatorIndex).trim();
                 String value = line.substring(separatorIndex + 1).trim();
-                // 首字母小写化
+                // Lowercase first letter
                 map.put(StringUtils.uncapitalize(key), value);
             } else {
-                // 切割HTTP/1.1, 101, Switching Protocols
+                // Cut HTTP/1.1, 101, Switching Protocols
                 String[] parts = line.split("\\s+", 3);
                 if (parts.length == 3) {
                     for (int i = 0; i < parts.length; i++) {
