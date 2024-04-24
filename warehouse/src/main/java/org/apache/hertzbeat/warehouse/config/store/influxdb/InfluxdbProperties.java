@@ -15,14 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.config;
+package org.apache.hertzbeat.warehouse.config.store.influxdb;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * WarehouseAutoConfiguration class
- * @version 2.1
+ * Influxdb configuration information
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-public class WarehouseAutoConfiguration {
+@ConfigurationProperties(prefix = "warehouse.store.influxdb")
+public record InfluxdbProperties(@DefaultValue("false") boolean enabled,
+                                 String serverUrl,
+                                 String username,
+                                 String password,
+                                 @DefaultValue("30d") String expireTime,
+                                 @DefaultValue("1") int replication) {
 }

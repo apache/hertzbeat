@@ -15,14 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.config;
+package org.apache.hertzbeat.warehouse.config.store.redis;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * WarehouseAutoConfiguration class
- * @version 2.1
+ * Redis configuration information
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-public class WarehouseAutoConfiguration {
+@ConfigurationProperties(prefix = "warehouse.store.redis")
+public record RedisProperties(@DefaultValue("false") boolean enabled,
+                              @DefaultValue("127.0.0.1") String host,
+                              @DefaultValue("6379") Integer port,
+                              String password,
+                              @DefaultValue("0") Integer db) {
 }

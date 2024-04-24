@@ -15,14 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.config;
+package org.apache.hertzbeat.warehouse.config.entrance;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * WarehouseAutoConfiguration class
- * @version 2.1
+ * kafka configuration information
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-public class WarehouseAutoConfiguration {
+@ConfigurationProperties(prefix = "warehouse.entrance.kafka")
+@ConfigurationPropertiesScan("org.apache.hertzbeat.warehouse.config")
+public record KafkaProperties(@DefaultValue("true") boolean enabled,
+                              @DefaultValue("127.0.0.1:9092") String servers,
+                              String topic,
+                              String groupId) {
 }

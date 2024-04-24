@@ -15,14 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.config;
-
-import org.springframework.context.annotation.ComponentScan;
+package org.apache.hertzbeat.warehouse.config.store.iotdb;
 
 /**
- * WarehouseAutoConfiguration class
- * @version 2.1
+ * IoTDB user version
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-public class WarehouseAutoConfiguration {
+public enum IotDbVersion {
+    /**
+     * version 0.13.*
+     */
+    V_0_13,
+    /**
+     * version 1.0.*
+     */
+    V_1_0
 }

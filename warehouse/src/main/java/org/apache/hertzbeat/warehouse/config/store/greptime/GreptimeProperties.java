@@ -15,14 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.config;
+package org.apache.hertzbeat.warehouse.config.store.greptime;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * WarehouseAutoConfiguration class
- * @version 2.1
+ * GrepTimeDB configuration information
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-public class WarehouseAutoConfiguration {
+@ConfigurationProperties(prefix = "warehouse.store.greptime")
+public record GreptimeProperties(@DefaultValue("false") boolean enabled,
+                                 @DefaultValue("127.0.0.1:4001") String endpoint,
+                                 String username,
+                                 String password) {
 }
