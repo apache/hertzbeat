@@ -150,6 +150,7 @@
           "items": [
             "help/jvm",
             "help/springboot2",
+            "help/springboot3",
             "help/dynamic_tp"
           ]
         },
