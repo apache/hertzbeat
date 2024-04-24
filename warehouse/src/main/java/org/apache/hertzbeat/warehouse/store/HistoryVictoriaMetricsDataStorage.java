@@ -18,6 +18,20 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,21 +48,15 @@ import org.apache.hertzbeat.common.util.TimePeriodUtil;
 import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAmount;
-import java.util.*;
 
 /**
  * tdengine data storage
@@ -84,12 +92,12 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private final RestTemplate restTemplate;
 
     public HistoryVictoriaMetricsDataStorage(WarehouseProperties properties, RestTemplate restTemplate) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getVictoriaMetrics() == null) {
+        if (properties == null || properties.store() == null || properties.store().victoriaMetrics() == null) {
             log.error("init error, please config Warehouse victoriaMetrics props in application.yml");
             throw new IllegalArgumentException("please config Warehouse victoriaMetrics props");
         }
         this.restTemplate = restTemplate;
-        victoriaMetricsProp = properties.getStore().getVictoriaMetrics();
+        victoriaMetricsProp = properties.store().victoriaMetrics();
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
     }
 
@@ -201,9 +209,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
-        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\"" + 
-                "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" +
-                "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
+                + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\""
+                + "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -267,9 +275,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
         if (!serverAvailable) {
-            log.error("\n\t---------------VictoriaMetrics Init Failed---------------\n" +
-                    "\t--------------Please Config VictoriaMetrics--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------VictoriaMetrics Init Failed---------------\n"
+                    + "\t--------------Please Config VictoriaMetrics--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return Collections.emptyMap();
         }
         long endTime = ZonedDateTime.now().toEpochSecond();
@@ -292,9 +300,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
-        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\"" +
-                "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" +
-                "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
+                + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\""
+                + "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();

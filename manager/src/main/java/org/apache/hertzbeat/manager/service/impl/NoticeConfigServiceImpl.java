@@ -17,6 +17,18 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
@@ -40,14 +52,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 消息通知配置实现
@@ -178,12 +182,12 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
                     }
                     // filter time
                     LocalTime nowTime = nowDate.toLocalTime();
-                    boolean startMatch = rule.getPeriodStart() == null || 
-                            nowTime.isAfter(rule.getPeriodStart().toLocalTime()) ||
-                            (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd()) 
+                    boolean startMatch = rule.getPeriodStart() == null
+                            || nowTime.isAfter(rule.getPeriodStart().toLocalTime())
+                            || (rule.getPeriodEnd() != null && rule.getPeriodStart().isAfter(rule.getPeriodEnd())
                                     && nowTime.isBefore(rule.getPeriodStart().toLocalTime()));
-                    boolean endMatch = rule.getPeriodEnd() == null ||
-                            nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
+                    boolean endMatch = rule.getPeriodEnd() == null
+                            || nowTime.isBefore(rule.getPeriodEnd().toLocalTime());
                     return startMatch && endMatch;
                 })
                 .collect(Collectors.toList());

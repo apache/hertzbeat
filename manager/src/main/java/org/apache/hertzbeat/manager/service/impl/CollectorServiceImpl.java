@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import java.util.LinkedList;
+import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
@@ -34,9 +36,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * collector service impl

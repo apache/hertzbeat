@@ -138,7 +138,9 @@
             "help/nginx",
             "help/pop3",
             "help/smtp",
-            "help/ntp"
+            "help/ntp",
+            "help/dns",
+            "help/ftp"
           ]
         },
         {
@@ -246,6 +248,13 @@
             "help/alert_console",
             "help/alert_enterprise_wechat_app",
             "help/alert_smn"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "Network",
+          "items": [
+            "help/huawei_switch"
           ]
         },
         "help/issue"

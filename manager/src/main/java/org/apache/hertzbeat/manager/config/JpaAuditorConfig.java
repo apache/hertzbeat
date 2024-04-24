@@ -19,10 +19,9 @@ package org.apache.hertzbeat.manager.config;
 
 import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
+import java.util.Optional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
-
-import java.util.Optional;
 
 /**
  * generate auditor for jpa auditing

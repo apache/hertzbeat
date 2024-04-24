@@ -17,18 +17,17 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.component.alerter.AlertStoreHandler;
+import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.support.exception.IgnoreException;
 import org.springframework.stereotype.Component;
-
-import java.util.Map;
 
 /**
  * 报警持久化 - 落地到数据库

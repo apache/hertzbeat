@@ -17,6 +17,24 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import static java.util.Objects.isNull;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -51,17 +69,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
 import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
-
-import javax.annotation.Resource;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import static java.util.Objects.isNull;
 
 /**
  * Monitoring Type Management Implementation
@@ -118,7 +125,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             if (PUSH_PROTOCOL_METRICS_NAME.equals(metric.getName())) {
                 List<Param> params = paramDao.findParamsByMonitorId(monitorId);
                 List<Configmap> configmaps = params.stream()
-                        .map(param -> new Configmap(param.getField(), param.getValue(),
+                        .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                 param.getType())).collect(Collectors.toList());
                 Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
                 CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
@@ -462,13 +469,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         if (objectStoreConfig == null) {
             appDefineStore = new LocalFileAppDefineStoreImpl();
         } else {
-            switch (objectStoreConfig.getType()) {
-                case OBS:
-                    appDefineStore = new ObjectStoreAppDefineStoreImpl();
-                    break;
-                case FILE:
-                default:
-                    appDefineStore = new LocalFileAppDefineStoreImpl();
+            if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
+                appDefineStore = new ObjectStoreAppDefineStoreImpl();
+            } else {
+                appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
         var success = appDefineStore.loadAppDefines();

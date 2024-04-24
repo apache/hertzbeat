@@ -19,14 +19,22 @@ package org.apache.hertzbeat.collector.collect.dns;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import java.io.IOException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
@@ -44,14 +52,6 @@ import org.xbill.DNS.Resolver;
 import org.xbill.DNS.Section;
 import org.xbill.DNS.SimpleResolver;
 import org.xbill.DNS.Type;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 /**
  * dns protocol collection implementation
@@ -93,6 +93,10 @@ public class DnsCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+        // compatible with monitoring template configurations of older versions
+        if (StringUtils.isBlank(metrics.getDns().getQueryClass())) {
+            metrics.getDns().setQueryClass(DClass.string(DClass.IN));
+        }
         // check params
         if (checkDnsProtocolFailed(metrics.getDns())) {
             builder.setCode(CollectRep.Code.FAIL);
@@ -123,7 +127,7 @@ public class DnsCollectImpl extends AbstractCollect {
             // add header columns
             Map<String, String> headerInfo = dnsResolveResult.getHeaderInfo();
             metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumns(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
-        }else {
+        } else {
             // add question/answer/authority/additional columns
             List<String> currentMetricsResolveResultList = dnsResolveResult.getList(metrics.getName());
             for (int index = 0; index < metrics.getAliasFields().size(); index++) {
@@ -161,7 +165,7 @@ public class DnsCollectImpl extends AbstractCollect {
 
         Message response = res.send(query);
         responseTimeStopWatch.stop();
-        return resolve(response, responseTimeStopWatch.getLastTaskTimeMillis());
+        return resolve(response, responseTimeStopWatch.lastTaskInfo().getTimeMillis());
     }
 
     private DnsResolveResult resolve(Message message, Long responseTime) {
@@ -190,7 +194,8 @@ public class DnsCollectImpl extends AbstractCollect {
 
     private List<String> getSectionInfo(Message message, int section) {
         List<RRset> currentSetList = message.getSectionRRsets(section);
-        if (currentSetList == null || currentSetList.size() <= 0) {
+        
+        if (CollectionUtils.isEmpty(currentSetList)) {
             return Lists.newArrayList();
         }
 
@@ -214,13 +219,13 @@ public class DnsCollectImpl extends AbstractCollect {
         private List<String> additionalList;
 
         public List<String> getList(String metricsName) {
-            switch (metricsName) {
-                case QUESTION: return questionList;
-                case ANSWER: return answerList;
-                case AUTHORITY: return authorityList;
-                case ADDITIONAL: return additionalList;
-                default: return Collections.emptyList();
-            }
+            return switch (metricsName) {
+                case QUESTION -> questionList;
+                case ANSWER -> answerList;
+                case AUTHORITY -> authorityList;
+                case ADDITIONAL -> additionalList;
+                default -> Collections.emptyList();
+            };
         }
     }
 }

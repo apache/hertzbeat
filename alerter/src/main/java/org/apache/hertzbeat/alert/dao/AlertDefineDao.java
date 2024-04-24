@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import java.util.List;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * AlertDefine Dao
@@ -60,8 +59,8 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
      * @param metrics metrics
      * @return Alarm Definition List
      */
-    @Query("select define from AlertDefine define join AlertDefineMonitorBind bind on bind.alertDefineId = define.id " +
-            "where bind.monitorId = :monitorId and define.app = :app and define.metric = :metrics and define.enable = true and define.preset = false")
+    @Query("select define from AlertDefine define join AlertDefineMonitorBind bind on bind.alertDefineId = define.id "
+            + "where bind.monitorId = :monitorId and define.app = :app and define.metric = :metrics and define.enable = true and define.preset = false")
     List<AlertDefine> queryAlertDefinesByMonitor(@Param(value = "monitorId") Long monitorId,
                                                  @Param(value = "app") String app,
                                                  @Param(value = "metrics") String metrics);

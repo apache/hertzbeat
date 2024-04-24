@@ -20,6 +20,8 @@ package org.apache.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.obs.services.ObsClient;
+import java.lang.reflect.Type;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
@@ -32,9 +34,6 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
-
-import javax.annotation.Resource;
-import java.lang.reflect.Type;
 
 /**
  * 文件存储配置服务
@@ -83,12 +82,9 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
     public void handler(ObjectStoreDTO<T> config) {
         // 初始化文件存储服务
         if (config != null) {
-            switch (config.getType()) {
-                case OBS:
-                    initObs(config);
-                    break;
+            if (config.getType() == ObjectStoreDTO.Type.OBS) {
+                initObs(config);
                 // case other object store service
-                default:
             }
             ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
         }

@@ -23,9 +23,9 @@ package org.apache.hertzbeat.collector.collect.http.promethus.exporter;
 public enum MetricType {
     // for string metric info
     INFO("info"),
-    // 代表单调递增的计数器, 例: 统计次数
+    // Represents a monotonically increasing counter, e.g., counting occurrences
     COUNTER("counter"),
-    // 任意上下波动的指标类型, 例: CPU的使用率
+    // A metric type that can fluctuate up and down, e.g., CPU usage rate
     GAUGE("gauge"),
     SUMMARY("summary"),
     UNTYPED("untyped"),

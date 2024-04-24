@@ -17,9 +17,15 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -30,15 +36,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
-
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Silence the batch API for alarms
@@ -65,7 +67,7 @@ public class AlertSilencesController {
         Specification<AlertSilence> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate= criteriaBuilder.in(root.get("id"));
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
                 for (long id : ids) {
                     inPredicate.value(id);
                 }

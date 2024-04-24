@@ -17,10 +17,10 @@
 
 package org.apache.hertzbeat.collector.collect.common.cache;
 
+import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Objects;
 
 /**
  * resource identifier in cache
@@ -41,11 +41,11 @@ public class CacheIdentifier {
 
     @Override
     public String toString() {
-        return "CacheIdentifier {" +
-                "ip='" + ip + '\'' +
-                ", port='" + port + '\'' +
-                ", username+password=>hash='" + Objects.hash(username, password) + '\'' +
-                ", customArg='" + customArg + '\'' +
-                '}';
+        return "CacheIdentifier {"
+                + "ip='" + ip + '\''
+                + ", port='" + port + '\''
+                + ", username+password=>hash='" + Objects.hash(username, password) + '\''
+                + ", customArg='" + customArg + '\''
+                + '}';
     }
 }

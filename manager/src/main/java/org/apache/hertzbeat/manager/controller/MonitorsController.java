@@ -17,9 +17,18 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.ListJoin;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.service.MonitorService;
@@ -30,19 +39,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.ListJoin;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Monitor and manage batch API
@@ -101,7 +105,7 @@ public class MonitorsController {
                 if (tagArr.length == TAG_LENGTH) {
                     String tagValue = tagArr[1];
                     andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
-                    andList.add(criteriaBuilder.equal(tagJoin.get("value"), tagValue));
+                    andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagValue));
                 } else {
                     andList.add(criteriaBuilder.equal(tagJoin.get("name"), tag));
                 }
@@ -121,12 +125,12 @@ public class MonitorsController {
             Predicate[] orPredicates = new Predicate[orList.size()];
             Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
 
-            if (andPredicate.getExpressions().isEmpty() && orPredicate.getExpressions().isEmpty()) {
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
                 return query.where().getRestriction();
-            } else if (andPredicate.getExpressions().isEmpty()) {
-                return query.where(orPredicate).getRestriction();
-            } else if (orPredicate.getExpressions().isEmpty()) {
-                return query.where(andPredicate).getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
             } else {
                 return query.where(andPredicate, orPredicate).getRestriction();
             }

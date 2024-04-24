@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.mongodb;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoServerUnavailableException;
@@ -25,26 +26,23 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.bson.Document;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.MongodbConnect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.bson.Document;
 import org.springframework.util.Assert;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Optional;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Mongodb single collect
@@ -104,7 +102,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         }
         ClientSession clientSession = null;
         MongoClient mongoClient;
-        CacheIdentifier identifier= null;
+        CacheIdentifier identifier = null;
         try {
             identifier = getIdentifier(metrics.getMongodb());
             mongoClient = getClient(metrics, identifier);

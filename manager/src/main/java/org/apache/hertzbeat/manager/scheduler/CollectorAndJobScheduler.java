@@ -17,6 +17,17 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
@@ -37,24 +48,12 @@ import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
-import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
+import org.apache.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * collector service
@@ -140,7 +139,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     appDefine.setTimestamp(System.currentTimeMillis());
                     List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                     List<Configmap> configmaps = params.stream()
-                            .map(param -> new Configmap(param.getField(), param.getValue(),
+                            .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                     param.getType())).collect(Collectors.toList());
                     List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                             .filter(item -> StringUtils.hasText(item.getDefaultValue()))

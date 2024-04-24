@@ -20,8 +20,8 @@
 import { Tag } from '../../pojo/Tag';
 
 export function formatTagName(tag: Tag): string {
-  if (tag.value != undefined && tag.value.trim() != '') {
-    return `${tag.name}:${tag.value}`;
+  if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
+    return `${tag.name}:${tag.tagValue}`;
   } else {
     return tag.name;
   }

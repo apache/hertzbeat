@@ -20,13 +20,15 @@
 package org.apache.hertzbeat.collector.collect.httpsd;
 
 import com.ecwid.consul.transport.TransportException;
+import java.lang.reflect.Field;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClientManagement;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServerInfo;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -34,15 +36,12 @@ import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
-import java.lang.reflect.Field;
-import java.util.Objects;
-
 /**
  * http_sd protocol collection implementation
  */
 @Slf4j
 public class HttpsdImpl extends AbstractCollect {
-    private final static String SERVER = "server";
+    private static final  String SERVER = "server";
     private final DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
 
     @Override
@@ -79,13 +78,13 @@ public class HttpsdImpl extends AbstractCollect {
             metrics.getAliasFields().forEach(fieldName -> {
                 if (StringUtils.equalsAnyIgnoreCase(CollectorConstants.RESPONSE_TIME, fieldName)) {
                     valueRowBuilder.addColumns(String.valueOf(System.currentTimeMillis() - beginTime));
-                }else {
+                } else {
                     addColumnIfMatched(fieldName, serverInfo, valueRowBuilder);
                 }
             });
 
             builder.addValues(valueRowBuilder.build());
-        }else {
+        } else {
             // Service instances monitor
             discoveryClient.getServices().forEach(serviceInstance -> {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();

@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
-import java.util.List;
-
 /**
  * prometheus parse abstract class
- * todo: string类型 和 scalar类型 响应格式解析
+ * todo: parse response formats for string and scalar types
  */
 public abstract class AbstractPrometheusParse {
 
@@ -42,16 +41,16 @@ public abstract class AbstractPrometheusParse {
     }
 
     /**
-     * prom response type check: string, matrix, vector, scalar
-     * todo：string、scalar类型响应未实现
-     * @param responseStr 返回字符串
-     * @return return
+     * checks the Prometheus response type: string, matrix, vector, scalar
+     * todo：implementation for string and scalar types is missing
+     * @param responseStr The returned string
+     * @return boolean indicating the result
      */
     abstract Boolean checkType(String responseStr);
 
     /**
      * Parse the prom interface response data
-     * @param resp 返回数据
+     * @param resp The returned data
      * @param aliasFields alias fields
      * @param http httpProtocol
      * @param builder builder

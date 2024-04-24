@@ -17,25 +17,31 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
-import java.util.List;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Notification strategy entity
@@ -61,7 +67,7 @@ public class NoticeRule {
     @Schema(title = "Policy name",
             description = "Policy name",
             example = "dispatch-1", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String name;
 
@@ -86,7 +92,7 @@ public class NoticeRule {
     @Schema(title = "Template identification",
             description = "Template identification",
             example = "demo", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     private String templateName;
 
     @Schema(title = "Whether to enable this policy",
@@ -99,8 +105,8 @@ public class NoticeRule {
             example = "false", accessMode = READ_WRITE)
     private boolean filterAll = true;
 
-    @Schema(title = "Filter the matching alarm level, empty is all alarm level " +
-            "0: high -emergency- Urgent alarm - red 1: Medium -critical- Serious alarm - orange 2: Low -warning- Warning alarm - yellow",
+    @Schema(title = "Filter the matching alarm level, empty is all alarm level "
+            + "0: high -emergency- Urgent alarm - red 1: Medium -critical- Serious alarm - orange 2: Low -warning- Warning alarm - yellow",
             example = "[1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;
@@ -117,9 +123,11 @@ public class NoticeRule {
     private List<Byte> days;
 
     @Schema(title = "Limit time period start", example = "00:00:00", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodStart;
 
     @Schema(title = "Restricted time period end", example = "23:59:59", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodEnd;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)

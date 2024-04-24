@@ -17,24 +17,31 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.apache.hertzbeat.manager.service.TagService;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.manager.service.TagService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Tags management API
@@ -91,18 +98,18 @@ public class TagController {
             if (search != null && !search.isEmpty()) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
                 orList.add(predicateName);
-                Predicate predicateValue = criteriaBuilder.like(root.get("value"), "%" + search + "%");
+                Predicate predicateValue = criteriaBuilder.like(root.get("tagValue"), "%" + search + "%");
                 orList.add(predicateValue);
             }
             Predicate[] orPredicates = new Predicate[orList.size()];
             Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
 
-            if (andPredicate.getExpressions().isEmpty() && orPredicate.getExpressions().isEmpty()) {
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
                 return query.where().getRestriction();
-            } else if (andPredicate.getExpressions().isEmpty()) {
-                return query.where(orPredicate).getRestriction();
-            } else if (orPredicate.getExpressions().isEmpty()) {
-                return query.where(andPredicate).getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
             } else {
                 return query.where(andPredicate, orPredicate).getRestriction();
             }

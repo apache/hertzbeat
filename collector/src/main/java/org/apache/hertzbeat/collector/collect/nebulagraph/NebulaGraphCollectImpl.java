@@ -17,16 +17,15 @@
 
 package org.apache.hertzbeat.collector.collect.nebulagraph;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -38,15 +37,15 @@ import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 
 
 /**
@@ -54,19 +53,19 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 public class NebulaGraphCollectImpl extends AbstractCollect {
-    private final static int SUCCESS_CODE = 200;
+    private static final int SUCCESS_CODE = 200;
 
-    private final static String[] TIME_RANGE = new String[]{"5", "60", "600", "3600"};
+    private static final String[] TIME_RANGE = new String[]{"5", "60", "600", "3600"};
 
-    private final static String REGEX = "\\.%s\\=";
+    private static final String REGEX = "\\.%s\\=";
 
-    private final static String STR_SPLIT = "\n";
+    private static final String STR_SPLIT = "\n";
 
-    private final static String STORAGE_SPLIT_KEY_VALUE = "=";
+    private static final String STORAGE_SPLIT_KEY_VALUE = "=";
 
-    private final static String GRAPH_API = "/stats";
+    private static final String GRAPH_API = "/stats";
 
-    private final static String STORAGE_API = "/rocksdb_stats";
+    private static final String STORAGE_API = "/rocksdb_stats";
 
 
     @Override
@@ -80,7 +79,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         NebulaGraphProtocol nebulaGraph = metrics.getNebulaGraph();
         String timePeriod = nebulaGraph.getTimePeriod();
 
-        if (!Objects.isNull(nebulaGraph.getTimePeriod())&&!Arrays.asList(TIME_RANGE).contains(timePeriod)) {
+        if (!Objects.isNull(nebulaGraph.getTimePeriod()) && !Arrays.asList(TIME_RANGE).contains(timePeriod)) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("The time range for metric statistics, currently supporting 5 seconds, 60 seconds, 600 seconds, and 3600 seconds.");
             return;

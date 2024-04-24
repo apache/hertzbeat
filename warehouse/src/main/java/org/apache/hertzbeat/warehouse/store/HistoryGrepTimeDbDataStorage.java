@@ -17,29 +17,45 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import io.greptime.models.*;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.flight.FlightRuntimeException;
-import org.apache.hertzbeat.common.entity.dto.Value;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 import io.greptime.GreptimeDB;
+import io.greptime.models.ColumnDataType;
+import io.greptime.models.Err;
+import io.greptime.models.QueryOk;
+import io.greptime.models.QueryRequest;
+import io.greptime.models.Result;
+import io.greptime.models.Row;
+import io.greptime.models.SelectExprType;
+import io.greptime.models.SelectRows;
+import io.greptime.models.SemanticType;
+import io.greptime.models.TableName;
+import io.greptime.models.TableSchema;
+import io.greptime.models.WriteOk;
+import io.greptime.models.WriteRows;
 import io.greptime.options.GreptimeOptions;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAmount;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.flight.FlightRuntimeException;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.dto.Value;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.TimePeriodUtil;
+import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 
 /**
  * greptimeDB data storage
@@ -54,21 +70,21 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
      * storage database
      */
     private static final String STORAGE_DATABASE = "hertzbeat";
-    private static final String QUERY_HISTORY_SQL
-            = "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
-    private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-            = "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
-    private static final String QUERY_INSTANCE_SQL
-            = "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
-    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s" +
-            " and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
+    private static final String QUERY_HISTORY_SQL =
+            "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
+    private static final String QUERY_HISTORY_WITH_INSTANCE_SQL =
+            "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
+    private static final String QUERY_INSTANCE_SQL =
+            "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
+    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
+            "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s"
+                    + " and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
     private static final String TABLE_NOT_EXIST = "not exist";
     private static final String DATABASE_NOT_EXIST = "not exist";
     private GreptimeDB greptimeDb;
 
     public HistoryGrepTimeDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initDbSession(properties.getStore().getGreptime());
+        this.serverAvailable = this.initDbSession(properties.store().greptime());
     }
 
     private boolean initDbSession(WarehouseProperties.StoreProperties.GreptimeProperties properties) {
@@ -219,15 +235,15 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                                                          String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------Greptime Init Failed---------------\n" +
-                    "\t--------------Please Config Greptime--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------Greptime Init Failed---------------\n"
+                    + "\t--------------Please Config Greptime--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         long expireTime = getExpireTimeFromToken(history);
         String table = app + "_" + metrics;
-        String selectSql = label == null ?
-                String.format(QUERY_HISTORY_SQL, metric, table, expireTime, monitorId)
+        String selectSql = label == null
+                ? String.format(QUERY_HISTORY_SQL, metric, table, expireTime, monitorId)
                 : String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, expireTime, monitorId, label);
         log.debug("selectSql: {}", selectSql);
         QueryRequest request = QueryRequest.newBuilder()
@@ -286,9 +302,9 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                                                                  String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------Greptime Init Failed---------------\n" +
-                    "\t--------------Please Config Greptime--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------Greptime Init Failed---------------\n"
+                    + "\t--------------Please Config Greptime--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String table = app + "_" + metrics;

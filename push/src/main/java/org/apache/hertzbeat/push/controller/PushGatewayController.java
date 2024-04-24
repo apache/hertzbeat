@@ -22,6 +22,8 @@ package org.apache.hertzbeat.push.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.push.service.PushGatewayService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +31,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * push gateway controller

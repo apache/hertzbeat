@@ -17,11 +17,34 @@
 
 package org.apache.hertzbeat.collector.collect.prometheus;
 
+import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.net.ssl.SSLException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.util.Base64;
+import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.MetricFamily;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.TextParser;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -41,28 +64,7 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
-import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
-import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.springframework.util.StringUtils;
-
-import javax.net.ssl.SSLException;
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 
 /**
@@ -221,8 +223,8 @@ public class PrometheusAutoCollectImpl {
             if (StringUtils.hasText(auth.getDigestAuthUsername())
                         && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
-                UsernamePasswordCredentials credentials
-                        = new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
+                UsernamePasswordCredentials credentials =
+                        new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
                 provider.setCredentials(AuthScope.ANY, credentials);
                 AuthCache authCache = new BasicAuthCache();
                 authCache.put(new HttpHost(protocol.getHost(), Integer.parseInt(protocol.getPort())), new DigestScheme());
