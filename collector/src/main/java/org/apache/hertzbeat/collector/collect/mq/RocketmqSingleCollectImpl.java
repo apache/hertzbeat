@@ -146,9 +146,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
      * @param metrics metrics config
      */
     private void preCheck(Metrics metrics) {
-        if (metrics == null || metrics.getRocketmq() == null) {
-            throw new IllegalArgumentException("Mongodb collect must has rocketmq params");
-        }
+        Assert.isTrue(metrics != null && metrics.getRocketmq() != null, "Mongodb collect must has rocketmq params");
         RocketmqProtocol rocketmq = metrics.getRocketmq();
         Assert.hasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
         Assert.hasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
@@ -339,7 +337,8 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                 Map<String, List<RocketmqCollectData.TopicQueueInfo>> topicQueueInfoTable = new HashMap<>(32);
                 List<RocketmqCollectData.TopicQueueInfo> topicQueueInfoList = new ArrayList<>();
 
-                // todo 查询topic的queue信息需要for循环调用 mqAdminExt.examineTopicStats(), topic数量很大的情况, 调用次数也会很多
+                // When querying queue information for a topic, you need to use a for-loop to call mqAdminExt.examineTopicStats().
+                // If the number of topics is large, the number of calls will also be high
                 topicQueueInfoTable.put(topic, topicQueueInfoList);
                 topicInfoList.add(topicQueueInfoTable);
                 rocketmqCollectData.setTopicInfoList(topicInfoList);

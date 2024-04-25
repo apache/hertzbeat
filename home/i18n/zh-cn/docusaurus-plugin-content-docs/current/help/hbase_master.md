@@ -1,7 +1,7 @@
 ---
 id: hbase_master  
 title: 监控：Hbase Master监控    
-sidebar_label: HbaseMaster监控
+sidebar_label: Apache Hbase Master
 keywords: [开源监控系统, 开源数据库监控, HbaseMaster监控]
 ---
 > 对Hbase Master的通用性能指标进行采集监控
