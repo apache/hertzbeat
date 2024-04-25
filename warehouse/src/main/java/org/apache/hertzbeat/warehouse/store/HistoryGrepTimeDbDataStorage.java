@@ -53,7 +53,7 @@ import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.greptime.GreptimeProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -83,11 +83,11 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final String DATABASE_NOT_EXIST = "not exist";
     private GreptimeDB greptimeDb;
 
-    public HistoryGrepTimeDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initDbSession(properties.store().greptime());
+    public HistoryGrepTimeDbDataStorage(GreptimeProperties greptimeProperties) {
+        this.serverAvailable = this.initDbSession(greptimeProperties);
     }
 
-    private boolean initDbSession(WarehouseProperties.StoreProperties.GreptimeProperties properties) {
+    private boolean initDbSession(GreptimeProperties properties) {
         String endpoint = properties.endpoint();
         GreptimeOptions opts = GreptimeOptions.newBuilder(endpoint)
                 .writeMaxRetries(1)

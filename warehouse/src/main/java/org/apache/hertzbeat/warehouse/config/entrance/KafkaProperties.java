@@ -15,33 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.warehouse.config.entrance;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Websocket Protocol
+ * kafka configuration information
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class WebsocketProtocol {
-    /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
-     */
-    private String host;
-
-    /**
-     * Port number
-     */
-    private String port;
-    
-    /**
-     * The path to the websocket endpoint
-     */
-    private String path;
+@ConfigurationProperties(prefix = "warehouse.entrance.kafka")
+@ConfigurationPropertiesScan("org.apache.hertzbeat.warehouse.config")
+public record KafkaProperties(@DefaultValue("true") boolean enabled,
+                              @DefaultValue("127.0.0.1:9092") String servers,
+                              String topic,
+                              String groupId) {
 }

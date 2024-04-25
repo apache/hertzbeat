@@ -15,33 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.warehouse.config.store.jpa;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Websocket Protocol
+ * JPA configuration information
+ * @param enabled use mysql/h2 jpa store metrics history data
+ * @param expireTime save data expire time(ms)
+ * @param maxHistoryRecordNum The maximum number of history records retained
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class WebsocketProtocol {
-    /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
-     */
-    private String host;
-
-    /**
-     * Port number
-     */
-    private String port;
-    
-    /**
-     * The path to the websocket endpoint
-     */
-    private String path;
+@ConfigurationProperties(prefix = "warehouse.store.jpa")
+public record JpaProperties(@DefaultValue("true") boolean enabled,
+                            @DefaultValue("1h") String expireTime,
+                            @DefaultValue("20000") Integer maxHistoryRecordNum) {
 }
