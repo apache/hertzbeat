@@ -103,7 +103,8 @@ public class MonitorController {
     }
 
     @PostMapping(path = "/detect")
-    @Operation(summary = "Perform availability detection on this monitoring based on monitoring information", description = "Perform availability detection on this monitoring based on monitoring information")
+    @Operation(summary = "Perform availability detection on this monitoring based on monitoring information",
+            description = "Perform availability detection on this monitoring based on monitoring information")
     public ResponseEntity<Message<Void>> detectMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, null);
         monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
