@@ -15,33 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.warehouse.config.store.greptime;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Websocket Protocol
+ * GrepTimeDB configuration information
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class WebsocketProtocol {
-    /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
-     */
-    private String host;
-
-    /**
-     * Port number
-     */
-    private String port;
-    
-    /**
-     * The path to the websocket endpoint
-     */
-    private String path;
+@ConfigurationProperties(prefix = "warehouse.store.greptime")
+public record GreptimeProperties(@DefaultValue("false") boolean enabled,
+                                 @DefaultValue("127.0.0.1:4001") String endpoint,
+                                 String username,
+                                 String password) {
 }

@@ -15,33 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.warehouse.config.store.influxdb;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Websocket Protocol
+ * Influxdb configuration information
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class WebsocketProtocol {
-    /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
-     */
-    private String host;
-
-    /**
-     * Port number
-     */
-    private String port;
-    
-    /**
-     * The path to the websocket endpoint
-     */
-    private String path;
+@ConfigurationProperties(prefix = "warehouse.store.influxdb")
+public record InfluxdbProperties(@DefaultValue("false") boolean enabled,
+                                 String serverUrl,
+                                 String username,
+                                 String password,
+                                 @DefaultValue("30d") String expireTime,
+                                 @DefaultValue("1") int replication) {
 }
