@@ -61,7 +61,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  *
  * @version 2.1
- * Created by Musk.Chen on 2023/1/14
  */
 class ManagerTest extends AbstractSpringIntegrationTest {
 

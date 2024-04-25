@@ -56,10 +56,10 @@ class I18nControllerTest {
     @Test
     void queryI18n() throws Exception {
 
-        // The interface is called to return manufactured data｜ 调用接口返回制造的数据
+        // The interface is called to return manufactured data
         Mockito.when(appService.getI18nResources("zh-CN"))
                 .thenReturn(new HashMap<>());
-        // Request interface ｜ 请求接口
+        // Request interface
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/i18n/{lang}", "zh-CN"))
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
