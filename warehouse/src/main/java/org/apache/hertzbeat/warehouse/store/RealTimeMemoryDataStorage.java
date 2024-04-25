@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.memory.MemoryProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -44,11 +44,11 @@ public class RealTimeMemoryDataStorage extends AbstractRealTimeDataStorage {
     private static final Integer DEFAULT_INIT_SIZE = 16;
     private static final Integer METRICS_SIZE = 8;
 
-    public RealTimeMemoryDataStorage(WarehouseProperties properties) {
+    public RealTimeMemoryDataStorage(MemoryProperties memoryProperties) {
         int initSize = DEFAULT_INIT_SIZE;
-        if (properties != null && properties.store() != null && properties.store().memory() != null
-                && properties.store().memory().initSize() != null) {
-            initSize = properties.store().memory().initSize();
+        if (memoryProperties != null
+                && memoryProperties.initSize() != null) {
+            initSize = memoryProperties.initSize();
         }
         monitorMetricsDataMap = new ConcurrentHashMap<>(initSize);
         this.serverAvailable = true;

@@ -218,7 +218,7 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 解析ngx_http_reqstat_module模块暴露信息
+     * Analyze the information exposed by the ngx_http_reqstat_module module
      *
      * @param builder builder
      * @param resp resp
@@ -228,17 +228,17 @@ public class NginxCollectImpl extends AbstractCollect {
     private void parseReqStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
                                         Long responseTime) {
         //example
-        //zone_name       key     max_active      max_bw  traffic requests        active  bandwidth
-        //imgstore_appid  43    27      6M      63G     374063  0        0
-        //imgstore_appid  53    329     87M     2058G   7870529 50      25M
-        //server_addr     10.128.1.17     2        8968   24M     1849    0        0
-        //server_addr     127.0.0.1       1       6M      5G      912     1        0
-        //server_addr     180.96.x.1   3358    934M    27550G  141277391       891     356M
-        //server_addr     180.96.x.2   78      45M     220G    400704  0        0
-        //server_addr     180.96.x.3   242     58M     646G    2990547 42      7M
-        //server_name     d.123.sogou.com 478     115M    2850G   30218726        115     39M
-        //server_name     dl.pinyin.sogou.com     913     312M    8930G   35345453        225     97M
-        //server_name     download.ie.sogou.com   964     275M    7462G   7979817 297     135M
+        //zone_name       key                    max_active      max_bw  traffic   requests   active  bandwidth
+        //imgstore_appid  43                     27              6M      63G       374063     0       0
+        //imgstore_appid  53                     329             87M     2058G     7870529    50      25M
+        //server_addr     10.128.1.17            2               8968    24M       1849       0       0
+        //server_addr     127.0.0.1              1               6M      5G        912        1       0
+        //server_addr     180.96.x.1             3358            934M    27550G    141277391  891     356M
+        //server_addr     180.96.x.2             78              45M     220G      400704     0       0
+        //server_addr     180.96.x.3             242             58M     646G      2990547    42      7M
+        //server_name     d.123.sogou.com 478    115M            2850G   30218726             115     39M
+        //server_name     dl.pinyin.sogou.com    913             312M    8930G     35345453   225     97M
+        //server_name     download.ie.sogou.com  964             275M    7462G     7979817    297     135M
         List<ReqStatusResponse> reqStatusResponses = regexReqStatusMatch(resp);
         List<String> aliasFields = metrics.getAliasFields();
 
@@ -273,7 +273,7 @@ public class NginxCollectImpl extends AbstractCollect {
 
     private Map<String, Object> regexNginxStatusMatch(String resp, Integer aliasFieldsSize) {
         Map<String, Object> metricsMap = new HashMap<>(aliasFieldsSize);
-        // 正则提取监控信息
+        // Extract monitoring information using regular expressions
         Pattern pattern = Pattern.compile(REGEX_SERVER);
         Matcher matcher = pattern.matcher(resp);
         while (matcher.find()) {
