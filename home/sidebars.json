@@ -186,6 +186,7 @@
             "help/linux",
             "help/windows",
             "help/ubuntu",
+            "help/debian",
             "help/centos"
           ]
         },
