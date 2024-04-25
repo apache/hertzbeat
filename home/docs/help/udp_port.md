@@ -1,11 +1,12 @@
 ---
-id: port  
+id: udp_port  
 title: Monitoring：UDP port availability      
 sidebar_label: UDP Port availability    
 keywords: [open source monitoring tool, open source port monitoring tool, monitoring UDP port metrics]
 ---
 
-> UDP is a connectionless transport layer protocol. We determine the availability status of its ports by sending request packets at the application layer and receiving responses. The configuration information requires filling in the hexadecimal content of the application layer packets that prompt responses from the peer. We recommend using Wireshark for packet capture to obtain the transmitted packet content.<br>You can click on `Create UDP Port Availability` to configure or select `More Actions` to import existing configurations.
+> UDP is a connectionless transport layer protocol. We determine the availability status of its ports by sending request packets at the application layer and receiving responses. The configuration information requires filling in the hexadecimal content of the application layer packets that prompt responses from the peer. We recommend using Wireshark for packet capture to obtain the transmitted packet content.  
+> You can click on `Create UDP Port Availability` to configure or select `More Actions` to import existing configurations.
 
 ### Configuration parameter
 
