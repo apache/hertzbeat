@@ -159,7 +159,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
         }
         HttpProtocol httpProtocol = metrics.getHttp();
         String url = httpProtocol.getUrl();
-        if (StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
+        if (url == null || StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
             httpProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
     }

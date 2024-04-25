@@ -139,7 +139,7 @@ public class NginxCollectImpl extends AbstractCollect {
         
         String url = nginxProtocol.getUrl();
         
-        if (StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
+        if (url == null || StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
             nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
     }
