@@ -59,7 +59,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * tdengine data storage
+ * VictoriaMetrics data storage
  */
 @Primary
 @Component
