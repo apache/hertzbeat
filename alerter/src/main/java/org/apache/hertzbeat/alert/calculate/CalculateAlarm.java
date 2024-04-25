@@ -329,8 +329,7 @@ public class CalculateAlarm {
                 }
             });
             match = (Boolean) expression.execute(fieldValueMap);
-        } catch (CompileExpressionErrorException |
-                 ExpressionSyntaxErrorException compileException) {
+        } catch (CompileExpressionErrorException | ExpressionSyntaxErrorException compileException) {
             log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
             throw compileException;
         } catch (ExpressionRuntimeException expressionRuntimeException) {

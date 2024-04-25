@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.common.entity.manager;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -69,8 +68,7 @@ public class StatusPageHistory {
     private Integer abnormal;
 
     @Schema(title = "state unknown time(s)", example = "1000")
-    @Column(name = "`unknown`")
-    private Integer unknown;
+    private Integer unknowing;
 
     @Schema(title = "state normal tim(s)", example = "1000")
     private Integer normal;

@@ -127,24 +127,24 @@ export class MonitorEditComponent implements OnInit {
                   param.type = 1;
                 }
                 if (define.type === 'boolean') {
-                  param.value = define.defaultValue == 'true';
+                  param.paramValue = define.defaultValue == 'true';
                 } else if (param.field === 'host') {
-                  param.value = this.monitor.host;
+                  param.paramValue = this.monitor.host;
                 } else if (define.defaultValue != undefined) {
                   if (define.type === 'number') {
-                    param.value = Number(define.defaultValue);
+                    param.paramValue = Number(define.defaultValue);
                   } else if (define.type === 'boolean') {
-                    param.value = define.defaultValue.toLowerCase() == 'true';
+                    param.paramValue = define.defaultValue.toLowerCase() == 'true';
                   } else {
-                    param.value = define.defaultValue;
+                    param.paramValue = define.defaultValue;
                   }
                 }
               } else {
                 if (define.type === 'boolean') {
-                  if (param.value != null) {
-                    param.value = param.value.toLowerCase() == 'true';
+                  if (param.paramValue != null) {
+                    param.paramValue = param.paramValue.toLowerCase() == 'true';
                   } else {
-                    param.value = false;
+                    param.paramValue = false;
                   }
                 }
               }
@@ -192,9 +192,9 @@ export class MonitorEditComponent implements OnInit {
       this.params.forEach(param => {
         if (param.field === 'port') {
           if (booleanValue) {
-            param.value = '443';
+            param.paramValue = '443';
           } else {
-            param.value = '80';
+            param.paramValue = '80';
           }
         }
       });
@@ -216,15 +216,15 @@ export class MonitorEditComponent implements OnInit {
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
-        param.value = this.monitor.host;
+        param.paramValue = this.monitor.host;
       }
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     this.advancedParams.forEach(param => {
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     let addMonitor = {
@@ -271,15 +271,15 @@ export class MonitorEditComponent implements OnInit {
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
-        param.value = this.monitor.host;
+        param.paramValue = this.monitor.host;
       }
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     this.advancedParams.forEach(param => {
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     let detectMonitor = {
@@ -319,8 +319,8 @@ export class MonitorEditComponent implements OnInit {
   }
 
   sliceTagName(tag: Tag): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
+    if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
+      return `${tag.name}:${tag.tagValue}`;
     } else {
       return tag.name;
     }

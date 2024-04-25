@@ -133,13 +133,15 @@
             "help/api",
             "help/ping",
             "help/port",
+            "help/udp_port",
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
             "help/pop3",
             "help/smtp",
             "help/ntp",
-            "help/dns"
+            "help/dns",
+            "help/ftp"
           ]
         },
         {
@@ -148,6 +150,7 @@
           "items": [
             "help/jvm",
             "help/springboot2",
+            "help/springboot3",
             "help/dynamic_tp"
           ]
         },
@@ -162,7 +165,10 @@
             "help/oracle",
             "help/dm",
             "help/opengauss",
-            "help/nebulaGraph"
+            "help/nebulaGraph",
+            "help/tidb",
+            "help/mongodb"
+
           ]
         },
         {
@@ -191,7 +197,8 @@
             "help/shenyu",
             "help/rabbitmq",
             "help/activemq",
-            "help/spring_gateway"
+            "help/spring_gateway",
+            "help/nacos"
           ]
         },
         {
@@ -205,7 +212,8 @@
             "help/iotdb",
             "help/hive",
             "help/airflow",
-            "help/clickhouse"
+            "help/clickhouse",
+            "help/elasticsearch"
           ]
         },
         {
@@ -249,6 +257,13 @@
             "help/alert_smn"
           ]
         },
+        {
+          "type": "category",
+          "label": "Network",
+          "items": [
+            "help/huawei_switch"
+          ]
+        },
         "help/issue"
       ]
     },
@@ -256,10 +271,10 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/developer",
         "others/contributing",
         "others/resource"
       ]
     }
   ]
 }
+

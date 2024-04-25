@@ -98,18 +98,18 @@ public class TagController {
             if (search != null && !search.isEmpty()) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
                 orList.add(predicateName);
-                Predicate predicateValue = criteriaBuilder.like(root.get("value"), "%" + search + "%");
+                Predicate predicateValue = criteriaBuilder.like(root.get("tagValue"), "%" + search + "%");
                 orList.add(predicateValue);
             }
             Predicate[] orPredicates = new Predicate[orList.size()];
             Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
 
-            if (andPredicate.getExpressions().isEmpty() && orPredicate.getExpressions().isEmpty()) {
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
                 return query.where().getRestriction();
-            } else if (andPredicate.getExpressions().isEmpty()) {
-                return query.where(orPredicate).getRestriction();
-            } else if (orPredicate.getExpressions().isEmpty()) {
-                return query.where(andPredicate).getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
             } else {
                 return query.where(andPredicate, orPredicate).getRestriction();
             }

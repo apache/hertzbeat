@@ -70,7 +70,7 @@
           <input
             nz-input
             [required]="paramDefine.required"
-            [(ngModel)]="params[i].value"
+            [(ngModel)]="params[i].paramValue"
             [name]="paramDefine.field"
             [type]="paramDefine.type"
             [id]="paramDefine.field"
@@ -84,7 +84,7 @@
         <nz-form-control *ngIf="paramDefine.type === 'textarea'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <textarea
             nz-input
-            [(ngModel)]="params[i].value"
+            [(ngModel)]="params[i].paramValue"
             [required]="paramDefine.required"
             [name]="paramDefine.field"
             [id]="paramDefine.field"
@@ -103,7 +103,7 @@
               nz-input
               [required]="paramDefine.required"
               placeholder="input password"
-              [(ngModel)]="params[i].value"
+              [(ngModel)]="params[i].paramValue"
               [id]="paramDefine.field"
               [name]="paramDefine.field"
               [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
@@ -119,7 +119,7 @@
         </nz-form-label>
         <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-input-number
-            [(ngModel)]="params[i].value"
+            [(ngModel)]="params[i].paramValue"
             [required]="paramDefine.required"
             [nzMin]="getNumber(paramDefine.range || '', 0) || -1000"
             [nzMax]="getNumber(paramDefine.range || '', 1) || 65535"
@@ -135,7 +135,7 @@
         </nz-form-label>
         <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-switch
-            [(ngModel)]="params[i].value"
+            [(ngModel)]="params[i].paramValue"
             (ngModelChange)="onParamBooleanChanged($event, paramDefine.field)"
             [required]="paramDefine.required"
             [name]="paramDefine.field"
@@ -148,7 +148,7 @@
         </nz-form-label>
         <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <nz-radio-group
-            [(ngModel)]="params[i].value"
+            [(ngModel)]="params[i].paramValue"
             nzButtonStyle="solid"
             [required]="paramDefine.required"
             [name]="paramDefine.field"
@@ -165,7 +165,7 @@
         </nz-form-label>
         <nz-form-control *ngIf="paramDefine.type === 'key-value'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <app-key-value-input
-            [(value)]="params[i].value"
+            [(value)]="params[i].paramValue"
             [id]="paramDefine.field"
             [keyAlias]="paramDefine.keyAlias ? paramDefine.keyAlias : 'Name'"
             [valueAlias]="paramDefine.valueAlias ? paramDefine.valueAlias : 'Value'"
@@ -181,7 +181,7 @@
         </nz-form-label>
         <nz-form-control *ngIf="paramDefine.type === 'metrics-field'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
           <app-metrics-field-input
-            [(value)]="params[i].value"
+            [(value)]="params[i].paramValue"
             [id]="paramDefine.field"
             [FieldAlias]="'Field'"
             [UnitAlias]="'Unit'"
@@ -207,7 +207,7 @@
             >
               <input
                 nz-input
-                [(ngModel)]="advancedParams[i].value"
+                [(ngModel)]="advancedParams[i].paramValue"
                 [required]="paramDefine.required"
                 [name]="paramDefine.field"
                 [type]="paramDefine.type"
@@ -226,7 +226,7 @@
             <nz-form-control *ngIf="paramDefine.type === 'textarea'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
               <textarea
                 nz-input
-                [(ngModel)]="advancedParams[i].value"
+                [(ngModel)]="advancedParams[i].paramValue"
                 [required]="paramDefine.required"
                 [name]="paramDefine.field"
                 [id]="paramDefine.field"
@@ -249,7 +249,7 @@
                   nz-input
                   placeholder="input password"
                   [required]="paramDefine.required"
-                  [(ngModel)]="advancedParams[i].value"
+                  [(ngModel)]="advancedParams[i].paramValue"
                   [id]="paramDefine.field"
                   [name]="paramDefine.field"
                   [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
@@ -265,7 +265,7 @@
             </nz-form-label>
             <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
               <nz-input-number
-                [(ngModel)]="advancedParams[i].value"
+                [(ngModel)]="advancedParams[i].paramValue"
                 [required]="paramDefine.required"
                 [nzMin]="-1000"
                 [nzMax]="65535"
@@ -281,7 +281,7 @@
             </nz-form-label>
             <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
               <nz-switch
-                [(ngModel)]="advancedParams[i].value"
+                [(ngModel)]="advancedParams[i].paramValue"
                 [required]="paramDefine.required"
                 [name]="paramDefine.field"
                 [id]="paramDefine.field"
@@ -293,7 +293,7 @@
             </nz-form-label>
             <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
               <nz-radio-group
-                [(ngModel)]="advancedParams[i].value"
+                [(ngModel)]="advancedParams[i].paramValue"
                 [required]="paramDefine.required"
                 nzButtonStyle="solid"
                 [name]="paramDefine.field"
@@ -314,7 +314,7 @@
             </nz-form-label>
             <nz-form-control *ngIf="paramDefine.type === 'key-value'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
               <app-key-value-input
-                [(value)]="advancedParams[i].value"
+                [(value)]="advancedParams[i].paramValue"
                 [id]="paramDefine.field"
                 keyAlias="Header Name"
                 valueAlias="Header Value"
@@ -475,9 +475,9 @@
         <tr *ngFor="let data of smallTable.data">
           <td nzAlign="center" nzLeft [nzChecked]="checkedTags.has(data)" (nzCheckedChange)="onItemChecked(data, $event)"></td>
           <td nzAlign="left">
-            <nz-tag *ngIf="data.value == undefined || data.value.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
-            <nz-tag *ngIf="data.value != undefined && data.value.trim() != ''" [nzColor]="data.color">
-              {{ data.name + ':' + data.value }}
+            <nz-tag *ngIf="data.tagValue == undefined || data.tagValue.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
+            <nz-tag *ngIf="data.tagValue != undefined && data.tagValue.trim() != ''" [nzColor]="data.color">
+              {{ data.name + ':' + data.tagValue }}
             </nz-tag>
           </td>
         </tr>

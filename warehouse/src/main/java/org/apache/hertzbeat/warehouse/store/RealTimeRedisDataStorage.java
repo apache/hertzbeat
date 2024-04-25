@@ -55,7 +55,7 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     }
 
     private Integer getRedisSelectDb(WarehouseProperties properties){
-        return properties.getStore().getRedis().db();
+        return properties.store().redis().db();
     }
 
     @Override
@@ -96,11 +96,11 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     }
 
     private boolean initRedisClient(WarehouseProperties properties) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getRedis() == null) {
+        if (properties == null || properties.store() == null || properties.store().redis() == null) {
             log.error("init error, please config Warehouse redis props in application.yml");
             return false;
         }
-        WarehouseProperties.StoreProperties.RedisProperties redisProp = properties.getStore().getRedis();
+        WarehouseProperties.StoreProperties.RedisProperties redisProp = properties.store().redis();
         RedisURI.Builder uriBuilder = RedisURI.builder()
                 .withHost(redisProp.host())
                 .withPort(redisProp.port())

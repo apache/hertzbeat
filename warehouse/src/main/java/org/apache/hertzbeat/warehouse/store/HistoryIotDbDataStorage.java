@@ -76,10 +76,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String SHOW_STORAGE_GROUP = "show storage group";
 
-    private static final String QUERY_HISTORY_SQL
-            = "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
-    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h)";
+    private static final String QUERY_HISTORY_SQL =
+            "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
+    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
+            "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h)";
 
     private SessionPool sessionPool;
 
@@ -88,7 +88,7 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
     private long queryTimeoutInMs;
 
     public HistoryIotDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initIotDbSession(properties.getStore().getIotDb());
+        this.serverAvailable = this.initIotDbSession(properties.store().iotDb());
     }
 
     private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {
@@ -256,9 +256,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                                                          String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------IotDb Init Failed---------------\n" +
-                    "\t--------------Please Config IotDb--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------IotDb Init Failed---------------\n"
+                    + "\t--------------Please Config IotDb--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, label, true);
@@ -317,9 +317,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                                                                  String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------IotDb Init Failed---------------\n" +
-                    "\t--------------Please Config IotDb--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------IotDb Init Failed---------------\n"
+                    + "\t--------------Please Config IotDb--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, label, true);
@@ -420,10 +420,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      * 查询时可以通过 ${group}.${app}.${metrics}.${monitor}.* 的方式获取所有instance数据
      */
     private String getDeviceId(String app, String metrics, Long monitorId, String labels, boolean useQuote) {
-        String deviceId = STORAGE_GROUP + "." +
-                (useQuote ? addQuote(app) : app) + "." +
-                (useQuote ? addQuote(metrics) : metrics) + "." +
-                ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
+        String deviceId = STORAGE_GROUP + "."
+                + (useQuote ? addQuote(app) : app) + "."
+                + (useQuote ? addQuote(metrics) : metrics) + "."
+                + ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
         if (labels != null && !labels.isEmpty() && !labels.equals(CommonConstants.NULL_VALUE)) {
             deviceId += "." + addQuote(labels);
         }

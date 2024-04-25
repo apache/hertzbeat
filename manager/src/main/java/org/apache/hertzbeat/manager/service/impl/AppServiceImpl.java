@@ -125,7 +125,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             if (PUSH_PROTOCOL_METRICS_NAME.equals(metric.getName())) {
                 List<Param> params = paramDao.findParamsByMonitorId(monitorId);
                 List<Configmap> configmaps = params.stream()
-                        .map(param -> new Configmap(param.getField(), param.getValue(),
+                        .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                 param.getType())).collect(Collectors.toList());
                 Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
                 CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
@@ -469,13 +469,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         if (objectStoreConfig == null) {
             appDefineStore = new LocalFileAppDefineStoreImpl();
         } else {
-            switch (objectStoreConfig.getType()) {
-                case OBS:
-                    appDefineStore = new ObjectStoreAppDefineStoreImpl();
-                    break;
-                case FILE:
-                default:
-                    appDefineStore = new LocalFileAppDefineStoreImpl();
+            if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
+                appDefineStore = new ObjectStoreAppDefineStoreImpl();
+            } else {
+                appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
         var success = appDefineStore.loadAppDefines();

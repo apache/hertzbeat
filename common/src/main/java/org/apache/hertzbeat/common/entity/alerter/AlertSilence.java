@@ -29,6 +29,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -39,7 +40,7 @@ import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonByteListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.hibernate.validator.constraints.Length;
+import org.apache.hertzbeat.common.entity.manager.ZonedDateTimeAttributeConverter;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -71,7 +72,7 @@ public class AlertSilence {
     @Schema(title = "Policy name",
             description = "Policy name",
             example = "silence-1", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String name;
 
@@ -106,16 +107,18 @@ public class AlertSilence {
     @Column(length = 2048)
     private List<TagItem> tags;
 
-    @Schema(title = "The day of the WEEK is valid in periodic silence, multiple," +
-            " all or empty is daily 7: Sunday 1: Monday 2: Tuesday 3: Wednesday 4: Thursday 5: Friday 6: Saturday",
+    @Schema(title = "The day of the WEEK is valid in periodic silence, multiple,"
+            + " all or empty is daily 7: Sunday 1: Monday 2: Tuesday 3: Wednesday 4: Thursday 5: Friday 6: Saturday",
             example = "[0,1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> days;
 
     @Schema(title = "Limit time period start", example = "00:00:00", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodStart;
 
     @Schema(title = "Restricted time period end", example = "23:59:59", accessMode = READ_WRITE)
+    @Convert(converter = ZonedDateTimeAttributeConverter.class)
     private ZonedDateTime periodEnd;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)

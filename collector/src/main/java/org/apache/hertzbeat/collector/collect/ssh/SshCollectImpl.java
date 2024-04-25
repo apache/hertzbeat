@@ -109,22 +109,14 @@ public class SshCollectImpl extends AbstractCollect {
                 return;
             }
             switch (sshProtocol.getParseType()) {
-                case PARSE_TYPE_LOG:
-                    parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
-                    break;
-                case PARSE_TYPE_NETCAT:
-                    parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
-                    break;
-                case PARSE_TYPE_ONE_ROW:
-                    parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
-                    break;
-                case PARSE_TYPE_MULTI_ROW:
-                    parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
-                    break;
-                default:
+                case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
+                default -> {
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("Ssh collect not support this parse type: " + sshProtocol.getParseType());
-                    break;
+                }
             }
         } catch (ConnectException connectException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(connectException);

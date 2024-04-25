@@ -70,21 +70,21 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
      * storage database
      */
     private static final String STORAGE_DATABASE = "hertzbeat";
-    private static final String QUERY_HISTORY_SQL
-            = "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
-    private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-            = "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
-    private static final String QUERY_INSTANCE_SQL
-            = "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
-    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s" +
-            " and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
+    private static final String QUERY_HISTORY_SQL =
+            "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s order by ts desc;";
+    private static final String QUERY_HISTORY_WITH_INSTANCE_SQL =
+            "SELECT CAST (ts AS Int64) ts, instance, \"%s\" FROM %s WHERE ts >= %s and monitor_id = %s and instance = %s order by ts desc;";
+    private static final String QUERY_INSTANCE_SQL =
+            "SELECT DISTINCT instance FROM %s WHERE ts >= now() - interval '1' WEEK";
+    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
+            "SELECT first, avg ,max, min FROM (SELECT \"%s\" as first FROM %s WHERE monitor_id = %s and ts >= %s"
+                    + " and ts < %s ORDER BY ts LIMIT 1) LEFT JOIN (SELECT avg(\"%s\") as avg, min(\"%s\") as min, max(\"%s\") as max FROM %s WHERE ts >= %s and ts < %s) ON 1=1";
     private static final String TABLE_NOT_EXIST = "not exist";
     private static final String DATABASE_NOT_EXIST = "not exist";
     private GreptimeDB greptimeDb;
 
     public HistoryGrepTimeDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initDbSession(properties.getStore().getGreptime());
+        this.serverAvailable = this.initDbSession(properties.store().greptime());
     }
 
     private boolean initDbSession(WarehouseProperties.StoreProperties.GreptimeProperties properties) {
@@ -235,15 +235,15 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                                                          String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------Greptime Init Failed---------------\n" +
-                    "\t--------------Please Config Greptime--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------Greptime Init Failed---------------\n"
+                    + "\t--------------Please Config Greptime--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         long expireTime = getExpireTimeFromToken(history);
         String table = app + "_" + metrics;
-        String selectSql = label == null ?
-                String.format(QUERY_HISTORY_SQL, metric, table, expireTime, monitorId)
+        String selectSql = label == null
+                ? String.format(QUERY_HISTORY_SQL, metric, table, expireTime, monitorId)
                 : String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, expireTime, monitorId, label);
         log.debug("selectSql: {}", selectSql);
         QueryRequest request = QueryRequest.newBuilder()
@@ -302,9 +302,9 @@ public class HistoryGrepTimeDbDataStorage extends AbstractHistoryDataStorage {
                                                                  String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------Greptime Init Failed---------------\n" +
-                    "\t--------------Please Config Greptime--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------Greptime Init Failed---------------\n"
+                    + "\t--------------Please Config Greptime--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String table = app + "_" + metrics;
