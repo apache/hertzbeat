@@ -209,6 +209,8 @@
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
+            "help/hbase_master",
+            "help/hbase_regionserver",
             "help/iotdb",
             "help/hive",
             "help/airflow",

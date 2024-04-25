@@ -1,7 +1,7 @@
 ---
 id: hbase_regionserver  
 title: 监控 Hbase RegionServer监控    
-sidebar_label: HbaseRegionServer监控
+sidebar_label: Apache Hbase RegionServer
 keywords: [开源监控系统, 开源数据库监控, RegionServer监控]
 ---
 > 对Hbase RegionServer的通用性能指标进行采集监控
