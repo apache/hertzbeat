@@ -133,6 +133,7 @@
             "help/api",
             "help/ping",
             "help/port",
+            "help/udp_port",
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
@@ -149,6 +150,7 @@
           "items": [
             "help/jvm",
             "help/springboot2",
+            "help/springboot3",
             "help/dynamic_tp"
           ]
         },
@@ -164,7 +166,8 @@
             "help/dm",
             "help/opengauss",
             "help/nebulaGraph",
-            "help/tidb"
+            "help/tidb",
+            "help/mongodb"
 
           ]
         },
@@ -268,7 +271,6 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/developer",
         "others/contributing",
         "others/resource"
       ]
