@@ -36,6 +36,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[OpenGauss database monitoring](opengauss) <br />
 &emsp;&#x1F449;&emsp;[IoTDB database monitoring](iotdb) <br />
 &emsp;&#x1F449;&emsp;[TiDB database monitoring](tidb) <br />
+&emsp;&#x1F449;&emsp;[MongoDB database monitoring](mongodb) <br />
 
 ### Operating system monitoring     
 

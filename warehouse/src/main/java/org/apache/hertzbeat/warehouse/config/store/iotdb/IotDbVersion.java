@@ -15,33 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package org.apache.hertzbeat.warehouse.config.store.iotdb;
 
 /**
- * Websocket Protocol
+ * IoTDB user version
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class WebsocketProtocol {
+public enum IotDbVersion {
     /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
+     * version 0.13.*
      */
-    private String host;
-
+    V_0_13,
     /**
-     * Port number
+     * version 1.0.*
      */
-    private String port;
-    
-    /**
-     * The path to the websocket endpoint
-     */
-    private String path;
+    V_1_0
 }
