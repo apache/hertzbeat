@@ -15,14 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.config;
+package org.apache.hertzbeat.warehouse.config.store.vm;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * WarehouseAutoConfiguration class
- * @version 2.1
+ * Victoriametrics configuration information
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-public class WarehouseAutoConfiguration {
+@ConfigurationProperties(prefix = "warehouse.store.victoria-metrics")
+public record VictoriaMetricsProperties(@DefaultValue("false") boolean enabled,
+                                        @DefaultValue("http://localhost:8428") String url,
+                                        String username,
+                                        String password) {
 }

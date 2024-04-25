@@ -15,14 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.config;
+package org.apache.hertzbeat.warehouse.config.store.jpa;
 
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * WarehouseAutoConfiguration class
- * @version 2.1
+ * JPA configuration information
+ * @param enabled use mysql/h2 jpa store metrics history data
+ * @param expireTime save data expire time(ms)
+ * @param maxHistoryRecordNum The maximum number of history records retained
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-public class WarehouseAutoConfiguration {
+@ConfigurationProperties(prefix = "warehouse.store.jpa")
+public record JpaProperties(@DefaultValue("true") boolean enabled,
+                            @DefaultValue("1h") String expireTime,
+                            @DefaultValue("20000") Integer maxHistoryRecordNum) {
 }
