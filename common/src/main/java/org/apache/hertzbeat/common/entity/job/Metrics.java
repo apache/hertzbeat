@@ -43,6 +43,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
@@ -206,7 +207,10 @@ public class Metrics {
      * Monitoring configuration information using the public http_sd protocol
      */
     private HttpsdProtocol httpsd;
-
+    /**
+     * Monitoring configuration information using the public redfish protocol
+     */
+    private RedfishProtocol redfish;
     /**
      * collector use - Temporarily store subTask metrics response data
      */
