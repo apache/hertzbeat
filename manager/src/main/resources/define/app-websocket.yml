@@ -50,6 +50,21 @@ params:
     range: '[0,65535]'
     # required-true or false
     required: true
+  # field-param field key
+  # field-字段名称标识符
+  - field: path
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: WebSocket服务的路径
+      en-US: Path of WebSocket service
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: text
+    # required-true or false
+    # 是否是必输项 true-必填 false-可选
+    required: true
+    defaultValue: /
 # collect metrics config list
 metrics:
   # metrics - summary
@@ -102,3 +117,4 @@ metrics:
       # telnet host
       host: ^_^host^_^
       port: ^_^port^_^
+      path: ^_^path^_^

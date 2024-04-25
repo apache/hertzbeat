@@ -45,7 +45,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.vm.VictoriaMetricsProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpEntity;
@@ -59,7 +59,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * tdengine data storage
+ * VictoriaMetrics data storage
  */
 @Primary
 @Component
@@ -87,17 +87,17 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
 
-    private final WarehouseProperties.StoreProperties.VictoriaMetricsProperties victoriaMetricsProp;
+    private final VictoriaMetricsProperties victoriaMetricsProp;
     
     private final RestTemplate restTemplate;
 
-    public HistoryVictoriaMetricsDataStorage(WarehouseProperties properties, RestTemplate restTemplate) {
-        if (properties == null || properties.store() == null || properties.store().victoriaMetrics() == null) {
+    public HistoryVictoriaMetricsDataStorage(VictoriaMetricsProperties victoriaMetricsProperties, RestTemplate restTemplate) {
+        if (victoriaMetricsProperties == null) {
             log.error("init error, please config Warehouse victoriaMetrics props in application.yml");
             throw new IllegalArgumentException("please config Warehouse victoriaMetrics props");
         }
         this.restTemplate = restTemplate;
-        victoriaMetricsProp = properties.store().victoriaMetrics();
+        victoriaMetricsProp = victoriaMetricsProperties;
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
     }
 

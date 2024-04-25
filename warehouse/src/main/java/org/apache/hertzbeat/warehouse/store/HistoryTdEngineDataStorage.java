@@ -37,7 +37,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.tdengine.TdEngineProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -71,16 +71,16 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private HikariDataSource hikariDataSource;
     private final int tableStrColumnDefineMaxLength;
 
-    public HistoryTdEngineDataStorage(WarehouseProperties properties) {
-        if (properties == null || properties.store() == null || properties.store().tdEngine() == null) {
+    public HistoryTdEngineDataStorage(TdEngineProperties tdEngineProperties) {
+        if (tdEngineProperties == null) {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
-        tableStrColumnDefineMaxLength = properties.store().tdEngine().tableStrColumnDefineMaxLength();
-        serverAvailable = initTdEngineDatasource(properties.store().tdEngine());
+        tableStrColumnDefineMaxLength = tdEngineProperties.tableStrColumnDefineMaxLength();
+        serverAvailable = initTdEngineDatasource(tdEngineProperties);
     }
 
-    private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
+    private boolean initTdEngineDatasource(TdEngineProperties tdEngineProperties) {
         HikariConfig config = new HikariConfig();
         // jdbc properties
         config.setJdbcUrl(tdEngineProperties.url());

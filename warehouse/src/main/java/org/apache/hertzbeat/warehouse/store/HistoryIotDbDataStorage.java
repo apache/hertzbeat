@@ -29,8 +29,8 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.config.IotDbVersion;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.iotdb.IotDbProperties;
+import org.apache.hertzbeat.warehouse.config.store.iotdb.IotDbVersion;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
@@ -87,11 +87,11 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private long queryTimeoutInMs;
 
-    public HistoryIotDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initIotDbSession(properties.store().iotDb());
+    public HistoryIotDbDataStorage(IotDbProperties iotDbProperties) {
+        this.serverAvailable = this.initIotDbSession(iotDbProperties);
     }
 
-    private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {
+    private boolean initIotDbSession(IotDbProperties properties) {
         SessionPool.Builder builder = new SessionPool.Builder();
         builder.host(properties.host());
         if (properties.rpcPort() != null) {
