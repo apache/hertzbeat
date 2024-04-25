@@ -1,127 +1,146 @@
 ---
-id: doris_fe  
-title: 监控：DORIS数据库FE监控      
-sidebar_label: DORIS数据库FE  
-keywords: [开源监控系统, 开源数据库监控, DORIS数据库FE监控]
+id: doris_fe
+title: Monitoring DORIS Database FE Monitoring
+sidebar_label: DORIS Database FE
+keywords: [Open Source Monitoring System, Open Source Database Monitoring, DORIS Database FE Monitoring]
 ---
+> Collect and monitor general performance metrics for DORIS database FE. Supports DORIS 2.0.0.
 
-> 对DORIS数据库FE的通用性能指标进行采集监控。支持DORIS2.0.0。
+**Protocol: HTTP**
 
-### 配置参数
+### Pre-monitoring operations
 
-| 参数名称     | 参数帮助描述                                                 |
-| ------------ | ------------------------------------------------------------ |
-| 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://) |
-| 任务名称     | 标识此监控的名称，名称需要保证唯一性                         |
-| 端口         | 数据库对外提供的端口，默认为8030                             |
-| 查询超时时间 | 设置连接未响应的超时时间，单位ms毫秒，默认3000毫秒           |
-| 数据库名称   | 数据库实例名称，可选                                         |
-| 采集间隔     | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒   |
-| 是否探测     | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作 |
-| 描述备注     | 更多标识和描述此监控的备注信息，用户可以在这里备注信息       |
+Check the `fe/conf/fe.conf` file to obtain the value of the `http_port` configuration item, which is used for monitoring.
 
-### 采集指标
-
-#### 指标集合：doris_fe_connection_total
-
-| 指标名称 | 指标单位 | 指标帮助描述            |
-| -------- | -------- | ----------------------- |
-| value    | 无       | 当前FE的MySQL端口连接数 |
-
-#### 指标集合：doris_fe_edit_log_clean
-
-不应失败，如失败，需人工介入
-
-| 指标名称 | 指标单位 | 指标帮助描述                 |
-| -------- | -------- | ---------------------------- |
-| success  | 无       | 清理历史元数据日志成功的次数 |
-| failed   | 无       | 清理历史元数据日志失败的次数 |
+### Configuration Parameters
 
 
-#### 指标集合：doris_fe_edit_log
+| Parameter Name      | Parameter Description                                                                                                                                                        |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monitor Host        | The monitored target's IPV4, IPV6, or domain name. Note: Without the protocol header (e.g., https://, http://)                                                               |
+| Task Name           | A unique name identifying this monitoring task                                                                                                                               |
+| Port                | The port provided by the database to the outside, default is 8030 ,get the value of the`http_port` configuration item                                                        |
+| Query Timeout       | The timeout for the connection to not respond, in milliseconds, default is 3000 milliseconds                                                                                 |
+| Database Name       | Optional database instance name                                                                                                                                              |
+| Collection Interval | The interval between periodic data collections for monitoring, in seconds, with a minimum interval of 30 seconds                                                             |
+| Probe Required      | Whether to probe and check the availability of monitoring before adding new monitoring, continue with the addition or modification operation only if the probe is successful |
+| Description         | Additional notes and descriptions for this monitoring task                                                                                                                   |
 
-| 指标名称          | 指标单位 | 指标帮助描述             |
-| ----------------- | -------- | ------------------------ |
-| write             | 无       | 元数据日志写入次数的计数 |
-| read              | 无       | 元数据日志读取次数的计数 |
-| current           | 无       | 元数据日志当前数量       |
-| accumulated_bytes | 字节     | 元数据日志写入量的累计值 |
-| current_bytes     | 字节     | 元数据日志当前值         |
+### Collection Indicators
 
-#### 指标集合：doris_fe_image_clean
+#### Metric Set: doris_fe_connection_total
 
-不应失败，如失败，需人工介入
 
-| 指标名称 | 指标单位 | 指标帮助描述                     |
-| -------- | -------- | -------------------------------- |
-| success  | 无       | 清理历史元数据镜像文件成功的次数 |
-| failed   | 无       | 清理历史元数据镜像文件失败的次数 |
+| Metric Name | Metric Unit | Metric help description                            |
+| ----------- | ----------- | -------------------------------------------------- |
+| value       | None        | The current number of MySQL port connections on FE |
 
-#### 指标集合：doris_fe_image_write
+#### Metric Set: doris_fe_edit_log_clean
 
-不应失败，如失败，需人工介入
+Should not fail; if it does, manual intervention is required.
 
-| 指标名称 | 指标单位 | 指标帮助描述                 |
-| -------- | -------- | ---------------------------- |
-| success  | 无       | 生成元数据镜像文件成功的次数 |
-| failed   | 无       | 生成元数据镜像文件失败的次数 |
 
-#### 指标集合：doris_fe_query_err
+| Metric Name | Metric Unit | Metric help description                                       |
+| ----------- | ----------- | ------------------------------------------------------------- |
+| success     | None        | The number of successful cleanups of historical metadata logs |
+| failed      | None        | The number of failed cleanups of historical metadata logs     |
 
-| 指标名称 | 指标单位 | 指标帮助描述     |
-| -------- | -------- | ---------------- |
-| value    | 无       | 错误查询的累积值 |
+#### Metric Set: doris_fe_edit_log
 
-#### 指标集合：doris_fe_max_journal_id
 
-| 指标名称 | 指标单位 | 指标帮助描述                                                 |
-| -------- | -------- | ------------------------------------------------------------ |
-| value    | 无       | 当前FE节点最大元数据日志ID。如果是Master FE，则是当前写入的最大ID，如果是非Master FE，则代表当前回放的元数据日志最大ID。用于观察多个FE之间的 id 是否差距过大。过大则表示元数据同步出现问题 |
+| Metric Name       | Metric Unit | Metric help description                     |
+| ----------------- | ----------- | ------------------------------------------- |
+| write             | None        | The count of metadata log write operations  |
+| read              | None        | The count of metadata log read operations   |
+| current           | None        | The current number of metadata logs         |
+| accumulated_bytes | Bytes       | The cumulative value of metadata log writes |
+| current_bytes     | Bytes       | The current value of metadata logs          |
 
-#### 指标集合：doris_fe_max_tablet_compaction_score
+#### Metric Set: doris_fe_image_clean
 
-| 指标名称 | 指标单位 | 指标帮助描述                                                 |
-| -------- | -------- | ------------------------------------------------------------ |
-| value    | 无       | 所有BE节点中最大的 compaction score 值。该值可以观测当前集群最大的 compaction score，以判断是否过高。如过高则可能出现查询或写入延迟 |
+Should not fail; if it does, manual intervention is required.
 
-#### 指标集合：doris_fe_qps
 
-| 指标名称 | 指标单位 | 指标帮助描述                         |
-| -------- | -------- | ------------------------------------ |
-| value    | 无       | 当前FE每秒查询数量（仅统计查询请求） |
+| Metric Name | Metric Unit | Metric help description                                              |
+| ----------- | ----------- | -------------------------------------------------------------------- |
+| success     | None        | The number of successful cleanups of historical metadata image files |
+| failed      | None        | The number of failed cleanups of historical metadata image files     |
 
-#### 指标集合：doris_fe_query_err_rate
+#### Metric Set: doris_fe_image_write
 
-| 指标名称 | 指标单位 | 指标帮助描述   |
-| -------- | -------- | -------------- |
-| value    | 无       | 每秒错误查询数 |
+Should not fail; if it does, manual intervention is required.
 
-#### 指标集合：doris_fe_report_queue_size
 
-| 指标名称 | 指标单位 | 指标帮助描述                                                 |
-| -------- | -------- | ------------------------------------------------------------ |
-| value    | 无       | BE的各种定期汇报任务在FE端的队列长度，该值反映了汇报任务在 Master FE 节点上的阻塞程度，数值越大，表示FE处理能力不足 |
+| Metric Name | Metric Unit | Metric help description                                      |
+| ----------- | ----------- | ------------------------------------------------------------ |
+| success     | None        | The number of successful generations of metadata image files |
+| failed      | None        | The number of failed generations of metadata image files     |
 
-#### 指标集合：doris_fe_rps
+#### Metric Set: doris_fe_query_err
 
-| 指标名称 | 指标单位 | 指标帮助描述                                   |
-| -------- | -------- | ---------------------------------------------- |
-| value    | 无       | 当前FE每秒请求数量（包含查询以及其他各类语句） |
 
-#### 指标集合：doris_fe_scheduled_tablet_num
+| Metric Name | Metric Unit | Metric help description                   |
+| ----------- | ----------- | ----------------------------------------- |
+| value       | None        | The cumulative value of erroneous queries |
 
-| 指标名称 | 指标单位 | 指标帮助描述                                                 |
-| -------- | -------- | ------------------------------------------------------------ |
-| value    | 无       | Master FE节点正在调度的 tablet 数量。包括正在修复的副本和正在均衡的副本，该数值可以反映当前集群，正在迁移的 tablet 数量。如果长时间有值，说明集群不稳定 |
+#### Metric Set: doris_fe_max_journal_id
 
-#### 指标集合：doris_fe_txn_status
 
-可以观测各个状态下导入事务的数量，来判断是否有堆积
+| Metric Name | Metric Unit | Metric help description                                                                                                                                                                                                                                                                                                                             |
+| ----------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| value       | None        | The current maximum metadata log ID on the FE node. If it is a Master FE, it is the maximum ID currently written; if it is a non-Master FE, it represents the maximum metadata log ID currently being replayed. Used to observe if there is a large gap between the IDs of multiple FEs. A large gap indicates issues with metadata synchronization |
 
-| 指标名称  | 指标单位 | 指标帮助描述  |
-| --------- | -------- | ------------- |
-| unknown   | 无       | 未知          |
-| prepare   | 无       | 准备中        |
-| committed | 无       | 已提交        |
-| visible   | 无       | 可见          |
-| aborted   | 无       | 已中止/已撤销 |
+#### Metric Set: doris_fe_max_tablet_compaction_score
+
+
+| Metric Name | Metric Unit | Metric help description                                                                                                                                                                                        |
+| ----------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| value       | None        | The largest compaction score value among all BE nodes. This value can observe the current cluster's maximum compaction score to judge if it is too high. If too high, there may be delays in queries or writes |
+
+#### Metric Set: doris_fe_qps
+
+
+| Metric Name | Metric Unit | Metric help description                                                         |
+| ----------- | ----------- | ------------------------------------------------------------------------------- |
+| value       | None        | The number of queries per second on the current FE (only counts query requests) |
+
+#### Metric Set: doris_fe_query_err_rate
+
+
+| Metric Name | Metric Unit | Metric help description                    |
+| ----------- | ----------- | ------------------------------------------ |
+| value       | None        | The number of erroneous queries per second |
+
+#### Metric Set: doris_fe_report_queue_size
+
+
+| Metric Name | Metric Unit | Metric help description                                                                                                                                                                                                                            |
+| ----------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| value       | None        | The length of the queue for various regular reporting tasks on the BE side at the FE end. This value reflects the degree of blocking of reporting tasks on the Master FE node. A larger value indicates insufficient processing capacity on the FE |
+
+#### Metric Set: doris_fe_rps
+
+
+| Metric Name | Metric Unit | Metric help description                                                                              |
+| ----------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| value       | None        | The number of requests per second on the current FE (includes queries and other types of statements) |
+
+#### Metric Set: doris_fe_scheduled_tablet_num
+
+
+| Metric Name | Metric Unit | Metric help description                                                                                                                                                                                                                                                                                                   |
+| ----------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| value       | None        | The number of tablets currently being scheduled by the Master FE node. This includes tablets that are being repaired and tablets that are being balanced. This value can reflect the number of tablets currently migrating in the cluster. If there is a value for a long time, it indicates that the cluster is unstable |
+
+#### Metric Set: doris_fe_txn_status
+
+Can observe the number of import transactions in various states to determine if there is a backlog.
+
+
+| Metric Name | Metric Unit | Metric help description |
+| ----------- | ----------- | ----------------------- |
+| unknown     | None        | Unknown state           |
+| prepare     | None        | In preparation          |
+| committed   | None        | Committed               |
+| visible     | None        | Visible                 |
+| aborted     | None        | Aborted / Revoked       |
