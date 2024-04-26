@@ -82,6 +82,7 @@
         <dependency>
             <groupId>com.googlecode.aviator</groupId>
             <artifactId>aviator</artifactId>
+            <version>5.4.1</version>
         </dependency>
         <!-- Tool dependencies  -->
         <dependency>
@@ -119,6 +120,12 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
+        </dependency>
+        <!-- expr calculate -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-jexl3</artifactId>
+            <version>3.2.1</version>
         </dependency>
 
         <dependency>
