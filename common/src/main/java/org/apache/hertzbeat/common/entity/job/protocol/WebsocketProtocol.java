@@ -39,4 +39,9 @@ public class WebsocketProtocol {
      * Port number
      */
     private String port;
+    
+    /**
+     * The path to the websocket endpoint
+     */
+    private String path;
 }

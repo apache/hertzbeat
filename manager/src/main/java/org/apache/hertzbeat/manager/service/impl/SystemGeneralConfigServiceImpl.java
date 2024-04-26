@@ -42,12 +42,11 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
     private ApplicationContext applicationContext;
     
     /**
-     * 构造方法，传入GeneralConfigDao、ObjectMapper和type。
      *
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
      *
-     * @param generalConfigDao 配置Dao对象
-     * @param objectMapper     JSON工具类对象
+     * @param generalConfigDao ConfigDao object
+     * @param objectMapper     JSON tool object
      */
     protected SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);

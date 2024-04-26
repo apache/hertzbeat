@@ -23,30 +23,26 @@ import org.apache.hertzbeat.common.entity.manager.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * ParamDao 数据库操作
  * ParamDao database operations
  */
 public interface ParamDao extends JpaRepository<Param, Long> {
 
     /**
      * Query the list of parameters associated with the monitoring ID'
-     * 根据监控任务ID查询与之关联的参数列表
-     * @param monitorId Monitor ID          监控任务ID
-     * @return list of parameter values     参数值列表
+     * @param monitorId Monitor ID
+     * @return list of parameter values
      */
     List<Param> findParamsByMonitorId(Long monitorId);
 
     /**
      * Remove the parameter list associated with the monitoring ID based on it
-     * 根据监控任务ID删除与之关联的参数列表
-     * @param monitorId Monitor Id       监控任务ID
+     * @param monitorId Monitor Id
      */
     void deleteParamsByMonitorId(long monitorId);
 
     /**
      * Remove the parameter list associated with the monitoring ID list based on it
-     * 根据监控任务ID列表删除与之关联的参数列表
-     * @param monitorIds Monitoring ID List     监控任务ID列表
+     * @param monitorIds Monitoring ID List
      */
     void deleteParamsByMonitorIdIn(Set<Long> monitorIds);
 }

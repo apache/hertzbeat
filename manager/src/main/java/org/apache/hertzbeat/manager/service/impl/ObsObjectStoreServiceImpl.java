@@ -30,7 +30,6 @@ import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.service.ObjectStoreService;
 
 /**
- * 华为云存储服务
  * Huawei cloud storage service
  */
 @Slf4j

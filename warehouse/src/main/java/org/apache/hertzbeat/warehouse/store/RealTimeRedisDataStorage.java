@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.redis.RedisProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
@@ -49,13 +49,13 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     private final Integer db;
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
 
-    public RealTimeRedisDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = initRedisClient(properties);
-        this.db = getRedisSelectDb(properties);
+    public RealTimeRedisDataStorage(RedisProperties redisProperties) {
+        this.serverAvailable = initRedisClient(redisProperties);
+        this.db = getRedisSelectDb(redisProperties);
     }
 
-    private Integer getRedisSelectDb(WarehouseProperties properties){
-        return properties.store().redis().db();
+    private Integer getRedisSelectDb(RedisProperties redisProperties){
+        return redisProperties.db();
     }
 
     @Override
@@ -95,12 +95,12 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
         });
     }
 
-    private boolean initRedisClient(WarehouseProperties properties) {
-        if (properties == null || properties.store() == null || properties.store().redis() == null) {
+    private boolean initRedisClient(RedisProperties redisProperties) {
+        if (redisProperties == null) {
             log.error("init error, please config Warehouse redis props in application.yml");
             return false;
         }
-        WarehouseProperties.StoreProperties.RedisProperties redisProp = properties.store().redis();
+        RedisProperties redisProp = redisProperties;
         RedisURI.Builder uriBuilder = RedisURI.builder()
                 .withHost(redisProp.host())
                 .withPort(redisProp.port())

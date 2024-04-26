@@ -23,19 +23,18 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 
 /**
- * Email delivery service  邮箱发送服务
+ * Email delivery service
  * @version 1.0
  */
 public interface MailService {
 
     /**
      * Build an alert email template
-     * 构建告警邮件模版
-     * @param alert          Alarm data element information  告警数据元信息
-     * @param noticeTemplate NoticeTemplate information  模板信息
-     * @return content of email                邮件内容
-     * @throws IOException       IOException information  IO异常
-     * @throws TemplateException Freemarker TemplateException information  Freemarker模板异常
+     * @param alert          Alarm data element information
+     * @param noticeTemplate NoticeTemplate information
+     * @return content of email
+     * @throws IOException       IOException information
+     * @throws TemplateException Freemarker TemplateException information
      */
     String buildAlertHtmlTemplate(Alert alert, NoticeTemplate noticeTemplate) throws IOException, TemplateException;
 }

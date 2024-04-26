@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.config;
 
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
@@ -25,6 +24,5 @@ import org.springframework.context.annotation.ComponentScan;
  * @version 2.1
  */
 @ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-@EnableConfigurationProperties(WarehouseProperties.class)
 public class WarehouseAutoConfiguration {
 }
