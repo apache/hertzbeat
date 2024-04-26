@@ -88,7 +88,7 @@ sidebar_label: Help Center
 
 > The Metric threshold configuration provides the Metric threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
 
-More details see&emsp;&#x1F449;&emsp;[threshold alarm](alert_threshold) <br /> 
+More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert_threshold) <br /> 
 &emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert_threshold_expr)   
 
 ### Alarm notification  
@@ -102,7 +102,8 @@ More details see&emsp;&#x1F449;&emsp;[threshold alarm](alert_threshold) <br />
 &emsp;&#x1F449;&emsp;[Configure Discord Notification](alert_webhook) <br />
 &emsp;&#x1F449;&emsp;[Configure Slack Notification](alert_webhook) <br />
 &emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert_webhook) <br />
-&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br /> 
-&emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert_wework) <br />    
-&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br /> 
-&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />   
+&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br />
+&emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert_wework) <br />
+&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br />
+&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />
+&emsp;&#x1F449;&emsp;[Configure Huawei Cloud SMN Notification](alert_smn) <br />
