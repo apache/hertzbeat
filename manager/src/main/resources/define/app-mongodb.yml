@@ -412,5 +412,5 @@ metrics:
       password: ^_^password^_^
       database: ^_^database^_^
       authenticationDatabase: ^_^authenticationDatabase^_^
-      command: hostInfo.extra.extra
+      command: hostInfo.extra
       timeout: ^_^timeout^_^
