@@ -148,6 +148,7 @@
           "type": "category",
           "label": "program",
           "items": [
+            "help/process",
             "help/jvm",
             "help/springboot2",
             "help/springboot3",
