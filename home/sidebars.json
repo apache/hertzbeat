@@ -142,7 +142,8 @@
             "help/smtp",
             "help/ntp",
             "help/dns",
-            "help/ftp"
+            "help/ftp",
+            "help/websocket"
           ]
         },
         {
