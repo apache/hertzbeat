@@ -21,7 +21,7 @@ public class JexlCommonFunction {
 
 
     /**
-     * Define a custom aviator string equality function
+     * Define a custom string equality function
      * @param left left
      * @param right right
      * @return true if equals
@@ -37,7 +37,7 @@ public class JexlCommonFunction {
     }
 
     /**
-     * Custom aviator determines whether string 1 contains string 2 (case-insensitive)
+     * Custom determines whether string 1 contains string 2 (case-insensitive)
      * @param left left
      * @param right right
      * @return true if contains
@@ -51,7 +51,7 @@ public class JexlCommonFunction {
 
 
     /**
-     * Custom aviator determines if a value exists for this object in the environment
+     * Custom determines if a value exists for this object in the environment
      * @param arg arg
      * @return true if exists
      */
@@ -63,7 +63,7 @@ public class JexlCommonFunction {
     }
 
     /**
-     * Custom aviator determines if a string matches a regex
+     * Custom determines if a string matches a regex
      * - regex You need to add "" or ''
      * @param str str
      * @param regex regex
