@@ -17,9 +17,11 @@
 
 package org.apache.hertzbeat.collector.collect.ftp;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -41,12 +43,13 @@ public class FtpCollectImpl extends AbstractCollect {
     private static final String ANONYMOUS = "anonymous";
     private static final String PASSWORD = "password";
 
+    @Setter
+    @VisibleForTesting
+    private FTPClient ftpClient = new FTPClient();
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        FTPClient ftpClient = new FTPClient();
         FtpProtocol ftpProtocol = metrics.getFtp();
-        // Set timeout
-        ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
         // Judge whether the basic information is wrong
         try {
             preCheck(metrics);
@@ -56,6 +59,9 @@ public class FtpCollectImpl extends AbstractCollect {
             builder.setMsg(e.getMessage());
             return;
         }
+        // Set timeout
+        ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
+
         // Collect data to load in CollectRep.ValueRow.Builder's object
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         Map<String, String> valueMap;
@@ -150,6 +156,7 @@ public class FtpCollectImpl extends AbstractCollect {
         Assert.hasText(ftpProtocol.getHost(), "Ftp Protocol host is required.");
         Assert.hasText(ftpProtocol.getPort(), "Ftp Protocol port is required.");
         Assert.hasText(ftpProtocol.getDirection(), "Ftp Protocol direction is required.");
+        Assert.hasText(ftpProtocol.getTimeout(), "Ftp Protocol timeout is required.");
     }
 
     @Override
