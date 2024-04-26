@@ -125,6 +125,7 @@
       "label": "help",
       "items": [
         "help/guide",
+        "help/prometheus",
         {
           "type": "category",
           "label": "service",
