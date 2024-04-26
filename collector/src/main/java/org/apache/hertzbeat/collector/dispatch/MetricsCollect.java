@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import com.googlecode.aviator.AviatorEvaluator;
-import com.googlecode.aviator.Expression;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;

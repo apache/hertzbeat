@@ -78,12 +78,6 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <scope>provided</scope>
         </dependency>
-        <!-- Expression evaluation -->
-        <dependency>
-            <groupId>com.googlecode.aviator</groupId>
-            <artifactId>aviator</artifactId>
-            <version>5.4.1</version>
-        </dependency>
         <!-- Tool dependencies  -->
         <dependency>
             <groupId>com.google.guava</groupId>
