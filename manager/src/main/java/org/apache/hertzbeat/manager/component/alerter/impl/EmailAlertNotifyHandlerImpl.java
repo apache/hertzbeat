@@ -80,14 +80,14 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         try {
-            //获取sender
+            // get sender
             JavaMailSenderImpl sender = (JavaMailSenderImpl) javaMailSender;
             String fromUsername = username;
             try {
                 boolean useDatabase = false;
                 GeneralConfig emailConfig = generalConfigDao.findByType(TYPE);
                 if (emailConfig != null && emailConfig.getContent() != null) {
-                    // 若启用数据库配置
+                    // enable database configuration
                     String content = emailConfig.getContent();
                     EmailNoticeSender emailNoticeSenderConfig = objectMapper.readValue(content, EmailNoticeSender.class);
                     if (emailNoticeSenderConfig.isEnable()) {
@@ -102,7 +102,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                     }
                 }
                 if (!useDatabase) {
-                    // 若数据库未配置则启用yml配置
+                    // if the database is not configured, use the yml configuration
                     sender.setHost(host);
                     sender.setPort(port);
                     sender.setUsername(username);
@@ -116,14 +116,14 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             MimeMessage mimeMessage = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             messageHelper.setSubject(bundle.getString("alerter.notify.title"));
-            //Set sender Email 设置发件人Email
+            // Set sender Email
             messageHelper.setFrom(fromUsername);
-            //Set recipient Email 设定收件人Email
+            // Set recipient Email
             messageHelper.setTo(receiver.getEmail());
             messageHelper.setSentDate(new Date());
-            //Build email templates 构建邮件模版
+            // Build email templates
             String process = mailService.buildAlertHtmlTemplate(alert, noticeTemplate);
-            //Set Email Content Template 设置邮件内容模版
+            // Set Email Content Template
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);
         } catch (Exception e) {

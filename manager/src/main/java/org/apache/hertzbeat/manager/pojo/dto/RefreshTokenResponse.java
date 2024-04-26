@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "刷新令牌响应")
+@Schema(description = "flash token response")
 public class RefreshTokenResponse {
     @Schema(title = "Access Token")
     private String token;

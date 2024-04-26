@@ -33,8 +33,6 @@ import java.util.Map;
 /**
  * unit test case for WeChatAppAlertNotifyHandlerImpl
  *
- *
- * @create 2023/04/05
  */
 @Slf4j
 public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
