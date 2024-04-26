@@ -24,7 +24,6 @@ import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 
 /**
- * 参数定义传输实体
  * Parameters define transfer entities
  */
 @Data

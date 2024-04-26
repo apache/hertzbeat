@@ -118,7 +118,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 collector.getIp(), System.currentTimeMillis(), null);
         consistentHash.addNode(node);
         reBalanceCollectorAssignJobs();
-        // 读取数据库此collector下的固定采集任务并下发
+        // Read database The fixed collection tasks at this collector are delivered
         List<CollectorMonitorBind> binds = collectorMonitorBindDao.findCollectorMonitorBindsByCollector(identity);
         for (CollectorMonitorBind bind : binds) {
             Optional<Monitor> monitorOptional = monitorDao.findById(bind.getMonitorId());
@@ -128,7 +128,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                     continue;
                 }
                 try {
-                    // 构造采集任务Job实体
+                    // build collect job entity
                     Job appDefine = appService.getAppDefine(monitor.getApp());
                     if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
                         appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());

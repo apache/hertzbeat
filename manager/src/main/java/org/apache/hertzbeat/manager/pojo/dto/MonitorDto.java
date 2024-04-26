@@ -31,7 +31,7 @@ import org.apache.hertzbeat.common.entity.manager.Param;
  * Monitoring Information External Interaction Entities
  */
 @Data
-@Schema(description = "Monitoring information entities | 监控信息实体")
+@Schema(description = "Monitoring information entities")
 public class MonitorDto {
     
     @Schema(description = "Monitor Content", accessMode = READ_WRITE)
