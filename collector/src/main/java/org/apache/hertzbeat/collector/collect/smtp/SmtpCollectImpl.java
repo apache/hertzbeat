@@ -119,10 +119,10 @@ public class SmtpCollectImpl extends AbstractCollect {
 
     private static Map<String, String> execCmdAndParseResult(SMTP smtp, String cmd, SmtpProtocol smtpProtocol) throws IOException {
         Map<String, String> result = new HashMap<>(8);
-        // 存入smtp连接的响应
+        // Store the response of the SMTP connection
         result.put("smtpBanner", smtp.getReplyString());
         smtp.helo(smtpProtocol.getEmail());
-        // 获取helo的响应
+        // Retrieve the response for the HELO command
         String replyString = smtp.getReplyString();
         result.put("heloInfo", replyString);
         String[] lines = replyString.split("\n");
