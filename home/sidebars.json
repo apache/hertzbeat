@@ -125,6 +125,7 @@
       "label": "help",
       "items": [
         "help/guide",
+        "help/prometheus",
         {
           "type": "category",
           "label": "service",
@@ -148,6 +149,7 @@
           "type": "category",
           "label": "program",
           "items": [
+            "help/process",
             "help/jvm",
             "help/springboot2",
             "help/springboot3",
