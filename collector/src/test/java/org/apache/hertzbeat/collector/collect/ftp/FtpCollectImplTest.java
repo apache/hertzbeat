@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -41,9 +42,6 @@ class FtpCollectImplTest {
 
     @InjectMocks
     private FtpCollectImpl ftpCollectImpl;
-
-    @Mock
-    private FTPClient ftpClient;
 
     @Test
     void testPreCheck() {
@@ -62,7 +60,6 @@ class FtpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setName("server");
         metrics.setFtp(ftpProtocol);
-        ftpCollectImpl.setFtpClient(ftpClient);
         metrics.setAliasFields(aliasField);
         ftpCollectImpl.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getCode(), CollectRep.Code.UN_CONNECTABLE);
@@ -81,19 +78,24 @@ class FtpCollectImplTest {
                 .direction("/")
                 .build();
 
-        Mockito.doNothing().when(ftpClient).connect(ftpProtocol.getHost(),
-                Integer.parseInt(ftpProtocol.getPort()));
-        Mockito.doAnswer(invocationOnMock -> true).when(ftpClient).login(ftpProtocol.getUsername(), ftpProtocol.getPassword());
-        boolean isActive = true;
-        Mockito.when(ftpClient.changeWorkingDirectory(ftpProtocol.getDirection())).thenReturn(isActive);
-        Mockito.doNothing().when(ftpClient).disconnect();
+        boolean isActive = false;
+        MockedConstruction<FTPClient> mocked = Mockito.mockConstruction(FTPClient.class,
+                (ftpClient, context) -> {
+                    Mockito.doNothing().when(ftpClient).connect(ftpProtocol.getHost(),
+                            Integer.parseInt(ftpProtocol.getPort()));
+
+                    Mockito.doAnswer(invocationOnMock -> true).when(ftpClient)
+                            .login(ftpProtocol.getUsername(), ftpProtocol.getPassword());
+                    Mockito.when(ftpClient.changeWorkingDirectory(ftpProtocol.getDirection())).thenReturn(isActive);
+                    Mockito.doNothing().when(ftpClient).disconnect();
+                });
+
 
         List<String> aliasField = new ArrayList<>();
         aliasField.add("isActive");
         aliasField.add("responseTime");
         Metrics metrics = new Metrics();
         metrics.setFtp(ftpProtocol);
-        ftpCollectImpl.setFtpClient(ftpClient);
         metrics.setAliasFields(aliasField);
 
         ftpCollectImpl.collect(builder, 1L, "test", metrics);
@@ -102,6 +104,7 @@ class FtpCollectImplTest {
             assertEquals(Boolean.toString(isActive), valueRow.getColumns(0));
             assertNotNull(valueRow.getColumns(1));
         }
+        mocked.close();
 
     }
 
@@ -115,19 +118,21 @@ class FtpCollectImplTest {
                 .direction("/")
                 .build();
 
-        Mockito.doNothing().when(ftpClient).connect(ftpProtocol.getHost(),
-                Integer.parseInt(ftpProtocol.getPort()));
-        Mockito.doAnswer(invocationOnMock -> true).when(ftpClient).login("anonymous", "password");
         boolean isActive = true;
-        Mockito.when(ftpClient.changeWorkingDirectory(ftpProtocol.getDirection())).thenReturn(isActive);
-        Mockito.doNothing().when(ftpClient).disconnect();
+        MockedConstruction<FTPClient> mocked = Mockito.mockConstruction(FTPClient.class,
+                (ftpClient, context) -> {
+                    Mockito.doNothing().when(ftpClient).connect(ftpProtocol.getHost(),
+                            Integer.parseInt(ftpProtocol.getPort()));
+                    Mockito.doAnswer(invocationOnMock -> true).when(ftpClient).login("anonymous", "password");
+                    Mockito.when(ftpClient.changeWorkingDirectory(ftpProtocol.getDirection())).thenReturn(isActive);
+                    Mockito.doNothing().when(ftpClient).disconnect();
+                });
 
         List<String> aliasField = new ArrayList<>();
         aliasField.add("isActive");
         aliasField.add("responseTime");
         Metrics metrics = new Metrics();
         metrics.setFtp(ftpProtocol);
-        ftpCollectImpl.setFtpClient(ftpClient);
         metrics.setAliasFields(aliasField);
 
         ftpCollectImpl.collect(builder, 1L, "test", metrics);
@@ -136,6 +141,7 @@ class FtpCollectImplTest {
             assertEquals(Boolean.toString(isActive), valueRow.getColumns(0));
             assertNotNull(valueRow.getColumns(1));
         }
+        mocked.close();
 
     }
 

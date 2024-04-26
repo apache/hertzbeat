@@ -17,11 +17,9 @@
 
 package org.apache.hertzbeat.collector.collect.ftp;
 
-import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -43,12 +41,10 @@ public class FtpCollectImpl extends AbstractCollect {
     private static final String ANONYMOUS = "anonymous";
     private static final String PASSWORD = "password";
 
-    @Setter
-    @VisibleForTesting
-    private FTPClient ftpClient = new FTPClient();
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+        FTPClient ftpClient = new FTPClient();
         FtpProtocol ftpProtocol = metrics.getFtp();
         // Judge whether the basic information is wrong
         try {
