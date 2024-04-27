@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import javax.annotation.Resource;
 import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -51,8 +53,6 @@ import org.apache.hertzbeat.warehouse.store.RealTimeRedisDataStorage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *
@@ -108,11 +108,11 @@ class ManagerTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    void testJNDI() throws NamingException {
-//        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
+    void testJndi() throws NamingException {
+        //System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
         // for CI
-//        InitialContext initialContext = new InitialContext();
-//        initialContext.lookup("rmi://localhost:1099/Exploit");
+        //InitialContext initialContext = new InitialContext();
+        //initialContext.lookup("rmi://localhost:1099/Exploit");
     }
 
 }
