@@ -67,9 +67,9 @@ public class PushServiceImpl implements PushService {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                try{
+                try {
                     deletePeriodically();
-                }catch (Exception e) {
+                } catch (Exception e) {
                     log.error("periodical deletion failed. {}", e.getMessage());
                 }
             }

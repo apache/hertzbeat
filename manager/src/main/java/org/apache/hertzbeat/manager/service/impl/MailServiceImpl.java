@@ -43,7 +43,6 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 /**
  * Mailbox sending service interface implementation class
- * 邮箱发送服务接口实现类
  */
 @Slf4j
 @Service

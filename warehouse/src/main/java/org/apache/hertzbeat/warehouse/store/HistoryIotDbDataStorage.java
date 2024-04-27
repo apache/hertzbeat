@@ -29,8 +29,8 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.config.IotDbVersion;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.iotdb.IotDbProperties;
+import org.apache.hertzbeat.warehouse.config.store.iotdb.IotDbVersion;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
@@ -76,10 +76,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String SHOW_STORAGE_GROUP = "show storage group";
 
-    private static final String QUERY_HISTORY_SQL
-            = "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
-    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h)";
+    private static final String QUERY_HISTORY_SQL =
+            "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
+    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
+            "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h)";
 
     private SessionPool sessionPool;
 
@@ -87,11 +87,11 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private long queryTimeoutInMs;
 
-    public HistoryIotDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initIotDbSession(properties.getStore().getIotDb());
+    public HistoryIotDbDataStorage(IotDbProperties iotDbProperties) {
+        this.serverAvailable = this.initIotDbSession(iotDbProperties);
     }
 
-    private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {
+    private boolean initIotDbSession(IotDbProperties properties) {
         SessionPool.Builder builder = new SessionPool.Builder();
         builder.host(properties.host());
         if (properties.rpcPort() != null) {
@@ -256,9 +256,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                                                          String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------IotDb Init Failed---------------\n" +
-                    "\t--------------Please Config IotDb--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------IotDb Init Failed---------------\n"
+                    + "\t--------------Please Config IotDb--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, label, true);
@@ -317,9 +317,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                                                                  String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------IotDb Init Failed---------------\n" +
-                    "\t--------------Please Config IotDb--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------IotDb Init Failed---------------\n"
+                    + "\t--------------Please Config IotDb--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, label, true);
@@ -420,10 +420,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      * 查询时可以通过 ${group}.${app}.${metrics}.${monitor}.* 的方式获取所有instance数据
      */
     private String getDeviceId(String app, String metrics, Long monitorId, String labels, boolean useQuote) {
-        String deviceId = STORAGE_GROUP + "." +
-                (useQuote ? addQuote(app) : app) + "." +
-                (useQuote ? addQuote(metrics) : metrics) + "." +
-                ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
+        String deviceId = STORAGE_GROUP + "."
+                + (useQuote ? addQuote(app) : app) + "."
+                + (useQuote ? addQuote(metrics) : metrics) + "."
+                + ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
         if (labels != null && !labels.isEmpty() && !labels.equals(CommonConstants.NULL_VALUE)) {
             deviceId += "." + addQuote(labels);
         }

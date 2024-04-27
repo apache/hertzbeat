@@ -28,7 +28,7 @@ equals(str1,str2)
 
 #### 表达式函数库列表
 
-参考: https://www.yuque.com/boyan-avfmj/aviatorscript/ashevw
+todo 
 
 #### 支持的环境变量    
 > 环境变量即指标值等支持的变量，用于在表达式中，阈值计算判断时会将变量替换成实际值进行计算    

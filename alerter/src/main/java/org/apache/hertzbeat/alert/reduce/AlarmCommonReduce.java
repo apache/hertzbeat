@@ -60,7 +60,7 @@ public class AlarmCommonReduce {
             List<Tag> tagList = alertMonitorDao.findMonitorIdBindTags(monitorId);
             for (Tag tag : tagList) {
                 if (!tags.containsKey(tag.getName())) {
-                    tags.put(tag.getName(), tag.getValue());
+                    tags.put(tag.getName(), tag.getTagValue());
                 }
             }
         }

@@ -45,7 +45,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.vm.VictoriaMetricsProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpEntity;
@@ -59,7 +59,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * tdengine data storage
+ * VictoriaMetrics data storage
  */
 @Primary
 @Component
@@ -87,17 +87,17 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
 
-    private final WarehouseProperties.StoreProperties.VictoriaMetricsProperties victoriaMetricsProp;
+    private final VictoriaMetricsProperties victoriaMetricsProp;
     
     private final RestTemplate restTemplate;
 
-    public HistoryVictoriaMetricsDataStorage(WarehouseProperties properties, RestTemplate restTemplate) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getVictoriaMetrics() == null) {
+    public HistoryVictoriaMetricsDataStorage(VictoriaMetricsProperties victoriaMetricsProperties, RestTemplate restTemplate) {
+        if (victoriaMetricsProperties == null) {
             log.error("init error, please config Warehouse victoriaMetrics props in application.yml");
             throw new IllegalArgumentException("please config Warehouse victoriaMetrics props");
         }
         this.restTemplate = restTemplate;
-        victoriaMetricsProp = properties.getStore().getVictoriaMetrics();
+        victoriaMetricsProp = victoriaMetricsProperties;
         serverAvailable = checkVictoriaMetricsDatasourceAvailable();
     }
 
@@ -209,9 +209,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
-        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\"" + 
-                "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" +
-                "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
+                + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\""
+                + "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -275,9 +275,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
         if (!serverAvailable) {
-            log.error("\n\t---------------VictoriaMetrics Init Failed---------------\n" +
-                    "\t--------------Please Config VictoriaMetrics--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------VictoriaMetrics Init Failed---------------\n"
+                    + "\t--------------Please Config VictoriaMetrics--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return Collections.emptyMap();
         }
         long endTime = ZonedDateTime.now().toEpochSecond();
@@ -300,9 +300,9 @@ public class HistoryVictoriaMetricsDataStorage extends AbstractHistoryDataStorag
         if (CommonConstants.PROMETHEUS.equals(app)) {
             labelName = metrics;
         }
-        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\"" +
-                "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\"" +
-                "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
+        String timeSeriesSelector = LABEL_KEY_NAME + "=\"" + labelName + "\""
+                + "," + LABEL_KEY_INSTANCE + "=\"" + monitorId + "\""
+                + "," + MONITOR_METRIC_KEY + "=\"" + metric + "\"";
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         try {
             HttpHeaders headers = new HttpHeaders();

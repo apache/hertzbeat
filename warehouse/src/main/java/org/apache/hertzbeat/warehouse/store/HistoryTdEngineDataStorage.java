@@ -37,7 +37,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.tdengine.TdEngineProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
@@ -57,31 +57,30 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO `%s` USING `%s` TAGS (%s) VALUES %s";
     private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (monitor BIGINT)";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
-    private static final String QUERY_HISTORY_WITH_INSTANCE_SQL
-            = "SELECT ts, instance, `%s` FROM `%s` WHERE instance = '%s' AND ts >= now - %s order by ts desc";
-    private static final String QUERY_HISTORY_SQL
-            = "SELECT ts, instance, `%s` FROM `%s` WHERE ts >= now - %s order by ts desc";
-    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT first(ts), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE instance = '%s' AND ts >= now - %s interval(4h)";
-    private static final String QUERY_INSTANCE_SQL
-            = "SELECT DISTINCT instance FROM `%s` WHERE ts >= now - 1w";
+    private static final String QUERY_HISTORY_WITH_INSTANCE_SQL =
+            "SELECT ts, instance, `%s` FROM `%s` WHERE instance = '%s' AND ts >= now - %s order by ts desc";
+    private static final String QUERY_HISTORY_SQL =
+            "SELECT ts, instance, `%s` FROM `%s` WHERE ts >= now - %s order by ts desc";
+    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
+            "SELECT first(ts), first(`%s`), avg(`%s`), min(`%s`), max(`%s`) FROM `%s` WHERE instance = '%s' AND ts >= now - %s interval(4h)";
+    private static final String QUERY_INSTANCE_SQL =
+            "SELECT DISTINCT instance FROM `%s` WHERE ts >= now - 1w";
 
-    private static final String TABLE_NOT_EXIST
-            = "Table does not exist";
+    private static final String TABLE_NOT_EXIST = "Table does not exist";
 
     private HikariDataSource hikariDataSource;
     private final int tableStrColumnDefineMaxLength;
 
-    public HistoryTdEngineDataStorage(WarehouseProperties properties) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getTdEngine() == null) {
+    public HistoryTdEngineDataStorage(TdEngineProperties tdEngineProperties) {
+        if (tdEngineProperties == null) {
             log.error("init error, please config Warehouse TdEngine props in application.yml");
             throw new IllegalArgumentException("please config Warehouse TdEngine props");
         }
-        tableStrColumnDefineMaxLength = properties.getStore().getTdEngine().tableStrColumnDefineMaxLength();
-        serverAvailable = initTdEngineDatasource(properties.getStore().getTdEngine());
+        tableStrColumnDefineMaxLength = tdEngineProperties.tableStrColumnDefineMaxLength();
+        serverAvailable = initTdEngineDatasource(tdEngineProperties);
     }
 
-    private boolean initTdEngineDatasource(WarehouseProperties.StoreProperties.TdEngineProperties tdEngineProperties) {
+    private boolean initTdEngineDatasource(TdEngineProperties tdEngineProperties) {
         HikariConfig config = new HikariConfig();
         // jdbc properties
         config.setJdbcUrl(tdEngineProperties.url());
@@ -103,10 +102,10 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         try {
             this.hikariDataSource = new HikariDataSource(config);
         } catch (Exception e) {
-            log.warn("\n\t------------------WARN WARN WARN------------------\n" +
-                    "\t---------------Init TdEngine Failed---------------\n" +
-                    "\t--------------Please Config Tdengine--------------\n" +
-                    "\t---------Or Can Not Use Metric History Now---------\n");
+            log.warn("\n\t------------------WARN WARN WARN------------------\n"
+                    + "\t---------------Init TdEngine Failed---------------\n"
+                    + "\t--------------Please Config Tdengine--------------\n"
+                    + "\t---------Or Can Not Use Metric History Now---------\n");
             return false;
         }
         return true;
@@ -241,9 +240,9 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
         log.debug(selectSql);
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!serverAvailable) {
-            log.error("\n\t---------------TdEngine Init Failed---------------\n" +
-                    "\t--------------Please Config Tdengine--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------TdEngine Init Failed---------------\n"
+                    + "\t--------------Please Config Tdengine--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         try (Connection connection = hikariDataSource.getConnection();
@@ -280,9 +279,9 @@ public class HistoryTdEngineDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
         if (!serverAvailable) {
-            log.error("\n\t---------------TdEngine Init Failed---------------\n" +
-                    "\t--------------Please Config Tdengine--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------TdEngine Init Failed---------------\n"
+                    + "\t--------------Please Config Tdengine--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return Collections.emptyMap();
         }
         String table = app + "_" + metrics + "_" + monitorId;

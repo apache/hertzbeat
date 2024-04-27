@@ -53,7 +53,7 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         try {
             localConnectConfig = connectConfig;
             namingService = NamingFactory.createNamingService(connectConfig.getHost() + ":" + connectConfig.getPort());
-        }catch (NacosException exception) {
+        } catch (NacosException exception) {
             throw new RuntimeException("Failed to init namingService");
         }
     }
@@ -106,7 +106,7 @@ public class NacosDiscoveryClient implements DiscoveryClient {
 
         try {
             namingService.shutDown();
-        }catch (NacosException ignore) {
+        } catch (NacosException ignore) {
         }
     }
 }

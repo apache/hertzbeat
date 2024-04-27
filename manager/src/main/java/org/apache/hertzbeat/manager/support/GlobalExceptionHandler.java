@@ -52,8 +52,8 @@ public class GlobalExceptionHandler {
     private static final String CONNECT_STR = "||";
 
     /**
-     * 处理探测失败
-     * @param exception 探测异常
+     * Processing probe failure
+     * @param exception Detection anomaly
      * @return response
      */
     @ExceptionHandler(MonitorDetectException.class)
@@ -64,8 +64,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理数据库操作异常
-     * @param exception 探测异常
+     * processing database operation exception
+     * @param exception Detection anomaly
      * @return response
      */
     @ExceptionHandler(MonitorDatabaseException.class)
@@ -88,8 +88,8 @@ public class GlobalExceptionHandler {
     }
     
     /**
-     * 处理参数错误的失败
-     * @param exception 参数异常
+     * processing parameter error
+     * @param exception parameter exception
      * @return response
      */
     @ExceptionHandler(IllegalArgumentException.class)
@@ -107,8 +107,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理请求参数错误的失败, 请求参数json映射body时出错
-     * @param exception 参数映射body异常
+     * processing parameter error, parameter mapping body error
+     * @param exception Parameter mapping body is abnormal
      * @return response
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -130,7 +130,6 @@ public class GlobalExceptionHandler {
 
     /**
      * handler the exception thrown for data input verify
-     * valid注解校验框架校验异常统一处理
      * @param e data input verify exception
      * @return response
      */
@@ -138,8 +137,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     ResponseEntity<Message<Void>> handleInputValidException(Exception e) {
         StringBuffer errorMessage = new StringBuffer();
-        if (e instanceof MethodArgumentNotValidException) {
-            MethodArgumentNotValidException exception = (MethodArgumentNotValidException) e;
+        if (e instanceof MethodArgumentNotValidException exception) {
             exception.getBindingResult().getAllErrors().forEach(error -> {
                 try {
                     String field = Objects.requireNonNull(error.getCodes())[0];
@@ -148,8 +146,7 @@ public class GlobalExceptionHandler {
                     errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR);
                 }
             });
-        } else if (e instanceof BindException) {
-            BindException exception = (BindException) e;
+        } else if (e instanceof BindException exception) {
             exception.getAllErrors().forEach(error ->
                     errorMessage.append(error.getDefaultMessage()).append(CONNECT_STR));
         }
@@ -166,7 +163,6 @@ public class GlobalExceptionHandler {
 
     /**
      * handler the exception thrown for data input verify
-     * valid注解校验框架校验异常统一处理
      * @param e data input verify exception
      * @return response
      */
@@ -227,8 +223,8 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 处理监控指标传参异常
-     * @param exception 指标参数异常
+     * processing monitor metrics exception
+     * @param exception MonitorMetricsException
      * @return response
      */
     @ExceptionHandler(MonitorMetricsException.class)

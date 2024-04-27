@@ -42,7 +42,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.warehouse.History;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.jpa.JpaProperties;
 import org.apache.hertzbeat.warehouse.dao.HistoryDao;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Sort;
@@ -58,13 +58,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private final HistoryDao historyDao;
-    private final WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
+    private final JpaProperties jpaProperties;
 
     private static final int STRING_MAX_LENGTH = 1024;
 
-    public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
+    public HistoryJpaDatabaseDataStorage(JpaProperties jpaProperties,
                                          HistoryDao historyDao) {
-        this.jpaProperties = properties.getStore().getJpa();
+        this.jpaProperties = jpaProperties;
         this.serverAvailable = true;
         this.historyDao = historyDao;
         expiredDataCleaner();
@@ -81,8 +81,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 .build();
         ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
         scheduledExecutor.scheduleAtFixedRate(() -> {
-            log.warn("[jpa-metrics-store]-start running expired data cleaner." +
-                    "Please use time series db instead of jpa for better performance");
+            log.warn("[jpa-metrics-store]-start running expired data cleaner."
+                    + "Please use time series db instead of jpa for better performance");
             String expireTimeStr = jpaProperties.expireTime();
             long expireTime = 0;
             try {
@@ -146,50 +146,36 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 
                     if (CommonConstants.NULL_VALUE.equals(columnValue)) {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER: {
+                            case CommonConstants.TYPE_NUMBER -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                         .dou(null);
-                                break;
                             }
-
-                            case CommonConstants.TYPE_STRING: {
+                            case CommonConstants.TYPE_STRING -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_STRING)
                                         .str(null);
-                                break;
                             }
-
-                            case CommonConstants.TYPE_TIME: {
+                            case CommonConstants.TYPE_TIME -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_TIME)
                                         .int32(null);
-                                break;
                             }
-                            default:
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
-                                break;
+                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
                         }
                     } else {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER: {
+                            case CommonConstants.TYPE_NUMBER -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                         .dou(Double.parseDouble(columnValue));
-                                break;
                             }
-
-                            case CommonConstants.TYPE_STRING: {
+                            case CommonConstants.TYPE_STRING -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_STRING)
                                         .str(formatStrValue(columnValue));
-                                break;
                             }
-
-                            case CommonConstants.TYPE_TIME: {
+                            case CommonConstants.TYPE_TIME -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_TIME)
                                         .int32(Integer.parseInt(columnValue));
-                                break;
                             }
-                            default:
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                        .dou(Double.parseDouble(columnValue));
-                                break;
+                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                                    .dou(Double.parseDouble(columnValue));
                         }
 
                         if (field.getLabel()) {

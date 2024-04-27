@@ -41,11 +41,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Alert sender Configuration API
- * 告警发送端配置API
  */
 @RestController
 @RequestMapping(value = "/api/config", produces = {APPLICATION_JSON_VALUE})
-@Tag(name = "Alert sender Configuration API | 告警发送端配置API")
+@Tag(name = "Alert sender Configuration API")
 @Slf4j
 public class GeneralConfigController {
     private Map<String, GeneralConfigService> configServiceMap;
@@ -58,7 +57,7 @@ public class GeneralConfigController {
     }
 
     @PostMapping(path = "/{type}")
-    @Operation(summary = "Save or update common config", description = "保存公共配置")
+    @Operation(summary = "Save or update common config", description = "Save or update common config")
     public ResponseEntity<Message<String>> saveOrUpdateConfig(
             @Parameter(description = "Config Type", example = "email")
             @PathVariable("type") @NotNull final String type,
@@ -72,7 +71,7 @@ public class GeneralConfigController {
     }
 
     @GetMapping(path = "/{type}")
-    @Operation(summary = "Get the sender config", description = "获取发送端配置")
+    @Operation(summary = "Get the sender config", description = "Get the sender config")
     public ResponseEntity<Message<Object>> getConfig(
             @Parameter(description = "Config Type", example = "email")
             @PathVariable("type") @NotNull final String type) {

@@ -17,14 +17,20 @@
 
 package org.apache.hertzbeat.common.entity.alerter;
 
+
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import java.util.Map;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.stereotype.Component;
 
 /**
  * json map converter
  */
+@Converter
+@Component
 public class JsonMapAttributeConverter implements AttributeConverter<Map<String, String>, String> {
 
     @Override

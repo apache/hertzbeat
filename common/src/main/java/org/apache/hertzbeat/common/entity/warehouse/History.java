@@ -31,7 +31,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
 
 /**
  * metrics history data entity
@@ -51,8 +50,7 @@ import org.hibernate.annotations.GenericGenerator;
 public class History {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "myid")
-    @GenericGenerator(name = "myid", strategy = "org.apache.hertzbeat.common.util.SnowFlakeIdGenerator")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(description = "Metric data history entity primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 

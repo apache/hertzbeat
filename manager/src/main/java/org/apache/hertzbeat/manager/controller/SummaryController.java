@@ -33,9 +33,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * System Summary Statistics API
- * 系统摘要统计API
  */
-@Tag(name = "Summary Statistics API | 系统摘要统计API")
+@Tag(name = "Summary Statistics API")
 @RestController
 @RequestMapping(path = "/api/summary", produces = {APPLICATION_JSON_VALUE})
 public class SummaryController {
@@ -44,7 +43,7 @@ public class SummaryController {
     private MonitorService monitorService;
 
     @GetMapping
-    @Operation(summary = "Query all application category monitoring statistics", description = "查询所有应用类别监控统计信息")
+    @Operation(summary = "Query all application category monitoring statistics", description = "Query all application category monitoring statistics")
     public ResponseEntity<Message<Dashboard>> appMonitors() {
         List<AppCount> appsCount = monitorService.getAllAppMonitorsCount();
         Message<Dashboard> message = Message.success(new Dashboard(appsCount));

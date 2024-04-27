@@ -143,14 +143,9 @@ public class TextParser {
         if (buffer.isEmpty()) return;
         c = buffer.read();
         switch (c) {
-            case COMMA:
-                startReadLabelName(metric, buffer);
-                break;
-            case RIGHT_CURLY_BRACKET:
-                readLabelValue(metric, buffer);
-                break;
-            default:
-                throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
+            case COMMA -> startReadLabelName(metric, buffer);
+            case RIGHT_CURLY_BRACKET -> readLabelValue(metric, buffer);
+            default -> throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
         }
     }
 
@@ -161,9 +156,9 @@ public class TextParser {
     }
 
     /**
-     * 获取指标的名称
+     * Gets the name of the metric
      *
-     * @param buffer 行数据对象
+     * @param buffer Line data object
      * @return token name
      */
     private static String readTokenAsMetricName(StrBuffer buffer) {
@@ -184,9 +179,9 @@ public class TextParser {
     }
 
     /**
-     * 获取label的名称
+     * Gets the name of the label
      *
-     * @param buffer 行数据对象
+     * @param buffer Line data object
      * @return label name
      */
     private static String readTokenAsLabelName(StrBuffer buffer) {
@@ -209,9 +204,9 @@ public class TextParser {
     }
 
     /**
-     * 获取Label的值
+     * Gets the value of the label
      *
-     * @param buffer 行数据对象
+     * @param buffer Line data object
      * @return label value
      */
     private static String readTokenAsLabelValue(StrBuffer buffer) {
@@ -219,18 +214,12 @@ public class TextParser {
         boolean escaped = false;
         while (!buffer.isEmpty()) {
             char c = buffer.read();
-            // 处理 '\\' 转义
+            // Handle '\\' escape character
             if (escaped) {
                 switch (c) {
-                    case QUOTES:
-                    case '\\':
-                        builder.append(c);
-                        break;
-                    case 'n':
-                        builder.append('\n');
-                        break;
-                    default:
-                        throw new ParseException("parse label value error");
+                    case QUOTES, '\\' -> builder.append(c);
+                    case 'n' -> builder.append('\n');
+                    default -> throw new ParseException("parse label value error");
                 }
                 escaped = false;
             } else {
@@ -251,9 +240,9 @@ public class TextParser {
     }
 
     /**
-     * 是否符合metric name首字符规则
+     * Checks if the character complies with the metric name's first character rule
      *
-     * @param c metric字符
+     * @param c Metric character
      * @return true/false
      */
     private static boolean isValidMetricNameStart(char c) {
@@ -261,9 +250,9 @@ public class TextParser {
     }
 
     /**
-     * 是否符合metric name除首字符其他字符规则
+     * Checks if the character complies with the metric name's non-first character rule
      *
-     * @param c metric字符
+     * @param c Metric character
      * @return true/false
      */
     private static boolean isValidMetricNameContinuation(char c) {
@@ -271,9 +260,9 @@ public class TextParser {
     }
 
     /**
-     * 是否符合label name首字符规则
+     * Checks if the character complies with the label name's first character rule
      *
-     * @param c metric字符
+     * @param c Metric character
      * @return true/false
      */
     private static boolean isValidLabelNameStart(char c) {
@@ -281,9 +270,9 @@ public class TextParser {
     }
 
     /**
-     * 是否符合label name除首字符其他字符规则
+     * Checks if the character complies with the label name's non-first character rule
      *
-     * @param c metric字符
+     * @param c Metric character
      * @return true/false
      */
     private static boolean isValidLabelNameContinuation(char c) {
@@ -291,7 +280,7 @@ public class TextParser {
     }
 
     /**
-     * 检测是否是有效的utf8编码的字符串
+     * Checks if a string is valid UTF-8 encoded
      *
      * @param s label value
      * @return true/false

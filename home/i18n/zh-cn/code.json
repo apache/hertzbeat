@@ -491,5 +491,17 @@
   "theme.tags.tagsPageTitle": {
     "message": "标签",
     "description": "The title of the tag list page"
+  },
+  "team.name": {
+    "message": "Apache HertzBeat(Incubating) 团队"
+  },
+  "team.desc": {
+    "message": "HertzBeat 团队由来自全球各个领域的贡献者组成。践行 开放，协作 的社区理念，欢迎👏更多的人加入我们，和社区一同成长。"
+  },
+  "team.tip": {
+    "message": "(排名不分先后)"
+  },
+  "team.thanks": {
+    "message": "感谢这些已经为 HertzBeat 做出贡献的非常棒的人们！"
   }
 }

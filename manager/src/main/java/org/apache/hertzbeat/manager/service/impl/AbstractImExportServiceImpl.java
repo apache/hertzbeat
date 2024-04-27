@@ -86,19 +86,17 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
 
     /**
      * Parsing an input stream into a form
-     * 将输入流解析为表单
      *
-     * @param is 输入流
-     * @return 表单
+     * @param is input stream
+     * @return form
      */
     abstract List<ExportMonitorDTO> parseImport(InputStream is);
 
     /**
      * Export Configuration to Output Stream
-     * 导出配置到输出流
      *
-     * @param monitorList 配置列表
-     * @param os          输出流
+     * @param monitorList config list
+     * @param os          output stream
      */
     abstract void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os);
 
@@ -108,16 +106,18 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         BeanUtils.copyProperties(dto.getMonitor(), monitor);
         if (!CollectionUtils.isEmpty(dto.getMonitor().getTags())) {
             monitor.setTags(dto.getMonitor().getTags().stream()
-                    .map(Tag::getId).collect(Collectors.toUnmodifiableList()));
+                    .map(Tag::getId).toList());
         }
         exportMonitor.setMonitor(monitor);
         exportMonitor.setParams(dto.getParams().stream()
                 .map(it -> {
                     var param = new ParamDTO();
-                    BeanUtils.copyProperties(it, param);
+                    param.setField(it.getField());
+                    param.setType(it.getType());
+                    param.setValue(it.getParamValue());
                     return param;
                 })
-                .collect(Collectors.toUnmodifiableList()));
+                .toList());
         exportMonitor.setMetrics(dto.getMetrics());
         exportMonitor.setDetected(false);
         exportMonitor.getMonitor().setCollector(dto.getCollector());
@@ -133,7 +133,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         monitorDto.setDetected(exportMonitor.getDetected());
         var monitor = new Monitor();
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
-        if (exportMonitor.monitor != null) { //多增加一个null检测
+        if (exportMonitor.monitor != null) { // Add one more null check
             BeanUtils.copyProperties(exportMonitor.monitor, monitor);
             if (exportMonitor.monitor.tags != null) {
                 monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags))
@@ -153,10 +153,12 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
             monitorDto.setParams(exportMonitor.params.stream()
                     .map(it -> {
                         var param = new Param();
-                        BeanUtils.copyProperties(it, param);
+                        param.setField(it.field);
+                        param.setType(it.type);
+                        param.setParamValue(it.value);
                         return param;
                     })
-                    .collect(Collectors.toUnmodifiableList()));
+                    .toList());
         } else {
             monitorDto.setParams(Collections.emptyList());
         }

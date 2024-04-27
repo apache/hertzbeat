@@ -102,7 +102,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         }
         ClientSession clientSession = null;
         MongoClient mongoClient;
-        CacheIdentifier identifier= null;
+        CacheIdentifier identifier = null;
         try {
             identifier = getIdentifier(metrics.getMongodb());
             mongoClient = getClient(metrics, identifier);
@@ -169,9 +169,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
      * Check that the mongodb connection information in metrics is complete
      */
     private void preCheck(Metrics metrics) {
-        if (metrics == null || metrics.getMongodb() == null) {
-            throw new IllegalArgumentException("Mongodb collect must has mongodb params");
-        }
+        Assert.isTrue(metrics != null && metrics.getMongodb() != null, "Mongodb collect must has mongodb params");
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
         Assert.hasText(mongodbProtocol.getCommand(), "Mongodb Protocol command is required.");
         Assert.hasText(mongodbProtocol.getHost(), "Mongodb Protocol host is required.");

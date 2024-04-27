@@ -411,12 +411,26 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/handy-git"><img src="https://avatars.githubusercontent.com/u/32837980?v=4?s=100" width="100px;" alt="handy"/><br /><sub><b>handy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=handy-git" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/LiuTianyou"><img src="https://avatars.githubusercontent.com/u/30208283?v=4?s=100" width="100px;" alt="LiuTianyou"/><br /><sub><b>LiuTianyou</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=LiuTianyou" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/LiuTianyou"><img src="https://avatars.githubusercontent.com/u/30208283?v=4?s=100" width="100px;" alt="LiuTianyou"/><br /><sub><b>LiuTianyou</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=LiuTianyou" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=LiuTianyou" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/WinterKi1ler"><img src="https://avatars.githubusercontent.com/u/160592092?v=4?s=100" width="100px;" alt="WinterKi1ler"/><br /><sub><b>WinterKi1ler</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=WinterKi1ler" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://sharehoo.cn/"><img src="https://avatars.githubusercontent.com/u/45377370?v=4?s=100" width="100px;" alt="miki"/><br /><sub><b>miki</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=miki-hmt" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://codeflex.substack.com/"><img src="https://avatars.githubusercontent.com/u/85513042?v=4?s=100" width="100px;" alt="Keshav Carpenter"/><br /><sub><b>Keshav Carpenter</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=alpha951" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://codeflex.substack.com/"><img src="https://avatars.githubusercontent.com/u/85513042?v=4?s=100" width="100px;" alt="Keshav Carpenter"/><br /><sub><b>Keshav Carpenter</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=alpha951" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=alpha951" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/makechoicenow"><img src="https://avatars.githubusercontent.com/u/9911918?v=4?s=100" width="100px;" alt="makechoicenow"/><br /><sub><b>makechoicenow</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=makechoicenow" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/gjjjj0101"><img src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;" alt="Gao Jian"/><br /><sub><b>Gao Jian</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://jangto.tistory.com/"><img src="https://avatars.githubusercontent.com/u/37864182?v=4?s=100" width="100px;" alt="Hyeon Sung"/><br /><sub><b>Hyeon Sung</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=dukbong" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://crossoverjie.top/"><img src="https://avatars.githubusercontent.com/u/15684156?v=4?s=100" width="100px;" alt="crossoverJie"/><br /><sub><b>crossoverJie</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=crossoverJie" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=crossoverJie" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/PeixyJ"><img src="https://avatars.githubusercontent.com/u/45998593?v=4?s=100" width="100px;" alt="PeixyJ"/><br /><sub><b>PeixyJ</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=PeixyJ" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Hi-Mr-Wind"><img src="https://avatars.githubusercontent.com/u/85803831?v=4?s=100" width="100px;" alt="风如歌"/><br /><sub><b>风如歌</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Hi-Mr-Wind" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MananPoojara"><img src="https://avatars.githubusercontent.com/u/104253184?v=4?s=100" width="100px;" alt="Manan Pujara"/><br /><sub><b>Manan Pujara</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=MananPoojara" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xuziyang"><img src="https://avatars.githubusercontent.com/u/8465969?v=4?s=100" width="100px;" alt="xuziyang"/><br /><sub><b>xuziyang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xuziyang" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lwqzz"><img src="https://avatars.githubusercontent.com/u/62584513?v=4?s=100" width="100px;" alt="lwqzz"/><br /><sub><b>lwqzz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lwqzz" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/YxYL6125"><img src="https://avatars.githubusercontent.com/u/91076160?v=4?s=100" width="100px;" alt="YxYL"/><br /><sub><b>YxYL</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=YxYL6125" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/tomorrowshipyltm"><img src="https://avatars.githubusercontent.com/u/61336903?v=4?s=100" width="100px;" alt="tomorrowshipyltm"/><br /><sub><b>tomorrowshipyltm</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tomorrowshipyltm" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/15613060203"><img src="https://avatars.githubusercontent.com/u/41351615?v=4?s=100" width="100px;" alt="栗磊"/><br /><sub><b>栗磊</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=15613060203" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -452,7 +466,7 @@ WeChat Public : Search `Apache HertzBeat` or `usthecom`.
 
 HertzBeat is built on so many great open source projects, thanks to them!
 
-- `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Aviator Protobuf HttpClient Guava SnakeYaml JsonPath ...`
+- `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Protobuf HttpClient Guava SnakeYaml JsonPath ...`
 - `TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...`
 
 ## Landscape

@@ -147,7 +147,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
             // 取出端口信息
             params.forEach(param => {
               if (param.field === 'port') {
-                this.port = Number(param.value);
+                this.port = Number(param.paramValue);
               }
             });
             this.metrics = [];

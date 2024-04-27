@@ -70,8 +70,8 @@ public class PrometheusMatrixParser extends AbstractPrometheusParse {
                     } else {
                         if (CommonConstants.PROM_TIME.equals(aliasField)) {
                             for (Object o : value) {
-                                if (o instanceof Double) {
-                                    valueRowBuilder.addColumns(String.valueOf(BigDecimal.valueOf((Double) o * 1000)));
+                                if (o instanceof Double time) {
+                                    valueRowBuilder.addColumns(String.valueOf(BigDecimal.valueOf(time * 1000)));
                                     setTimeFlag = true;
                                 }
                             }
@@ -80,8 +80,8 @@ public class PrometheusMatrixParser extends AbstractPrometheusParse {
                             }
                         } else {
                             for (Object o : value) {
-                                if (o instanceof String) {
-                                    valueRowBuilder.addColumns((String) o);
+                                if (o instanceof String str) {
+                                    valueRowBuilder.addColumns(str);
                                     setValueFlag = true;
                                 }
                             }
