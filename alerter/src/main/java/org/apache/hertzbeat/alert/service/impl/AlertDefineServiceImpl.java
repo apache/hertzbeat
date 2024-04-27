@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.googlecode.aviator.AviatorEvaluator;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -35,6 +34,7 @@ import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
+import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -70,7 +70,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         // todo
         if (StringUtils.hasText(alertDefine.getExpr())) {
             try {
-                AviatorEvaluator.compile(alertDefine.getExpr(), false);
+                JexlExpressionRunner.compile(alertDefine.getExpr());
             } catch (Exception e) {
                 throw new IllegalArgumentException("alert expr error: " + e.getMessage());
             }
