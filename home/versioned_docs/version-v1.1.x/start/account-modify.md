@@ -1,7 +1,7 @@
 ---
 id: account-modify  
-title: 配置修改账户密码(可选)        
-sidebar_label: 配置修改账户密码(可选)      
+title: 配置修改账户密码        
+sidebar_label: 配置修改账户密码      
 ---
 
 HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat        
@@ -110,5 +110,20 @@ account:
      role: [guest]
 ```
 
+## Update Security Secret
+
+> This secret is the key for account security encryption management and needs to be updated to your custom key string of the same length.
+
+
+Update the `application.yml` file in the `config` directory, modify the `sureness.jwt.secret` parameter to your custom key string of the same length.
+
+```yaml
+sureness:
+  jwt:
+    secret: 'CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
+             LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+             8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
+             dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
+```
 
 **重启 HertzBeat 浏览器访问 http://ip:1157/ 即可探索使用 HertzBeat**  
