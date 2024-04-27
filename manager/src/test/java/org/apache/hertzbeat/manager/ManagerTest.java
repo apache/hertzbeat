@@ -17,6 +17,10 @@
 
 package org.apache.hertzbeat.manager;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import javax.annotation.Resource;
+import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.calculate.CalculateAlarm;
@@ -50,12 +54,6 @@ import org.apache.hertzbeat.warehouse.store.RealTimeRedisDataStorage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
-
-import javax.annotation.Resource;
-import javax.naming.NamingException;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *

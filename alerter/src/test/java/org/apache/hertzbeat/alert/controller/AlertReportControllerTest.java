@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.apache.hertzbeat.alert.dto.GeneralCloudAlertReport;
 import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
 import org.apache.hertzbeat.alert.service.AlertService;
@@ -32,10 +35,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * unit test for {@link AlertReportController }

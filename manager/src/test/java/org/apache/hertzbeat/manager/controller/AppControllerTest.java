@@ -17,9 +17,13 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,13 +36,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 /**
  * Test case for {@link AppController}
@@ -53,6 +50,7 @@ class AppControllerTest {
 
     @InjectMocks
     private AppController appController;
+
     @BeforeEach
     void setUp() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(appController).build();
@@ -124,7 +122,7 @@ class AppControllerTest {
 
         // Request interface
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/apps/hierarchy", "zh-CN"))
-                    .andExpect( jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                     .andExpect(jsonPath("$.data[0].category").value("os"))
                     .andReturn();
 

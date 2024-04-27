@@ -19,12 +19,11 @@ package org.apache.hertzbeat.common.config;
 
 import com.googlecode.aviator.AviatorEvaluator;
 import com.googlecode.aviator.exception.UnsupportedFeatureException;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  *
