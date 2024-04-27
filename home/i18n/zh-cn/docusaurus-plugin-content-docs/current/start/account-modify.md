@@ -1,7 +1,7 @@
 ---
 id: account-modify  
-title: 更新账户和密钥        
-sidebar_label: 配置修改账户密码和加密密钥      
+title: 配置修改账户密码和加密密钥        
+sidebar_label: 更新账户和密钥      
 ---
 
 ## 更新账户
