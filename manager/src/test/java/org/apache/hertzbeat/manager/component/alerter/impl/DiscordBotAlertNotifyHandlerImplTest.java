@@ -31,9 +31,6 @@ import java.util.Map;
 
 /**
  * Test case for {@link DiscordBotAlertNotifyHandlerImpl}
- *
- *
- * Created by gcdd1993 on 2023/1/19
  */
 @Slf4j
 class DiscordBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {

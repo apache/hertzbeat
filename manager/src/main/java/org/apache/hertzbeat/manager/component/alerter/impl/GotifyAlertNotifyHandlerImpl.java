@@ -41,11 +41,11 @@ import org.springframework.stereotype.Component;
 public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl{
 
     /**
-     * 发送报警通知
+     * Send alarm notification
      *
-     * @param receiver       Notification configuration information   通知配置信息
-     * @param noticeTemplate Notification configuration information   通知配置信息
-     * @param alert          Alarm information                        告警信息
+     * @param receiver       Notification configuration information
+     * @param noticeTemplate Notification configuration information
+     * @param alert          Alarm information
      * @throws AlertNoticeException when send receiver error
      */
     @Override
@@ -77,9 +77,9 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     }
 
     /**
-     * 通知类型
+     * notification type
      *
-     * @return 通知类型
+     * @return notification type
      */
     @Override
     public byte type() {

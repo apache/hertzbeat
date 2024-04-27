@@ -32,9 +32,7 @@ import java.util.Map;
 /**
  * Test case for {@link SlackAlertNotifyHandlerImpl}
  *
- *
  * @version 2.1
- * Created by Musk.Chen on 2023/1/17
  */
 @Slf4j
 class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {

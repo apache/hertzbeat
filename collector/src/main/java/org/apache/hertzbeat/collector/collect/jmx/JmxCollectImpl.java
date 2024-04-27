@@ -53,6 +53,7 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -76,8 +77,8 @@ public class JmxCollectImpl extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
 
         try {
-            JmxProtocol jmxProtocol = metrics.getJmx();
             validateParams(metrics);
+            JmxProtocol jmxProtocol = metrics.getJmx();
 
             // Create a jndi remote connection
             JMXConnector jmxConnector = getConnectSession(jmxProtocol);
@@ -161,14 +162,12 @@ public class JmxCollectImpl extends AbstractCollect {
         return attributeValueMap;
     }
 
-    private void validateParams(Metrics metrics) throws IllegalArgumentException {
-        if (metrics == null || metrics.getJmx() == null) {
-            throw new IllegalArgumentException("JMX collect must has jmx params");
-        }
-        if (StringUtils.hasText(metrics.getJmx().getUrl())) {
-            if (metrics.getJmx().getUrl().contains(IGNORED_STUB)) {
-                throw new IllegalArgumentException("JMX url prohibit contains stub, please check");
-            }
+    private void validateParams(Metrics metrics) {
+        Assert.isTrue(metrics != null && metrics.getJmx() != null, "JMX collect must have JMX params");
+        
+        String url = metrics.getJmx().getUrl();
+        if (StringUtils.hasText(url)) {
+            Assert.doesNotContain(url, IGNORED_STUB, "JMX url prohibit contains stub, please check");
         }
     }
 

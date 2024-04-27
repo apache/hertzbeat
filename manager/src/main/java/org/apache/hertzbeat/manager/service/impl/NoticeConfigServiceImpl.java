@@ -54,7 +54,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 消息通知配置实现
  * Message notification configuration implementation
  */
 @Service
@@ -145,7 +144,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         }
 
         // The temporary rule is to forward all, and then implement more matching rules: alarm status selection, monitoring type selection, etc.
-        // 规则是全部转发, 告警状态选择, 监控类型选择等(按照tags标签和告警级别过滤匹配)
         return rules.stream()
                 .filter(rule -> {
                     if (!rule.isFilterAll()) {

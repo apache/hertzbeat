@@ -27,7 +27,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
- * 标签服务
  * tag service
  */
 public interface TagService {
@@ -46,8 +45,8 @@ public interface TagService {
 
     /**
      * get tag page list
-     * @param specification 查询条件
-     * @param pageRequest   分页条件
+     * @param specification Query condition
+     * @param pageRequest   Paging condition
      * @return Tags
      */
     Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest);

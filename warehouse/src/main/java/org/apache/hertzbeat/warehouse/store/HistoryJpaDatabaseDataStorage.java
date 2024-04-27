@@ -42,7 +42,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.warehouse.History;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.jpa.JpaProperties;
 import org.apache.hertzbeat.warehouse.dao.HistoryDao;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Sort;
@@ -58,13 +58,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private final HistoryDao historyDao;
-    private final WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
+    private final JpaProperties jpaProperties;
 
     private static final int STRING_MAX_LENGTH = 1024;
 
-    public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
+    public HistoryJpaDatabaseDataStorage(JpaProperties jpaProperties,
                                          HistoryDao historyDao) {
-        this.jpaProperties = properties.store().jpa();
+        this.jpaProperties = jpaProperties;
         this.serverAvailable = true;
         this.historyDao = historyDao;
         expiredDataCleaner();

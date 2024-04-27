@@ -29,62 +29,56 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /**
- * AuthResources 数据库操作
+ * AuthResources database operation
  */
 public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificationExecutor<Monitor> {
 
 
     /**
      * Delete monitor based on monitor ID list
-     * 根据监控任务ID列表删除监控
-     * @param monitorIds Monitoring ID List 监控任务ID列表
+     * @param monitorIds Monitoring ID List
      */
     void deleteAllByIdIn(Set<Long> monitorIds);
 
     /**
      * Query monitoring based on monitoring ID list
-     * 根据监控任务ID列表查询监控
-     * @param monitorIds Monitoring ID List 监控任务ID列表
-     * @return Monitor List     监控列表
+     * @param monitorIds Monitoring ID List
+     * @return Monitor List
      */
     List<Monitor> findMonitorsByIdIn(Set<Long> monitorIds);
 
     /**
      * Query monitoring by monitoring type
-     * 根据监控类型查询监控
-     * @param app Monitor Type   监控类型
-     * @return Monitor List     监控列表
+     * @param app Monitor Type
+     * @return Monitor List
      */
     List<Monitor> findMonitorsByAppEquals(String app);
 
     /**
      * Querying Monitoring of Sent Collection Tasks
-     * 查询已下发采集任务的监控
-     * @param status Monitor Status     任务状态
-     * @return Monitor List     监控列表
+     * @param status Monitor Status
+     * @return Monitor List
      */
     List<Monitor> findMonitorsByStatusNotInAndAndJobIdNotNull(List<Byte> status);
 
     /**
-     * Query monitoring by monitoring name 根据任务名称查询监控
-     * @param name monitoring name 任务名称
-     * @return monitoring list 监控列表
+     * Query monitoring by monitoring name
+     * @param name monitoring name
+     * @return monitoring list
      */
     Optional<Monitor> findMonitorByNameEquals(String name);
 
     /**
      * Query the monitoring category - the number of monitoring corresponding to the status
-     * 查询监控类别-状态对应的监控数量
-     * @return Monitoring Category-Status and Monitoring Quantity Mapping 监控类别-状态与监控数量映射
+     * @return Monitoring Category-Status and Monitoring Quantity Mapping
      */
     @Query("select new org.apache.hertzbeat.manager.pojo.dto.AppCount(mo.app, mo.status, COUNT(mo.id)) from Monitor mo group by mo.app, mo.status")
     List<AppCount> findAppsStatusCount();
 
     /**
      * Update the status of the specified monitor
-     * 更新指定监控的状态
-     * @param id     Monitor ID 监控任务ID
-     * @param status 任务状态 Monitor Status
+     * @param id     Monitor ID
+     * @param status  Monitor Status
      */
     @Modifying(clearAutomatically = true)
     @Query("update Monitor set status = :status where id = :id")

@@ -42,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * status page endpoint controller
  */
-@Tag(name = "Status Page API | 状态页API")
+@Tag(name = "Status Page API")
 @RestController()
 @RequestMapping(value = "/api/status/page", produces = {APPLICATION_JSON_VALUE})
 public class StatusPageController {

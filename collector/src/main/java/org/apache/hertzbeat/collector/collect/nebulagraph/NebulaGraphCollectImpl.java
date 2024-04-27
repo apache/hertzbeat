@@ -99,7 +99,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         HttpUriRequest request = createHttpRequest(nebulaGraph.getHost(), nebulaGraph.getPort(),
                 nebulaGraph.getUrl(), nebulaGraph.getTimeout());
         try {
-            // 发起http请求，获取响应数据
+            // Send an HTTP request to obtain response data
             response = CommonHttpClient.getHttpClient().execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
@@ -110,7 +110,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
             resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             responseTime = System.currentTimeMillis() - startTime;
             resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
-            // 根据API进行不同解析
+            // Parse the response differently depending on the API
             if (GRAPH_API.equals(nebulaGraph.getUrl())) {
                 parseStatsResponse(resp, nebulaGraph.getTimePeriod(), resultMap);
             } else if (STORAGE_API.equals(nebulaGraph.getUrl())) {
@@ -177,13 +177,13 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 解析Stats响应通过时间间隔进行筛选
+     * Parse Stats response and filter by time period
      *
-     * @param responseBody 响应体
-     * @param timePeriod   时间间隔
+     * @param responseBody response body
+     * @param timePeriod   time period
      */
     private void parseStatsResponse(String responseBody, String timePeriod, HashMap<String, String> resultMap) {
-        // 设置正则匹配
+        // Set up regular expression matching
         String timeRegex = String.format(REGEX, timePeriod);
         Pattern pattern = Pattern.compile(timeRegex);
         String[] strArray = responseBody.split(STR_SPLIT);
@@ -198,9 +198,9 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
 
 
     /**
-     * 解析Storage响应通过时间间隔进行筛选
+     * Parse the Storage response and filter by time period
      *
-     * @param responseBody 响应体
+     * @param responseBody response body
      */
     private void parseStorageResponse(String responseBody, HashMap<String, String> resultMap) {
         String[] strArray = responseBody.split(STR_SPLIT);
