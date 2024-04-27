@@ -168,7 +168,8 @@
             "help/hadoop",
             "help/iotdb",
             "help/hive",
-            "help/airflow"
+            "help/airflow",
+            "help/influxdb"
           ]
         },
         {
