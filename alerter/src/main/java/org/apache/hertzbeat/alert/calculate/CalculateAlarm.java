@@ -26,11 +26,6 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_METRICS;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_APP;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_ID;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_NAME;
-import com.googlecode.aviator.AviatorEvaluator;
-import com.googlecode.aviator.Expression;
-import com.googlecode.aviator.exception.CompileExpressionErrorException;
-import com.googlecode.aviator.exception.ExpressionRuntimeException;
-import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +35,8 @@ import java.util.ResourceBundle;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.jexl3.JexlException;
+import org.apache.commons.jexl3.JexlExpression;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
@@ -57,6 +54,7 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.domain.Specification;
@@ -321,23 +319,24 @@ public class CalculateAlarm {
 
     private boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr) {
         Boolean match;
+        JexlExpression expression;
         try {
-            Expression expression = AviatorEvaluator.compile(expr, true);
-            expression.getVariableNames().forEach(variable -> {
-                if (!fieldValueMap.containsKey(variable)) {
-                    throw new ExpressionRuntimeException("metrics value not contains expr field: " + variable);
-                }
-            });
-            match = (Boolean) expression.execute(fieldValueMap);
-        } catch (CompileExpressionErrorException |
-                 ExpressionSyntaxErrorException compileException) {
-            log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
-            throw compileException;
-        } catch (ExpressionRuntimeException expressionRuntimeException) {
-            log.error("Alert Define Rule: {} Run Error: {}.", expr, expressionRuntimeException.getMessage());
-            throw expressionRuntimeException;
+            expression = JexlExpressionRunner.compile(expr);
+        } catch (JexlException jexlException) {
+            log.error("Alarm Rule: {} Compile Error: {}.", expr, jexlException.getMessage());
+            throw jexlException;
         } catch (Exception e) {
-            log.error("Alert Define Rule: {} Unknown Error: {}.", expr, e.getMessage());
+            log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
+            throw e;
+        }
+
+        try {
+            match = (Boolean) JexlExpressionRunner.evaluate(expression, fieldValueMap);
+        } catch (JexlException jexlException) {
+            log.error("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
+            throw jexlException;
+        } catch (Exception e) {
+            log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
             throw e;
         }
         return match != null && match;

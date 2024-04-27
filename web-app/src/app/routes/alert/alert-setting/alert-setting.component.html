@@ -582,9 +582,9 @@
         <tr *ngFor="let data of smallTable.data">
           <td nzAlign="center" nzLeft [nzChecked]="checkedTags.has(data)" (nzCheckedChange)="onTagItemChecked(data, $event)"></td>
           <td nzAlign="left">
-            <nz-tag *ngIf="data.value == undefined || data.value.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
-            <nz-tag *ngIf="data.value != undefined && data.value.trim() != ''" [nzColor]="data.color">
-              {{ data.name + ':' + data.value }}
+            <nz-tag *ngIf="data.tagValue == undefined || data.tagValue.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
+            <nz-tag *ngIf="data.tagValue != undefined && data.tagValue.trim() != ''" [nzColor]="data.color">
+              {{ data.name + ':' + data.tagValue }}
             </nz-tag>
           </td>
         </tr>

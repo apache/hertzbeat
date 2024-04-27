@@ -39,7 +39,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-
+import org.springframework.util.StringUtils;
 
 /**
  * ssl Certificate
@@ -96,7 +96,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(Long.toString(responseTime));
                     } else if (NAME_SUBJECT.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(x509Certificate.getSubjectDN().getName());
+                        valueRowBuilder.addColumns(x509Certificate.getSubjectX500Principal().getName());
                     } else if (NAME_EXPIRED.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(Boolean.toString(expired));
                     } else if (NAME_START_TIME.equalsIgnoreCase(alias)) {
@@ -158,10 +158,9 @@ public class SslCertificateCollectImpl extends AbstractCollect {
             throw new Exception("Http/Https collect must has http params");
         }
         HttpProtocol httpProtocol = metrics.getHttp();
-        if (httpProtocol.getUrl() == null
-                || "".equals(httpProtocol.getUrl())
-                || !httpProtocol.getUrl().startsWith(RIGHT_DASH)) {
-            httpProtocol.setUrl(httpProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + httpProtocol.getUrl().trim());
+        String url = httpProtocol.getUrl();
+        if (StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
+            httpProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
     }
 }

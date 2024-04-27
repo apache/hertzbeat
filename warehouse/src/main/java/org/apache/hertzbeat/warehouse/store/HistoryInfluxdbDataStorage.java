@@ -40,7 +40,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.influxdb.InfluxdbProperties;
 import org.apache.http.ssl.SSLContexts;
 import org.influxdb.InfluxDB;
 import org.influxdb.InfluxDBFactory;
@@ -79,11 +79,11 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
 
     private InfluxDB influxDb;
 
-    public HistoryInfluxdbDataStorage(WarehouseProperties properties) {
-        this.initInfluxDb(properties);
+    public HistoryInfluxdbDataStorage(InfluxdbProperties influxdbProperties) {
+        this.initInfluxDb(influxdbProperties);
     }
 
-    public void initInfluxDb(WarehouseProperties properties) {
+    public void initInfluxDb(InfluxdbProperties influxdbProperties) {
         OkHttpClient.Builder client = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS)
@@ -93,7 +93,6 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         client.sslSocketFactory(defaultSslSocketFactory(), defaultTrustManager());
         client.hostnameVerifier(noopHostnameVerifier());
 
-        WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties = properties.getStore().getInfluxdb();
         this.influxDb = InfluxDBFactory.connect(influxdbProperties.serverUrl(), influxdbProperties.username(), influxdbProperties.password(), client);
         // Close it if your application is terminating, or you are not using it anymore.
         Runtime.getRuntime().addShutdownHook(new Thread(influxDb::close));
@@ -101,7 +100,7 @@ public class HistoryInfluxdbDataStorage extends AbstractHistoryDataStorage {
         this.serverAvailable = this.createDatabase(influxdbProperties);
     }
 
-    private boolean createDatabase(WarehouseProperties.StoreProperties.InfluxdbProperties influxdbProperties) {
+    private boolean createDatabase(InfluxdbProperties influxdbProperties) {
         QueryResult queryResult = this.influxDb.query(new Query(SHOW_DATABASE));
 
         if (queryResult.hasError()) {

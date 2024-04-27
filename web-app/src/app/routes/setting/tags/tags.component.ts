@@ -185,8 +185,8 @@ export class SettingTagsComponent implements OnInit {
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.tag.name = this.tag.name.trim();
-    if (this.tag.value != undefined) {
-      this.tag.value = this.tag.value.trim();
+    if (this.tag.tagValue != undefined) {
+      this.tag.tagValue = this.tag.tagValue.trim();
     }
     if (this.tag.description != undefined) {
       this.tag.description = this.tag.description.trim();

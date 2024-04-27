@@ -52,7 +52,7 @@ import org.springframework.web.multipart.MultipartFile;
  * Monitor and manage batch API
  * 监控管理批量API
  */
-@Tag(name = "Monitor Manage Batch API | 监控列表API")
+@Tag(name = "Monitor Manage Batch API")
 @RestController
 @RequestMapping(path = "/api/monitors", produces = {APPLICATION_JSON_VALUE})
 public class MonitorsController {
@@ -66,18 +66,18 @@ public class MonitorsController {
 
     @GetMapping
     @Operation(summary = "Obtain a list of monitoring information based on query filter items",
-            description = "根据查询过滤项获取监控信息列表")
+            description = "Obtain a list of monitoring information based on query filter items")
     public ResponseEntity<Message<Page<Monitor>>> getMonitors(
-            @Parameter(description = "Monitor ID | 监控任务ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
-            @Parameter(description = "Monitor Type | 监控类型", example = "linux") @RequestParam(required = false) final String app,
-            @Parameter(description = "Monitor Name | 任务名称，模糊查询", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
-            @Parameter(description = "Monitor Host | 监控Host，模糊查询", example = "127.0.0.1") @RequestParam(required = false) final String host,
-            @Parameter(description = "Monitor Status | 任务状态 0:未监控,1:可用,2:不可用,9:全部状态", example = "1") @RequestParam(required = false) final Byte status,
-            @Parameter(description = "Sort Field | 排序字段", example = "name") @RequestParam(defaultValue = "gmtCreate") final String sort,
-            @Parameter(description = "Sort by | 排序方式，asc:升序，desc:降序", example = "desc") @RequestParam(defaultValue = "desc") final String order,
-            @Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(description = "Number of list pagination | 列表分页数量", example = "8") @RequestParam(defaultValue = "8") int pageSize,
-            @Parameter(description = "Monitor tag | 监控标签", example = "env:prod") @RequestParam(required = false) final String tag) {
+            @Parameter(description = "Monitor ID", example = "6565463543") @RequestParam(required = false) final List<Long> ids,
+            @Parameter(description = "Monitor Type", example = "linux") @RequestParam(required = false) final String app,
+            @Parameter(description = "Monitor Name support fuzzy query", example = "linux-127.0.0.1") @RequestParam(required = false) final String name,
+            @Parameter(description = "Monitor Host support fuzzy query", example = "127.0.0.1") @RequestParam(required = false) final String host,
+            @Parameter(description = "Monitor Status 0:no monitor,1:usable,2:disabled,9:all status", example = "1") @RequestParam(required = false) final Byte status,
+            @Parameter(description = "Sort Field ", example = "name") @RequestParam(defaultValue = "gmtCreate") final String sort,
+            @Parameter(description = "Sort mode eg:asc desc", example = "desc") @RequestParam(defaultValue = "desc") final String order,
+            @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
+            @Parameter(description = "Number of list pagination ", example = "8") @RequestParam(defaultValue = "8") int pageSize,
+            @Parameter(description = "Monitor tag ", example = "env:prod") @RequestParam(required = false) final String tag) {
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (ids != null && !ids.isEmpty()) {
@@ -105,7 +105,7 @@ public class MonitorsController {
                 if (tagArr.length == TAG_LENGTH) {
                     String tagValue = tagArr[1];
                     andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
-                    andList.add(criteriaBuilder.equal(tagJoin.get("value"), tagValue));
+                    andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagValue));
                 } else {
                     andList.add(criteriaBuilder.equal(tagJoin.get("name"), tag));
                 }
@@ -125,17 +125,17 @@ public class MonitorsController {
             Predicate[] orPredicates = new Predicate[orList.size()];
             Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
 
-            if (andPredicate.getExpressions().isEmpty() && orPredicate.getExpressions().isEmpty()) {
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
                 return query.where().getRestriction();
-            } else if (andPredicate.getExpressions().isEmpty()) {
-                return query.where(orPredicate).getRestriction();
-            } else if (orPredicate.getExpressions().isEmpty()) {
-                return query.where(andPredicate).getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
             } else {
                 return query.where(andPredicate, orPredicate).getRestriction();
             }
         };
-        // Pagination is a must         分页是必须的
+        // Pagination is a must
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<Monitor> monitorPage = monitorService.getMonitors(specification, pageRequest);
@@ -145,9 +145,9 @@ public class MonitorsController {
 
     @GetMapping(path = "/{app}")
     @Operation(summary = "Filter all acquired monitoring information lists of the specified monitoring type according to the query",
-            description = "根据查询过滤指定监控类型的所有获取监控信息列表")
+            description = "Filter all acquired monitoring information lists of the specified monitoring type according to the query")
     public ResponseEntity<Message<List<Monitor>>> getAppMonitors(
-            @Parameter(description = "en: Monitoring type,zh: 监控类型", example = "linux") @PathVariable(required = false) final String app) {
+            @Parameter(description = "en: Monitoring type", example = "linux") @PathVariable(required = false) final String app) {
         List<Monitor> monitors = monitorService.getAppMonitors(app);
         Message<List<Monitor>> message = Message.success(monitors);
         return ResponseEntity.ok(message);
@@ -155,9 +155,9 @@ public class MonitorsController {
 
     @DeleteMapping
     @Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",
-            description = "根据监控任务ID列表批量删除监控项")
+            description = "Delete monitoring items in batches according to the monitoring ID list")
     public ResponseEntity<Message<Void>> deleteMonitors(
-            @Parameter(description = "Monitoring ID List | 监控任务ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @Parameter(description = "Monitoring ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             monitorService.deleteMonitors(new HashSet<>(ids));
@@ -168,9 +168,9 @@ public class MonitorsController {
 
     @DeleteMapping("manage")
     @Operation(summary = "Unmanaged monitoring items in batches according to the monitoring ID list",
-            description = "根据监控任务ID列表批量取消纳管监控项")
+            description = "Unmanaged monitoring items in batches according to the monitoring ID list")
     public ResponseEntity<Message<Void>> cancelManageMonitors(
-            @Parameter(description = "Monitoring ID List | 监控任务ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @Parameter(description = "Monitoring ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             monitorService.cancelManageMonitors(new HashSet<>(ids));
@@ -181,9 +181,9 @@ public class MonitorsController {
 
     @GetMapping("manage")
     @Operation(summary = "Start the managed monitoring items in batches according to the monitoring ID list",
-            description = "根据监控任务ID列表批量启动纳管监控项")
+            description = "Start the managed monitoring items in batches according to the monitoring ID list")
     public ResponseEntity<Message<Void>> enableManageMonitors(
-            @Parameter(description = "Monitor ID List | 监控任务ID列表", example = "6565463543") @RequestParam(required = false) List<Long> ids
+            @Parameter(description = "Monitor ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             monitorService.enableManageMonitors(new HashSet<>(ids));
@@ -193,16 +193,16 @@ public class MonitorsController {
     }
 
     @GetMapping("/export")
-    @Operation(summary = "export monitor config", description = "导出监控配置")
+    @Operation(summary = "export monitor config", description = "export monitor config")
     public void export(
-            @Parameter(description = "Monitor ID List | 监控任务ID列表", example = "6565463543") @RequestParam List<Long> ids,
+            @Parameter(description = "Monitor ID List", example = "6565463543") @RequestParam List<Long> ids,
             @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
             HttpServletResponse res) throws Exception {
         monitorService.export(ids, type, res);
     }
 
     @PostMapping("/import")
-    @Operation(summary = "import monitor config", description = "导入监控配置")
+    @Operation(summary = "import monitor config", description = "import monitor config")
     public ResponseEntity<Message<Void>> export(MultipartFile file) throws Exception {
         monitorService.importConfig(file);
         return ResponseEntity.ok(Message.success("Import success"));
@@ -210,9 +210,9 @@ public class MonitorsController {
 
 
     @PostMapping("/copy")
-    @Operation(summary = "copy monitors by ids", description = "根据id批量复制monitor")
+    @Operation(summary = "copy monitors by ids", description = "copy monitors by ids")
     public ResponseEntity<Message<Void>> duplicateMonitors(
-            @Parameter(description = "Monitor ID List | 监控任务ID列表", example = "6565463543") @RequestParam List<Long> ids
+            @Parameter(description = "Monitor ID List", example = "6565463543") @RequestParam List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
             monitorService.copyMonitors(ids);

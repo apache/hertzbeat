@@ -64,7 +64,7 @@ docker-compose:
       - any-glob-to-any-file:
           - "script/docker-compose/**/*"
 
-docs:
+doc:
   - changed-files:
       - any-glob-to-any-file:
           - "**/README.md"

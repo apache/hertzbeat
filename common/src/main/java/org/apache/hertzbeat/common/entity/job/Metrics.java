@@ -103,7 +103,6 @@ public class Metrics {
      * Public attribute - expression calculation, map the pre-query attribute (pre Fields)
      * with the final attribute (fields), and calculate the final attribute (fields) value
      * eg: size = size1 + size2, speed = speedSize
-     * <a href="https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m">www.yuque.com/boyan-avfmj/aviatorscript/ban32m</a>
      */
     private List<String> calculates;
     /**

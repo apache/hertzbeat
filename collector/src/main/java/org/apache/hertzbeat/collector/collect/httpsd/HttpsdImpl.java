@@ -20,8 +20,10 @@
 package org.apache.hertzbeat.collector.collect.httpsd;
 
 import com.ecwid.consul.transport.TransportException;
+import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.Field;
 import java.util.Objects;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -41,8 +43,11 @@ import org.apache.hertzbeat.common.util.CommonUtil;
  */
 @Slf4j
 public class HttpsdImpl extends AbstractCollect {
-    private final static String SERVER = "server";
-    private final DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
+    private static final  String SERVER = "server";
+
+    @Setter
+    @VisibleForTesting
+    private DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
@@ -78,13 +83,13 @@ public class HttpsdImpl extends AbstractCollect {
             metrics.getAliasFields().forEach(fieldName -> {
                 if (StringUtils.equalsAnyIgnoreCase(CollectorConstants.RESPONSE_TIME, fieldName)) {
                     valueRowBuilder.addColumns(String.valueOf(System.currentTimeMillis() - beginTime));
-                }else {
+                } else {
                     addColumnIfMatched(fieldName, serverInfo, valueRowBuilder);
                 }
             });
 
             builder.addValues(valueRowBuilder.build());
-        }else {
+        } else {
             // Service instances monitor
             discoveryClient.getServices().forEach(serviceInstance -> {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();

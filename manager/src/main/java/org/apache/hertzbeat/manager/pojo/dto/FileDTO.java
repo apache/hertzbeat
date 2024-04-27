@@ -24,9 +24,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 文件存储
  * File storage
- * Created by gcdd1993 on 2023/9/13
  */
 @Data
 @Builder

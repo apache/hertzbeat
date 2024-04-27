@@ -59,8 +59,8 @@ public interface AlertDefineDao extends JpaRepository<AlertDefine, Long>, JpaSpe
      * @param metrics metrics
      * @return Alarm Definition List
      */
-    @Query("select define from AlertDefine define join AlertDefineMonitorBind bind on bind.alertDefineId = define.id " +
-            "where bind.monitorId = :monitorId and define.app = :app and define.metric = :metrics and define.enable = true and define.preset = false")
+    @Query("select define from AlertDefine define join AlertDefineMonitorBind bind on bind.alertDefineId = define.id "
+            + "where bind.monitorId = :monitorId and define.app = :app and define.metric = :metrics and define.enable = true and define.preset = false")
     List<AlertDefine> queryAlertDefinesByMonitor(@Param(value = "monitorId") Long monitorId,
                                                  @Param(value = "app") String app,
                                                  @Param(value = "metrics") String metrics);

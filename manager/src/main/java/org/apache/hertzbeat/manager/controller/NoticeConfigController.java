@@ -47,9 +47,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Message Notification Configuration API
- * 消息通知配置API
  */
-@Tag(name = "Notification Config API | 消息通知配置API")
+@Tag(name = "Notification Config API")
 @RestController()
 @RequestMapping(value = "/api/notice", produces = {APPLICATION_JSON_VALUE})
 public class NoticeConfigController {
@@ -58,23 +57,23 @@ public class NoticeConfigController {
     private NoticeConfigService noticeConfigService;
 
     @PostMapping(path = "/receiver")
-    @Operation(summary = "Add a recipient", description = "新增一个接收人")
+    @Operation(summary = "Add a recipient", description = "Add a recipient")
     public ResponseEntity<Message<Void>> addNewNoticeReceiver(@Valid @RequestBody NoticeReceiver noticeReceiver) {
         noticeConfigService.addReceiver(noticeReceiver);
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping(path = "/receiver")
-    @Operation(summary = "Modify existing recipient information", description = "修改已存在的接收人信息")
+    @Operation(summary = "Modify existing recipient information", description = "Modify existing recipient information")
     public ResponseEntity<Message<Void>> editNoticeReceiver(@Valid @RequestBody NoticeReceiver noticeReceiver) {
         noticeConfigService.editReceiver(noticeReceiver);
         return ResponseEntity.ok(Message.success("Edit success"));
     }
 
     @DeleteMapping(path = "/receiver/{id}")
-    @Operation(summary = "Delete existing recipient information", description = "删除已存在的接收人信息")
+    @Operation(summary = "Delete existing recipient information", description = "Delete existing recipient information")
     public ResponseEntity<Message<Void>> deleteNoticeReceiver(
-            @Parameter(description = "en: Recipient ID,zh: 接收人ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
+            @Parameter(description = "en: Recipient ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
         NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
         if (noticeReceiver == null) {
             return ResponseEntity.ok(Message.success("The relevant information of the recipient could not be found, please check whether the parameters are correct"));
@@ -85,9 +84,9 @@ public class NoticeConfigController {
 
     @GetMapping(path = "/receivers")
     @Operation(summary = "Get a list of message notification recipients based on query filter items",
-            description = "根据查询过滤项获取消息通知接收人列表")
+            description = "Get a list of message notification recipients based on query filter items")
     public ResponseEntity<Message<List<NoticeReceiver>>> getReceivers(
-            @Parameter(description = "en: Recipient name,zh: 接收人名称，模糊查询", example = "tom") @RequestParam(required = false) final String name) {
+            @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name) {
         Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (name != null && !name.isEmpty()) {
@@ -102,25 +101,24 @@ public class NoticeConfigController {
     }
 
     @PostMapping(path = "/rule")
-    @Operation(summary = "Add a notification policy", description = "新增一个通知策略")
+    @Operation(summary = "Add a notification policy", description = "Add a notification policy")
     public ResponseEntity<Message<Void>> addNewNoticeRule(@Valid @RequestBody NoticeRule noticeRule) {
         noticeConfigService.addNoticeRule(noticeRule);
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping(path = "/rule")
-    @Operation(summary = "Modify existing notification policy information", description = "修改已存在的通知策略信息")
+    @Operation(summary = "Modify existing notification policy information", description = "Modify existing notification policy information")
     public ResponseEntity<Message<Void>> editNoticeRule(@Valid @RequestBody NoticeRule noticeRule) {
         noticeConfigService.editNoticeRule(noticeRule);
         return ResponseEntity.ok(Message.success("Edit success"));
     }
 
     @DeleteMapping(path = "/rule/{id}")
-    @Operation(summary = "Delete existing notification policy information", description = "删除已存在的通知策略信息")
+    @Operation(summary = "Delete existing notification policy information", description = "Delete existing notification policy information")
     public ResponseEntity<Message<Void>> deleteNoticeRule(
-            @Parameter(description = "en: Notification Policy ID,zh: 通知策略ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
+            @Parameter(description = "en: Notification Policy ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
         // Returns success if it does not exist or if the deletion is successful
-        // todo 不存在或删除成功都返回成功
         NoticeRule noticeRule = noticeConfigService.getNoticeRulesById(ruleId);
         if (noticeRule == null) {
             return ResponseEntity.ok(Message.success("The specified notification rule could not be queried, please check whether the parameters are correct"));
@@ -131,9 +129,9 @@ public class NoticeConfigController {
 
     @GetMapping(path = "/rules")
     @Operation(summary = "Get a list of message notification policies based on query filter items",
-            description = "根据查询过滤项获取消息通知策略列表")
+            description = "Get a list of message notification policies based on query filter items")
     public ResponseEntity<Message<List<NoticeRule>>> getRules(
-            @Parameter(description = "en: Recipient name,zh: 接收人名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
+            @Parameter(description = "en: Recipient name", example = "rule1") @RequestParam(required = false) final String name) {
         Specification<NoticeRule> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
             if (name != null && !name.isEmpty()) {
@@ -149,25 +147,24 @@ public class NoticeConfigController {
 
 
     @PostMapping(path = "/template")
-    @Operation(summary = "Add a notification template", description = "新增一个通知模板")
+    @Operation(summary = "Add a notification template", description = "Add a notification template")
     public ResponseEntity<Message<Void>> addNewNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
         noticeConfigService.addNoticeTemplate(noticeTemplate);
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
     @PutMapping(path = "/template")
-    @Operation(summary = "Modify existing notification template information", description = "修改已存在的通知模板信息")
+    @Operation(summary = "Modify existing notification template information", description = "Modify existing notification template information")
     public ResponseEntity<Message<Void>> editNoticeTemplate(@Valid @RequestBody NoticeTemplate noticeTemplate) {
         noticeConfigService.editNoticeTemplate(noticeTemplate);
         return ResponseEntity.ok(Message.success("Edit success"));
     }
 
     @DeleteMapping(path = "/template/{id}")
-    @Operation(summary = "Delete existing notification template information", description = "删除已存在的通知模板信息")
+    @Operation(summary = "Delete existing notification template information", description = "Delete existing notification template information")
     public ResponseEntity<Message<Void>> deleteNoticeTemplate(
-            @Parameter(description = "en: Notification template ID,zh: 通知模板ID", example = "6565463543") @PathVariable("id") final Long templateId) {
+            @Parameter(description = "en: Notification template ID", example = "6565463543") @PathVariable("id") final Long templateId) {
         // Returns success if it does not exist or if the deletion is successful
-        // todo 不存在或删除成功都返回成功
         Optional<NoticeTemplate> noticeTemplate = noticeConfigService.getNoticeTemplatesById(templateId);
         if (noticeTemplate.isEmpty()) {
             return ResponseEntity.ok(Message.success("The specified notification template could not be queried, please check whether the parameters are correct"));
@@ -178,9 +175,9 @@ public class NoticeConfigController {
 
     @GetMapping(path = "/templates")
     @Operation(summary = "Get a list of message notification templates based on query filter items",
-            description = "根据查询过滤项获取消息通知模板列表")
+            description = "Get a list of message notification templates based on query filter items")
     public ResponseEntity<Message<List<NoticeTemplate>>> getTemplates(
-            @Parameter(description = "Template name | 模板名称，模糊查询", example = "rule1") @RequestParam(required = false) final String name) {
+            @Parameter(description = "Template name,support fuzzy query", example = "rule1") @RequestParam(required = false) final String name) {
 
         Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
@@ -196,7 +193,7 @@ public class NoticeConfigController {
     }
 
     @PostMapping(path = "/receiver/send-test-msg")
-    @Operation(summary = "Send test msg to receiver", description = "给指定接收人发送测试消息")
+    @Operation(summary = "Send test msg to receiver", description = "Send test msg to receiver")
     public ResponseEntity<Message<Void>> sendTestMsg(@Valid @RequestBody NoticeReceiver noticeReceiver) {
         boolean sendFlag = noticeConfigService.sendTestMsg(noticeReceiver);
         if (sendFlag) {

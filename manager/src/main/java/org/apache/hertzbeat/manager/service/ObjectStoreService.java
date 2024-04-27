@@ -23,29 +23,28 @@ import org.apache.hertzbeat.manager.pojo.dto.FileDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 
 /**
- * 文件存储服务
  * File storage service
  */
 public interface ObjectStoreService {
 
     /**
-     * 保存文件
-     * @param filePath 文件路径，例如：hertzbeat/111.json
-     * @param is       文件流
+     * save file
+     * @param filePath file path，eg：hertzbeat/111.json
+     * @param is       input stream
      */
     boolean upload(String filePath, InputStream is);
 
     /**
-     * 读取文件
-     * @param filePath 文件路径，例如：hertzbeat/111.json
-     * @return 文件
+     * read file
+     * @param filePath file path，eg：hertzbeat/111.json
+     * @return file
      */
     FileDTO download(String filePath);
 
     /**
-     * 列举文件
-     * @param dir 文件目录
-     * @return 文件列表
+     * Enumeration file
+     * @param dir file catalog
+     * @return file list
      */
     List<FileDTO> list(String dir);
 

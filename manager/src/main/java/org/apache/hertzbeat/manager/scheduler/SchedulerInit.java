@@ -93,7 +93,7 @@ public class SchedulerInit implements CommandLineRunner {
                 Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
         for (Monitor monitor : monitors) {
             try {
-                // 构造采集任务Job实体
+                // build collect job entity
                 Job appDefine = appService.getAppDefine(monitor.getApp());
                 if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
                     appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -105,7 +105,7 @@ public class SchedulerInit implements CommandLineRunner {
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream()
-                        .map(param -> new Configmap(param.getField(), param.getValue(),
+                        .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                 param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))

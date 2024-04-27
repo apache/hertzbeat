@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * hertzbeat metrics exporter
  */
-@Tag(name = "Inner Metrics Exporter API | 内部监控指标API")
+@Tag(name = "Inner Metrics Exporter API")
 @RestController
 @RequestMapping(path = "/api/metrics", produces = {APPLICATION_JSON_VALUE})
 public class MetricsController {
@@ -46,8 +46,8 @@ public class MetricsController {
     @Operation(summary = "Get Hertzbeat Metrics Data")
     public ResponseEntity<Message<Map<String, Object>>> getMetricsInfo() {
         Map<String, Object> metricsInfo = new HashMap<>(8);
-        if (commonDataQueue instanceof InMemoryCommonDataQueue) {
-            Map<String, Integer> queueInfo = ((InMemoryCommonDataQueue) commonDataQueue).getQueueSizeMetricsInfo();
+        if (commonDataQueue instanceof InMemoryCommonDataQueue dataQueue) {
+            Map<String, Integer> queueInfo = dataQueue.getQueueSizeMetricsInfo();
             metricsInfo.putAll(queueInfo);
         }
         return ResponseEntity.ok(Message.success(metricsInfo));

@@ -305,7 +305,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     private Map<String, String> parseInfo(String info, Metrics metrics) {
-        // yml配置的指标总和
+        // total of metrics configured in yml
         int fieldTotalSize = metrics.getFields().size();
         String[] lines = info.split(SignConstants.LINE_FEED);
         Map<String, String> result = new HashMap<>(MapCapUtil.calInitMap(fieldTotalSize));
@@ -330,9 +330,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     private void preCheck(Metrics metrics) {
-        if (metrics == null || metrics.getRedis() == null) {
-            throw new IllegalArgumentException("Redis collect must has redis params");
-        }
+    	Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
         RedisProtocol redisProtocol = metrics.getRedis();
         Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
         Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");

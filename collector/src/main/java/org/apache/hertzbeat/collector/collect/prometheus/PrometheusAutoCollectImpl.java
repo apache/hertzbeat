@@ -102,8 +102,10 @@ public class PrometheusAutoCollectImpl {
                 builder.setMsg("StatusCode " + statusCode);
                 return null;
             }
-            // todo 这里直接将InputStream转为了String, 对于prometheus exporter大数据来说, 会生成大对象, 可能会严重影响JVM内存空间
-            // todo 方法一、使用InputStream进行解析, 代码改动大; 方法二、手动触发gc, 可以参考dubbo for long i
+            // todo: The InputStream is directly converted to a String here
+            //       For large data in the Prometheus exporter, this can generate large objects, which could severely impact JVM memory space
+            // todo: Option one: Use InputStream for parsing, but this requires significant code changes
+            //       Option two: Manually trigger garbage collection, which can be referenced from Dubbo for long i
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             long collectTime = System.currentTimeMillis();
             builder.setTime(collectTime);
@@ -223,8 +225,8 @@ public class PrometheusAutoCollectImpl {
             if (StringUtils.hasText(auth.getDigestAuthUsername())
                         && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
-                UsernamePasswordCredentials credentials
-                        = new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
+                UsernamePasswordCredentials credentials =
+                        new UsernamePasswordCredentials(auth.getDigestAuthUsername(), auth.getDigestAuthPassword());
                 provider.setCredentials(AuthScope.ANY, credentials);
                 AuthCache authCache = new BasicAuthCache();
                 authCache.put(new HttpHost(protocol.getHost(), Integer.parseInt(protocol.getPort())), new DigestScheme());

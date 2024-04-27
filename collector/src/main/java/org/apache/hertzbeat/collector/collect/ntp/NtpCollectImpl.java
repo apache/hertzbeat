@@ -74,7 +74,7 @@ public class NtpCollectImpl extends AbstractCollect {
 
             timeInfo.computeDetails();
 
-            // 获取ntp服务器信息
+            // Obtain NTP server information
             Map<String, String> resultMap = getNtpInfo(timeInfo);
             resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
