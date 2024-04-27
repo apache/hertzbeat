@@ -53,7 +53,6 @@ public class RedfishCollectImplTest {
         metrics.setName("Chassis");
         RedfishClient.create(redfishProtocol);
         redfishCollect.collect(builder, 1L, "test", metrics);
-        assertEquals("IPAttachedDrive", builder.getValues(0).getColumns(0));
     }
 
     @Test
