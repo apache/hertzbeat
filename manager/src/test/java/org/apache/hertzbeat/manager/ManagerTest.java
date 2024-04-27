@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.manager;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import javax.annotation.Resource;
 import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -39,7 +37,6 @@ import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatcher;
 import org.apache.hertzbeat.collector.dispatch.unit.impl.DataSizeConvert;
-import org.apache.hertzbeat.common.config.AviatorConfiguration;
 import org.apache.hertzbeat.common.config.CommonConfig;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
@@ -54,6 +51,8 @@ import org.apache.hertzbeat.warehouse.store.RealTimeRedisDataStorage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  *
@@ -91,7 +90,6 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         // test common module
         assertNotNull(ctx.getBean(CommonProperties.class));
         assertNotNull(ctx.getBean(CommonConfig.class));
-        assertNotNull(ctx.getBean(AviatorConfiguration.class));
         assertNotNull(ctx.getBean(InMemoryCommonDataQueue.class));
         // condition on common.sms.tencent.app-id
         assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(TencentSmsClient.class));
