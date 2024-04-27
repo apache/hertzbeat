@@ -3,7 +3,7 @@ id: package-deploy
 title: 通过安装包安装 HertzBeat    
 sidebar_label: 安装包方式部署    
 ---
-> HertzBeat支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。
+> Apache HertzBeat(Incubating) 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。
    
 1. 下载HertzBeat安装包
    下载您系统环境对应的安装包 `hertzbeat-xx.tar.gz` `hertzbeat-collector-xx.tar.gz`
