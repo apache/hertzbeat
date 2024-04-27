@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
@@ -28,7 +29,7 @@ public class RedfishCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        try{
+        try {
             validateParams(metrics);
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
@@ -39,6 +40,7 @@ public class RedfishCollectImpl extends AbstractCollect {
         try {
             connectSession = getRedfishConnectSession(metrics.getRedfish());
         } catch (Exception e) {
+            log.error("Redfish session create error: {}", e.getMessage());
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
             return;
@@ -49,7 +51,7 @@ public class RedfishCollectImpl extends AbstractCollect {
             builder.setMsg("Get redfish resources uri error");
             return;
         }
-        for (String uri : resourcesUri){
+        for (String uri : resourcesUri) {
             String resp = null;
             try {
                 resp = connectSession.getRedfishResource(uri);
@@ -114,14 +116,13 @@ public class RedfishCollectImpl extends AbstractCollect {
         String pattern = "\\{\\w+\\}";
         Pattern r = Pattern.compile(pattern);
         String[] fragment = r.split(schema);
-        List <String> res = new ArrayList<>();
+        List<String> res = new ArrayList<>();
         for (String value : fragment) {
             List<String> temp = new ArrayList<>();
             if (res.isEmpty()) {
                 res.add(value);
             } else {
-                String a = value;
-                res.forEach(s -> s += a);
+                res = res.stream().map(s -> s + value).collect(Collectors.toList());
             }
 
             for (String s : res) {
@@ -144,7 +145,7 @@ public class RedfishCollectImpl extends AbstractCollect {
         return res;
     }
 
-    private List<String> getCollectionResource(String uri, ConnectSession connectSession){
+    private List<String> getCollectionResource(String uri, ConnectSession connectSession) {
         String resp = null;
         try {
             resp = connectSession.getRedfishResource(uri);
@@ -156,7 +157,7 @@ public class RedfishCollectImpl extends AbstractCollect {
     }
 
     private void parseRedfishResource(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics) {
-        if (!StringUtils.hasText(resp)){
+        if (!StringUtils.hasText(resp)) {
             return;
         }
         List<String> aliasFields = metrics.getAliasFields();

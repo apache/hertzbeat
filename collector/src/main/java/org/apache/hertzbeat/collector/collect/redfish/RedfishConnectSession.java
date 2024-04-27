@@ -51,6 +51,9 @@ public class RedfishConnectSession implements ConnectSession {
 
     @Override
     public String getRedfishResource(String uri) throws Exception {
+        if (uri.endsWith("/")) {
+            uri = uri.substring(0, uri.length() - 1);
+        }
         String url = null;
         if (IpDomainUtil.isHasSchema(this.session.host())) {
             url = this.session.host() + ":" + this.session.port() + uri;
@@ -59,7 +62,7 @@ public class RedfishConnectSession implements ConnectSession {
             String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
                     ? String.format("[%s]:%s", this.session.host(), this.session.port() + uri)
                     : String.format("%s:%s", this.session.host(), this.session.port() + uri);
-            url = CollectorConstants.HTTP_HEADER + baseUri;
+            url = CollectorConstants.HTTPS_HEADER + baseUri;
         }
         HttpGet httpGet = new HttpGet(url);
         httpGet.setHeader("X-Auth-Token", session.token());

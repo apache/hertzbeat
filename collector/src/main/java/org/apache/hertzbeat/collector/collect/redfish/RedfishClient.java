@@ -1,6 +1,5 @@
 package org.apache.hertzbeat.collector.collect.redfish;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
@@ -15,11 +14,9 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
 
-
 /**
  * redfish client impl
  */
-@Slf4j
 public class RedfishClient {
     private final String host;
     private final Integer port;
@@ -41,7 +38,7 @@ public class RedfishClient {
                 redfishProtocol.getUsername(), redfishProtocol.getPassword(), Integer.parseInt(redfishProtocol.getTimeout()));
     }
 
-    public RedfishConnectSession connect() throws Exception{
+    public ConnectSession connect() throws Exception {
         HttpHost host = new HttpHost(this.host, this.port);
         HttpClientContext httpClientContext = new HttpClientContext();
         httpClientContext.setTargetHost(host);
@@ -80,7 +77,7 @@ public class RedfishClient {
         HttpUriRequest request = requestBuilder.build();
 
         Session session;
-        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpClientContext)){
+        try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpClientContext)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_CREATED) {
                 throw new Exception("Http Status Code: " + statusCode);
@@ -89,7 +86,6 @@ public class RedfishClient {
             String auth = response.getFirstHeader("X-Auth-Token").getValue();
             session = new Session(auth, location, this.host, this.port);
         } catch (Exception e) {
-            log.error("Redfish session create error: {}", e.getMessage());
             throw new Exception("Redfish session create error: " + e.getMessage());
         } finally {
             request.abort();
