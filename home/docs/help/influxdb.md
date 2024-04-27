@@ -1,7 +1,7 @@
 ---
-id: influxdb  
-title: Monitoring: InfluxDB Database Monitoring      
-sidebar_label: InfluxDB Database   
+id: influxdb
+title: Monitoring InfluxDB Database
+sidebar_label: InfluxDB Database
 keywords: [open source monitoring system, open source database monitoring, InfluxDB database monitoring]
 ---
 
