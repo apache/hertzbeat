@@ -219,7 +219,8 @@
             "help/hive",
             "help/airflow",
             "help/clickhouse",
-            "help/elasticsearch"
+            "help/elasticsearch",
+            "help/influxdb"
           ]
         },
         {
