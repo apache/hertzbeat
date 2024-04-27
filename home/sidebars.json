@@ -23,6 +23,7 @@
         "start/influxdb-init",
         "start/mysql-change",
         "start/postgresql-change",
+        "start/account-modify",
         "start/custom-config",
         "start/ssl-cert-practice"
       ]
@@ -70,6 +71,13 @@
           "label": "snmp",
           "items": [
             "advanced/extend-snmp"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "push",
+          "items": [
+            "advanced/extend-push"
           ]
         }
       ]
@@ -193,6 +201,7 @@
             "help/shenyu",
             "help/rabbitmq",
             "help/activemq",
+            "help/rocketmq",
             "help/spring_gateway",
             "help/nacos"
           ]
@@ -211,7 +220,8 @@
             "help/hive",
             "help/airflow",
             "help/clickhouse",
-            "help/elasticsearch"
+            "help/elasticsearch",
+            "help/influxdb"
           ]
         },
         {
