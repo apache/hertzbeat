@@ -4,7 +4,7 @@ title: 通过 Docker 方式安装 HertzBeat
 sidebar_label: Docker方式部署    
 ---
 
-> 推荐使用Docker部署HertzBeat  
+> 推荐使用 Docker 部署 Apache HertzBeat(Incubating)  
 
 1. 下载安装Docker环境   
    Docker 工具自身的下载请参考以下资料：  
