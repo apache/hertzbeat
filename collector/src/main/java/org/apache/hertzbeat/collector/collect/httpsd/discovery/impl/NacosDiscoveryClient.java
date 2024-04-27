@@ -23,15 +23,14 @@ import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.google.common.collect.Lists;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.ConnectConfig;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServerInfo;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServiceInstance;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * DiscoveryClient impl of Nacos
@@ -54,7 +53,7 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         try {
             localConnectConfig = connectConfig;
             namingService = NamingFactory.createNamingService(connectConfig.getHost() + ":" + connectConfig.getPort());
-        }catch (NacosException exception) {
+        } catch (NacosException exception) {
             throw new RuntimeException("Failed to init namingService");
         }
     }
@@ -107,7 +106,7 @@ public class NacosDiscoveryClient implements DiscoveryClient {
 
         try {
             namingService.shutDown();
-        }catch (NacosException ignore) {
+        } catch (NacosException ignore) {
         }
     }
 }

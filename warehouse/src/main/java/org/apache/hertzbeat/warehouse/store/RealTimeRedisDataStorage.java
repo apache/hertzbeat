@@ -17,24 +17,23 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.annotation.Primary;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Component;
-
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.warehouse.config.store.redis.RedisProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Primary;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Component;
 
 /**
  * redis storage collects real-time data
@@ -50,13 +49,13 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
     private final Integer db;
     private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
 
-    public RealTimeRedisDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = initRedisClient(properties);
-        this.db = getRedisSelectDb(properties);
+    public RealTimeRedisDataStorage(RedisProperties redisProperties) {
+        this.serverAvailable = initRedisClient(redisProperties);
+        this.db = getRedisSelectDb(redisProperties);
     }
 
-    private Integer getRedisSelectDb(WarehouseProperties properties){
-        return properties.getStore().getRedis().getDb();
+    private Integer getRedisSelectDb(RedisProperties redisProperties){
+        return redisProperties.db();
     }
 
     @Override
@@ -96,18 +95,18 @@ public class RealTimeRedisDataStorage extends AbstractRealTimeDataStorage {
         });
     }
 
-    private boolean initRedisClient(WarehouseProperties properties) {
-        if (properties == null || properties.getStore() == null || properties.getStore().getRedis() == null) {
+    private boolean initRedisClient(RedisProperties redisProperties) {
+        if (redisProperties == null) {
             log.error("init error, please config Warehouse redis props in application.yml");
             return false;
         }
-        WarehouseProperties.StoreProperties.RedisProperties redisProp = properties.getStore().getRedis();
+        RedisProperties redisProp = redisProperties;
         RedisURI.Builder uriBuilder = RedisURI.builder()
-                .withHost(redisProp.getHost())
-                .withPort(redisProp.getPort())
+                .withHost(redisProp.host())
+                .withPort(redisProp.port())
                 .withTimeout(Duration.of(10, ChronoUnit.SECONDS));
-        if (redisProp.getPassword() != null && !"".equals(redisProp.getPassword())) {
-            uriBuilder.withPassword(redisProp.getPassword().toCharArray());
+        if (redisProp.password() != null && !"".equals(redisProp.password())) {
+            uriBuilder.withPassword(redisProp.password().toCharArray());
         }
         try {
             redisClient = RedisClient.create(uriBuilder.build());

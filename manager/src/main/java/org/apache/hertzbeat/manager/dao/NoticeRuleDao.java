@@ -17,20 +17,17 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.util.List;
-
 /**
- * NoticeRule数据库操作
  * NoticeRule database operations
  */
 public interface NoticeRuleDao extends JpaRepository<NoticeRule, Long>, JpaSpecificationExecutor<NoticeRule> {
 
     /**
-     * 查询所有已启用的通知策略
      * Query all enabled notification policies
      * @return notification policies
      */

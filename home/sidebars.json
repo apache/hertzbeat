@@ -125,6 +125,7 @@
       "label": "help",
       "items": [
         "help/guide",
+        "help/prometheus",
         {
           "type": "category",
           "label": "service",
@@ -133,20 +134,25 @@
             "help/api",
             "help/ping",
             "help/port",
+            "help/udp_port",
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
             "help/pop3",
             "help/smtp",
-            "help/ntp"
+            "help/ntp",
+            "help/dns",
+            "help/ftp"
           ]
         },
         {
           "type": "category",
           "label": "program",
           "items": [
+            "help/process",
             "help/jvm",
             "help/springboot2",
+            "help/springboot3",
             "help/dynamic_tp"
           ]
         },
@@ -161,7 +167,10 @@
             "help/oracle",
             "help/dm",
             "help/opengauss",
-            "help/nebulaGraph"
+            "help/nebulaGraph",
+            "help/tidb",
+            "help/mongodb"
+
           ]
         },
         {
@@ -179,6 +188,7 @@
             "help/linux",
             "help/windows",
             "help/ubuntu",
+            "help/debian",
             "help/centos"
           ]
         },
@@ -190,7 +200,8 @@
             "help/shenyu",
             "help/rabbitmq",
             "help/activemq",
-            "help/spring_gateway"
+            "help/spring_gateway",
+            "help/nacos"
           ]
         },
         {
@@ -201,9 +212,13 @@
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
+            "help/hbase_master",
+            "help/hbase_regionserver",
             "help/iotdb",
             "help/hive",
             "help/airflow",
+            "help/clickhouse",
+            "help/elasticsearch",
             "help/influxdb"
           ]
         },
@@ -248,6 +263,13 @@
             "help/alert_smn"
           ]
         },
+        {
+          "type": "category",
+          "label": "Network",
+          "items": [
+            "help/huawei_switch"
+          ]
+        },
         "help/issue"
       ]
     },
@@ -255,10 +277,10 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/developer",
         "others/contributing",
         "others/resource"
       ]
     }
   ]
 }
+

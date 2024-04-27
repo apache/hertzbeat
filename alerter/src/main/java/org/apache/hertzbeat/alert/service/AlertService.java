@@ -17,15 +17,14 @@
 
 package org.apache.hertzbeat.alert.service;
 
+import java.util.HashSet;
+import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.dto.AlertReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * Alarm information management interface
@@ -49,7 +48,6 @@ public interface AlertService {
 
     /**
      * Delete alarms in batches according to the alarm ID list
-     * 根据告警ID列表批量删除告警
      * @param ids Alarm ID List 
      */
     void deleteAlerts(HashSet<Long> ids);
@@ -61,7 +59,6 @@ public interface AlertService {
 
     /**
      * Update the alarm status according to the alarm ID-status value
-     * 根据告警ID-状态值 更新告警状态
      * @param status Alarm status to be modified  
      * @param ids    Alarm ID List to be modified   
      */

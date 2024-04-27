@@ -17,14 +17,13 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 /**
  * Monitoring Type Management Interface
@@ -33,9 +32,8 @@ public interface AppService {
 
     /**
      * Query the defined parameter structure based on the monitoring type
-     * 根据监控类型查询定义的参数结构
-     * @param app Monitoring type   监控类型
-     * @return list of parameter structures     参数结构列表
+     * @param app Monitoring type
+     * @return list of parameter structures
      */
     List<ParamDefine> getAppParamDefines(String app);
 
@@ -51,12 +49,10 @@ public interface AppService {
 
     /**
      * Get monitor structure definition based on monitor type name
-     * 根据监控类型名称获取监控结构定义
      *
-     * @param app Monitoring type name  监控类型名称
-     * @return Monitoring Structure Definition  监控结构定义
+     * @param app Monitoring type name
+     * @return Monitoring Structure Definition
      * @throws IllegalArgumentException Thrown when there is no monitoring type with the corresponding name that is not supported
-     *                                  当不存在即不支持对应名称的监控类型时抛出
      */
     Job getAppDefine(String app) throws IllegalArgumentException;
 
@@ -68,27 +64,25 @@ public interface AppService {
     Optional<Job> getAppDefineOption(String app);
 
     /**
-     * 获取app定义的指标
+     * Get the defined metrics of the app
      *
-     * @param app 监控类型
-     * @return 指标
+     * @param app monitoring type
+     * @return target
      */
     List<String> getAppDefineMetricNames(String app);
 
 
     /**
      * Get defined monitoring I 18 N resources
-     * 获取定义的监控I18N资源
      *
-     * @param lang Language type    语言类型
-     * @return I18N Resources     I18N资源
+     * @param lang Language type
+     * @return I18N Resources
      */
     Map<String, String> getI18nResources(String lang);
 
     /**
      * Query all types of monitoring hierarchy
-     * 查询所有监控的层级资源
-     * 
+     *
      * @param lang language     
      * @return hierarchy information 
      */

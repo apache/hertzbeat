@@ -19,6 +19,10 @@ package org.apache.hertzbeat.collector.dispatch.timer;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.dispatch.MetricsTaskDispatch;
@@ -29,11 +33,6 @@ import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.common.util.AesUtil;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Timer Task implementation
@@ -67,8 +66,8 @@ public class WheelTimerTask implements TimerTask {
                             log.error("Aes Decode value {} error.", item.getValue());
                         }
                         item.setValue(decodeValue);
-                    } else if (item.getValue() != null && item.getValue() instanceof String) {
-                        item.setValue(((String) item.getValue()).trim());
+                    } else if (item.getValue() != null && item.getValue() instanceof String value) {
+                        item.setValue(value.trim());
                     }
                 })
                 .collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));

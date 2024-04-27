@@ -17,7 +17,22 @@
 
 package org.apache.hertzbeat.common.entity.alerter;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,21 +40,12 @@ import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonByteListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Alert Converge strategy entity
@@ -63,7 +69,7 @@ public class AlertConverge {
 
     @Schema(title = "Policy name", description = "Policy name",
             example = "converge-1", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String name;
 
@@ -75,10 +81,10 @@ public class AlertConverge {
             example = "true", accessMode = READ_WRITE)
     private boolean matchAll = true;
 
-    @Schema(title = "Alarm Level " +
-            "0:High-Emergency-Critical Alarm " +
-            "1:Medium-Critical-Critical Alarm " +
-            "2:Low-Warning-Warning",
+    @Schema(title = "Alarm Level "
+            + "0:High-Emergency-Critical Alarm "
+            + "1:Medium-Critical-Critical Alarm "
+            + "2:Low-Warning-Warning",
             example = "[1]", accessMode = READ_WRITE)
     @Convert(converter = JsonByteListAttributeConverter.class)
     private List<Byte> priorities;

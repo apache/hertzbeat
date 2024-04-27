@@ -488,5 +488,17 @@
   "theme.tags.tagsPageTitle": {
     "message": "Tags",
     "description": "The title of the tag list page"
+  },
+  "team.name": {
+    "message": "Apache HertzBeat(Incubating) Team"
+  },
+  "team.desc": {
+    "message": "The HertzBeat team is composed of contributors from various fields around the world. We embrace the community philosophy of openness and collaboration, welcoming👏 more people to join us and grow together with the community."
+  },
+  "team.tip": {
+    "message": "(In no particular order)"
+  },
+  "team.thanks": {
+    "message": "Thanks to these wonderful people, who already contributed to HertzBeat!"
   }
 }

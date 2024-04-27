@@ -17,33 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.nginx;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.IpDomainUtil;
-
+import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -53,8 +27,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 
-import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 
 /**
  * nginx collect
@@ -62,30 +61,30 @@ import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 @Slf4j
 public class NginxCollectImpl extends AbstractCollect {
 
-    private final static int SUCCESS_CODE = 200;
-    private final static String NGINX_STATUS_NAME = "nginx_status";
-    private final static String REQ_STATUS_NAME = "req_status";
-    private final static String AVAILABLE = "available";
-    private final static String CONNECTIONS = "connections";
-    private final static String ACTIVE = "active";
-    private final static String GET = "get";
-    private final static String FIELD_SPLIT = "_";
-    private final static String REGEX_KEYS = "server\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)";
-    private final static String REGEX_VALUES = "(\\d+) (\\d+) (\\d+)";
-    private final static String REGEX_SERVER = "(\\w+): (\\d+)";
-    private final static String REGEX_SPLIT = "\\r?\\n";
-    private final static String REGEX_LINE_SPLIT = "\\s+";
+    private static final int SUCCESS_CODE = 200;
+    private static final String NGINX_STATUS_NAME = "nginx_status";
+    private static final String REQ_STATUS_NAME = "req_status";
+    private static final String AVAILABLE = "available";
+    private static final String CONNECTIONS = "connections";
+    private static final String ACTIVE = "active";
+    private static final String GET = "get";
+    private static final String FIELD_SPLIT = "_";
+    private static final String REGEX_KEYS = "server\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)";
+    private static final String REGEX_VALUES = "(\\d+) (\\d+) (\\d+)";
+    private static final String REGEX_SERVER = "(\\w+): (\\d+)";
+    private static final String REGEX_SPLIT = "\\r?\\n";
+    private static final String REGEX_LINE_SPLIT = "\\s+";
 
 
     public NginxCollectImpl() {
-
+        
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
-        // 校验参数
+        // validate parameters
         try {
             validateParams(metrics);
         } catch (Exception e) {
@@ -97,7 +96,7 @@ public class NginxCollectImpl extends AbstractCollect {
         HttpContext httpContext = createHttpContext(metrics.getNginx());
         HttpUriRequest request = createHttpRequest(metrics.getNginx());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)){
-            // 发起http请求，获取响应数据
+            // send an HTTP request and get the response data
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
@@ -107,8 +106,8 @@ public class NginxCollectImpl extends AbstractCollect {
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
 
             Long responseTime = System.currentTimeMillis() - startTime;
-            // 根据metrics name选择调用不同解析方法
-            if (NGINX_STATUS_NAME.equals(metrics.getName()) || AVAILABLE.equals(metrics.getName())) {
+            // call different parsing methods based on the metrics name
+            if (StringUtils.equalsAny(metrics.getName(), NGINX_STATUS_NAME, AVAILABLE)) {
                 parseNginxStatusResponse(builder, resp, metrics, responseTime);
             } else if (REQ_STATUS_NAME.equals(metrics.getName())) {
                 parseReqStatusResponse(builder, resp, metrics, responseTime);
@@ -133,15 +132,15 @@ public class NginxCollectImpl extends AbstractCollect {
 
     private void validateParams(Metrics metrics) throws Exception {
         final NginxProtocol nginxProtocol;
-
+        
         if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
             throw new Exception("Nginx collect must has nginx params");
         }
         
-        if (nginxProtocol.getUrl() == null
-                || "".equals(nginxProtocol.getUrl())
-                || !nginxProtocol.getUrl().startsWith(RIGHT_DASH)) {
-            nginxProtocol.setUrl(nginxProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + nginxProtocol.getUrl().trim());
+        String url = nginxProtocol.getUrl();
+        
+        if (StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
+            nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
     }
 
@@ -154,22 +153,22 @@ public class NginxCollectImpl extends AbstractCollect {
 
     private HttpUriRequest createHttpRequest(NginxProtocol nginxProtocol) {
         RequestBuilder requestBuilder = RequestBuilder.get();
-        // uri
-        String uri = CollectUtil.replaceUriSpecialChar(nginxProtocol.getUrl());
-        if (IpDomainUtil.isHasSchema(nginxProtocol.getHost())) {
-            requestBuilder.setUri(nginxProtocol.getHost() + ":" + nginxProtocol.getPort() + uri);
+        String portWithUri = nginxProtocol.getPort() + CollectUtil.replaceUriSpecialChar(nginxProtocol.getUrl());
+        String host = nginxProtocol.getHost();
+        
+        if (IpDomainUtil.isHasSchema(host)) {
+            requestBuilder.setUri(host + ":" + portWithUri);
         } else {
-            String ipAddressType = IpDomainUtil.checkIpAddressType(nginxProtocol.getHost());
+            String ipAddressType = IpDomainUtil.checkIpAddressType(host);
             String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
-                    ? String.format("[%s]:%s", nginxProtocol.getHost(), nginxProtocol.getPort() + uri)
-                    : String.format("%s:%s", nginxProtocol.getHost(), nginxProtocol.getPort() + uri);
+                    ? String.format("[%s]:%s", host, portWithUri)
+                    : String.format("%s:%s", host, portWithUri);
 
             requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
         }
 
         requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
         requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
-
         requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/plain");
 
         int timeout = Integer.parseInt(nginxProtocol.getTimeout());
@@ -185,7 +184,7 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 解析nginx自带ngx_http_stub_status_module模块暴露信息
+     * analyze the information exposed by nginx's built-in ngx_http_stub_status_module
      *
      * @param builder builder
      * @param resp resp
@@ -201,7 +200,7 @@ public class NginxCollectImpl extends AbstractCollect {
         //Reading: 0 Writing: 1 Waiting: 1
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, Object> metricMap = regexNginxStatusMatch(resp, metrics.getAliasFields().size());
-        // 返回数据
+        // Returned data
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
             Object value = metricMap.get(alias);
@@ -219,7 +218,7 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 解析ngx_http_reqstat_module模块暴露信息
+     * Analyze the information exposed by the ngx_http_reqstat_module module
      *
      * @param builder builder
      * @param resp resp
@@ -229,29 +228,29 @@ public class NginxCollectImpl extends AbstractCollect {
     private void parseReqStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
                                         Long responseTime) {
         //example
-        //zone_name       key     max_active      max_bw  traffic requests        active  bandwidth
-        //imgstore_appid  43    27      6M      63G     374063  0        0
-        //imgstore_appid  53    329     87M     2058G   7870529 50      25M
-        //server_addr     10.128.1.17     2        8968   24M     1849    0        0
-        //server_addr     127.0.0.1       1       6M      5G      912     1        0
-        //server_addr     180.96.x.1   3358    934M    27550G  141277391       891     356M
-        //server_addr     180.96.x.2   78      45M     220G    400704  0        0
-        //server_addr     180.96.x.3   242     58M     646G    2990547 42      7M
-        //server_name     d.123.sogou.com 478     115M    2850G   30218726        115     39M
-        //server_name     dl.pinyin.sogou.com     913     312M    8930G   35345453        225     97M
-        //server_name     download.ie.sogou.com   964     275M    7462G   7979817 297     135M
-        List<ReqSatusResponse> reqSatusResponses = regexReqStatusMatch(resp);
+        //zone_name       key                    max_active      max_bw  traffic   requests   active  bandwidth
+        //imgstore_appid  43                     27              6M      63G       374063     0       0
+        //imgstore_appid  53                     329             87M     2058G     7870529    50      25M
+        //server_addr     10.128.1.17            2               8968    24M       1849       0       0
+        //server_addr     127.0.0.1              1               6M      5G        912        1       0
+        //server_addr     180.96.x.1             3358            934M    27550G    141277391  891     356M
+        //server_addr     180.96.x.2             78              45M     220G      400704     0       0
+        //server_addr     180.96.x.3             242             58M     646G      2990547    42      7M
+        //server_name     d.123.sogou.com 478    115M            2850G   30218726             115     39M
+        //server_name     dl.pinyin.sogou.com    913             312M    8930G     35345453   225     97M
+        //server_name     download.ie.sogou.com  964             275M    7462G     7979817    297     135M
+        List<ReqStatusResponse> reqStatusResponses = regexReqStatusMatch(resp);
         List<String> aliasFields = metrics.getAliasFields();
 
-        for (ReqSatusResponse reqSatusResponse : reqSatusResponses) {
+        for (ReqStatusResponse reqStatusResponse : reqStatusResponses) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equals(alias)) {
                     valueRowBuilder.addColumns(String.valueOf(responseTime));
                 } else {
                     try {
-                        String methodName = reqSatusResponse.getFieldMethodName(alias);
-                        Object value = reflect(reqSatusResponse, methodName);
+                        String methodName = reqStatusResponse.getFieldMethodName(alias);
+                        Object value = reflect(reqStatusResponse, methodName);
                         value = value == null ? CommonConstants.NULL_VALUE : value;
                         valueRowBuilder.addColumns(String.valueOf(value));
                     } catch (Exception e) {
@@ -266,15 +265,15 @@ public class NginxCollectImpl extends AbstractCollect {
         }
     }
 
-    private Object reflect(ReqSatusResponse reqSatusResponse, String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Class<?> clazz = reqSatusResponse.getClass();
+    private Object reflect(ReqStatusResponse reqStatusResponse, String methodName) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Class<?> clazz = reqStatusResponse.getClass();
         Method method = clazz.getMethod(methodName);
-        return method.invoke(reqSatusResponse);
+        return method.invoke(reqStatusResponse);
     }
 
     private Map<String, Object> regexNginxStatusMatch(String resp, Integer aliasFieldsSize) {
         Map<String, Object> metricsMap = new HashMap<>(aliasFieldsSize);
-        // 正则提取监控信息
+        // Extract monitoring information using regular expressions
         Pattern pattern = Pattern.compile(REGEX_SERVER);
         Matcher matcher = pattern.matcher(resp);
         while (matcher.find()) {
@@ -294,13 +293,13 @@ public class NginxCollectImpl extends AbstractCollect {
         return metricsMap;
     }
 
-    private List<ReqSatusResponse> regexReqStatusMatch(String resp) {
-        List<ReqSatusResponse> reqSatusResponses = new ArrayList<>();
+    private List<ReqStatusResponse> regexReqStatusMatch(String resp) {
+        List<ReqStatusResponse> reqStatusResponses = new ArrayList<>();
 
         String[] lines = resp.split(REGEX_SPLIT);
         for (int i = 1; i < lines.length; i++) {
             String[] values = lines[i].split(REGEX_LINE_SPLIT);
-            ReqSatusResponse reqSatusResponse = ReqSatusResponse.builder()
+            ReqStatusResponse reqStatusResponse = ReqStatusResponse.builder()
                     .zoneName(values[0])
                     .key(values[1])
                     .maxActive(values[2])
@@ -310,16 +309,16 @@ public class NginxCollectImpl extends AbstractCollect {
                     .active(values[6])
                     .bandwidth(values[7])
                     .build();
-            reqSatusResponses.add(reqSatusResponse);
+            reqStatusResponses.add(reqStatusResponse);
         }
-        return reqSatusResponses;
+        return reqStatusResponses;
     }
 
     @Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    static class ReqSatusResponse {
+    static class ReqStatusResponse {
         private String zoneName; // zone_name
 
         private String maxActive; // max_active

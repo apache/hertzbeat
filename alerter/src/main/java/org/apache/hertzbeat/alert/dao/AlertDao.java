@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.dao;
 
+import java.util.List;
+import java.util.Set;
 import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,9 +26,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Alert Database Operations
@@ -50,7 +49,6 @@ public interface AlertDao extends JpaRepository<Alert, Long>, JpaSpecificationEx
 
     /**
      * Query the number of unhandled alarms of each alarm severity
-     * 查询各个告警级别的未处理告警数量
      * @return List of alerts num 
      */
     @Query("select new org.apache.hertzbeat.alert.dto.AlertPriorityNum(mo.priority, count(mo.id)) from Alert mo where mo.status = 0 group by mo.priority")

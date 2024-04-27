@@ -71,6 +71,14 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>*.jar</include>
             </includes>
         </fileSet>
-        
+
+        <!-- external lib -->
+        <fileSet>
+            <directory>../script/ext-lib</directory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+            <outputDirectory>ext-lib</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>

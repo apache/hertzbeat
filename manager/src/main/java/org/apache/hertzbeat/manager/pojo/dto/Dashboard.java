@@ -18,14 +18,12 @@
 package org.apache.hertzbeat.manager.pojo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
- * 大屏仪表盘统计信息
  * Large screen dashboard statistics
  */
 @Data

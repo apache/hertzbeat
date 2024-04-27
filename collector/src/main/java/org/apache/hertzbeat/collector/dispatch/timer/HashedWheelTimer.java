@@ -18,10 +18,6 @@
 package org.apache.hertzbeat.collector.dispatch.timer;
 
 
-import org.apache.hertzbeat.common.util.NetworkUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Queue;
@@ -36,6 +32,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
+import org.apache.hertzbeat.common.util.NetworkUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link Timer} optimized for approximated I/O timeout scheduling.
@@ -249,8 +248,8 @@ public class HashedWheelTimer implements Timer {
 
         this.maxPendingTimeouts = maxPendingTimeouts;
 
-        if (INSTANCE_COUNTER.incrementAndGet() > INSTANCE_COUNT_LIMIT &&
-                WARNED_TOO_MANY_INSTANCES.compareAndSet(false, true)) {
+        if (INSTANCE_COUNTER.incrementAndGet() > INSTANCE_COUNT_LIMIT
+                && WARNED_TOO_MANY_INSTANCES.compareAndSet(false, true)) {
             reportTooManyInstances();
         }
     }
@@ -332,9 +331,9 @@ public class HashedWheelTimer implements Timer {
     public Set<Timeout> stop() {
         if (Thread.currentThread() == workerThread) {
             throw new IllegalStateException(
-                    HashedWheelTimer.class.getSimpleName() +
-                            ".stop() cannot be called from " +
-                            TimerTask.class.getSimpleName());
+                    HashedWheelTimer.class.getSimpleName()
+                            + ".stop() cannot be called from "
+                            + TimerTask.class.getSimpleName());
         }
 
         if (!WORKER_STATE_UPDATER.compareAndSet(this, WORKER_STATE_STARTED, WORKER_STATE_SHUTDOWN)) {
@@ -412,9 +411,9 @@ public class HashedWheelTimer implements Timer {
     }
 
     private static void reportTooManyInstances() {
-        logger.error("You are creating too many HashedWheelTimer instances. " +
-                "HashedWheelTimer is a shared resource that must be reused across the JVM," +
-                "so that only a few instances are created.");
+        logger.error("You are creating too many HashedWheelTimer instances. "
+                + "HashedWheelTimer is a shared resource that must be reused across the JVM,"
+                + "so that only a few instances are created.");
     }
 
     private final class Worker implements Runnable {

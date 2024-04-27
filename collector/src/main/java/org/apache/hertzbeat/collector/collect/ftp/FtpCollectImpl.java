@@ -17,21 +17,20 @@
 
 package org.apache.hertzbeat.collector.collect.ftp;
 
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.ftp.FTPClient;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * ftp protocol collection implementation
@@ -42,12 +41,11 @@ public class FtpCollectImpl extends AbstractCollect {
     private static final String ANONYMOUS = "anonymous";
     private static final String PASSWORD = "password";
 
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         FTPClient ftpClient = new FTPClient();
         FtpProtocol ftpProtocol = metrics.getFtp();
-        // Set timeout
-        ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
         // Judge whether the basic information is wrong
         try {
             preCheck(metrics);
@@ -57,6 +55,9 @@ public class FtpCollectImpl extends AbstractCollect {
             builder.setMsg(e.getMessage());
             return;
         }
+        // Set timeout
+        ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
+
         // Collect data to load in CollectRep.ValueRow.Builder's object
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         Map<String, String> valueMap;
@@ -151,6 +152,7 @@ public class FtpCollectImpl extends AbstractCollect {
         Assert.hasText(ftpProtocol.getHost(), "Ftp Protocol host is required.");
         Assert.hasText(ftpProtocol.getPort(), "Ftp Protocol port is required.");
         Assert.hasText(ftpProtocol.getDirection(), "Ftp Protocol direction is required.");
+        Assert.hasText(ftpProtocol.getTimeout(), "Ftp Protocol timeout is required.");
     }
 
     @Override

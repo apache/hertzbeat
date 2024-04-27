@@ -18,6 +18,21 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import jakarta.persistence.criteria.Predicate;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.time.temporal.TemporalAmount;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -27,24 +42,12 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.warehouse.History;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.jpa.JpaProperties;
 import org.apache.hertzbeat.warehouse.dao.HistoryDao;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
-
-import jakarta.persistence.criteria.Predicate;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.time.temporal.TemporalAmount;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * data storage by mysql/h2 - jpa
@@ -55,13 +58,13 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private final HistoryDao historyDao;
-    private final WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
+    private final JpaProperties jpaProperties;
 
     private static final int STRING_MAX_LENGTH = 1024;
 
-    public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
+    public HistoryJpaDatabaseDataStorage(JpaProperties jpaProperties,
                                          HistoryDao historyDao) {
-        this.jpaProperties = properties.getStore().getJpa();
+        this.jpaProperties = jpaProperties;
         this.serverAvailable = true;
         this.historyDao = historyDao;
         expiredDataCleaner();
@@ -78,9 +81,9 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 .build();
         ScheduledExecutorService scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
         scheduledExecutor.scheduleAtFixedRate(() -> {
-            log.warn("[jpa-metrics-store]-start running expired data cleaner." +
-                    "Please use time series db instead of jpa for better performance");
-            String expireTimeStr = jpaProperties.getExpireTime();
+            log.warn("[jpa-metrics-store]-start running expired data cleaner."
+                    + "Please use time series db instead of jpa for better performance");
+            String expireTimeStr = jpaProperties.expireTime();
             long expireTime = 0;
             try {
                 if (NumberUtils.isParsable(expireTimeStr)) {
@@ -100,8 +103,8 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 int rows = historyDao.deleteHistoriesByTimeBefore(expireTime);
                 log.info("[jpa-metrics-store]-delete {} rows.", rows);
                 long total = historyDao.count();
-                if (total > jpaProperties.getMaxHistoryRecordNum()) {
-                    rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.getMaxHistoryRecordNum() / 2);
+                if (total > jpaProperties.maxHistoryRecordNum()) {
+                    rows = historyDao.deleteOlderHistoriesRecord(jpaProperties.maxHistoryRecordNum() / 2);
                     log.warn("[jpa-metrics-store]-force delete {} rows due too many. Please use time series db instead of jpa for better performance.", rows);
                 }
             } catch (Exception e) {
@@ -125,15 +128,16 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         String metrics = metricsData.getMetrics();
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         try {
-            List<History> historyList = new LinkedList<>();
-            History.HistoryBuilder historyBuilder = History.builder()
-                    .monitorId(metricsData.getId())
-                    .app(monitorType)
-                    .metrics(metrics)
-                    .time(metricsData.getTime());
+            List<History> allHistoryList = new LinkedList<>();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                List<History> singleHistoryList = new LinkedList<>();
                 Map<String, String> labels = new HashMap<>(8);
                 for (int i = 0; i < fieldsList.size(); i++) {
+                    History.HistoryBuilder historyBuilder = History.builder()
+                            .monitorId(metricsData.getId())
+                            .app(monitorType)
+                            .metrics(metrics)
+                            .time(metricsData.getTime());
                     final CollectRep.Field field = fieldsList.get(i);
                     final int fieldType = field.getType();
                     final String fieldName = field.getName();
@@ -143,50 +147,36 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 
                     if (CommonConstants.NULL_VALUE.equals(columnValue)) {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER: {
+                            case CommonConstants.TYPE_NUMBER -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                         .dou(null);
-                                break;
                             }
-
-                            case CommonConstants.TYPE_STRING: {
+                            case CommonConstants.TYPE_STRING -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_STRING)
                                         .str(null);
-                                break;
                             }
-
-                            case CommonConstants.TYPE_TIME: {
+                            case CommonConstants.TYPE_TIME -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_TIME)
                                         .int32(null);
-                                break;
                             }
-                            default:
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
-                                break;
+                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
                         }
                     } else {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER: {
+                            case CommonConstants.TYPE_NUMBER -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                         .dou(Double.parseDouble(columnValue));
-                                break;
                             }
-
-                            case CommonConstants.TYPE_STRING: {
+                            case CommonConstants.TYPE_STRING -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_STRING)
                                         .str(formatStrValue(columnValue));
-                                break;
                             }
-
-                            case CommonConstants.TYPE_TIME: {
+                            case CommonConstants.TYPE_TIME -> {
                                 historyBuilder.metricType(CommonConstants.TYPE_TIME)
                                         .int32(Integer.parseInt(columnValue));
-                                break;
                             }
-                            default:
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                        .dou(Double.parseDouble(columnValue));
-                                break;
+                            default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                                    .dou(Double.parseDouble(columnValue));
                         }
 
                         if (field.getLabel()) {
@@ -194,11 +184,12 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                         }
                     }
 
-                    historyList.add(historyBuilder.build());
+                    singleHistoryList.add(historyBuilder.build());
                 }
-                historyBuilder.instance(JsonUtil.toJson(labels));
+                singleHistoryList.forEach(history -> history.setInstance(JsonUtil.toJson(labels)));
+                allHistoryList.addAll(singleHistoryList);
             }
-            historyDao.saveAll(historyList);
+            historyDao.saveAll(allHistoryList);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

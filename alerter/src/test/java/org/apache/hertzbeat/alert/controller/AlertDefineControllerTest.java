@@ -43,8 +43,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Test case for {@link AlertDefineController}
- *
- *
  */
 @ExtendWith(MockitoExtension.class)
 class AlertDefineControllerTest {

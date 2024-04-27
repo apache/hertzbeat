@@ -17,17 +17,17 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.URI;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 /**
  * Send alarm information through WeChat
@@ -65,7 +65,7 @@ final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
         if (jsonObject.has(ACCESS_TOKEN)) {
             accessToken = jsonObject.get(ACCESS_TOKEN).getAsString();
         } else {
-            // todo 处理错误情况，例如记录日志或抛出异常
+            // todo Handle error conditions, such as logging or throwing exceptions
             log.error("Failed to obtain ACCESS_TOKEN from response: {}", response.body());
         }
 
@@ -73,22 +73,22 @@ final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
     }
 
     private String constructMessageContent(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
-        // 示例：构造一个文本消息内容
+        // example: construct a text message content
         JsonObject messageContent = new JsonObject();
         messageContent.addProperty("msgtype", "text");
         JsonObject textContent = new JsonObject();
 
-        // 这里可以根据NoticeTemplate和Alert信息构造消息内容
+        // Here you can construct the message content based on the NoticeTemplate and Alert information
         String alertMessage = String.format("警告：%s\n详情：%s", alert.getAlertDefineId(), alert.getContent());
         textContent.addProperty("content", alertMessage);
         messageContent.add("text", textContent);
 
-        // 如果需要@某人，可以在这里添加
+        // if need @ someone, you can add here
         JsonObject atInfo = new JsonObject();
-        atInfo.addProperty("isAtAll", false); // 是否@所有人
+        atInfo.addProperty("isAtAll", false); // Whether @everyone
         messageContent.add("at", atInfo);
 
-        // 返回JSON字符串
+        // return JSON string
         return messageContent.toString();
     }
 
@@ -100,7 +100,7 @@ final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                 .POST(HttpRequest.BodyPublishers.ofString(messageContent))
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        // 检查消息是否成功发送
+        // Check if the message was sent successfully
         log.info("Message sent response: {}", response.body());
     }
 

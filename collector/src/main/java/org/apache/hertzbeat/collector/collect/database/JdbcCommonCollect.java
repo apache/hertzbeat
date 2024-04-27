@@ -17,24 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.database;
 
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
-import org.apache.hertzbeat.collector.collect.common.cache.JdbcConnect;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.postgresql.util.PSQLException;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
-import org.springframework.util.StringUtils;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -44,6 +26,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
+import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.JdbcConnect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.postgresql.util.PSQLException;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * common query for database query
@@ -79,29 +78,23 @@ public class JdbcCommonCollect extends AbstractCollect {
             statement = getConnection(jdbcProtocol.getUsername(),
                     jdbcProtocol.getPassword(), databaseUrl, timeout);
             switch (jdbcProtocol.getQueryType()) {
-                case QUERY_TYPE_ONE_ROW:
-                    queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                    break;
-                case QUERY_TYPE_MULTI_ROW:
-                    queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                    break;
-                case QUERY_TYPE_COLUMNS:
-                    queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
-                    break;
-                case RUN_SCRIPT:
+                case QUERY_TYPE_ONE_ROW -> queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_MULTI_ROW -> queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_COLUMNS -> queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case RUN_SCRIPT -> {
                     Connection connection = statement.getConnection();
                     FileSystemResource rc = new FileSystemResource(jdbcProtocol.getSql());
                     ScriptUtils.executeSqlScript(connection, rc);
-                    break;
-                default:
+                }
+                default -> {
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("Not support database query type: " + jdbcProtocol.getQueryType());
-                    break;
+                }
             }
         } catch (PSQLException psqlException) {
             // for PostgreSQL 08001
             if (CollectorConstants.POSTGRESQL_UN_REACHABLE_CODE.equals(psqlException.getSQLState())) {
-                // 对端链接失败 不可达
+                // Peer connection failed, unreachable
                 builder.setCode(CollectRep.Code.UN_REACHABLE);
             } else {
                 builder.setCode(CollectRep.Code.FAIL);
@@ -291,39 +284,28 @@ public class JdbcCommonCollect extends AbstractCollect {
             // when has config jdbc url, use it 
             return jdbcProtocol.getUrl();
         }
-        String url;
-        switch (jdbcProtocol.getPlatform()) {
-            case "mysql":
-            case "mariadb":
-                url = "jdbc:mysql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
-                        + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
-                break;
-            case "postgresql":
-                url = "jdbc:postgresql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-                break;
-            case "clickhouse":
-                url = "jdbc:clickhouse://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-                break;
-            case "sqlserver":
-                url = "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase())
-                        + ";trustServerCertificate=true;";
-                break;
-            case "oracle":
-                url = "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
-                        + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
-                break;
-            case "dm":
-                url = "jdbc:dm://" + jdbcProtocol.getHost() + ":" +jdbcProtocol.getPort();
-                break;
-            default:
-                throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
-
-        }
-        return url;
+        return switch (jdbcProtocol.getPlatform()) {
+            case "mysql", "mariadb" ->
+                    "jdbc:mysql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase())
+                    + "?useUnicode=true&characterEncoding=utf-8&useSSL=false";
+            case "postgresql" ->
+                    "jdbc:postgresql://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+            case "clickhouse" ->
+                    "jdbc:clickhouse://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+            case "sqlserver" ->
+                    "jdbc:sqlserver://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + ";" + (jdbcProtocol.getDatabase() == null ? "" : "DatabaseName=" + jdbcProtocol.getDatabase())
+                    + ";trustServerCertificate=true;";
+            case "oracle" ->
+                    "jdbc:oracle:thin:@" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort()
+                    + "/" + (jdbcProtocol.getDatabase() == null ? "" : jdbcProtocol.getDatabase());
+            case "dm" ->
+                    "jdbc:dm://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort();
+            default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
+        };
     }
 
     private void validateParams(Metrics metrics) throws IllegalArgumentException {

@@ -17,19 +17,18 @@
 
 package org.apache.hertzbeat.collector.collect.icmp;
 
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * icmp ping collect
@@ -42,14 +41,14 @@ public class IcmpCollectImpl extends AbstractCollect {
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // 简单校验必有参数
+        // Simple validation requires mandatory parameters
         if (metrics == null || metrics.getIcmp() == null) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("ICMP collect must has icmp params");
             return;
         }
         IcmpProtocol icmp = metrics.getIcmp();
-        // 超时时间默认6000毫秒
+        // The default timeout is 6000 milliseconds
         int timeout = 6000;
         try {
             timeout = Integer.parseInt(icmp.getTimeout());
@@ -57,26 +56,25 @@ public class IcmpCollectImpl extends AbstractCollect {
             log.warn(e.getMessage());
         }
         try {
-            // todo need root java jcm to use ICMP, else it telnet the peer server 7 port available
-            // todo 需要配置java虚拟机root权限从而使用ICMP，否则是判断telnet对端7号端口是否开通
+            // todo requires Java JVM with root permissions to use ICMP, otherwise check if telnet is available on peer server's port 7
+            // todo requires configuring Java JVM with root permissions to use ICMP, otherwise check if telnet is available on the peer's port 7
             // todo https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address
             boolean status = InetAddress.getByName(icmp.getHost()).isReachable(timeout);
             long responseTime = System.currentTimeMillis() - startTime;
-            if (status) {
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                for (String alias : metrics.getAliasFields()) {
-                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Long.toString(responseTime));
-                    } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                    }
-                }
-                builder.addValues(valueRowBuilder.build());
-            } else {
+            if (!status) {
                 builder.setCode(CollectRep.Code.UN_REACHABLE);
                 builder.setMsg("Un Reachable, Timeout " + timeout + "ms");
                 return;
             }
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            for (String alias : metrics.getAliasFields()) {
+                if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    valueRowBuilder.addColumns(Long.toString(responseTime));
+                } else {
+                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                }
+            }
+            builder.addValues(valueRowBuilder.build());
         } catch (UnknownHostException unknownHostException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
             builder.setCode(CollectRep.Code.UN_REACHABLE);

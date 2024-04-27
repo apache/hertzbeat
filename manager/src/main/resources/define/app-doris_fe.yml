@@ -15,15 +15,12 @@
 
 category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
-# 监控类型 eg: linux windows tomcat mysql aws...
 app: doris_fe
 # The monitoring i18n name
-# 监控类型国际化名称
 name:
   zh-CN: Apache Doris FE
   en-US: Apache Doris FE
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 对 Doris 数据库FE的通用指标（doris_fe connection total、doris_fe edit log clean、doris_fe image、doris_fe rps等）进行测量监控，支持版本为DORIS2.0.0。<br>您可以点击 “<i>新建 Doris DatabaseFE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring Doris DatabaseFE through general performance metric such as doris_fe connection total, doris_fe edit log clean, doris_fe image and doris_fe rps. The version we support is DORIS2.0.0. You could click the "<i>New Doris DatabaseFE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
@@ -31,32 +28,25 @@ help:
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/doris_fe/
   en-US: https://hertzbeat.apache.org/docs/help/doris_fe/
-# 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
-  # field-变量字段标识符
   - field: host
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 目标Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     # default value
     defaultValue: 8030
@@ -68,7 +58,6 @@ params:
     type: number
     required: false
     # hide param-true or false
-    # 是否隐藏字段 true or false
     hide: true
     defaultValue: 6000
 metrics:
@@ -78,15 +67,15 @@ metrics:
       - field: value
         type: 0
         label: true
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -99,15 +88,15 @@ metrics:
         label: true
       - field: value
         type: 0
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -120,15 +109,15 @@ metrics:
         label: true
       - field: value
         type: 0
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -141,15 +130,15 @@ metrics:
         label: true
       - field: value
         type: 0
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -162,15 +151,15 @@ metrics:
         label: true
       - field: value
         type: 0
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -181,15 +170,15 @@ metrics:
       - field: value
         type: 0
         label: true
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -200,15 +189,15 @@ metrics:
       - field: value
         type: 0
         label: true
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -219,15 +208,15 @@ metrics:
       - field: value
         type: 0
         label: true
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -238,15 +227,15 @@ metrics:
       - field: value
         type: 0
         label: true
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -257,15 +246,16 @@ metrics:
       - field: value
         type: 0
         label: true
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
       # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -277,15 +267,15 @@ metrics:
       - field: value
         type: 0
         label: true
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -296,15 +286,15 @@ metrics:
       - field: value
         type: 0
         label: true
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -315,15 +305,15 @@ metrics:
       - field: value
         type: 0
         label: true
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET
@@ -336,15 +326,15 @@ metrics:
         label: true
       - field: value
         type: 0
-     # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: '/metrics'
       timeout: ^_^timeout^_^
       method: GET

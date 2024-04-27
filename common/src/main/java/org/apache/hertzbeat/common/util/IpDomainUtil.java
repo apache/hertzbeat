@@ -17,9 +17,6 @@
 
 package org.apache.hertzbeat.common.util;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.http.conn.util.InetAddressUtils;
 
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -27,6 +24,10 @@ import java.net.NetworkInterface;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.http.conn.util.InetAddressUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * ipv4 ipv6 domain util
@@ -110,7 +111,7 @@ public class IpDomainUtil {
      * @return IP address type
      */
     public static String checkIpAddressType(String ipDomain){
-        if (InetAddressUtils.isIPv6Address(ipDomain)) {
+        if (StringUtils.hasText(ipDomain) && InetAddressUtils.isIPv6Address(ipDomain)) {
             return CollectorConstants.IPV6;
         }
         return CollectorConstants.IPV4;

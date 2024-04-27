@@ -17,13 +17,20 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.warehouse.config.IotDbVersion;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.warehouse.config.store.iotdb.IotDbProperties;
+import org.apache.hertzbeat.warehouse.config.store.iotdb.IotDbVersion;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
@@ -34,10 +41,6 @@ import org.apache.iotdb.tsfile.write.record.Tablet;
 import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.*;
 
 /**
  * IoTDB data storage
@@ -73,10 +76,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String SHOW_STORAGE_GROUP = "show storage group";
 
-    private static final String QUERY_HISTORY_SQL
-            = "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
-    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL
-            = "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h)";
+    private static final String QUERY_HISTORY_SQL =
+            "SELECT %s FROM %s WHERE Time >= now() - %s order by Time desc";
+    private static final String QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL =
+            "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h)";
 
     private SessionPool sessionPool;
 
@@ -84,38 +87,38 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
 
     private long queryTimeoutInMs;
 
-    public HistoryIotDbDataStorage(WarehouseProperties properties) {
-        this.serverAvailable = this.initIotDbSession(properties.getStore().getIotDb());
+    public HistoryIotDbDataStorage(IotDbProperties iotDbProperties) {
+        this.serverAvailable = this.initIotDbSession(iotDbProperties);
     }
 
-    private boolean initIotDbSession(WarehouseProperties.StoreProperties.IotDbProperties properties) {
+    private boolean initIotDbSession(IotDbProperties properties) {
         SessionPool.Builder builder = new SessionPool.Builder();
-        builder.host(properties.getHost());
-        if (properties.getRpcPort() != null) {
-            builder.port(properties.getRpcPort());
+        builder.host(properties.host());
+        if (properties.rpcPort() != null) {
+            builder.port(properties.rpcPort());
         }
-        if (properties.getUsername() != null) {
-            builder.user(properties.getUsername());
+        if (properties.username() != null) {
+            builder.user(properties.username());
         }
-        if (properties.getPassword() != null) {
-            builder.password(properties.getPassword());
+        if (properties.password() != null) {
+            builder.password(properties.password());
         }
-        if (properties.getNodeUrls() != null && !properties.getNodeUrls().isEmpty()) {
-            builder.nodeUrls(properties.getNodeUrls());
+        if (properties.nodeUrls() != null && !properties.nodeUrls().isEmpty()) {
+            builder.nodeUrls(properties.nodeUrls());
         }
-        if (properties.getZoneId() != null) {
-            builder.zoneId(properties.getZoneId());
+        if (properties.zoneId() != null) {
+            builder.zoneId(properties.zoneId());
         }
-        if (properties.getVersion() != null) {
-            this.version = properties.getVersion();
+        if (properties.version() != null) {
+            this.version = properties.version();
         }
-        this.queryTimeoutInMs = properties.getQueryTimeoutInMs();
+        this.queryTimeoutInMs = properties.queryTimeoutInMs();
         this.sessionPool = builder.build();
         boolean available = checkConnection();
         if (available) {
             available = this.createDatabase();
             if (available) {
-                this.initTtl(properties.getExpireTime());
+                this.initTtl(properties.expireTime());
                 log.info("IotDB session pool init success");
             }
         }
@@ -253,9 +256,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                                                          String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------IotDb Init Failed---------------\n" +
-                    "\t--------------Please Config IotDb--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------IotDb Init Failed---------------\n"
+                    + "\t--------------Please Config IotDb--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, label, true);
@@ -314,9 +317,9 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
                                                                  String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------IotDb Init Failed---------------\n" +
-                    "\t--------------Please Config IotDb--------------\n" +
-                    "\t----------Can Not Use Metric History Now----------\n");
+            log.error("\n\t---------------IotDb Init Failed---------------\n"
+                    + "\t--------------Please Config IotDb--------------\n"
+                    + "\t----------Can Not Use Metric History Now----------\n");
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, label, true);
@@ -417,10 +420,10 @@ public class HistoryIotDbDataStorage extends AbstractHistoryDataStorage {
      * 查询时可以通过 ${group}.${app}.${metrics}.${monitor}.* 的方式获取所有instance数据
      */
     private String getDeviceId(String app, String metrics, Long monitorId, String labels, boolean useQuote) {
-        String deviceId = STORAGE_GROUP + "." +
-                (useQuote ? addQuote(app) : app) + "." +
-                (useQuote ? addQuote(metrics) : metrics) + "." +
-                ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
+        String deviceId = STORAGE_GROUP + "."
+                + (useQuote ? addQuote(app) : app) + "."
+                + (useQuote ? addQuote(metrics) : metrics) + "."
+                + ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
         if (labels != null && !labels.isEmpty() && !labels.equals(CommonConstants.NULL_VALUE)) {
             deviceId += "." + addQuote(labels);
         }

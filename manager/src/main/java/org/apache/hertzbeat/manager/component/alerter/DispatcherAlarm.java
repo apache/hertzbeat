@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.manager.component.alerter;
 
 import com.google.common.collect.Maps;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -25,18 +27,14 @@ import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.IgnoreException;
-import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map;
-
 /**
  * Alarm information storage and distribution
- * 告警信息入库分发
  */
 @Component
 @Slf4j
@@ -64,7 +62,7 @@ public class DispatcherAlarm implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        // 启动报警分发
+        // Start alarm distribution
         DispatchTask dispatchTask = new DispatchTask();
         for (int i = 0; i < DISPATCH_THREADS; i++) {
             workerPool.executeJob(dispatchTask);
@@ -111,9 +109,9 @@ public class DispatcherAlarm implements InitializingBean {
                 try {
                     Alert alert = dataQueue.pollAlertsData();
                     if (alert != null) {
-                        // Determining alarm type storage   判断告警类型入库
+                        // Determining alarm type storage
                         alertStoreHandler.store(alert);
-                        // 通知分发
+                        // Notice distribution
                         sendNotify(alert);
                     }
                 } catch (IgnoreException ignored) {
@@ -127,7 +125,7 @@ public class DispatcherAlarm implements InitializingBean {
 
         private void sendNotify(Alert alert) {
             List<NoticeRule> noticeRules = matchNoticeRulesByAlert(alert);
-            // todo Send notification here temporarily single thread     发送通知这里暂时单线程
+            // todo Send notification here temporarily single thread
             if (noticeRules != null) {
                 for (NoticeRule rule : noticeRules) {
                     try {

@@ -17,30 +17,44 @@
 
 package org.apache.hertzbeat.collector.collect.jmx;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import javax.management.Attribute;
+import javax.management.AttributeList;
+import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanFeatureInfo;
+import javax.management.MBeanInfo;
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectInstance;
+import javax.management.ObjectName;
+import javax.management.openmbean.CompositeData;
+import javax.management.openmbean.CompositeType;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import javax.management.remote.rmi.RMIConnectorServer;
+import javax.naming.Context;
+import javax.rmi.ssl.SslRMIClientSocketFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JmxConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.CommonUtil;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-
-import javax.management.*;
-import javax.management.openmbean.CompositeData;
-import javax.management.openmbean.CompositeType;
-import javax.management.remote.*;
-import javax.management.remote.rmi.RMIConnectorServer;
-import javax.naming.Context;
-import javax.rmi.ssl.SslRMIClientSocketFactory;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * jmx protocol acquisition implementation
@@ -63,8 +77,8 @@ public class JmxCollectImpl extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
 
         try {
-            JmxProtocol jmxProtocol = metrics.getJmx();
             validateParams(metrics);
+            JmxProtocol jmxProtocol = metrics.getJmx();
 
             // Create a jndi remote connection
             JMXConnector jmxConnector = getConnectSession(jmxProtocol);
@@ -126,15 +140,13 @@ public class JmxCollectImpl extends AbstractCollect {
             if (value instanceof Number || value instanceof  String || value instanceof ObjectName
                     || value instanceof Boolean || value instanceof Date || value instanceof TimeUnit) {
                 attributeValueMap.put(attribute.getName(), value.toString());
-            } else if (value instanceof CompositeData) {
-                CompositeData compositeData = (CompositeData) value;
+            } else if (value instanceof CompositeData compositeData) {
                 CompositeType compositeType = compositeData.getCompositeType();
                 for (String typeKey : compositeType.keySet()) {
                     Object fieldValue = compositeData.get(typeKey);
                     attributeValueMap.put(attribute.getName() + SUB_ATTRIBUTE + typeKey, fieldValue.toString());
                 }
-            } else if (value instanceof String[]) {
-                String[] values = (String[]) value;
+            } else if (value instanceof String[] values) {
                 StringBuilder builder = new StringBuilder();
                 for (int index = 0; index < values.length; index++) {
                     builder.append(values[index]);
@@ -150,14 +162,12 @@ public class JmxCollectImpl extends AbstractCollect {
         return attributeValueMap;
     }
 
-    private void validateParams(Metrics metrics) throws IllegalArgumentException {
-        if (metrics == null || metrics.getJmx() == null) {
-            throw new IllegalArgumentException("JMX collect must has jmx params");
-        }
-        if (StringUtils.hasText(metrics.getJmx().getUrl())) {
-            if (metrics.getJmx().getUrl().contains(IGNORED_STUB)) {
-                throw new IllegalArgumentException("JMX url prohibit contains stub, please check");
-            }
+    private void validateParams(Metrics metrics) {
+        Assert.isTrue(metrics != null && metrics.getJmx() != null, "JMX collect must have JMX params");
+        
+        String url = metrics.getJmx().getUrl();
+        if (StringUtils.hasText(url)) {
+            Assert.doesNotContain(url, IGNORED_STUB, "JMX url prohibit contains stub, please check");
         }
     }
 

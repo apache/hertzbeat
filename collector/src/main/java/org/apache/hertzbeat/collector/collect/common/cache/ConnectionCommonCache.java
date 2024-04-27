@@ -20,11 +20,15 @@ package org.apache.hertzbeat.collector.collect.common.cache;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * lru common resource cache for client-server connection
@@ -72,8 +76,8 @@ public class ConnectionCommonCache {
                 .maximumWeightedCapacity(DEFAULT_MAX_CAPACITY)
                 .listener((key, value) -> {
                     timeoutMap.remove(key);
-                    if (value instanceof CacheCloseable) {
-                        ((CacheCloseable) value).close();
+                    if (value instanceof CacheCloseable closeable) {
+                        closeable.close();
                     }
                     log.info("connection common cache discard key: {}, value: {}.", key, value);
                 }).build();
@@ -104,8 +108,8 @@ public class ConnectionCommonCache {
                         || cacheTime[0] + cacheTime[1] < currentTime) {
                     cacheMap.remove(key);
                     timeoutMap.remove(key);
-                    if (value instanceof CacheCloseable) {
-                        ((CacheCloseable) value).close();
+                    if (value instanceof CacheCloseable closeable) {
+                        closeable.close();
                     }
 
                 }
@@ -131,9 +135,9 @@ public class ConnectionCommonCache {
                     log.warn("[connection common cache] clean the timeout cache, key {}", key);
                     timeoutMap.remove(key);
                     cacheMap.remove(key);
-                    if (value instanceof CacheCloseable) {
+                    if (value instanceof CacheCloseable closeable) {
                         log.warn("[connection common cache] close the timeout cache, key {}", key);
-                        ((CacheCloseable) value).close();
+                        closeable.close();
                     }
                 }
             });
@@ -209,8 +213,8 @@ public class ConnectionCommonCache {
     public void removeCache(Object key) {
         timeoutMap.remove(key);
         Object value = cacheMap.remove(key);
-        if (value instanceof CacheCloseable) {
-            ((CacheCloseable) value).close();
+        if (value instanceof CacheCloseable closeable) {
+            closeable.close();
         }
     }
 

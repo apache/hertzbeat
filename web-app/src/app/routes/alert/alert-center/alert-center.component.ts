@@ -299,8 +299,8 @@ export class AlertCenterComponent implements OnInit {
   // end: 列表多选分页逻辑
 
   sliceTagName(tag: Tag): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
+    if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
+      return `${tag.name}:${tag.tagValue}`;
     } else {
       return tag.name;
     }

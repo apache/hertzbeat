@@ -17,10 +17,9 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.internal;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
 import java.util.EventListener;
 import java.util.List;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * One-time collection task response result listener

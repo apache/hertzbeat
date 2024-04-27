@@ -17,7 +17,21 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,15 +41,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-import java.util.Objects;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Tag Entity
@@ -60,8 +65,8 @@ public class Tag {
     private String name;
 
     @Schema(title = "Tag Value", example = "23", accessMode = READ_WRITE)
-    @Column(name = "`value`", length = 2048)
-    private String value;
+    @Column(length = 2048)
+    private String tagValue;
 
     @Schema(title = "Tag Color", example = "#ffff", accessMode = READ_WRITE)
     private String color;
@@ -100,13 +105,13 @@ public class Tag {
             return false;
         }
         Tag tag = (Tag) o;
-        return Objects.equals(name, tag.name) && Objects.equals(value, tag.value);
+        return Objects.equals(name, tag.name) && Objects.equals(tagValue, tag.tagValue);
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 13 * hash + (name == null ? 0 : name.hashCode()) + (value == null ? 0 : value.hashCode());
+        hash = 13 * hash + (name == null ? 0 : name.hashCode()) + (tagValue == null ? 0 : tagValue.hashCode());
         return hash;
     }
 }

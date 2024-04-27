@@ -18,20 +18,40 @@
 package org.apache.hertzbeat.common.entity.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.job.protocol.*;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.entity.job.protocol.*;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
+import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * Details of the monitoring metrics collected 
@@ -82,7 +102,6 @@ public class Metrics {
      * Public attribute - expression calculation, map the pre-query attribute (pre Fields)
      * with the final attribute (fields), and calculate the final attribute (fields) value
      * eg: size = size1 + size2, speed = speedSize
-     * <a href="https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m">www.yuque.com/boyan-avfmj/aviatorscript/ban32m</a>
      */
     private List<String> calculates;
     /**

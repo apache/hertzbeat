@@ -17,11 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus.exporter;
 
-import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
-import org.apache.hertzbeat.common.util.StrBuffer;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +24,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
+import org.apache.hertzbeat.common.util.StrBuffer;
+import org.springframework.util.StringUtils;
 
 /**
  * Resolves the data passed by prometheus's exporter interface http:xxx/metrics
@@ -111,13 +110,9 @@ public class ExporterParser {
         this.currentMetricFamily = metricMap.computeIfAbsent(metricName, key -> new MetricFamily());
         this.currentMetricFamily.setName(metricName);
         switch (token) {
-            case HELP:
-                this.parseHelp(buffer);
-                break;
-            case TYPE:
-                this.parseType(buffer);
-                break;
-            default:
+            case HELP -> this.parseHelp(buffer);
+            case TYPE -> this.parseType(buffer);
+            default -> {}
         }
     }
 
@@ -147,12 +142,13 @@ public class ExporterParser {
             metricList = new ArrayList<>();
             this.currentMetricFamily.setMetricList(metricList);
         }
-        // todo 这里可能存在问题, 目前逻辑是HISTOGRAM和SUMMARY只创建一个metric
-        //  相比源码有所改动: 源码通过属性存储解析结果; 这边通过参数传递
+        // TODO: This part may have issues. The current logic creates only one metric for both HISTOGRAM and SUMMARY
+        // compared to the source code, there is a slight modification: the source code stores parsing results in a property
+        // here, the results are passed through parameters.
         MetricFamily.Metric metric;
-        if (!metricList.isEmpty() &&
-                (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
-                        this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
+        if (!metricList.isEmpty()
+                && (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM)
+                || this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
             metric = metricList.get(0);
         } else {
             metric = new MetricFamily.Metric();
@@ -218,14 +214,9 @@ public class ExporterParser {
         if (buffer.isEmpty()) return;
         c = buffer.read();
         switch (c) {
-            case COMMA:
-                this.startReadLabelName(metric, buffer);
-                break;
-            case RIGHT_CURLY_BRACKET:
-                this.readLabelValue(metric, label, buffer);
-                break;
-            default:
-                throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
+            case COMMA -> this.startReadLabelName(metric, buffer);
+            case RIGHT_CURLY_BRACKET -> this.readLabelValue(metric, label, buffer);
+            default -> throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
         }
     }
 
@@ -233,41 +224,41 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         switch (this.currentMetricFamily.getMetricType()) {
-            case INFO:
+            case INFO -> {
                 MetricFamily.Info info = new MetricFamily.Info();
                 info.setValue(buffer.toDouble());
                 metric.setInfo(info);
-                break;
-            case COUNTER:
+            }
+            case COUNTER -> {
                 MetricFamily.Counter counter = new MetricFamily.Counter();
                 counter.setValue(buffer.toDouble());
                 metric.setCounter(counter);
-                break;
-            case GAUGE:
+            }
+            case GAUGE -> {
                 MetricFamily.Gauge gauge = new MetricFamily.Gauge();
                 gauge.setValue(buffer.toDouble());
                 metric.setGauge(gauge);
-                break;
-            case UNTYPED:
+            }
+            case UNTYPED -> {
                 MetricFamily.Untyped untyped = new MetricFamily.Untyped();
                 untyped.setValue(buffer.toDouble());
                 metric.setUntyped(untyped);
-                break;
-            case SUMMARY:
+            }
+            case SUMMARY -> {
                 MetricFamily.Summary summary = metric.getSummary();
                 if (summary == null) {
                     summary = new MetricFamily.Summary();
                     metric.setSummary(summary);
                 }
-                // 处理 xxx_sum 的数据
+                // Process data for xxx_sum
                 if (label != null && this.isSum(label.getName())) {
                     summary.setSum(buffer.toDouble());
                 }
-                // 处理 xxx_count 的数据
+                // Process data for xxx_count
                 else if (label != null && this.isCount(label.getName())) {
                     summary.setCount(buffer.toLong());
                 }
-                // 处理 "xxx{quantile=\"0\"} 0" 的格式
+                // Handle format for "xxx{quantile=\"0\"} 0"
                 else if (StringUtils.hasText(this.currentQuantile)) {
                     List<MetricFamily.Quantile> quantileList = summary.getQuantileList();
                     MetricFamily.Quantile quantile = new MetricFamily.Quantile();
@@ -275,8 +266,8 @@ public class ExporterParser {
                     quantile.setValue(buffer.toDouble());
                     quantileList.add(quantile);
                 }
-                break;
-            case HISTOGRAM:
+            }
+            case HISTOGRAM -> {
                 MetricFamily.Histogram histogram = metric.getHistogram();
                 if (histogram == null) {
                     histogram = new MetricFamily.Histogram();
@@ -287,7 +278,7 @@ public class ExporterParser {
                 } else if (label != null && this.isCount(label.getName())) {
                     histogram.setCount(buffer.toLong());
                 }
-                // 处理 "xxx{quantile=\"0\"} 0" 的格式
+                // Process the format "xxx{quantile=\"0\"} 0"
                 else if (StringUtils.hasText(this.currentBucket)) {
                     List<MetricFamily.Bucket> bucketList = histogram.getBucketList();
                     MetricFamily.Bucket bucket = new MetricFamily.Bucket();
@@ -295,16 +286,15 @@ public class ExporterParser {
                     bucket.setCumulativeCount(buffer.toLong());
                     bucketList.add(bucket);
                 }
-                break;
-            default:
-                throw new ParseException("no such type in metricFamily");
+            }
+            default -> throw new ParseException("no such type in metricFamily");
         }
     }
 
     /**
-     * 读取第一个空格符前的token
+     * Reads the token before the first whitespace
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return token unit
      */
     private String readTokenUnitWhitespace(StrBuffer buffer) {
@@ -320,9 +310,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取指标的名称
+     * Gets the name of the metric
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return token name
      */
     private String readTokenAsMetricName(StrBuffer buffer) {
@@ -343,9 +333,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取label的名称
+     * Gets the name of the label
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return label name
      */
     private String readTokenAsLabelName(StrBuffer buffer) {
@@ -368,9 +358,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取Label的值
+     * Gets the value of the label
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return label value
      */
     private String readTokenAsLabelValue(StrBuffer buffer) {
@@ -378,18 +368,12 @@ public class ExporterParser {
         boolean escaped = false;
         while (!buffer.isEmpty()) {
             char c = buffer.read();
-            // 处理 '\\' 转义
+            // Handle '\\' escape sequences
             if (escaped) {
                 switch (c) {
-                    case QUOTES:
-                    case '\\':
-                        builder.append(c);
-                        break;
-                    case 'n':
-                        builder.append('\n');
-                        break;
-                    default:
-                        throw new ParseException("parse label value error");
+                    case QUOTES, '\\' -> builder.append(c);
+                    case 'n' -> builder.append('\n');
+                    default -> throw new ParseException("parse label value error");
                 }
                 escaped = false;
             } else {
@@ -410,9 +394,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合metric name首字符规则
+     * Checks whether a character conforms to the first character rule for metric names
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidMetricNameStart(char c) {
@@ -420,9 +404,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合metric name除首字符其他字符规则
+     * Checks whether a character conforms to rules for metric name characters other than the first
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidMetricNameContinuation(char c) {
@@ -430,9 +414,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合label name首字符规则
+     * Checks whether a character conforms to the first character rule for label names
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidLabelNameStart(char c) {
@@ -440,9 +424,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合label name除首字符其他字符规则
+     * Checks whether a character conforms to rules for label name characters other than the first
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidLabelNameContinuation(char c) {
@@ -450,7 +434,7 @@ public class ExporterParser {
     }
 
     /**
-     * 检测是否是有效的utf8编码的字符串
+     * Checks if a string is a valid UTF-8 encoded string
      *
      * @param s label value
      * @return true/false
