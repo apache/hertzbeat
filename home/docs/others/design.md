@@ -4,6 +4,6 @@ title: 设计文档
 sidebar_label: 设计文档     
 ---
 
-### HertzBeat 架构   
+### HertzBeat Arch   
 
-![architecture](/img/docs/hertzbeat-arch.svg) 
+![architecture](/img/docs/hertzbeat-arch.svg)   
