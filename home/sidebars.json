@@ -201,6 +201,7 @@
             "help/shenyu",
             "help/rabbitmq",
             "help/activemq",
+            "help/rocketmq",
             "help/spring_gateway",
             "help/nacos"
           ]
