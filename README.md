@@ -431,6 +431,7 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/YxYL6125"><img src="https://avatars.githubusercontent.com/u/91076160?v=4?s=100" width="100px;" alt="YxYL"/><br /><sub><b>YxYL</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=YxYL6125" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/tomorrowshipyltm"><img src="https://avatars.githubusercontent.com/u/61336903?v=4?s=100" width="100px;" alt="tomorrowshipyltm"/><br /><sub><b>tomorrowshipyltm</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tomorrowshipyltm" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/15613060203"><img src="https://avatars.githubusercontent.com/u/41351615?v=4?s=100" width="100px;" alt="栗磊"/><br /><sub><b>栗磊</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=15613060203" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Alanxtl"><img src="https://avatars.githubusercontent.com/u/25652981?v=4?s=100" width="100px;" alt="Alan"/><br /><sub><b>Alan</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Alanxtl" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

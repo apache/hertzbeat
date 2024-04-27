@@ -1744,6 +1744,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Alanxtl",
+      "name": "Alan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25652981?v=4",
+      "profile": "https://github.com/Alanxtl",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
