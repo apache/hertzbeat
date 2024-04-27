@@ -31,7 +31,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Schema(description = "Monitor Hierarchy | 监控类型指标信息层级关系")
+@Schema(description = "Monitor Hierarchy")
 public class Hierarchy {
 
     /**
@@ -49,7 +49,7 @@ public class Hierarchy {
     /**
      * Attribute internationalization tag
      */
-    @Schema(description = "Attribute internationalization tag", example = "Linux系统", accessMode = READ_WRITE)
+    @Schema(description = "Attribute internationalization tag", example = "Linux system", accessMode = READ_WRITE)
     String label;
 
     /**

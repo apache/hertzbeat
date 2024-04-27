@@ -44,7 +44,6 @@ import org.springframework.util.StringUtils;
 
 /**
  * Configure the import and export EXCEL format
- * 配置导入导出 EXCEL格式
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -55,8 +54,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
 
     /**
      * Export file type
-     * 导出文件类型
-     * @return 文件类型
+     * @return file type
      */
     @Override
     public String type() {
@@ -65,8 +63,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
 
     /**
      * Get Export File Name
-     * 获取导出文件名
-     * @return 文件名
+     * @return file name
      */
     @Override
     public String getFileName() {
@@ -75,9 +72,8 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
 
     /**
      * Parsing an input stream into a form
-     * 将输入流解析为表单
-     * @param is 输入流
-     * @return 表单
+     * @param is input stream
+     * @return form
      */
 
     @Override
@@ -217,9 +213,8 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
 
     /**
      * Export Configuration to Output Stream
-     * 导出配置到输出流
-     * @param monitorList 配置列表
-     * @param os          输出流
+     * @param monitorList config list
+     * @param os          output stream
      */
     @Override
     void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
@@ -230,16 +225,16 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             sheet.setDefaultColumnWidth(20);
             sheet.setColumnWidth(9, 40 * 256);
             sheet.setColumnWidth(10, 40 * 256);
-            // 设置表头样式
+            // set header style
             CellStyle headerCellStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
             headerCellStyle.setFont(headerFont);
             headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
-            // 设置表格内容样式
+            // set cell style
             CellStyle cellStyle = workbook.createCellStyle();
             cellStyle.setAlignment(HorizontalAlignment.CENTER);
-            // 设置表头
+            // set header
             String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "collector(default null if system dispatch)", "field", "type", "value", "metrics", "detected" };
             Row headerRow = sheet.createRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -248,20 +243,20 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                 cell.setCellStyle(headerCellStyle);
             }
 
-            // 遍历监控列表，每个监控对象对应一行数据
+            // foreach monitor, each monitor object corresponds to a row of data
             int rowIndex = 1;
             for (ExportMonitorDTO monitor : monitorList) {
-                // 获取监控信息
+                // get monitor information
                 MonitorDTO monitorDTO = monitor.getMonitor();
-                // 获取监控参数
+                // get monitor parameters
                 List<ParamDTO> paramList = monitor.getParams();
-                // 获取监控指标
+                // get monitor metrics
                 List<String> metricList = monitor.getMetrics();
-                // 将监控信息和参数信息合并到一行中
+                // merge monitor information and parameter information into one row
                 for (int i = 0; i < Math.max(paramList.size(), 1); i++) {
                     Row row = sheet.createRow(rowIndex++);
                     if (i == 0) {
-                        // 监控信息只需要填写一次
+                        // You need to fill in the monitoring information only once
                         Cell nameCell = row.createCell(0);
                         nameCell.setCellValue(monitorDTO.getName());
                         nameCell.setCellStyle(cellStyle);
@@ -295,7 +290,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         detectedCell.setCellValue(monitor.getDetected() != null && monitor.getDetected());
                         detectedCell.setCellStyle(cellStyle);
                     }
-                    // 填写参数信息
+                    // Fill in parameter information
                     if (i < paramList.size()) {
                         ParamDTO paramDTO = paramList.get(i);
                         Cell fieldCell = row.createCell(8);

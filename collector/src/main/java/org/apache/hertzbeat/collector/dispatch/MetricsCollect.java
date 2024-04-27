@@ -407,6 +407,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
     @Override
     public int compareTo(MetricsCollect collect) {
-        return runPriority - collect.runPriority;
+        return collect.runPriority - this.runPriority;
     }
 }

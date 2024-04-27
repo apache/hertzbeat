@@ -60,10 +60,9 @@ import static org.mockito.Mockito.*;
 
 /**
  * newBranch feature-clickhouse#179
- * 配置带密码的clickhouse
  * <a href="https://www.cnblogs.com/it1042290135/p/16202478.html">...</a>
  * <p>
- * 9363是promethus的http端口(在config.xml里面打开), <a href="http://clickhouse:9363/metrics">...</a>
+ * <a href="http://clickhouse:9363/metrics">...</a>
  * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363 --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
  * <p>
  * <p>
@@ -73,7 +72,6 @@ import static org.mockito.Mockito.*;
  * web UI
  * <a href="http://localhost:18123/play">...</a>
  * <p>
- * 明文密码linux可以登录了,但是navicat还是无法登录
  * clickhouse client -h 127.0.0.1 -d default -m -u default --password 123456
  * Test case for {@link MonitorService}
  *
@@ -119,7 +117,7 @@ class MonitorServiceTest {
     Map<String, Alert> triggeredAlertMap = spy(new HashMap<>());
 
     /**
-     * 属性无法直接mock,测试执行前-手动赋值
+     * Properties cannot be directly mock, test execution before - manual assignment
      */
     @BeforeEach
     public void setUp() {
@@ -145,7 +143,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 探测失败-超时
+     * Probe failed - Timed out
      */
     @Test
     void detectMonitorFail() {
@@ -202,7 +200,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-数据库已经存在相同的任务名称
+     * Parameter verification - The same task name already exists in the database
      */
     @Test
     void validateMonitorName() {
@@ -222,7 +220,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-为必填的参数没有填
+     * Parameter check - The required parameter is not filled
      */
     @Test
     void validateRequireMonitorParams() {
@@ -255,7 +253,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-为必填的参数类型错误
+     * Parameter check - Error for required parameter type
      */
     @Test
     void validateMonitorParamsType() {
@@ -291,7 +289,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-为必填的-整形参数范围
+     * Parameter verification - This parameter is mandatory. - Integer parameter range
      */
     @Test
     void validateMonitorParamsRange() {
@@ -327,7 +325,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-为必填的-文本参数长度
+     * Parameter check - Required - Length of the text parameter
      */
     @Test
     void validateMonitorParamsTextLimit() {
@@ -364,7 +362,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-主机IP参数格式
+     * Parameter verification - Host IP address Parameter format
      */
     @ParameterizedTest
     @CsvSource({
@@ -409,7 +407,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-布尔类型
+     * Parameter check - Boolean type
      */
     @ParameterizedTest
     @CsvSource({
@@ -456,7 +454,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-布尔类型
+     * Parameter check - Boolean type
      */
     @ParameterizedTest
     @CsvSource({
@@ -507,7 +505,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-没有定义的类型
+     * Parameter check - No defined type
      */
     @ParameterizedTest
     @CsvSource({
@@ -580,7 +578,7 @@ class MonitorServiceTest {
         }
         reset();
         /**
-         * 不能修改monitor的[监控类型]
+         * The [monitoring type] of monitor cannot be modified.
          */
         Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").host("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));

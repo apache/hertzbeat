@@ -33,7 +33,6 @@ import java.util.Map;
 /**
  *
  * @version 2.1
- * Created by Musk.Chen on 2023/1/16
  */
 @Slf4j
 class TelegramBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {

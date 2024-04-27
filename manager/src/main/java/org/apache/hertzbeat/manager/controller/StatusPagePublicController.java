@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * status page public endpoint controller
  */
-@Tag(name = "Status Page Public API | 状态页对外API")
+@Tag(name = "Status Page Public API")
 @RestController()
 @RequestMapping(value = "/api/status/page/public", produces = {APPLICATION_JSON_VALUE})
 public class StatusPagePublicController {

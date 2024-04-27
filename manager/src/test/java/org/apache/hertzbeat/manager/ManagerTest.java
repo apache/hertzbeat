@@ -43,7 +43,6 @@ import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.apache.hertzbeat.common.service.TencentSmsClient;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import org.apache.hertzbeat.warehouse.controller.MetricsDataController;
 import org.apache.hertzbeat.warehouse.store.HistoryIotDbDataStorage;
 import org.apache.hertzbeat.warehouse.store.HistoryTdEngineDataStorage;
@@ -58,7 +57,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 /**
  *
  * @version 2.1
- * Created by Musk.Chen on 2023/1/14
  */
 class ManagerTest extends AbstractSpringIntegrationTest {
 
@@ -98,7 +96,6 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         assertNotNull(ctx.getBean(SpringContextHolder.class));
 
         // test warehouse module
-        assertNotNull(ctx.getBean(WarehouseProperties.class));
         assertNotNull(ctx.getBean(WarehouseWorkerPool.class));
 
         // default DataStorage is RealTimeMemoryDataStorage

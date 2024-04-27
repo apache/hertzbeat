@@ -125,6 +125,7 @@
       "label": "help",
       "items": [
         "help/guide",
+        "help/prometheus",
         {
           "type": "category",
           "label": "service",
@@ -133,6 +134,7 @@
             "help/api",
             "help/ping",
             "help/port",
+            "help/udp_port",
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
@@ -147,8 +149,10 @@
           "type": "category",
           "label": "program",
           "items": [
+            "help/process",
             "help/jvm",
             "help/springboot2",
+            "help/springboot3",
             "help/dynamic_tp"
           ]
         },
@@ -164,7 +168,8 @@
             "help/dm",
             "help/opengauss",
             "help/nebulaGraph",
-            "help/tidb"
+            "help/tidb",
+            "help/mongodb"
 
           ]
         },
@@ -183,6 +188,7 @@
             "help/linux",
             "help/windows",
             "help/ubuntu",
+            "help/debian",
             "help/centos"
           ]
         },
@@ -206,6 +212,8 @@
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
+            "help/hbase_master",
+            "help/hbase_regionserver",
             "help/iotdb",
             "help/hive",
             "help/airflow",
@@ -268,7 +276,6 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/developer",
         "others/contributing",
         "others/resource"
       ]

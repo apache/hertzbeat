@@ -35,7 +35,6 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * Send alarm information by Slack Webhook
- * 通过Slack Webhook发送告警信息
  */
 @Component
 @RequiredArgsConstructor

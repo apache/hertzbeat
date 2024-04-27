@@ -33,7 +33,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Send alarm information through DingTalk robot
- * 通过钉钉机器人发送告警信息
  */
 @Component
 @RequiredArgsConstructor
@@ -77,9 +76,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
     }
 
     /**
-     * 钉钉机器人请求消息体
-     *
-     *
+     * DingTalk robot request body
      * @version 1.0
      */
     @Data
@@ -87,12 +84,12 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
         private static final String MARKDOWN = "markdown";
 
         /**
-         * 消息类型
+         * Message type
          */
         private String msgtype = MARKDOWN;
 
         /**
-         * markdown消息
+         * markdown message
          */
         private MarkdownDTO markdown;
 
@@ -101,11 +98,12 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
     @Data
     private static class MarkdownDTO {
         /**
-         * 消息内容
+         * Message content
          */
         private String text;
+
         /**
-         * 消息标题
+         * Message title
          */
         private String title;
     }

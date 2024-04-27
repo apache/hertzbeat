@@ -36,7 +36,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Send alarm information through enterprise WeChat
- * 通过企业微信发送告警信息
  */
 @Component
 @RequiredArgsConstructor
@@ -84,30 +83,33 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     private static class WeWorkWebHookDto {
 
         public static final String WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
+
         /**
-         * markdown格式
+         * markdown format
          */
         private static final String MARKDOWN = "markdown";
+
         /**
-         * 文本格式
+         * text format
          */
         private static final String TEXT = "text";
 
         /**
-         * 消息类型
+         * message type
          */
         @Builder.Default
         private String msgtype = MARKDOWN;
 
         /**
-         * markdown消息
+         * markdown message
          */
         private MarkdownDTO markdown;
 
         @Data
         private static class MarkdownDTO {
+
             /**
-             * 消息内容
+             * message content
              */
             private String content;
         }

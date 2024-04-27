@@ -15,18 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.config;
+package org.apache.hertzbeat.warehouse.config.store.memory;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * IoTDB user version
+ * Memory storage configuration information
+ * @param enabled Whether memory data storage is enabled
+ * @param initSize Memory storage map initialization size
  */
-public enum IotDbVersion {
-    /**
-     * version 0.13.*
-     */
-    V_0_13,
-    /**
-     * version 1.0.*
-     */
-    V_1_0
+@ConfigurationProperties(prefix = "warehouse.store.memory")
+public record MemoryProperties(@DefaultValue("true") boolean enabled,
+                               @DefaultValue("1024") Integer initSize) {
 }

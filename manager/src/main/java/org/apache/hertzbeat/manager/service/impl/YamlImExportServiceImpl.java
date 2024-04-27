@@ -29,7 +29,6 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * Configure the import and export Yaml format
- * 配置导入导出 Yaml格式
  */
 @Slf4j
 @Service
@@ -40,8 +39,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
 
     /**
      * Export file type
-     * 导出文件类型
-     * @return 文件类型
+     * @return file type
      */
     @Override
     public String type() {
@@ -50,8 +48,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
 
     /**
      * Get Export File Name
-     * 获取导出文件名
-     * @return 文件名
+     * @return file name
      */
     @Override
     public String getFileName() {
@@ -60,9 +57,8 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
 
     /**
      * Parsing an input stream into a form
-     * 将输入流解析为表单
-     * @param is 输入流
-     * @return 表单
+     * @param is input stream
+     * @return form
      */
     @Override
     List<ExportMonitorDTO> parseImport(InputStream is) {
@@ -74,9 +70,9 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
 
     /**
      * Export Configuration to Output Stream
-     * 导出配置到输出流
-     * @param monitorList 配置列表
-     * @param os          输出流
+     * @param monitorList configuration list
+     * @param os          output stream
+     *
      */
     @Override
     void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
