@@ -5,9 +5,9 @@ sidebar_label: Use InfluxDB Store Metrics
 ---
 
 HertzBeat's historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
-We recommend VictoriaMetrics for long term support.
 
-TDengine is the Time Series Data Platform where developers build IoT, analytics, and cloud applications.
+> It is recommended to use VictoriaMetrics as metrics storage.
+
 
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**  
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**   

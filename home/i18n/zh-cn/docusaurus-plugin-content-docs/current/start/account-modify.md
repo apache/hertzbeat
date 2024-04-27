@@ -1,8 +1,10 @@
 ---
 id: account-modify  
-title: 配置修改账户和密钥        
-sidebar_label: 配置修改账户密码      
+title: 更新账户和密钥        
+sidebar_label: 配置修改账户密码和加密密钥      
 ---
+
+## 更新账户
 
 HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat        
 若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤      
