@@ -34,8 +34,8 @@ help:
   en-US: HertzBeat uses 'ms' as the metric unit to PING the end HOST address and determines the connectivity. You could click the "Add API " button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
   zh-TW: HertzBeat 以 ms 爲指標單位，對端 HOST 地址進行 PING 操作，判斷其連通性。您可以點擊“<i>新建 PING 連通性</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.com/zh-cn/docs/help/ping
-  en-US: https://hertzbeat.com/docs/help/ping
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/ping
+  en-US: https://hertzbeat.apache.org/docs/help/ping
 # 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:

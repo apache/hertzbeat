@@ -61,7 +61,8 @@ export class CollectorService {
       httpParams = httpParams.append('collectors', collector);
     });
     const options = { params: httpParams };
-    return this.http.put<Message<any>>(`${collector_uri}/online/`, null, options);
+    // 修复上下线接口调用异常问题  miki
+    return this.http.put<Message<any>>(`${collector_uri}/online`, null, options);
   }
 
   public goOfflineCollector(collectors: Set<string>): Observable<Message<any>> {
@@ -72,7 +73,8 @@ export class CollectorService {
       httpParams = httpParams.append('collectors', collector);
     });
     const options = { params: httpParams };
-    return this.http.put<Message<any>>(`${collector_uri}/offline/`, null, options);
+    // 修复上下线接口调用异常问题  miki
+    return this.http.put<Message<any>>(`${collector_uri}/offline`, null, options);
   }
 
   public deleteCollector(collectors: Set<string>): Observable<Message<any>> {

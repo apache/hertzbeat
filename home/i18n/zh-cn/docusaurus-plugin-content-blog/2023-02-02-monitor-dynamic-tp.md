@@ -172,7 +172,7 @@ management:
 :::
 
 DynamicTp Github: https://github.com/dromara/dynamic-tp           
-HertzBeat Github: https://github.com/dromara/hertzbeat 
+HertzBeat Github: https://github.com/apache/hertzbeat 
 
 **欢迎了解使用Star支持哦！**
 

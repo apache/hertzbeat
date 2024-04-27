@@ -439,10 +439,14 @@ export class AlertNoticeComponent implements OnInit {
     this.isManageRuleModalVisible = true;
     this.isManageRuleModalAdd = false;
     this.receiversOption = [];
-    this.receiversOption.push({
-      value: rule.receiverId,
-      label: rule.receiverName
+
+    this.rule.receiverId.forEach(id => {
+      this.receiversOption.push({
+        value: id,
+        label: this.rule.receiverName[this.rule.receiverId.indexOf(id)]
+      });
     });
+
     this.templatesOption = [];
     if (this.rule.templateId && this.rule.templateName) {
       this.templatesOption.push({
@@ -492,9 +496,11 @@ export class AlertNoticeComponent implements OnInit {
 
   onSwitchReceiver() {
     this.receiversOption.forEach(option => {
-      if (option.value == this.rule.receiverId) {
-        this.switchReceiver = option.receiver;
-      }
+      this.rule.receiverId.forEach(id => {
+        if (option.value == id) {
+          this.switchReceiver = option.receiver;
+        }
+      });
     });
     this.rule.templateId = -1;
   }
@@ -685,10 +691,13 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageRuleModalOk() {
+    this.rule.receiverName = [];
     this.receiversOption.forEach(option => {
-      if (option.value == this.rule.receiverId) {
-        this.rule.receiverName = option.label;
-      }
+      this.rule.receiverId.forEach(id => {
+        if (option.value == id) {
+          this.rule.receiverName.push(option.label);
+        }
+      });
     });
     // template model
     if (this.rule.templateId != null && this.rule.templateId >= 0) {

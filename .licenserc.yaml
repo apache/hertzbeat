@@ -48,6 +48,7 @@ header:
     - 'material/**'
     - 'LICENSE'
     - 'NOTICE'
+    - 'DISCLAIMER'
     - '**/LICENSE'
     - '**/NOTICE'
     - '.all-contributorsrc'

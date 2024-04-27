@@ -31,14 +31,14 @@ Even small corrections to typos are very welcome :)
 ### Getting HertzBeat up and running
 
 > To get HertzBeat code running on your development tools, and able to debug with breakpoints.
-> This is a front-end and back-end separation project. To start the local code, the back-end [manager](https://github.com/dromara/hertzbeat/tree/master/manager) and the front-end [web-app](https://github.com/dromara/hertzbeat/tree/master/web-app) must be started separately.
+> This is a front-end and back-end separation project. To start the local code, the back-end [manager](https://github.com/apache/hertzbeat/tree/master/manager) and the front-end [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) must be started separately.
 
 
 - Backend start
 
 1. Requires `maven3+`, `java11` and `lombok` environments
 2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
-3. Start `springboot manager` service `manager/src/main/java/org/dromara/hertzbeat/manager/Manager.java`
+3. Start `springboot manager` service `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
 
 - Front-web start
 
@@ -58,7 +58,7 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
 
 ### Submit Pull Request
 
-1. First you need to fork your target [hertzbeat repository](https://github.com/dromara/hertzbeat).
+1. First you need to fork your target [hertzbeat repository](https://github.com/apache/hertzbeat).
 2. Then download the code locally with git command:
 ```shell
 git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
@@ -103,7 +103,7 @@ git push origin --delete a-dev-branch
 On the master/main branch, you can do the following to sync the upstream repository:
 
 ```shell
-git remote add upstream https://github.com/dromara/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
+git remote add upstream https://github.com/apache/hertzbeat.git #Bind the remote warehouse, if it has been executed, it does not need to be executed again
 git checkout master 
 git pull upstream master
 ```
@@ -114,25 +114,25 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion
 
-[Github Discussion](https://github.com/dromara/hertzbeat/discussions)
+[Github Discussion](https://github.com/apache/hertzbeat/discussions)
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
-QQ group number `236915833`, verify code: `tancloud`
+QQ group number `630061200`, verify code: `tancloud`
 
 Public WeChat: `tancloudtech`
 
 ## 🥐 Architecture
 
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
+- **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
 > Provides monitoring management, monitoring configuration management, system user management, etc.
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** Provide metrics data collection services.
+- **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
+- **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
 > Metrics data management, data query, calculation and statistics.
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** Provide alert service.
+- **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** Provide alert service.
 > Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
+- **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)   
+![hertzBeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)   

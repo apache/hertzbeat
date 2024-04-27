@@ -52,7 +52,7 @@ public class NginxProtocol {
     private String url;
 
     /**
-     * 校验相关参数
+     * Validates the relevant parameters
      * @return is invalid true or false
      */
     public boolean isInValid() {

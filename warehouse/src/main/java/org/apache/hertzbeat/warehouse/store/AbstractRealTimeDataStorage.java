@@ -25,7 +25,6 @@ import org.springframework.lang.NonNull;
 import java.util.List;
 
 /**
- * 实时数据存储抽象类
  * Real-time data storage abstract class
  */
 @Slf4j

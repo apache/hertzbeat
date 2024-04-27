@@ -24,7 +24,7 @@ body:
   attributes:
     label: Feature Request
     description: >
-      Tip: Have you checked the docs https://hertzbeat.com/docs/, GitHub issues whether someone else has already reported your issue? Maybe the feature already exists?
+      Tip: Have you checked the docs https://hertzbeat.apache.org/docs/, GitHub issues whether someone else has already reported your issue? Maybe the feature already exists?
     placeholder: >
       A concise description of what you're experiencing.
   validations:
@@ -53,4 +53,4 @@ body:
   validations:
     required: false
 - type: markdown
-  value: "Please read the [Contribution Guideline](https://hertzbeat.com/docs/others/contributing) before submitting the PR"
+  value: "Please read the [Contribution Guideline](https://hertzbeat.apache.org/docs/others/contributing) before submitting the PR"

@@ -23,6 +23,8 @@ import com.jayway.jsonpath.spi.cache.LRUCache;
 
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * json path parser
  */
@@ -45,7 +47,7 @@ public class JsonPathParser {
      * @return content [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
     public static List<Object> parseContentWithJsonPath(String content, String jsonPath) {
-        if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {
+        if (StringUtils.isAnyEmpty(content, jsonPath)) {
             return Collections.emptyList();
         }
         return PARSER.parse(content).read(jsonPath);
@@ -58,7 +60,7 @@ public class JsonPathParser {
      * @return content [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
     public static <T> T parseContentWithJsonPath(String content, String jsonPath, TypeRef<T> typeRef) {
-        if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {
+        if (StringUtils.isAnyEmpty(content, jsonPath)) {
             return null;
         }
         return PARSER.parse(content).read(jsonPath, typeRef);

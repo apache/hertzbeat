@@ -6,14 +6,9 @@ sidebar_label: Related resources
 
 ## Icon resources 
 
-### TANCLOUD-HertzBeat LOGO   
+### HertzBeat LOGO   
 
-![logo](/img/tancloud-logo.svg)  
+![logo](/img/hertzbeat-logo.svg)  
 
-Download: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-logo.jpg)     
+Download: [SVG](https://gitee.com/hertzbeat/hertzbeat/raw/master/home/static/img/hertzbeat-logo.svg)  [PNG](https://gitee.com/hertzbeat/hertzbeat/raw/master/home/static/img/hertzbeat-logo.jpg)     
 
-### TANCLOUD BRAND LOGO  
-
-![logo](/img/tancloud-brand.svg)  
-
-Download: [SVG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-brand.svg)  [JPG](https://gitee.com/dromara/hertzbeat/raw/master/home/static/img/tancloud-brand.jpg)     
