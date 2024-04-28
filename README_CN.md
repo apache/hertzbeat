@@ -415,7 +415,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="http://sharehoo.cn/"><img src="https://avatars.githubusercontent.com/u/45377370?v=4?s=100" width="100px;" alt="miki"/><br /><sub><b>miki</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=miki-hmt" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://codeflex.substack.com/"><img src="https://avatars.githubusercontent.com/u/85513042?v=4?s=100" width="100px;" alt="Keshav Carpenter"/><br /><sub><b>Keshav Carpenter</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=alpha951" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=alpha951" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/makechoicenow"><img src="https://avatars.githubusercontent.com/u/9911918?v=4?s=100" width="100px;" alt="makechoicenow"/><br /><sub><b>makechoicenow</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=makechoicenow" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gjjjj0101"><img src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;" alt="Gao Jian"/><br /><sub><b>Gao Jian</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gjjjj0101"><img src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;" alt="Gao Jian"/><br /><sub><b>Gao Jian</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a> <a href="#design-gjjjj0101" title="Design">🎨</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://jangto.tistory.com/"><img src="https://avatars.githubusercontent.com/u/37864182?v=4?s=100" width="100px;" alt="Hyeon Sung"/><br /><sub><b>Hyeon Sung</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=dukbong" title="Code">💻</a></td>
@@ -434,6 +434,9 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="http://www.hadoop.wiki/"><img src="https://avatars.githubusercontent.com/u/29418975?v=4?s=100" width="100px;" alt="Jast"/><br /><sub><b>Jast</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhangshenghang" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zuobiao-zhou"><img src="https://avatars.githubusercontent.com/u/61108539?v=4?s=100" width="100px;" alt="Zhang Yuxuan"/><br /><sub><b>Zhang Yuxuan</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zuobiao-zhou" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Pzz-2021"><img src="https://avatars.githubusercontent.com/u/118056735?v=4?s=100" width="100px;" alt="P.P."/><br /><sub><b>P.P.</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Pzz-2021" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/LLP2333"><img src="https://avatars.githubusercontent.com/u/61670545?v=4?s=100" width="100px;" alt="llp2333"/><br /><sub><b>llp2333</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=LLP2333" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
