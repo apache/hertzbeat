@@ -24,7 +24,7 @@ import org.apache.hertzbeat.collector.collect.redfish.ConnectSession;
  * redfish connect session
  */
 @Slf4j
-public class RedfishConnect implements CacheCloseable{
+public class RedfishConnect implements AutoCloseable {
     private final ConnectSession reddishConnectSession;
 
     public RedfishConnect(ConnectSession reddishConnectSession) {
@@ -32,13 +32,9 @@ public class RedfishConnect implements CacheCloseable{
     }
 
     @Override
-    public void close() {
-        try {
-            if (reddishConnectSession != null) {
-                reddishConnectSession.close();
-            }
-        } catch (Exception e) {
-            log.error("[connection common cache] close redfish connect error: {}", e.getMessage());
+    public void close() throws Exception {
+        if (reddishConnectSession != null) {
+            reddishConnectSession.close();
         }
     }
 
