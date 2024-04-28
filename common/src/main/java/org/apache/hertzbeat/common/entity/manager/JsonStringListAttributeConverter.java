@@ -42,11 +42,16 @@ public class JsonStringListAttributeConverter implements AttributeConverter<List
         if (StringUtils.isBlank(dbData)) {
             return List.of();
         }
+        if (!JsonUtil.isJsonStr(dbData)) {
+            return List.of(dbData);
+        }
         TypeReference<List<String>> typeReference = new TypeReference<>() {
         };
         List<String> stringList = JsonUtil.fromJson(dbData, typeReference);
         if (stringList == null && !dbData.isEmpty()) {
             return List.of(dbData);
-        } else return stringList;
+        } else {
+            return stringList;
+        }
     }
 }

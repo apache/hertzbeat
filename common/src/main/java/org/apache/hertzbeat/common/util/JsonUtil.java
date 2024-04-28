@@ -93,4 +93,16 @@ public class JsonUtil {
             return null;
         }
     }
+    
+    public static boolean isJsonStr(String jsonStr) {
+        if (!StringUtils.hasText(jsonStr)) {
+            return false;
+        }
+        try {
+            OBJECT_MAPPER.readTree(jsonStr);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
 }
