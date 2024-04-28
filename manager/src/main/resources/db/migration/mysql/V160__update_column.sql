@@ -17,16 +17,16 @@
 
 -- ensure every sql can rerun without error
 
-ALTER TABLE HZB_PARAM ADD COLUMN IF NOT EXISTS `value` VARCHAR(255);
-UPDATE HZB_PARAM SET param_value = `value` WHERE `value` IS NOT NULL AND param_value IS NULL;
-ALTER TABLE HZB_PARAM DROP COLUMN `value`;
+-- for to hertzbeat v1.6.0 upgrade in mysql, user need run this by themself, ignore for non-upgrading -> 1.6.0 users
 
-ALTER TABLE HZB_TAG ADD COLUMN IF NOT EXISTS `value` VARCHAR(255);
-UPDATE HZB_TAG SET tag_value = `value` WHERE `value` IS NOT NULL AND tag_value IS NULL;
-ALTER TABLE HZB_TAG DROP COLUMN `value`;
-
-ALTER TABLE HZB_STATUS_PAGE_HISTORY ADD COLUMN IF NOT EXISTS `unknown` int;
-UPDATE HZB_STATUS_PAGE_HISTORY SET unknowing = `unknown` WHERE `unknown` IS NOT NULL AND unknowing IS NULL;
-ALTER TABLE HZB_STATUS_PAGE_HISTORY DROP COLUMN `unknown`;
-
-commit;
+# UPDATE hzb_param SET param_value = `value` WHERE `value` IS NOT NULL AND param_value IS NULL;
+# ALTER TABLE hzb_param DROP COLUMN `value`;
+# commit;
+# 
+# UPDATE hzb_tag SET tag_value = `value` WHERE `value` IS NOT NULL AND tag_value IS NULL;
+# ALTER TABLE hzb_tag DROP COLUMN `value`;
+# commit;
+# 
+# UPDATE hzb_status_page_history SET unknowing = `unknown` WHERE `unknown` IS NOT NULL AND unknowing IS NULL;
+# ALTER TABLE hzb_status_page_history DROP COLUMN `unknown`;
+# commit;
