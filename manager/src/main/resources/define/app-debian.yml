@@ -466,7 +466,7 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
-      script: ps --no-headers -eo pid,%cpu,%mem,comm | sort -k2nr | head -n 10 | awk 'BEGIN {print "pid cpu_usage mem_usage command"} {print $1, $2, $3, $4}'
+      script: ps --no-headers -eo pid,%cpu,%mem,cmd --sort=-%cpu | head -n 10 | awk 'BEGIN {print "pid cpu_usage mem_usage command"} {print $1, $2, $3, $4}'
       parseType: multiRow
 
   - name: top_mem_process
@@ -507,5 +507,5 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
-      script: ps --no-headers -eo pid,%cpu,%mem,comm | sort -k3nr | head -n 10 | awk 'BEGIN {print "pid cpu_usage mem_usage command"} {print $1, $2, $3, $4}'
+      script: ps --no-headers -eo pid,%cpu,%mem,cmd --sort=-%mem | head -n 10 | awk 'BEGIN {print "pid cpu_usage mem_usage command"} {print $1, $2, $3, $4}'
       parseType: multiRow
