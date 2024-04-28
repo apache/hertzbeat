@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * jmx connect object
  **/
 @Slf4j
-public class JmxConnect implements CacheCloseable {
+public class JmxConnect implements AutoCloseable {
 
     private final JMXConnector connection;
 
@@ -34,13 +34,9 @@ public class JmxConnect implements CacheCloseable {
 
 
     @Override
-    public void close() {
-        try {
-            if (connection != null) {
-                connection.close();
-            }
-        } catch (Exception e) {
-            log.error("[connection common cache] close jmx connect error: {}", e.getMessage());
+    public void close() throws Exception {
+        if (connection != null) {
+            connection.close();
         }
     }
 

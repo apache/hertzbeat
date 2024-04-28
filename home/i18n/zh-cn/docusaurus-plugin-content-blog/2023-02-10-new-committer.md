@@ -11,7 +11,7 @@ tags: [opensource]
 
 # 欢迎 HertzBeat 新晋两位 Committer
 
-> 非常高兴 Dromara HertzBeat 开源社区又迎来了两位新晋社区 Committer, 有来自一线的研发小组leader，也有来自大厂的实习生，让我们来了解下他们的开源经历吧！
+> 非常高兴 HertzBeat 开源社区又迎来了两位新晋社区 Committer, 有来自一线的研发小组leader，也有来自大厂的实习生，让我们来了解下他们的开源经历吧！
 
 ## 第一位 进击的阿晨
 

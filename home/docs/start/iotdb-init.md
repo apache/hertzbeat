@@ -4,8 +4,9 @@ title: Use Time Series Database IoTDB to Store Metrics Data (Optional)
 sidebar_label: Use IoTDB Store Metrics 
 ---
 
-HertzBeat's historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
-We recommend VictoriaMetrics for long term support.
+Apache HertzBeat(Incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
+
+> It is recommended to use VictoriaMetrics as metrics storage.
 
 Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring metrics collected. Support V0.13+ version and V1.0.+ version.  
 
@@ -30,7 +31,7 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
 $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
     -v /opt/iotdb/data:/iotdb/data \ 
     --name iotdb \
-    apache/iotdb:0.13.3-node
+    apache/iotdb:1.2.2-standalone
 ```
 
    `-v /opt/iotdb/data:/iotdb/data` is local persistent mount of IotDB data directory.`/iotdb/data` should be replaced with the actual local directory.
@@ -56,7 +57,7 @@ warehouse:
       username: root
       password: root
       # config.org.apache.hertzbeat.warehouse.IotDbVersion: V_0_13 || V_1_0
-      version: V_0_13
+      version: V_1_0
       query-timeout-in-ms: -1
       # default '7776000000'（90days,unit:ms,-1:no-expire）
       expire-time: '7776000000'

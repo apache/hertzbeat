@@ -17,7 +17,11 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import freemarker.template.TemplateException;
+import java.io.IOException;
+import java.util.ResourceBundle;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -29,14 +33,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-import java.util.ResourceBundle;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 
 /**
  * Test case for {@link MailService}
@@ -57,8 +53,8 @@ class MailServiceTest {
 
     @Test
     void buildAlertHtmlTemplate() throws TemplateException, IOException {
-        Alert alert=new Alert();
-        NoticeTemplate noticeTemplate=new NoticeTemplate();
+        Alert alert = new Alert();
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
         alert.setTarget("Test Target");
         alert.setContent("Test");
         alert.setTriggerTimes(1);
@@ -69,7 +65,7 @@ class MailServiceTest {
         noticeTemplate.setName("test");
         noticeTemplate.setContent("result");
 
-        assertEquals("result", mailService.buildAlertHtmlTemplate(alert,noticeTemplate));
-        assertNotNull(mailService.buildAlertHtmlTemplate(alert,noticeTemplate));
+        assertEquals("result", mailService.buildAlertHtmlTemplate(alert, noticeTemplate));
+        assertNotNull(mailService.buildAlertHtmlTemplate(alert, noticeTemplate));
     }
 }

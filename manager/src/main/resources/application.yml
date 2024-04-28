@@ -82,6 +82,14 @@ spring:
         logging:
           level: SEVERE
           
+  flyway:
+    enabled: true
+    clean-disabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations:
+      - classpath:db/migration/{vendor}
+    
   mail:
     # Attention: this is mail server address. 
     # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq 企业邮箱为 smtp.exmail.qq.com

@@ -4,8 +4,9 @@ title: Use Time Series Database GreptimeDB to Store Metrics Data (Optional)
 sidebar_label: Use GreptimeDB Store Metrics
 ---
 
-HertzBeat's historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
-We recommend VictoriaMetrics for long term support.
+Apache HertzBeat(Incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
+
+> It is recommended to use VictoriaMetrics as metrics storage.
 
 GreptimeDB is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.   
 

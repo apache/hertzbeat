@@ -4,7 +4,7 @@ title: Tutorial 2 Obtain TOKEN index value based on HTTP protocol for subsequent
 sidebar_label: Tutorial 2 Get TOKEN for subsequent authentication
 ---
 
-Through this tutorial, we will describe step by step how to modify on the basis of tutorial 1, add an metrics, first call the authentication interface to obtain the TOKEN, and use the TOKEN as a parameter for the subsequent metrics collection and authentication.
+Through this tutorial, we will describe step by step how to modify on the basis of tutorial 1, add metrics, first call the authentication interface to obtain the TOKEN, and use the TOKEN as a parameter for the subsequent metrics collection and authentication.
 
 Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
 

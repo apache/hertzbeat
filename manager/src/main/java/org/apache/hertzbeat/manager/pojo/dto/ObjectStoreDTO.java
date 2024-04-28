@@ -23,7 +23,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 文件存储容器
  * file storage container
  */
 @Data
@@ -33,33 +32,33 @@ import lombok.NoArgsConstructor;
 public class ObjectStoreDTO<T> {
 
     /**
-     * 文件存储服务类型
+     * file storage service type
      */
     private Type type;
 
     /**
-     * 配置项
+     * Configuration item
      */
     private T config;
 
     /**
-     * 文件存储服务类型
+     * file storage service type
      */
     public enum Type {
 
         /**
-         * 本地文件
+         * local file
          */
         FILE,
 
         /**
-         * <a href="https://support.huaweicloud.com/obs/index.html">华为云OBS</a>
+         * <a href="https://support.huaweicloud.com/obs/index.html">Huawei Cloud OBS</a>
          */
         OBS
     }
 
     /**
-     * 文件存储配置
+     * file storage configuration
      */
     @Data
     public static class ObsConfig {
@@ -69,7 +68,7 @@ public class ObjectStoreDTO<T> {
         private String endpoint;
 
         /**
-         * 保存路径
+         * Save path
          */
         private String savePath = "hertzbeat";
     }

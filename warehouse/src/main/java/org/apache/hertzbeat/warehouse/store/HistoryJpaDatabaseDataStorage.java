@@ -128,15 +128,16 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         String metrics = metricsData.getMetrics();
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         try {
-            List<History> historyList = new LinkedList<>();
-            History.HistoryBuilder historyBuilder = History.builder()
-                    .monitorId(metricsData.getId())
-                    .app(monitorType)
-                    .metrics(metrics)
-                    .time(metricsData.getTime());
+            List<History> allHistoryList = new LinkedList<>();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                List<History> singleHistoryList = new LinkedList<>();
                 Map<String, String> labels = new HashMap<>(8);
                 for (int i = 0; i < fieldsList.size(); i++) {
+                    History.HistoryBuilder historyBuilder = History.builder()
+                            .monitorId(metricsData.getId())
+                            .app(monitorType)
+                            .metrics(metrics)
+                            .time(metricsData.getTime());
                     final CollectRep.Field field = fieldsList.get(i);
                     final int fieldType = field.getType();
                     final String fieldName = field.getName();
@@ -183,11 +184,12 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                         }
                     }
 
-                    historyList.add(historyBuilder.build());
+                    singleHistoryList.add(historyBuilder.build());
                 }
-                historyBuilder.instance(JsonUtil.toJson(labels));
+                singleHistoryList.forEach(history -> history.setInstance(JsonUtil.toJson(labels)));
+                allHistoryList.addAll(singleHistoryList);
             }
-            historyDao.saveAll(historyList);
+            historyDao.saveAll(allHistoryList);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

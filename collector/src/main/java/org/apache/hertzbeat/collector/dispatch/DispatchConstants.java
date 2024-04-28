@@ -119,6 +119,10 @@ public interface DispatchConstants {
      * protocol http_sd
      */
     String PROTOCOL_HTTP_SD = "httpsd";
+    /**
+     * protocol redfish
+     */
+    String PROTOCOL_REDFISH = "redfish";
 
     // Protocol type related - end
     // 协议类型相关 - end //

@@ -950,7 +950,8 @@ export default function () {
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/gjjjj0101"><img
                     src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;"
                     alt="Gao Jian"/><br/><sub><b>Gao Jian</b></sub></a><br/><a
-                    href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a></td>
+                    href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a> <a
+                    href="#design-gjjjj0101" title="Design">🎨</a></td>
                 </tr>
                 <tr>
                   <td align="center" valign="top" width="14.28%"><a href="https://jangto.tistory.com/"><img
@@ -996,6 +997,27 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/41351615?v=4?s=100" width="100px;"
                     alt="栗磊"/><br/><sub><b>栗磊</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=15613060203" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/Alanxtl"><img
+                    src="https://avatars.githubusercontent.com/u/25652981?v=4?s=100" width="100px;"
+                    alt="Alan"/><br/><sub><b>Alan</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=Alanxtl" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="http://www.hadoop.wiki/"><img
+                    src="https://avatars.githubusercontent.com/u/29418975?v=4?s=100" width="100px;"
+                    alt="Jast"/><br/><sub><b>Jast</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=zhangshenghang" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/zuobiao-zhou"><img
+                    src="https://avatars.githubusercontent.com/u/61108539?v=4?s=100" width="100px;" alt="Zhang Yuxuan"/><br/><sub><b>Zhang
+                    Yuxuan</b></sub></a><br/><a href="https://github.com/apache/hertzbeat/commits?author=zuobiao-zhou"
+                                                title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/Pzz-2021"><img
+                    src="https://avatars.githubusercontent.com/u/118056735?v=4?s=100" width="100px;"
+                    alt="P.P."/><br/><sub><b>P.P.</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=Pzz-2021" title="Code">💻</a></td>
+                </tr>
+                <tr>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/LLP2333"><img
+                    src="https://avatars.githubusercontent.com/u/61670545?v=4?s=100" width="100px;" alt="llp2333"/><br/><sub><b>llp2333</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=LLP2333" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>

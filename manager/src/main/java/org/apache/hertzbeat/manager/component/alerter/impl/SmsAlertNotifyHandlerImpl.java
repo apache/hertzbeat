@@ -45,7 +45,7 @@ final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
-        // SMS notification 短信通知
+        // SMS notification
         try {
             String monitorName = null;
             if (alert.getTags() != null) {

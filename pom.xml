@@ -107,7 +107,6 @@
 
         <nekohtml.version>1.9.22</nekohtml.version>
         <json-path.version>2.9.0</json-path.version>
-        <aviator.version>5.4.1</aviator.version>
         <gson.version>2.10.1</gson.version>
         <guava.version>32.1.2-jre</guava.version>
         <protobuf.version>3.19.6</protobuf.version>
@@ -133,7 +132,9 @@
         <h2.version>2.2.224</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
+        <flyway.version>10.11.1</flyway.version>
         <commons-collections4.version>4.4</commons-collections4.version>
+        <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
     </properties>
 
@@ -229,6 +230,27 @@
                 <artifactId>httpclient</artifactId>
                 <version>${httpclient.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-jexl3</artifactId>
+                <version>${commons-jexl3}</version>
+            </dependency>
+            <!-- database migration -->
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-mysql</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-postgresql</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
             <!-- mysql -->
             <dependency>
                 <groupId>mysql</groupId>
@@ -318,12 +340,7 @@
                 <artifactId>json-path</artifactId>
                 <version>${json-path.version}</version>
             </dependency>
-            <!-- 表达式计算 -->
-            <dependency>
-                <groupId>com.googlecode.aviator</groupId>
-                <artifactId>aviator</artifactId>
-                <version>${aviator.version}</version>
-            </dependency>
+            <!-- protobuf -->
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java-util</artifactId>

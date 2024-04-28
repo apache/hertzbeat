@@ -17,19 +17,24 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import jakarta.annotation.Resource;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
+import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
-
-import jakarta.annotation.Resource;
-
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test case for {@link MonitorDao}

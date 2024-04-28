@@ -43,6 +43,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
@@ -102,7 +103,6 @@ public class Metrics {
      * Public attribute - expression calculation, map the pre-query attribute (pre Fields)
      * with the final attribute (fields), and calculate the final attribute (fields) value
      * eg: size = size1 + size2, speed = speedSize
-     * <a href="https://www.yuque.com/boyan-avfmj/aviatorscript/ban32m">www.yuque.com/boyan-avfmj/aviatorscript/ban32m</a>
      */
     private List<String> calculates;
     /**
@@ -206,7 +206,10 @@ public class Metrics {
      * Monitoring configuration information using the public http_sd protocol
      */
     private HttpsdProtocol httpsd;
-
+    /**
+     * Monitoring configuration information using the public redfish protocol
+     */
+    private RedfishProtocol redfish;
     /**
      * collector use - Temporarily store subTask metrics response data
      */

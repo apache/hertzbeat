@@ -37,12 +37,11 @@ public class TemplateConfigServiceImpl extends AbstractGeneralConfigServiceImpl<
     
     
     /**
-     * 构造方法，传入GeneralConfigDao、ObjectMapper和type。
      *
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
      *
-     * @param generalConfigDao 配置Dao对象
-     * @param objectMapper     JSON工具类对象
+     * @param generalConfigDao configDao object
+     * @param objectMapper     JSON tool object
      */
     protected TemplateConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);

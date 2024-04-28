@@ -93,7 +93,7 @@ public class SchedulerInit implements CommandLineRunner {
                 Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
         for (Monitor monitor : monitors) {
             try {
-                // 构造采集任务Job实体
+                // build collect job entity
                 Job appDefine = appService.getAppDefine(monitor.getApp());
                 if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
                     appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());

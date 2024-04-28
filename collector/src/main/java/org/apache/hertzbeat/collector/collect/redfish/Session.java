@@ -15,15 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.common.cache;
+package org.apache.hertzbeat.collector.collect.redfish;
 
 /**
- * resource in cache remove callback
+ * Redfish session
  */
-public interface CacheCloseable {
-
-    /**
-     * when the resource in cache want to be removed, callback this
-     */
-    void close();
-}
+public record Session(String token, String location, String host, Integer port) {}

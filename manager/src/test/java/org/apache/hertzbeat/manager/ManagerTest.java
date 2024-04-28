@@ -17,6 +17,10 @@
 
 package org.apache.hertzbeat.manager;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import javax.annotation.Resource;
+import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.calculate.CalculateAlarm;
@@ -35,7 +39,6 @@ import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatcher;
 import org.apache.hertzbeat.collector.dispatch.unit.impl.DataSizeConvert;
-import org.apache.hertzbeat.common.config.AviatorConfiguration;
 import org.apache.hertzbeat.common.config.CommonConfig;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
@@ -51,16 +54,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
-import javax.annotation.Resource;
-import javax.naming.NamingException;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 /**
  *
  * @version 2.1
- * Created by Musk.Chen on 2023/1/14
  */
 class ManagerTest extends AbstractSpringIntegrationTest {
 
@@ -94,7 +90,6 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         // test common module
         assertNotNull(ctx.getBean(CommonProperties.class));
         assertNotNull(ctx.getBean(CommonConfig.class));
-        assertNotNull(ctx.getBean(AviatorConfiguration.class));
         assertNotNull(ctx.getBean(InMemoryCommonDataQueue.class));
         // condition on common.sms.tencent.app-id
         assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(TencentSmsClient.class));
@@ -113,11 +108,11 @@ class ManagerTest extends AbstractSpringIntegrationTest {
     }
 
     @Test
-    void testJNDI() throws NamingException {
-//        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
+    void testJndi() throws NamingException {
+        //System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
         // for CI
-//        InitialContext initialContext = new InitialContext();
-//        initialContext.lookup("rmi://localhost:1099/Exploit");
+        //InitialContext initialContext = new InitialContext();
+        //initialContext.lookup("rmi://localhost:1099/Exploit");
     }
 
 }
