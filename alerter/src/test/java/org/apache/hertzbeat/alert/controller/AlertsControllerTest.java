@@ -17,10 +17,17 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.alert.service.AlertService;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,13 +43,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Test case for {@link AlertsController}
@@ -67,7 +67,6 @@ class AlertsControllerTest {
         ids = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
     }
 
-//    @Test
     // todo: fix this test
     void getAlerts() throws Exception {
         String sortField = "id";

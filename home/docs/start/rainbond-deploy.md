@@ -4,7 +4,7 @@ title: Use Rainbond Deploy HertzBeat
 sidebar_label: Install via Rainbond      
 ---
 
-If you are unfamiliar with Kubernetes, and want to install HertzBeat in Kubernetes, you can use Rainbond to deploy. Rainbond is a cloud-native application management platform built on Kubernetes and simplifies the application deployment to Kubernetes.
+If you are unfamiliar with Kubernetes, and want to install Apache HertzBeat(Incubating) in Kubernetes, you can use Rainbond to deploy. Rainbond is a cloud-native application management platform built on Kubernetes and simplifies the application deployment to Kubernetes.
 
 ## Prerequisites
 
