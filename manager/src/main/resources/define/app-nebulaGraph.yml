@@ -28,8 +28,8 @@ help:
   zh-TW: Hertzbeat將調用NebulaGraph提供的HTTP API監控介面，對nebulaGraph及存儲數據的rocksdb的名額進行監測。
 # The description and help of this monitoring type
 helpLink:
-  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nebulagraph
-  en-US: https://hertzbeat.apache.org/docs/help/nebulagraph
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nebulaGraph
+  en-US: https://hertzbeat.apache.org/docs/help/nebulaGraph
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
