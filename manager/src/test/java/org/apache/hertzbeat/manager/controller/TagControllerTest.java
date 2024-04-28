@@ -17,8 +17,12 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import org.apache.hertzbeat.common.entity.manager.Tag;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.impl.TagServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,12 +35,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Test case for {@link TagController}
@@ -106,7 +104,8 @@ class TagControllerTest {
 
     @Test
     void getTags() throws Exception {
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/tag?type={type}&search={search}", (byte)1, "status"))
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/tag?type={type}&search={search}",
+                        (byte) 1, "status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
