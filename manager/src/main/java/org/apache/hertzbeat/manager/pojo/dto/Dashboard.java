@@ -24,7 +24,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 大屏仪表盘统计信息
  * Large screen dashboard statistics
  */
 @Data

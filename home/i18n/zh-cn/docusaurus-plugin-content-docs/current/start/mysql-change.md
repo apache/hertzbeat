@@ -3,7 +3,7 @@ id: mysql-change
 title: 关系型数据库使用 Mysql 替换依赖的 H2 存储系统元数据            
 sidebar_label: 元数据使用Mysql存储(可选)      
 ---
-MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
+MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat(Incubating) 除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 
 注意⚠️ 使用外置Mysql数据库替换内置H2数据库为可选项，但建议生产环境配置，以提供更好的性能
 

@@ -136,8 +136,6 @@ html[data-theme=dark] {
 }
 footer > div{
     width: 100%;
-    display: flex;
-    flex-direction: row;
     align-items: center;
 }
 @media (max-width : 500px){
@@ -175,7 +173,6 @@ html[data-theme=dark] footer{
 }
 .footer__logo {
     margin-top: 1rem;
-    max-width: 20rem;
 }
 
 /*.footer__link-item[target="_blank"]:after {*/

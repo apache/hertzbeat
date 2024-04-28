@@ -19,7 +19,6 @@ name:
   zh-CN: ShenYu网关
   en-US: Apache ShenYu
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 通过调用 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics 插件</a> 对 ShenYu 网关的通用指标 (请求量、执行时间、JVM、内存占用、线程信息等) 进行采集监控。<br>注意⚠️：需要您提前 <a href="https://shenyu.apache.org/zh/docs/plugin-center/observability/metrics-plugin">开启暴露 ShenYu Metrics 插件暴露其数据接口</a>。您可以点击 “<i>新建 ShenYu</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitors metrics of the ShenYu Gateway by calling the <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">ShenYu Metrics Api</a>. <br>Note⚠️:You need to <a href="https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin">enable ShenYu Metrics Plugin</a> in advance. You can click "<i>New ShenYu</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
@@ -56,15 +55,15 @@ metrics:
     fields:
       - field: value
         type: 0
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -73,18 +72,18 @@ metrics:
   - name: shenyu_request_throw_created
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: value
         type: 0
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -93,19 +92,19 @@ metrics:
   - name: process_cpu_seconds_total
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: value
         type: 0
         unit: s
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -114,18 +113,18 @@ metrics:
   - name: process_open_fds
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: value
         type: 0
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -134,18 +133,18 @@ metrics:
   - name: process_max_fds
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: value
         type: 0
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -154,22 +153,22 @@ metrics:
   - name: jvm_info
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: runtime
         type: 1
       - field: vendor
         type: 1
       - field: version
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -178,7 +177,7 @@ metrics:
   - name: jvm_memory_bytes_used
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: area
         type: 1
         label: true
@@ -187,15 +186,15 @@ metrics:
         unit: MB
     units:
       - value=B->MB
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -204,7 +203,7 @@ metrics:
   - name: jvm_memory_pool_bytes_used
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
         type: 1
         label: true
@@ -213,15 +212,15 @@ metrics:
         unit: MB
     units:
       - value=B->MB
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -230,7 +229,7 @@ metrics:
   - name: jvm_memory_pool_bytes_committed
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
         type: 1
         label: true
@@ -239,15 +238,15 @@ metrics:
         unit: MB
     units:
       - value=B->MB
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -256,7 +255,7 @@ metrics:
   - name: jvm_memory_pool_bytes_max
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
         type: 1
         label: true
@@ -265,15 +264,15 @@ metrics:
         unit: MB
     units:
       - value=B->MB
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # Specific collection configuration when protocol is http protocol
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET
@@ -282,7 +281,7 @@ metrics:
   - name: jvm_threads_state
     priority: 1
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
+      # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: state
         type: 1
         label: true
@@ -293,15 +292,15 @@ metrics:
       - value
     calculates:
       - count=value
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # This section describes how to configure data collection when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain name
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url request interface path
       url: ''
       timeout: ^_^timeout^_^
       method: GET

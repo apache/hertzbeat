@@ -11,7 +11,7 @@ keywords: [open source monitoring system, alerting system]
 
 ! [hertzBeat](/img/blog/new-committer.png)
 
-> Welcome to Dromara HertzBeat's three new community committeers, let's learn more about their open source experience!
+> Welcome to HertzBeat's three new community committeers, let's learn more about their open source experience!
 
 # New Committer - vinci
 
@@ -78,7 +78,7 @@ In July this year, after basically completing the study of Java framework develo
 
 Thanks to the author of HertzBeat, HertzBeat/Sms4j Committer Tiejia Xiaobao, Sms4j Committer Dongfeng, when I encountered problems that I could not solve, I often asked the three brothers to ask for advice, and they are always tired of patiently helping me solve the problem, there are really no words.
 
-Thanks to the other partners in the community, I've gained a lot from communicating and discussing with them, and I've also felt the active open source atmosphere in the Dromara community.
+Thanks to the other partners in the community, I've gained a lot from communicating and discussing with them, and I've also felt the active open source atmosphere in the community.
 
 ## Some advice for newcomers
 

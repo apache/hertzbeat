@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * hertzbeat metrics exporter
  */
-@Tag(name = "Inner Metrics Exporter API | 内部监控指标API")
+@Tag(name = "Inner Metrics Exporter API")
 @RestController
 @RequestMapping(path = "/api/metrics", produces = {APPLICATION_JSON_VALUE})
 public class MetricsController {

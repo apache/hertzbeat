@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * collector API
  */
-@Tag(name = "Collector Manage API | 采集器信息管理API")
+@Tag(name = "Collector Manage API")
 @RestController()
 @RequestMapping(value = "/api/collector", produces = {APPLICATION_JSON_VALUE})
 public class CollectorController {
@@ -62,11 +62,11 @@ public class CollectorController {
 
     @GetMapping
     @Operation(summary = "Get a list of collectors based on query filter items",
-            description = "根据查询过滤项获取采集器列表")
+            description = "Get a list of collectors based on query filter items")
     public ResponseEntity<Message<Page<CollectorSummary>>> getCollectors(
             @Parameter(description = "collector name", example = "tom") @RequestParam(required = false) final String name,
-            @Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(description = "Number of list pagination | 列表分页数量", example = "8") @RequestParam(required = false) Integer pageSize) {
+            @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
+            @Parameter(description = "Number of list pagination", example = "8") @RequestParam(required = false) Integer pageSize) {
         if (pageSize == null) {
             pageSize = Integer.MAX_VALUE;
         }
@@ -110,7 +110,7 @@ public class CollectorController {
     @DeleteMapping
     @Operation(summary = "Delete collectors")
     public ResponseEntity<Message<Void>> deleteCollector(
-            @Parameter(description = "collector name | 采集器名称", example = "demo-collector")
+            @Parameter(description = "collector name", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
         this.collectorService.deleteRegisteredCollector(collectors);
         return ResponseEntity.ok(Message.success("Delete success"));

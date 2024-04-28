@@ -431,6 +431,10 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/YxYL6125"><img src="https://avatars.githubusercontent.com/u/91076160?v=4?s=100" width="100px;" alt="YxYL"/><br /><sub><b>YxYL</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=YxYL6125" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/tomorrowshipyltm"><img src="https://avatars.githubusercontent.com/u/61336903?v=4?s=100" width="100px;" alt="tomorrowshipyltm"/><br /><sub><b>tomorrowshipyltm</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=tomorrowshipyltm" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/15613060203"><img src="https://avatars.githubusercontent.com/u/41351615?v=4?s=100" width="100px;" alt="栗磊"/><br /><sub><b>栗磊</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=15613060203" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Alanxtl"><img src="https://avatars.githubusercontent.com/u/25652981?v=4?s=100" width="100px;" alt="Alan"/><br /><sub><b>Alan</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Alanxtl" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.hadoop.wiki/"><img src="https://avatars.githubusercontent.com/u/29418975?v=4?s=100" width="100px;" alt="Jast"/><br /><sub><b>Jast</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zhangshenghang" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/zuobiao-zhou"><img src="https://avatars.githubusercontent.com/u/61108539?v=4?s=100" width="100px;" alt="Zhang Yuxuan"/><br /><sub><b>Zhang Yuxuan</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zuobiao-zhou" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Pzz-2021"><img src="https://avatars.githubusercontent.com/u/118056735?v=4?s=100" width="100px;" alt="P.P."/><br /><sub><b>P.P.</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Pzz-2021" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -466,7 +470,7 @@ WeChat Public : Search `Apache HertzBeat` or `usthecom`.
 
 HertzBeat is built on so many great open source projects, thanks to them!
 
-- `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Aviator Protobuf HttpClient Guava SnakeYaml JsonPath ...`
+- `Java Spring SpringBoot Jpa Maven Assembly Netty Lombok Sureness Protobuf HttpClient Guava SnakeYaml JsonPath ...`
 - `TypeScript Angular NG-ZORRO NG-ALAIN NodeJs Npm Html Less Echarts Rxjs ZoneJs MonacoEditor SlickCarousel Docusaurus ...`
 
 ## Landscape

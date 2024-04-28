@@ -46,9 +46,5 @@
   "link.item.label.contact": {
     "message": "Contact",
     "description": "The label of footer link with label=contact linking to /docs/community/contact"
-  },
-  "copyright": {
-    "message": "Copyright © 2024 Apache HertzBeat",
-    "description": "The footer copyright"
   }
 }
