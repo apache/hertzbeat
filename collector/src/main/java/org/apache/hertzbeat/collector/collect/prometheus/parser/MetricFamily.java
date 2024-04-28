@@ -53,11 +53,6 @@ public class MetricFamily {
          * value
          */
         private double value;
-
-        /**
-         * timestamp
-         */
-        private long timestamp;
     }
 
     /**
