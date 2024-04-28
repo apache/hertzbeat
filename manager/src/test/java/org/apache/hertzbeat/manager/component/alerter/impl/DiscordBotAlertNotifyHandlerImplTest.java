@@ -17,17 +17,16 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.springframework.util.StringUtils;
-
 import jakarta.annotation.Resource;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
+import org.junit.jupiter.api.Test;
+import org.springframework.util.StringUtils;
 
 /**
  * Test case for {@link DiscordBotAlertNotifyHandlerImpl}
@@ -51,16 +50,16 @@ class DiscordBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest
         receiver.setName("Mock 告警");
         receiver.setDiscordChannelId(discordChannelId);
         receiver.setDiscordBotToken(discordBotToken);
-        var noticeTemplate=new NoticeTemplate();
+        var noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("DiscordBot");
-        noticeTemplate.setContent("${targetLabel} : ${target}\n" +
-                "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
-                "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
-                "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n" +
-                "${priorityLabel} : ${priority}\n" +
-                "${triggerTimeLabel} : ${triggerTime}\n" +
-                "${contentLabel} : ${content}");
+        noticeTemplate.setContent("${targetLabel} : ${target}\n"
+                + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
+                + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
+                + "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n"
+                + "${priorityLabel} : ${priority}\n"
+                + "${triggerTimeLabel} : ${triggerTime}\n"
+                + "${contentLabel} : ${content}");
         var alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");
@@ -74,6 +73,6 @@ class DiscordBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest
         alert.setPriority((byte) 0);
         alert.setLastAlarmTime(System.currentTimeMillis());
 
-        discordBotAlertNotifyHandler.send(receiver, noticeTemplate,alert);
+        discordBotAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
 }
