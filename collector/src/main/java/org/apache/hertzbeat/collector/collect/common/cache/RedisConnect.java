@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * redis connection
  */
 @Slf4j
-public class RedisConnect implements AutoCloseable {
+public class RedisConnect extends AbstractConnection<StatefulConnection<String, String>> {
 
     private final StatefulConnection<String, String> connection;
 
@@ -33,12 +33,13 @@ public class RedisConnect implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void closeConnection() throws Exception {
         if (connection != null) {
             connection.closeAsync();
         }
     }
 
+    @Override
     public StatefulConnection<String, String> getConnection() {
         return connection;
     }

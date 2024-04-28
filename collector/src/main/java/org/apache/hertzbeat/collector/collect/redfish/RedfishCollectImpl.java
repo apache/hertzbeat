@@ -44,6 +44,12 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class RedfishCollectImpl extends AbstractCollect {
 
+    private final ConnectionCommonCache<CacheIdentifier, RedfishConnect> connectionCommonCache;
+
+    public RedfishCollectImpl() {
+        connectionCommonCache = new ConnectionCommonCache<>();
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         try {
@@ -88,13 +94,13 @@ public class RedfishCollectImpl extends AbstractCollect {
                 .username(redfishProtocol.getUsername())
                 .build();
         ConnectSession redfishConnectSession = null;
-        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
+        Optional<RedfishConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
         if (cacheOption.isPresent()) {
-            RedfishConnect redfishConnect = (RedfishConnect) cacheOption.get();
+            RedfishConnect redfishConnect = cacheOption.get();
             redfishConnectSession = redfishConnect.getConnection();
             if (redfishConnectSession == null || !redfishConnectSession.isOpen()) {
                 redfishConnectSession = null;
-                ConnectionCommonCache.getInstance().removeCache(identifier);
+                connectionCommonCache.removeCache(identifier);
             }
         }
         if (redfishConnectSession != null) {
@@ -102,7 +108,7 @@ public class RedfishCollectImpl extends AbstractCollect {
         }
         RedfishClient redfishClient = RedfishClient.create(redfishProtocol);
         redfishConnectSession = redfishClient.connect();
-        ConnectionCommonCache.getInstance().addCache(identifier, new RedfishConnect(redfishConnectSession));
+        connectionCommonCache.addCache(identifier, new RedfishConnect(redfishConnectSession));
         return redfishConnectSession;
     }
 

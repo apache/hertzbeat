@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * jmx connect object
  **/
 @Slf4j
-public class JmxConnect implements AutoCloseable {
+public class JmxConnect extends AbstractConnection<JMXConnector> {
 
     private final JMXConnector connection;
 
@@ -34,12 +34,13 @@ public class JmxConnect implements AutoCloseable {
 
 
     @Override
-    public void close() throws Exception {
+    public void closeConnection() throws Exception {
         if (connection != null) {
             connection.close();
         }
     }
 
+    @Override
     public JMXConnector getConnection() {
         return connection;
     }
