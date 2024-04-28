@@ -4,8 +4,9 @@ title: 依赖时序数据库服务VictoriaMetrics安装初始化
 sidebar_label: 使用VictoriaMetrics存储指标数据(推荐)    
 ---
 
-HertzBeat的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
-我们推荐使用并长期支持VictoriaMetrics
+Apache HertzBeat(Incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
+
+> 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
 
 VictoriaMetrics，是一个快速高效、经济并且可扩展的监控解决方案和时序数据库，兼容 Prometheus 生态。推荐版本(VictoriaMetrics:v1.95.1+, HertzBeat:v1.4.3+)
 

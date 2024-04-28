@@ -142,7 +142,7 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 
 ### 完全开源
 
-- Dromara开源社区顶级项目，Gitee GVP，使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
+- Apache 基金会孵化器下开源项目，Gitee GVP，使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
 - 无监控数量`License`，监控类型等伪开源限制。
 - 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
 - 开源不等同于免费，基于HertzBeat二次开发需保留页面脚注，版权等。

@@ -3,7 +3,7 @@ id: extend-http-default
 title: HTTP协议系统默认解析方式  
 sidebar_label: 系统默认解析方式
 ---
-> HTTP接口调用获取响应数据后，用HertzBeat默认的解析方式去解析响应数据。    
+> HTTP接口调用获取响应数据后，用 Apache HertzBeat(Incubating) 默认的解析方式去解析响应数据。    
 
 **此需接口响应数据结构符合HertzBeat指定的数据结构规则**   
 
