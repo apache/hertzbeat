@@ -4,7 +4,7 @@ title: Quick Tutorial Customize and adapt a monitoring based on HTTP protocol
 sidebar_label: Tutorial Case
 ---
 
-Through this tutorial, we describe step by step how to customize and adapt a monitoring type based on the http protocol under the hertzbeat monitoring tool.
+Through this tutorial, we describe step by step how to customize and adapt a monitoring type based on the http protocol under the Apache HertzBeat(Incubating).
 
 Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [Http Protocol Customization](extend-http).
 
