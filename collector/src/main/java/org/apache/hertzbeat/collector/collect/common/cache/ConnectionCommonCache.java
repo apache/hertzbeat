@@ -76,8 +76,12 @@ public class ConnectionCommonCache {
                 .maximumWeightedCapacity(DEFAULT_MAX_CAPACITY)
                 .listener((key, value) -> {
                     timeoutMap.remove(key);
-                    if (value instanceof CacheCloseable closeable) {
-                        closeable.close();
+                    if (value instanceof AutoCloseable closeable) {
+                        try {
+                            closeable.close();
+                        } catch (Exception e) {
+                            log.error("connection close error: {}.", e.getMessage(), e);
+                        }
                     }
                     log.info("connection common cache discard key: {}, value: {}.", key, value);
                 }).build();
@@ -108,8 +112,12 @@ public class ConnectionCommonCache {
                         || cacheTime[0] + cacheTime[1] < currentTime) {
                     cacheMap.remove(key);
                     timeoutMap.remove(key);
-                    if (value instanceof CacheCloseable closeable) {
-                        closeable.close();
+                    if (value instanceof AutoCloseable closeable) {
+                        try {
+                            closeable.close();
+                        } catch (Exception e) {
+                            log.error("connection close error: {}.", e.getMessage(), e);
+                        }
                     }
 
                 }
@@ -135,9 +143,12 @@ public class ConnectionCommonCache {
                     log.warn("[connection common cache] clean the timeout cache, key {}", key);
                     timeoutMap.remove(key);
                     cacheMap.remove(key);
-                    if (value instanceof CacheCloseable closeable) {
-                        log.warn("[connection common cache] close the timeout cache, key {}", key);
-                        closeable.close();
+                    if (value instanceof AutoCloseable closeable) {
+                        try {
+                            closeable.close();
+                        } catch (Exception e) {
+                            log.error("connection close error: {}.", e.getMessage(), e);
+                        }
                     }
                 }
             });
@@ -213,8 +224,12 @@ public class ConnectionCommonCache {
     public void removeCache(Object key) {
         timeoutMap.remove(key);
         Object value = cacheMap.remove(key);
-        if (value instanceof CacheCloseable closeable) {
-            closeable.close();
+        if (value instanceof AutoCloseable closeable) {
+            try {
+                closeable.close();
+            } catch (Exception e) {
+                log.error("connection close error: {}.", e.getMessage(), e);
+            }
         }
     }
 
