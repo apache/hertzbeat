@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.hertzbeat.collector.dispatch.unit.impl.TimeLengthConvert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test case for {@link TimeLengthConvert}
