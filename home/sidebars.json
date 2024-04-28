@@ -200,6 +200,7 @@
             "help/shenyu",
             "help/rabbitmq",
             "help/activemq",
+            "help/rocketmq",
             "help/spring_gateway",
             "help/nacos"
           ]
@@ -218,7 +219,8 @@
             "help/hive",
             "help/airflow",
             "help/clickhouse",
-            "help/elasticsearch"
+            "help/elasticsearch",
+            "help/influxdb"
           ]
         },
         {

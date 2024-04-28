@@ -17,7 +17,26 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -25,14 +44,13 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
-import org.apache.hertzbeat.manager.dao.MonitorDao;
-import org.apache.hertzbeat.manager.pojo.dto.AppCount;
-import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
+import org.apache.hertzbeat.manager.pojo.dto.AppCount;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
@@ -53,17 +71,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 /**
  * newBranch feature-clickhouse#179
  * <a href="https://www.cnblogs.com/it1042290135/p/16202478.html">...</a>
  * <p>
  * <a href="http://clickhouse:9363/metrics">...</a>
- * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363 --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
+ * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363
+ * --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server
+ * --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
  * <p>
  * <p>
  * <a href="https://hub.docker.com/r/clickhouse/clickhouse-server/">...</a>
@@ -577,8 +592,8 @@ class MonitorServiceTest {
             assertEquals("The Monitor " + monitorId + " not exists", e.getMessage());
         }
         reset();
-        /**
-         * The [monitoring type] of monitor cannot be modified.
+        /*
+          The [monitoring type] of monitor cannot be modified.
          */
         Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").host("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));
@@ -588,8 +603,8 @@ class MonitorServiceTest {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
         reset();
-        Monitor existOKMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
-        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOKMonitor));
+        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
         assertThrows(MonitorDatabaseException.class, () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null));
@@ -598,8 +613,8 @@ class MonitorServiceTest {
     @Test
     void deleteMonitor() {
         long id = 1L;
-        Monitor existOKMonitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
-        when(monitorDao.findById(id)).thenReturn(Optional.of(existOKMonitor));
+        Monitor existOkMonitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+        when(monitorDao.findById(id)).thenReturn(Optional.of(existOkMonitor));
         doNothing().when(alertDefineBindDao).deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
         doNothing().when(tagMonitorBindDao).deleteTagMonitorBindsByMonitorId(id);
         assertDoesNotThrow(() -> monitorService.deleteMonitor(id));
