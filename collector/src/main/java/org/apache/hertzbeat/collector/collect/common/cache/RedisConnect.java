@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * redis connection
  */
 @Slf4j
-public class RedisConnect implements CacheCloseable {
+public class RedisConnect implements AutoCloseable {
 
     private final StatefulConnection<String, String> connection;
 
@@ -33,13 +33,9 @@ public class RedisConnect implements CacheCloseable {
     }
 
     @Override
-    public void close() {
-        try {
-            if (connection != null) {
-                connection.closeAsync();
-            }
-        } catch (Exception e) {
-            log.error("[connection common cache] close redis connect error: {}", e.getMessage());
+    public void close() throws Exception {
+        if (connection != null) {
+            connection.closeAsync();
         }
     }
 
