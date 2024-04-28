@@ -18,12 +18,11 @@
 package org.apache.hertzbeat.common.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Test case for {@link JsonUtil}

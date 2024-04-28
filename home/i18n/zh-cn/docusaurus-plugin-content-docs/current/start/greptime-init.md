@@ -4,8 +4,9 @@ title: 依赖时序数据库服务GreptimeDB安装初始化
 sidebar_label: 使用GreptimeDB存储指标数据(可选)    
 ---
 
-HertzBeat的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
-我们推荐使用并长期支持VictoriaMetrics
+Apache HertzBeat(Incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
+
+> 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
 
 GreptimeDB is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.   
 It's designed to work on infrastructure of the cloud era, and users benefit from its elasticity and commodity storage.

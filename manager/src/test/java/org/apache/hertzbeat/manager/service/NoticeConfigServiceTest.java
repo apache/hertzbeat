@@ -17,18 +17,27 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import com.google.common.collect.Lists;
-import org.apache.hertzbeat.manager.dao.NoticeReceiverDao;
-import org.apache.hertzbeat.manager.dao.NoticeRuleDao;
-import org.apache.hertzbeat.manager.dao.NoticeTemplateDao;
-import org.assertj.core.util.Maps;
+import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.manager.component.alerter.DispatcherAlarm;
+import org.apache.hertzbeat.manager.dao.NoticeReceiverDao;
+import org.apache.hertzbeat.manager.dao.NoticeRuleDao;
+import org.apache.hertzbeat.manager.dao.NoticeTemplateDao;
 import org.apache.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
+import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,14 +45,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 /**
  * Test case for {@link NoticeConfigService}

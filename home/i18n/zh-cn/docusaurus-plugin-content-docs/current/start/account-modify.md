@@ -1,10 +1,12 @@
 ---
 id: account-modify  
-title: 配置修改账户密码(可选)        
-sidebar_label: 配置修改账户密码(可选)      
+title: 配置修改账户密码和加密密钥        
+sidebar_label: 更新账户和密钥      
 ---
 
-HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat        
+## 更新账户
+
+Apache HertzBeat(Incubating) 默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat        
 若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤      
 修改位于安装目录下的 `/hertzbeat/config/sureness.yml` 的配置文件，docker环境目录为`opt/hertzbeat/config/sureness.yml`，建议提前挂载映射           
 配置文件内容参考 项目仓库[/script/sureness.yml](https://github.com/apache/hertzbeat/blob/master/script/sureness.yml)  
@@ -110,5 +112,19 @@ account:
      role: [guest]
 ```
 
+## 更新安全密钥
+
+> 此密钥为账户安全加密管理的密钥，需要更新为相同长度的你自定义密钥串。
+
+更新 `config` 目录下的 `application.yml` 文件，修改 `sureness.jwt.secret` 参数为你自定义的相同长度的密钥串。
+
+```yaml
+sureness:
+  jwt:
+    secret: 'CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
+             LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+             8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
+             dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
+```
 
 **重启 HertzBeat 浏览器访问 http://ip:1157/ 即可探索使用 HertzBeat**  

@@ -4,8 +4,9 @@ title: 依赖时序数据库服务TDengine安装初始化
 sidebar_label: 使用TDengine存储指标数据(可选)    
 ---
 
-HertzBeat的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
-我们推荐使用并长期支持VictoriaMetrics
+Apache HertzBeat(Incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
+
+> 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
 
 TDengine是一款开源物联网时序型数据库，我们用其存储采集到的监控指标历史数据。 注意支持⚠️ 3.x版本。   
 

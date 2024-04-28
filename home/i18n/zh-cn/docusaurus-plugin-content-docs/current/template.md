@@ -4,7 +4,7 @@ title: 监控模版中心
 sidebar_label: 监控模版
 ---
 
-> Hertzbeat 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。  
+> Apache HertzBeat(Incubating) 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。  
 
 > 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，您只需在浏览器配置`YML`就能使用这些协议去自定义采集任何您想要的指标。    
 > 您相信只需配置下就能立刻适配一款`K8s`或`Docker`等新的监控类型吗？

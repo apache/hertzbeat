@@ -1745,6 +1745,42 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Alanxtl",
+      "name": "Alan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25652981?v=4",
+      "profile": "https://github.com/Alanxtl",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "zhangshenghang",
+      "name": "Jast",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29418975?v=4",
+      "profile": "http://www.hadoop.wiki/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "zuobiao-zhou",
+      "name": "Zhang Yuxuan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/61108539?v=4",
+      "profile": "https://github.com/zuobiao-zhou",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Pzz-2021",
+      "name": "P.P.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118056735?v=4",
+      "profile": "https://github.com/Pzz-2021",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

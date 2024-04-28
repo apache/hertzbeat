@@ -6,7 +6,7 @@ sidebar_label: 快速开始
 
 ### 🐕 开始使用
 
-- 如果您是想将HertzBeat部署到本地搭建监控系统，请参考下面的部署文档进行操作。
+- 如果您是想将 Apache HertzBeat(Incubating) 部署到本地搭建监控系统，请参考下面的部署文档进行操作。
 
 
 ### 🍞 HertzBeat安装   
