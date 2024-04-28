@@ -24,7 +24,7 @@ import org.apache.hertzbeat.collector.collect.redfish.ConnectSession;
  * redfish connect session
  */
 @Slf4j
-public class RedfishConnect implements AutoCloseable {
+public class RedfishConnect extends AbstractConnection<ConnectSession> {
     private final ConnectSession reddishConnectSession;
 
     public RedfishConnect(ConnectSession reddishConnectSession) {
@@ -32,12 +32,13 @@ public class RedfishConnect implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void closeConnection() throws Exception {
         if (reddishConnectSession != null) {
             reddishConnectSession.close();
         }
     }
 
+    @Override
     public ConnectSession getConnection() {
         return reddishConnectSession;
     }

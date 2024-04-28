@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * mongodb connect client
  */
 @Slf4j
-public class MongodbConnect implements AutoCloseable {
+public class MongodbConnect extends AbstractConnection<MongoClient> {
     private final MongoClient mongoClient;
 
     public MongodbConnect(MongoClient mongoClient) {
@@ -32,13 +32,14 @@ public class MongodbConnect implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception{
+    public void closeConnection() throws Exception {
         if (this.mongoClient != null) {
             this.mongoClient.close();
         }
     }
 
-    public MongoClient getMongoClient() {
+    @Override
+    public MongoClient getConnection() {
         return mongoClient;
     }
 }

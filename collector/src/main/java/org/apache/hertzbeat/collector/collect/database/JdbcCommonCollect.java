@@ -57,7 +57,11 @@ public class JdbcCommonCollect extends AbstractCollect {
     
     private static final String[] VULNERABLE_KEYWORDS = {"allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"};
 
-    public JdbcCommonCollect(){}
+    private final ConnectionCommonCache<CacheIdentifier, JdbcConnect> connectionCommonCache;
+
+    public JdbcCommonCollect(){
+        connectionCommonCache = new ConnectionCommonCache<>();
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
@@ -130,10 +134,10 @@ public class JdbcCommonCollect extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder()
                 .ip(url)
                 .username(username).password(password).build();
-        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
+        Optional<JdbcConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
         Statement statement = null;
         if (cacheOption.isPresent()) {
-            JdbcConnect jdbcConnect = (JdbcConnect) cacheOption.get();
+            JdbcConnect jdbcConnect = cacheOption.get();
             try {
                 statement = jdbcConnect.getConnection().createStatement();
                 // set query timeout
@@ -153,7 +157,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                     log.error(e2.getMessage());
                 }
                 statement = null;
-                ConnectionCommonCache.getInstance().removeCache(identifier);
+                connectionCommonCache.removeCache(identifier);
             }
         }
         if (statement != null) {
@@ -167,7 +171,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         statement.setQueryTimeout(timeoutSecond);
         statement.setMaxRows(1000);
         JdbcConnect jdbcConnect = new JdbcConnect(connection);
-        ConnectionCommonCache.getInstance().addCache(identifier, jdbcConnect);
+        connectionCommonCache.addCache(identifier, jdbcConnect);
         return statement;
     }
 

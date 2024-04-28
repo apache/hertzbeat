@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * jdbc common connection
  */
 @Slf4j
-public class JdbcConnect implements AutoCloseable {
+public class JdbcConnect extends AbstractConnection<Connection> {
 
     private final Connection connection;
 
@@ -33,12 +33,13 @@ public class JdbcConnect implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void closeConnection() throws Exception {
         if (connection != null) {
             connection.close();
         }
     }
 
+    @Override
     public Connection getConnection() {
         return connection;
     }

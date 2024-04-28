@@ -18,27 +18,25 @@
 package org.apache.hertzbeat.collector.collect.common.cache;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.sshd.client.session.ClientSession;
 
 /**
- * ssh connection holder
+ * AbstractConnection
  */
 @Slf4j
-public class SshConnect extends AbstractConnection<ClientSession> {
-    private final ClientSession clientSession;
+public abstract class AbstractConnection<T> implements AutoCloseable {
 
-    public SshConnect(ClientSession clientSession) {
-        this.clientSession = clientSession;
-    }
+    /**
+     * @return Returns the connection.
+     */
+    public abstract T getConnection();
+
+    /**
+     * Close connection
+     */
+    public abstract void closeConnection() throws Exception;
 
     @Override
-    public void closeConnection() throws Exception {
-        if (clientSession != null) {
-            clientSession.close();
-        }
-    }
-
-    public ClientSession getConnection() {
-        return clientSession;
+    public void close() throws Exception{
+        closeConnection();
     }
 }
