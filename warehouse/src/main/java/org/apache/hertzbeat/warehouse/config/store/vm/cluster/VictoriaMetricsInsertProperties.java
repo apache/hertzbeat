@@ -15,60 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.prometheus.parser;
-
-import java.util.List;
-import lombok.Data;
-import lombok.ToString;
+package org.apache.hertzbeat.warehouse.config.store.vm.cluster;
 
 /**
- * metric family
+ * vminsert configuration information
  */
-@Data
-@ToString
-public class MetricFamily {
-    
-    /**
-     * metric name
-     */
-    private String name;
-
-    /**
-     * metrics
-     */
-    private List<Metric> metricList;
-
-    /**
-     * Metric
-     */
-    @Data
-    public static class Metric {
-
-        /**
-         * labels
-         */
-        private List<Label> labels;
-
-        /**
-         * value
-         */
-        private double value;
-    }
-
-    /**
-     * Label
-     */
-    @Data
-    public static class Label {
-
-        /**
-         * name
-         */
-        private String name;
-
-        /**
-         * value
-         */
-        private String value;
-    }
+public record VictoriaMetricsInsertProperties(
+        String url,
+        String username,
+        String password
+) {
 }

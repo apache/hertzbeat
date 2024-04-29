@@ -950,7 +950,8 @@ export default function () {
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/gjjjj0101"><img
                     src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;"
                     alt="Gao Jian"/><br/><sub><b>Gao Jian</b></sub></a><br/><a
-                    href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a></td>
+                    href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a> <a
+                    href="#design-gjjjj0101" title="Design">🎨</a></td>
                 </tr>
                 <tr>
                   <td align="center" valign="top" width="14.28%"><a href="https://jangto.tistory.com/"><img
@@ -1012,6 +1013,11 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/118056735?v=4?s=100" width="100px;"
                     alt="P.P."/><br/><sub><b>P.P.</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=Pzz-2021" title="Code">💻</a></td>
+                </tr>
+                <tr>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/LLP2333"><img
+                    src="https://avatars.githubusercontent.com/u/61670545?v=4?s=100" width="100px;" alt="llp2333"/><br/><sub><b>llp2333</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=LLP2333" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>

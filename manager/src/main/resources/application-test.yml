@@ -30,6 +30,8 @@ spring:
       eclipselink:
         logging:
           level: SEVERE
+  flyway:
+    enabled: false
   mail:
     host: smtp.exmail.qq.com
     username: example@tancloud.cn

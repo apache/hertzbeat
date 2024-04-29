@@ -68,9 +68,11 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     private static final String UNIQUE_IDENTITY = "identity";
 
     private final ClientResources defaultClientResources;
-
+    private final ConnectionCommonCache<CacheIdentifier, RedisConnect> connectionCommonCache;
+    
     public RedisCommonCollectImpl() {
         defaultClientResources = DefaultClientResources.create();
+        connectionCommonCache = new ConnectionCommonCache<>();
     }
 
     @Override
@@ -185,7 +187,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClient redisClient = buildSingleClient(redisProtocol);
             connection = redisClient.connect();
-            ConnectionCommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
+            connectionCommonCache.addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -223,7 +225,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClusterClient redisClusterClient = buildClusterClient(redisProtocol);
             connection = redisClusterClient.connect();
-            ConnectionCommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
+            connectionCommonCache.addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -236,9 +238,9 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      */
     private StatefulConnection<String, String> getStatefulConnection(CacheIdentifier identifier) {
         StatefulConnection<String, String> connection = null;
-        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
+        Optional<RedisConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
         if (cacheOption.isPresent()) {
-            RedisConnect redisConnect = (RedisConnect) cacheOption.get();
+            RedisConnect redisConnect = cacheOption.get();
             connection = redisConnect.getConnection();
             if (!connection.isOpen()) {
                 try {
@@ -247,7 +249,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                     log.info("The redis connect form cache, close error: {}", e.getMessage());
                 }
                 connection = null;
-                ConnectionCommonCache.getInstance().removeCache(identifier);
+                connectionCommonCache.removeCache(identifier);
             }
         }
         return connection;

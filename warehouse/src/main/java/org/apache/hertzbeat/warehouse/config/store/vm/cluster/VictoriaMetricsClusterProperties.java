@@ -15,60 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.prometheus.parser;
+package org.apache.hertzbeat.warehouse.config.store.vm.cluster;
 
-import java.util.List;
-import lombok.Data;
-import lombok.ToString;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * metric family
+ * Victoriametrics configuration information
  */
-@Data
-@ToString
-public class MetricFamily {
-    
-    /**
-     * metric name
-     */
-    private String name;
-
-    /**
-     * metrics
-     */
-    private List<Metric> metricList;
-
-    /**
-     * Metric
-     */
-    @Data
-    public static class Metric {
-
-        /**
-         * labels
-         */
-        private List<Label> labels;
-
-        /**
-         * value
-         */
-        private double value;
-    }
-
-    /**
-     * Label
-     */
-    @Data
-    public static class Label {
-
-        /**
-         * name
-         */
-        private String name;
-
-        /**
-         * value
-         */
-        private String value;
-    }
+@ConfigurationProperties(prefix = "warehouse.store.victoria-metrics.cluster")
+public record VictoriaMetricsClusterProperties(
+    VictoriaMetricsInsertProperties insert,
+    VictoriaMetricsSelectProperties select
+) {
 }

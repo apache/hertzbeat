@@ -15,60 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.prometheus.parser;
+package org.apache.hertzbeat.collector.collect.common.cache;
 
-import java.util.List;
-import lombok.Data;
-import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * metric family
+ * AbstractConnection
  */
-@Data
-@ToString
-public class MetricFamily {
-    
-    /**
-     * metric name
-     */
-    private String name;
+@Slf4j
+public abstract class AbstractConnection<T> implements AutoCloseable {
 
     /**
-     * metrics
+     * @return Returns the connection.
      */
-    private List<Metric> metricList;
+    public abstract T getConnection();
 
     /**
-     * Metric
+     * Close connection
      */
-    @Data
-    public static class Metric {
+    public abstract void closeConnection() throws Exception;
 
-        /**
-         * labels
-         */
-        private List<Label> labels;
-
-        /**
-         * value
-         */
-        private double value;
-    }
-
-    /**
-     * Label
-     */
-    @Data
-    public static class Label {
-
-        /**
-         * name
-         */
-        private String name;
-
-        /**
-         * value
-         */
-        private String value;
+    @Override
+    public void close() throws Exception{
+        closeConnection();
     }
 }

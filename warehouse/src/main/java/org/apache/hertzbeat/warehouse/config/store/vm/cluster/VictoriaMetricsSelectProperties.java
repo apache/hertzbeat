@@ -15,15 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.common.cache;
+package org.apache.hertzbeat.warehouse.config.store.vm.cluster;
 
 /**
- * resource in cache remove callback
+ * vmselect configuration information
  */
-public interface CacheCloseable {
-
-    /**
-     * when the resource in cache want to be removed, callback this
-     */
-    void close();
+public record VictoriaMetricsSelectProperties(
+        String url,
+        String username,
+        String password
+) {
 }
