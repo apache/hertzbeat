@@ -113,7 +113,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
             log.error("alert does not have mapping default notice template. type: {}.", type());
             throw new NullPointerException(type() + " does not have mapping default notice template");
         }
-        // TODO 单实例复用缓存 考虑多线程问题
+        // Single instance reuse cache considers mulitple-threading issues
         String templateName = "freeMakerTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
         cfg.setTemplateLoader(stringLoader);

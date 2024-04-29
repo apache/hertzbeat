@@ -437,7 +437,7 @@
     "message": "将 Http,Jmx,Ssh,Snmp,Jdbc 等协议规范可配置模版化，只需在线配置YML就可自定义监控指标。{br} 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。{br}自由的告警阈值规则，邮箱，短信，钉钉，企业微信，飞书，Webhook等消息及时送达。{br} 您相信只需配置下就能适配新K8s监控类型吗？"
   },
   "opensource-content": {
-    "message": "HertzBeat 的单机集群版全开源，基于Apache2.0 License。{br}欢迎任何对此有兴趣的同学参与其中，贡献不分大小，无论是文档代码或者错别字，我们尊重每一位同学，一起学习进步成长。{br}希望我们参与的代码能被部署到全球成千上万机器上。{github}"
+    "message": "Apache HertzBeat(Incubating) 的单机集群版全开源，基于 Apache2.0 License。{br}欢迎任何对此有兴趣的同学参与其中，贡献不分大小，无论是文档代码或者错别字，我们尊重每一位同学，一起学习进步成长。{br}希望我们参与的代码能被部署到全球成千上万机器上。{github}"
   },
   "slogan": {
     "message": "易用友好的开源实时监控系统"
@@ -464,7 +464,7 @@
     "message": "快速开始"
   },
   "Who uses HertzBeat?": {
-    "message": "Who uses HertzBeat?"
+    "message": "谁在使用 Apache HertzBeat (Incubating)"
   },
   "Support HertzBeat": {
     "message": "Support HertzBeat"

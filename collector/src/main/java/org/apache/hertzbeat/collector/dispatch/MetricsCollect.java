@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import com.googlecode.aviator.AviatorEvaluator;
-import com.googlecode.aviator.Expression;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -28,6 +26,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.jexl3.JexlExpression;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
 import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
@@ -40,6 +39,7 @@ import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.Pair;
 
 /**
@@ -203,11 +203,11 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         }
         // eg: database_pages=Database pages unconventional mapping 
         Map<String, String> fieldAliasMap = new HashMap<>(8);
-        Map<String, Expression> fieldExpressionMap = metrics.getCalculates()
+        Map<String, JexlExpression> fieldExpressionMap = metrics.getCalculates()
                 .stream()
                 .map(cal -> transformCal(cal, fieldAliasMap))
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Expression) arr[1], (oldValue, newValue) -> newValue));
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (JexlExpression) arr[1], (oldValue, newValue) -> newValue));
 
         if (metrics.getUnits() == null) {
             metrics.setUnits(Collections.emptyList());
@@ -220,46 +220,47 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
         List<Metrics.Field> fields = metrics.getFields();
         List<String> aliasFields = metrics.getAliasFields();
-        Map<String, String> aliasFieldValueMap = new HashMap<>(16);
-        Map<String, Object> fieldValueMap = new HashMap<>(16);
+        Map<String, String> aliasFieldValueMap = new HashMap<>(8);
+        Map<String, Object> fieldValueMap = new HashMap<>(8);
+        Map<String, String> aliasFieldUnitMap = new HashMap<>(8);
         CollectRep.ValueRow.Builder realValueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (CollectRep.ValueRow aliasRow : aliasRowList) {
             for (int aliasIndex = 0; aliasIndex < aliasFields.size(); aliasIndex++) {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
+                String aliasField = aliasFields.get(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
-                    aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
+                    aliasFieldValueMap.put(aliasField, aliasFieldValue);
+                    // whether the alias field is a number
+                    CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                            .extractDoubleAndUnitFromStr(aliasFieldValue);
+                    if (doubleAndUnit != null) {
+                        fieldValueMap.put(aliasField, doubleAndUnit.getValue());
+                        if (doubleAndUnit.getUnit() != null) {
+                            aliasFieldUnitMap.put(aliasField, doubleAndUnit.getUnit());
+                        }
+                    } else {
+                        fieldValueMap.put(aliasField, aliasFieldValue);
+                    }
+                } else {
+                    fieldValueMap.put(aliasField, null);
                 }
             }
 
             for (Metrics.Field field : fields) {
                 String realField = field.getField();
-                Expression expression = fieldExpressionMap.get(realField);
+                JexlExpression expression = fieldExpressionMap.get(realField);
                 String value = null;
                 String aliasFieldUnit = null;
                 if (expression != null) {
-                    // If there is a calculation expression, calculate the value
-                    if (CommonConstants.TYPE_NUMBER == field.getType()) {
-                        for (String variable : expression.getVariableFullNames()) {
-                            // extract double value and unit from aliasField value
-                            CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                    .extractDoubleAndUnitFromStr(aliasFieldValueMap.get(variable));
-                            if (doubleAndUnit != null) {
-                                Double doubleValue = doubleAndUnit.getValue();
-                                aliasFieldUnit = doubleAndUnit.getUnit();
-                                fieldValueMap.put(variable, doubleValue);
-                            } else {
-                                fieldValueMap.put(variable, null);
+                    try {
+                        for (Map.Entry<String, String> unitEntry : aliasFieldUnitMap.entrySet()) {
+                            if (expression.getSourceText().contains(unitEntry.getKey())) {
+                                aliasFieldUnit = unitEntry.getValue();
+                                break;
                             }
                         }
-                    } else {
-                        for (String variable : expression.getVariableFullNames()) {
-                            String strValue = aliasFieldValueMap.get(variable);
-                            fieldValueMap.put(variable, strValue);
-                        }
-                    }
-                    try {
                         // valueList为空时也执行,涵盖纯字符串赋值表达式
-                        Object objValue = expression.execute(fieldValueMap);
+                        Object objValue = JexlExpressionRunner.evaluate(expression, fieldValueMap);
                         if (objValue != null) {
                             value = String.valueOf(objValue);
                         }
@@ -274,16 +275,15 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     } else {
                         value = aliasFieldValueMap.get(realField);
                     }
-
+                    
                     if (value != null) {
                         final byte fieldType = field.getType();
-
                         if (fieldType == CommonConstants.TYPE_NUMBER) {
                             CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
                                     .extractDoubleAndUnitFromStr(value);
-                            final Double tempValue = doubleAndUnit.getValue();
+                            final Double tempValue = doubleAndUnit == null ? null : doubleAndUnit.getValue();
                             value = tempValue == null ? null : String.valueOf(tempValue);
-                            aliasFieldUnit = doubleAndUnit.getUnit();
+                            aliasFieldUnit = doubleAndUnit == null ? null : doubleAndUnit.getUnit();
                         } else if (fieldType == CommonConstants.TYPE_TIME) {
                             final int tempValue;
                             value = (tempValue = CommonUtil.parseTimeStrToSecond(value)) == -1 ? null : String.valueOf(tempValue);
@@ -314,9 +314,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     value = CommonConstants.NULL_VALUE;
                 }
                 realValueRowBuilder.addColumns(value);
-                fieldValueMap.clear();
             }
             aliasFieldValueMap.clear();
+            fieldValueMap.clear();
+            aliasFieldUnitMap.clear();
             collectData.addValues(realValueRowBuilder.build());
             realValueRowBuilder.clear();
         }
@@ -332,9 +333,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         int splitIndex = cal.indexOf("=");
         String field = cal.substring(0, splitIndex).trim();
         String expressionStr = cal.substring(splitIndex + 1).trim().replace("\\#", "#");
-        Expression expression;
+        JexlExpression expression;
         try {
-            expression = AviatorEvaluator.compile(expressionStr, true);
+            expression = JexlExpressionRunner.compile(expressionStr);
         } catch (Exception e) {
             fieldAliasMap.put(field, expressionStr);
             return null;

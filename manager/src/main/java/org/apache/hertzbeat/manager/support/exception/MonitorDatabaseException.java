@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.manager.support.exception;
 
 /**
- * 数据库操作异常
  * Database operation exception
  */
 public class MonitorDatabaseException extends RuntimeException {

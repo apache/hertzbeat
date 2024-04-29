@@ -4,7 +4,7 @@ title: HertzBeat 新版本更新指引
 sidebar_label: 版本更新指引     
 ---
 
-**HertzBeat 的发布版本列表**
+**Apache HertzBeat(Incubating) 的发布版本列表**
 
 - [Github Release](https://github.com/apache/hertzbeat/releases)
 - [Gitee Release](https://gitee.com/hertzbeat/hertzbeat/releases)

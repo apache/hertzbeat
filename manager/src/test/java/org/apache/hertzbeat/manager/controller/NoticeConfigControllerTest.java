@@ -17,11 +17,15 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.apache.hertzbeat.common.entity.manager.NoticeRule;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,12 +39,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Test case for {@link NoticeConfigController}
@@ -91,17 +89,18 @@ class NoticeConfigControllerTest {
         return noticeReceiver;
 
     }
+
     public NoticeTemplate getNoticeTemplate(){
         NoticeTemplate template = new NoticeTemplate();
         template.setId(5L);
         template.setName("Dingding");
-        template.setContent("[${title}]\n" +
-                "${targetLabel} : ${target}\n" +
-                "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
-                "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
-                "${priorityLabel} : ${priority}\n" +
-                "${triggerTimeLabel} : ${triggerTime}\n" +
-                "${contentLabel} : ${content}");
+        template.setContent("[${title}]\n"
+                + "${targetLabel} : ${target}\n"
+                + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
+                + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
+                + "${priorityLabel} : ${priority}\n"
+                + "${triggerTimeLabel} : ${triggerTime}\n"
+                + "${contentLabel} : ${content}");
         template.setType((byte) 5);
 
         return template;
@@ -259,7 +258,7 @@ class NoticeConfigControllerTest {
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-//                .andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))
+                //.andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))
                 .andReturn();
     }
 }

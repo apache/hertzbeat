@@ -24,7 +24,7 @@ import org.apache.sshd.client.session.ClientSession;
  * ssh connection holder
  */
 @Slf4j
-public class SshConnect implements CacheCloseable {
+public class SshConnect extends AbstractConnection<ClientSession> {
     private final ClientSession clientSession;
 
     public SshConnect(ClientSession clientSession) {
@@ -32,13 +32,9 @@ public class SshConnect implements CacheCloseable {
     }
 
     @Override
-    public void close() {
-        try {
-            if (clientSession != null) {
-                clientSession.close();
-            }
-        } catch (Exception e) {
-            log.error("[connection common cache] close ssh connect error: {}", e.getMessage());
+    public void closeConnection() throws Exception {
+        if (clientSession != null) {
+            clientSession.close();
         }
     }
 

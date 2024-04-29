@@ -36,7 +36,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Send alert information through FeiShu
- * 通过飞书发送告警信息
  */
 @Component
 @RequiredArgsConstructor
@@ -101,7 +100,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         private static final String MARKDOWN = "post";
 
         /**
-         * 消息类型
+         * Message type
          */
         @JsonProperty("msg_type")
         private String msgType = MARKDOWN;
@@ -111,7 +110,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     }
 
     /**
-     * 消息内容
+     * Message content
      */
     @Data
     private static class Content {
@@ -121,15 +120,17 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     @Data
     private static class FlyBookContent {
         /**
-         * 格式  目前支持文本、超链接、@人的功能  text  a  at
+         * format currently supports text、hyperlink、@people function
          */
         public String tag;
+
         /**
-         * 文本
+         * text
          */
         public String text;
+
         /**
-         * 超链接地址
+         * hyperlink address
          */
         public String href;
 
@@ -149,11 +150,12 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     @Data
     private static class ZhCn {
         /**
-         * 标题
+         * Title
          */
         public String title;
+
         /**
-         * 内容
+         * Content
          */
         public List<List<FlyBookContent>> content;
     }

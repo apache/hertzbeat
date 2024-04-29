@@ -42,7 +42,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.warehouse.History;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.TimePeriodUtil;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.config.store.jpa.JpaProperties;
 import org.apache.hertzbeat.warehouse.dao.HistoryDao;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Sort;
@@ -58,13 +58,13 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
     private final HistoryDao historyDao;
-    private final WarehouseProperties.StoreProperties.JpaProperties jpaProperties;
+    private final JpaProperties jpaProperties;
 
     private static final int STRING_MAX_LENGTH = 1024;
 
-    public HistoryJpaDatabaseDataStorage(WarehouseProperties properties,
+    public HistoryJpaDatabaseDataStorage(JpaProperties jpaProperties,
                                          HistoryDao historyDao) {
-        this.jpaProperties = properties.store().jpa();
+        this.jpaProperties = jpaProperties;
         this.serverAvailable = true;
         this.historyDao = historyDao;
         expiredDataCleaner();
@@ -128,15 +128,16 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         String metrics = metricsData.getMetrics();
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         try {
-            List<History> historyList = new LinkedList<>();
-            History.HistoryBuilder historyBuilder = History.builder()
-                    .monitorId(metricsData.getId())
-                    .app(monitorType)
-                    .metrics(metrics)
-                    .time(metricsData.getTime());
+            List<History> allHistoryList = new LinkedList<>();
             for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+                List<History> singleHistoryList = new LinkedList<>();
                 Map<String, String> labels = new HashMap<>(8);
                 for (int i = 0; i < fieldsList.size(); i++) {
+                    History.HistoryBuilder historyBuilder = History.builder()
+                            .monitorId(metricsData.getId())
+                            .app(monitorType)
+                            .metrics(metrics)
+                            .time(metricsData.getTime());
                     final CollectRep.Field field = fieldsList.get(i);
                     final int fieldType = field.getType();
                     final String fieldName = field.getName();
@@ -183,11 +184,12 @@ public class HistoryJpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                         }
                     }
 
-                    historyList.add(historyBuilder.build());
+                    singleHistoryList.add(historyBuilder.build());
                 }
-                historyBuilder.instance(JsonUtil.toJson(labels));
+                singleHistoryList.forEach(history -> history.setInstance(JsonUtil.toJson(labels)));
+                allHistoryList.addAll(singleHistoryList);
             }
-            historyDao.saveAll(historyList);
+            historyDao.saveAll(allHistoryList);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

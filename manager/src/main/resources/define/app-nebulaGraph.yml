@@ -13,133 +13,100 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
 category: db
-# 监控应用类型名称(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# The monitoring type eg: linux windows tomcat mysql aws...
 app: nebulaGraph
 # The app api i18n name
-# app api国际化名称
 name:
   zh-CN: NebulaGraph
   en-US: NebulaGraph
-# 监控类型的帮助描述信息
+# The description and help of this monitoring type
 help:
   zh-CN: Hertzbeat 将调用NebulaGraph提供的 HTTP API 监控接口，对nebulaGraph及存储数据的rocksdb的指标进行监测。
   en-US: Hertzbeat will call the HTTP API monitoring interface provided by NebulaGraph to monitor the indicators of NebulaGraph and the Rocksdb that stores data.
   zh-TW: Hertzbeat將調用NebulaGraph提供的HTTP API監控介面，對nebulaGraph及存儲數據的rocksdb的名額進行監測。
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 helpLink:
-  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nebulagraph
-  en-US: https://hertzbeat.apache.org/docs/help/nebulagraph
-# app api所需输入参数定义(根据定义渲染页面UI)
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nebulaGraph
+  en-US: https://hertzbeat.apache.org/docs/help/nebulaGraph
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
-  # field-字段名称标识符
   - field: host
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 目标Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # required-true or false
-    # 是否是必输项 true-必填 false-可选
     required: true
   # field-param field key
-  # field-变量字段标识符
   - field: graphPort
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: graph端口
       en-US: graphPort
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     # default value
-    # 默认值
     defaultValue: 19669
   - field: timePeriod
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: graph指标统计的时间范围(s)
       en-US: graph indicator statistics time range (s)
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,3600]'
     # required-true or false
-    # 是否是必输项 true-必填 false-可选
     required: true
     # default value 6000
-    # 默认值 6000
     defaultValue: 60
   - field: storagePort
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: storage端口
       en-US: storagePort
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     # default value
-    # 默认值
     defaultValue: 19779
   # field-param field key
-  # field-变量字段标识符
   - field: timeout
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 连接超时时间(ms)
       en-US: Connect Timeout(ms)
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,100000]'
     # required-true or false
-    # 是否是必输项 true-必填 false-可选
     required: true
     # default value 6000
-    # 默认值 6000
     defaultValue: 6000
 
 
 # collect metrics config list
-# 采集指标配置列表
 metrics:
   # metrics - available
-  # 监控指标 - available
   - name: nebulaGraph_stats
     i18n:
       zh-CN: nebulaGraph 统计信息
       en-US: nebulaGraph stats
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     fields:
       - field: responseTime
@@ -546,13 +513,11 @@ metrics:
       host: ^_^host^_^
       # http port
       port: ^_^graphPort^_^
-      # 时间间隔
+      # time period
       timePeriod: ^_^timePeriod^_^
       # http url
-      # url请求接口路径
       url: /stats
       # timeout
-      # 超时时间
       timeout: ^_^timeout^_^
   - name: rocksdb_stats
     i18n:
@@ -560,8 +525,6 @@ metrics:
       en-US: rocksdb stats
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     fields:
       - field: responseTime
@@ -769,8 +732,6 @@ metrics:
       # http port
       port: ^_^storagePort^_^
       # http url
-      # url请求接口路径
       url: /rocksdb_stats
       # timeout
-      # 超时时间
       timeout: ^_^timeout^_^

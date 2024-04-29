@@ -72,9 +72,7 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * Monitoring Type Management Implementation
- * 监控类型管理实现
  * temporarily stores the monitoring configuration and parameter configuration in memory and then stores it in the
- * 暂时将监控配置和参数配置存放内存 之后存入数据库
  */
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
@@ -255,7 +253,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public List<Hierarchy> getAllAppHierarchy(String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
         for (var job : appDefines.values()) {
-            // todo 暂时先过滤掉push以解决前端问题，待后续设计优化后放开
+            // TODO temporarily filter out push to solve the front-end problem, and open it after the subsequent design optimization
             if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
                 continue;
             }
@@ -377,7 +375,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         verifyDefineAppContent(app, isModify);
         appDefineStore.save(app.getApp(), ymlContent);
         appDefines.put(app.getApp().toLowerCase(), app);
-        // 解决 ：模板修改后，同类型模板的所有监控实例 ，在任务状态中，需要重新下发任务
+        // resolve: after the template is modified, all monitoring instances of the same type of template need to be reissued in the task status
         SpringContextHolder.getBean(MonitorService.class).updateAppCollectJob(app);
     }
 
@@ -461,9 +459,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     }
 
     /**
-     * 刷新配置存储
+     * flush config store
      *
-     * @param objectStoreConfig 文件服务配置
+     * @param objectStoreConfig file service configuration
      */
     private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
         if (objectStoreConfig == null) {
@@ -484,15 +482,16 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     private interface AppDefineStore {
 
         /**
-         * 加载所有采集任务配置
+         * The configuration of all collection tasks is loaded
+         *
          */
         boolean loadAppDefines();
 
         /**
-         * 加载某个采集任务配置
+         * Load a collection task configuration
          *
-         * @param app 应用名称
-         * @return 采集任务配置文本
+         * @param app app name
+         * @return collect task configuration text
          */
         String loadAppDefine(String app);
 

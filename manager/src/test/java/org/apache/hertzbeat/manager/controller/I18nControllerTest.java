@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import java.util.HashMap;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,10 +31,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.HashMap;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 /**
  * Test case for {@link I18nController}
@@ -56,10 +54,10 @@ class I18nControllerTest {
     @Test
     void queryI18n() throws Exception {
 
-        // The interface is called to return manufactured data｜ 调用接口返回制造的数据
+        // The interface is called to return manufactured data
         Mockito.when(appService.getI18nResources("zh-CN"))
                 .thenReturn(new HashMap<>());
-        // Request interface ｜ 请求接口
+        // Request interface
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/i18n/{lang}", "zh-CN"))
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

@@ -263,13 +263,13 @@
     "message": "Makes protocols such as Http, Jmx, Ssh, Snmp, Jdbc configurable, you can collect any metrics by simply configuring the yml online. {br} High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration. {br} Flexible threshold rules and timely notifications delivered via discord slack email webhook more."
   },
   "opensource-content": {
-    "message": "HertzBeat's stand-alone and cluster version code are all open source, unlimited and anyone who are interested in it are very welcome to contribute. No matter how small the contribution is, whether it is a document code or a typo, we respect everyone and learn and grow together. {br} Hope that the code we participate in can be deployed to thousands of machines in this world.{github}"
+    "message": "Apache HertzBeat(Incubating)'s stand-alone and cluster version code are all open source, unlimited and anyone who are interested in it are very welcome to contribute. No matter how small the contribution is, whether it is a document code or a typo, we respect everyone and learn and grow together. {br} Hope that the code we participate in can be deployed to thousands of machines in this world.{github}"
   },
   "slogan": {
     "message": "Open Source Real-time Monitoring System"
   },
   "Who uses HertzBeat?": {
-    "message": "Who uses HertzBeat?"
+    "message": "Who uses Apache HertzBeat (Incubating)?"
   },
   "theme.admonition.note": {
     "message": "note",

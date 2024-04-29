@@ -69,8 +69,10 @@ public class JmxCollectImpl extends AbstractCollect {
     private static final String IGNORED_STUB = "/stub/";
 
     private static final String SUB_ATTRIBUTE = "->";
+    private final ConnectionCommonCache<CacheIdentifier, JmxConnect> connectionCommonCache;
 
     public JmxCollectImpl() {
+        connectionCommonCache = new ConnectionCommonCache<>();
     }
 
     @Override
@@ -175,16 +177,16 @@ public class JmxCollectImpl extends AbstractCollect {
         CacheIdentifier identifier = CacheIdentifier.builder().ip(jmxProtocol.getHost())
                 .port(jmxProtocol.getPort()).username(jmxProtocol.getUsername())
                 .password(jmxProtocol.getPassword()).build();
-        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
+        Optional<JmxConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
         JMXConnector conn = null;
         if (cacheOption.isPresent()) {
-            JmxConnect jmxConnect = (JmxConnect) cacheOption.get();
+            JmxConnect jmxConnect = cacheOption.get();
             conn = jmxConnect.getConnection();
             try {
                 conn.getMBeanServerConnection();
             } catch (Exception e) {
                 conn = null;
-                ConnectionCommonCache.getInstance().removeCache(identifier);
+                connectionCommonCache.removeCache(identifier);
             }
         }
         if (conn != null) {
@@ -209,7 +211,7 @@ public class JmxCollectImpl extends AbstractCollect {
         }
         JMXServiceURL jmxServiceUrl = new JMXServiceURL(url);
         conn = JMXConnectorFactory.connect(jmxServiceUrl, environment);
-        ConnectionCommonCache.getInstance().addCache(identifier, new JmxConnect(conn));
+        connectionCommonCache.addCache(identifier, new JmxConnect(conn));
         return conn;
     }
 

@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * mongodb connect client
  */
 @Slf4j
-public class MongodbConnect implements CacheCloseable {
+public class MongodbConnect extends AbstractConnection<MongoClient> {
     private final MongoClient mongoClient;
 
     public MongodbConnect(MongoClient mongoClient) {
@@ -32,17 +32,14 @@ public class MongodbConnect implements CacheCloseable {
     }
 
     @Override
-    public void close() {
-        try {
-            if (this.mongoClient != null) {
-                this.mongoClient.close();
-            }
-        } catch (Exception e) {
-            log.error("[connection common cache] close mongodb connect error: {}", e.getMessage());
+    public void closeConnection() throws Exception {
+        if (this.mongoClient != null) {
+            this.mongoClient.close();
         }
     }
 
-    public MongoClient getMongoClient() {
+    @Override
+    public MongoClient getConnection() {
         return mongoClient;
     }
 }
