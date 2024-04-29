@@ -23,13 +23,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * NoticeRule数据库操作
  * NoticeRule database operations
  */
 public interface NoticeRuleDao extends JpaRepository<NoticeRule, Long>, JpaSpecificationExecutor<NoticeRule> {
 
     /**
-     * 查询所有已启用的通知策略
      * Query all enabled notification policies
      * @return notification policies
      */

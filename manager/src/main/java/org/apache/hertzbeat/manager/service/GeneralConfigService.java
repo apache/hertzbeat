@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.manager.service;
 
 /**
- * ConfigService接口，提供配置的增删查改操作。
  * <p>ConfigService interface provides CRUD operations for configurations.</p>
  * @param <T> 配置类型
  * @version 1.0
@@ -33,14 +32,14 @@ public interface GeneralConfigService<T> {
     String type();
     
     /**
-     * 保存更新配置
-     * @param config 需要保存的配置
+     * save config
+     * @param config need save configuration
      */
     void saveConfig(T config);
 
     /**
-     * 获取配置
-     * @return 查询到的配置
+     * get config
+     * @return query The configuration is queried
      */
     T getConfig();
     

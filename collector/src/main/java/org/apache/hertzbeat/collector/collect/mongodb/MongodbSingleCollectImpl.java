@@ -79,6 +79,12 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             "validateDBMetadata",
     };
 
+    private final ConnectionCommonCache<CacheIdentifier, MongodbConnect> connectionCommonCache;
+
+    public MongodbSingleCollectImpl() {
+        connectionCommonCache = new ConnectionCommonCache<>();
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         try {
@@ -124,7 +130,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             fillBuilder(metrics, valueRowBuilder, document);
             builder.addValues(valueRowBuilder.build());
         } catch (MongoServerUnavailableException | MongoTimeoutException unavailableException) {
-            ConnectionCommonCache.getInstance().removeCache(identifier);
+            connectionCommonCache.removeCache(identifier);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             String message = CommonUtil.getMessageFromThrowable(unavailableException);
             builder.setMsg(message);
@@ -169,9 +175,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
      * Check that the mongodb connection information in metrics is complete
      */
     private void preCheck(Metrics metrics) {
-        if (metrics == null || metrics.getMongodb() == null) {
-            throw new IllegalArgumentException("Mongodb collect must has mongodb params");
-        }
+        Assert.isTrue(metrics != null && metrics.getMongodb() != null, "Mongodb collect must has mongodb params");
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
         Assert.hasText(mongodbProtocol.getCommand(), "Mongodb Protocol command is required.");
         Assert.hasText(mongodbProtocol.getHost(), "Mongodb Protocol host is required.");
@@ -196,11 +200,11 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     private MongoClient getClient(Metrics metrics, CacheIdentifier identifier) {
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
 
-        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
+        Optional<MongodbConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
         MongoClient mongoClient = null;
         if (cacheOption.isPresent()) {
-            MongodbConnect mongodbConnect = (MongodbConnect) cacheOption.get();
-            mongoClient = mongodbConnect.getMongoClient();
+            MongodbConnect mongodbConnect = cacheOption.get();
+            mongoClient = mongodbConnect.getConnection();
         }
         if (mongoClient != null) {
             return mongoClient;
@@ -222,7 +226,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         mongoClient = MongoClients.create(settings);
 
         MongodbConnect mongodbConnect = new MongodbConnect(mongoClient);
-        ConnectionCommonCache.getInstance().addCache(identifier, mongodbConnect, 3600 * 1000L);
+        connectionCommonCache.addCache(identifier, mongodbConnect, 3600 * 1000L);
         return mongoClient;
     }
 }

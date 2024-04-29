@@ -60,7 +60,8 @@ public class PushCollectImpl extends AbstractCollect {
 
     private static final Integer SUCCESS_CODE = 200;
 
-    // 第一次采集多久之前的数据，其实没有办法确定，因为无法确定上次何时采集，难以避免重启后重复采集的现象，默认30s
+    // It's hard to determine how long ago the first data collection was, because there's no way to know when the last collection occurred.
+    // This makes it difficult to avoid re-collecting data after a restart. The default is 30 seconds
     private static final Integer firstCollectInterval = 30000;
 
     public PushCollectImpl() {
@@ -152,7 +153,7 @@ public class PushCollectImpl extends AbstractCollect {
     }
 
     private void parseResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metric) {
-        Message<PushMetricsDto> msg = JsonUtil.fromJson(resp, new TypeReference<Message<PushMetricsDto>>() {
+        Message<PushMetricsDto> msg = JsonUtil.fromJson(resp, new TypeReference<>() {
         });
         if (msg == null) {
             throw new NullPointerException("parse result is null");

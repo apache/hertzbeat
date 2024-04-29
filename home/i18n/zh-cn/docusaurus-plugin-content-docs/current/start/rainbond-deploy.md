@@ -4,7 +4,7 @@ title: 使用 Rainbond 部署 HertzBeat
 sidebar_label: Rainbond方式部署    
 ---
 
-如果你不熟悉 Kubernetes，想在 Kubernetes 中安装 HertzBeat，可以使用 Rainbond 来部署。Rainbond 是一个基于 Kubernetes 构建的云原生应用管理平台，可以很简单的将你的应用部署到 Kubernetes中。
+如果你不熟悉 Kubernetes，想在 Kubernetes 中安装 Apache HertzBeat(Incubating)，可以使用 Rainbond 来部署。Rainbond 是一个基于 Kubernetes 构建的云原生应用管理平台，可以很简单的将你的应用部署到 Kubernetes中。
 
 ## 前提
 

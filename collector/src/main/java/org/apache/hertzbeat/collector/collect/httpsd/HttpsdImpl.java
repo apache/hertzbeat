@@ -20,8 +20,10 @@
 package org.apache.hertzbeat.collector.collect.httpsd;
 
 import com.ecwid.consul.transport.TransportException;
+import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.Field;
 import java.util.Objects;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -42,7 +44,10 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 @Slf4j
 public class HttpsdImpl extends AbstractCollect {
     private static final  String SERVER = "server";
-    private final DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
+
+    @Setter
+    @VisibleForTesting
+    private DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {

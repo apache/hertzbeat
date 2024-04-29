@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Monitor Define transfer body | 监控类型定义传输体")
+@Schema(description = "Monitor Define transfer body")
 public class MonitorDefineDto {
 
     @Schema(description = "Define content", example = "1", accessMode = READ_ONLY)

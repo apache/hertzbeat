@@ -74,7 +74,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
                 long responseTime = System.currentTimeMillis() - startTime;
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                // 发送统计命令
+                // Send a command to collect statistics
                 Map<String, String> resultMap = new HashMap<>(128);
                 parseCmdResponse(resultMap, in, out, STATS);
                 parseCmdResponse(resultMap, in, out, STATS_SETTINGS);
@@ -82,7 +82,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
 
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
-                //  关闭输出流和Socket连接
+                //  Close the output stream and socket connection
                 in.close();
                 out.close();
                 socket.close();
@@ -130,7 +130,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
         out.println(cmd);
         String line;
         while ((line = in.readLine()) != null && !line.equals(STATS_END_RSP)) {
-            // 解析每一行，将键值对存入HashMap
+            // Parse each line and store the key-value pairs in a HashMap
             String[] parts = line.split(" ");
             if (parts.length == 3) {
                 statsMap.put(parts[1], parts[2]);
@@ -145,7 +145,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
         String line;
         while ((line = in.readLine()) != null && !line.equals(STATS_END_RSP)) {
             String[] parts = line.split("\\s+");
-            // 提取 slab size 和 slab count，并放入HashMap
+            // Extract slab size and slab count, then add them to the HashMap
             if (parts.length >= 3 && "STAT".equals(parts[0])) {
                 statsMap.put("item_size", parts[1]);
                 statsMap.put("item_count", parts[2]);

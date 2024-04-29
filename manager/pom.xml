@@ -116,6 +116,19 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
+        <!-- database migration -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
         <!-- mysql -->
         <dependency>
             <groupId>mysql</groupId>
@@ -194,6 +207,7 @@
                     <include>*.xml</include>
                     <include>banner.txt</include>
                     <include>define/**</include>
+                    <include>db/**</include>
                     <include>templates/**</include>
                     <include>**/*.html</include>
                 </includes>

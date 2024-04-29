@@ -80,7 +80,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
- * 监控管理服务实现
  * Monitoring and management service implementation
  */
 @Service
@@ -232,7 +231,7 @@ public class MonitorServiceImpl implements MonitorService {
         tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type((byte) 0).build());
         tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type((byte) 0).build());
         Job appDefine = appService.getAppDefine(monitor.getApp());
-        //设置用户可选指标
+        // set user optional metrics
         List<Metrics> metricsDefine = appDefine.getMetrics();
         Set<String> metricsDefineNamesSet = metricsDefine.stream()
                 .map(Metrics::getName)
@@ -253,10 +252,8 @@ public class MonitorServiceImpl implements MonitorService {
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // Send the collection task to get the job ID
-        // 下发采集任务得到jobId
         long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, null);
         // Brush the library after the download is successful
-        // 下发成功后刷库
         try {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
@@ -266,7 +263,6 @@ public class MonitorServiceImpl implements MonitorService {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
-            // 刷库异常取消之前的下发任务
             collectJobScheduling.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
@@ -319,7 +315,6 @@ public class MonitorServiceImpl implements MonitorService {
     @Transactional(readOnly = true)
     public void validate(MonitorDto monitorDto, Boolean isModify) throws IllegalArgumentException {
         // The request monitoring parameter matches the monitoring parameter definition mapping check
-        // 请求监控参数与监控参数定义映射校验匹配
         Monitor monitor = monitorDto.getMonitor();
         monitor.setHost(monitor.getHost().trim());
         monitor.setName(monitor.getName().trim());
@@ -361,7 +356,7 @@ public class MonitorServiceImpl implements MonitorService {
         } else {
             monitorDto.setCollector(null);
         }
-        // Parameter definition structure verification  参数定义结构校验
+        // Parameter definition structure verification
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
         if (paramDefines != null) {
             for (ParamDefine paramDefine : paramDefines) {
@@ -418,7 +413,6 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "password":
                             // The plaintext password needs to be encrypted for transmission and storage
-                            // 明文密码需加密传输存储
                             String passwordValue = param.getParamValue();
                             if (!AesUtil.isCiphertext(passwordValue)) {
                                 passwordValue = AesUtil.aesEncode(passwordValue);
@@ -435,7 +429,7 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         case "radio":
-                            // radio single value check  radio单选值校验
+                            // radio single value check
                             List<ParamDefine.Option> options = paramDefine.getOptions();
                             boolean invalid = true;
                             if (options != null) {
@@ -486,7 +480,6 @@ public class MonitorServiceImpl implements MonitorService {
                             }
                             break;
                         // todo More parameter definitions and actual value format verification
-                        // 更多参数定义与实际值格式校验
                         default:
                             throw new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid.");
                     }
@@ -500,7 +493,6 @@ public class MonitorServiceImpl implements MonitorService {
     public void modifyMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
         long monitorId = monitor.getId();
         // Check to determine whether the monitor corresponding to the monitor id exists
-        // 查判断monitorId对应的此监控是否存在
         Optional<Monitor> queryOption = monitorDao.findById(monitorId);
         if (queryOption.isEmpty()) {
             throw new IllegalArgumentException("The Monitor " + monitorId + " not exists");
@@ -508,11 +500,9 @@ public class MonitorServiceImpl implements MonitorService {
         Monitor preMonitor = queryOption.get();
         if (!preMonitor.getApp().equals(monitor.getApp())) {
             // The type of monitoring cannot be modified
-            // 监控的类型不能修改
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
         // Auto Update Default Tags: monitorName
-        // 自动更新默认的Tag： 监控名字
         List<Tag> tags = monitor.getTags();
         if (tags == null) {
             tags = new LinkedList<>();
@@ -525,7 +515,6 @@ public class MonitorServiceImpl implements MonitorService {
         }
         if (preMonitor.getStatus() != CommonConstants.UN_MANAGE_CODE) {
             // Construct the collection task Job entity
-            // 构造采集任务Job实体
             Job appDefine = appService.getAppDefine(monitor.getApp());
             if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
                 appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -549,7 +538,6 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setJobId(newJobId);
         }
         // After the update is successfully released, refresh the database
-        // 下发更新成功后刷库
         try {
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitorId);
             if (collector != null) {
@@ -568,7 +556,6 @@ public class MonitorServiceImpl implements MonitorService {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
-            // 刷库异常取消之前的下发任务
             collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
             throw new MonitorDatabaseException(e.getMessage());
         }
@@ -649,9 +636,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void cancelManageMonitors(HashSet<Long> ids) {
         // Update monitoring status Delete corresponding monitoring periodic task
-        // 更新任务状态  删除对应的监控周期性任务
         // The jobId is not deleted, and the jobId is reused again after the management is started.
-        // jobId不删除 待启动纳管之后再次复用jobId
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
                         monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
@@ -668,7 +653,6 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void enableManageMonitors(HashSet<Long> ids) {
         // Update monitoring status Add corresponding monitoring periodic task
-        // 更新任务状态 新增对应的监控周期性任务
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
                         monitor.getStatus() == CommonConstants.UN_MANAGE_CODE)
@@ -677,7 +661,6 @@ public class MonitorServiceImpl implements MonitorService {
         if (!unManagedMonitors.isEmpty()) {
             for (Monitor monitor : unManagedMonitors) {
                 // Construct the collection task Job entity
-                // 构造采集任务Job实体
                 Job appDefine = appService.getAppDefine(monitor.getApp());
                 if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
                     appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
@@ -699,7 +682,7 @@ public class MonitorServiceImpl implements MonitorService {
                     }
                 });
                 appDefine.setConfigmap(configmaps);
-                // Issue collection tasks       下发采集任务
+                // Issue collection tasks
                 Optional<CollectorMonitorBind> bindOptional =
                         collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
                 long newJobId = bindOptional.map(bind ->
@@ -719,7 +702,6 @@ public class MonitorServiceImpl implements MonitorService {
             return null;
         }
         //Statistical category information, calculate the number of corresponding states for each monitor
-        //统计类别信息，计算每个监控分别对应状态的数量
         Map<String, AppCount> appCountMap = new HashMap<>(appCounts.size());
         for (AppCount item : appCounts) {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
@@ -733,7 +715,6 @@ public class MonitorServiceImpl implements MonitorService {
             appCountMap.put(item.getApp(), appCount);
         }
         //Traverse the map obtained by statistics and convert it into a List<App Count> result set
-        //遍历统计得到的map，转换成List<App Count>结果集
         return appCountMap.values().stream().map(item -> {
             item.setSize(item.getAvailableSize() + item.getUnManageSize() + item.getUnAvailableSize());
             try {
@@ -804,7 +785,7 @@ public class MonitorServiceImpl implements MonitorService {
                 appDefine.setConfigmap(configmaps);
                 // if is pinned collector
                 String collector = monitorIdCollectorMap.get(monitor.getId());
-                // 下发采集任务
+                // Delivering a collection task
                 long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
                 monitorDao.save(monitor);   
