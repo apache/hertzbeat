@@ -70,7 +70,7 @@ class AlertDefinesControllerTest {
     Integer pageSize = 7;
   
     // Parameter collection
-    Map<String, Object> content = new HashMap<String, Object>();
+    Map<String, Object> content = new HashMap<>();
 
     // Object for mock
     PageRequest pageRequest;
@@ -89,7 +89,7 @@ class AlertDefinesControllerTest {
         content.put("pageIndex", pageIndex);
         content.put("pageSize", pageSize);
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(content.get("order").toString()), content.get("sort").toString()));
-        pageRequest = PageRequest.of(((Integer) content.get("pageIndex")).intValue(), ((Integer) content.get("pageSize")).intValue(), sortExp);
+        pageRequest = PageRequest.of((Integer) content.get("pageIndex"), (Integer) content.get("pageSize"), sortExp);
     }
 
     //    @Test
