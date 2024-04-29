@@ -417,7 +417,7 @@ public class HashedWheelTimer implements Timer {
     }
 
     private final class Worker implements Runnable {
-        private final Set<Timeout> unprocessedTimeouts = new HashSet<Timeout>();
+        private final Set<Timeout> unprocessedTimeouts = new HashSet<>();
 
         private long tick;
 
