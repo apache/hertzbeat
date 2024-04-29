@@ -113,7 +113,7 @@ public class CollectUtil {
         } catch (Exception e) {
             log.debug(e.getMessage());
         }
-        return doubleAndUnit;
+        return null;
     }
 
     /**

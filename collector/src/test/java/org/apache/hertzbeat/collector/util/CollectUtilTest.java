@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -74,6 +75,7 @@ class CollectUtilTest {
     @Test
     void extractDoubleAndUnitFromStr() {
         CollectUtil.DoubleAndUnit res1 = CollectUtil.extractDoubleAndUnitFromStr("20.5%");
+        assertNotNull(res1);
         assertEquals(20.5, res1.getValue());
         assertEquals("%", res1.getUnit());
 
@@ -81,6 +83,7 @@ class CollectUtilTest {
         assertNull(res2);
 
         CollectUtil.DoubleAndUnit res3 = CollectUtil.extractDoubleAndUnitFromStr("KB");
+        assertNotNull(res3);
         assertEquals(0, res3.getValue());
         assertEquals("KB", res3.getUnit());
     }
