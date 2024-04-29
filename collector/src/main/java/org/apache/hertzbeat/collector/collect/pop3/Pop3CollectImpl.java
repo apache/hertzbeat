@@ -76,11 +76,6 @@ public class Pop3CollectImpl extends AbstractCollect {
                 builder.setCode(CollectRep.Code.UN_CONNECTABLE);
                 builder.setMsg("Peer connect failed，Timeout " + pop3Protocol.getTimeout() + "ms");
             }
-        } catch (IOException e1) {
-            String errorMsg = CommonUtil.getMessageFromThrowable(e1);
-            log.info(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
         } catch (Exception e2) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);

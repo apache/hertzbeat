@@ -122,7 +122,7 @@ public class PushServiceImpl implements PushService {
                 if (pushMetrics == null || pushMetrics.getMetrics() == null) {
                     return pushMetricsDto;
                 }
-                List<Map<String, String>> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<List<Map<String, String>>>() {
+                List<Map<String, String>> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<>() {
                 });
                 metrics = PushMetricsDto.Metrics.builder().monitorId(monitorId).metrics(jsonMap).time(pushMetrics.getTime()).build();
                 lastPushMetrics.put(monitorId, metrics);
