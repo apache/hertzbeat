@@ -204,7 +204,8 @@
             "help/activemq",
             "help/rocketmq",
             "help/spring_gateway",
-            "help/nacos"
+            "help/nacos",
+            "help/kafka"
           ]
         },
         {

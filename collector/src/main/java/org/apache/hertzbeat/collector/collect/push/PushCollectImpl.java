@@ -153,7 +153,7 @@ public class PushCollectImpl extends AbstractCollect {
     }
 
     private void parseResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metric) {
-        Message<PushMetricsDto> msg = JsonUtil.fromJson(resp, new TypeReference<Message<PushMetricsDto>>() {
+        Message<PushMetricsDto> msg = JsonUtil.fromJson(resp, new TypeReference<>() {
         });
         if (msg == null) {
             throw new NullPointerException("parse result is null");
