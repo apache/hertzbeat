@@ -110,7 +110,8 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
     private List<TagItem> extractTagDataFromRow(Cell cell) {
         String jsonStr = getCellValueAsString(cell);
         if (StringUtils.hasText(jsonStr)) {
-            return JsonUtil.fromJson(jsonStr, new TypeReference<List<TagItem>>() {});
+            return JsonUtil.fromJson(jsonStr, new TypeReference<>() {
+            });
         }
         return null;
     }

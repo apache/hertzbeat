@@ -93,4 +93,24 @@ public class JsonUtil {
             return null;
         }
     }
+
+    /**
+     * check if the string is a json string
+     * @param jsonStr json string
+     * @return true if the string is a json string
+     */
+    public static boolean isJsonStr(String jsonStr) {
+        if (!StringUtils.hasText(jsonStr)) {
+            return false;
+        }
+        if (!jsonStr.startsWith("{") || !jsonStr.endsWith("}")) {
+            return false;
+        }
+        try {
+            OBJECT_MAPPER.readTree(jsonStr);
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
 }

@@ -69,8 +69,10 @@ public class SshCollectImpl extends AbstractCollect {
     private static final String PARSE_TYPE_LOG = "log";
 
     private static final int DEFAULT_TIMEOUT = 10_000;
-
+    private final ConnectionCommonCache<CacheIdentifier, SshConnect> connectionCommonCache;
+    
     public SshCollectImpl() {
+        connectionCommonCache = new ConnectionCommonCache<>();
     }
 
     @Override
@@ -274,7 +276,7 @@ public class SshCollectImpl extends AbstractCollect {
                 .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
                 .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
                 .build();
-        ConnectionCommonCache.getInstance().removeCache(identifier);
+        connectionCommonCache.removeCache(identifier);
     }
 
     private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection)
@@ -285,18 +287,18 @@ public class SshCollectImpl extends AbstractCollect {
                 .build();
         ClientSession clientSession = null;
         if (reuseConnection) {
-            Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
+            Optional<SshConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
             if (cacheOption.isPresent()) {
-                clientSession = ((SshConnect) cacheOption.get()).getConnection();
+                clientSession = cacheOption.get().getConnection();
                 try {
                     if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
                         clientSession = null;
-                        ConnectionCommonCache.getInstance().removeCache(identifier);
+                        connectionCommonCache.removeCache(identifier);
                     }
                 } catch (Exception e) {
                     log.warn(e.getMessage());
                     clientSession = null;
-                    ConnectionCommonCache.getInstance().removeCache(identifier);
+                    connectionCommonCache.removeCache(identifier);
                 }
             }
             if (clientSession != null) {
@@ -321,7 +323,7 @@ public class SshCollectImpl extends AbstractCollect {
         }
         if (reuseConnection) {
             SshConnect sshConnect = new SshConnect(clientSession);
-            ConnectionCommonCache.getInstance().addCache(identifier, sshConnect);
+            connectionCommonCache.addCache(identifier, sshConnect);
         }
         return clientSession;
     }

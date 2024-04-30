@@ -113,7 +113,7 @@ public class CollectUtil {
         } catch (Exception e) {
             log.debug(e.getMessage());
         }
-        return doubleAndUnit;
+        return null;
     }
 
     /**
@@ -416,7 +416,7 @@ public class CollectUtil {
 
     public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
 
-        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<List<Metrics.Field>>() {
+        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<>() {
         });
         metrics.setFields(pushFieldList);
     }

@@ -17,24 +17,24 @@
 
 package org.apache.hertzbeat.collector.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test case for {@link CollectUtil}
@@ -75,6 +75,7 @@ class CollectUtilTest {
     @Test
     void extractDoubleAndUnitFromStr() {
         CollectUtil.DoubleAndUnit res1 = CollectUtil.extractDoubleAndUnitFromStr("20.5%");
+        assertNotNull(res1);
         assertEquals(20.5, res1.getValue());
         assertEquals("%", res1.getUnit());
 
@@ -82,6 +83,7 @@ class CollectUtilTest {
         assertNull(res2);
 
         CollectUtil.DoubleAndUnit res3 = CollectUtil.extractDoubleAndUnitFromStr("KB");
+        assertNotNull(res3);
         assertEquals(0, res3.getValue());
         assertEquals("KB", res3.getUnit());
     }

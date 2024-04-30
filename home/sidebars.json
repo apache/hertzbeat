@@ -14,6 +14,7 @@
           "label": "Install via Helm",
           "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
         },
+        "start/account-modify",
         "start/upgrade",
         "start/victoria-metrics-init",
         "start/iotdb-init",
@@ -142,7 +143,8 @@
             "help/smtp",
             "help/ntp",
             "help/dns",
-            "help/ftp"
+            "help/ftp",
+            "help/websocket"
           ]
         },
         {
@@ -200,8 +202,10 @@
             "help/shenyu",
             "help/rabbitmq",
             "help/activemq",
+            "help/rocketmq",
             "help/spring_gateway",
-            "help/nacos"
+            "help/nacos",
+            "help/kafka"
           ]
         },
         {

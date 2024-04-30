@@ -132,6 +132,7 @@
         <h2.version>2.2.224</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
+        <flyway.version>10.11.1</flyway.version>
         <commons-collections4.version>4.4</commons-collections4.version>
         <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
@@ -233,6 +234,22 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-jexl3</artifactId>
                 <version>${commons-jexl3}</version>
+            </dependency>
+            <!-- database migration -->
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-mysql</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-postgresql</artifactId>
+                <version>${flyway.version}</version>
             </dependency>
             <!-- mysql -->
             <dependency>

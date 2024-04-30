@@ -43,6 +43,9 @@ public class JsonLongListAttributeConverter implements AttributeConverter<List<L
         if (StringUtils.isBlank(dbData)) {
             return List.of();
         }
+        if (!JsonUtil.isJsonStr(dbData) && StringUtils.isNumeric(dbData)) {
+            return List.of(Long.parseLong(dbData));
+        }
         TypeReference<List<Long>> typeReference = new TypeReference<>() {
         };
         List<Long> longList = JsonUtil.fromJson(dbData, typeReference);
