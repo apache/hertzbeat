@@ -214,6 +214,7 @@
           "label": "bigdata",
           "items": [
             "help/spark",
+            "help/flink",
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
