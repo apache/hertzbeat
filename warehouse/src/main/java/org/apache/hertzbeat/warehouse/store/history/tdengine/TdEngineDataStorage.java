@@ -17,11 +17,13 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tdengine;
 
+import com.taosdata.jdbc.TSDBDriver;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,8 +33,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -52,11 +56,14 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class TdEngineDataStorage extends AbstractHistoryDataStorage {
 
+    private static final String CONSTANTS_URL_PREFIX = "jdbc:TAOS://";
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
     private static final String INSTANCE_NULL = "''";
+    private static final String CONSTANTS_CREATE_DATABASE = "CREATE DATABASE IF NOT EXISTS %s";
     private static final String INSERT_TABLE_DATA_SQL = "INSERT INTO `%s` USING `%s` TAGS (%s) VALUES %s";
     private static final String CREATE_SUPER_TABLE_SQL = "CREATE STABLE IF NOT EXISTS `%s` %s TAGS (monitor BIGINT)";
     private static final String NO_SUPER_TABLE_ERROR = "Table does not exist";
+
     private static final String QUERY_HISTORY_WITH_INSTANCE_SQL =
             "SELECT ts, instance, `%s` FROM `%s` WHERE instance = '%s' AND ts >= now - %s order by ts desc";
     private static final String QUERY_HISTORY_SQL =
@@ -67,6 +74,18 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             "SELECT DISTINCT instance FROM `%s` WHERE ts >= now - 1w";
 
     private static final String TABLE_NOT_EXIST = "Table does not exist";
+
+    private static final Runnable INSTANCE_EXCEPTION_PRINT = () -> {
+        if (log.isErrorEnabled()) {
+            log.error(
+                    """
+                            \t---------------TdEngine Init Failed---------------
+                            \t--------------Please Config Tdengine--------------
+                            \t----------Can Not Use Metric History Now----------
+                            """
+            );
+        }
+    };
 
     private HikariDataSource hikariDataSource;
     private final int tableStrColumnDefineMaxLength;
@@ -80,8 +99,42 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
         serverAvailable = initTdEngineDatasource(tdEngineProperties);
     }
 
-    private boolean initTdEngineDatasource(TdEngineProperties tdEngineProperties) {
-        HikariConfig config = new HikariConfig();
+    /**
+     * {@code TdEngine} 初始化数据库
+     *
+     * @param tdEngineProperties {@link TdEngineProperties} 对象实例
+     */
+    private void initTdEngineDatabase(final TdEngineProperties tdEngineProperties) throws SQLException {
+        final Properties parseResultProperties = com.taosdata.jdbc.utils.StringUtils.parseUrl(tdEngineProperties.url(), null);
+        final String host = ObjectUtils.requireNonEmpty(parseResultProperties.getProperty(TSDBDriver.PROPERTY_KEY_HOST));
+        final String port = ObjectUtils.requireNonEmpty(parseResultProperties.getProperty(TSDBDriver.PROPERTY_KEY_PORT));
+        final String dbName = ObjectUtils.requireNonEmpty(parseResultProperties.getProperty(TSDBDriver.PROPERTY_KEY_DBNAME));
+
+        try (
+                final Connection tempConnection = DriverManager.getConnection(
+                        CONSTANTS_URL_PREFIX + host + ":" + port,
+                        tdEngineProperties.username(),
+                        tdEngineProperties.password()
+                )
+        ) {
+            tempConnection.prepareStatement(String.format(CONSTANTS_CREATE_DATABASE, dbName))
+                    .execute();
+        }
+    }
+
+    private boolean initTdEngineDatasource(final TdEngineProperties tdEngineProperties) {
+        try {
+            initTdEngineDatabase(tdEngineProperties);
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error(e.getMessage(), e);
+            }
+
+            INSTANCE_EXCEPTION_PRINT.run();
+            return false;
+        }
+
+        final HikariConfig config = new HikariConfig();
         // jdbc properties
         config.setJdbcUrl(tdEngineProperties.url());
         config.setUsername(tdEngineProperties.username());
@@ -102,10 +155,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
         try {
             this.hikariDataSource = new HikariDataSource(config);
         } catch (Exception e) {
-            log.warn("\n\t------------------WARN WARN WARN------------------\n"
-                    + "\t---------------Init TdEngine Failed---------------\n"
-                    + "\t--------------Please Config Tdengine--------------\n"
-                    + "\t---------Or Can Not Use Metric History Now---------\n");
+            INSTANCE_EXCEPTION_PRINT.run();
             return false;
         }
         return true;
@@ -117,7 +167,11 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             return;
         }
         if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse tdengine] flush metrics data {} is null, ignore.", metricsData.getId());
+
+            if (log.isInfoEnabled()) {
+                log.info("[warehouse tdengine] flush metrics data {} is null, ignore.", metricsData.getId());
+            }
+
             return;
         }
         String monitorId = String.valueOf(metricsData.getId());
@@ -145,7 +199,11 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                             double number = Double.parseDouble(value);
                             sqlRowBuffer.append(number);
                         } catch (Exception e) {
-                            log.warn(e.getMessage());
+
+                            if (log.isWarnEnabled()) {
+                                log.warn(e.getMessage());
+                            }
+
                             sqlRowBuffer.append("NULL");
                         }
                     }
@@ -168,7 +226,11 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             sqlBuffer.append(" ").append(String.format(sqlRowBuffer.toString(), formatStringValue(JsonUtil.toJson(labels))));
         }
         String insertDataSql = String.format(INSERT_TABLE_DATA_SQL, table, superTable, monitorId, sqlBuffer);
-        log.debug(insertDataSql);
+
+        if (log.isDebugEnabled()) {
+            log.debug(insertDataSql);
+        }
+
         Connection connection = null;
         Statement statement = null;
         try {
@@ -201,21 +263,31 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 String createTableSql = String.format(CREATE_SUPER_TABLE_SQL, superTable, fieldSqlBuilder);
                 try {
                     assert statement != null;
-                    log.info("[tdengine-data]: create {} use sql: {}.", superTable, createTableSql);
+
+                    if (log.isInfoEnabled()) {
+                        log.info("[tdengine-data]: create {} use sql: {}.", superTable, createTableSql);
+                    }
+
                     statement.execute(createTableSql);
                     statement.execute(insertDataSql);
                 } catch (Exception createTableException) {
-                    log.error(e.getMessage(), createTableException);
+                    if (log.isErrorEnabled()) {
+                        log.error(e.getMessage(), createTableException);
+                    }
                 }
             } else {
-                log.error(e.getMessage());
+                if (log.isErrorEnabled()) {
+                    log.error(e.getMessage());
+                }
             }
         } finally {
             try {
                 assert connection != null;
                 connection.close();
             } catch (Exception e) {
-                log.error(e.getMessage());
+                if (log.isErrorEnabled()) {
+                    log.error(e.getMessage());
+                }
             }
         }
     }
@@ -241,12 +313,16 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
         String table = app + "_" + metrics + "_" + monitorId;
         String selectSql = label == null ? String.format(QUERY_HISTORY_SQL, metric, table, history) :
                 String.format(QUERY_HISTORY_WITH_INSTANCE_SQL, metric, table, label, history);
-        log.debug(selectSql);
+
+        if (log.isDebugEnabled()) {
+            log.debug(selectSql);
+        }
+
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!serverAvailable) {
-            log.error("\n\t---------------TdEngine Init Failed---------------\n"
-                    + "\t--------------Please Config Tdengine--------------\n"
-                    + "\t----------Can Not Use Metric History Now----------\n");
+
+            INSTANCE_EXCEPTION_PRINT.run();
+
             return instanceValuesMap;
         }
         try (Connection connection = hikariDataSource.getConnection();
@@ -255,7 +331,9 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             while (resultSet.next()) {
                 Timestamp ts = resultSet.getTimestamp(1);
                 if (ts == null) {
-                    log.error("warehouse tdengine query result timestamp is null, ignore. {}.", selectSql);
+                    if (log.isErrorEnabled()) {
+                        log.error("warehouse tdengine query result timestamp is null, ignore. {}.", selectSql);
+                    }
                     continue;
                 }
                 String instanceValue = resultSet.getString(2);
@@ -271,10 +349,14 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
         } catch (SQLException sqlException) {
             String msg = sqlException.getMessage();
             if (msg != null && !msg.contains(TABLE_NOT_EXIST)) {
-                log.warn(sqlException.getMessage());
+                if (log.isWarnEnabled()) {
+                    log.warn(sqlException.getMessage());
+                }
             }
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
+            if (log.isErrorEnabled()) {
+                log.error(e.getMessage(), e);
+            }
         }
         return instanceValuesMap;
     }
@@ -283,9 +365,9 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
         if (!serverAvailable) {
-            log.error("\n\t---------------TdEngine Init Failed---------------\n"
-                    + "\t--------------Please Config Tdengine--------------\n"
-                    + "\t----------Can Not Use Metric History Now----------\n");
+
+            INSTANCE_EXCEPTION_PRINT.run();
+
             return Collections.emptyMap();
         }
         String table = app + "_" + metrics + "_" + monitorId;
@@ -310,13 +392,17 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     }
                 }
             } catch (Exception e) {
-                log.error(e.getMessage());
+                if (log.isErrorEnabled()) {
+                    log.error(e.getMessage());
+                }
             } finally {
                 try {
                     assert connection != null;
                     connection.close();
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    if (log.isErrorEnabled()) {
+                        log.error(e.getMessage());
+                    }
                 }
             }
         }
@@ -327,7 +413,11 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             }
             String selectSql = String.format(QUERY_HISTORY_INTERVAL_WITH_INSTANCE_SQL,
                     metric, metric, metric, metric, table, instanceValue, history);
-            log.debug(selectSql);
+
+            if (log.isDebugEnabled()) {
+                log.debug(selectSql);
+            }
+
             List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
             Connection connection = null;
             try {
@@ -353,13 +443,17 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 }
                 resultSet.close();
             } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                if (log.isErrorEnabled()) {
+                    log.error(e.getMessage(), e);
+                }
             } finally {
                 try {
                     assert connection != null;
                     connection.close();
                 } catch (Exception e) {
-                    log.error(e.getMessage());
+                    if (log.isErrorEnabled()) {
+                        log.error(e.getMessage());
+                    }
                 }
             }
         }
