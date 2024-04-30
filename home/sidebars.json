@@ -191,7 +191,8 @@
             "help/windows",
             "help/ubuntu",
             "help/debian",
-            "help/centos"
+            "help/centos",
+            "help/almalinux"
           ]
         },
         {
