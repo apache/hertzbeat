@@ -135,7 +135,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
         if (exportMonitor.monitor != null) { // Add one more null check
             BeanUtils.copyProperties(exportMonitor.monitor, monitor);
-            if (exportMonitor.monitor.tags != null) {
+            if (exportMonitor.monitor.tags != null && !exportMonitor.monitor.tags.isEmpty()) {
                 monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags))
                         .stream()
                         .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
