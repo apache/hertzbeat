@@ -192,7 +192,8 @@
             "help/ubuntu",
             "help/debian",
             "help/centos",
-            "help/almalinux"
+            "help/almalinux",
+            "help/opensuse"
           ]
         },
         {

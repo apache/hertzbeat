@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.remoting;
 
 /**
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.RemotingService
  * remoting service interface
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/RemotingService.java">RemotingService</a>
  */
