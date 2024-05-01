@@ -26,8 +26,7 @@ import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 public interface RemotingClient extends RemotingService {
 
     /**
-     * register remoting processor
-     * 根据不同的type注册不同的processor
+     * register remoting processor by type
      * @param messageType type
      * @param processor remoting processor
      */
