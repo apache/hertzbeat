@@ -142,7 +142,7 @@ public class ManageServer implements CommandLineRunner {
         }
     }
 
-    public boolean isChannelExist(final String identity) {
+    public boolean isChannelActive(final String identity) {
         Channel channel = this.clientChannelTable.get(identity);
         return channel != null && channel.isActive();
     }

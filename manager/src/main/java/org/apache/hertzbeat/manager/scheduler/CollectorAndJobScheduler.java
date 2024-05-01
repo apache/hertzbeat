@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
@@ -102,7 +103,7 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
             collector.setStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
             if (collectorInfo != null) {
                 collector.setIp(collectorInfo.getIp());
-                collector.setMode(collectorInfo.getMode());   
+                collector.setMode(collectorInfo.getMode());
             }
         } else {
             if (collectorInfo == null) {
@@ -336,34 +337,33 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         }
         if (CommonConstants.MAIN_COLLECTOR_NODE.equals(node.getIdentity())) {
             return collectJobService.collectSyncJobData(job);
-        } else {
-            List<CollectRep.MetricsData> metricsData = new LinkedList<>();
-            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                    .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
-                    .setDirection(ClusterMsg.Direction.REQUEST)
-                    .setMsg(JsonUtil.toJson(job))
-                    .build();
-            boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
-            if (result) {
-                CountDownLatch countDownLatch = new CountDownLatch(1);
-                CollectResponseEventListener listener = new CollectResponseEventListener() {
-                    @Override
-                    public void response(List<CollectRep.MetricsData> responseMetrics) {
-                        if (responseMetrics != null) {
-                            metricsData.addAll(responseMetrics);
-                        }
-                        countDownLatch.countDown();
-                    }
-                };
-                eventListeners.put(job.getMonitorId(), listener);
-                try {
-                    countDownLatch.await(120, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                    log.info("The sync task runs for 120 seconds with no response and returns");
-                }
-            }
-            return metricsData;
         }
+        List<CollectRep.MetricsData> metricsData = new LinkedList<>();
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setType(ClusterMsg.MessageType.ISSUE_ONE_TIME_TASK)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setMsg(JsonUtil.toJson(job))
+                .build();
+        boolean result = this.manageServer.sendMsg(node.getIdentity(), message);
+        if (result) {
+            CountDownLatch countDownLatch = new CountDownLatch(1);
+            CollectResponseEventListener listener = new CollectResponseEventListener() {
+                @Override
+                public void response(List<CollectRep.MetricsData> responseMetrics) {
+                    if (responseMetrics != null) {
+                        metricsData.addAll(responseMetrics);
+                    }
+                    countDownLatch.countDown();
+                }
+            };
+            eventListeners.put(job.getMonitorId(), listener);
+            try {
+                countDownLatch.await(120, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                log.info("The sync task runs for 120 seconds with no response and returns");
+            }
+        }
+        return metricsData;
     }
 
     @Override
