@@ -50,6 +50,7 @@ import org.apache.hertzbeat.remoting.RemotingServer;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 
 /**
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingServer 
  * netty server
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingServer.java">NettyRemotingServer</a>
  */

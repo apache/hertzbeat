@@ -438,6 +438,7 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/LLP2333"><img src="https://avatars.githubusercontent.com/u/61670545?v=4?s=100" width="100px;" alt="llp2333"/><br /><sub><b>llp2333</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=LLP2333" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/HeartLinked"><img src="https://avatars.githubusercontent.com/u/78212101?v=4?s=100" width="100px;" alt="feiyang li"/><br /><sub><b>feiyang li</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=HeartLinked" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>

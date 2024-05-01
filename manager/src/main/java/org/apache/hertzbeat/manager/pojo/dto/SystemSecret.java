@@ -15,18 +15,24 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.remoting.netty;
+package org.apache.hertzbeat.manager.pojo.dto;
 
-import io.netty.channel.ChannelHandlerContext;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRequestProcessor 
- * netty remoting processor
- * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRequestProcessor.java">NettyRequestProcessor</a>
+ * System Secret Config
  */
-public interface NettyRemotingProcessor {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class SystemSecret {
 
-    ClusterMsg.Message handle(ChannelHandlerContext ctx, ClusterMsg.Message message);
-
+    /**
+     * secret key for jwt
+     */
+    private String jwtSecret;
 }
