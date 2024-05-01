@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
