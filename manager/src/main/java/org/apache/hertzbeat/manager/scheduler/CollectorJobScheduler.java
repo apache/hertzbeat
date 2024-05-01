@@ -61,7 +61,7 @@ import org.springframework.util.StringUtils;
 @Component
 @AutoConfigureAfter(value = {SchedulerProperties.class})
 @Slf4j
-public class CollectorAndJobScheduler implements CollectorScheduling, CollectJobScheduling {
+public class CollectorJobScheduler implements CollectorScheduling, CollectJobScheduling {
 
     private final Map<Long, Job> jobContentCache = new ConcurrentHashMap<>(16);
 

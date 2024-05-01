@@ -45,6 +45,8 @@ public class HeartbeatProcessor implements NettyRemotingProcessor {
             if (!isChannelActive) {
                 log.info("the collector {} is not online.", identity);
                 return null;
+            } else {
+                this.manageServer.getCollectorAndJobScheduler().collectorGoOnline(identity, null);
             }
         }
         if (log.isDebugEnabled()) {
