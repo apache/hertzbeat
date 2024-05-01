@@ -35,10 +35,10 @@ import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.dto.ValueRow;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.store.AbstractHistoryDataStorage;
-import org.apache.hertzbeat.warehouse.store.AbstractRealTimeDataStorage;
-import org.apache.hertzbeat.warehouse.store.HistoryJpaDatabaseDataStorage;
-import org.apache.hertzbeat.warehouse.store.RealTimeMemoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.jpa.JpaDatabaseDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -90,9 +90,9 @@ public class MetricsDataController {
         AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream()
                 .filter(AbstractRealTimeDataStorage::isServerAvailable)
                 .max((o1, o2) -> {
-                    if (o1 instanceof RealTimeMemoryDataStorage) {
+                    if (o1 instanceof MemoryDataStorage) {
                         return -1;
-                    } else if (o2 instanceof RealTimeMemoryDataStorage) {
+                    } else if (o2 instanceof MemoryDataStorage) {
                         return 1;
                     } else {
                         return 0;
@@ -156,9 +156,9 @@ public class MetricsDataController {
     ) {
         AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream()
                 .filter(AbstractHistoryDataStorage::isServerAvailable).max((o1, o2) -> {
-                    if (o1 instanceof HistoryJpaDatabaseDataStorage) {
+                    if (o1 instanceof JpaDatabaseDataStorage) {
                         return -1;
-                    } else if (o2 instanceof HistoryJpaDatabaseDataStorage) {
+                    } else if (o2 instanceof JpaDatabaseDataStorage) {
                         return 1;
                     } else {
                         return 0;

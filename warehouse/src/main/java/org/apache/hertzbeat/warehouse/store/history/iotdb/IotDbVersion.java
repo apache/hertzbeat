@@ -15,34 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store;
-
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+package org.apache.hertzbeat.warehouse.store.history.iotdb;
 
 /**
- * Test case for {@link MetricsDataRedisCodec}
+ * IoTDB user version
  */
-class MetricsDataRedisCodecTest {
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @Test
-    void decodeKey() {
-    }
-
-    @Test
-    void decodeValue() {
-    }
-
-    @Test
-    void encodeKey() {
-    }
-
-    @Test
-    void encodeValue() {
-    }
+public enum IotDbVersion {
+    /**
+     * version 0.13.*
+     */
+    V_0_13,
+    /**
+     * version 1.0.*
+     */
+    V_1_0
 }

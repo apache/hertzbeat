@@ -15,34 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store;
+package org.apache.hertzbeat.warehouse;
 
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
- * Test case for {@link MetricsDataRedisCodec}
+ * WarehouseAutoConfiguration class
+ * @version 2.1
  */
-class MetricsDataRedisCodecTest {
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @Test
-    void decodeKey() {
-    }
-
-    @Test
-    void decodeValue() {
-    }
-
-    @Test
-    void encodeKey() {
-    }
-
-    @Test
-    void encodeValue() {
-    }
+@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
+public class WarehouseAutoConfiguration {
 }

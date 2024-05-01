@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
@@ -92,6 +93,10 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
     @Override
     public void collectorGoOnline(String identity, CollectorInfo collectorInfo) {
+        if (identity == null || collectorInfo == null) {
+            log.error("identity or collectorInfo can not be null if collector not existed");
+            return;
+        }
         Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
         Collector collector;
         if (collectorOptional.isPresent()) {
@@ -100,20 +105,18 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
                 return;
             }
             collector.setStatus(CommonConstants.COLLECTOR_STATUS_ONLINE);
-            if (collectorInfo != null) {
-                collector.setIp(collectorInfo.getIp());
-                collector.setMode(collectorInfo.getMode());   
-            }
+            collector.setIp(collectorInfo.getIp());
+            collector.setMode(collectorInfo.getMode());
         } else {
-            if (collectorInfo == null) {
-                log.error("collectorInfo can not null when collector not existed");
-                return;
-            }
-            collector = Collector.builder().name(identity).ip(collectorInfo.getIp())
+            collector = Collector.builder()
+                    .name(identity)
+                    .ip(collectorInfo.getIp())
                     .mode(collectorInfo.getMode())
-                    .status(CommonConstants.COLLECTOR_STATUS_ONLINE).build();
+                    .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
+                    .build();
         }
         collectorDao.save(collector);
+
         ConsistentHash.Node node = new ConsistentHash.Node(identity, collector.getMode(),
                 collector.getIp(), System.currentTimeMillis(), null);
         consistentHash.addNode(node);
@@ -122,42 +125,42 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         List<CollectorMonitorBind> binds = collectorMonitorBindDao.findCollectorMonitorBindsByCollector(identity);
         for (CollectorMonitorBind bind : binds) {
             Optional<Monitor> monitorOptional = monitorDao.findById(bind.getMonitorId());
-            if (monitorOptional.isPresent()) {
-                Monitor monitor = monitorOptional.get();
-                if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
-                    continue;
+            if (monitorOptional.isEmpty()) {
+                continue;
+            }
+            Monitor monitor = monitorOptional.get();
+            if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+                continue;
+            }
+            try {
+                // build collect job entity
+                Job appDefine = appService.getAppDefine(monitor.getApp());
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
                 }
-                try {
-                    // build collect job entity
-                    Job appDefine = appService.getAppDefine(monitor.getApp());
-                    if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                        appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+                appDefine.setMonitorId(monitor.getId());
+                appDefine.setInterval(monitor.getIntervals());
+                appDefine.setCyclic(true);
+                appDefine.setTimestamp(System.currentTimeMillis());
+                List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
+                List<Configmap> configmaps = params.stream()
+                        .map(param -> new Configmap(param.getField(), param.getParamValue(),
+                                param.getType())).collect(Collectors.toList());
+                List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                        .toList();
+                paramDefaultValue.forEach(defaultVar -> {
+                    if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
+                        Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
+                        configmaps.add(configmap);
                     }
-                    appDefine.setMonitorId(monitor.getId());
-                    appDefine.setInterval(monitor.getIntervals());
-                    appDefine.setCyclic(true);
-                    appDefine.setTimestamp(System.currentTimeMillis());
-                    List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
-                    List<Configmap> configmaps = params.stream()
-                            .map(param -> new Configmap(param.getField(), param.getParamValue(),
-                                    param.getType())).collect(Collectors.toList());
-                    List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                            .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                            .collect(Collectors.toList());
-                    paramDefaultValue.forEach(defaultVar -> {
-                        if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                            // todo type
-                            Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
-                            configmaps.add(configmap);
-                        }
-                    });
-                    appDefine.setConfigmap(configmaps);
-                    long jobId = addAsyncCollectJob(appDefine, identity);
-                    monitor.setJobId(jobId);
-                    monitorDao.save(monitor);
-                } catch (Exception e) {
-                    log.error("insert pinned monitor job: {} in collector: {} error,continue next monitor", monitor, identity, e);
-                }
+                });
+                appDefine.setConfigmap(configmaps);
+                long jobId = addAsyncCollectJob(appDefine, identity);
+                monitor.setJobId(jobId);
+                monitorDao.save(monitor);
+            } catch (Exception e) {
+                log.error("insert pinned monitor job: {} in collector: {} error,continue next monitor", monitor, identity, e);
             }
         }
     }
@@ -165,14 +168,16 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     @Override
     public void collectorGoOffline(String identity) {
         Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
-        if (collectorOptional.isPresent()) {
-            log.info("the collector: {} is going offline now.", identity);
-            Collector collector = collectorOptional.get();
-            collector.setStatus(CommonConstants.COLLECTOR_STATUS_OFFLINE);
-            collectorDao.save(collector);
-            consistentHash.removeNode(identity);
-            reBalanceCollectorAssignJobs();
+        if (collectorOptional.isEmpty()) {
+            log.info("the collector : {} not found.", identity);
+            return;
         }
+        Collector collector = collectorOptional.get();
+        collector.setStatus(CommonConstants.COLLECTOR_STATUS_OFFLINE);
+        collectorDao.save(collector);
+        consistentHash.removeNode(identity);
+        reBalanceCollectorAssignJobs();
+        log.info("the collector: {} go offline success.", identity);
     }
 
     @Override
@@ -180,56 +185,44 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         consistentHash.getAllNodes().entrySet().parallelStream().forEach(entry -> {
             String collectorName = entry.getKey();
             AssignJobs assignJobs = entry.getValue().getAssignJobs();
-            if (assignJobs != null) {
-                if (CommonConstants.MAIN_COLLECTOR_NODE.equals(collectorName)) {
-                    if (!assignJobs.getAddingJobs().isEmpty()) {
-                        Set<Long> addedJobIds = new HashSet<>(8);
-                        for (Long addingJobId : assignJobs.getAddingJobs()) {
-                            Job job = jobContentCache.get(addingJobId);
-                            if (job == null) {
-                                log.error("assigning job {} content is null.", addingJobId);
-                                continue;
-                            }
-                            addedJobIds.add(addingJobId);
-                            collectJobService.addAsyncCollectJob(job);
-                        }
-                        assignJobs.addAssignJobs(addedJobIds);
-                        assignJobs.removeAddingJobs(addedJobIds);
+            if (collectorName == null || assignJobs == null) {
+                return;
+            }
+            if (assignJobs.getAddingJobs() != null && !assignJobs.getAddingJobs().isEmpty()) {
+                Set<Long> addedJobIds = new HashSet<>(8);
+                for (Long addingJobId : assignJobs.getAddingJobs()) {
+                    Job job = jobContentCache.get(addingJobId);
+                    if (job == null) {
+                        log.error("assigning job {} content is null.", addingJobId);
+                        continue;
                     }
-                    if (!assignJobs.getRemovingJobs().isEmpty()) {
-                        assignJobs.getRemovingJobs().forEach(jobId -> collectJobService.cancelAsyncCollectJob(jobId));
-                        assignJobs.clearRemovingJobs();
-                    }
-                } else {
-                    if (!assignJobs.getAddingJobs().isEmpty()) {
-                        Set<Long> addedJobIds = new HashSet<>(8);
-                        for (Long addingJobId : assignJobs.getAddingJobs()) {
-                            Job job = jobContentCache.get(addingJobId);
-                            if (job == null) {
-                                log.error("assigning job {} content is null.", addingJobId);
-                                continue;
-                            }
-                            addedJobIds.add(addingJobId);
-                            ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
-                                    .setDirection(ClusterMsg.Direction.REQUEST)
-                                    .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
-                                    .setMsg(JsonUtil.toJson(job))
-                                    .build();
-                            this.manageServer.sendMsg(collectorName, message);
-                        }
-                        assignJobs.addAssignJobs(addedJobIds);
-                        assignJobs.removeAddingJobs(addedJobIds);
-                    }
-                    if (!assignJobs.getRemovingJobs().isEmpty()) {
+                    addedJobIds.add(addingJobId);
+                    if (CommonConstants.MAIN_COLLECTOR_NODE.equals(collectorName)) {
+                        collectJobService.addAsyncCollectJob(job);
+                    } else {
                         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                                 .setDirection(ClusterMsg.Direction.REQUEST)
-                                .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
-                                .setMsg(JsonUtil.toJson(assignJobs.getRemovingJobs()))
+                                .setType(ClusterMsg.MessageType.ISSUE_CYCLIC_TASK)
+                                .setMsg(JsonUtil.toJson(job))
                                 .build();
                         this.manageServer.sendMsg(collectorName, message);
-                        assignJobs.clearRemovingJobs();
                     }
                 }
+                assignJobs.addAssignJobs(addedJobIds);
+                assignJobs.removeAddingJobs(addedJobIds);
+            }
+            if (assignJobs.getRemovingJobs() != null && !assignJobs.getRemovingJobs().isEmpty()) {
+                if (CommonConstants.MAIN_COLLECTOR_NODE.equals(collectorName)) {
+                    assignJobs.getRemovingJobs().forEach(jobId -> collectJobService.cancelAsyncCollectJob(jobId));
+                } else {
+                    ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                            .setDirection(ClusterMsg.Direction.REQUEST)
+                            .setType(ClusterMsg.MessageType.DELETE_CYCLIC_TASK)
+                            .setMsg(JsonUtil.toJson(assignJobs.getRemovingJobs()))
+                            .build();
+                    this.manageServer.sendMsg(collectorName, message);
+                }
+                assignJobs.clearRemovingJobs();
             }
         });
     }
@@ -462,5 +455,4 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
     public void setManageServer(ManageServer manageServer) {
         this.manageServer = manageServer;
     }
-
 }

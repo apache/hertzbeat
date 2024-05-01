@@ -17,32 +17,24 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
+import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test case for {@link MetricsDataRedisCodec}
+ * Test case for {@link MemoryDataStorage}
  */
-class MetricsDataRedisCodecTest {
+class MemoryDataStorageTest {
 
     @BeforeEach
     void setUp() {
     }
 
     @Test
-    void decodeKey() {
+    void getCurrentMetricsData() {
     }
 
     @Test
-    void decodeValue() {
-    }
-
-    @Test
-    void encodeKey() {
-    }
-
-    @Test
-    void encodeValue() {
+    void destroy() {
     }
 }

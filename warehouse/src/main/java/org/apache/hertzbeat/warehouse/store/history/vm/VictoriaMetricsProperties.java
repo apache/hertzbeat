@@ -15,34 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store;
+package org.apache.hertzbeat.warehouse.store.history.vm;
 
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Test case for {@link MetricsDataRedisCodec}
+ * Victoriametrics configuration information
  */
-class MetricsDataRedisCodecTest {
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @Test
-    void decodeKey() {
-    }
-
-    @Test
-    void decodeValue() {
-    }
-
-    @Test
-    void encodeKey() {
-    }
-
-    @Test
-    void encodeValue() {
-    }
+@ConfigurationProperties(prefix = "warehouse.store.victoria-metrics")
+public record VictoriaMetricsProperties(@DefaultValue("false") boolean enabled,
+                                        @DefaultValue("http://localhost:8428") String url,
+                                        String username,
+                                        String password) {
 }

@@ -15,34 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store;
-
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+package org.apache.hertzbeat.warehouse.store.history.vm;
 
 /**
- * Test case for {@link MetricsDataRedisCodec}
+ * vminsert configuration information
  */
-class MetricsDataRedisCodecTest {
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @Test
-    void decodeKey() {
-    }
-
-    @Test
-    void decodeValue() {
-    }
-
-    @Test
-    void encodeKey() {
-    }
-
-    @Test
-    void encodeValue() {
-    }
+public record VictoriaMetricsInsertProperties(
+        String url,
+        String username,
+        String password
+) {
 }

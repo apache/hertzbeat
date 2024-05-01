@@ -15,34 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store;
+package org.apache.hertzbeat.warehouse.store.history.greptime;
 
-import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Test case for {@link MetricsDataRedisCodec}
+ * GrepTimeDB configuration information
  */
-class MetricsDataRedisCodecTest {
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @Test
-    void decodeKey() {
-    }
-
-    @Test
-    void decodeValue() {
-    }
-
-    @Test
-    void encodeKey() {
-    }
-
-    @Test
-    void encodeValue() {
-    }
+@ConfigurationProperties(prefix = "warehouse.store.greptime")
+public record GreptimeProperties(@DefaultValue("false") boolean enabled,
+                                 @DefaultValue("127.0.0.1:4001") String endpoint,
+                                 String username,
+                                 String password) {
 }

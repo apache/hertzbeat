@@ -21,8 +21,8 @@ import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.store.AbstractRealTimeDataStorage;
-import org.apache.hertzbeat.warehouse.store.RealTimeMemoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.springframework.stereotype.Service;
 
 /**
@@ -43,9 +43,9 @@ public class WarehouseServiceImpl implements WarehouseService {
         AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream()
                 .filter(AbstractRealTimeDataStorage::isServerAvailable)
                 .max((o1, o2) -> {
-                    if (o1 instanceof RealTimeMemoryDataStorage) {
+                    if (o1 instanceof MemoryDataStorage) {
                         return -1;
-                    } else if (o2 instanceof RealTimeMemoryDataStorage) {
+                    } else if (o2 instanceof MemoryDataStorage) {
                         return 1;
                     } else {
                         return 0;
