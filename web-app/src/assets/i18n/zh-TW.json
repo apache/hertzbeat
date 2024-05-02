@@ -633,7 +633,7 @@
   "status.public.org.state.2": "所有系統運行異常",
   "status.public.today": "今天",
   "status.public.30-day": "30天前",
-  "status.public.power-by": "由 HertzBeat 提供構建. Star Us !",
+  "status.public.power-by": "由 Apache HertzBeat 提供構建. Star Us !",
   "status.public.to-incident": "事件信息",
   "status.public.to-component": "狀態頁面",
   "status.incident": "維護事件",

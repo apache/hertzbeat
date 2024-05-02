@@ -636,7 +636,7 @@
   "status.public.org.state.2": "所有系统运行异常",
   "status.public.today": "今天",
   "status.public.30-day": "30天前",
-  "status.public.power-by": "由 HertzBeat 提供构建. Star Us !",
+  "status.public.power-by": "由 Apache HertzBeat 提供构建. Star Us !",
   "status.public.to-incident": "事件信息",
   "status.public.to-component": "状态页面",
   "status.incident": "维护事件",
