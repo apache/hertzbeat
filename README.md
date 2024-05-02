@@ -20,12 +20,12 @@
 [![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
 
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**   
-**Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe [mailing lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org)**
+**Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe mailing lists**
 
 
 ## 🎡 <font color="green">Introduction</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat)(Incubating) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
+[Apache HertzBeat](https://github.com/apache/hertzbeat) (Incubating) is an easy-to-use, open source, real-time monitoring system with agentless, high performance cluster, prometheus-compatible, offers powerful custom monitoring and status page building capabilities.   
 
 ### Features
 

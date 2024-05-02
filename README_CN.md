@@ -21,12 +21,12 @@
 
 
 **官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**    
-**邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至 ```dev-subscribe@hertzbeat.apache.org```</a>** 订阅[邮件列表](https://lists.apache.org/list.html?dev@hertzbeat.apache.org)
+**邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至 ```dev-subscribe@hertzbeat.apache.org```</a>** 订阅邮件列表
 
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat)(Incubating) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
+[Apache HertzBeat](https://github.com/apache/hertzbeat) (Incubating) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
 
 ### 特点
 
