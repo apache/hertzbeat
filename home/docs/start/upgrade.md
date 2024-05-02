@@ -6,9 +6,9 @@ sidebar_label: Version Upgrade Guide
 
 **HertzBeat Release Version List**
 
+- [Download Page](/docs/download)
 - [Github Release](https://github.com/apache/hertzbeat/releases)
 - [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
-- [Docker quay.io Release](https://quay.io/repository/apache/hertzbeat?tab=tags)
 
 Apache HertzBeat (incubating)'s metadata information is stored in H2 or Mysql, PostgreSQL relational databases, and the collected metric data is stored in time series databases such as TDengine and IotDB.
 

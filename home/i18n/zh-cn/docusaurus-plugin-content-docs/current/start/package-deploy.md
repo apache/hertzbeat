@@ -7,7 +7,7 @@ sidebar_label: 安装包方式部署
    
 1. 下载HertzBeat安装包
    下载您系统环境对应的安装包 `hertzbeat-xx.tar.gz` `hertzbeat-collector-xx.tar.gz`
-   - 从[GITHUB Release](https://github.com/apache/hertzbeat/releases) 仓库下载
+   - [下载页面](/docs/download)
 
 2. 配置HertzBeat的配置文件(可选)       
    解压安装包到主机 eg: /opt/hertzbeat  
@@ -38,7 +38,7 @@ sidebar_label: 安装包方式部署
    浏览器访问 http://ip:1157/ 即刻开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。  
 
 6. 部署采集器集群(可选)
-   - 下载解压您系统环境对应采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [GITHUB Release](https://github.com/apache/hertzbeat/releases)
+   - 下载解压您系统环境对应采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [下载页面](/docs/download)    
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:
