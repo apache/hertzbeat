@@ -67,27 +67,7 @@ export const features = [
 
 export const usersLink = [
   {
-    img: 'skyworth_logo.png',
-    alt: 'skyworth',
-  },
-  {
-    img: 'sc_edu_logo.png',
-    alt: 'sc_edu_logo',
-  },
-  {
-    img: 'cmge_logo.png',
-    alt: 'cmge',
-  },
-  {
-    img: 'cnsodata_logo.svg',
-    alt: 'cnsodata',
-  },
-  {
     img: 'tancloud_logo.svg',
     alt: 'tancloud',
-  },
-  {
-    img: 'hibobi_logo.svg',
-    alt: 'hibobi',
   }
 ]
