@@ -15,20 +15,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 调整脚本目录
+# 
 cd `dirname $0`
-# 当前脚本目录
+# current dir
 CURRENT_DIR=`pwd`
-# 跳转制品目录
+# cd dist dir
 cd ../../../manager/target
-# 自动捕获hertzbeat版本
+# auto detect hertzbeat version
 VERSION=`ls *.tar| awk -F"-" '{print $2}' | awk -F".tar" '{print $1}'`
-# 强制使用版本参数
+# use the version param
 if [ -n "$1" ]; then
     VERSION="$1";
 fi
 
-# 编译上下文目录
+# compile context dir
 CONTEXT_DIR=`pwd`
 
 COMMAND="docker buildx build --platform ${IMAGE_PLATFORM:-linux/arm64,linux/amd64} -t apache/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push=${IMAGE_PUSH:-true} --load=${IMAGE_LOAD:-false}"

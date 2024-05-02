@@ -310,5 +310,4 @@ Built-in support for monitoring types include:
 
 ----- 
 
-**Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**

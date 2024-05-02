@@ -7,7 +7,6 @@ sidebar_label: 版本更新指引
 **Apache HertzBeat(Incubating) 的发布版本列表**
 
 - [Github Release](https://github.com/apache/hertzbeat/releases)
-- [Gitee Release](https://gitee.com/hertzbeat/hertzbeat/releases)
 - [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
 - [Docker quay.io Release](https://quay.io/repository/apache/hertzbeat?tab=tags)
 

@@ -14,8 +14,7 @@ sidebar_label: 使用案例
 Apache HertzBeat(Incubating) 一个拥有强大自定义监控能力，无需Agent的实时监控工具。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
 
 
-github: https://github.com/apache/hertzbeat    
-gitee: https://gitee.com/hertzbeat/hertzbeat
+github: https://github.com/apache/hertzbeat
 
 #### 安装 HertzBeat
 
@@ -100,5 +99,3 @@ https://tancloud.cn/docs/help/alert_dingtalk
 监控SSL证书的实践就到这里，当然对hertzbeat来说这个功能只是冰山一角，如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
 
 **github: https://github.com/apache/hertzbeat**
-
-**gitee: https://gitee.com/hertzbeat/hertzbeat**

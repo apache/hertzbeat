@@ -112,10 +112,6 @@
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-```或者使用 quay.io (若 dockerhub 网络链接超时)```
-
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
-
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 3. 部署采集器集群(可选)

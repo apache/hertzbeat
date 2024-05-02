@@ -7,8 +7,7 @@ sidebar_label: Install via Package
 > You can install and run Apache HertzBeat(Incubating) on Linux Windows Mac system, and CPU supports X86/ARM64.
 
 1. Download HertzBeat installation package    
-   Download installation package `hertzbeat-xx.tar.gz` `hertzbeat-collector-xx.tar.gz` corresponding to your system environment   
-   - download from [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) repository 
+   Download installation package `hertzbeat-xx.tar.gz` `hertzbeat-collector-xx.tar.gz` corresponding to your system environment
    - download from [GITHUB Release](https://github.com/apache/hertzbeat/releases) repository
 
 2. Configure HertzBeat's configuration file(optional)        
@@ -42,7 +41,7 @@ sidebar_label: Install via Package
 
 6. Deploy collector clusters (Optional)
 
-   - Download and unzip the collector release package `hertzbeat-collector-xx.tar.gz` to new machine [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [GITHUB Release](https://github.com/apache/hertzbeat/releases)
+   - Download and unzip the collector release package `hertzbeat-collector-xx.tar.gz` to new machine [GITHUB Release](https://github.com/apache/hertzbeat/releases)
    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
      ```yaml
      collector:
