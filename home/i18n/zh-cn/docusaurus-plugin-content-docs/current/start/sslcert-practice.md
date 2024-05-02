@@ -18,13 +18,11 @@ github: https://github.com/apache/hertzbeat
 
 #### 安装 HertzBeat
 
-1.如果不想安装可以直接使用云服务 [TanCloud探云 console.tancloud.cn](https://console.tancloud.cn)
-
-2. `docker` 环境仅需一条命令即可安装
+1. `docker` 环境仅需一条命令即可安装
 
 `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
-3. 安装成功浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
+2. 安装成功浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 #### 监控SSL证书
 
