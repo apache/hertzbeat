@@ -4,7 +4,7 @@ title: Install HertzBeat via Docker
 sidebar_label: Install via Docker      
 ---
 
-> Recommend to use docker deploy Apache HertzBeat(Incubating)
+> Recommend to use docker deploy Apache HertzBeat (incubating)
 
 
 1. Download and install the Docker environment   
@@ -16,11 +16,11 @@ sidebar_label: Install via Docker
    ```
 
 2. pull HertzBeat Docker mirror  
-   you can look up the mirror version TAG in [dockerhub mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)  
-   or in [quay.io mirror repository](https://quay.io/repository/tancloud/hertzbeat)     
+   you can look up the mirror version TAG in [dockerhub mirror repository](https://hub.docker.com/r/apache/hertzbeat/tags)  
+   or in [quay.io mirror repository](https://quay.io/repository/apache/hertzbeat)     
    ```shell
-   $ docker pull tancloud/hertzbeat   
-   $ docker pull tancloud/hertzbeat-collector       
+   $ docker pull apache/hertzbeat   
+   $ docker pull apache/hertzbeat-collector       
    ```
    or  
    ```shell
@@ -30,7 +30,7 @@ sidebar_label: Install via Docker
 
 3. Mounted HertzBeat configuration file (optional)    
    Download and config `application.yml` in the host directory, eg:`$(pwd)/application.yml`    
-   Download from [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml) or [gitee/script/application.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/application.yml).    
+   Download from [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)        
    You can modify the configuration yml file according to your needs.      
    - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`   
    - **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)  
@@ -41,7 +41,7 @@ sidebar_label: Install via Docker
    HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       
    If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.    
    Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`    
-   Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/sureness.yml)    
+   Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)       
    For detail steps, please refer to [Configure Account Password](account-modify)    
 
 5. Start the HertzBeat Docker container    
@@ -54,7 +54,7 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
     -v $(pwd)/logs:/opt/hertzbeat/logs \
     -v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml \
     -v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml \
-    --name hertzbeat tancloud/hertzbeat
+    --name hertzbeat apache/hertzbeat
 ```
 
    This command starts a running HertzBeat Docker container with mapping port 1157-1158. If existing processes on the host use the port, please modify host mapped port.  
@@ -67,7 +67,7 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional, if you don't have a need, just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file.    
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional, if you don't have a need, just delete it) Mount account configuration file modified in the previous step into the container. Delete this command parameters if no needs.  
    - `--name hertzbeat` : Naming container name hertzbeat 
-   - `tancloud/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat` instead if you pull `quay.io` docker image.**     
+   - `apache/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat` instead if you pull `quay.io` docker image.**     
 
 6. Begin to explore HertzBeat  
 
@@ -81,7 +81,7 @@ $ docker run -d \
     -e MODE=public \
     -e MANAGER_HOST=127.0.0.1 \
     -e MANAGER_PORT=1158 \
-    --name hertzbeat-collector tancloud/hertzbeat-collector
+    --name hertzbeat-collector apache/hertzbeat-collector
 ```
 
    This command starts a running HertzBeat-Collector container.
@@ -92,7 +92,7 @@ $ docker run -d \
    - `-e MANAGER_PORT=1158` :  (optional) Set the main hertzbeat server port, default 1158.
    - `-v $(pwd)/logs:/opt/hertzbeat-collector/logs` : (optional) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
    - `--name hertzbeat-collector` : Naming container name hertzbeat-collector
-   - `tancloud/hertzbeat-collector` : Use the pulled latest HertzBeat-Collector official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat-collector` instead if you pull `quay.io` docker image.**
+   - `apache/hertzbeat-collector` : Use the pulled latest HertzBeat-Collector official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat-collector` instead if you pull `quay.io` docker image.**
 
 8. Access `http://localhost:1157` and you will see the registered new collector in dashboard.  
 

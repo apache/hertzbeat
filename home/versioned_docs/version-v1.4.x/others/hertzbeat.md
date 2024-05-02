@@ -141,7 +141,7 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 ## 即刻体验一波 
 
-Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat`   
+Docker 环境下运行一条命令即可：`docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat`   
 浏览器访问 `http://localhost:1157` 默认账户密码 `admin/hertzbeat`
 
 ### 登陆页面

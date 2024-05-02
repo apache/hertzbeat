@@ -16,26 +16,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# 项目名称
+# project name
 SERVER_NAME="${project.artifactId}"
 
-# jar名称
+# jar file name
 JAR_NAME="${project.build.finalName}.jar"
 
-# 进入bin目录
+# cd bin dir
 cd `dirname $0`
-# bin目录绝对路径
+# bin dir
 BIN_DIR=`pwd`
-# 返回到上一级项目根目录路径
+# return root dir
 cd ..
-# 打印项目根目录绝对路径
-# `pwd` 执行系统命令并获得结果
+# root path dir
 DEPLOY_DIR=`pwd`
 
-# 外部配置文件绝对目录,如果是目录需要/结尾，也可以直接指定文件
-# 如果指定的是目录,spring则会读取目录中的所有配置文件
+# config dir
 CONF_DIR=$DEPLOY_DIR/config
-# 应用的端口号
+# server port
 SERVER_PORT=1159
 
 PIDS=`ps -ef | grep java | grep "$CONF_DIR" | awk '{print $2}'`
@@ -57,13 +55,13 @@ if [ -n "$PIDS" ]; then
 fi
 
 if [ -n "$SERVER_PORT" ]; then
-    # linux 下查询端口是否占用
+    # linux - find the port whether used
     SERVER_PORT_COUNT=`netstat -tln | grep :$SERVER_PORT | wc -l`
     if [ $SERVER_PORT_COUNT -gt 0 ]; then
         echo "ERROR: netstat the HertzBeat $SERVER_NAME port $SERVER_PORT already used!"
         exit 1
     fi
-    # mac 下查询端口是否占用
+    # mac - find the port whether used
     LSOF_AVA=`command -v lsof | wc -l`
     if [ $LSOF_AVA -gt 0 ]; then
         SERVER_PORT_COUNT=`lsof -i:$SERVER_PORT | grep java | wc -l`
@@ -76,9 +74,9 @@ fi
 MAIN_CLASS="org.apache.hertzbeat.collector.Collector"
 EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
 CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"
-# 项目日志输出绝对路径
+# log dir
 LOGS_DIR=$DEPLOY_DIR/logs
-# 如果logs文件夹不存在,则创建文件夹
+# create logs dir when not exist
 if [ ! -d $LOGS_DIR ]; then
     mkdir $LOGS_DIR
 fi
@@ -88,7 +86,7 @@ JAVA_OPTS=" -Duser.timezone=Asia/Shanghai -Doracle.jdbc.timezoneAsRegion=false"
 
 JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGS_DIR"
 
-# 加载外部log文件的配置
+# load logback config
 LOG_IMPL_FILE=logback-spring.xml
 LOGGING_CONFIG=""
 if [ -f "$CONF_DIR/$LOG_IMPL_FILE" ]

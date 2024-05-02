@@ -178,7 +178,7 @@ This practical article took us to experience how to use the open source real-tim
 
 > Only one docker command is needed to install and experience heartbeat:
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 ## More powerful
 

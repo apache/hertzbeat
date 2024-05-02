@@ -310,7 +310,7 @@ export class CollectorComponent implements OnInit {
               `    -e IDENTITY=${this.identity} \\\n` +
               `    -e MANAGER_HOST=${this.managerHost} \\\n` +
               `    -e MODE=public \\\n` +
-              `    --name hertzbeat-collector tancloud/hertzbeat-collector` +
+              `    --name hertzbeat-collector apache/hertzbeat-collector` +
               `\n` +
               `${this.i18nSvc.fanyi('collector.deploy.docker.help.1')}\n` +
               `${this.i18nSvc.fanyi('collector.deploy.docker.help.2')}\n` +

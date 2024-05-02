@@ -23,7 +23,7 @@ gitee: https://gitee.com/hertzbeat/hertzbeat
 
 2. The `docker` environment can be installed with just one command
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 3. After the installation is successful, the browser can access `localhost:1157` to start, the default account password is `admin/hertzbeat`
 

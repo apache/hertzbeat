@@ -32,6 +32,7 @@ import org.apache.hertzbeat.remoting.RemotingService;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
 
 /**
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRemotingAbstract 
  * netty remote abstract
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRemotingAbstract.java">NettyRemotingAbstract</a>
  */

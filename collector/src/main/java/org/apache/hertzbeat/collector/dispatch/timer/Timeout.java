@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.collector.dispatch.timer;
 
 /**
+ * Derived from Apache Dubbo org.apache.dubbo.common.timer.Timeout 
+ * <a href="https://github.com/apache/dubbo/blob/3.2/dubbo-common/src/main/java/org/apache/dubbo/common/timer/Timeout.java">Timeout.java</a>
  * A handle associated with a {@link TimerTask} that is returned by a
  * {@link Timer}.
  */

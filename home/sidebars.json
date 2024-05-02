@@ -191,7 +191,9 @@
             "help/windows",
             "help/ubuntu",
             "help/debian",
-            "help/centos"
+            "help/centos",
+            "help/almalinux",
+            "help/opensuse"
           ]
         },
         {
@@ -213,6 +215,7 @@
           "label": "bigdata",
           "items": [
             "help/spark",
+            "help/flink",
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",

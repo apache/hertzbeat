@@ -146,5 +146,9 @@
   "item.label.team": {
     "message": "团队",
     "description": "Navbar item with label team"
+  },
+  "item.label.download": {
+    "message": "下载",
+    "description": "Navbar item with label download"
   }
 }
