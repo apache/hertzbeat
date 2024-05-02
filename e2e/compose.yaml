@@ -28,7 +28,7 @@ services:
     links:
       - hertzbeat
   hertzbeat:
-    image: tancloud/hertzbeat
+    image: apache/hertzbeat
     ports:
       - 1157:1157
     environment:

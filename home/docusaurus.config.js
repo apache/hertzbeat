@@ -71,6 +71,11 @@ module.exports = {
           to: '/blog/',
         },
         {
+          label: 'download',
+          position: 'left',
+          to: '/docs/download',
+        },
+        {
           label: 'Community',
           position: 'left',
           items: [

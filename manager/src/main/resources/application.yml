@@ -91,15 +91,13 @@ spring:
       - classpath:db/migration/{vendor}
     
   mail:
-    # Attention: this is mail server address. 
-    # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq 企业邮箱为 smtp.exmail.qq.com
+    # Mail server address, eg: qq-mailbox is smtp.qq.com, qq-exmail is smtp.exmail.qq.com  
     host: smtp.qq.com
     username: tancloud@qq.com
-    # Attention: this is not email account password, this requires an email authorization code
+    # Attention this is not email account password, this requires an email authorization code
     # 请注意此非邮箱账户密码 此需填写邮箱授权码
     password: your-password
-    # Attention: qq mailbox default is 465 port, if you use 587 port, please configure port: 587 in application.yml
-    # 请注意腾讯邮箱默认为465端口，如果使用587端口请在application.yml中配置port: 587
+    # Mailbox smtp server port, eg: qq-mailbox is 465, qq-exmail is 587
     port: 465
     properties:
       mail:
@@ -121,7 +119,7 @@ common:
 warehouse:
   store:
     # store history metrics data, enable only one below
-    # 存储历史数据方式, 下方只能enabled启用一种方式
+    # 存储历史数据方式, 下方只能 enabled 启用一种方式
     jpa:
       enabled: true
       # The maximum retention time for history records, after which records will be deleted
@@ -153,7 +151,6 @@ warehouse:
       # config.org.apache.hertzbeat.warehouse.IotDbVersion: V_0_13 || V_1_0
       version: V_1_0
       query-timeout-in-ms: -1
-      # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
       expire-time: '7776000000'
     influxdb:
@@ -165,7 +162,7 @@ warehouse:
       replication: 1
 
     # store real-time metrics data, enable only one below
-    # 存储实时数据方式, 下方只能enabled启用一种方式
+    # 存储实时数据方式, 下方只能 enabled 启用一种方式
     memory:
       enabled: true
       init-size: 16

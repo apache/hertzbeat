@@ -55,7 +55,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 1. `docker` 环境仅需一条命令即可开始
 
-```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat```
 
 ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 

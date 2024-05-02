@@ -146,5 +146,9 @@
   "item.label.Thanks": {
     "message": "Thanks",
     "description": "Navbar item with label Thanks"
+  },
+  "item.label.download": {
+    "message": "Download",
+    "description": "Navbar item with label download"
   }
 }
