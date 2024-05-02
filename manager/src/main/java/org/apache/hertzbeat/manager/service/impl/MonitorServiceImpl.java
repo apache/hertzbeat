@@ -89,6 +89,7 @@ public class MonitorServiceImpl implements MonitorService {
     private static final Long MONITOR_ID_TMP = 1000000000L;
 
     public static final String HTTP = "http://";
+    
     public static final String HTTPS = "https://";
     public static final String BLANK = "";
     public static final String PATTERN_HTTP = "(?i)http://";
@@ -583,7 +584,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteMonitors(Set<Long> ids) throws RuntimeException {
         List<Monitor> monitors = monitorDao.findMonitorsByIdIn(ids);
-        if (monitors != null) {
+        if (!monitors.isEmpty()) {
             monitorDao.deleteAll(monitors);
             paramDao.deleteParamsByMonitorIdIn(ids);
             Set<Long> monitorIds = monitors.stream().map(Monitor::getId).collect(Collectors.toSet());
@@ -751,6 +752,9 @@ public class MonitorServiceImpl implements MonitorService {
         List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp())
                 .stream().filter(monitor -> monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
                 .toList();
+        if (monitors.isEmpty()) {
+            return;
+        }
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findCollectorMonitorBindsByMonitorIdIn(
                 monitors.stream().map(Monitor::getId).collect(Collectors.toSet()));
         Map<Long, String> monitorIdCollectorMap = monitorBinds.stream().collect(
@@ -775,7 +779,7 @@ public class MonitorServiceImpl implements MonitorService {
                         param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                        .collect(Collectors.toList());
+                        .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);

@@ -82,9 +82,9 @@ public class SchedulerInit implements CommandLineRunner {
         collectorDao.saveAll(collectors);
         // insert default consistent node
         CollectorInfo collectorInfo = CollectorInfo.builder()
-                                              .name(CommonConstants.MAIN_COLLECTOR_NODE)
-                                              .ip(MAIN_COLLECTOR_NODE_IP)
-                                              .build();
+                .name(CommonConstants.MAIN_COLLECTOR_NODE)
+                .ip(MAIN_COLLECTOR_NODE_IP)
+                .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
         List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(List.of((byte) 0));
@@ -109,7 +109,7 @@ public class SchedulerInit implements CommandLineRunner {
                                 param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                        .collect(Collectors.toList());
+                        .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                         // todo type
