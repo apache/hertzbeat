@@ -4,7 +4,7 @@ title: Install HertzBeat via Package
 sidebar_label: Install via Package
 ---
 
-> You can install and run Apache HertzBeat(Incubating) on Linux Windows Mac system, and CPU supports X86/ARM64.
+> You can install and run Apache HertzBeat (incubating) on Linux Windows Mac system, and CPU supports X86/ARM64.
 
 1. Download HertzBeat installation package    
    Download installation package `hertzbeat-xx.tar.gz` `hertzbeat-collector-xx.tar.gz` corresponding to your system environment

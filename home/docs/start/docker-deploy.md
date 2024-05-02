@@ -4,7 +4,7 @@ title: Install HertzBeat via Docker
 sidebar_label: Install via Docker      
 ---
 
-> Recommend to use docker deploy Apache HertzBeat(Incubating)
+> Recommend to use docker deploy Apache HertzBeat (incubating)
 
 
 1. Download and install the Docker environment   
