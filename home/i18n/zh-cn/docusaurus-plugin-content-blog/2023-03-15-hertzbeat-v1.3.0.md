@@ -53,7 +53,7 @@ keywords: [开源监控系统, 告警系统, Linux监控]
 
 只需要一条docker命令即可安装体验heartbeat
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 感谢hertzbeat贡献者们的贡献！👍👍
 

@@ -22,11 +22,11 @@ $ docker buildx use mybuilder
 
 ```shell
 # 使用 $ docker buildx build 命令构建镜像, --push 参数表示将构建好的镜像推送到 Docker 仓库
-$ docker buildx build --platform linux/arm64,linux/amd64 -t tancloud/hertzbeat:v1.0.0 . --push
+$ docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzbeat:v1.0.0 . --push
 
 $ docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:latest . --push
 
 # 查看镜像信息
-$ docker buildx imagetools inspect tancloud/hertzbeat:v1.0.0
+$ docker buildx imagetools inspect apache/hertzbeat:v1.0.0
 
 ```

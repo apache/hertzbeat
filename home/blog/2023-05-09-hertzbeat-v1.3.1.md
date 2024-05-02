@@ -46,7 +46,7 @@ Support monitoring EulerOS metrics and SpringBoot3 metrics. Fixed several bugs, 
 Let's Try Now!
 
 Only one docker command is needed to install and experience hertzbeat：
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 ## Upgrade Note⚠️.
 

@@ -63,7 +63,7 @@ services:
       - hertzbeat
 
   hertzbeat:
-    image: tancloud/hertzbeat
+    image: apache/hertzbeat
     container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always

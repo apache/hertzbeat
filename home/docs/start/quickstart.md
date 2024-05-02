@@ -16,7 +16,7 @@ sidebar_label: Quick Start
 
 1. Just one command to get started:
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
 ```or use quay.io (if dockerhub network connect timeout)```
 
@@ -27,7 +27,7 @@ sidebar_label: Quick Start
 3. Deploy collector clusters(Optional)
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
 - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.

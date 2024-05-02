@@ -55,7 +55,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 1. `docker` 环境仅需一条命令即可开始
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 2. 浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
