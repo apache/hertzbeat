@@ -18,11 +18,11 @@ sidebar_label: Docker方式部署
    ```
 
 2. 拉取HertzBeat Docker镜像   
-   镜像版本TAG可查看 [dockerhub 官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
-   或者使用 [quay.io 镜像仓库](https://quay.io/repository/tancloud/hertzbeat)
+   镜像版本TAG可查看 [dockerhub 官方镜像仓库](https://hub.docker.com/r/apache/hertzbeat/tags)     
+   或者使用 [quay.io 镜像仓库](https://quay.io/repository/apache/hertzbeat)
 
    ```shell
-   $ docker pull tancloud/hertzbeat   
+   $ docker pull apache/hertzbeat   
    ```
    若网络超时或者使用
    ```shell
@@ -71,7 +71,7 @@ $ docker run -d -p 1157:1157 \
     -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
     -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml \
     --restart=always \
-    --name hertzbeat tancloud/hertzbeat
+    --name hertzbeat apache/hertzbeat
 ```
 
  	这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
@@ -101,7 +101,7 @@ $ docker run -d -p 1157:1157 \
      $ docker update --restart=always hertzbeat
      ```
 
-   - `tancloud/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,**若使用`quay.io`镜像需用参数`quay.io/tancloud/hertzbeat`代替。**   
+   - `apache/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,**若使用`quay.io`镜像需用参数`quay.io/tancloud/hertzbeat`代替。**   
 
 7. 开始探索HertzBeat  
    浏览器访问 http://ip:1157/ 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。  

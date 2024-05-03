@@ -16,10 +16,10 @@
 # under the License.
 
 apiVersion: v2
-name: hertzbeat
+name: HertzBeat
 description: An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities.
 type: application
-home: https://hertzbeat.com/
+home: https://hertzbeat.apache.org/
 sources:
   - https://github.com/apache/hertzbeat
   - https://charts.hertzbeat.com

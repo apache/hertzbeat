@@ -6,12 +6,11 @@ sidebar_label: Version Upgrade Guide
 
 **HertzBeat Release Version List**
 
+- [Download Page](/docs/download)
 - [Github Release](https://github.com/apache/hertzbeat/releases)
-- [Gitee Release](https://gitee.com/hertzbeat/hertzbeat/releases)
-- [DockerHub Release](https://hub.docker.com/r/tancloud/hertzbeat/tags)
-- [Docker quay.io Release](https://quay.io/repository/tancloud/hertzbeat?tab=tags)
+- [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
 
-Apache HertzBeat(Incubating)'s metadata information is stored in H2 or Mysql, PostgreSQL relational databases, and the collected metric data is stored in time series databases such as TDengine and IotDB.
+Apache HertzBeat (incubating)'s metadata information is stored in H2 or Mysql, PostgreSQL relational databases, and the collected metric data is stored in time series databases such as TDengine and IotDB.
 
 **You need to save and back up the data files of the database and monitoring templates yml files before upgrading**
 

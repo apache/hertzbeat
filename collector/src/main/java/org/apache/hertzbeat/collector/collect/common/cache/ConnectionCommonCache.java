@@ -217,13 +217,11 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
      */
     public void removeCache(T key) {
         timeoutMap.remove(key);
-        Object value = cacheMap.remove(key);
-        if (value instanceof AutoCloseable closeable) {
-            try {
-                closeable.close();
-            } catch (Exception e) {
-                log.error("connection close error: {}.", e.getMessage(), e);
-            }
+        C value = cacheMap.remove(key);
+        try {
+            value.close();
+        } catch (Exception e) {
+            log.error("connection close error: {}.", e.getMessage(), e);
         }
     }
 

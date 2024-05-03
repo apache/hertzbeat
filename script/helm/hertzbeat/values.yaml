@@ -19,7 +19,7 @@
 
 manager:
   image:
-    repository: tancloud/hertzbeat
+    repository: apache/hertzbeat
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""
@@ -40,7 +40,7 @@ manager:
 
 collector:
   image:
-    repository: tancloud/hertzbeat-collector
+    repository: apache/hertzbeat-collector
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: ""

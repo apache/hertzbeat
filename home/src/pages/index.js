@@ -123,11 +123,11 @@ function Home() {
                 style={{ top: '880px', right: '50px', color: '#000033' }}
             />
             {/*who is using*/}
-            <Section isDark>
-              <LogoCarousel logos={usersLink}
-                            headerTitle={translate({ message: 'Who uses HertzBeat?' })}>
-              </LogoCarousel>
-            </Section>
+            {/*<Section isDark>*/}
+            {/*  <LogoCarousel logos={usersLink}*/}
+            {/*                headerTitle={translate({ message: 'Who uses HertzBeat?' })}>*/}
+            {/*  </LogoCarousel>*/}
+            {/*</Section>*/}
             {features && features.length > 0 && (
                 <Section>
                   {features.map((props, idx) => (

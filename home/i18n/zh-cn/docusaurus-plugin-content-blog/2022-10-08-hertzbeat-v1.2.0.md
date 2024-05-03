@@ -14,7 +14,7 @@ Home: hertzbeat.com | tancloud.cn
 Hi guys! HertzBeat v1.2.0 is coming. This version supports more powerful mertics collect jsonpath, upgrade springboot version to 2.7.4 , support metrics unit convert display, and more. Fixed several bugs and improved the overall stable usability.
 
 Only one docker command is needed to install and experience heartbeat：
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 Thanks to the contributors! 👍👍  @Ceilzcx @Privauto @VampireAchao @DreamGirl524 @CharlieXCL @emrys-he @SxLiuYu  @tomsun28
 
@@ -83,7 +83,7 @@ spring:
 大家好，HertzBeat v1.2.0 发布啦！这个版本支持了更强大的jsonpath去采集自定义监控指标，将springboot版本升级到2.7，支持指标单位的提取转换展示等。修复了若干bug，提升整体稳定性。
 
 只需要一条docker命令即可安装体验heartbeat ：
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 感谢hertzbeat贡献者们的贡献！👍👍 @Ceilzcx @Privauto @VampireAchao @DreamGirl524 @CharlieXCL @emrys-he @SxLiuYu @tomsun28
 
