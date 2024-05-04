@@ -15,13 +15,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 项目名称
+# project name
 APPLICATION="${project.artifactId}"
 
-# 项目启动jar包名称
+# jar file name
 APPLICATION_JAR="${project.build.finalName}.jar"
 
-# 通过项目名称查找到PI，然后kill -9 pid
+# find the service pid, kill -9 pid
 PID=$(ps -ef | grep java | grep "${APPLICATION_JAR}" | grep -v grep | awk '{ print $2 }')
 if [[ -z "$PID" ]]
 then
