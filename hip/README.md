@@ -71,7 +71,7 @@ The process works in the following way:
 7. Based on the discussion and feedback, some changes might be applied by authors to the text of the proposal. They will be applied as extra commits, making it easier to track the changes.
 8. Once some consensus is reached, there will be a vote to formally approve the proposal. The vote will be held on the dev@hertzbeat.apache.org mailing list, by
    sending a message using subject `[VOTE] HIP-xxx: {HIP TITLE}`. Make sure to include a link to the HIP PR in the body of the message.
-   Make sure to update the HIP with a link to the vote. You can obtain it from [Apache Pony Mail](https://lists.apache.org/list.html?dev@HertzBeat.apache.org).
+   Make sure to update the HIP with a link to the vote. You can obtain it from [Apache Pony Mail](https://lists.apache.org/list.html?dev@hertzbeat.apache.org).
    Everyone is welcome to vote on the proposal, though only the vote of the PMC members will be considered binding.
    It is required to have a lazy majority of at least 3 binding +1s votes.
    The vote should stay open for at least 48 hours.
