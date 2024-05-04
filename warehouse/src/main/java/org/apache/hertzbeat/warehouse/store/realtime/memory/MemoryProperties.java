@@ -15,33 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
+package org.apache.hertzbeat.warehouse.store.realtime.memory;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * collector info
+ * Memory storage configuration information
+ * @param enabled Whether memory data storage is enabled
+ * @param initSize Memory storage map initialization size
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "collector info")
-public class CollectorInfo {
-    
-    @NotNull
-    private String name;
-    
-    @NotNull
-    private String ip;
-    
-    @NotNull
-    private String mode = CommonConstants.MODE_PUBLIC;
+@ConfigurationProperties(prefix = "warehouse.store.memory")
+public record MemoryProperties(@DefaultValue("true") boolean enabled,
+                               @DefaultValue("1024") Integer initSize) {
 }

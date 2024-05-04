@@ -15,33 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
+package org.apache.hertzbeat.warehouse.store.realtime.redis;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * collector info
+ * Redis configuration information
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "collector info")
-public class CollectorInfo {
-    
-    @NotNull
-    private String name;
-    
-    @NotNull
-    private String ip;
-    
-    @NotNull
-    private String mode = CommonConstants.MODE_PUBLIC;
+@ConfigurationProperties(prefix = "warehouse.store.redis")
+public record RedisProperties(@DefaultValue("false") boolean enabled,
+                              @DefaultValue("127.0.0.1") String host,
+                              @DefaultValue("6379") Integer port,
+                              String password,
+                              @DefaultValue("0") Integer db) {
 }
