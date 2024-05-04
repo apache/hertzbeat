@@ -16,6 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
+# Derived from Api Testing https://github.com/LinuxSuRen/api-testing/blob/master/e2e/start.sh
 
 file=$1
 if [ "$file" == "" ]

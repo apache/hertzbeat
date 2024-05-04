@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.util;
 
+import com.aliyun.dysmsapi20170525.Client;
 import com.aliyun.dysmsapi20170525.models.SendSmsRequest;
 import com.aliyun.dysmsapi20170525.models.SendSmsResponse;
 import com.aliyun.teaopenapi.models.Config;
@@ -28,25 +29,24 @@ import java.util.Map;
  */
 public class AliYunSendSmsUtil {
 
-    public static  com.aliyun.dysmsapi20170525.Client createClient(String accessKeyId, String accessKeySecret) throws Exception {
+    public static Client createClient(String accessKeyId, String accessKeySecret) throws Exception {
         Config config = new Config();
         config.accessKeyId = accessKeyId;
         config.accessKeySecret = accessKeySecret;
-        return new com.aliyun.dysmsapi20170525.Client(config);
+        return new Client(config);
     }
 
     /**
      * Method for sending SMS messages: Enter the map format
      */
-    public static SendSmsResponse send(Map<String, Object> map, String singName, String templateCode, String phone, String accessKeyId, String accessKeySecret) throws Exception {
-        com.aliyun.dysmsapi20170525.Client client = AliYunSendSmsUtil.createClient(accessKeyId, accessKeySecret);
+    public static SendSmsResponse send(Map<String, Object> map, String singName, String templateCode, String phone,
+                                       String accessKeyId, String accessKeySecret) throws Exception {
+        Client client = AliYunSendSmsUtil.createClient(accessKeyId, accessKeySecret);
         SendSmsRequest sendReq = new SendSmsRequest()
-                .setPhoneNumbers(phone)//The phone number that received the text message
-                .setSignName(singName)//SMS signature
-                .setTemplateCode(templateCode)//SMS Template Code
-                .setTemplateParam(new ObjectMapper().writeValueAsString(map)); //The actual value of the SMS template variable
-        SendSmsResponse sendResp = client.sendSms(sendReq);
-        return sendResp;
-
+                .setPhoneNumbers(phone)
+                .setSignName(singName)
+                .setTemplateCode(templateCode)
+                .setTemplateParam(new ObjectMapper().writeValueAsString(map));
+        return client.sendSms(sendReq);
     }
 }
