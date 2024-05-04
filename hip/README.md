@@ -31,7 +31,9 @@ There are several goals for the HIP process:
 ### When is a HIP *not* required?
 
 * Bug-fixes
-* Simple enhancements that won't affect the APIs or the semantic
+* Simple enhancements 
+* Simple code refactor, improve
+* Small new feature, like support new monitoring type
 * Small documentation changes
 * Small website changes
 
