@@ -4,7 +4,7 @@ import Layout from '@theme/Layout'
 import Link from '@docusaurus/Link'
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext'
 import useBaseUrl from '@docusaurus/useBaseUrl'
-import Translate, { translate } from '@docusaurus/Translate'
+import Translate from '@docusaurus/Translate'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { EffectFade, Navigation, Autoplay } from 'swiper'
@@ -14,12 +14,9 @@ import 'swiper/css/pagination'
 
 import Feature from './components/Feature'
 import Section from './components/Section'
-import LogoCarousel from './components/LogoCarousel'
-import cdnTransfer from '../CdnTransfer'
 
 import styles from './styles.module.css'
-import {features, usersLink} from '../constants'
-import DiaLog from "./components/DiaLog";
+import {features} from '../constants'
 
 function Home() {
   const context = useDocusaurusContext()
@@ -36,7 +33,7 @@ function Home() {
               <h1 className="hero__title">
                 <img
                     style={{ width: '500px', marginTop: '100px' }}
-                    src={cdnTransfer('/img/hertzbeat-brand.svg')}
+                    src={'/img/hertzbeat-brand.svg'}
                     alt={'#'}
                 />
               </h1>
@@ -122,12 +119,6 @@ function Home() {
                 className="swiper-button-next user-swiper-button-next"
                 style={{ top: '880px', right: '50px', color: '#000033' }}
             />
-            {/*who is using*/}
-            {/*<Section isDark>*/}
-            {/*  <LogoCarousel logos={usersLink}*/}
-            {/*                headerTitle={translate({ message: 'Who uses HertzBeat?' })}>*/}
-            {/*  </LogoCarousel>*/}
-            {/*</Section>*/}
             {features && features.length > 0 && (
                 <Section>
                   {features.map((props, idx) => (
@@ -137,30 +128,11 @@ function Home() {
             )}
           </main>
         </Layout>
-        <DiaLog/>
       </>
   )
 }
 
 export default Home
-
-function loadGitter() {
-  return new Promise(function (resolve, reject) {
-    var script = document.createElement('script')
-    script.type = 'text/javascript'
-    script.async = true
-    script.src = 'https://sidecar.gitter.im/dist/sidecar.v1.js'
-    ;((window.gitter = {}).chat = {}).options = {
-      room: 'hertzbeat/community',
-    }
-    script.onload = function () {
-      ;((window.gitter = {}).chat = {}).options = {
-        room: 'hertzbeat/community',
-      }
-    }
-    document.body.appendChild(script)
-  })
-}
 
 function autoRedirect() {
   let lang = global.navigator?.language || navigator?.userLanguage

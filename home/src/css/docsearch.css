@@ -4,14 +4,12 @@
 
 .navbar .DocSearch-Button-Placeholder {
     font-size: 1.1rem;
-    font-family: 'IBM Plex Mono';
     color: #999
 }
 
 @media (max-width: 1296px) {
     .navbar .DocSearch-Button-Placeholder {
         font-size: 0.8rem;
-        font-family: 'IBM Plex Mono';
         color: #999
     }
 }
