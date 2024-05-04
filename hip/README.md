@@ -86,7 +86,7 @@ It is advised to create a master GitHub issue to formulate the execution plan an
 ## List of HIPs
 
 ### List of HIPs
-1. You can view all HIPs as the list of Pull Requests having title starting with `[improve][HIP] HIP-`. Here is the [link](https://github.com/apache/HertzBeat/pulls?q=is%3Apr+title%3A%22%5BHIP%5D%5Bdesign%5D+hip-%22) for it.
+1. You can view all HIPs as the list of Pull Requests having title starting with `[improve][HIP] HIP-`. Here is the [link](https://github.com/apache/hertzbeat/pulls?q=is%3Apr+title%3A%22%5BHIP%5D%5Bdesign%5D+hip-%22) for it.
     - Merged PR means the HIP was accepted.
     - Closed PR means the HIP was rejected.
     - Open PR means the HIP was submitted and is in the process of discussion.
