@@ -438,13 +438,13 @@ svn commit -m "release for HertzBeat 2.1.0"
 发送社区投票邮件需要至少三个`+1`，且无`-1`。
 
 > `Send to`: dev@hertzbeat.apache.org <br />
-> `Title`: [VOTE] Release Apache HertzBeat (Incubating) 2.1.0 rc1 <br />
+> `Title`: [VOTE] Release Apache HertzBeat (incubating) 2.1.0 rc1 <br />
 > `Body`: 
 
 ```
 Hello HertzBeat Community:
 
-This is a call for vote to release Apache HertzBeat(Incubating) version release-2.1.0-RC1.
+This is a call for vote to release Apache HertzBeat (incubating) version release-2.1.0-RC1.
 
 Apache Streamark - Make stream processing easier! Easy-to-use streaming application development framework and operation platform.
 
@@ -499,13 +499,13 @@ Thanks!
 在72小时后，将统计投票结果，并发送投票结果邮件，如下所示。
 
 > `Send to`: dev@hertzbeat.apache.org <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (Incubating) 2.1.0-rc1 <br />
+> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
 > `Body`:
 
 ```
 Dear HertzBeat community,
 
-Thanks for your review and vote for "Release Apache HertzBeat (Incubating) 2.1.0-rc1"
+Thanks for your review and vote for "Release Apache HertzBeat (incubating) 2.1.0-rc1"
 I'm happy to announce the vote has passed:
 
 
@@ -549,14 +549,14 @@ ChunJin Mu
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
-> `Title`: [VOTE] Release Apache HertzBeat(Incubating) 2.1.0-rc1 <br />
+> `Title`: [VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
 > `Body`:
 
 ```
 Hello Incubator Community:
 
-This is a call for a vote to release Apache HertzBeat(Incubating) version 2.1.0-RC1.
-The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat(Incubating) version 2.1.0-RC1.
+This is a call for a vote to release Apache HertzBeat (incubating) version 2.1.0-RC1.
+The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat (incubating) version 2.1.0-RC1.
 We now kindly request the Incubator PMC members review and vote on this incubator release.
 Apache HertzBeat, Make stream processing easier! Easy-to-use streaming application development framework and operation platform.
 
@@ -604,7 +604,7 @@ How to Build:
 
 Thanks,
 
-On behalf of Apache HertzBeat(Incubating) community
+On behalf of Apache HertzBeat (incubating) community
 
 
 Best,
@@ -628,13 +628,13 @@ Chunjin Mu
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat(Incubating) 2.1.0-rc1 <br />
+> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
 > `Body`:
 
 ```
 Hi all,
 
-Thanks for your review and vote for "Release Apache HertzBeat (Incubating) 2.1.0-rc1"
+Thanks for your review and vote for "Release Apache HertzBeat (incubating) 2.1.0-rc1"
 I'm happy to announce the vote has passed:
 
 3 binding votes, no +0 or -1 votes.
@@ -740,13 +740,13 @@ release note: https://hertzbeat.apache.org/download/release-note/2.1.0
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org <br />
-> `Title`: [ANNOUNCE] Release Apache HertzBeat (Incubating) 2.1.0 <br />
+> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 2.1.0 <br />
 > `Body`:
 
 ```
 Hi all,
 
-We are glad to announce the release of Apache HertzBeat(incubating) 2.1.0.
+We are glad to announce the release of Apache HertzBeat (incubating) 2.1.0.
 Once again I would like to express my thanks to your help.
 
 Apache HertzBeat(https://hertzbeat.apache.org/) - Make stream processing easier! Easy-to-use streaming application development framework and operation platform.

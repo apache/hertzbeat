@@ -14,19 +14,18 @@
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![Docker Pulls](https://img.shields.io/docker/pulls/tancloud/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/tancloud/hertzbeat/general)
+[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/apache/hertzbeat/general)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
-[![QQ](https://img.shields.io/badge/qq-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
 
 
 **官网: [hertzbeat.apache.org](https://hertzbeat.apache.org)**    
-**邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至 ```dev-subscribe@hertzbeat.apache.org```</a>** 订阅[邮件列表](https://lists.apache.org/list.html?dev@hertzbeat.apache.org)
+**邮件: <a href="mailto:dev-subscribe@hertzbeat.apache.org">发送至 ```dev-subscribe@hertzbeat.apache.org```</a>** 订阅邮件列表
 
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat)(Incubating) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
+[Apache HertzBeat](https://github.com/apache/hertzbeat) (incubating) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
 
 ### 特点
 
@@ -110,18 +109,14 @@
 
 1. `docker` 环境仅需一条命令即可开始     
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
-
-```或者使用 quay.io (若 dockerhub 网络链接超时)```
-
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 3. 部署采集器集群(可选)
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
    - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
    - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。

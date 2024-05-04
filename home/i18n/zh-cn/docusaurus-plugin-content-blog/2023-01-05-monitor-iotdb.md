@@ -131,6 +131,6 @@ HertzBeat Github: https://github.com/apache/hertzbeat
 **欢迎了解使用Star支持哦！**
 
 只需要一条docker命令即可安装体验heartbeat ：   
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 注意⚠️HertzBeat v1.2.3 版本支持 IoTDB v0.12 v0.13, 由于其v1.0刚发布, 暂未对此版本全部指标兼容。   
