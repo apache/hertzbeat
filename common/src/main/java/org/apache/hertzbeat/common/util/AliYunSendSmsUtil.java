@@ -26,10 +26,11 @@ import java.util.Map;
 
 /**
  * Alibaba cloud send SMS util
+ * Refer from <a href="https://github.com/alibaba/aliyun-spring-boot/blob/master/aliyun-spring-boot-docs/asciidoc/sms.adoc">alibaba aliyun-spring-boot</a>
  */
 public class AliYunSendSmsUtil {
 
-    public static Client createClient(String accessKeyId, String accessKeySecret) throws Exception {
+    private static Client createClient(String accessKeyId, String accessKeySecret) throws Exception {
         Config config = new Config();
         config.accessKeyId = accessKeyId;
         config.accessKeySecret = accessKeySecret;
@@ -41,7 +42,7 @@ public class AliYunSendSmsUtil {
      */
     public static SendSmsResponse send(Map<String, Object> map, String singName, String templateCode, String phone,
                                        String accessKeyId, String accessKeySecret) throws Exception {
-        Client client = AliYunSendSmsUtil.createClient(accessKeyId, accessKeySecret);
+        Client client = createClient(accessKeyId, accessKeySecret);
         SendSmsRequest sendReq = new SendSmsRequest()
                 .setPhoneNumbers(phone)
                 .setSignName(singName)
