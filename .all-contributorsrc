@@ -1808,6 +1808,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "westboy",
+      "name": "Jin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6385565?v=4",
+      "profile": "https://github.com/westboy",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
