@@ -66,32 +66,6 @@ html[data-theme=dark] {
     background-color: #fff;
 }
 
-.teamProfile {
-    margin-bottom: 20px;
-}
-.githubProfile {
-    margin-left: 15px;
-}
-.githubProfile:before {
-    content: '';
-    display: inline-block;
-    transform: translate(0, 3px);
-    height: 20px;
-    width: 20px;
-}
-
-.toggle_node_modules-\@docusaurus-theme-classic-lib-next-theme-Toggle- {
-    width: 0
-}
-
-body .react-toggle-track {
-    width: 55px;
-    height: 30px;
-}
-
-body .react-toggle-track-x {
-    right: 15px;
-}
 
 body .react-toggle-thumb {
     top: 4px;
