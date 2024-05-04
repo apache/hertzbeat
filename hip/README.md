@@ -67,7 +67,7 @@ The process works in the following way:
 4. Create GitHub Pull request (PR). The PR title should be `[improve][hip] HIP-xxx: {title}`, where the `xxx` match the number given in previous step (file-name). Replace `{title}` with a short title to your proposal.
    *Validate* again that your number does not collide, by step (2) numbering check.
 5. The author(s) will email the dev@hertzbeat.apache.org mailing list to kick off a discussion, using subject prefix `[DISCUSS] HIP-xxx: {HIP TITLE}`. The discussion will happen in broader context either on the mailing list or as general comments on the PR. Many of the discussion items will be on particular aspect of the proposal, hence they should be as comments in the PR to specific lines in the proposal file.
-6. Update file with a link to the discussion on the mailing. You can obtain it from [Apache Pony Mail](https://lists.apache.org/list.html?dev@HertzBeat.apache.org).
+6. Update file with a link to the discussion on the mailing. You can obtain it from [Apache Pony Mail](https://lists.apache.org/list.html?dev@hertzbeat.apache.org).
 7. Based on the discussion and feedback, some changes might be applied by authors to the text of the proposal. They will be applied as extra commits, making it easier to track the changes.
 8. Once some consensus is reached, there will be a vote to formally approve the proposal. The vote will be held on the dev@hertzbeat.apache.org mailing list, by
    sending a message using subject `[VOTE] HIP-xxx: {HIP TITLE}`. Make sure to include a link to the HIP PR in the body of the message.
