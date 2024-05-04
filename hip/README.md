@@ -60,7 +60,7 @@ A HIP proposal can be in these states:
 
 The process works in the following way:
 
-1. Fork https://github.com/apache/HertzBeat repository (Using the fork button on GitHub).
+1. Fork https://github.com/apache/hertzbeat repository (Using the fork button on GitHub).
 2. Clone the repository, and on it, copy the file `hip/TEMPLATE.md` and name it `hip-xxx.md`. The number `xxx` should be the next sequential number after the last contributed HIP. You view the list of contributed HIPs (at any status) as a list of Pull Requests having a "HIP" label. Use the link [here](https://github.com/apache/HertzBeat/pulls?q=is%3Apr+label%3Ahip+) as shortcut.
 3. Write the proposal following the section outlined by the template and the explanation for each section in the comment it contains (you can delete the comment once done).
     * If you need diagrams, avoid attaching large files. You can use [MermaidJS](https://mermaid.js.org/) as simple language to describe many types of diagrams.
