@@ -15,33 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-
+package org.apache.hertzbeat.warehouse.store.history.vm;
 
 /**
- * collector info
+ * vmselect configuration information
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "collector info")
-public class CollectorInfo {
-    
-    @NotNull
-    private String name;
-    
-    @NotNull
-    private String ip;
-    
-    @NotNull
-    private String mode = CommonConstants.MODE_PUBLIC;
+public record VictoriaMetricsSelectProperties(
+        String url,
+        String username,
+        String password
+) {
 }

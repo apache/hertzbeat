@@ -15,33 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
+package org.apache.hertzbeat.warehouse;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-
+import org.springframework.context.annotation.ComponentScan;
 
 /**
- * collector info
+ * WarehouseAutoConfiguration class
+ * @version 2.1
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "collector info")
-public class CollectorInfo {
-    
-    @NotNull
-    private String name;
-    
-    @NotNull
-    private String ip;
-    
-    @NotNull
-    private String mode = CommonConstants.MODE_PUBLIC;
+@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
+public class WarehouseAutoConfiguration {
 }

@@ -65,7 +65,7 @@ public class Job {
      */
     private boolean hide = true;
     /**
-     * Large categories of monitoring   
+     * Large categories of monitoring
      * service-application service monitoring db-database
      * monitoring custom-custom monitoring os-operating system monitoring...
      */
@@ -126,7 +126,7 @@ public class Job {
      */
     @JsonIgnore
     private transient long dispatchTime;
-    
+
     /**
      * collector usage - metric group task execution priority view
      * 0 - availability
@@ -183,8 +183,8 @@ public class Job {
      * collector use - to get the next set of priority metric group tasks
      *
      * @param metrics Current Metrics
-     * @param first   Is it the first time to get  
-     * @return Metrics Tasks       
+     * @param first   Is it the first time to get
+     * @return Metrics Tasks
      * Returning null means: the job has been completed, and the collection of all metrics has ended
      * Returning the empty set metrics that there are still metrics collection tasks at the current
      * level that have not been completed,and the next level metrics task collection cannot be performed.
@@ -238,7 +238,7 @@ public class Job {
         if (this.envConfigmaps == null) {
             this.envConfigmaps = envConfigmaps;
         } else {
-            this.envConfigmaps.putAll(envConfigmaps);   
+            this.envConfigmaps.putAll(envConfigmaps);
         }
     }
 
