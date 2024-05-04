@@ -28,7 +28,7 @@ function Home() {
             title={`${siteConfig.title} · ${siteConfig.tagline}`}
             description={`${siteConfig.tagline}`}
         >
-          <header className={clsx('hero hero--primary', styles.heroBanner)}>
+          <header className={clsx('hero--primary', styles.heroBanner)}>
             <div className="container">
               <h1 className="hero__title">
                 <img
@@ -44,8 +44,7 @@ function Home() {
                 <Link
                     to="/docs/"
                     className={clsx(
-                        'button button--primary button--lg',
-                        styles.getStarted
+                        'button button--primary button--lg'
                     )}
                 >
                   <Translate>quickstart</Translate>
@@ -54,7 +53,7 @@ function Home() {
             </div>
           </header>
           <main>
-            <div className={styles.sectionDashboard}>
+            <div>
               <Swiper
                   modules={[Autoplay, EffectFade, Navigation]}
                   watchSlidesProgress={true}

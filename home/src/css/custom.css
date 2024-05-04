@@ -1,7 +1,5 @@
 @import url(navbar.css);
-@import url(docsearch.css);
 @import url(hero.css);
-@import url(buttons.css);
 
 :root {
     --ifm-color-primary: #7228B5;
@@ -140,59 +138,7 @@ footer > div{
     margin-top: 1rem;
 }
 
-
-.docusaurus-highlight-code-line {
-    background-color: #484d5b;
-    display: block;
-}
-
-.features_src-pages- h3 {
-    text-align: center;
-}
-.features_src-pages- .featureImage_src-pages- {
-    width: 120px;
-    height: 120px;
-    margin-bottom: 20px;
-}
-
-
-img[alt^=Support] {
-    width: 20px;
-    margin-right: 5px;
-    display: inline-block;
-}
-
-.main-wrapper .markdown p > a,
-.main-wrapper .container p > a {
-    text-decoration: none!important;
-    border-bottom: 1px solid var(--ifm-color-primary);
-    padding: 2px;
-}
-.main-wrapper .container .admonition p > a {
-    background-color: transparent;
-    color: inherit;
-    text-decoration: underline!important;
-    border-bottom: 0;
-}
-
-.main-wrapper .markdown p > a:hover,
-.main-wrapper .container p > a:hover {
-    color: var(--ifm-color-primary)
-}
-
 article thead {
-    background-color: var(--ifm-table-border-color);
     font-family: Verdana, Arial, Helvetica, sans-serif;
     text-align: left;
-}
-
-.prism-code > div {
-    background-color: var(--ifm-table-border-color)!important;
-}
-
-.tabs__item:hover {
-    border-bottom-left-radius: 0;
-}
-.markdown > div > .margin-vert--md {
-    margin-top: 0!important;
 }
