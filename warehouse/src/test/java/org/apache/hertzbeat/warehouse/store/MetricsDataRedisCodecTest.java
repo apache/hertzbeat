@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

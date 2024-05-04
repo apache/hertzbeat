@@ -15,33 +15,38 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
+package org.apache.hertzbeat.warehouse.store;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-
+import org.apache.hertzbeat.warehouse.store.history.tdengine.TdEngineDataStorage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
- * collector info
+ * Test case for {@link TdEngineDataStorage}
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "collector info")
-public class CollectorInfo {
-    
-    @NotNull
-    private String name;
-    
-    @NotNull
-    private String ip;
-    
-    @NotNull
-    private String mode = CommonConstants.MODE_PUBLIC;
+class TdEngineDataStorageTest {
+
+    @BeforeEach
+    void setUp() {
+    }
+
+    @Test
+    void isServerAvailable() {
+    }
+
+    @Test
+    void saveData() {
+    }
+
+    @Test
+    void destroy() {
+    }
+
+    @Test
+    void getHistoryMetricData() {
+    }
+
+    @Test
+    void getHistoryIntervalMetricData() {
+    }
 }
