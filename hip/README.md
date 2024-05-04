@@ -20,7 +20,7 @@ There are several goals for the HIP process:
 
 4. Have greater scrutiny to changes are affecting the public APIs (as defined below) to reduce chances of introducing breaking changes or APIs that are not expressing an ideal semantic.
 
-It is not a goal for HIP to add undue process or slow-down the development.
+**It is not a goal for HIP to add undue process or slow-down the development.**
 
 ### When is a HIP required?
 
