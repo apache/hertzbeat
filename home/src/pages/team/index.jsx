@@ -1023,6 +1023,13 @@ export default function () {
                     alt="feiyang li"/><br/><sub><b>feiyang li</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=HeartLinked" title="Documentation">📖</a>
                   </td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/Aias00"><img
+                    src="https://avatars.githubusercontent.com/u/25810623?v=4?s=100" width="100px;"
+                    alt="aias00"/><br/><sub><b>aias00</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=Aias00" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/westboy"><img
+                    src="https://avatars.githubusercontent.com/u/6385565?v=4?s=100" width="100px;" alt="Jin"/><br/><sub><b>Jin</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=westboy" title="Documentation">📖</a></td>
                 </tr>
                 </tbody>
               </table>
