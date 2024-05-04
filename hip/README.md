@@ -24,10 +24,9 @@ There are several goals for the HIP process:
 
 ### When is a HIP required?
 
-* Any new feature for HertzBeat (Example: New Monitor Protocol)
-* Any change to the wire protocol APIs
-* Any large code change that will touch multiple components
-* Any change to the configuration
+* Major new feature for HertzBeat (Example: support metrics push gateway, support logs monitoring)
+* Major change to the wire protocol APIs
+* Large code change that will touch multiple components
 
 ### When is a HIP *not* required?
 
