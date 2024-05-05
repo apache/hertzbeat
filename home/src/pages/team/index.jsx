@@ -125,7 +125,7 @@ export default function () {
             <span className="desc"><Translate>team.thanks</Translate></span>
 
             <div className="row" style={{marginTop: '20px', marginLeft: '20px'}}>
-
+              {/* ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section */}
               <table>
                 <tbody>
                 <tr>
