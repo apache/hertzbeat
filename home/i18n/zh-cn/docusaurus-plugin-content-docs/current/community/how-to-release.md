@@ -374,7 +374,7 @@ Steps to validate the release，Please refer to:
 https://hertzbeat.apache.org/community/release/how-to-verify
 
 How to Build:
-https://hertzbeat.apache.org/docs/community/how_to_release/#34-compile-the-binary-package
+https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
 
 Thanks!
 ```
@@ -465,12 +465,7 @@ Steps to validate the release， Please refer to:
 
 
 How to Build:
-
-1) clone source code:
-> git clone -b v1.6.0-rc1 git@github.com:apache/hertzbeat.git
-
-2) build project:
-https://hertzbeat.apache.org/docs/community/how_to_release/#34-compile-the-binary-package
+https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
 
 
 Thanks,
