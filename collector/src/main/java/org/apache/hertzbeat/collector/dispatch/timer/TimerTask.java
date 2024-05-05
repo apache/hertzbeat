@@ -20,6 +20,8 @@ package org.apache.hertzbeat.collector.dispatch.timer;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Derived from Apache Dubbo org.apache.dubbo.common.timer.TimerTask 
+ * <a href="https://github.com/apache/dubbo/blob/3.2/dubbo-common/src/main/java/org/apache/dubbo/common/timer/TimerTask.java">TimerTask.java</a>
  * A task which is executed after the delay specified with
  * {@link Timer#newTimeout(TimerTask, long, TimeUnit)} (TimerTask, long, TimeUnit)}.
  */

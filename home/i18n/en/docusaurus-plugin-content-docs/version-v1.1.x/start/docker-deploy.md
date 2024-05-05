@@ -15,9 +15,9 @@ sidebar_label: Install via Docker
    ```
 
 2. pull HertzBeat Docker mirror  
-   you can look up the mirror version TAG in [official mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
+   you can look up the mirror version TAG in [official mirror repository](https://hub.docker.com/r/apache/hertzbeat/tags)     
    ``` 
-   $ docker pull tancloud/hertzbeat   
+   $ docker pull apache/hertzbeat   
    ```
 3. Configure HertzBeat's configuration file(optional)      
    Create application.yml in the host directory，eg:/opt/application.yml        
@@ -173,7 +173,7 @@ $ docker run -d -p 1157:1157 \
     -v /opt/logs:/opt/hertzbeat/logs \
     -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
     -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml \
-    --name hertzbeat tancloud/hertzbeat
+    --name hertzbeat apache/hertzbeat
 ```
 
    This command starts a running HertzBeat Docker container, and the container port 1157 is mapped to the host machine 1157. If existing processes on the host use the port, please modify host mapped port.  
@@ -186,7 +186,7 @@ $ docker run -d -p 1157:1157 \
    - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : (optional，if you don't have a need,just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file. We need to modify MYSQL, TDengine configuration information in the configuration file to connect to an external service.
    - `-v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional，if you don't have a need,just delete it) Mount account configuration file modified in the previous step into the container. Delete this command parameters if have no modify account needs.
    - `--name hertzbeat` : Naming container name hertzbeat 
-   - `tancloud/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. version can be looked up in [official mirror repository](https://hub.docker.com/r/tancloud/hertzbeat/tags)   
+   - `apache/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. version can be looked up in [official mirror repository](https://hub.docker.com/r/apache/hertzbeat/tags)   
 
 7. Begin to explore HertzBeat  
    visit http://ip:1157/ on the browser. You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat.  

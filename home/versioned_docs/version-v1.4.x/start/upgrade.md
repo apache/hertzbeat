@@ -8,8 +8,8 @@ sidebar_label: Version Upgrade Guide
 
 - [Github Release](https://github.com/apache/hertzbeat/releases)
 - [Gitee Release](https://gitee.com/hertzbeat/hertzbeat/releases)
-- [DockerHub Release](https://hub.docker.com/r/tancloud/hertzbeat/tags)
-- [Docker quay.io Release](https://quay.io/repository/tancloud/hertzbeat?tab=tags)
+- [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
+- [Docker quay.io Release](https://quay.io/repository/apache/hertzbeat?tab=tags)
 
 HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL relational databases, and the collected metric data is stored in time series databases such as TDengine and IotDB.
 

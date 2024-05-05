@@ -337,8 +337,8 @@ metrics:
     calculates:
       - node_name=$.name
       - ip=$.ip
-      - cpu_load_average=#`$.os.cpu.load_average.1m` | $.os.load_average
-      - cpu_percent=$.os.cpu.percent | $.os.cpu_percent
+      - cpu_load_average=$.os.cpu.load_average.1m!=null?$.os.cpu.load_average.1m:$.os.load_average
+      - cpu_percent=$.os.cpu.percent!=null?$.os.cpu.percent:$.os.cpu_percent
       - heap_used=$.jvm.mem.heap_used_in_bytes
       - heap_used_percent=$.jvm.mem.heap_used_percent
       - heap_total=$.jvm.mem.heap_max_in_bytes

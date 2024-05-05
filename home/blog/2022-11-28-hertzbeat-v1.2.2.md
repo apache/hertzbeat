@@ -14,7 +14,7 @@ Hi guys! HertzBeat v1.2.2 is coming. This release brings significant features. T
 Let's Try It Now!
 
 Only one docker command is needed to install and experience heartbeat：
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 Thanks to the contributors! 👍👍
 
@@ -63,7 +63,7 @@ Have Fun!
 大家好，HertzBeat v1.2.2发布啦！这个版本带来个超多重大更新，我们支持了对云原生kubernets, docker的监控，支持了对springboot应用, nacos注册发现中心，达梦数据库，opengauss数据库等的指标监控。我们也引入了一个实验性特性，用户可以使用promethues promql 从promethues server拿取指标数据作为hertzbeat自定义监控指标数据。当然我们也新增了多个测试用户覆盖，修复了多个BUG。还有个很多用户想要的更新，我们新增了对linux监控的top10 cpu 内存利用率的进程监控指标。有个这个指标，我们就可以干很多事情。比如监控某个进程CPU异常，内存爆满啥的。快来试试吧！
 
 只需要一条docker命令即可安装体验heartbeat ：
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 感谢hertzbeat贡献者们的贡献！👍👍
 

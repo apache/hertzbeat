@@ -37,6 +37,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Derived from Apache Dubbo org.apache.dubbo.common.timer.HashedWheelTimer 
+ * <a href="https://github.com/apache/dubbo/blob/3.2/dubbo-common/src/main/java/org/apache/dubbo/common/timer/HashedWheelTimer.java">HashedWheelTimer.java</a>
  * A {@link Timer} optimized for approximated I/O timeout scheduling.
  *
  * <h3>Tick Duration</h3>

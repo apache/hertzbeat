@@ -49,7 +49,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 
 只需要一条docker命令即可安装体验hertzbeat:    
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 若dockerhub网络超时，可以使用下面命令:   
 `docker run -d -p 1157:1157 --name hertzbeat quay.io/tancloud/hertzbeat`

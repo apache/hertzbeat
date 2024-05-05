@@ -310,6 +310,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 if (CommonConstants.TYPE_NUMBER == field.getType()) {
                     value = CommonUtil.parseDoubleStr(value, field.getUnit());
                 }
+                // Handle the case where the value is string type and value is numeric
+                if (CommonConstants.TYPE_STRING == field.getType() && CommonUtil.isNumeric(value)) {
+                    value = CommonUtil.parseDoubleStr(value, field.getUnit());
+                }
                 if (value == null) {
                     value = CommonConstants.NULL_VALUE;
                 }

@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 
 /**
+ * Derived from Apache Rocketmq org.apache.rocketmq.remoting.netty.NettyRequestProcessor 
  * netty remoting processor
  * @see <a href="https://github.com/apache/rocketmq/blob/develop/remoting/src/main/java/org/apache/rocketmq/remoting/netty/NettyRequestProcessor.java">NettyRequestProcessor</a>
  */

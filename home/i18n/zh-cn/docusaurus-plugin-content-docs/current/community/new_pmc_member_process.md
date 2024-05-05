@@ -282,5 +282,5 @@ submission process. This should enable better productivity.
 A PPMC member helps manage and guide the direction of the project.
 
 Thanks,
-On behalf of the Apache HertzBeat (Incubating) PPMC
+On behalf of the Apache HertzBeat (incubating) PPMC
 ```

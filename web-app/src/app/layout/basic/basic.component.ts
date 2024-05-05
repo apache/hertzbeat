@@ -75,7 +75,7 @@ import { CONSTANTS } from '../../shared/constants';
     </layout-default>
     <global-footer style="border-top: 1px solid #e5e5e5; min-height: 120px; margin:0;">
       <div style="margin-top: 30px">
-        Apache HertzBeat {{ version }}<br />
+        Apache HertzBeat (incubating) {{ version }}<br />
         Copyright &copy; {{ currentYear }}
         <a href="https://hertzbeat.apache.org" target="_blank">Apache HertzBeat</a>
         <br />
