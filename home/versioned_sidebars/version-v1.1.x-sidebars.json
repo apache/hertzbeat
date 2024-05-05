@@ -2,7 +2,7 @@
   "docs": [
     {
       "type": "category",
-      "label": "快速入门",
+      "label": "Quickstart",
       "items": [
         "introduce",
         "start/quickstart",

@@ -1,3 +1,4 @@
+/* Derived from https://github.com/apache/incubator-streampark-website/tree/dev/src/pages/team */
 .team_page {
     margin-top: 50px!important;
 }
@@ -7,7 +8,6 @@
 .team_page .team_title {
     font-size: 25px;
     font-weight: 500;
-    color: var(--ifm-color-primary-contrast-foreground);
     margin-top: 50px;
 }
 .team_page .team_desc {
@@ -18,7 +18,6 @@
 }
 .team_page .desc {
     font-size: 1rem;
-    color: var(--ifm-color-gray-700);
     margin-left: 1.2rem;
 }
 .team_page .character_list {
@@ -83,9 +82,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
 }
-/*****************************
-  team
-*****************************/
 .team-row {
     --bs-gutter-x: 1.5rem;
     --bs-gutter-y: 0;

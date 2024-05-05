@@ -247,6 +247,13 @@
         },
         {
           "type": "category",
+          "label": "network",
+          "items": [
+            "help/huawei_switch"
+          ]
+        },
+        {
+          "type": "category",
           "label": "threshold",
           "items": [
             "help/alert_threshold",
@@ -268,13 +275,6 @@
             "help/alert_console",
             "help/alert_enterprise_wechat_app",
             "help/alert_smn"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "Network",
-          "items": [
-            "help/huawei_switch"
           ]
         },
         "help/issue"

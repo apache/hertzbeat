@@ -209,6 +209,7 @@ These files from https://github.com/ng-alain/ng-alain
 
 web-app/src/app/core/**
 web-app/src/app/layout/**
+web-app/src/app/routes/exception/**
 web-app/src/app/routes/routes.module.ts
 web-app/src/app/routes/routes-routing.module.ts
 web-app/src/app/shared/json-schema/**
