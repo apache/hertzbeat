@@ -1,5 +1,5 @@
 ---
-id: contributing  
+id: contribution  
 title: 贡献指南
 sidebar_position: 0
 ---
