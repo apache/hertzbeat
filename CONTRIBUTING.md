@@ -116,6 +116,9 @@ git checkout master
 git pull upstream master
 ```
 
+### HertzBeat Improvement Proposal (HIP)
+If you have major new features(e.g., support metrics push gateway, support logs monitoring), you need to write a design document known as a HertzBeat Improvement Proposal (HIP). Before starting to write a HIP, make sure you follow the process [here](https://github.com/apache/hertzbeat/tree/master/hip).
+
 ### How to become a Committer?  
 
 With the above steps, you are a contributor to HertzBeat. Repeat the previous steps to stay active in the community, keep at, you can become a Committer!    
@@ -262,6 +265,9 @@ git remote add upstream https://github.com/apache/hertzbeat.git #Bind the remote
 git checkout master 
 git pull upstream master
 ```
+
+### HertzBeat 改进提案 (HIP)
+如果您有重大的新特性（例如，支持指标推送网关，日志监控等），您需要编写一个被称为 HertzBeat 改进提案（HertzBeat Improvement Proposal，HIP）的设计文档。在开始编写 HIP 之前，请确保您遵循了[这里](https://github.com/apache/hertzbeat/tree/master/hip)的流程。
 
 ### 如何成为Committer？  
 
