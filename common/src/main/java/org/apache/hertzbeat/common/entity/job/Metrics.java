@@ -37,6 +37,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.NQGLProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
@@ -55,7 +56,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
- * Details of the monitoring metrics collected 
+ * Details of the monitoring metrics collected
  * eg: cpu | memory | health
  */
 @Data
@@ -210,6 +211,11 @@ public class Metrics {
      * Monitoring configuration information using the public redfish protocol
      */
     private RedfishProtocol redfish;
+    /**
+     * Monitoring configuration information using the public redfish protocol
+     */
+    private NQGLProtocol ngql;
+
     /**
      * collector use - Temporarily store subTask metrics response data
      */
