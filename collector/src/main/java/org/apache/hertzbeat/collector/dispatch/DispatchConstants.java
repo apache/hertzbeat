@@ -60,6 +60,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_NEBULAGRAPH = "nebulaGraph";
     /**
+     * protocol ngql
+     */
+    String PROTOCOL_NGQL = "ngql";
+    /**
      * protocol udp
      */
     String PROTOCOL_UDP = "udp";

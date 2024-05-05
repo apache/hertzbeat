@@ -86,6 +86,11 @@ class CollectUtilTest {
         assertNotNull(res3);
         assertEquals(0, res3.getValue());
         assertEquals("KB", res3.getUnit());
+
+        CollectUtil.DoubleAndUnit res4 = CollectUtil.extractDoubleAndUnitFromStr("GRAPH0");
+        assertNull(res4.getValue());
+        assertNull(res4.getUnit());
+
     }
 
 
@@ -140,7 +145,6 @@ class CollectUtilTest {
         Metrics metricsTarget = Metrics.builder().name("张三").build();
         JsonElement jsonElement2 = new Gson().toJsonTree(metricsTarget);
         assertEquals(JSON_MAPPER.readTree(jsonElement2.toString()), JSON_MAPPER.readTree(res.toString()));
-
 
         List<Metrics> metricsList = new ArrayList<>();
         metricsList.add(metrics);
