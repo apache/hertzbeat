@@ -30,10 +30,12 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.job.protocol.NQGLProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
 
 /**
  * template for connect nebula graph and execute ngql
@@ -46,6 +48,9 @@ public class NebulaTemplate {
     private final HostAddress hostAddress;
     private final String spaceName;
     private Session session;
+    NebulaPool pool;
+    @Getter
+    private boolean initSuccess;
 
     private final Integer timeout;
 
@@ -56,30 +61,33 @@ public class NebulaTemplate {
         this.spaceName = protocol.getSpaceName();
         this.timeout = Integer.valueOf(protocol.getTimeout());
         initSession();
+
     }
 
 
-    public void closeSession() {
+    public void closeSessionAndPool() {
         if (session != null && session.ping()) {
             session.close();
+        }
+        if (pool != null) {
+            pool.close();
         }
     }
 
     @SneakyThrows
     private void initSession() {
-        NebulaPool pool = new NebulaPool();
+        pool = new NebulaPool();
         try {
             NebulaPoolConfig nebulaPoolConfig = new NebulaPoolConfig();
             nebulaPoolConfig.setMaxConnSize(100);
             nebulaPoolConfig.setTimeout(timeout);
             boolean initResult = pool
                 .init(Collections.singletonList(hostAddress), nebulaPoolConfig);
+            initSuccess = initResult;
             if (!initResult) {
                 log.error("pool init failed.");
-                return;
             }
             session = pool.getSession(userName, password, false);
-
         } catch (Exception e) {
             log.error("初始化失败");
         }

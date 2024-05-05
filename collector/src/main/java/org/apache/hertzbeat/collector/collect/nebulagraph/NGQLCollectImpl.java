@@ -64,6 +64,10 @@ public class NGQLCollectImpl extends AbstractCollect {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         NebulaTemplate nebulaTemplate = new NebulaTemplate(metrics.getNgql());
+        if (!nebulaTemplate.isInitSuccess()) {
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("Failed to connect Nebula Graph");
+        }
         stopWatch.stop();
         long responseTime = stopWatch.getTotalTimeMillis();
         try {
@@ -74,7 +78,7 @@ public class NGQLCollectImpl extends AbstractCollect {
                 case PARSE_TYPE_COLUMNS -> queryColumns(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
             }
         } finally {
-            nebulaTemplate.closeSession();
+            nebulaTemplate.closeSessionAndPool();
         }
     }
 
