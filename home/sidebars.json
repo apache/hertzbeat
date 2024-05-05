@@ -91,10 +91,12 @@
       "label": "Community",
       "items": [
         "community/contact",
+        "community/development",
         {
           "type": "category",
           "label": "contribution",
           "items": [
+            "community/contribution",
             "community/mailing_lists",
             "community/become_committer",
             "community/become_pmc_member",
@@ -284,7 +286,6 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/contributing",
         "others/resource"
       ]
     }
