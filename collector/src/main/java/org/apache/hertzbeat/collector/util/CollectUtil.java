@@ -57,7 +57,8 @@ public class CollectUtil {
     /**
      * Regularly verifying whether a string is a combination of numbers and units
      */
-    private static final String DOUBLE_AND_UNIT_CHECK_REGEX ="^[.\\d+"+String.join("",UNIT_SYMBOLS)+"]+$";
+    private static final String DOUBLE_AND_UNIT_CHECK_REGEX = "^[.\\d+" + String.join("", UNIT_SYMBOLS) + "]+$";
+
     /**
      * count match keyword number
      * @param content content
@@ -94,7 +95,7 @@ public class CollectUtil {
             log.debug(e.getMessage());
         }
 
-        if(!str.matches(DOUBLE_AND_UNIT_CHECK_REGEX)){
+        if (!str.matches(DOUBLE_AND_UNIT_CHECK_REGEX)){
             return doubleAndUnit;
         }
         // extract unit from str value, eg: 23.43GB, 33KB, 44.22G

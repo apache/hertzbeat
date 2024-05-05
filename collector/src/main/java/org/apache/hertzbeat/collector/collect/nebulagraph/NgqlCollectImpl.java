@@ -30,7 +30,7 @@ import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.NQGLProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
 import org.springframework.util.Assert;
@@ -39,7 +39,7 @@ import org.springframework.util.StopWatch;
 /**
  * connect nebulaGraph and collect metrics use NGQL
  */
-public class NGQLCollectImpl extends AbstractCollect {
+public class NgqlCollectImpl extends AbstractCollect {
 
     private static final String PARSE_TYPE_FILTER_COUNT = "filterCount";
     private static final String PARSE_TYPE_ONE_ROW = "oneRow";
@@ -60,7 +60,7 @@ public class NGQLCollectImpl extends AbstractCollect {
             builder.setMsg(e.getMessage());
             return;
         }
-        NQGLProtocol ngql = metrics.getNgql();
+        NgqlProtocol ngql = metrics.getNgql();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         NebulaTemplate nebulaTemplate = new NebulaTemplate(metrics.getNgql());
@@ -76,6 +76,7 @@ public class NGQLCollectImpl extends AbstractCollect {
                 case PARSE_TYPE_ONE_ROW -> queryOneRow(nebulaTemplate, ngql, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> queryMultiRow(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_COLUMNS -> queryColumns(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
+                default -> {}
             }
         } finally {
             nebulaTemplate.closeSessionAndPool();
@@ -83,7 +84,7 @@ public class NGQLCollectImpl extends AbstractCollect {
     }
 
     private void validateParams(Metrics metrics) {
-        NQGLProtocol ngql = metrics.getNgql();
+        NgqlProtocol ngql = metrics.getNgql();
         Assert.hasText(ngql.getHost(), "NGQL protocol host is required");
         Assert.hasText(ngql.getPort(), "Port protocol host is required");
         Assert.hasText(ngql.getParseType(), "NGQL protocol parseType is required");
@@ -92,14 +93,15 @@ public class NGQLCollectImpl extends AbstractCollect {
     }
 
     /**
-     * parseType filterCount Filter the result set according to requirements and count the quantity </br> command:  field#ngql#filterName#filterValue
+     * parseType filterCount Filter the result set according to requirements and count the quantity
+     * command:  field#ngql#filterName#filterValue
      *
      * @param nebulaTemplate template for execute ngql
      * @param protocol       ngql  protocol
      * @param columns        metrics aliasField
      * @param responseTime   cost time for connect to nebula graph
      */
-    private void filterCount(NebulaTemplate nebulaTemplate, NQGLProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void filterCount(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
         Map<String, String> data = new HashMap<>();
         for (String command : protocol.getCommands()) {
             Map<String, String> showJobs = showJobs(nebulaTemplate, protocol.getSpaceName(), command);
@@ -144,7 +146,7 @@ public class NGQLCollectImpl extends AbstractCollect {
         builder.addValues(valueRowBuilder.build());
     }
 
-    private void queryOneRow(NebulaTemplate nebulaTemplate, NQGLProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void queryOneRow(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
         Map<String, Object> queryResult = new HashMap<>();
         for (String command : protocol.getCommands()) {
             Map<String, String> showJobs = showJobs(nebulaTemplate, protocol.getSpaceName(), command);

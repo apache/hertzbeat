@@ -34,8 +34,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.entity.job.protocol.NQGLProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
+import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 
 /**
  * template for connect nebula graph and execute ngql
@@ -54,7 +53,7 @@ public class NebulaTemplate {
 
     private final Integer timeout;
 
-    public NebulaTemplate(NQGLProtocol protocol) {
+    public NebulaTemplate(NgqlProtocol protocol) {
         this.userName = protocol.getUsername();
         this.password = protocol.getPassword();
         this.hostAddress = new HostAddress(protocol.getHost(), Integer.parseInt(protocol.getPort()));
@@ -93,13 +92,13 @@ public class NebulaTemplate {
         }
     }
 
-    private ResultSet execute(String ngQL) {
+    private ResultSet execute(String ngql) {
         ResultSet resultSet;
         try {
-            resultSet = session.execute(ngQL);
+            resultSet = session.execute(ngql);
             return resultSet;
         } catch (IOErrorException e) {
-            log.error("Query error:【{}】,ErrorMsg:【{}】", ngQL, e.getMessage());
+            log.error("Query error:【{}】,ErrorMsg:【{}】", ngql, e.getMessage());
             session.close();
         }
         return null;
@@ -108,19 +107,19 @@ public class NebulaTemplate {
     /**
      * Execute ngql query using the graph space name configured in the protocol
      *
-     * @param ngQL ngql
+     * @param ngql ngql
      */
-    public List<Map<String, Object>> executeCommand(String ngQL) {
-        return executeCommand(ngQL, spaceName);
+    public List<Map<String, Object>> executeCommand(String ngql) {
+        return executeCommand(ngql, spaceName);
     }
 
-    public List<Map<String, Object>> executeCommand(String ngQL, String currentSpaceName) {
+    public List<Map<String, Object>> executeCommand(String ngql, String currentSpaceName) {
         if (StringUtils.isNotBlank(currentSpaceName)) {
-            ngQL = "USE " + currentSpaceName + ";" + ngQL;
+            ngql = "USE " + currentSpaceName + ";" + ngql;
         }
-        ResultSet resultSet = execute(ngQL);
+        ResultSet resultSet = execute(ngql);
         if (resultSet == null) {
-            log.error("Query Error result set is null,NGQL:【{}】", ngQL);
+            log.error("Query Error result set is null,NGQL:【{}】", ngql);
             return Collections.emptyList();
         }
         List<String> columnNames = resultSet.getColumnNames();

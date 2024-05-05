@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class NQGLProtocol {
+public class NgqlProtocol {
 
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST

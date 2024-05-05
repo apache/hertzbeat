@@ -37,9 +37,9 @@ import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.NQGLProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
@@ -214,7 +214,7 @@ public class Metrics {
     /**
      * Monitoring configuration information using the public redfish protocol
      */
-    private NQGLProtocol ngql;
+    private NgqlProtocol ngql;
 
     /**
      * collector use - Temporarily store subTask metrics response data
