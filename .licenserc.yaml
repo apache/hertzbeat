@@ -41,7 +41,6 @@ header:
     - '**/*.txt'
     - '**/target/**'
     - '.gitattributes'
-    - '.gitpod.yml'
     - '**/.gitignore'
     - '**/.gitkeep'
     - 'home/**'

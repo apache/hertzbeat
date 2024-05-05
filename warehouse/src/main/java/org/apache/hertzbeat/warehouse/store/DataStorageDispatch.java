@@ -22,6 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
+import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.jpa.JpaDatabaseDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.springframework.stereotype.Component;
 
 /**
@@ -44,23 +48,28 @@ public class DataStorageDispatch {
         this.workerPool = workerPool;
         this.historyDataStorages = historyDataStorages;
         this.realTimeDataStorages = realTimeDataStorages;
-        startStoragePersistentData();
-        startStorageRealTimeData();
+        startPersistentDataStorage();
+        startRealTimeDataStorage();
     }
 
-    private void startStorageRealTimeData() {
+    private void startRealTimeDataStorage() {
+        if (realTimeDataStorages == null || realTimeDataStorages.isEmpty()) {
+            log.info("no real time data storage start");
+            return;
+        }
+        if (realTimeDataStorages.size() > 1) {
+            realTimeDataStorages.removeIf(MemoryDataStorage.class::isInstance);
+        }
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-realtime-data-storage");
-            if (realTimeDataStorages != null && realTimeDataStorages.size() > 1) {
-                realTimeDataStorages.removeIf(item -> item instanceof RealTimeMemoryDataStorage);
-            }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToRealTimeStorage();
-                    if (metricsData != null && realTimeDataStorages != null) {
-                        for (AbstractRealTimeDataStorage realTimeDataStorage : realTimeDataStorages) {
-                            realTimeDataStorage.saveData(metricsData);
-                        }
+                    if (metricsData == null) {
+                        continue;
+                    }
+                    for (AbstractRealTimeDataStorage realTimeDataStorage : realTimeDataStorages) {
+                        realTimeDataStorage.saveData(metricsData);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -70,19 +79,24 @@ public class DataStorageDispatch {
         workerPool.executeJob(runnable);
     }
 
-    protected void startStoragePersistentData() {
+    protected void startPersistentDataStorage() {
+        if (historyDataStorages == null || historyDataStorages.isEmpty()) {
+            log.info("no history data storage start");
+            return;
+        }
+        if (historyDataStorages.size() > 1) {
+            historyDataStorages.removeIf(JpaDatabaseDataStorage.class::isInstance);
+        }
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
-            if (historyDataStorages != null && historyDataStorages.size() > 1) {
-                historyDataStorages.removeIf(item -> item instanceof HistoryJpaDatabaseDataStorage);
-            }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToPersistentStorage();
-                    if (metricsData != null && historyDataStorages != null) {
-                        for (AbstractHistoryDataStorage historyDataStorage : historyDataStorages) {
-                            historyDataStorage.saveData(metricsData);
-                        }
+                    if (metricsData == null) {
+                        continue;
+                    }
+                    for (AbstractHistoryDataStorage historyDataStorage : historyDataStorages) {
+                        historyDataStorage.saveData(metricsData);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
