@@ -20,7 +20,7 @@ Check the `hbase-site.xml` file to obtain the value of the `hbase.master.info.po
 | Target Host         | The IPv4, IPv6, or domain name of the monitored peer. Note: without protocol header (e.g., https://, http://).                                                                   |
 | Port                | The port number of the Hbase master, default is 16010. That is, the value of the`hbase.master.info.port` parameter.                                                              |
 | Task Name           | The name identifying this monitoring, which needs to be unique.                                                                                                                  |
-| Query Timeout       | The timeout setting for Kafka connection, in milliseconds, with a default of 3000 milliseconds.                                                                                  |
+| Query Timeout       | Set the connection timeout in ms, the default is 3000 milliseconds.                                                                                 |
 | Collection Interval | The periodic collection interval for monitoring data, in seconds, with the minimum allowable interval being 30 seconds.                                                          |
 | Probe               | Whether to probe and check the availability of monitoring before adding new monitoring, and proceed with the addition or modification operation only if the probe is successful. |
 | Description         | Additional notes and descriptions for this monitoring, users can add notes here.                                                                                                 |

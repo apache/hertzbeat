@@ -20,7 +20,7 @@ Review the `hbase-site.xml` file to obtain the value of the `hbase.regionserver.
 | Target Host         | The IPV4, IPV6, or domain name of the monitored entity. Note ⚠️ Do not include the protocol header (e.g., https://, http://).                    |
 | Port                | The port number of the HBase regionserver, default is 16030, i.e., the value of the`hbase.regionserver.info.port` parameter                        |
 | Task Name           | A unique name to identify this monitoring task.                                                                                                    |
-| Query Timeout       | Set the timeout for Kafka connections in milliseconds, default is 3000 ms.                                                                         |
+| Query Timeout       | Set the connection timeout in ms, the default is 3000 milliseconds.                                                                         |
 | Collection Interval | The interval time for periodic data collection in seconds, with a minimum interval of 30 seconds.                                                  |
 | Probe Before Adding | Whether to probe and check the availability of monitoring before adding new monitoring, only proceed with the addition if the probe is successful. |
 | Description Note    | Additional notes to identify and describe this monitoring, users can add notes here.                                                               |
