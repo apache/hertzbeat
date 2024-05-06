@@ -31,9 +31,6 @@ export class StartupService {
     private storageService: MemoryStorageService
   ) {
     iconSrv.addIcon(...ICONS_AUTO, ...ICONS);
-    iconSrv.fetchFromIconfont({
-      scriptUrl: './assets/img/icon-gitee.js'
-    });
   }
 
   public loadConfigResourceViaHttp(): Observable<void> {

@@ -1,10 +1,8 @@
 import React from 'react'
 
-import styles from './Section.module.css'
-
-export default function Section({ isDark, children }) {
+export default function Section({children }) {
     return (
-        <section className={[styles.section, ...(isDark ? [styles.darkSection, 'darkSection'] : [])].join(' ')}>
+        <section style={{padding: '4rem 0', width: '100%' }}>
             <div className="container">
                 <div className="row">
                     {children}

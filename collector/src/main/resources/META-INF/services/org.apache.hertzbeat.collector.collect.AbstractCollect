@@ -22,3 +22,4 @@ org.apache.hertzbeat.collector.collect.nebulagraph.NebulaGraphCollectImpl
 org.apache.hertzbeat.collector.collect.pop3.Pop3CollectImpl
 org.apache.hertzbeat.collector.collect.httpsd.HttpsdImpl
 org.apache.hertzbeat.collector.collect.redfish.RedfishCollectImpl
+org.apache.hertzbeat.collector.collect.nebulagraph.NgqlCollectImpl

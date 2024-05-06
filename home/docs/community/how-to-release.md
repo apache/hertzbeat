@@ -4,14 +4,15 @@ title: How to Release
 sidebar_position: 4
 ---
 
-This tutorial describes in detail how to release Apache HertzBeat, take the release of version 2.1.0 as an example.
+This tutorial describes in detail how to release Apache HertzBeat, take the release of version 1.6.0 as an example.
 
 ## 1. Environmental requirements
 
-This release process is operated in the Ubuntu OS, and the following tools are required:
+This release process is operated in the UbuntuOS(Windows,Mac), and the following tools are required:
 
-- JDK 1.8+
-- Apache Maven 3.x (this process uses 3.8.7)
+- JDK 17
+- Node18 Yarn
+- Apache Maven 3.x
 - GnuPG 2.x
 - Git
 - SVN (apache uses svn to host project releases)
@@ -59,9 +60,9 @@ GnuPG needs to construct a user ID to identify your key.
 
 Real name: muchunjin # Please enter 'gpg real name'
 Email address: muchunjin@apache.org # Please enter your apache email address here
-Comment: for apache HertzBeat release create at 20230501 # Please enter some comments here
+Comment: apache key # Please enter some comments here
 You selected this USER-ID:
-    "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>"
+    "muchunjin (apache key) <muchunjin@apache.org>"
 
 Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? O # Please enter O here
 We need to generate a lot of random bytes. It is a good idea to perform
@@ -94,7 +95,7 @@ public and secret key created and signed.
 
 pub   rsa4096 2023-05-01 [SC]
       85778A4CE4DD04B7E07813ABACFB69E705016886
-uid                      muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>
+uid                      muchunjin (apache key) <muchunjin@apache.org>
 sub   rsa4096 2023-05-01 [E]
 ```
 
@@ -108,11 +109,11 @@ $ gpg --keyid-format SHORT --list-keys
 ------------------------
 pub   rsa4096/05016886 2023-05-01 [SC]
       85778A4CE4DD04B7E07813ABACFB69E705016886
-uid         [ultimate] muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>
+uid         [ultimate] muchunjin (apache key) <muchunjin@apache.org>
 sub   rsa4096/0C5A4E1C 2023-05-01 [E]
 
 # Send public key to keyserver via key id
-$ gpg --keyserver keyserver.ubuntu.com --send-key 584EE68E
+$ gpg --keyserver keyserver.ubuntu.com --send-key 05016886
 # Among them, keyserver.ubuntu.com is the selected keyserver, it is recommended to use this, because the Apache Nexus verification uses this keyserver
 ```
 
@@ -122,32 +123,26 @@ Verify whether it is synchronized to the public network, it will take about a mi
 
 ```shell
 $ gpg --keyserver keyserver.ubuntu.com --recv-keys 05016886   # If the following content appears, it means success
-gpg: key ACFB69E705016886: "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" not changed
+gpg: key ACFB69E705016886: "muchunjin (apache key) <muchunjin@apache.org>" not changed
 gpg: Total number processed: 1
 gpg:              unchanged: 1
 ```
 
-Or enter https://keyserver.ubuntu.com/ address in the browser, enter the name of the key and click 'Search key'
+Or enter https://keyserver.ubuntu.com/ address in the browser, enter the name of the key and click 'Search key' to search if existed.
 
-![图片](https://github.com/apache/streampark/assets/19602424/b8fe193e-c137-42b0-a833-90a6d975f335)
-
-If the query results are as follows, it means that the key is successfully created.
-
-![图片](https://github.com/apache/streampark/assets/19602424/73ada3f2-2d2e-4b76-b25c-34a52db6a069)
-
-#### 2.4 Add the gpg public key to the KEYS file of the Apache SVN project warehouse
+#### 2.4 Add the gpg public key to the KEYS file of the Apache SVN project repo
 
 - Apache HertzBeat Branch Dev https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
-- Apache HertzBeat Branch Release https://dist.apache.org/repos/dist/release/incubator/hertzbeat/
+- Apache HertzBeat Branch Release https://dist.apache.org/repos/dist/release/incubator/hertzbeat
 
 ##### 2.4.1 Add public key to KEYS in dev branch
 
 ```shell
-$ mkdir -p hertzbeat/dev
-$ cd hertzbeat_svn/dev
+$ mkdir -p svn/dev
+$ cd svn/dev
 
 $ svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
-$ cd hertzbeat_svn/dev/hertzbeat
+$ cd svn/dev/hertzbeat
 
 # Append the KEY you generated to the file KEYS, and check if it is added correctly
 $ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS 
@@ -158,11 +153,11 @@ $ svn ci -m "add gpg key for muchunjin"
 ##### 2.4.2 Add public key to KEYS in release branch
 
 ```shell
-$ mkdir -p hertzbeat_svn/release
-$ cd hertzbeat_svn/release
+$ mkdir -p svn/release
+$ cd svn/release
 
-$ svn co https://dist.apache.org/repos/dist/release/incubator/hertzbeat/
-$ cd hertzbeat_svn/release/hertzbeat
+$ svn co https://dist.apache.org/repos/dist/release/incubator/hertzbeat
+$ cd svn/release/hertzbeat
 
 # Append the KEY you generated to the file KEYS, and check if it is added correctly
 $ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS 
@@ -170,171 +165,61 @@ $ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache
 $ svn ci -m "add gpg key for muchunjin"
 ```
 
-#### 2.5 Configure apache maven address and user password settings
+## 3. Prepare material package & release 
 
-- Generate master password
-```shell
-$ mvn --encrypt-master-password <apache password>
-{EM+4/TYVDXYHRbkwjjAS3mE1RhRJXJUSG8aIO5RSxuHU26rKCjuS2vG+/wMjz9te}
-```
+#### 3.1 Based on the master branch, create a release-${release_version}-rcx branch, such as release-1.6.0-rc1, And create a tag named v1.6.0-rc1 based on the release-1.6.0-rc1 branch, and set this tag as pre-release.
 
-- Create the file ${user.home}/.m2/settings-security.xml and configure the password created in the previous step
 
 ```shell
-<settingsSecurity>
-  <master>{EM+4/TYVDXYHRbkwjjAS3mE1RhRJXJUSG8aIO5RSxuHU26rKCjuS2vG+/wMjz9te}</master>
-</settingsSecurity>
+git checkout master
+git checkout -b release-1.6.0-rc1
 ```
 
-- Generate the final encrypted password and add it to the ~/.m2/settings.xml file
+#### 3.2 checkout release branch to local
 
 ```shell
-$ mvn --encrypt-password <apache passphrase>
-{/ZLaH78TWboH5IRqNv9pgU4uamuqm9fCIbw0gRWT01c=}
+git checkout release-1.6.0-rc1
 ```
 
-> In the maven configuration file ~/.m2/settings.xml, add the following `server` item
+#### 3.3 Compile the binary package
 
-```
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
-  
-  <localRepository>/path/to/local/repo</localRepository>
-  
-  <servers>
-    <server>
-        <id>apache.snapshots.https</id>
-        <!-- APACHE LDAP UserName --> 
-        <username>muchunjin</username>
-        <!-- APACHE LDAP password (Fill in the password you just created with the command `mvn --encrypt-password <apache passphrase>`) -->
-        <password>{/ZLaH78TWboH5IRqNv9pgU4uamuqm9fCIbw0gRWT01c=}</password>
-    </server>
-    <server>
-        <id>apache.releases.https</id>
-        <!-- APACHE LDAP UserName --> 
-        <username>muchunjin</username>
-        <!-- APACHE LDAP password (Fill in the password you just created with the command `mvn --encrypt-password <apache passphrase>`) -->
-        <password>{/ZLaH78TWboH5IRqNv9pgU4uamuqm9fCIbw0gRWT01c=}</password>
-    </server>
-  </servers>
-
-  <profiles>
-        <profile>
-          <id>apache-release</id>
-          <properties>
-            <gpg.keyname>05016886</gpg.keyname>
-            <!-- Use an agent: Prevents being asked for the password during the build -->
-            <gpg.useagent>true</gpg.useagent>
-            <gpg.passphrase>passphrase for your gpg key</gpg.passphrase>
-          </properties>
-        </profile>
-  </profiles>
-```
-
-## 3. Prepare material package & release Apache Nexus
-
-#### 3.1 Based on the dev branch, create a release-${release_version}-rcx branch, such as release-2.1.0-rc1, And create a tag named v2.1.0-rc1 based on the release-2.1.0-rc1 branch, and set this tag as pre-release.
-
-![图片](https://user-images.githubusercontent.com/19602424/236656362-1d346faa-6582-44eb-9722-8bb2de0eaa92.png)
-
-#### 3.2 clone release branch to local
+> Build HertzBeat server binary, run script in `web-app`
 
 ```shell
-git clone -b release-2.1.0-rc1 -c core.autocrlf=false git@github.com:apache/hertzbeat.git
+yarn install
+
+yarn package
 ```
 
-#### 3.3 Publish the relevant JARs to Apache Nexus
-
-##### 3.3.1 Release scala 2.11 to the Apache Nexus repository
+> run script in root
 
 ```shell
-mvn clean install \
--Pscala-2.11 \
--DskipTests \
--Dcheckstyle.skip=true \
--Dmaven.javadoc.skip=true \
--pl 'hertzbeat-common,hertzbeat-flink' \
--pl '!hertzbeat-console/hertzbeat-console-service' \
--amd
+mvn clean package
 ```
+
+> Build HertzBeat collector binary, run script in `collector`
 
 ```shell
-mvn deploy \
--Pscala-2.11,apache-release \
--DskipTests \
--Dmaven.javadoc.skip=true \
--DretryFailedDeploymentCount=3
+mvn clean package -Pcluster
 ```
 
-##### 3.3.2 Release scala 2.12 to the Apache Nexus repository
+The release package are here `manager/target/hertzbeat-{version}.tar.gz`，`collector/target/hertzbeat-collector-{version}.tar.gz`，`collector/target/hertzbeat-collector-{version}-bin.tar.gz`。
 
-```shell
-mvn clean install \
--Pscala-2.12 \
--DskipTests \
--Dcheckstyle.skip=true \
--Dmaven.javadoc.skip=true \
--pl 'hertzbeat-common,hertzbeat-flink' \
--pl '!hertzbeat-console/hertzbeat-console-service' \
--amd
-```
-
-```shell
-mvn deploy \
--Pscala-2.12,apache-release \
--DskipTests \
--Dmaven.javadoc.skip=true \
--DretryFailedDeploymentCount=3
-```
-
-```shell
-mvn deploy \
--Papache-release \
--DskipTests \
--Dmaven.javadoc.skip=true \
--DretryFailedDeploymentCount=3
-```
-
-##### 3.3.3 Check for successful publishing to the Apache Nexus repository
-
-> Visit https://repository.apache.org/ and log in, if there are scala 2.11, scala 2.12, it means success.
-
-![图片](https://user-images.githubusercontent.com/19602424/236657233-08d142eb-5f81-427b-a04d-9ab3172199c1.png)
-
-#### 3.4 Compile the binary package
-
-> Scala 2.11 compilation and packaging
-
-```shell
-> ./build.sh # choose "mixed mode" and "scala 2.11"
-```
-
-> Scala 2.12 compilation and packaging
-
-```shell
-> ./build.sh # choose "mixed mode" and "scala 2.12"
-```
+#### 3.4 Package the source code
 
 > Package the project source code
 
 ```shell
 git archive \
 --format=tar.gz \
---output="dist/apache-hertzbeat-2.1.0-incubating-src.tar.gz" \
---prefix=apache-hertzbeat-2.1.0-incubating-src/ \
-release-2.1.0-rc1
+--output="target/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
+--prefix=apache-hertzbeat-1.6.0-incubating-src/ \
+release-1.6.0-rc1
 ```
 
-> The following 3 files will be generated
+The archive package is here `target/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
 
-```
-apache-hertzbeat-2.1.0-incubating-src.tar.gz
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz
-```
-
-#### 3.4 Sign binary and source packages
+#### 3.5 Sign binary and source packages
 
 ```shell
 cd dist
@@ -349,18 +234,18 @@ for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
 > The final file list is as follows
 
 ```
-apache-hertzbeat-2.1.0-incubating-src.tar.gz
-apache-hertzbeat-2.1.0-incubating-src.tar.gz.asc
-apache-hertzbeat-2.1.0-incubating-src.tar.gz.sha512
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz.asc
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz.asc
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-incubating-src.tar.gz
+apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc
+apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
+apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz.asc
+apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz.asc
+apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz.sha512
 ```
 
-#### 3.5 Verify signature
+#### 3.6 Verify signature
 
 ```shell
 $ cd dist
@@ -368,97 +253,97 @@ $ cd dist
 # Verify signature
 $ for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 
-apache-hertzbeat-2.1.0-incubating-src.tar.gz
+apache-hertzbeat-1.6.0-incubating-src.tar.gz
 gpg: Signature made Tue May  2 12:16:35 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz
+gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:36 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz
+gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:37 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: BAD signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
+gpg: BAD signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
 
 # Verify SHA512
 $ for i in *.tar.gz; do echo $i; sha512sum --check $i.sha512; done
 
-apache-hertzbeat-2.1.0-incubating-src.tar.gz
-apache-hertzbeat-2.1.0-incubating-src.tar.gz: OK
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz: OK
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-incubating-src.tar.gz
+apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
+apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz: OK
+apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz: OK
 ```
 
-#### 3.6 Publish the dev directory of the Apache SVN warehouse of the material package
+#### 3.7 Publish the dev directory of the Apache SVN material package
+
+- Clone the dev directory 
 
 ```shell
-# Check out the dev directory of the Apache SVN warehouse to the hertzbeat_svn_dev directory under dist in the root directory of the Apache HertzBeat project
-svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat dist/hertzbeat_svn_dev
+# Check out the dev directory of the Apache SVN to the svn/dev directory under dist in the root directory of the Apache HertzBeat project
+svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat svn/dev
 
 svn co --depth empty https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
 ```
 
-Create a version number directory and name it in the form of ${release_version}-${RC_version}. RC_version starts from 1, that is, the candidate version starts from RC1. During the release process, there is a problem that causes the vote to fail. If it needs to be corrected, it needs to iterate the RC version , the RC version number needs to be +1. For example: Vote for version 2.1.0-RC1. If the vote passes without any problems, the RC1 version material will be released as the final version material. If there is a problem (when the hertzbeat/incubator community votes, the voters will strictly check various release requirements and compliance issues) and need to be corrected, then re-initiate the vote after the correction, and the candidate version for the next vote is 2.1.0- RC2.
+- Copy the material package to the dev directory
+
+Create a version number directory and name it in the form of ${release_version}-${RC_version}. RC_version starts from 1, that is, the candidate version starts from RC1. During the release process, there is a problem that causes the vote to fail. If it needs to be corrected, it needs to iterate the RC version , the RC version number needs to be +1. For example: Vote for version 1.6.0-RC1. If the vote passes without any problems, the RC1 version material will be released as the final version material. If there is a problem (when the hertzbeat/incubator community votes, the voters will strictly check various release requirements and compliance issues) and need to be corrected, then re-initiate the vote after the correction, and the candidate version for the next vote is 1.6.0- RC2.
 
 ```shell
-mkdir -p dist/hertzbeat_svn_dev/2.1.0-RC1
-cp -f dist/* dist/hertzbeat_svn_dev/2.1.0-RC1
+mkdir -p svn/dev/1.6.0-RC1
+cp -f dist/* svn/dev/1.6.0-RC1
 ```
 
-Commit to SVN
+- Commit to SVN
 
 ```shell
-cd dist/hertzbeat_svn_dev/
+cd svn/dev
 
 # 1.check svn status
 svn status
 
 # 2. add to svn
-svn add 2.0.0-RC1
+svn add 1.6.0-RC1
 
 svn status
 
 # 3. Submit to svn remote server
-svn commit -m "release for HertzBeat 2.1.0"
+svn commit -m "release for HertzBeat 1.6.0"
 ```
 
-#### 3.7 Check Apache SVN Commit Results
+- Check Apache SVN Commit Results
 
-> Visit the address https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/ in the browser
+> Visit the address https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/ in the browser, check if existed the new material package
 
-![图片](https://github.com/apache/streampark/assets/19602424/e4763537-af9f-4f2a-967d-912e6670b360)
 
-## 3. Enter the community voting stage
+## 4. Enter the community voting stage
 
-#### 3.1 Send a Community Vote Email
+#### 4.1 Send a Community Vote Email
 
 Send a voting email in the community requires at least three `+1` and no `-1`.
 
 > `Send to`: dev@hertzbeat.apache.org <br />
-> `Title`: [VOTE] Release Apache HertzBeat (incubating) 2.1.0 rc1 <br />
+> `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
 > `Body`: 
 
 ```
 Hello HertzBeat Community:
 
-This is a call for vote to release Apache HertzBeat (incubating) version release-2.1.0-RC1.
+This is a call for vote to release Apache HertzBeat (incubating) version release-1.6.0-RC1.
 
-Apache Streamark - Make stream processing easier! Easy-to-use streaming application development framework and operation platform.
+Apache HertzBeat - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Release notes:
-https://hertzbeat.apache.org/download/release-note/2.1.0/
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0
 
 The release candidates:
-https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/
-
-Maven artifacts are available in a staging repository at:
-https://repository.apache.org/content/repositories/orgapachehertzbeat-1012/
+https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
 
 Git tag for the release:
-https://github.com/apache/hertzbeat/releases/tag/v2.1.0-rc1
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
@@ -489,9 +374,7 @@ Steps to validate the release，Please refer to:
 https://hertzbeat.apache.org/community/release/how-to-verify
 
 How to Build:
-
-1.cd hertzbeat
-2.sh ./build.sh
+https://hertzbeat.apache.org/docs/community/how_to_release/#34-compile-the-binary-package
 
 Thanks!
 ```
@@ -499,22 +382,19 @@ Thanks!
 After 72 hours, the voting results will be counted, and the voting result email will be sent, as follows.
 
 > `Send to`: dev@hertzbeat.apache.org <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
+> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
 Dear HertzBeat community,
 
-Thanks for your review and vote for "Release Apache HertzBeat (incubating) 2.1.0-rc1"
+Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
 I'm happy to announce the vote has passed:
 
 
 4 binding +1, from:
 
-- Zhuoyu Chen
-- Huajie Wang
-- Linying Yu
-- Shaokang Lv
+- cc
 
 1 non-binding +1, from:
 
@@ -534,12 +414,7 @@ Best,
 ChunJin Mu
 ```
 
-One item of the email content is `Vote thread`, and the link is obtained as follows: <br />
-Visit this address https://lists.apache.org/list.html?dev@hertzbeat.apache.org, and find the mail title and click to display the voting content
-![图片](https://github.com/apache/streampark/assets/19602424/5755ed06-529f-4739-96a8-1ac13bbb21ea)
-
-Right-click the title and click Copy Link Address to get the link
-![图片](https://github.com/apache/streampark/assets/19602424/1616da5b-7891-45cc-b956-a0ba5e7ce874)
+One item of the email content is `Vote thread`, and the link is obtained here: https://lists.apache.org/list.html?dev@hertzbeat.apache.org
 
 #### 3.2 Send Incubator Community voting mail
 
@@ -547,16 +422,16 @@ Send a voting email in the incubator community requires at least three `+1` and 
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
-> `Title`: [VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
+> `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
 Hello Incubator Community:
 
-This is a call for a vote to release Apache HertzBeat (incubating) version 2.1.0-RC1.
-The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat (incubating) version 2.1.0-RC1.
+This is a call for a vote to release Apache HertzBeat (incubating) version 1.6.0-RC1.
+The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat (incubating) version 1.6.0-RC1.
 We now kindly request the Incubator PMC members review and vote on this incubator release.
-Apache HertzBeat, Make stream processing easier! Easy-to-use streaming application development framework and operation platform.
+Apache HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 HertzBeat community vote thread:
 https://lists.apache.org/thread/t01b2lbtqzyt7j4dsbdp5qjc3gngjsdq
@@ -565,13 +440,10 @@ Vote result thread:
 https://lists.apache.org/thread/t5z58mvrs1drgzfyc48c9lhmd8skswn7
 
 The release candidate:
-https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/
+https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
 
 Git tag for the release:
-https://github.com/apache/hertzbeat/releases/tag/v2.1.0-rc1
-
-Maven artifacts are available in a staging repository at:
-https://repository.apache.org/content/repositories/orgapachehertzbeat-1012/
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
@@ -594,10 +466,10 @@ Steps to validate the release， Please refer to:
 How to Build:
 
 1) clone source code:
-> git clone -b v2.1.0-rc1 git@github.com:apache/hertzbeat.git
+> git clone -b v1.6.0-rc1 git@github.com:apache/hertzbeat.git
 
 2) build project:
-> cd hertzbeat && sh ./build.sh
+https://hertzbeat.apache.org/docs/community/how_to_release/#34-compile-the-binary-package
 
 
 Thanks,
@@ -626,22 +498,20 @@ Then the voting results will be counted, and the voting result email will be sen
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
+> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
 Hi all,
 
-Thanks for your review and vote for "Release Apache HertzBeat (incubating) 2.1.0-rc1"
+Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
 I'm happy to announce the vote has passed:
 
 3 binding votes, no +0 or -1 votes.
 Thanks for reviewing and voting.
 
 +3 (binding) +1, from:
-- tison
-- Gang Li
-- Willem Jiang
+- cc
 
 no 0 or -1 votes.
 
@@ -655,10 +525,7 @@ Best,
 ChunJin Mu
 ```
 
-One item of the email content is `Vote thread`, and the link is obtained as follows: <br />
-Visit this address https://lists.apache.org/list.html?general@incubator.apache.org, and find the mail title and click to display the voting content
-![图片](https://github.com/apache/streampark/assets/19602424/aea68925-7911-4413-8b2d-aea12685337f)
-Then right-click the title and click Copy Link Address to get the link.
+One item of the email content is `Vote thread`, and the link is obtained here: https://lists.apache.org/list.html?general@incubator.apache.org
 
 Wait a day to see if the tutor has any other comments, if not, send the following announcement email
 
@@ -667,92 +534,62 @@ Wait a day to see if the tutor has any other comments, if not, send the followin
 #### 4.1 Migrating source and binary packages
 
 ```shell
-svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/2.1.0  -m "transfer packages for 2.1.0-RC1"
+svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/1.6.0  -m "transfer packages for 1.6.0-RC1"
 ```
 
-#### 4.2 Publish releases in the Apache Staging repository
+#### 4.2 Add the new version download address to the official website
 
-- Log in to http://repository.apache.org , log in with your Apache account
-- Click Staging repositories on the left
-- Select your most recently uploaded warehouse, the warehouse specified in the voting email
-- Click the Release button above, this process will perform a series of checks
-> It usually takes 24 hours for the warehouse to synchronize to other data sources
+https://github.com/apache/hertzbeat/blob/master/home/docs/download.md
+https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md
 
-#### 4.3 Add the new version download address to the official website
 
-Add the following to the src/pages/download/data.json file on the official website
-
-```
-{
-    "version": "2.1.0",
-    "date": "2023-05-11"
-}
-```
-
-The final file content is as follows
-
-```
-[
-    {
-    "version": "2.0.0",
-    "date": "2023-02-21"
-    },
-    {
-    "version": "2.1.0",
-    "date": "2023-05-11"
-    }
-]
-```
-
-Open the official website address https://hertzbeat.apache.org/download/ to see if there is a new version of the download
+Open the official website address https://hertzbeat.apache.org/docs/download/ to see if there is a new version of the download
 > It should be noted that the download link may take effect after an hour, so please pay attention to it.
 
-![图片](https://github.com/apache/streampark/assets/19602424/e7900fb2-7bfc-4fa1-bd40-9806e6a822ef)
 
-#### 4.4 Generate a release on github
+#### 4.3 Generate a release on github
 
-Create a tag named v2.1.0 based on the release-2.1.0-rc1 branch, and set this tag to latest release.
+Create a tag named v1.6.0 based on the release-1.6.0-rc1 branch, and set this tag to latest release.
 
 Then enter Release Title and Describe
 - Release Title: 
 ```
-v2.1.0-incubating
+v1.6.0-incubating
 ```
 - Describe:
 ```
-Release-2.1.0-incubating
-release note: https://hertzbeat.apache.org/download/release-note/2.1.0
+Release-1.6.0-incubating
+release note: xxx
 ```
-
-![图片](https://github.com/apache/streampark/assets/19602424/84723ff5-a295-471d-8265-1b8ef867c3d1)
 
 Then click the `Publish release` button.
 
-The rename the release-2.1.0-rc1 branch to release-2.1.0.
+The rename the release-1.6.0-rc1 branch to release-1.6.0.
 
 #### 4.5 Send new version announcement email
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org <br />
-> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 2.1.0 <br />
+> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 1.6.0 <br />
 > `Body`:
 
 ```
 Hi all,
 
-We are glad to announce the release of Apache HertzBeat (incubating) 2.1.0.
+We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
 Once again I would like to express my thanks to your help.
 
-Apache HertzBeat(https://hertzbeat.apache.org/) - Make stream processing easier! Easy-to-use streaming application development framework and operation platform.
+Apache HertzBeat(https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Download Links: https://hertzbeat.apache.org/download/
-Release Notes: https://hertzbeat.apache.org/download/release-note/2.1.0
+Release Notes: https://github.com/apache/hertzbeat/releases/tag/v1.6.0
 
 HertzBeat Resources:
 - Issue: https://github.com/apache/hertzbeat/issues
 - Mailing list: dev@hertzbeat.apache.org
 
-- Apache HertzBeat Team
+
+Apache HertzBeat Team
 
 Best,
 ChunJin Mu
