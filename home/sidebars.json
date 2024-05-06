@@ -221,6 +221,8 @@
             "help/hadoop",
             "help/hbase_master",
             "help/hbase_regionserver",
+            "help/hdfs_namenode",
+            "help/hdfs_datanode",
             "help/iotdb",
             "help/hive",
             "help/airflow",
