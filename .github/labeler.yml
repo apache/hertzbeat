@@ -108,3 +108,8 @@ monitoring-template:
   - changed-files:
       - any-glob-to-any-file:
           - "manager/src/main/resources/define/**/*"
+
+HIP:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'hip/**'
