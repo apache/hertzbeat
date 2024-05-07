@@ -1,5 +1,11 @@
 ## Hertzbeat Web-App        
 
+:::tip
+
+HertzBeat Web-App is a fork from [ng-alain](https://github.com/ng-alain/ng-alain/). Check [LICENSE](/LICENSE) and [license-ng-alain.txt](/material/licenses/frontend/LICENSE-ng-alain.txt) for more details.
+
+:::
+
 ### Quickly Start   
 
 1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
