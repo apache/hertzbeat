@@ -28,7 +28,7 @@ gitee: https://gitee.com/hertzbeat/hertzbeat
 
 2. `docker` 环境仅需一条命令即可安装
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 3. 安装成功浏览器访问 `localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 

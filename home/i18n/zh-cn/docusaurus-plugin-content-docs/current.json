@@ -110,5 +110,9 @@
   "sidebar.docs.category.release": {
     "message": "发布指南",
     "description": "The label for category release in sidebar docs"
+  },
+  "sidebar.docs.category.network": {
+    "message": "网络",
+    "description": "The label for category Network in sidebar docs"
   }
 }

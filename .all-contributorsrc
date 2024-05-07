@@ -1790,6 +1790,33 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "HeartLinked",
+      "name": "feiyang li",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78212101?v=4",
+      "profile": "https://github.com/HeartLinked",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Aias00",
+      "name": "aias00",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25810623?v=4",
+      "profile": "https://github.com/Aias00",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "westboy",
+      "name": "Jin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6385565?v=4",
+      "profile": "https://github.com/westboy",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,

@@ -19,7 +19,7 @@ FROM openjdk:17-slim-buster
 
 ARG VERSION
 
-MAINTAINER tancloud "tomsun28@outlook.com"
+MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
 
 # Install SSH
 RUN apt-get update && apt-get install -y openssh-server 

@@ -79,6 +79,13 @@
           "items": [
             "advanced/extend-push"
           ]
+        },
+        {
+          "type": "category",
+          "label": "NGQL",
+          "items": [
+            "advanced/extend-ngql"
+          ]
         }
       ]
     },
@@ -170,9 +177,9 @@
             "help/dm",
             "help/opengauss",
             "help/nebulaGraph",
+            "help/nebulagraph_cluster",
             "help/tidb",
             "help/mongodb"
-
           ]
         },
         {
@@ -191,7 +198,9 @@
             "help/windows",
             "help/ubuntu",
             "help/debian",
-            "help/centos"
+            "help/centos",
+            "help/almalinux",
+            "help/opensuse"
           ]
         },
         {
@@ -204,7 +213,8 @@
             "help/activemq",
             "help/rocketmq",
             "help/spring_gateway",
-            "help/nacos"
+            "help/nacos",
+            "help/kafka"
           ]
         },
         {
@@ -212,11 +222,14 @@
           "label": "bigdata",
           "items": [
             "help/spark",
+            "help/flink",
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
             "help/hbase_master",
             "help/hbase_regionserver",
+            "help/hdfs_namenode",
+            "help/hdfs_datanode",
             "help/iotdb",
             "help/hive",
             "help/airflow",
@@ -243,6 +256,13 @@
         },
         {
           "type": "category",
+          "label": "network",
+          "items": [
+            "help/huawei_switch"
+          ]
+        },
+        {
+          "type": "category",
           "label": "threshold",
           "items": [
             "help/alert_threshold",
@@ -264,13 +284,6 @@
             "help/alert_console",
             "help/alert_enterprise_wechat_app",
             "help/alert_smn"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "Network",
-          "items": [
-            "help/huawei_switch"
           ]
         },
         "help/issue"

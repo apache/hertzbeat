@@ -83,20 +83,40 @@ metrics:
   - name: basic
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    i18n:
+      zh-CN: 基本信息
+      en-US: Basic Info
     priority: 0
     # monitor metrics list
     fields:
       # metric information includes field name, type field type: 0-number, 1-string, label-whether it is a metric label field, unit-metric unit
       - field: server_version
+        i18n:
+          zh-CN: 数据库版本
+          en-US: Server Version
         type: 1
         label: true
       - field: port
+        i18n:
+          zh-CN: 端口号
+          en-US: Port
         type: 1
       - field: server_encoding
+        i18n:
+          zh-CN: 数据库编码格式
+          en-US: Encoding
         type: 1
       - field: data_directory
+        i18n:
+          zh-CN: 数据存储目录
+          en-US: Data Directory
         type: 1
       - field: max_connections
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Max Connection
         type: 0
         unit: sbc
     protocol: jdbc
@@ -117,30 +137,57 @@ metrics:
       url: ^_^url^_^
 
   - name: state
+    i18n:
+      zh-CN: 状态
+      en-US: Status
     priority: 1
     fields:
       # metric information includes field name, type field type: 0-number, 1-string, label-whether it is a metric label field, unit-metric unit
       - field: name
+        i18n:
+          zh-CN: 名称
+          en-US: Name
         type: 1
       - field: conflicts
+        i18n:
+          zh-CN: 冲突次数
+          en-US: Conflicts
         type: 0
         unit: times
       - field: deadlocks
+        i18n:
+          zh-CN: 死锁次数
+          en-US: Deadlocks
         type: 0
         unit: times
       - field: blks_read
+        i18n:
+          zh-CN: 块读取数
+          en-US: Blocks Read
         type: 0
         unit: blocks per second
       - field: blks_hit
+        i18n:
+          zh-CN: 块命中数
+          en-US: Blocks Hit
         type: 0
         unit: blocks per second
       - field: blk_read_time
+        i18n:
+          zh-CN: 块读取时间
+          en-US: Block Read Time
         type: 0
         unit: ms
       - field: blk_write_time
+        i18n:
+          zh-CN: 块写入时间
+          en-US: Block Write
         type: 0
         unit: ms
       - field: stats_reset
+        i18n:
+          zh-CN: 统计信息重置时间
+          en-US: States Reset
         type: 1
     protocol: jdbc
     jdbc:
@@ -160,10 +207,16 @@ metrics:
       url: ^_^url^_^
 
   - name: activity
+    i18n:
+      zh-CN: 活跃进程
+      en-US: Activity
     priority: 2
     fields:
       # metric information includes field name, type field type: 0-number, 1-string, label-whether it is a metric label field, unit-metric unit
       - field: running
+        i18n:
+          zh-CN: 运行中进程数
+          en-US: Running
         type: 0
         unit: sbc
     protocol: jdbc

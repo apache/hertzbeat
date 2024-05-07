@@ -49,7 +49,7 @@ class JsonUtilTest {
     @Test
     void testFromJson() {
         String jsonStr = "[{\"name\":\"test\",\"value\":\"pro\"},{\"name\":\"test\",\"value\":\"dev\"}]";
-        List<TagItem> tagItems = JsonUtil.fromJson(jsonStr, new TypeReference<List<TagItem>>() {
+        List<TagItem> tagItems = JsonUtil.fromJson(jsonStr, new TypeReference<>() {
         });
         System.out.println(tagItems);
     }

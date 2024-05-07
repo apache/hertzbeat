@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
-import org.apache.hertzbeat.manager.scheduler.CollectorAndJobScheduler;
+import org.apache.hertzbeat.manager.scheduler.CollectorJobScheduler;
 import org.apache.hertzbeat.manager.scheduler.SchedulerProperties;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectCyclicDataResponseProcessor;
 import org.apache.hertzbeat.manager.scheduler.netty.process.CollectOneTimeDataResponseProcessor;
@@ -53,7 +53,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ManageServer implements CommandLineRunner {
 
-    private final CollectorAndJobScheduler collectorAndJobScheduler;
+    private final CollectorJobScheduler collectorJobScheduler;
 
     private ScheduledExecutorService channelSchedule;
 
@@ -62,10 +62,10 @@ public class ManageServer implements CommandLineRunner {
     private final Map<String, Channel> clientChannelTable = new ConcurrentHashMap<>(16);
 
     public ManageServer(final SchedulerProperties schedulerProperties,
-                        final CollectorAndJobScheduler collectorAndJobScheduler,
+                        final CollectorJobScheduler collectorJobScheduler,
                         final CommonThreadPool threadPool) {
-        this.collectorAndJobScheduler = collectorAndJobScheduler;
-        this.collectorAndJobScheduler.setManageServer(this);
+        this.collectorJobScheduler = collectorJobScheduler;
+        this.collectorJobScheduler.setManageServer(this);
         this.init(schedulerProperties, threadPool);
     }
 
@@ -95,7 +95,7 @@ public class ManageServer implements CommandLineRunner {
                     if (!channel.isActive()) {
                         channel.closeFuture();
                         this.clientChannelTable.remove(collector);
-                        this.collectorAndJobScheduler.collectorGoOffline(collector);
+                        this.collectorJobScheduler.collectorGoOffline(collector);
                     }
                 });   
             } catch (Exception e) {
@@ -110,8 +110,8 @@ public class ManageServer implements CommandLineRunner {
         this.channelSchedule.shutdownNow();
     }
 
-    public CollectorAndJobScheduler getCollectorAndJobScheduler() {
-        return collectorAndJobScheduler;
+    public CollectorJobScheduler getCollectorAndJobScheduler() {
+        return collectorJobScheduler;
     }
 
     public Channel getChannel(final String identity) {
@@ -134,7 +134,7 @@ public class ManageServer implements CommandLineRunner {
     public void closeChannel(final String identity) {
         Channel channel = this.getChannel(identity);
         if (channel != null) {
-            this.collectorAndJobScheduler.collectorGoOffline(identity);
+            this.collectorJobScheduler.collectorGoOffline(identity);
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder().setType(ClusterMsg.MessageType.GO_CLOSE).build();
             this.remotingServer.sendMsg(channel, message);
             this.clientChannelTable.remove(identity);
@@ -142,7 +142,7 @@ public class ManageServer implements CommandLineRunner {
         }
     }
 
-    public boolean isChannelExist(final String identity) {
+    public boolean isChannelActive(final String identity) {
         Channel channel = this.clientChannelTable.get(identity);
         return channel != null && channel.isActive();
     }
@@ -185,7 +185,7 @@ public class ManageServer implements CommandLineRunner {
             }
             if (identity != null) {
                 ManageServer.this.clientChannelTable.remove(identity);
-                ManageServer.this.collectorAndJobScheduler.collectorGoOffline(identity);
+                ManageServer.this.collectorJobScheduler.collectorGoOffline(identity);
                 channel.close();
                 log.info("handle idle event triggered. the client {} is going offline.", identity);
             }

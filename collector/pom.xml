@@ -193,8 +193,14 @@
             <artifactId>nacos-client</artifactId>
             <version>2.2.1</version>
         </dependency>
+        <!-- nebula graph client -->
+        <dependency>
+            <groupId>com.vesoft</groupId>
+            <artifactId>client</artifactId>
+            <version>3.6.0</version>
+        </dependency>
     </dependencies>
-    
+
     <profiles>
         <profile>
             <id>inner</id>
@@ -366,5 +372,5 @@
             </build>
         </profile>
     </profiles>
-    
+
 </project>

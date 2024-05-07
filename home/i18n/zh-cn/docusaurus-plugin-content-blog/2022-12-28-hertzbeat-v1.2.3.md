@@ -16,7 +16,7 @@ Hi guys! HertzBeat v1.2.3 is coming. This release we support prometheus exporter
 Let's Try It Now!
 
 Only one docker command is needed to install and experience heartbeat：
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 Thanks to the contributors! 👍👍
 
@@ -62,7 +62,7 @@ Have Fun!
 大家好，HertzBeat v1.2.3发布啦！这个版本带来了重大更新，我们支持了对prometheus exporter协议监控，用户可以很方便的使用hertzbeat来适配监控prometheus exporter. 基于这个能力，这个版本我们也支持了对apache shenyu, apache iotdb的指标监控。我们更新了UI布局，修复了多个BUG，也支持了短信通知。快来体验下吧!
 
 只需要一条docker命令即可安装体验heartbeat ：
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 感谢hertzbeat贡献者们的贡献！👍👍
 

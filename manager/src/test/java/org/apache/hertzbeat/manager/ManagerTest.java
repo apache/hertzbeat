@@ -46,10 +46,10 @@ import org.apache.hertzbeat.common.service.TencentSmsClient;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.controller.MetricsDataController;
-import org.apache.hertzbeat.warehouse.store.HistoryIotDbDataStorage;
-import org.apache.hertzbeat.warehouse.store.HistoryTdEngineDataStorage;
-import org.apache.hertzbeat.warehouse.store.RealTimeMemoryDataStorage;
-import org.apache.hertzbeat.warehouse.store.RealTimeRedisDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.iotdb.IotDbDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tdengine.TdEngineDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.redis.RedisDataStorage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -99,10 +99,10 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         assertNotNull(ctx.getBean(WarehouseWorkerPool.class));
 
         // default DataStorage is RealTimeMemoryDataStorage
-        assertNotNull(ctx.getBean(RealTimeMemoryDataStorage.class));
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(RealTimeRedisDataStorage.class));
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(HistoryTdEngineDataStorage.class));
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(HistoryIotDbDataStorage.class));
+        assertNotNull(ctx.getBean(MemoryDataStorage.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(RedisDataStorage.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(TdEngineDataStorage.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(IotDbDataStorage.class));
 
         assertNotNull(ctx.getBean(MetricsDataController.class));
     }

@@ -54,6 +54,10 @@ public class CollectUtil {
     private static final String CRYING_PLACEHOLDER_REGEX = "(\\^o\\^)(\\w|-|$|\\.)+(\\^o\\^)";
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
     private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b");
+    /**
+     * Regularly verifying whether a string is a combination of numbers and units
+     */
+    private static final String DOUBLE_AND_UNIT_CHECK_REGEX = "^[.\\d+" + String.join("", UNIT_SYMBOLS) + "]+$";
 
     /**
      * count match keyword number
@@ -90,6 +94,10 @@ public class CollectUtil {
         } catch (Exception e) {
             log.debug(e.getMessage());
         }
+
+        if (!str.matches(DOUBLE_AND_UNIT_CHECK_REGEX)){
+            return doubleAndUnit;
+        }
         // extract unit from str value, eg: 23.43GB, 33KB, 44.22G
         try {
             // B KB MB GB % ....
@@ -113,7 +121,7 @@ public class CollectUtil {
         } catch (Exception e) {
             log.debug(e.getMessage());
         }
-        return doubleAndUnit;
+        return null;
     }
 
     /**
@@ -412,11 +420,11 @@ public class CollectUtil {
         // todo more special
         return uri;
     }
-    
+
 
     public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
 
-        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<List<Metrics.Field>>() {
+        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<>() {
         });
         metrics.setFields(pushFieldList);
     }

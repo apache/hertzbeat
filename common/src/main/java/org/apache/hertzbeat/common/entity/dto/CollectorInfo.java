@@ -44,7 +44,4 @@ public class CollectorInfo {
     
     @NotNull
     private String mode = CommonConstants.MODE_PUBLIC;
-    
-    // todo more
-    
 }

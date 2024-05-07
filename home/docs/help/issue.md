@@ -18,9 +18,6 @@ The hertzbeat installed and deployed by the installation package is not availabl
 > When you install HertzBeat via DockerDocker root is enabled by default. No such problem.   
 > See https://stackoverflow.com/questions/11506321/how-to-ping-an-ip-address 
 
-4. If the history chart on the monitoring page is not displayed，popup [please configure dependency service on TDengine time series database]
-> As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service - TDengine database.
-> Installation and initialization this database refers to [TDengine Installation and Initialization](../start/tdengine-init).   
 
 ### Docker Deployment common issues   
 

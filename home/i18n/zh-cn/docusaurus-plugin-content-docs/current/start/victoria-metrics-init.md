@@ -4,7 +4,7 @@ title: 依赖时序数据库服务VictoriaMetrics安装初始化
 sidebar_label: 使用VictoriaMetrics存储指标数据(推荐)    
 ---
 
-Apache HertzBeat(Incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
+Apache HertzBeat (incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
 
 > 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
 

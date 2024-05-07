@@ -106,5 +106,9 @@
   "sidebar.docs.category.Community": {
     "message": "Community",
     "description": "The label for category Community in sidebar docs"
+  },
+  "sidebar.docs.category.network": {
+    "message": "Network",
+    "description": "The label for category Network in sidebar docs"
   }
 }
