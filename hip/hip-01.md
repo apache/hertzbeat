@@ -35,7 +35,7 @@ public abstract class AbstractCollect {
 }
 ```
 
-Before calling the method `org.apache.hertzbeat.collector.collect.AbstractCollect#collect`, call the `preCheck` function and catch the exception.
+Before calling the method `org.apache.hertzbeat.collector.collect.AbstractCollect#collect`, call the `preCheck` method and catch the exception.
 
 Refactoring all `AbstractCollect` to implement the `preCheck` method.
 
