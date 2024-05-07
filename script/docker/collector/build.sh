@@ -22,7 +22,7 @@ CURRENT_DIR=`pwd`
 # cd dist dir
 cd ../../../collector/target
 # auto detect hertzbeat version
-VERSION=`ls *.tar| awk -F"-" '{print $3}' | awk -F".tar" '{print $1}'`
+VERSION=`ls *.tar| awk -F"-" '{print $4}'`
 # use the version param
 if [ -n "$1" ]; then
     VERSION="$1";
