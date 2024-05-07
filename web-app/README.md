@@ -1,10 +1,9 @@
 ## Hertzbeat Web-App        
 
-:::tip
+> [!NOTE]
+>
+> HertzBeat Web-App is a fork to [ng-alain](https://github.com/ng-alain/ng-alain/). Check [LICENSE](/LICENSE) and [license-ng-alain.txt](/material/licenses/frontend/LICENSE-ng-alain.txt) for more details.
 
-HertzBeat Web-App is a fork from [ng-alain](https://github.com/ng-alain/ng-alain/). Check [LICENSE](/LICENSE) and [license-ng-alain.txt](/material/licenses/frontend/LICENSE-ng-alain.txt) for more details.
-
-:::
 
 ### Quickly Start   
 
