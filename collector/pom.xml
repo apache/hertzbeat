@@ -63,7 +63,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>5.3.23</version>
         </dependency>
         <!-- kafka -->
         <dependency>
