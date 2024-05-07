@@ -67,7 +67,7 @@ export const features = [
 
 export const usersLink = [
   {
-    img: 'tancloud_logo.svg',
+    img: 'tancloud-logo.svg',
     alt: 'tancloud',
   }
 ]

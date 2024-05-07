@@ -403,11 +403,5 @@ module.exports = {
       },
     ],
   ],
-  themes: ['@docusaurus/theme-live-codeblock'],
-  scripts: [
-    {
-      src: 'https://hm.baidu.com/hm.js?77fb03ed1c6c1267119fec6d84dd88f3',
-      async: true,
-    },
-  ],
+  themes: ['@docusaurus/theme-live-codeblock']
 }

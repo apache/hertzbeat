@@ -36,6 +36,8 @@ import org.springframework.aot.hint.TypeReference;
 import org.springframework.util.ClassUtils;
 
 /**
+ * Derived from SpringCloud org.springframework.cloud.config.server.config.ConfigServerRuntimeHints
+ * @see <a href="https://github.com/spring-cloud/spring-cloud-config/blob/main/spring-cloud-config-server/src/main/java/org/springframework/cloud/config/server/config/ConfigServerRuntimeHints.java">ConfigServerRuntimeHints</a>
  */
 public class HertzbeatRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 
