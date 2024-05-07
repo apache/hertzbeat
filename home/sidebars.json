@@ -202,7 +202,8 @@
             "help/debian",
             "help/centos",
             "help/almalinux",
-            "help/opensuse"
+            "help/opensuse",
+            "help/freebsd"
           ]
         },
         {
