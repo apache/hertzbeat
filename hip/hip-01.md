@@ -50,5 +50,5 @@ Supplement the relevant unit tests.
 <!--
 Updated afterwards
 -->
-* Mailing List discussion thread:
+* Mailing List discussion thread: https://lists.apache.org/thread/cvvo7xg35fxq7kml5ggdrcdygrx6yvyj
 * Mailing List voting thread:
