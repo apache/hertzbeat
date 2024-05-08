@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.history.jpa.JpaDatabaseDataStorage;
 import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
 import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
@@ -37,16 +37,16 @@ public class DataStorageDispatch {
 
     private final CommonDataQueue commonDataQueue;
     private final WarehouseWorkerPool workerPool;
-    private final List<AbstractHistoryDataStorage> historyDataStorages;
+    private final List<HistoryDataWriter> historyDataWriters;
     private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
 
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
-                               List<AbstractHistoryDataStorage> historyDataStorages,
+                               List<HistoryDataWriter> historyDataWriters,
                                List<AbstractRealTimeDataStorage> realTimeDataStorages) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
-        this.historyDataStorages = historyDataStorages;
+        this.historyDataWriters = historyDataWriters;
         this.realTimeDataStorages = realTimeDataStorages;
         startPersistentDataStorage();
         startRealTimeDataStorage();
@@ -80,12 +80,12 @@ public class DataStorageDispatch {
     }
 
     protected void startPersistentDataStorage() {
-        if (historyDataStorages == null || historyDataStorages.isEmpty()) {
+        if (historyDataWriters == null || historyDataWriters.isEmpty()) {
             log.info("no history data storage start");
             return;
         }
-        if (historyDataStorages.size() > 1) {
-            historyDataStorages.removeIf(JpaDatabaseDataStorage.class::isInstance);
+        if (historyDataWriters.size() > 1) {
+            historyDataWriters.removeIf(JpaDatabaseDataStorage.class::isInstance);
         }
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
@@ -95,8 +95,8 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
-                    for (AbstractHistoryDataStorage historyDataStorage : historyDataStorages) {
-                        historyDataStorage.saveData(metricsData);
+                    for (HistoryDataWriter historyDataWriter : historyDataWriters) {
+                        historyDataWriter.saveData(metricsData);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
