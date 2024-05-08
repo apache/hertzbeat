@@ -67,6 +67,7 @@ public class NgqlCollectImpl extends AbstractCollect {
         if (!nebulaTemplate.isInitSuccess()) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("Failed to connect Nebula Graph");
+            return;
         }
         stopWatch.stop();
         long responseTime = stopWatch.getTotalTimeMillis();
