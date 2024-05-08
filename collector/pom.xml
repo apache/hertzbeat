@@ -293,6 +293,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>

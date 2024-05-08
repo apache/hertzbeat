@@ -20,9 +20,9 @@ cd `dirname $0`
 # current dir
 CURRENT_DIR=`pwd`
 # cd dist dir
-cd ../../../collector/target
+cd ../../../dist
 # auto detect hertzbeat version
-VERSION=`ls *.tar| awk -F"-" '{print $4}'`
+VERSION=`ls apache-hertzbeat-collector-*-incubating-bin.tar| awk -F"-" '{print $4}'`
 # use the version param
 if [ -n "$1" ]; then
     VERSION="$1";
