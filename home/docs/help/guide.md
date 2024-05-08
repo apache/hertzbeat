@@ -38,6 +38,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[IoTDB database monitoring](iotdb) <br />
 &emsp;&#x1F449;&emsp;[TiDB database monitoring](tidb) <br />
 &emsp;&#x1F449;&emsp;[MongoDB database monitoring](mongodb) <br />
+&emsp;&#x1F449;&emsp;[NebulaGraph cluster monitoring](nebulagraph_cluster) <br />
 
 ### Operating system monitoring     
 
@@ -45,6 +46,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[Windows operating system monitoring](windows) <br />
 &emsp;&#x1F449;&emsp;[Ubuntu operating system monitoring](ubuntu) <br />
 &emsp;&#x1F449;&emsp;[Centos operating system monitoring](centos) <br />
+&emsp;&#x1F449;&emsp;[FreeBSD operating system monitoring](freebsd) <br />
 
 ### Middleware monitoring
 

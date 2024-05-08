@@ -38,6 +38,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
   &emsp;&#x1F449;&emsp;[TiDB数据库监控](tidb) <br />
   &emsp;&#x1F449;&emsp;[MongoDB数据库监控](mongodb) <br />
+  &emsp;&#x1F449;&emsp;[NebulaGraph集群监控](nebulagraph_cluster) <br />
 
 ### 操作系统监控     
 
@@ -45,6 +46,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[Windows操作系统监控](windows) <br />
   &emsp;&#x1F449;&emsp;[Ubuntu操作系统监控](ubuntu) <br /> 
   &emsp;&#x1F449;&emsp;[Centos操作系统监控](centos) <br />
+  &emsp;&#x1F449;&emsp;[FreeBSD操作系统监控](freebsd) <br />
 
 ### 中间件监控
 

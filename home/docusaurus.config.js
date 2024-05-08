@@ -84,8 +84,8 @@ module.exports = {
               to: '/docs/community/contact',
             },
             {
-              label: 'code_of_conduct',
-              to: 'https://www.apache.org/foundation/policies/conduct',
+              label: 'contribution',
+              to: '/docs/community/contribution',
             },
             {
               label: 'join_the_mailing_lists',
@@ -179,8 +179,8 @@ module.exports = {
               activeBaseRegex: `/team`,
             },
             {
-              label: 'contributing',
-              to: '/docs/community/mailing_lists',
+              label: 'development',
+              to: '/docs/community/development',
             },
             {
               label: 'kanban',
@@ -351,7 +351,6 @@ module.exports = {
         debug: false,
         offlineModeActivationStrategies: ['appInstalled', 'queryString'],
         // swRegister: false,
-        swCustom: path.resolve(__dirname, 'src/sw.js'),
         pwaHead: [
           {
             tagName: 'link',

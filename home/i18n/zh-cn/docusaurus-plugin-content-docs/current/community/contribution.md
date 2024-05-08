@@ -1,8 +1,25 @@
 ---
-id: contributing  
-title: 贡献者指南    
-sidebar_label: 贡献者指南    
+id: contribution  
+title: 贡献指南
+sidebar_position: 0
 ---
+
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
 
 > 非常欢迎参与项目贡献，我们致力于维护一个互相帮助的快乐社区。
 
@@ -33,20 +50,31 @@ sidebar_label: 贡献者指南
 > 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。   
 > 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
 
-- 后端启动
+#### 后端启动
 
-1. 需要`maven3+`, `java17`和`lombok`环境
+1. 需要 `maven3+`, `java17` 和 `lombok` 环境
+
 2. (可选)修改配置文件配置信息-`manager/src/main/resources/application.yml`
-3. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
 
-- 前端启动
+3. 在项目根目录运行编译: `mvn clean install -DskipTests`
 
-1. 需要`nodejs npm angular-cli`环境
-2. 安装yarn `npm install -g yarn`
-3. 在前端工程目录web-app下执行 `yarn install`
-4. 全局安装angular-cli `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
-5. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
-6. 浏览器访问 localhost:4200 即可开始，默认账号密码 admin/hertzbeat
+4. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
+
+#### 前端启动
+
+1. 需要 `nodejs yarn` 环境, Make sure `Node.js >= 18`
+
+2. 进入 `web-app` 目录: `cd web-app`
+
+3. 安装yarn: `npm install -g yarn`
+
+4. 在前端工程目录 `web-app` 下执行: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+
+5. 全局安装 `angular-cli`: `yarn global add @angular/cli@15` or `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`
+
+6. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
+
+7. 浏览器访问 localhost:4200 即可开始，默认账号密码 admin/hertzbeat**
 
 ### 寻找任务
 
@@ -129,3 +157,5 @@ git pull upstream master
 > 告警计算触发，任务状态联动，告警配置，告警通知。
 - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
+
+![hertzBeat](/img/docs/hertzbeat-arch.png)

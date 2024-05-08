@@ -113,6 +113,6 @@
   },
   "sidebar.docs.category.network": {
     "message": "网络",
-    "description": "The label for category Network in sidebar docs"
+    "description": "The label for category network in sidebar docs"
   }
 }

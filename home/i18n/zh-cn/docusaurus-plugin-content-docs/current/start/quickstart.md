@@ -68,7 +68,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在`web-app`目录下启动 `ng serve --open`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
-详细步骤参考 [参与贡献之本地代码启动](../others/contributing)
+详细步骤参考 [参与贡献之本地代码启动](../community/contribution)
 
 ##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+iotdb/tdengine
 

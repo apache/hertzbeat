@@ -77,17 +77,6 @@ params:
     # when type is number, range is required
     # required-true or false
     required: true
-  - field: spaceName
-    # name-param field display i18n name
-    name:
-      zh-CN: 图空间
-      en-US: Space Name
-    # type-param field type(most mapping the html input type)
-    type: text
-    # when type is number, range is required
-    # required-true or false
-    required: false
-
   # field-param field key
   - field: timeout
     # name-param field display i18n name
@@ -293,7 +282,7 @@ metrics:
   - name: storage
     i18n:
       zh-CN: Storage节点
-      en-US: Storage Node
+      en-US: Storage Nodes
     priority: 0
     fields:
       - field: host
@@ -362,7 +351,7 @@ metrics:
   - name: meta
     i18n:
       zh-CN: Meta节点
-      en-US: Meta Node
+      en-US: Meta Nodes
     priority: 0
     fields:
       - field: host
@@ -410,7 +399,7 @@ metrics:
   - name: graph
     i18n:
       zh-CN: Graph节点
-      en-US: Graph Node
+      en-US: Graph Nodes
     priority: 0
     fields:
       - field: host
