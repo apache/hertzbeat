@@ -46,6 +46,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[Windows操作系统监控](windows) <br />
   &emsp;&#x1F449;&emsp;[Ubuntu操作系统监控](ubuntu) <br /> 
   &emsp;&#x1F449;&emsp;[Centos操作系统监控](centos) <br />
+  &emsp;&#x1F449;&emsp;[FreeBSD操作系统监控](freebsd) <br />
 
 ### 中间件监控
 
