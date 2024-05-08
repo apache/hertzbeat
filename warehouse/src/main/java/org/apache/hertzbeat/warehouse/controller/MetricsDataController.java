@@ -37,7 +37,7 @@ import org.apache.hertzbeat.common.entity.dto.ValueRow;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.store.history.HistoryDataReader;
 import org.apache.hertzbeat.warehouse.store.history.jpa.JpaDatabaseDataStorage;
-import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,13 +56,13 @@ public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
 
-    private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
+    private final List<RealTimeDataReader> realTimeDataReaders;
 
     private final List<HistoryDataReader> historyDataReaders;
 
-    public MetricsDataController(List<AbstractRealTimeDataStorage> realTimeDataStorages,
+    public MetricsDataController(List<RealTimeDataReader> realTimeDataReaders,
                                  List<HistoryDataReader> historyDataReaders) {
-        this.realTimeDataStorages = realTimeDataStorages;
+        this.realTimeDataReaders = realTimeDataReaders;
         this.historyDataReaders = historyDataReaders;
     }
 
@@ -87,8 +87,8 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
-        AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream()
-                .filter(AbstractRealTimeDataStorage::isServerAvailable)
+        RealTimeDataReader realTimeDataReader = realTimeDataReaders.stream()
+                .filter(RealTimeDataReader::isServerAvailable)
                 .max((o1, o2) -> {
                     if (o1 instanceof MemoryDataStorage) {
                         return -1;
@@ -98,10 +98,10 @@ public class MetricsDataController {
                         return 0;
                     }
                 }).orElse(null);
-        if (realTimeDataStorage == null) {
+        if (realTimeDataReader == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "real time store not available"));
         }
-        CollectRep.MetricsData storageData = realTimeDataStorage.getCurrentMetricsData(monitorId, metrics);
+        CollectRep.MetricsData storageData = realTimeDataReader.getCurrentMetricsData(monitorId, metrics);
         if (storageData == null) {
             return ResponseEntity.ok(Message.success("query metrics data is empty"));
         }
