@@ -34,7 +34,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.store.history.HistoryDataReader;
-import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,17 +62,17 @@ class MetricsDataControllerTest {
     HistoryDataReader historyDataReader;
 
     @Mock
-    AbstractRealTimeDataStorage realTimeDataStorage;
+    RealTimeDataReader realTimeDataReader;
 
     private List<HistoryDataReader> historyDataReaders = new LinkedList<>();
 
-    private List<AbstractRealTimeDataStorage> realTimeDataStorages = new LinkedList<>();
+    private List<RealTimeDataReader> realTimeDataReaders = new LinkedList<>();
 
     @BeforeEach
     void setUp() {
         historyDataReaders.add(historyDataReader);
-        realTimeDataStorages.add(realTimeDataStorage);
-        metricsDataController = new MetricsDataController(realTimeDataStorages, historyDataReaders);
+        realTimeDataReaders.add(realTimeDataReader);
+        metricsDataController = new MetricsDataController(realTimeDataReaders, historyDataReaders);
         this.mockMvc = MockMvcBuilders.standaloneSetup(metricsDataController).build();
     }
 
@@ -101,8 +101,8 @@ class MetricsDataControllerTest {
         final long time = System.currentTimeMillis();
         final String getUrl = "/api/monitor/" + monitorId + "/metrics/" + metric;
 
-        when(realTimeDataStorage.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(null);
-        when(realTimeDataStorage.isServerAvailable()).thenReturn(true);
+        when(realTimeDataReader.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(null);
+        when(realTimeDataReader.isServerAvailable()).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -116,8 +116,8 @@ class MetricsDataControllerTest {
                 .setMetrics(metric)
                 .setTime(time)
                 .build();
-        when(realTimeDataStorage.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(metricsData);
-        when(realTimeDataStorage.isServerAvailable()).thenReturn(true);
+        when(realTimeDataReader.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(metricsData);
+        when(realTimeDataReader.isServerAvailable()).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
