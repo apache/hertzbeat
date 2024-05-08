@@ -205,9 +205,9 @@ mvn clean package -Pcluster
 
 生成的二进制包在:
 
-- `manager/target/apache-hertzbeat-{version}-incubating-bin.tar.gz`
-- `manager/target/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
-- `collector/target/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
+- `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
+- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
+- `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
 #### 3.4 打包项目源代码
 
@@ -216,12 +216,12 @@ mvn clean package -Pcluster
 ```shell
 git archive \
 --format=tar.gz \
---output="target/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
+--output="dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
 --prefix=apache-hertzbeat-1.6.0-incubating-src/ \
 release-1.6.0-rc1
 ```
 
-生成的代码归档文件在 `target/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
+生成的代码归档文件在 `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
 
 #### 3.5 对二进制和源码包进行签名
 

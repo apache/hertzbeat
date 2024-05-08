@@ -205,9 +205,9 @@ mvn clean package -Pcluster
 
 The release package are here:
 
-- `manager/target/apache-hertzbeat-{version}-incubating-bin.tar.gz`
-- `manager/target/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
-- `collector/target/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
+- `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
+- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
+- `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
 #### 3.4 Package the source code
 
@@ -216,12 +216,12 @@ The release package are here:
 ```shell
 git archive \
 --format=tar.gz \
---output="target/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
+--output="dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
 --prefix=apache-hertzbeat-1.6.0-incubating-src/ \
 release-1.6.0-rc1
 ```
 
-The archive package is here `target/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
+The archive package is here `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
 
 #### 3.5 Sign binary and source packages
 
