@@ -544,6 +544,21 @@ public class JexlTest {
     }
     
     @Test
+    void testAddString() {
+        JexlEngine jexl = jexlBuilder.create();
+        JexlContext context = new MapContext();
+        context.set("x", "Ubuntu");
+        JexlExpression e = jexl.createExpression("x + \"-00000\"");
+        Object o = e.evaluate(context);
+        String result = (String) o;
+        e = jexl.createExpression("x + '-00000'");
+        Assertions.assertEquals("Ubuntu-00000", result);
+        o = e.evaluate(context);
+        result = (String) o;
+        Assertions.assertEquals("Ubuntu-00000", result);
+    }
+    
+    @Test
     void testUnconventionalMapping() {
         // database_pages=Database pages
         // name=User Commits Per Sec
