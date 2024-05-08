@@ -17,20 +17,22 @@
 
 package org.apache.hertzbeat.warehouse.store.history;
 
-import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.springframework.beans.factory.DisposableBean;
 
 /**
- * data storage abstract class
+ *
  */
-@Slf4j
-public abstract class AbstractHistoryDataStorage implements HistoryDataReader, HistoryDataWriter {
-
-    protected boolean serverAvailable;
+public interface HistoryDataWriter extends DisposableBean {
 
     /**
      * @return data storage available
      */
-    public boolean isServerAvailable() {
-        return serverAvailable;
-    }
+    boolean isServerAvailable();
+
+    /**
+     * save metrics data
+     * @param metricsData metrics data
+     */
+    void saveData(CollectRep.MetricsData metricsData);
 }

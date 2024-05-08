@@ -35,7 +35,7 @@ import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.dto.ValueRow;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.HistoryDataReader;
 import org.apache.hertzbeat.warehouse.store.history.jpa.JpaDatabaseDataStorage;
 import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
 import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
@@ -58,20 +58,20 @@ public class MetricsDataController {
 
     private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
 
-    private final List<AbstractHistoryDataStorage> historyDataStorages;
+    private final List<HistoryDataReader> historyDataReaders;
 
     public MetricsDataController(List<AbstractRealTimeDataStorage> realTimeDataStorages,
-                                 List<AbstractHistoryDataStorage> historyDataStorages) {
+                                 List<HistoryDataReader> historyDataReaders) {
         this.realTimeDataStorages = realTimeDataStorages;
-        this.historyDataStorages = historyDataStorages;
+        this.historyDataReaders = historyDataReaders;
     }
 
     @GetMapping("/api/warehouse/storage/status")
     @Operation(summary = "Query Warehouse Storage Server Status", description = "Query the availability status of the storage service under the warehouse")
     public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus() {
         boolean available = false;
-        if (historyDataStorages != null) {
-            available = historyDataStorages.stream().anyMatch(AbstractHistoryDataStorage::isServerAvailable);
+        if (historyDataReaders != null) {
+            available = historyDataReaders.stream().anyMatch(HistoryDataReader::isServerAvailable);
         }
         if (available) {
             return ResponseEntity.ok(Message.success());
@@ -154,8 +154,8 @@ public class MetricsDataController {
             @Parameter(description = "aggregate data calc. off by default; 4-hour window, query limit >1 week", example = "false")
             @RequestParam(required = false) Boolean interval
     ) {
-        AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream()
-                .filter(AbstractHistoryDataStorage::isServerAvailable).max((o1, o2) -> {
+        HistoryDataReader historyDataReader = historyDataReaders.stream()
+                .filter(HistoryDataReader::isServerAvailable).max((o1, o2) -> {
                     if (o1 instanceof JpaDatabaseDataStorage) {
                         return -1;
                     } else if (o2 instanceof JpaDatabaseDataStorage) {
@@ -164,7 +164,7 @@ public class MetricsDataController {
                         return 0;
                     }
                 }).orElse(null);
-        if (historyDataStorage == null) {
+        if (historyDataReader == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
         }
         String[] names = metricFull.split("\\.");
@@ -179,9 +179,9 @@ public class MetricsDataController {
         }
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            instanceValuesMap = historyDataStorage.getHistoryMetricData(monitorId, app, metrics, metric, label, history);
+            instanceValuesMap = historyDataReader.getHistoryMetricData(monitorId, app, metrics, metric, label, history);
         } else {
-            instanceValuesMap = historyDataStorage.getHistoryIntervalMetricData(monitorId, app, metrics, metric, label, history);
+            instanceValuesMap = historyDataReader.getHistoryIntervalMetricData(monitorId, app, metrics, metric, label, history);
         }
         MetricsHistoryData historyData = MetricsHistoryData.builder()
                 .id(monitorId).metrics(metrics).values(instanceValuesMap)
