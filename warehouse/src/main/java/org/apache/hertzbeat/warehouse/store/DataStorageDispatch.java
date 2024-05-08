@@ -24,7 +24,7 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.store.history.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.history.jpa.JpaDatabaseDataStorage;
-import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.springframework.stereotype.Component;
 
@@ -38,27 +38,27 @@ public class DataStorageDispatch {
     private final CommonDataQueue commonDataQueue;
     private final WarehouseWorkerPool workerPool;
     private final List<HistoryDataWriter> historyDataWriters;
-    private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
+    private final List<RealTimeDataWriter> realTimeDataWriters;
 
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
                                List<HistoryDataWriter> historyDataWriters,
-                               List<AbstractRealTimeDataStorage> realTimeDataStorages) {
+                               List<RealTimeDataWriter> realTimeDataWriters) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
         this.historyDataWriters = historyDataWriters;
-        this.realTimeDataStorages = realTimeDataStorages;
+        this.realTimeDataWriters = realTimeDataWriters;
         startPersistentDataStorage();
         startRealTimeDataStorage();
     }
 
     private void startRealTimeDataStorage() {
-        if (realTimeDataStorages == null || realTimeDataStorages.isEmpty()) {
+        if (realTimeDataWriters == null || realTimeDataWriters.isEmpty()) {
             log.info("no real time data storage start");
             return;
         }
-        if (realTimeDataStorages.size() > 1) {
-            realTimeDataStorages.removeIf(MemoryDataStorage.class::isInstance);
+        if (realTimeDataWriters.size() > 1) {
+            realTimeDataWriters.removeIf(MemoryDataStorage.class::isInstance);
         }
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-realtime-data-storage");
@@ -68,8 +68,8 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
-                    for (AbstractRealTimeDataStorage realTimeDataStorage : realTimeDataStorages) {
-                        realTimeDataStorage.saveData(metricsData);
+                    for (RealTimeDataWriter realTimeDataWriter : realTimeDataWriters) {
+                        realTimeDataWriter.saveData(metricsData);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
