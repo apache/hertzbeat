@@ -26,6 +26,7 @@ import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlExpression;
+import org.apache.commons.jexl3.JexlFeatures;
 import org.apache.commons.jexl3.MapContext;
 
 /**
@@ -33,14 +34,25 @@ import org.apache.commons.jexl3.MapContext;
  */
 public class JexlExpressionRunner {
 
+    private static final String LOADER_NAME = "jexl-class-loader";
     private static final JexlEngine jexlEngine;
     
     static {
         Map<String, Object> functions = Maps.newLinkedHashMap();
         // set the root namespace function
         functions.put(null, new JexlCommonFunction());
-        jexlEngine = new JexlBuilder().charset(StandardCharsets.UTF_8).cache(256)
-                .strict(true).silent(false).stackOverflow(40).namespaces(functions).create();
+        ClassLoader classLoader = new ClassLoader() {
+            @Override
+            public String getName() {
+                return LOADER_NAME;
+            }
+        };
+        JexlFeatures features = new JexlFeatures();
+        features.annotation(false).loops(false).pragma(false)
+                .methodCall(false).lambda(false).newInstance(false).register(false);
+        jexlEngine = new JexlBuilder().charset(StandardCharsets.UTF_8).cache(256).loader(classLoader)
+                .features(features).strict(true).silent(false).stackOverflow(40).namespaces(functions)
+                .create();
     }
     
     public static Object evaluate(String expression, Map<String, Object> context) {
