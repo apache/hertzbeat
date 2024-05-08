@@ -229,6 +229,7 @@
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
+            "help/yarn",
             "help/hbase_master",
             "help/hbase_regionserver",
             "help/hdfs_namenode",
