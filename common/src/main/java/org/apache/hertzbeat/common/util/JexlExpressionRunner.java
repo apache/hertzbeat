@@ -40,7 +40,7 @@ public class JexlExpressionRunner {
         // set the root namespace function
         functions.put(null, new JexlCommonFunction());
         jexlEngine = new JexlBuilder().charset(StandardCharsets.UTF_8).cache(256)
-                .strict(true).silent(false).namespaces(functions).create();
+                .strict(true).silent(false).stackOverflow(40).namespaces(functions).create();
     }
     
     public static Object evaluate(String expression, Map<String, Object> context) {
