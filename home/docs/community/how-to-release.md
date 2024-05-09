@@ -194,7 +194,7 @@ yarn package
 > run script in root
 
 ```shell
-mvn clean package
+mvn clean install
 ```
 
 > Build HertzBeat collector binary, run script in `collector`
@@ -203,7 +203,11 @@ mvn clean package
 mvn clean package -Pcluster
 ```
 
-The release package are here `manager/target/hertzbeat-{version}.tar.gz`，`collector/target/hertzbeat-collector-{version}.tar.gz`，`collector/target/hertzbeat-collector-{version}-bin.tar.gz`。
+The release package are here:
+
+- `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
+- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
+- `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
 #### 3.4 Package the source code
 
@@ -212,23 +216,27 @@ The release package are here `manager/target/hertzbeat-{version}.tar.gz`，`coll
 ```shell
 git archive \
 --format=tar.gz \
---output="target/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
+--output="dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
 --prefix=apache-hertzbeat-1.6.0-incubating-src/ \
 release-1.6.0-rc1
 ```
 
-The archive package is here `target/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
+The archive package is here `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
 
 #### 3.5 Sign binary and source packages
+
+> The `gpg -u 33545C76`  `33545C76` is your gpg secret ID, see from `gpg --keyid-format SHORT --list-keys`
 
 ```shell
 cd dist
 
 # sign
-for i in *.tar.gz; do echo $i; gpg --armor --output $i.asc --detach-sig $i ; done
+for i in *.tar.gz; do echo $i; gpg -u 33545C76 --armor --output $i.asc --detach-sig $i ; done
 
 # SHA512
 for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
+
+# if macos sha512sum not found, you can install by brew install coreutils
 ```
 
 > The final file list is as follows
@@ -237,12 +245,15 @@ for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
 apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz.asc
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz.asc
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.asc
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.sha512
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512
 ```
 
 #### 3.6 Verify signature
@@ -271,10 +282,12 @@ $ for i in *.tar.gz; do echo $i; sha512sum --check $i.sha512; done
 
 apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz: OK
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz: OK
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 ```
 
 #### 3.7 Publish the dev directory of the Apache SVN material package
@@ -592,5 +605,6 @@ ChunJin Mu
 
 This version release is over.
 
+---
 
 This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
