@@ -196,7 +196,7 @@
     </dependencies>
 
     <build>
-        <finalName>apache-hertzbeat</finalName>
+        <finalName>apache-hertzbeat-${hzb.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -243,10 +243,7 @@
 
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>release</id>
             <build>
                 <plugins>
                     <!--Critical plugin, assembly plugin provided by maven, should be placed last-->
@@ -311,6 +308,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-macos-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -325,6 +323,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-macos-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -339,6 +338,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-linux-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -353,6 +353,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-linux-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -367,6 +368,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-windows-64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -381,6 +383,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-docker-compose.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>
