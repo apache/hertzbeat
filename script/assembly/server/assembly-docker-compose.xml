@@ -77,5 +77,26 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             </includes>
             <outputDirectory>/</outputDirectory>
         </fileSet>
+        
+        <!-- doc -->
+        <fileSet>
+            <directory>../</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>DISCLAIMER</include>
+                <include>LICENSE</include>
+                <include>NOTICE</include>
+                <include>README.md</include>
+            </includes>
+        </fileSet>
+
+        <!-- license -->
+        <fileSet>
+            <directory>../material/licenses</directory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+            <outputDirectory>licenses</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>
