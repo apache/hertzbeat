@@ -133,6 +133,7 @@
           "items": [
             "help/website",
             "help/api",
+            "help/openai",
             "help/ping",
             "help/port",
             "help/udp_port",
