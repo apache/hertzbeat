@@ -17,22 +17,22 @@
 
 package org.apache.hertzbeat.warehouse.store.realtime;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
- * Real-time data storage abstract class
+ * Real-time data writing class
  */
-@Slf4j
-public abstract class AbstractRealTimeDataStorage implements RealTimeDataReader, RealTimeDataWriter, DisposableBean {
-
-    protected boolean serverAvailable;
+public interface RealTimeDataWriter {
 
     /**
-     * @return data Whether the storage is available
+     * @return data storage available
      */
-    @Override
-    public boolean isServerAvailable() {
-        return serverAvailable;
-    }
+    boolean isServerAvailable();
+
+    /**
+     * save metrics data
+     * @param metricsData metrics data
+     */
+    void saveData(CollectRep.MetricsData metricsData);
+
 }
