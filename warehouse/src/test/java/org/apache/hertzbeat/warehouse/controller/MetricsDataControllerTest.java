@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -64,15 +66,9 @@ class MetricsDataControllerTest {
     @Mock
     RealTimeDataReader realTimeDataReader;
 
-    private List<HistoryDataReader> historyDataReaders = new LinkedList<>();
-
-    private List<RealTimeDataReader> realTimeDataReaders = new LinkedList<>();
-
     @BeforeEach
     void setUp() {
-        historyDataReaders.add(historyDataReader);
-        realTimeDataReaders.add(realTimeDataReader);
-        metricsDataController = new MetricsDataController(realTimeDataReaders, historyDataReaders);
+        metricsDataController = new MetricsDataController(realTimeDataReader, Optional.of(historyDataReader));
         this.mockMvc = MockMvcBuilders.standaloneSetup(metricsDataController).build();
     }
 

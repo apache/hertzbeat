@@ -81,7 +81,7 @@ export class AlertCenterComponent implements OnInit {
                   Object.keys(item.tags).forEach(name => {
                     item.tmp.push({
                       name: name,
-                      value: item.tags[name]
+                      tagValue: item.tags[name]
                     });
                   });
                 }

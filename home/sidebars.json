@@ -142,6 +142,7 @@
           "items": [
             "help/website",
             "help/api",
+            "help/openai",
             "help/ping",
             "help/port",
             "help/udp_port",
@@ -203,7 +204,9 @@
             "help/centos",
             "help/almalinux",
             "help/opensuse",
-            "help/freebsd"
+            "help/freebsd",
+            "help/redhat",
+            "help/rockylinux"
           ]
         },
         {
