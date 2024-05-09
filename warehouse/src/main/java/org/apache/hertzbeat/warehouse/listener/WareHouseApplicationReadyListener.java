@@ -15,23 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.history;
+package org.apache.hertzbeat.warehouse.listener;
 
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
+import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+
+
 
 /**
- * data storage abstract class
+ *
  */
 @Slf4j
-public abstract class AbstractHistoryDataStorage implements HistoryDataReader, HistoryDataWriter, DisposableBean {
+@Component
+public class WareHouseApplicationReadyListener {
 
-    protected boolean serverAvailable;
+    private Optional<AbstractHistoryDataStorage> historyDataStorage;
 
-    /**
-     * @return data storage available
-     */
-    public boolean isServerAvailable() {
-        return serverAvailable;
+    public WareHouseApplicationReadyListener(Optional<AbstractHistoryDataStorage> historyDataStorage) {
+        this.historyDataStorage = historyDataStorage;
+    }
+
+    @EventListener(classes = {ApplicationReadyEvent.class})
+    public void listen() {
+        if (historyDataStorage.isEmpty()) {
+            log.warn("The historical data repository is not configured");
+        }
     }
 }
