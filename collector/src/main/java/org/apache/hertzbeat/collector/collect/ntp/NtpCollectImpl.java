@@ -120,10 +120,10 @@ public class NtpCollectImpl extends AbstractCollect {
     private Map<String, String> getNtpInfo(TimeInfo timeInfo) {
         Map<String, String> valueMap = new HashMap<>(16);
 
-        TimeStamp timeStamp = timeInfo.getMessage().getTransmitTimeStamp();
+        NtpV3Packet message = timeInfo.getMessage();
+        TimeStamp timeStamp = message.getTransmitTimeStamp();
         Date date = timeStamp.getDate();
 
-        NtpV3Packet message = timeInfo.getMessage();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         valueMap.put("time", Long.toString(timeStamp.getTime()));
         valueMap.put("date", simpleDateFormat.format(date));
