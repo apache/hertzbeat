@@ -196,7 +196,7 @@
     </dependencies>
 
     <build>
-        <finalName>apache-hertzbeat</finalName>
+        <finalName>apache-hertzbeat-${hzb.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -243,10 +243,7 @@
 
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>release</id>
             <build>
                 <plugins>
                     <!--Critical plugin, assembly plugin provided by maven, should be placed last-->

@@ -30,6 +30,6 @@ ADD apache-hertzbeat-collector-${VERSION}-incubating-bin.tar /opt/
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
-WORKDIR /opt/apache-hertzbeat-collector/
+WORKDIR /opt/apache-hertzbeat-collector-${VERSION}-incubating/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]

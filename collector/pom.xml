@@ -229,7 +229,7 @@
         <profile>
             <id>cluster</id>
             <build>
-                <finalName>apache-hertzbeat-collector</finalName>
+                <finalName>apache-hertzbeat-collector-${hzb.version}</finalName>
                 <resources>
                     <resource>
                         <directory>src/main/resources</directory>

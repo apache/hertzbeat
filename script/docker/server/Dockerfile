@@ -36,6 +36,6 @@ ENV LANG=en_US.UTF-8
 
 EXPOSE 1157 1158 22
 
-WORKDIR /opt/apache-hertzbeat/
+WORKDIR /opt/apache-hertzbeat-${VERSION}-incubating/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]
