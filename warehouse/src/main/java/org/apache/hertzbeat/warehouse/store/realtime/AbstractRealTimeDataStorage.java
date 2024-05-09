@@ -17,45 +17,22 @@
 
 package org.apache.hertzbeat.warehouse.store.realtime;
 
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.springframework.beans.factory.DisposableBean;
-import org.springframework.lang.NonNull;
 
 /**
  * Real-time data storage abstract class
  */
 @Slf4j
-public abstract class AbstractRealTimeDataStorage implements DisposableBean {
+public abstract class AbstractRealTimeDataStorage implements RealTimeDataReader, RealTimeDataWriter, DisposableBean {
 
     protected boolean serverAvailable;
 
     /**
      * @return data Whether the storage is available
      */
+    @Override
     public boolean isServerAvailable() {
         return serverAvailable;
     }
-
-    /**
-     * save collect metrics data
-     * @param metricsData metrics data
-     */
-    public abstract void saveData(CollectRep.MetricsData metricsData);
-
-    /**
-     * query real-time last metrics data
-     * @param monitorId monitorId
-     * @param metric metric name
-     * @return metrics data
-     */
-    public abstract CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric);
-
-    /**
-     * query real-time last metrics data
-     * @param monitorId monitor id
-     * @return metrics data
-     */
-    public abstract List<CollectRep.MetricsData> getCurrentMetricsData(@NonNull Long monitorId);
 }

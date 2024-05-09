@@ -22,9 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.history.jpa.JpaDatabaseDataStorage;
-import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.springframework.stereotype.Component;
 
@@ -37,28 +37,28 @@ public class DataStorageDispatch {
 
     private final CommonDataQueue commonDataQueue;
     private final WarehouseWorkerPool workerPool;
-    private final List<AbstractHistoryDataStorage> historyDataStorages;
-    private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
+    private final List<HistoryDataWriter> historyDataWriters;
+    private final List<RealTimeDataWriter> realTimeDataWriters;
 
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
-                               List<AbstractHistoryDataStorage> historyDataStorages,
-                               List<AbstractRealTimeDataStorage> realTimeDataStorages) {
+                               List<HistoryDataWriter> historyDataWriters,
+                               List<RealTimeDataWriter> realTimeDataWriters) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
-        this.historyDataStorages = historyDataStorages;
-        this.realTimeDataStorages = realTimeDataStorages;
+        this.historyDataWriters = historyDataWriters;
+        this.realTimeDataWriters = realTimeDataWriters;
         startPersistentDataStorage();
         startRealTimeDataStorage();
     }
 
     private void startRealTimeDataStorage() {
-        if (realTimeDataStorages == null || realTimeDataStorages.isEmpty()) {
+        if (realTimeDataWriters == null || realTimeDataWriters.isEmpty()) {
             log.info("no real time data storage start");
             return;
         }
-        if (realTimeDataStorages.size() > 1) {
-            realTimeDataStorages.removeIf(MemoryDataStorage.class::isInstance);
+        if (realTimeDataWriters.size() > 1) {
+            realTimeDataWriters.removeIf(MemoryDataStorage.class::isInstance);
         }
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-realtime-data-storage");
@@ -68,8 +68,8 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
-                    for (AbstractRealTimeDataStorage realTimeDataStorage : realTimeDataStorages) {
-                        realTimeDataStorage.saveData(metricsData);
+                    for (RealTimeDataWriter realTimeDataWriter : realTimeDataWriters) {
+                        realTimeDataWriter.saveData(metricsData);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
@@ -80,12 +80,12 @@ public class DataStorageDispatch {
     }
 
     protected void startPersistentDataStorage() {
-        if (historyDataStorages == null || historyDataStorages.isEmpty()) {
+        if (historyDataWriters == null || historyDataWriters.isEmpty()) {
             log.info("no history data storage start");
             return;
         }
-        if (historyDataStorages.size() > 1) {
-            historyDataStorages.removeIf(JpaDatabaseDataStorage.class::isInstance);
+        if (historyDataWriters.size() > 1) {
+            historyDataWriters.removeIf(JpaDatabaseDataStorage.class::isInstance);
         }
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
@@ -95,8 +95,8 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
-                    for (AbstractHistoryDataStorage historyDataStorage : historyDataStorages) {
-                        historyDataStorage.saveData(metricsData);
+                    for (HistoryDataWriter historyDataWriter : historyDataWriters) {
+                        historyDataWriter.saveData(metricsData);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

@@ -98,10 +98,12 @@
       "label": "Community",
       "items": [
         "community/contact",
+        "community/development",
         {
           "type": "category",
           "label": "contribution",
           "items": [
+            "community/contribution",
             "community/mailing_lists",
             "community/become_committer",
             "community/become_pmc_member",
@@ -200,7 +202,10 @@
             "help/debian",
             "help/centos",
             "help/almalinux",
-            "help/opensuse"
+            "help/opensuse",
+            "help/freebsd",
+            "help/redhat",
+            "help/rockylinux"
           ]
         },
         {
@@ -226,6 +231,7 @@
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
+            "help/yarn",
             "help/hbase_master",
             "help/hbase_regionserver",
             "help/hdfs_namenode",
@@ -293,7 +299,6 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/contributing",
         "others/resource"
       ]
     }

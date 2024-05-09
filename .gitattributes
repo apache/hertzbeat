@@ -16,5 +16,8 @@
 #
 
 /home export-ignore
+/hip export-ignore
+/.github export-ignore
+/.idea export-ignore
 .gitattributes export-ignore  
 .gitignore export-ignore

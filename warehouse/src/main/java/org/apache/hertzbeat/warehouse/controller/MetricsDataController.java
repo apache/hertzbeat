@@ -35,9 +35,9 @@ import org.apache.hertzbeat.common.entity.dto.MetricsHistoryData;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.dto.ValueRow;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.store.history.AbstractHistoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.HistoryDataReader;
 import org.apache.hertzbeat.warehouse.store.history.jpa.JpaDatabaseDataStorage;
-import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,22 +56,22 @@ public class MetricsDataController {
 
     private static final Integer METRIC_FULL_LENGTH = 3;
 
-    private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
+    private final List<RealTimeDataReader> realTimeDataReaders;
 
-    private final List<AbstractHistoryDataStorage> historyDataStorages;
+    private final List<HistoryDataReader> historyDataReaders;
 
-    public MetricsDataController(List<AbstractRealTimeDataStorage> realTimeDataStorages,
-                                 List<AbstractHistoryDataStorage> historyDataStorages) {
-        this.realTimeDataStorages = realTimeDataStorages;
-        this.historyDataStorages = historyDataStorages;
+    public MetricsDataController(List<RealTimeDataReader> realTimeDataReaders,
+                                 List<HistoryDataReader> historyDataReaders) {
+        this.realTimeDataReaders = realTimeDataReaders;
+        this.historyDataReaders = historyDataReaders;
     }
 
     @GetMapping("/api/warehouse/storage/status")
     @Operation(summary = "Query Warehouse Storage Server Status", description = "Query the availability status of the storage service under the warehouse")
     public ResponseEntity<Message<Void>> getWarehouseStorageServerStatus() {
         boolean available = false;
-        if (historyDataStorages != null) {
-            available = historyDataStorages.stream().anyMatch(AbstractHistoryDataStorage::isServerAvailable);
+        if (historyDataReaders != null) {
+            available = historyDataReaders.stream().anyMatch(HistoryDataReader::isServerAvailable);
         }
         if (available) {
             return ResponseEntity.ok(Message.success());
@@ -87,8 +87,8 @@ public class MetricsDataController {
             @PathVariable Long monitorId,
             @Parameter(description = "Metrics Name", example = "cpu")
             @PathVariable String metrics) {
-        AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream()
-                .filter(AbstractRealTimeDataStorage::isServerAvailable)
+        RealTimeDataReader realTimeDataReader = realTimeDataReaders.stream()
+                .filter(RealTimeDataReader::isServerAvailable)
                 .max((o1, o2) -> {
                     if (o1 instanceof MemoryDataStorage) {
                         return -1;
@@ -98,10 +98,10 @@ public class MetricsDataController {
                         return 0;
                     }
                 }).orElse(null);
-        if (realTimeDataStorage == null) {
+        if (realTimeDataReader == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "real time store not available"));
         }
-        CollectRep.MetricsData storageData = realTimeDataStorage.getCurrentMetricsData(monitorId, metrics);
+        CollectRep.MetricsData storageData = realTimeDataReader.getCurrentMetricsData(monitorId, metrics);
         if (storageData == null) {
             return ResponseEntity.ok(Message.success("query metrics data is empty"));
         }
@@ -154,8 +154,8 @@ public class MetricsDataController {
             @Parameter(description = "aggregate data calc. off by default; 4-hour window, query limit >1 week", example = "false")
             @RequestParam(required = false) Boolean interval
     ) {
-        AbstractHistoryDataStorage historyDataStorage = historyDataStorages.stream()
-                .filter(AbstractHistoryDataStorage::isServerAvailable).max((o1, o2) -> {
+        HistoryDataReader historyDataReader = historyDataReaders.stream()
+                .filter(HistoryDataReader::isServerAvailable).max((o1, o2) -> {
                     if (o1 instanceof JpaDatabaseDataStorage) {
                         return -1;
                     } else if (o2 instanceof JpaDatabaseDataStorage) {
@@ -164,7 +164,7 @@ public class MetricsDataController {
                         return 0;
                     }
                 }).orElse(null);
-        if (historyDataStorage == null) {
+        if (historyDataReader == null) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "time series database not available"));
         }
         String[] names = metricFull.split("\\.");
@@ -179,9 +179,9 @@ public class MetricsDataController {
         }
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            instanceValuesMap = historyDataStorage.getHistoryMetricData(monitorId, app, metrics, metric, label, history);
+            instanceValuesMap = historyDataReader.getHistoryMetricData(monitorId, app, metrics, metric, label, history);
         } else {
-            instanceValuesMap = historyDataStorage.getHistoryIntervalMetricData(monitorId, app, metrics, metric, label, history);
+            instanceValuesMap = historyDataReader.getHistoryIntervalMetricData(monitorId, app, metrics, metric, label, history);
         }
         MetricsHistoryData historyData = MetricsHistoryData.builder()
                 .id(monitorId).metrics(metrics).values(instanceValuesMap)
