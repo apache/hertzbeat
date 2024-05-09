@@ -27,7 +27,6 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <baseDirectory>apache-hertzbeat-collector-${hzb.version}-incubating</baseDirectory>
     <!--Packaging type, multiple types can be set, different types will be packaged when packaging-->
     <formats>
-        <format>tar</format>
         <format>tar.gz</format>
     </formats>
     <!--Third-party dependency settings-->
