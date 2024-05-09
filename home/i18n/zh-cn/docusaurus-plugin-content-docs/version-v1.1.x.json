@@ -58,5 +58,9 @@
   "sidebar.docs.category.Others": {
     "message": "Others",
     "description": "The label for category Others in sidebar docs"
+  },
+  "sidebar.docs.category.Quickstart": {
+    "message": "Quickstart",
+    "description": "The label for category Quickstart in sidebar docs"
   }
 }

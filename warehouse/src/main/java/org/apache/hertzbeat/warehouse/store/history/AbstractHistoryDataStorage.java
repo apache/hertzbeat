@@ -17,18 +17,14 @@
 
 package org.apache.hertzbeat.warehouse.store.history;
 
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.dto.Value;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.springframework.beans.factory.DisposableBean;
 
 /**
  * data storage abstract class
  */
 @Slf4j
-public abstract class AbstractHistoryDataStorage implements DisposableBean {
+public abstract class AbstractHistoryDataStorage implements HistoryDataReader, HistoryDataWriter {
+
     protected boolean serverAvailable;
 
     /**
@@ -37,37 +33,4 @@ public abstract class AbstractHistoryDataStorage implements DisposableBean {
     public boolean isServerAvailable() {
         return serverAvailable;
     }
-
-    /**
-     * save metrics data
-     * @param metricsData metrics data
-     */
-    public abstract void saveData(CollectRep.MetricsData metricsData);
-
-    /**
-     * query history range metrics data from tsdb
-     * @param monitorId monitor id
-     * @param app monitor type
-     * @param metrics metrics
-     * @param metric metric
-     * @param label label
-     * @param history range
-     * @return metrics data
-     */
-    public abstract Map<String, List<Value>> getHistoryMetricData(
-            Long monitorId, String app, String metrics, String metric, String label, String history);
-
-    /**
-     * query history range interval metrics data from tsdb
-     * max min mean metrics value
-     * @param monitorId monitor id
-     * @param app monitor type
-     * @param metrics metrics
-     * @param metric metric
-     * @param label label
-     * @param history history range
-     * @return metrics data
-     */
-    public abstract Map<String, List<Value>> getHistoryIntervalMetricData(
-            Long monitorId, String app, String metrics, String metric, String label, String history);
 }

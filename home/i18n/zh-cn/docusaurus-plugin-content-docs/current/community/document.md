@@ -93,8 +93,3 @@ css 和其他样式文件放在 `src/css` 目录中。
 ### 页面内容修改
 
 > 所有页面文档都可以通过底部的'编辑此页面'按钮直接跳转到相应的 github 资源修改页面。
-
-### 页面样式修改
-
-访问页面 https://hertzbeat.apache.org/
-位于 `src/pages/components`

@@ -24,7 +24,7 @@ import java.util.Map;
 import javax.sql.DataSource;
 import org.eclipse.persistence.config.PersistenceUnitProperties;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaBaseConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
 import org.springframework.context.annotation.Configuration;
@@ -36,7 +36,7 @@ import org.springframework.transaction.jta.JtaTransactionManager;
  * jpa eclipselink impl config
  */
 @Configuration
-@EnableAutoConfiguration
+@ConditionalOnProperty(prefix = "spring.datasource", name = "url")
 public class EclipseLinkJpaConfiguration extends JpaBaseConfiguration {
 
     protected EclipseLinkJpaConfiguration(DataSource dataSource, JpaProperties properties, 

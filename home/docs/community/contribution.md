@@ -1,8 +1,25 @@
 ---
-id: contributing  
-title: Contributing Guide    
-sidebar_label: Contributing Guide    
+id: 'contribution'
+title: 'Contributor Guide'
+sidebar_position: 0
 ---
+
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+       https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+-->
 
 > We are committed to maintaining a happy community that helps each other, welcome every contributor to join us!
 
@@ -30,24 +47,35 @@ Even small corrections to typos are very welcome :)
 
 ### Getting HertzBeat up and running
 
-> To get HertzBeat code running on your development tools, and able to debug with breakpoints.
-> This is a front-end and back-end separation project. To start the local code, the back-end [manager](https://github.com/apache/hertzbeat/tree/master/manager) and the front-end [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) must be started separately.
+> To get HertzBeat code running on your development tools, and able to debug with breakpoints.   
+> This is a front-end and back-end separation project. To start the local code, the back-end manager and the front-end web-app must be started separately.
 
 
-- Backend start
+#### Backend start
 
 1. Requires `maven3+`, `java17` and `lombok` environments
-2. (Optional) Modify the configuration file-`manager/src/main/resources/application.yml`
-3. Start `springboot manager` service `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
 
-- Front-web start
+2. (Optional) Modify the configuration file: `manager/src/main/resources/application.yml`
 
-1. Need `nodejs npm angular-cli` environment
-2. Install yarn: `npm install -g yarn`
-3. Execute under the front-end project directory web-app: `yarn install`
-4. Install angular-cli globally: `npm install -g @angular/cli@14 --registry=https://registry.npm.taobao.org`
-5. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
-6. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
+3. Execute under the project root directory: `mvn clean install -DskipTests`
+
+4. Start `springboot manager` service: `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
+
+#### Frontend start
+
+1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
+
+2. Cd to the `web-app` directory: `cd web-app`
+
+3. Install yarn if not existed `npm install -g yarn`
+
+4. Install Dependencies: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
+
+5. Install angular-cli globally: `yarn global add @angular/cli@15` or `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`
+
+6. After the local backend is started, start the local frontend in the web-app directory: `ng serve --open`
+
+7. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
 ### Find tasks
 
@@ -68,7 +96,7 @@ git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended
 ```shell
 git checkout -b a-feature-branch #Recommended  
 ```
-5. Submit the coed as a commit, the commit message format specification required: [module name or type name] feature or bugfix or doc: custom message.
+5. Submit the coed as a commit, the commit message format specification required: [module name or type name]feature or bugfix or doc: custom message.
 ```shell
 git add <modified file/path> 
 git commit -m '[docs]feature: necessary instructions' #Recommended 
@@ -117,7 +145,7 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 ### Join Discussion
 
-[Github Discussion](https://github.com/apache/hertzbeat/discussions)
+[Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
 Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
@@ -134,4 +162,4 @@ Add WeChat account `tan-cloud` to pull you into the WeChat group.
 - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)   
+![hertzBeat](/img/docs/hertzbeat-arch.png)

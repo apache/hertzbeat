@@ -194,7 +194,7 @@ yarn package
 > 在项目根目录下执行以下命令
 
 ```shell
-mvn clean package
+mvn clean install
 ```
 
 > HertzBeat-Collector 编译打包，在项目`collector`目录下执行以下命令
@@ -203,7 +203,11 @@ mvn clean package
 mvn clean package -Pcluster
 ```
 
-生成的二进制包在 `manager/target/hertzbeat-{version}.tar.gz`，`collector/target/hertzbeat-collector-{version}.tar.gz`，`collector/target/hertzbeat-collector-{version}-bin.tar.gz`。
+生成的二进制包在:
+
+- `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
+- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
+- `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
 #### 3.4 打包项目源代码
 
@@ -212,24 +216,29 @@ mvn clean package -Pcluster
 ```shell
 git archive \
 --format=tar.gz \
---output="target/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
+--output="dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
 --prefix=apache-hertzbeat-1.6.0-incubating-src/ \
 release-1.6.0-rc1
 ```
 
-生成的代码归档文件在 `target/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
+生成的代码归档文件在 `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
 
 #### 3.5 对二进制和源码包进行签名
 
-将上步骤生成的三个文件包放到`dist`目录下(若无则新建目录)，然后对文件包进行签名和SHA512校验和生成。
+将上步骤生成的三个文件包放到`dist`目录下(若无则新建目录)，然后对文件包进行签名和SHA512校验和生成。   
+
+> 其中 `gpg -u 33545C76` 的 `33545C76` 是你的 GPG 密钥 ID，可以通过 `gpg --keyid-format SHORT --list-keys` 查看。   
+
 ```shell
 cd dist
 
 # sign
-for i in *.tar.gz; do echo $i; gpg --armor --output $i.asc --detach-sig $i ; done
+for i in *.tar.gz; do echo $i; gpg -u 33545C76 --armor --output $i.asc --detach-sig $i ; done
 
 # SHA512
 for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
+
+# if macos sha512sum not found, you can install by brew install coreutils
 ```
 
 > 最终文件列表如下
@@ -238,12 +247,15 @@ for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
 apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz.asc
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz.asc
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.asc
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.sha512
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512
 ```
 
 #### 3.6 验证签名
@@ -257,25 +269,27 @@ $ for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 apache-hertzbeat-1.6.0-incubating-src.tar.gz
 gpg: Signature made Tue May  2 12:16:35 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
+gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:36 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
+gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:37 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: BAD signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
+gpg: BAD signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
 
 # 验证 SHA512
 $ for i in *.tar.gz; do echo $i; sha512sum --check $i.sha512; done
 
 apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat_2.11-1.6.0-incubating-bin.tar.gz: OK
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-1.6.0-incubating-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz: OK
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 ```
 
 #### 3.7 发布 Apache SVN 仓库中 dev 目录的物料包
@@ -374,7 +388,7 @@ Steps to validate the release，Please refer to:
 https://hertzbeat.apache.org/community/release/how-to-verify
 
 How to Build:
-https://hertzbeat.apache.org/docs/community/how_to_release/#34-compile-the-binary-package
+https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
 
 Thanks!
 ```
@@ -465,12 +479,7 @@ Steps to validate the release， Please refer to:
 
 
 How to Build:
-
-1) clone source code:
-> git clone -b v1.6.0-rc1 git@github.com:apache/hertzbeat.git
-
-2) build project:
-https://hertzbeat.apache.org/docs/community/how_to_release/#34-compile-the-binary-package
+https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
 
 
 Thanks,

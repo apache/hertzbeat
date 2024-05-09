@@ -150,5 +150,13 @@
   "item.label.download": {
     "message": "下载",
     "description": "Navbar item with label download"
+  },
+  "item.label.contribution": {
+    "message": "贡献指南",
+    "description": "Navbar item with label contribution"
+  },
+  "item.label.development": {
+    "message": "运行编译",
+    "description": "Navbar item with label development"
   }
 }

@@ -133,7 +133,7 @@ metrics:
       - end_timestamp
       - days_remaining
     calculates:
-      - days_remaining=math.floor((end_timestamp-now())/86400000) #下取整
+      - days_remaining=(end_timestamp-now())/86400000 
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssl_cert
     http:
