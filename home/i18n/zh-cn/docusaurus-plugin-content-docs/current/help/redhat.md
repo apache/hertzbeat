@@ -1,12 +1,11 @@
 ---
-id: freebsd
-title: 监控：FreeBSD操作系统监控
-sidebar_label: FreeBSD操作系统
-keywords: [ 开源监控系统, 开源操作系统监控, FreeBSD操作系统监控 ]
+id: redhat
+title: 监控：RedHat操作系统监控
+sidebar_label: RedHat操作系统
+keywords: [ 开源监控系统, 开源操作系统监控, RedHat操作系统监控 ]
 ---
 
-> 对FreeBSD操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。
-
+> 对RedHat操作系统的通用性能指标 (系统信息、CPU、内存、磁盘、网卡、文件系统、TOP资源进程等) 进行采集监控。
 
 ### 配置参数
 
@@ -40,20 +39,40 @@ keywords: [ 开源监控系统, 开源操作系统监控, FreeBSD操作系统监
 | 指标名称           | 指标单位 | 指标帮助描述             |
 |----------------|------|--------------------|
 | info           | 无    | CPU型号              |
-| cores          | 核数   | CPU内核数量            |
-| interrupt      | 个数   | CPU中断数量            |
+| cores          | 无    | CPU内核数量            |
+| interrupt      | 无    | CPU中断数量            |
 | load           | 无    | CPU最近1/5/15分钟的平均负载 |
-| context_switch | 个数   | 当前上下文切换数量          |
+| context_switch | 无    | 当前上下文切换数量          |
 | usage          | %    | CPU使用率             |
 
 #### 指标集合：内存信息
 
-| 指标名称     | 指标单位 | 指标帮助描述  |
-|----------|------|---------|
-| physmem  | Mb   | 物理内存    |
-| usermem  | Mb   | 用户程序内存量 |
-| realmem  | Mb   | 实际内存    |
-| availmem | Mb   | 可用内存    |
+| 指标名称       | 指标单位 | 指标帮助描述   |
+|------------|------|----------|
+| total      | Mb   | 总内存容量    |
+| used       | Mb   | 用户程序内存量  |
+| free       | Mb   | 空闲内存容量   |
+| buff_cache | Mb   | 缓存占用内存   |
+| available  | Mb   | 剩余可用内存容量 |
+| usage      | %    | 内存使用率    |
+
+#### 指标集合：磁盘信息
+
+| 指标名称          | 指标单位 | 指标帮助描述    |
+|---------------|------|-----------|
+| disk_num      | 无    | 磁盘总数      |
+| partition_num | 无    | 分区总数      |
+| block_write   | 无    | 写入磁盘的总块数  |
+| block_read    | 无    | 从磁盘读出的块数  |
+| write_rate    | iops | 每秒写磁盘块的速率 |
+
+#### 指标集合：网卡信息
+
+| 指标名称           | 指标单位 | 指标帮助描述 |
+|----------------|------|--------|
+| interface_name | 无    | 网卡名称   |
+| receive_bytes  | Mb   | 入站数据流量 |
+| transmit_bytes | Mb   | 出站数据流量 |
 
 #### 指标集合：文件系统
 
@@ -86,4 +105,3 @@ keywords: [ 开源监控系统, 开源操作系统监控, FreeBSD操作系统监
 | mem_usage | %    | 内存占用率  |
 | cpu_usage | %    | CPU占用率 |
 | command   | 无    | 执行命令   |
-

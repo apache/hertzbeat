@@ -203,7 +203,9 @@
             "help/centos",
             "help/almalinux",
             "help/opensuse",
-            "help/freebsd"
+            "help/freebsd",
+            "help/redhat",
+            "help/rockylinux"
           ]
         },
         {

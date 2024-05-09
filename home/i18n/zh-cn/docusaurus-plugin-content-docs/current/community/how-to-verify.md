@@ -10,7 +10,7 @@ sidebar_position: 4
 ## 1. 下载候选版本到本地
 
 
->需要依赖gpg工具，如果没有，建议安装gpg2
+> 需要依赖gpg工具，如果没有，建议安装gpg2
 
 ```shell
 #如果本地有svn，可以clone到本地 
@@ -26,7 +26,6 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 > 开始验证环节，验证包含但不局限于以下内容和形式
 
 
-
 ### 2.1 查看发布包是否完整
 
 > 上传到dist的包必须包含源码包，二进制包可选
@@ -35,7 +34,6 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 2. 是否包含源码包的签名
 3. 是否包含源码包的sha512
 4. 如果上传了二进制包，则同样检查(2)-(4)所列的内容
-
 
 
 ### 2.2 检查gpg签名
@@ -103,14 +101,10 @@ for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
 
 ### 2.4 检查二进制包
 
-解压缩  `apache-hertzbeat_${scala.version}-${release.version}-incubating-bin.tar.gz`
+解压缩  `apache-hertzbeat-${release.version}-incubating-bin.tar.gz`
 
 ```shell
-# scala 2.11 二进制发行包
-tar -xzvf apache-hertzbeat_2.11-${release.version}-incubating-bin.tar.gz
-
-# scala 2.12 二进制发行包
-tar -xzvf apache-hertzbeat_2.12-${release.version}-incubating-bin.tar.gz
+tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 ```
 
 进行如下检查：
@@ -126,7 +120,8 @@ tar -xzvf apache-hertzbeat_2.12-${release.version}-incubating-bin.tar.gz
 - [ ] 如果依赖的是Apache许可证并且存在`NOTICE`文件，那么这些`NOTICE`文件也需要加入到版本的`NOTICE`文件中
 - [ ] .....
 
-详细的检查项，可以参考此文章：[ASF第三方许可证策](
+参考: https://apache.org/legal/resolved.html
+
 
 ### 2.5. 源码编译验证
 
@@ -134,32 +129,11 @@ tar -xzvf apache-hertzbeat_2.12-${release.version}-incubating-bin.tar.gz
 
 ```shell
 cd apache-hertzbeat-${release_version}-incubating-src
-
-# 执行编译脚本, 选择
-./build.sh
 ```
 
+编译源码: https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package 
+
 进行如下检查:
-
-***选择编译模式, 这里只能选择1***
-
->[HertzBeat] HertzBeat supports front-end and server-side mixed / detached packaging mode, Which mode do you need ?
->
->1. mixed mode
->
->2. detached mode
->
->  选 1
-
-***选择 scala 版本, 第一次编译 scala 2.11版本选择 1, 第二次编译 scala 2.12版本选择 2***
-
->[HertzBeat] HertzBeat supports Scala 2.11 and 2.12. Which version do you need ?
->
->1. 2.11
->2. 2.12
->
-
-一次编译大概8分钟左右,编译完成之后会在项目根路径下生成 ***dist*** 目录,会将最终的编译的项目二进制放在这里,  做如下检查:
 
 - [ ] 检查源码包是否包含由于包含不必要文件，致使tar包过于庞大
 - [ ] 文件夹包含单词`incubating`
@@ -172,22 +146,20 @@ cd apache-hertzbeat-${release_version}-incubating-src
 - [ ] 检查是否有多余文件或文件夹，例如空文件夹等
 - [ ] .....
 
-https://apache.org/legal/resolved.html)
-
+参考: https://apache.org/legal/resolved.html
 
 
 ## 3. 邮件回复
 
 如果发起了发布投票，验证后，可以参照此回复示例进行邮件回复
 
-<font color="red">
+:::caution 注意
 回复的邮件一定要带上自己检查了那些项信息，仅仅回复`+1 approve`，是无效的。
 
-PPMC在dev@hertzbeat.apache.org HertzBeat 的社区投票时，请带上 binding后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
+PPMC 在 dev@hertzbeat.apache.org HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
 
-IPMC在general@incubator.apache.org incubator社区投票，请带上 binding后缀，表示对incubator社区中的投票具有约束性投票，方便统计投票结果。
-
-</font>
+IPMC 在 general@incubator.apache.org incubator 社区投票，请带上 binding 后缀，表示对 incubator 社区中的投票具有约束性投票，方便统计投票结果。
+:::
 
 :::caution 注意
 如果在dev@hertzbeat.apache.org已经投过票，在incubator社区进行投票回复时，可以直接带过去,<font color="red">需要注意约束性</font>  如:
@@ -225,10 +197,6 @@ I  checked:
 ```
 
 
-## 4. 注意事项
-<font color="red">
-如果你有安装maven工具，你可以使用自己的mvn命令替换 ./mvnw或者mvnw.cmd
-mvnw是Maven Wrapper的缩写。它可以支持运行 Maven 项目，而无需安装 Maven 并配置环境变量。如果找不到它，它会根据配置文件，下载对应的 Maven 版本
-</font>
+--- 
 
 This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
