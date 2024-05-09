@@ -29,7 +29,6 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <formats>
         <format>tar</format>
         <format>tar.gz</format>
-        <format>zip</format>
     </formats>
     <!--Third-party dependency settings-->
     <dependencySets>
