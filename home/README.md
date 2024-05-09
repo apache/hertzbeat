@@ -1,7 +1,6 @@
 # HertzBeat Website
 
-This website is built using [Docusaurus 2](https://docusaurus.io/).    
-Learn From [webdriverio](https://webdriver.io/)                
+This website is built with [Docusaurus](https://docusaurus.io/).     
 
 ## Installation
 
@@ -48,4 +47,35 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
 
 ```console
 GITHUB_HOST=gitee.com USE_SSH=true yarn deploy  
+```
+
+
+## Directory Structure
+
+```html
+|-- docs
+|-- blog   
+|-- i18n
+|   `-- zh-CN  // internationalized chinese
+|       |-- code.json
+|       |-- docusaurus-plugin-content-blog
+|       |-- docusaurus-plugin-content-docs
+|       `-- docusaurus-theme-classic
+|-- resource  // static resource file
+|-- src
+|   |-- theme
+|   |-- css
+|   |-- js
+|   |-- pages
+|   |   |-- components
+|   |   |-- index.js
+|   |-- constants.js
+|-- static // picture static resource
+|   |-- img  //
+|   |   |-- blog // blog picture
+|   |   |-- docs // document picture
+|   |   |-- home // product picture
+|   |   |-- icons // icon
+|-- docusaurus.config.js
+|-- sidebars.js // document sidebar menu configuration
 ```
