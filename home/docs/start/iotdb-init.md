@@ -9,7 +9,9 @@ Apache HertzBeat (incubating)'s historical data storage relies on the time serie
 
 Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring metrics collected. Support V0.13+ version and V1.0.+ version.
 
-**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance****⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
+**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**
+
+**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
 > If you already have an IoTDB environment, you can skip directly to the YML configuration step.
 
