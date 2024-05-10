@@ -24,6 +24,7 @@ import com.usthe.sureness.provider.SurenessAccountProvider;
 import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
+import dm.jdbc.util.StringUtil;
 import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
@@ -66,11 +68,14 @@ public class AccountController {
     @PostMapping("/form")
     @Operation(summary = "Account password login to obtain associated user information", description = "Account password login to obtain associated user information")
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
-        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
+        if (StringUtils.isBlank(loginDto.getIdentifier()) || StringUtils.isBlank(loginDto.getCredential())) {
+            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, " identifier or credential is null"));
+        }
+        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier().trim());
         if (account == null || account.getPassword() == null) {
             return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Incorrect Account or Password"));
         } else {
-            String password = loginDto.getCredential();
+            String password = loginDto.getCredential().trim();
             if (account.getSalt() != null) {
                 password = Md5Util.md5(password + account.getSalt());
             }
