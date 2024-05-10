@@ -27,6 +27,7 @@ import org.apache.commons.jexl3.JexlContext;
 import org.apache.commons.jexl3.JexlEngine;
 import org.apache.commons.jexl3.JexlException;
 import org.apache.commons.jexl3.JexlExpression;
+import org.apache.commons.jexl3.JexlFeatures;
 import org.apache.commons.jexl3.MapContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,10 +42,19 @@ public class JexlTest {
     
     @BeforeEach
     void setUp() {
-        jexlBuilder = new JexlBuilder().charset(StandardCharsets.UTF_8).cache(256)
-                .strict(true).silent(false);
+        ClassLoader classLoader = new ClassLoader() {
+            @Override
+            public String getName() {
+                return "jexl-class-loader";
+            }
+        };
+        JexlFeatures features = new JexlFeatures();
+        features.annotation(false).loops(false).pragma(false)
+                .methodCall(false).lambda(false).newInstance(false).register(false);
+        jexlBuilder = new JexlBuilder().charset(StandardCharsets.UTF_8).cache(256).loader(classLoader)
+                .features(features).strict(true).silent(false).stackOverflow(40);
+
     }
-    
     
     @Test
     void testMultiExpression() {
@@ -534,6 +544,21 @@ public class JexlTest {
     }
     
     @Test
+    void testAddString() {
+        JexlEngine jexl = jexlBuilder.create();
+        JexlContext context = new MapContext();
+        context.set("x", "Ubuntu");
+        JexlExpression e = jexl.createExpression("x + \"-00000\"");
+        Object o = e.evaluate(context);
+        String result = (String) o;
+        e = jexl.createExpression("x + '-00000'");
+        Assertions.assertEquals("Ubuntu-00000", result);
+        o = e.evaluate(context);
+        result = (String) o;
+        Assertions.assertEquals("Ubuntu-00000", result);
+    }
+    
+    @Test
     void testUnconventionalMapping() {
         // database_pages=Database pages
         // name=User Commits Per Sec
@@ -552,6 +577,19 @@ public class JexlTest {
     void testRecException() {
         JexlEngine jexl = jexlBuilder.create();
         Assertions.assertThrows(JexlException.class, () -> jexl.createExpression("new java.util.Date()"));
+    }
+
+    @Test
+    void testNewObjectException() {
+        JexlEngine jexl = jexlBuilder.create();
+        Assertions.assertThrows(JexlException.class, () -> jexl.createExpression("new java.lang.StringBuilder()"));
+    }
+
+    @Test
+    void testMethodCallException() {
+        JexlEngine jexl = jexlBuilder.create();
+        Assertions.assertThrows(JexlException.class, () -> jexl.createExpression("'string'.length()"));
+        Assertions.assertThrows(JexlException.class, () -> jexl.createExpression("System.currentTimeMillis()"));
     }
     
     /**
