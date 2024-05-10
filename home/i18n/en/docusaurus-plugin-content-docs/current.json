@@ -108,7 +108,15 @@
     "description": "The label for category Community in sidebar docs"
   },
   "sidebar.docs.category.network": {
-    "message": "Network",
+    "message": "Network Monitor",
     "description": "The label for category network in sidebar docs"
+  },
+  "sidebar.docs.category.NGQL": {
+    "message": "NGQL",
+    "description": "The label for category NGQL in sidebar docs"
+  },
+  "sidebar.docs.category.llm": {
+    "message": "Ai LLM Monitor",
+    "description": "The label for category llm in sidebar docs"
   }
 }
