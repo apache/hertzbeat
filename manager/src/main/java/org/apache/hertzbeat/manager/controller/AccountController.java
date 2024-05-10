@@ -68,14 +68,11 @@ public class AccountController {
     @PostMapping("/form")
     @Operation(summary = "Account password login to obtain associated user information", description = "Account password login to obtain associated user information")
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
-        if (StringUtils.isBlank(loginDto.getIdentifier()) || StringUtils.isBlank(loginDto.getCredential())) {
-            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, " identifier or credential is null"));
-        }
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier().trim());
         if (account == null || account.getPassword() == null) {
             return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Incorrect Account or Password"));
         } else {
-            String password = loginDto.getCredential().trim();
+            String password = loginDto.getCredential();
             if (account.getSalt() != null) {
                 password = Md5Util.md5(password + account.getSalt());
             }
