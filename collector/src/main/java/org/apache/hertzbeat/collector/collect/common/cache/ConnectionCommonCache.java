@@ -219,6 +219,9 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
         timeoutMap.remove(key);
         C value = cacheMap.remove(key);
         try {
+            if (value == null) {
+                return;
+            }
             value.close();
         } catch (Exception e) {
             log.error("connection close error: {}.", e.getMessage(), e);
