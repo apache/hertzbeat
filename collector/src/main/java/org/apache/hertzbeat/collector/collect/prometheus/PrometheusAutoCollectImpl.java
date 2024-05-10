@@ -82,6 +82,7 @@ public class PrometheusAutoCollectImpl {
     
     public List<CollectRep.MetricsData> collect(CollectRep.MetricsData.Builder builder,
                                                 Metrics metrics) {
+        // TODO: 2024/5/10
         try {
             validateParams(metrics);
         } catch (Exception e) {

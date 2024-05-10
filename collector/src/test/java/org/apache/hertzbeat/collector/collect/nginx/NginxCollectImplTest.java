@@ -298,10 +298,11 @@ public class NginxCollectImplTest {
 
     @Test
     public void testNginxStatusMatch() {
-        String status = "Active connections: 2\n" +
-                "server accepts handled requests\n" +
-                "4 4 2\n" +
-                "Reading: 0 Writing: 1 Waiting: 1";
+        String status = """
+                Active connections: 2
+                server accepts handled requests
+                4 4 2
+                Reading: 0 Writing: 1 Waiting: 1""";
 
         // 使用正则表达式匹配并提取所需的键和对应的值
         Pattern keyValuePattern = Pattern.compile("(\\w+): (\\d+)");

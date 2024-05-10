@@ -84,6 +84,11 @@ public class SnmpCollectImpl extends AbstractCollect {
 
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         try {

@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.collector.collect.nebulagraph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
