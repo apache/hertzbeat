@@ -22,7 +22,9 @@
       "webserver": "Webserver Monitor",
       "cache": "Cache Monitor",
       "bigdata": "Bigdata Monitor",
-      "promql": "Data Query"
+      "promql": "Data Query",
+      "llm": "Ai LLM",
+      "server": "Server Monitor"
     },
     "account": {
       "": "Personal",

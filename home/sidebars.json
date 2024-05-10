@@ -142,7 +142,6 @@
           "items": [
             "help/website",
             "help/api",
-            "help/openai",
             "help/ping",
             "help/port",
             "help/udp_port",
@@ -259,6 +258,13 @@
           "items": [
             "help/docker",
             "help/kubernetes"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "llm",
+          "items": [
+            "help/openai"
           ]
         },
         {
