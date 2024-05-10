@@ -50,7 +50,7 @@
     "@angular/router": "17.3.7",
     "@delon/abc": "15.2.1",
     "@delon/acl": "15.2.1",
-    "@delon/auth": "15.2.1",
+    "@delon/auth": "17.3.1",
     "@delon/cache": "17.3.1",
     "@delon/form": "17.3.1",
     "@delon/mock": "17.3.1",
