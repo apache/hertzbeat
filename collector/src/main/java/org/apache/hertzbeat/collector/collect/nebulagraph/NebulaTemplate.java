@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -42,27 +41,9 @@ import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 @Slf4j
 public class NebulaTemplate {
 
-    private final String userName;
-    private final String password;
-    private final HostAddress hostAddress;
-    private final String spaceName;
+    private String spaceName;
     private Session session;
     NebulaPool pool;
-    @Getter
-    private boolean initSuccess;
-
-    private final Integer timeout;
-
-    public NebulaTemplate(NgqlProtocol protocol) {
-        this.userName = protocol.getUsername();
-        this.password = protocol.getPassword();
-        this.hostAddress = new HostAddress(protocol.getHost(), Integer.parseInt(protocol.getPort()));
-        this.spaceName = protocol.getSpaceName();
-        this.timeout = Integer.valueOf(protocol.getTimeout());
-        initSession();
-
-    }
-
 
     public void closeSessionAndPool() {
         if (session != null && session.ping()) {
@@ -74,22 +55,22 @@ public class NebulaTemplate {
     }
 
     @SneakyThrows
-    private void initSession() {
+    public boolean initSession(NgqlProtocol protocol) {
+        HostAddress hostAddress = new HostAddress(protocol.getHost(), Integer.parseInt(protocol.getPort()));
+        this.spaceName = protocol.getSpaceName();
         pool = new NebulaPool();
-        try {
-            NebulaPoolConfig nebulaPoolConfig = new NebulaPoolConfig();
-            nebulaPoolConfig.setMaxConnSize(100);
-            nebulaPoolConfig.setTimeout(timeout);
-            boolean initResult = pool
-                .init(Collections.singletonList(hostAddress), nebulaPoolConfig);
-            initSuccess = initResult;
-            if (!initResult) {
-                log.error("pool init failed.");
-            }
-            session = pool.getSession(userName, password, false);
-        } catch (Exception e) {
-            log.error("初始化失败");
+
+        NebulaPoolConfig nebulaPoolConfig = new NebulaPoolConfig();
+        nebulaPoolConfig.setMaxConnSize(100);
+        nebulaPoolConfig.setTimeout(Integer.parseInt(protocol.getTimeout()));
+        boolean initResult = pool
+            .init(Collections.singletonList(hostAddress), nebulaPoolConfig);
+        if (!initResult) {
+            log.error("pool init failed.");
+            return false;
         }
+        session = pool.getSession(protocol.getUsername(), protocol.getPassword(), false);
+        return true;
     }
 
     private ResultSet execute(String ngql) {
