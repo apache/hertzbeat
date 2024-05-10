@@ -51,7 +51,7 @@
     "@delon/abc": "15.2.1",
     "@delon/acl": "15.2.1",
     "@delon/auth": "15.2.1",
-    "@delon/cache": "15.2.1",
+    "@delon/cache": "17.3.1",
     "@delon/form": "15.2.1",
     "@delon/mock": "17.3.1",
     "@delon/theme": "15.2.1",
