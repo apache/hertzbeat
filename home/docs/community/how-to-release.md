@@ -194,7 +194,7 @@ yarn package
 > run script in root
 
 ```shell
-mvn clean install
+mvn clean package -Prelease
 ```
 
 > Build HertzBeat collector binary, run script in `collector`

@@ -57,7 +57,7 @@ sidebar_label: 运行编译
 
 1. Requires `maven3+`, `java17` environments
 
-2. Execute under the project root directory: `mvn clean package`
+2. Execute under the project root directory: `mvn clean package -Prelease`
 
 The HertzBeat install package will at `dist/hertzbeat-{version}.tar.gz`
 
