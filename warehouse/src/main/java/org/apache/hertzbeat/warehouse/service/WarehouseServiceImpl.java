@@ -22,7 +22,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
-import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.springframework.stereotype.Service;
 
 /**
@@ -32,26 +31,16 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class WarehouseServiceImpl implements WarehouseService {
 
-    private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
+    private final AbstractRealTimeDataStorage realTimeDataStorage;
 
-    public WarehouseServiceImpl(List<AbstractRealTimeDataStorage> realTimeDataStorages) {
-        this.realTimeDataStorages = realTimeDataStorages;
+    public WarehouseServiceImpl(AbstractRealTimeDataStorage realTimeDataStorage) {
+        this.realTimeDataStorage = realTimeDataStorage;
     }
 
     @Override
     public List<CollectRep.MetricsData> queryMonitorMetricsData(Long monitorId) {
-        AbstractRealTimeDataStorage realTimeDataStorage = realTimeDataStorages.stream()
-                .filter(AbstractRealTimeDataStorage::isServerAvailable)
-                .max((o1, o2) -> {
-                    if (o1 instanceof MemoryDataStorage) {
-                        return -1;
-                    } else if (o2 instanceof MemoryDataStorage) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }).orElse(null);
-        if (realTimeDataStorage == null) {
+        boolean available = realTimeDataStorage.isServerAvailable();
+        if (!available) {
             log.error("real time store not available");
             return Collections.emptyList();
         }

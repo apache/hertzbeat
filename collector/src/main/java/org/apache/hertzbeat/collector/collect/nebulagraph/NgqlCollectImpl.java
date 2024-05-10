@@ -63,11 +63,20 @@ public class NgqlCollectImpl extends AbstractCollect {
         NgqlProtocol ngql = metrics.getNgql();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        NebulaTemplate nebulaTemplate = new NebulaTemplate(metrics.getNgql());
-        if (!nebulaTemplate.isInitSuccess()) {
+        NebulaTemplate nebulaTemplate = new NebulaTemplate();
+        try {
+            boolean initSuccess = nebulaTemplate.initSession(ngql);
+            if (!initSuccess) {
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("Failed to connect Nebula Graph");
+                return;
+            }
+        } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Failed to connect Nebula Graph");
+            builder.setMsg(e.getMessage());
+            return;
         }
+
         stopWatch.stop();
         long responseTime = stopWatch.getTotalTimeMillis();
         try {
@@ -76,7 +85,8 @@ public class NgqlCollectImpl extends AbstractCollect {
                 case PARSE_TYPE_ONE_ROW -> queryOneRow(nebulaTemplate, ngql, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> queryMultiRow(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_COLUMNS -> queryColumns(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
-                default -> {}
+                default -> {
+                }
             }
         } finally {
             nebulaTemplate.closeSessionAndPool();

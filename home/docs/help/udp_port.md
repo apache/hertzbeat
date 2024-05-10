@@ -1,6 +1,6 @@
 ---
 id: udp_port  
-title: Monitoring：UDP port availability      
+title: Monitoring UDP port availability      
 sidebar_label: UDP Port availability    
 keywords: [open source monitoring tool, open source port monitoring tool, monitoring UDP port metrics]
 ---

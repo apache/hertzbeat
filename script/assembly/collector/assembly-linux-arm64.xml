@@ -22,7 +22,9 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
 http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <!--Required, will be appended to the end of the packaged file name-->
-    <id>linux_arm64_1.5.0</id>
+    <id>incubating-bin-linux_arm64</id>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>apache-hertzbeat-collector-${hzb.version}-incubating</baseDirectory>
     <!--Packaging type, multiple types can be set, different types will be packaged when packaging-->
     <formats>
         <format>tar.gz</format>
@@ -83,6 +85,27 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>**/*</include>
             </includes>
             <outputDirectory>ext-lib</outputDirectory>
+        </fileSet>
+
+        <!-- doc -->
+        <fileSet>
+            <directory>../</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>DISCLAIMER</include>
+                <include>LICENSE</include>
+                <include>NOTICE</include>
+                <include>README.md</include>
+            </includes>
+        </fileSet>
+
+        <!-- license -->
+        <fileSet>
+            <directory>../material/licenses</directory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+            <outputDirectory>licenses</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

@@ -103,14 +103,10 @@ $ for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
 
 ### 2.4 Check the binary package
 
-unzip  `apache-hertzbeat_${scala.version}-${release.version}-incubating-bin.tar.gz`
+unzip  `apache-hertzbeat-${release.version}-incubating-bin.tar.gz`
 
 ```shell
-# scala 2.11 
-tar -xzvf apache-hertzbeat_2.11-${release.version}-incubating-bin.tar.gz
-
-# scala 2.12 
-tar -xzvf apache-hertzbeat_2.12-${release.version}-incubating-bin.tar.gz
+tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 ```
 
 check as follows:
@@ -136,30 +132,12 @@ Unzip `apache-hertzbeat-${release_version}-incubating-src.tar.gz`
 
 ```shell
 cd apache-hertzbeat-${release_version}-incubating-src
-
-# execute build.sh
-./build.sh
 ```
 
-***package mode, just select mixed mode ***
-
->[HertzBeat] HertzBeat supports front-end and server-side mixed / detached packaging mode, Which mode do you need ?
->
->1. mixed mode
->
->2. detached mode
->
->  select 1
-
->[HertzBeat] HertzBeat supports Scala 2.11 and 2.12. Which version do you need ?
->
->1. 2.11
->2. 2.12
->
-
-It takes about 8 minutes to compile once. After the compilation is completed, the ***dist*** directory will be generated under the project root path, and the final compiled project binary will be placed here, and the following checks will be made:
+compile the source code: [Build HertzBeat Binary Package](https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package)
 
 and check as follows:
+
 - [ ] There are `LICENSE` and `NOTICE` files
 - [ ] There is a `DISCLAIMER` or `DISCLAIMER-WIP` file
 - [ ] The year in the `NOTICE` file is correct
@@ -185,7 +163,6 @@ When IPMC votes in the general@incubator.apache.org incubator community. Please 
 </font>
 
 :::caution
-
 If you have already voted on dev@hertzbeat.apache.org, you can take it directly to the incubator community when you reply to the vote, such as:
 
 ```html
@@ -193,7 +170,6 @@ If you have already voted on dev@hertzbeat.apache.org, you can take it directly 
 Forward my +1 from dev@listhertzbeatnkis (non-binding)
 Copy my +1 from hertzbeat DEV ML (non-binding)
 ````
-
 :::
 
 
@@ -223,12 +199,7 @@ I checked:
 ````
 
 
-## 4. Precautions
 
-<font color="red">
-If you have maven tools installed, you can replace ./mvnw or mvnw.cmd with your own mvn command
-mvnw is short for Maven Wrapper. It can support running Maven projects without installing Maven and configuring environment variables. If it can't find it, it will download the corresponding Maven version according to the configuration file
-</font>
-
+--- 
 
 This doc refer from [Apache StreamPark](https://streampark.apache.org/)   

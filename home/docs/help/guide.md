@@ -47,6 +47,8 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[Ubuntu operating system monitoring](ubuntu) <br />
 &emsp;&#x1F449;&emsp;[Centos operating system monitoring](centos) <br />
 &emsp;&#x1F449;&emsp;[FreeBSD operating system monitoring](freebsd) <br />
+&emsp;&#x1F449;&emsp;[RedHat operating system monitoring](redhat) <br />
+&emsp;&#x1F449;&emsp;[Rocky Linux operating system monitoring](rockylinux) <br />
 
 ### Middleware monitoring
 
