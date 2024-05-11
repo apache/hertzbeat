@@ -68,7 +68,7 @@ public class AccountController {
     @PostMapping("/form")
     @Operation(summary = "Account password login to obtain associated user information", description = "Account password login to obtain associated user information")
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
-        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier().trim());
+        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
         if (account == null || account.getPassword() == null) {
             return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Incorrect Account or Password"));
         } else {

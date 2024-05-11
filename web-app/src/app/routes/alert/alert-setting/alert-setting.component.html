@@ -644,7 +644,7 @@
 <nz-modal
   [(nzVisible)]="isSwitchExportTypeModalVisible"
   [nzTitle]="'monitors.export.switch-type' | i18n"
-  (nzOnCancel)="handleCancel()"
+  (nzOnCancel)="onExportTypeModalCancel()"
   nzOkDisabled="true"
   [nzFooter]="switchExportTypeModalFooter"
 >
