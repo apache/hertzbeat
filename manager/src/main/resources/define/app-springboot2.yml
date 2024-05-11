@@ -128,7 +128,7 @@ metrics:
         type: 1
     # metric alias list, used to identify metrics in query results
     aliasFields:
-      - $.activeProfiles[0]
+      - $.activeProfiles
       - $.propertySources[?(@.name=='server.ports')].properties.*.value
       - $.propertySources[?(@.name=='systemProperties')].properties['os.name'].value
       - $.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value
@@ -136,12 +136,12 @@ metrics:
       - $.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value
     # A list of calculation scripts for metric values.
     calculates:
-      - profile=#`$.activeProfiles[0]`
-      - port=#`$.propertySources[?(@.name=='server.ports')].properties.*.value`
-      - os=#`$.propertySources[?(@.name=='systemProperties')].properties['os.name'].value`
-      - jdk_vendor=#`$.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value`
-      - jvm_version=#`$.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value`
-      - os_arch=#`$.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value`
+      - profile=$.activeProfiles
+      - port=$.propertySources[?(@.name=='server.ports')].properties.*.value
+      - os=$.propertySources[?(@.name=='systemProperties')].properties['os.name'].value
+      - jdk_vendor=$.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value
+      - jvm_version=$.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value
+      - os_arch=$.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # Specific collection configuration when protocol is http protocol
