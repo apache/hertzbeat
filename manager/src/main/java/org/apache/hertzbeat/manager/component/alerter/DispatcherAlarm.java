@@ -18,6 +18,9 @@
 package org.apache.hertzbeat.manager.component.alerter;
 
 import com.google.common.collect.Maps;
+
+import java.lang.reflect.Constructor;
+import java.net.URLClassLoader;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +30,11 @@ import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.util.UdfUtil;
 import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.IgnoreException;
+import org.apache.hertzbeat.udf.AfterAlertUdf;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
@@ -113,6 +118,37 @@ public class DispatcherAlarm implements InitializingBean {
                         alertStoreHandler.store(alert);
                         // Notice distribution
                         sendNotify(alert);
+                        //execute udf
+                        URLClassLoader classLoader = UdfUtil.getClassLoader("H:\\Java\\hertzbeat\\udf\\target\\");
+                        Thread.currentThread().setContextClassLoader(classLoader);
+                        List<String> mainClassNameFromJar = UdfUtil.getAllClassNamesFromJar("H:\\Java\\hertzbeat\\udf\\target\\hertzbeat-udf-2.0-SNAPSHOT.jar");
+                        if (mainClassNameFromJar != null) {
+                            for (String name : mainClassNameFromJar) {
+                                if (name == null || name.trim().isEmpty()) {
+                                    log.error("class name is null or empty");
+                                    continue;
+                                }
+                                AfterAlertUdf afterAlertUdf = null;
+                                if (classLoader != null) {
+                                    try {
+                                        Class<?> clazz = classLoader.loadClass(name);
+                                        Constructor<?> constructor = clazz.getDeclaredConstructor();
+                                        afterAlertUdf = (AfterAlertUdf) constructor.newInstance();
+                                    } catch (ClassNotFoundException e) {
+                                        log.error("class not found : {}", e.getLocalizedMessage());
+                                    } catch (InstantiationException | IllegalAccessException | NoSuchMethodException e) {
+                                        log.error("class newInstance error : {}", e.getLocalizedMessage());
+                                    }
+                                }
+                                if (afterAlertUdf != null) {
+                                    try {
+                                        afterAlertUdf.execute(alert);
+                                    } catch (Exception e) {
+                                        log.error("execute udf error : {}", e.getLocalizedMessage());
+                                    }
+                                }
+                            }
+                        }
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {
