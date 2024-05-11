@@ -58,9 +58,9 @@ sidebar_label: Development
 
 1. Requires `maven3+`, `java17` environments
 
-2. Execute under the project root directory: `mvn clean package`
+2. Execute under the project root directory: `mvn clean package -Prelease`
 
-The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`
+The HertzBeat install package will at `dist/hertzbeat-{version}.tar.gz`
 
 ### Collector build
 
@@ -72,4 +72,4 @@ The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz
 
 4. Execute under `collector` directory: `mvn clean package -Pcluster`
 
-The HertzBeat collector package will at `collector/target/hertzbeat-collector-{version}.tar.gz`
+The HertzBeat collector package will at `dist/hertzbeat-collector-{version}.tar.gz`

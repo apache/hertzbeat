@@ -134,7 +134,7 @@
       <td nzAlign="left">{{ data.content }}</td>
       <td nzAlign="left">
         <span *ngFor="let tag of data?.tmp; let i = index">
-          <a [routerLink]="['/monitors/' + tag.value]" *ngIf="tag.name == 'monitorId'">
+          <a [routerLink]="['/monitors/' + tag.tagValue]" *ngIf="tag.name == 'monitorId'">
             <nz-tag class="hoverClass" nzColor="magenta" style="margin-top: 2px">
               <span nz-icon nzType="area-chart"></span>
               {{ sliceTagName(tag) }}

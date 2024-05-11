@@ -1,7 +1,7 @@
 ---
 id: udp_port
 title: 监控：UDP 端口可用性监控      
-sidebar_label: UDP 端口可用性监控
+sidebar_label: UDP 端口可用性
 keywords: [开源监控系统, 开源网络监控, UDP 端口可用性监控]
 ---
 

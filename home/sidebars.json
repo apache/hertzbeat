@@ -202,7 +202,10 @@
             "help/debian",
             "help/centos",
             "help/almalinux",
-            "help/opensuse"
+            "help/opensuse",
+            "help/freebsd",
+            "help/redhat",
+            "help/rockylinux"
           ]
         },
         {
@@ -228,6 +231,7 @@
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
+            "help/yarn",
             "help/hbase_master",
             "help/hbase_regionserver",
             "help/hdfs_namenode",
@@ -254,6 +258,13 @@
           "items": [
             "help/docker",
             "help/kubernetes"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "llm",
+          "items": [
+            "help/openai"
           ]
         },
         {
