@@ -262,6 +262,13 @@
         },
         {
           "type": "category",
+          "label": "llm",
+          "items": [
+            "help/openai"
+          ]
+        },
+        {
+          "type": "category",
           "label": "network",
           "items": [
             "help/huawei_switch"

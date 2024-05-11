@@ -20,9 +20,9 @@ cd `dirname $0`
 # current dir
 CURRENT_DIR=`pwd`
 # cd dist dir
-cd ../../../manager/target
+cd ../../../dist
 # auto detect hertzbeat version
-VERSION=`ls *.tar| awk -F"-" '{print $2}' | awk -F".tar" '{print $1}'`
+VERSION=`ls apache-hertzbeat-*-incubating-docker-compose.tar.gz| awk -F"-" '{print $3}'`
 # use the version param
 if [ -n "$1" ]; then
     VERSION="$1";
