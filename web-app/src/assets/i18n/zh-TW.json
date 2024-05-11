@@ -22,7 +22,9 @@
       "webserver": "Web伺服器監控",
       "cache": "快取監控",
       "bigdata": "大數據監控",
-      "promql": "数据查询"
+      "promql": "数据查询",
+      "llm": "Ai大模型",
+      "server": "服務器監控"
     },
     "account": {
       "": "個人頁",
