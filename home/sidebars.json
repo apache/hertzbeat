@@ -205,7 +205,8 @@
             "help/opensuse",
             "help/freebsd",
             "help/redhat",
-            "help/rockylinux"
+            "help/rockylinux",
+            "help/euleros"
           ]
         },
         {
