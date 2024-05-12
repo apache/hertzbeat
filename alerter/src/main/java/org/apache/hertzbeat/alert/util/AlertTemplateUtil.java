@@ -36,7 +36,10 @@ public class AlertTemplateUtil {
 
     public static String render(String template, Map<String, Object> replaceData) {
         if (template == null) {
-            return null;  
+            return null;
+        }
+        if (replaceData == null) {
+            return template;
         }
         try {
             Matcher matcher = PATTERN.matcher(template);
