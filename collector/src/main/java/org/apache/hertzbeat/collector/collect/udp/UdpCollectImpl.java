@@ -47,13 +47,15 @@ public class UdpCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getUdp() == null) {
+            throw new IllegalArgumentException("Udp collect must has udp params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getUdp() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Udp collect must has udp params");
-            return;
-        }
         UdpProtocol udpProtocol = metrics.getUdp();
         int timeout = CollectUtil.getTimeout(udpProtocol.getTimeout());
         try (DatagramSocket socket = new DatagramSocket()) {

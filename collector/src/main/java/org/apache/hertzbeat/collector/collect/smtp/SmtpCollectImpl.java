@@ -45,13 +45,15 @@ public class SmtpCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getSmtp() == null) {
+            throw new IllegalArgumentException("Smtp collect must has Smtp params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getSmtp() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Smtp collect must has Smtp params");
-            return;
-        }
         SmtpProtocol smtpProtocol = metrics.getSmtp();
         String host = smtpProtocol.getHost();
         String port = smtpProtocol.getPort();

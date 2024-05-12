@@ -55,13 +55,16 @@ public class WebsocketCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getWebsocket() == null) {
+            throw new IllegalArgumentException("Websocket collect must has Websocket params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getWebsocket() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Websocket collect must has Websocket params");
-            return;
-        }
+
         WebsocketProtocol websocketProtocol = metrics.getWebsocket();
         // Compatible with monitoring templates without path parameters
         if (StringUtils.isBlank(websocketProtocol.getPath())) {

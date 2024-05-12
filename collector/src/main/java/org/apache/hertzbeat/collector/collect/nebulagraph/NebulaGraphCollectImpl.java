@@ -69,13 +69,15 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
 
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getNebulaGraph() == null) {
+            throw new IllegalArgumentException("NebulaGraph collect must has NebulaGraph params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getNebulaGraph() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("NebulaGraph collect must has NebulaGraph params");
-            return;
-        }
         NebulaGraphProtocol nebulaGraph = metrics.getNebulaGraph();
         String timePeriod = nebulaGraph.getTimePeriod();
 

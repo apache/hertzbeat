@@ -50,16 +50,16 @@ public class Pop3CollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        Pop3Protocol pop3Protocol;
+        if (metrics == null || (pop3Protocol = metrics.getPop3()) == null || pop3Protocol.isInvalid()) {
+            throw new IllegalArgumentException("Pop3 collect must has pop3 params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
 
         Pop3Protocol pop3Protocol = metrics.getPop3();
         POP3Client pop3Client = null;
@@ -99,18 +99,6 @@ public class Pop3CollectImpl extends AbstractCollect {
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_POP3;
-    }
-
-    /**
-     * validate parameters
-     * @param metrics metrics
-     * @throws Exception exception
-     */
-    private void validateParams(Metrics metrics) throws Exception {
-        Pop3Protocol pop3Protocol;
-        if (metrics == null || (pop3Protocol = metrics.getPop3()) == null || pop3Protocol.isInvalid()) {
-            throw new Exception("Pop3 collect must has pop3 params");
-        }
     }
 
     /**
