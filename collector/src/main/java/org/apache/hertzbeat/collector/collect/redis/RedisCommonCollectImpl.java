@@ -75,15 +75,15 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         connectionCommonCache = new ConnectionCommonCache<>();
     }
 
+    public void preCheck(Metrics metrics) throws IllegalArgumentException{
+        Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
+        RedisProtocol redisProtocol = metrics.getRedis();
+        Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
+        Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        try {
-            preCheck(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         try {
             if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 List<Map<String, String>> redisInfoList = getClusterRedisInfo(metrics);
@@ -329,13 +329,6 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             }
         }
         return result;
-    }
-
-    private void preCheck(Metrics metrics) {
-    	Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
-        RedisProtocol redisProtocol = metrics.getRedis();
-        Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
-        Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
     }
 
     @Override

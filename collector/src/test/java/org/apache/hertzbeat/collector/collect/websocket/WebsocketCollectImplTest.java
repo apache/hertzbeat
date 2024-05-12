@@ -86,6 +86,7 @@ class WebsocketCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setWebsocket(websocketProtocol);
         metrics.setAliasFields(aliasField);
+        websocketCollectImpl.preCheck(metrics);
         websocketCollectImpl.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
