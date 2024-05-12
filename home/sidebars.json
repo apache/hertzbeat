@@ -272,7 +272,8 @@
           "type": "category",
           "label": "custom",
           "items": [
-            "help/kafka_promql"
+            "help/kafka_promql",
+            "help/influxdb_promql"
           ]
         },
         {
