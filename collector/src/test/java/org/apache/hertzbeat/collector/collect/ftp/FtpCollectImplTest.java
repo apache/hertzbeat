@@ -95,7 +95,7 @@ class FtpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setFtp(ftpProtocol);
         metrics.setAliasFields(aliasField);
-
+        ftpCollectImpl.preCheck(metrics);
         ftpCollectImpl.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {

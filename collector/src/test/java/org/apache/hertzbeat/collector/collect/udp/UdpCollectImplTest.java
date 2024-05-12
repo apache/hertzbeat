@@ -75,6 +75,7 @@ class UdpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setUdp(ftpProtocol);
         metrics.setAliasFields(aliasField);
+        udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
@@ -105,6 +106,7 @@ class UdpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setUdp(ftpProtocol);
         metrics.setAliasFields(aliasField);
+        udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getCode(), CollectRep.Code.UN_CONNECTABLE);
 
@@ -132,6 +134,7 @@ class UdpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setUdp(ftpProtocol);
         metrics.setAliasFields(aliasField);
+        udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getCode(), CollectRep.Code.UN_REACHABLE);
 

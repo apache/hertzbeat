@@ -94,6 +94,7 @@ public class NginxCollectImplTest {
             Metrics metrics = new Metrics();
             metrics.setName("nginx_status");
             metrics.setNginx(nginxProtocol);
+            nginxCollect.preCheck(metrics);
             nginxCollect.collect(builder, monitorId, app, metrics);
             assertEquals(builder.getCode(), CollectRep.Code.FAIL);
         }
@@ -154,6 +155,7 @@ public class NginxCollectImplTest {
             metrics.setFields(fields);
             metrics.setName("nginx_status");
             metrics.setNginx(nginxProtocol);
+            nginxCollect.preCheck(metrics);
             nginxCollect.collect(builder, monitorId, app, metrics);
             assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
             for (CollectRep.ValueRow row : builder.getValuesList()) {
@@ -219,6 +221,7 @@ public class NginxCollectImplTest {
             metrics.setFields(fields);
             metrics.setName("req_status");
             metrics.setNginx(nginxProtocol);
+            nginxCollect.preCheck(metrics);
             nginxCollect.collect(builder, monitorId, app, metrics);
             assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
             assertEquals(builder.getValuesCount(), 2);
