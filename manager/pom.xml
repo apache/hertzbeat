@@ -85,7 +85,7 @@
         <!-- udf -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-udf</artifactId>
+            <artifactId>hertzbeat-plugin</artifactId>
         </dependency>
         <!-- spring -->
         <dependency>

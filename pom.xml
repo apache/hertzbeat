@@ -86,7 +86,7 @@
         <module>warehouse</module>
         <module>remoting</module>
         <module>push</module>
-        <module>udf</module>
+        <module>plugin</module>
     </modules>
 
     <properties>
@@ -181,7 +181,7 @@
             <!-- udf -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
-                <artifactId>hertzbeat-udf</artifactId>
+                <artifactId>hertzbeat-plugin</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- spring -->

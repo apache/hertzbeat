@@ -17,13 +17,19 @@
  *
  */
 
-package org.apache.hertzbeat.udf;
+package org.apache.hertzbeat.plugin.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.plugin.Plugin;
 
 /**
- * AfterAlertUdf
+ * DemoPlugin
  */
-public interface AfterAlertUdf {
-    void execute(Alert alert);
+@Slf4j
+public class DemoPluginImpl1 implements Plugin {
+    @Override
+    public void execute(Alert alert) {
+        log.info("DemoPluginImplsd;kjghsakdjghalskjdghjk execute alert: {}", alert);
+    }
 }
