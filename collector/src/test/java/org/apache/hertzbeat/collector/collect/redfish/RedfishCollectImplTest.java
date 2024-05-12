@@ -79,7 +79,7 @@ public class RedfishCollectImplTest {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         List<String> aliasField = new ArrayList<>();
         aliasField.add("$.['@odata.id']");
-        redfishProtocol.setSchema("/redfish/v1/chassis/{ChassisId}/PowerSubsystem/PowerSupplies");
+        redfishProtocol.setSchema("/redfish/v1/Chassis/{ChassisId}/PowerSubsystem/PowerSupplies");
         Metrics metrics = new Metrics();
         metrics.setRedfish(redfishProtocol);
         metrics.setAliasFields(aliasField);
@@ -87,14 +87,14 @@ public class RedfishCollectImplTest {
         String chassis = """
                 {
                     "@odata.type": "#ChassisCollection.ChassisCollection",
-                    "Name": "chassis Collection",
+                    "Name": "Chassis Collection",
                     "Members@odata.count": 2,
                     "Members": [
                         {
-                            "@odata.id": "/redfish/v1/chassis/1U"
+                            "@odata.id": "/redfish/v1/Chassis/1U"
                         },
                         {
-                            "@odata.id": "/redfish/v1/chassis/2U"
+                            "@odata.id": "/redfish/v1/Chassis/2U"
                         }
                     ]
                 }""";
@@ -105,10 +105,10 @@ public class RedfishCollectImplTest {
                     "Members@odata.count": 2,
                     "Members": [
                         {
-                            "@odata.id": "/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies/Bay1"
+                            "@odata.id": "/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1"
                         },
                         {
-                            "@odata.id": "/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies/Bay2"
+                            "@odata.id": "/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2"
                         }
                     ]
                 }""";
@@ -119,10 +119,10 @@ public class RedfishCollectImplTest {
                     "Members@odata.count": 2,
                     "Members": [
                         {
-                            "@odata.id": "/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies/Bay1"
+                            "@odata.id": "/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1"
                         },
                         {
-                            "@odata.id": "/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies/Bay2"
+                            "@odata.id": "/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2"
                         }
                     ]
                 }""";
@@ -131,44 +131,44 @@ public class RedfishCollectImplTest {
                     "@odata.type": "#PowerSupply.v1_5_3.PowerSupply",
                     "Id": "Bay1",
                     "Name": "Power Supply Bay 1",
-                    "@odata.id": "/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies/Bay1"
+                    "@odata.id": "/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1"
                 }""";
         String bay2U1 = """
                 {
                     "@odata.type": "#PowerSupply.v1_5_3.PowerSupply",
                     "Id": "Bay2",
                     "Name": "Power Supply Bay 2",
-                    "@odata.id": "/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies/Bay2"
+                    "@odata.id": "/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2"
                 }""";
         String bay1U2 = """
                 {
                     "@odata.type": "#PowerSupply.v1_5_3.PowerSupply",
                     "Id": "Bay1",
                     "Name": "Power Supply Bay 1",
-                    "@odata.id": "/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies/Bay1"
+                    "@odata.id": "/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1"
                 }""";
         String bay2U2 = """
                 {
                     "@odata.type": "#PowerSupply.v1_5_3.PowerSupply",
                     "Id": "Bay2",
                     "Name": "Power Supply Bay 2",
-                    "@odata.id": "/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies/Bay2"
+                    "@odata.id": "/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2"
                 }""";
-        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/chassis/")).thenReturn(chassis);
-        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies")).thenReturn(powerSupplies1U);
-        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies")).thenReturn(powerSupplies2U);
-        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies/Bay1")).thenReturn(bay1U1);
-        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies/Bay2")).thenReturn(bay2U1);
-        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies/Bay1")).thenReturn(bay1U2);
-        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies/Bay2")).thenReturn(bay2U2);
+        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/")).thenReturn(chassis);
+        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies")).thenReturn(powerSupplies1U);
+        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies")).thenReturn(powerSupplies2U);
+        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1")).thenReturn(bay1U1);
+        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2")).thenReturn(bay2U1);
+        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1")).thenReturn(bay1U2);
+        Mockito.when(redfishConnectSession.getRedfishResource("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2")).thenReturn(bay2U2);
         MockedStatic<RedfishClient> clientMockedStatic = Mockito.mockStatic(RedfishClient.class);
         clientMockedStatic.when(() -> RedfishClient.create(redfishProtocol)).thenReturn(redfishClient);
         Mockito.when(redfishClient.connect()).thenReturn(redfishConnectSession);
         redfishCollect.preCheck(metrics);
         redfishCollect.collect(builder, 1L, "test", metrics);
-        assertEquals("/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(0).getColumns(0));
-        assertEquals("/redfish/v1/chassis/1U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(1).getColumns(0));
-        assertEquals("/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(2).getColumns(0));
-        assertEquals("/redfish/v1/chassis/2U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(3).getColumns(0));
+        assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(0).getColumns(0));
+        assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(1).getColumns(0));
+        assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(2).getColumns(0));
+        assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(3).getColumns(0));
     }
 }
