@@ -76,10 +76,19 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        Assert.isTrue(metrics != null && metrics.getJmx() != null, "JMX collect must have JMX params");
+
+        String url = metrics.getJmx().getUrl();
+        if (StringUtils.hasText(url)) {
+            Assert.doesNotContain(url, IGNORED_STUB, "JMX url prohibit contains stub, please check");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
 
         try {
-            validateParams(metrics);
             JmxProtocol jmxProtocol = metrics.getJmx();
 
             // Create a jndi remote connection
@@ -162,15 +171,6 @@ public class JmxCollectImpl extends AbstractCollect {
             }
         }
         return attributeValueMap;
-    }
-
-    private void validateParams(Metrics metrics) {
-        Assert.isTrue(metrics != null && metrics.getJmx() != null, "JMX collect must have JMX params");
-        
-        String url = metrics.getJmx().getUrl();
-        if (StringUtils.hasText(url)) {
-            Assert.doesNotContain(url, IGNORED_STUB, "JMX url prohibit contains stub, please check");
-        }
     }
 
     private JMXConnector getConnectSession(JmxProtocol jmxProtocol) throws IOException {

@@ -81,16 +81,21 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        final NginxProtocol nginxProtocol;
+        if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
+            throw new IllegalArgumentException("Nginx collect must has nginx params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
-        // validate parameters
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
+        NginxProtocol nginxProtocol = metrics.getNginx();
+        String url = nginxProtocol.getUrl();
+        if (StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
+            nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
 
         HttpContext httpContext = createHttpContext(metrics.getNginx());
@@ -128,20 +133,6 @@ public class NginxCollectImpl extends AbstractCollect {
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_NGINX;
-    }
-
-    private void validateParams(Metrics metrics) throws Exception {
-        final NginxProtocol nginxProtocol;
-        
-        if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
-            throw new Exception("Nginx collect must has nginx params");
-        }
-        
-        String url = nginxProtocol.getUrl();
-        
-        if (StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
-            nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
-        }
     }
 
     private HttpContext createHttpContext(NginxProtocol nginxProtocol) {

@@ -105,18 +105,28 @@ public class HttpCollectImpl extends AbstractCollect {
     
     public HttpCollectImpl() {
     }
-    
+
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getHttp() == null) {
+            throw new IllegalArgumentException("Http/Https collect must has http params");
+        }
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
+
+        HttpProtocol httpProtocol = metrics.getHttp();
+        String url = httpProtocol.getUrl();
+        if (!StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
+            httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
         }
+        if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
+            httpProtocol.setSuccessCodes(List.of("200"));
+        }
+
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
@@ -196,23 +206,6 @@ public class HttpCollectImpl extends AbstractCollect {
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_HTTP;
-    }
-    
-    private void validateParams(Metrics metrics) throws Exception {
-        if (metrics == null || metrics.getHttp() == null) {
-            throw new Exception("Http/Https collect must has http params");
-        }
-        
-        HttpProtocol httpProtocol = metrics.getHttp();
-        String url = httpProtocol.getUrl();
-        
-        if (!StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
-            httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
-        }
-        
-        if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
-            httpProtocol.setSuccessCodes(List.of("200"));
-        }
     }
     
     private void parseResponseByWebsite(String resp, List<String> aliasFields, HttpProtocol http,
