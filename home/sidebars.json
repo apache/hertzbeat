@@ -270,6 +270,14 @@
         },
         {
           "type": "category",
+          "label": "custom",
+          "items": [
+            "help/kafka_promql",
+            "help/influxdb_promql"
+          ]
+        },
+        {
+          "type": "category",
           "label": "network",
           "items": [
             "help/huawei_switch"
