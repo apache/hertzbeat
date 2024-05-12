@@ -112,8 +112,5 @@ public class AlerterProperties {
             private String groupId;
 
         }
-
     }
-
-
 }
