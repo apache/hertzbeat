@@ -82,7 +82,7 @@ class HttpsdImplTest {
         httpsd.preCheck(metrics);
         httpsd.collect(builder, 1L, "test", metrics);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(host, valueRow.getColumns(0));
+            assertEquals(host, valueRow.getColumns(1));
             assertEquals(port, valueRow.getColumns(1));
             assertNotNull(valueRow.getColumns(2));
         }
