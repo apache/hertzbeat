@@ -57,17 +57,23 @@ public class SslCertificateCollectImpl extends AbstractCollect {
     public SslCertificateCollectImpl() {}
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getHttp() == null) {
+            throw new IllegalArgumentException("Http/Https collect must has http params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
+
         HttpProtocol httpProtocol = metrics.getHttp();
+        String url = httpProtocol.getUrl();
+        if (!StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
+            httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
+        }
+
         HttpsURLConnection urlConnection = null;
         try {
             String uri = "";
@@ -153,14 +159,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SSL_CERT;
     }
 
-    private void validateParams(Metrics metrics) throws Exception {
-        if (metrics == null || metrics.getHttp() == null) {
-            throw new Exception("Http/Https collect must has http params");
-        }
-        HttpProtocol httpProtocol = metrics.getHttp();
-        String url = httpProtocol.getUrl();
-        if (!StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
-            httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
-        }
+    private void validateParams(Metrics metrics) {
+
     }
 }

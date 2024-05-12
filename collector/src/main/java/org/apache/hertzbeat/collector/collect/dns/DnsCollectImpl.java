@@ -92,17 +92,19 @@ public class DnsCollectImpl extends AbstractCollect {
 
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
         // compatible with monitoring template configurations of older versions
         if (StringUtils.isBlank(metrics.getDns().getQueryClass())) {
             metrics.getDns().setQueryClass(DClass.string(DClass.IN));
         }
         // check params
         if (checkDnsProtocolFailed(metrics.getDns())) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("DNS collect must have a valid DNS protocol param! ");
-            return;
+            throw new IllegalArgumentException("DNS collect must have a valid DNS protocol param! ");
         }
+    }
+
+    @Override
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
 
         DnsResolveResult dnsResolveResult;
         try {
