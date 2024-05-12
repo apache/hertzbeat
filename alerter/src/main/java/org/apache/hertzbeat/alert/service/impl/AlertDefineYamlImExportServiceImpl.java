@@ -17,19 +17,15 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-
-import org.springframework.stereotype.Service;
-
 
 /**
  * Configure the import and export Yaml format
