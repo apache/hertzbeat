@@ -22,7 +22,10 @@ import java.util.Base64;
 /**
  * base64 util
  */
-public class Base64Util {
+public final class Base64Util {
+
+    private Base64Util() {
+    }
 
     public static boolean isBase64(String base64) {
         try {

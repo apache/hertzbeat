@@ -28,16 +28,17 @@ import javax.annotation.concurrent.ThreadSafe;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
-
-
 /**
  * json util
  */
 @ThreadSafe
 @Slf4j
-public class JsonUtil {
+public final class JsonUtil {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private JsonUtil() {
+    }
 
     static {
         OBJECT_MAPPER

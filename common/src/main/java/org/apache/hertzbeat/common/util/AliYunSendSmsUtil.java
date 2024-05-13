@@ -28,7 +28,10 @@ import java.util.Map;
  * Alibaba cloud send SMS util
  * Refer from <a href="https://github.com/alibaba/aliyun-spring-boot/blob/master/aliyun-spring-boot-docs/asciidoc/sms.adoc">alibaba aliyun-spring-boot</a>
  */
-public class AliYunSendSmsUtil {
+public final class AliYunSendSmsUtil {
+
+    private AliYunSendSmsUtil() {
+    }
 
     private static Client createClient(String accessKeyId, String accessKeySecret) throws Exception {
         Config config = new Config();
