@@ -27,9 +27,9 @@ import org.apache.hertzbeat.plugin.Plugin;
  * DemoPlugin
  */
 @Slf4j
-public class DemoPluginImpl1 implements Plugin {
+public class DemoPluginImpl implements Plugin {
     @Override
     public void execute(Alert alert) {
-        log.info("DemoPluginImplsd;kjghsakdjghalskjdghjk execute alert: {}", alert);
+        log.info("DemoPluginImpl execute alert: {}", alert);
     }
 }

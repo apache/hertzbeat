@@ -44,7 +44,7 @@ public class PluginConfig implements ImportBeanDefinitionRegistrar, ApplicationC
 
     private static final String BASE_PATH = System.getProperty("user.dir") + File.separator + "ext-lib";
 
-    private static final String PACKAGE = "org/hertzbeat/plugin";
+    private static final String PACKAGE = "org/apache/hertzbeat/plugin";
 
     private URLClassLoader getClassLoader() {
         List<String> jars = getAllJars();
