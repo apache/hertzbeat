@@ -264,7 +264,11 @@
                 </ng-template>
               </nz-form-control>
 
-              <nz-form-label *ngIf="paramDefine.type === 'number'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+              <nz-form-label
+                *ngIf="paramDefine.type === 'number'"
+                nzSpan="7"
+                [nzRequired]="paramDefine.required"
+                [nzFor]="paramDefine.field"
                 >{{ paramDefine.name }}
               </nz-form-label>
               <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
@@ -280,7 +284,11 @@
                 ></nz-input-number>
               </nz-form-control>
 
-              <nz-form-label *ngIf="paramDefine.type === 'boolean'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
+              <nz-form-label
+                *ngIf="paramDefine.type === 'boolean'"
+                nzSpan="7"
+                [nzRequired]="paramDefine.required"
+                [nzFor]="paramDefine.field"
                 >{{ paramDefine.name }}
               </nz-form-label>
               <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">

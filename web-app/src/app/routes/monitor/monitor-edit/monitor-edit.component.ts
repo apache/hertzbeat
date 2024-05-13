@@ -164,7 +164,7 @@ export class MonitorEditComponent implements OnInit {
                 this.hostName = define.name;
               }
             });
-            this.onPageInit()
+            this.onPageInit();
             this.handleParameterChange('snmpVersion');
             this.handleParameterChange('httpMethod');
           } else {
@@ -204,7 +204,6 @@ export class MonitorEditComponent implements OnInit {
       this.onParentChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
     }
   }
-
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {
     // 对SSL的端口联动处理, 不开启SSL默认80端口，开启SSL默认443
