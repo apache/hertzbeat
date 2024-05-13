@@ -45,7 +45,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * Notification strategy entity
- * 通知策略
  */
 @Entity
 @Table(name = "hzb_notice_rule")
