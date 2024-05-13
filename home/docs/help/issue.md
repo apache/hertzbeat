@@ -22,12 +22,12 @@ The hertzbeat installed and deployed by the installation package is not availabl
 ### Docker Deployment common issues   
 
 1. **MYSQL, TDENGINE and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**     
-The problems lies in Docker container failed to visit and connect localhost port. Beacuse the docker default network mode is Bridge mode which can't access loacl machine through localhost.
+The problems lies in Docker container failed to visit and connect localhost port. Because the docker default network mode is Bridge mode which can't access local machine through localhost.
 > Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.     
 > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`    
 
 2. **According to the process deploy，visit http://ip:1157/ no interface**   
-Please refer to the following points to troubleshoot issuess：  
+Please refer to the following points to troubleshoot issues：  
 > one：Whether the MySQL database and tdengine database as dependent services have been successfully started, whether the corresponding hertzbeat database has been created, and whether the SQL script has been executed.    
 > two：Check whether dependent service, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.  
 > > three：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
@@ -39,7 +39,7 @@ Please refer to the following points to troubleshoot issuess：
 ### Package Deployment common issues
 
 1. **According to the process deploy，visit http://ip:1157/ no interface**   
-   Please refer to the following points to troubleshoot issuess:
+   Please refer to the following points to troubleshoot issues:
 > one：Whether the MySQL database and tdengine database as dependent services have been successfully started, whether the corresponding hertzbeat database has been created, and whether the SQL script has been executed.    
 > two：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.    
 > three： Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.
