@@ -158,7 +158,4 @@ public class AlertServiceImpl implements AlertService {
                 .gmtUpdate(dateTime)
                 .build();
     }
-
-
-
 }

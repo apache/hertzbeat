@@ -29,7 +29,8 @@ public class DateUtil {
 
     private static final String[] DATE_FORMATS = {
             "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-            "yyyy-MM-dd HH:mm:ss"};
+            "yyyy-MM-dd HH:mm:ss"
+    };
 
     /**
      * convert date to timestamp

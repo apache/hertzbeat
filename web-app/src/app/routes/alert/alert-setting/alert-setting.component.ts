@@ -710,6 +710,9 @@ export class AlertSettingComponent implements OnInit {
   onConnectModalCancel() {
     this.isConnectModalVisible = false;
   }
+  onExportTypeModalCancel() {
+    this.isSwitchExportTypeModalVisible = false;
+  }
   onConnectModalOk() {
     this.isConnectModalOkLoading = true;
     let defineBinds: AlertDefineBind[] = [];

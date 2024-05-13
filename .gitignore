@@ -28,6 +28,9 @@ jdk/
 *.iml
 *.ipr
 
+### For icon.png ###
+!.idea/icon.png
+
 ### NetBeans ###
 nbproject/private/
 build/

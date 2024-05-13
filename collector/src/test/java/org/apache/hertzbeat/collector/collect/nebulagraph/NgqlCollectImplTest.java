@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.collector.collect.nebulagraph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -84,6 +83,7 @@ class NgqlCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
+        ngqlCollect.preCheck(metrics);
         ngqlCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getValuesCount(), 1);
         assertEquals(builder.getValues(0).getColumns(0), collation);
@@ -117,6 +117,7 @@ class NgqlCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
+        ngqlCollect.preCheck(metrics);
         ngqlCollect.collect(builder, 1L, "test", metrics);
         assertEquals(1, builder.getValuesCount());
         assertEquals("1", builder.getValues(0).getColumns(0));
@@ -149,6 +150,7 @@ class NgqlCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
+        ngqlCollect.preCheck(metrics);
         ngqlCollect.collect(builder, 1L, "test", metrics);
         assertEquals(3, builder.getValuesCount());
         for (int i = 0; i < result.size(); i++) {
@@ -186,6 +188,7 @@ class NgqlCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
+        ngqlCollect.preCheck(metrics);
         ngqlCollect.collect(builder, 1L, "test", metrics);
         assertEquals(1, builder.getValuesCount());
         for (int i = 0; i < 3; i++) {

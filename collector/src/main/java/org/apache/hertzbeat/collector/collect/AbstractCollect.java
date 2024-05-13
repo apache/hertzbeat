@@ -27,6 +27,14 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 public abstract class AbstractCollect {
 
     /**
+     * Pre-check metrics
+     * @param metrics metric configuration
+     * @throws IllegalArgumentException when validation failed
+     */
+    public abstract void preCheck(Metrics metrics) throws IllegalArgumentException;
+
+
+    /**
      * Real acquisition implementation interface
      * @param builder response builder
      * @param monitorId  monitor id   
