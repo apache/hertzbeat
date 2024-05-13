@@ -56,7 +56,7 @@ params:
     # default value
     defaultValue: 80
     # field-param field key
-  - field: method
+  - field: httpMethod
     # name-param field display i18n name
     name:
       zh-CN: 请求方式
@@ -164,6 +164,8 @@ params:
     # 参数输入框提示信息
     # param field input placeholder
     placeholder: 'Available When POST PUT'
+    # dependent parameter values list
+    parent: [ POST,PUT ]
     # required-true or false
     required: false
     # hide param-true or false
@@ -278,7 +280,7 @@ metrics:
       # http connect timeout
       timeout: ^_^timeout^_^
       # http method: GET POST PUT DELETE PATCH
-      method: ^_^method^_^
+      method: ^_^httpMethod^_^
       # if enabled https
       ssl: ^_^ssl^_^
       # http request payload
