@@ -164,6 +164,10 @@ export class MonitorEditComponent implements OnInit {
                 this.hostName = define.name;
               }
             });
+            let paramDefine = this.paramDefines.find(param => param.field === 'snmpVersion');
+            if (paramDefine) {
+              this.onSnmpVersionChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
+            }
           } else {
             console.warn(message.msg);
           }
@@ -196,6 +200,18 @@ export class MonitorEditComponent implements OnInit {
           } else {
             param.paramValue = '80';
           }
+        }
+      });
+    }
+  }
+
+  onSnmpVersionChanged(snmpVersion: string, field: string) {
+    // 对不同snmp版本需要的参数进行动态展示
+    if (field === 'snmpVersion') {
+      this.paramDefines.forEach((paramDefine, index) => {
+        this.params[index].display = true;
+        if (paramDefine.parent != null && !paramDefine.parent.toString().includes(snmpVersion)) {
+          this.params[index].display = false;
         }
       });
     }
