@@ -164,9 +164,15 @@ export class MonitorEditComponent implements OnInit {
                 this.hostName = define.name;
               }
             });
+            this.onPageInit()
             let paramDefine = this.paramDefines.find(param => param.field === 'snmpVersion');
             if (paramDefine) {
-              this.onSnmpVersionChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
+              this.onParentChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
+            }
+            paramDefine = this.paramDefines.find(param => param.field === 'httpMethod');
+
+            if (paramDefine) {
+              this.onParentChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
             }
           } else {
             console.warn(message.msg);
@@ -190,6 +196,15 @@ export class MonitorEditComponent implements OnInit {
       );
   }
 
+  onPageInit() {
+    this.paramDefines.forEach((paramDefine, index) => {
+      this.params[index].display = true;
+    });
+    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
+      this.advancedParams[index].display = true;
+    });
+  }
+
   onParamBooleanChanged(booleanValue: boolean, field: string) {
     // 对SSL的端口联动处理, 不开启SSL默认80端口，开启SSL默认443
     if (field === 'ssl') {
@@ -205,13 +220,22 @@ export class MonitorEditComponent implements OnInit {
     }
   }
 
-  onSnmpVersionChanged(snmpVersion: string, field: string) {
-    // 对不同snmp版本需要的参数进行动态展示
+  onParentChanged(parentValue: string, field: string) {
+    // 基础设置参数级联展示
     if (field === 'snmpVersion') {
       this.paramDefines.forEach((paramDefine, index) => {
         this.params[index].display = true;
-        if (paramDefine.parent != null && !paramDefine.parent.toString().includes(snmpVersion)) {
+        if (paramDefine.parent != undefined && !paramDefine.parent.toString().includes(parentValue)) {
           this.params[index].display = false;
+        }
+      });
+    }
+    // 高级设置参数级联展示
+    if (field === 'httpMethod') {
+      this.advancedParamDefines.forEach((advancedParamDefine, index) => {
+        this.advancedParams[index].display = true;
+        if (advancedParamDefine.parent != undefined && !advancedParamDefine.parent.toString().includes(parentValue)) {
+          this.advancedParams[index].display = false;
         }
       });
     }
