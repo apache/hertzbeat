@@ -165,15 +165,8 @@ export class MonitorEditComponent implements OnInit {
               }
             });
             this.onPageInit()
-            let paramDefine = this.paramDefines.find(param => param.field === 'snmpVersion');
-            if (paramDefine) {
-              this.onParentChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
-            }
-            paramDefine = this.paramDefines.find(param => param.field === 'httpMethod');
-
-            if (paramDefine) {
-              this.onParentChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
-            }
+            this.handleParameterChange('snmpVersion');
+            this.handleParameterChange('httpMethod');
           } else {
             console.warn(message.msg);
           }
@@ -204,6 +197,14 @@ export class MonitorEditComponent implements OnInit {
       this.advancedParams[index].display = true;
     });
   }
+
+  handleParameterChange(paramField: string) {
+    const paramDefine = this.paramDefines.find(param => param.field === paramField);
+    if (paramDefine) {
+      this.onParentChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
+    }
+  }
+
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {
     // 对SSL的端口联动处理, 不开启SSL默认80端口，开启SSL默认443
