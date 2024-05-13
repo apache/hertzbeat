@@ -178,7 +178,7 @@
                 <artifactId>hertzbeat-push</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
-            <!-- udf -->
+            <!-- plugin -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-plugin</artifactId>

@@ -82,7 +82,7 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-push</artifactId>
         </dependency>
-        <!-- udf -->
+        <!-- plugin -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-plugin</artifactId>
