@@ -242,7 +242,8 @@
             "help/airflow",
             "help/clickhouse",
             "help/elasticsearch",
-            "help/influxdb"
+            "help/influxdb",
+            "help/hugegraph"
           ]
         },
         {
