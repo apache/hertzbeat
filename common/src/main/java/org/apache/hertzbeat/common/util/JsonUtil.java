@@ -33,9 +33,12 @@ import org.springframework.util.StringUtils;
  */
 @ThreadSafe
 @Slf4j
-public class JsonUtil {
+public final class JsonUtil {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private JsonUtil() {
+    }
 
     static {
         OBJECT_MAPPER

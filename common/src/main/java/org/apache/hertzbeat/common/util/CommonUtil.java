@@ -31,7 +31,7 @@ import org.apache.commons.lang3.StringUtils;
  * common util
  */
 @Slf4j
-public class CommonUtil {
+public final class CommonUtil {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
 
@@ -40,6 +40,9 @@ public class CommonUtil {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("^[-+]?[0-9]*\\.?[0-9]+$");
     
     private static final int PHONE_LENGTH = 11;
+
+    private CommonUtil() {
+    }
 
     /**
      * Converts the string str to the int numeric type

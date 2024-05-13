@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  * AES Decode Encode Util
  */
 @Slf4j
-public class AesUtil {
+public final class AesUtil {
 
     /**
      *  Default encryption key The AES encryption key is 16 bits by default.
