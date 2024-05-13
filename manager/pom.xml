@@ -82,6 +82,11 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-push</artifactId>
         </dependency>
+        <!-- plugin -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-plugin</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
