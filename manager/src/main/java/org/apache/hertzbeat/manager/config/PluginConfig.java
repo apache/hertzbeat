@@ -70,7 +70,7 @@ public class PluginConfig implements ImportBeanDefinitionRegistrar, ApplicationC
 
 
     private List<String> getAllJars() {
-        log.info("BASE_PATH:{}", PluginConfig.BASE_PATH);
+        log.debug("BASE_PATH:{}", PluginConfig.BASE_PATH);
         File file = new File(PluginConfig.BASE_PATH);
         File[] files = file.listFiles();
         if (files == null) {
