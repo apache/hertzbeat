@@ -180,7 +180,7 @@ export class MonitorNewComponent implements OnInit {
   }
 
   onParentChanged(parentValue: string, field: string) {
-    // 基础设置参数级联展示
+    // Cascade display of basic settings parameters
     if (field === 'snmpVersion') {
       this.paramDefines.forEach((paramDefine, index) => {
         this.params[index].display = true;
@@ -189,7 +189,7 @@ export class MonitorNewComponent implements OnInit {
         }
       });
     }
-    // 高级设置参数级联展示
+    // Cascading display of advanced settings parameters
     if (field === 'httpMethod') {
       this.advancedParamDefines.forEach((advancedParamDefine, index) => {
         this.advancedParams[index].display = true;
