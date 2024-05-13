@@ -187,6 +187,13 @@ public class ParamDefine {
     private LocalDateTime gmtUpdate;
 
     /**
+     *  Depends on which parameters
+     */
+    @Schema(title = "Depends on which parameters", example = "{0, 1}", accessMode = READ_WRITE)
+    @Convert(converter = JsonStringListAttributeConverter.class)
+    private List<Object> parent;
+
+    /**
      * Parameter option configuration
      */
     @Data

@@ -26,7 +26,10 @@ import lombok.extern.slf4j.Slf4j;
  * Alarm template keyword matching replacement engine tool
  */
 @Slf4j
-public class AlertTemplateUtil {
+public final class AlertTemplateUtil {
+
+    private AlertTemplateUtil() {
+    }
 
     /**
      * Match the variable ${key}
