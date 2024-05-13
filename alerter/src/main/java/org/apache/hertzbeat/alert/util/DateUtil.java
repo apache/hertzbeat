@@ -17,9 +17,11 @@
 
 package org.apache.hertzbeat.alert.util;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +35,7 @@ public final class DateUtil {
     }
 
     private static final String[] DATE_FORMATS = {
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'",
             "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
             "yyyy-MM-dd HH:mm:ss"
     };
@@ -45,15 +48,20 @@ public final class DateUtil {
     public static Optional<Long> getTimeStampFromSomeFormats(String date) {
         for (String dateFormat : DATE_FORMATS) {
             try {
-                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(dateFormat);
+                DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+                        .appendPattern(dateFormat)
+                        // enable string conversion in strict mode.
+                        .parseStrict()
+                        .toFormatter();
                 LocalDateTime time = LocalDateTime.parse(date, dateTimeFormatter);
                 return Optional.of(time.toInstant(ZoneOffset.UTC).toEpochMilli());
             } catch (Exception e) {
-                log.error("Error parsing date '{}' with format '{}': {}",
+                log.warn("Error parsing date '{}' with format '{}': {}",
                         date, dateFormat, e.getMessage());
             }
         }
 
+        log.error("Error parsing date '{}', no corresponding date format", date);
         return Optional.empty();
     }
 

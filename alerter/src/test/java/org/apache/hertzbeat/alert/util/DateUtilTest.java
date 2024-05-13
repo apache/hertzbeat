@@ -38,6 +38,11 @@ class DateUtilTest {
         actualTimestamp = DateUtil.getTimeStampFromSomeFormats(date);
         assertTrue(actualTimestamp.isPresent());
         assertEquals(1715603696789L, actualTimestamp.get());
+
+        date = "2023-02-22T07:27:15.404000000Z";
+        actualTimestamp = DateUtil.getTimeStampFromSomeFormats(date);
+        assertTrue(actualTimestamp.isPresent());
+        assertEquals(1677050835404L, actualTimestamp.get());
     }
 
     @Test
