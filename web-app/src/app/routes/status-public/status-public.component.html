@@ -194,13 +194,18 @@
             </nz-list>
           </div>
           <ng-template #incidentHeader>
-            <div style="width: 100%; border: 2px solid gray; border-radius: 3px" [ngStyle]="{borderColor: getStatusBorderColor(incident.state)}">
+            <div
+              style="width: 100%; border: 2px solid gray; border-radius: 3px"
+              [ngStyle]="{ borderColor: getStatusBorderColor(incident.state) }"
+            >
               <div style="margin: 10px; display: flex; justify-content: space-between">
                 <div style="font-weight: bold; font-size: large">
                   <span>{{ incident.name }}</span>
                 </div>
                 <div style="font-weight: bold">
-                  <span [ngStyle]="{color: getStatusBorderColor(incident.state)}">{{ 'status.incident.state.' + incident.state | i18n }}</span>
+                  <span [ngStyle]="{ color: getStatusBorderColor(incident.state) }">{{
+                    'status.incident.state.' + incident.state | i18n
+                  }}</span>
                 </div>
               </div>
               <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex; font-size: medium">

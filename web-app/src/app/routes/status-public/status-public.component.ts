@@ -166,13 +166,13 @@ export class StatusPublicComponent implements OnInit {
 
   getStatusBorderColor(status: number): string {
     if (status === 0) {
-      return "#ff2f2f";
+      return '#ff2f2f';
     } else if (status === 1) {
-      return "#e56c23";
+      return '#e56c23';
     } else if (status === 2) {
-      return "#19a7e7";
+      return '#19a7e7';
     } else {
-      return "#34be8f";
+      return '#34be8f';
     }
   }
 
