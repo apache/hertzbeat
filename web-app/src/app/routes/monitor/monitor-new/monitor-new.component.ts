@@ -179,6 +179,23 @@ export class MonitorNewComponent implements OnInit {
     }
   }
 
+  onSnmpVersionChanged(snmpVersion: string, field: string) {
+    // 对不同snmp版本需要的参数进行动态展示
+    if (field === 'snmpVersion') {
+      this.paramDefines.forEach((paramDefine, index) => {
+        this.params[index].display = true;
+        if (paramDefine.parent != undefined && !paramDefine.parent.toString().includes(snmpVersion)) {
+          this.params[index].display = false;
+        }
+      });
+    }
+    this.refreshParams();
+  }
+
+  refreshParams() {
+    this.params = [...this.params];
+  }
+
   onSubmit(formGroup: FormGroup) {
     if (formGroup.invalid) {
       Object.values(formGroup.controls).forEach(control => {
