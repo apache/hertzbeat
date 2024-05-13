@@ -38,6 +38,10 @@ public class AlertTemplateUtil {
         if (template == null) {
             return null;  
         }
+        if (replaceData == null) {
+            log.warn("The replaceData is null.");
+            return template;
+        }
         try {
             Matcher matcher = PATTERN.matcher(template);
             StringBuilder builder = new StringBuilder();
