@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.serialize;
 
-
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.util.JsonUtil;

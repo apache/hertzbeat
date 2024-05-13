@@ -33,7 +33,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
-
 /**
  * prometheus vector or matrix entity
  */

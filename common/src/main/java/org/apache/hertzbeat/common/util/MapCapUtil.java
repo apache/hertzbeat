@@ -22,7 +22,6 @@ package org.apache.hertzbeat.common.util;
  */
 public class MapCapUtil {
 
-
     private static final float LOAD_FACTOR = 0.75f;
 
     /**
