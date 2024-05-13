@@ -52,6 +52,7 @@ header:
     - '**/NOTICE'
     - '.all-contributorsrc'
     - '**/*.AbstractCollect'
+    - '**/*.Plugin'
     - '**/*.MockMaker'
     - '.prettierrc'
     - '.browserslistrc'
