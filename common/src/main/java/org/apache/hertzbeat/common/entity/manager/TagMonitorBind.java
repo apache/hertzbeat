@@ -39,7 +39,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * Tag Bind Monitor
- * 标签与监控关联实体
  */
 @Entity
 @Table(name = "hzb_tag_monitor_bind", indexes = {

@@ -28,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  * (-∞,a]||[b,+∞) = {x <= a || x >= b}
  */
 @Slf4j
-public class IntervalExpressionUtil {
+public final class IntervalExpressionUtil {
 
     private static final String SPLIT_OR = "\\|\\|";
     private static final String SPLIT_AND = ",";
@@ -38,6 +38,9 @@ public class IntervalExpressionUtil {
     private static final String SPLIT_EQ_RIGHT = "]";
     private static final String NEGATIVE = "-∞";
     private static final String POSITIVE = "+∞";
+
+    private IntervalExpressionUtil() {
+    }
 
     /**
      * CHECK WHETHER THE VALUE IS IN AN INTERVAL RANGE

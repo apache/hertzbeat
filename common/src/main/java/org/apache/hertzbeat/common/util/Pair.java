@@ -20,7 +20,7 @@ package org.apache.hertzbeat.common.util;
 /**
  * Pair KV
  */
-public class Pair<K, V> {
+public final class Pair<K, V> {
     private K left;
     private final V right;
 
