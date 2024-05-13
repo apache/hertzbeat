@@ -17,19 +17,6 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.anySet;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.when;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
@@ -47,6 +34,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 /**
  * Test case for {@link AlertDefineService}
  */
@@ -62,6 +54,9 @@ class AlertDefineServiceTest {
 
     @Mock
     private AlertDefineBindDao alertDefineBindDao;
+
+    @Mock
+    private List<AlertDefineImExportService> alertDefineImExportServiceList;
 
     @InjectMocks
     private AlertDefineServiceImpl alertDefineService;
