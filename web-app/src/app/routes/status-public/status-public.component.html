@@ -194,19 +194,18 @@
             </nz-list>
           </div>
           <ng-template #incidentHeader>
-            <div style="width: 100%; border: 1px dotted gray; border-radius: 3px">
+            <div
+              style="width: 100%; border: 2px solid gray; border-radius: 3px"
+              [ngStyle]="{ borderColor: getStatusBorderColor(incident.state) }"
+            >
               <div style="margin: 10px; display: flex; justify-content: space-between">
                 <div style="font-weight: bold; font-size: large">
-                  <span *ngIf="incident.state == 0" style="color: #ff2f2f">{{ incident.name }}</span>
-                  <span *ngIf="incident.state == 1" style="color: #e56c23">{{ incident.name }}</span>
-                  <span *ngIf="incident.state == 2" style="color: #19a7e7">{{ incident.name }}</span>
-                  <span *ngIf="incident.state == 3" style="color: #34be8f">{{ incident.name }}</span>
+                  <span>{{ incident.name }}</span>
                 </div>
                 <div style="font-weight: bold">
-                  <span *ngIf="incident.state == 0" style="color: #ff2f2f">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-                  <span *ngIf="incident.state == 1" style="color: #e56c23">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-                  <span *ngIf="incident.state == 2" style="color: #19a7e7">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-                  <span *ngIf="incident.state == 3" style="color: #34be8f">{{ 'status.incident.state.' + incident.state | i18n }}</span>
+                  <span [ngStyle]="{ color: getStatusBorderColor(incident.state) }">{{
+                    'status.incident.state.' + incident.state | i18n
+                  }}</span>
                 </div>
               </div>
               <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex; font-size: medium">
