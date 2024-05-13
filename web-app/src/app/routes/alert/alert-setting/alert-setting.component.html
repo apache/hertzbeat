@@ -644,6 +644,7 @@
 <nz-modal
   [(nzVisible)]="isSwitchExportTypeModalVisible"
   [nzTitle]="'alert.export.switch-type' | i18n"
+  (nzOnCancel)="onExportTypeModalCancel()"
   nzOkDisabled="true"
   [nzFooter]="switchExportTypeModalFooter"
 >

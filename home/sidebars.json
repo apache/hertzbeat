@@ -205,7 +205,8 @@
             "help/opensuse",
             "help/freebsd",
             "help/redhat",
-            "help/rockylinux"
+            "help/rockylinux",
+            "help/euleros"
           ]
         },
         {
@@ -265,6 +266,14 @@
           "label": "llm",
           "items": [
             "help/openai"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "custom",
+          "items": [
+            "help/kafka_promql",
+            "help/influxdb_promql"
           ]
         },
         {

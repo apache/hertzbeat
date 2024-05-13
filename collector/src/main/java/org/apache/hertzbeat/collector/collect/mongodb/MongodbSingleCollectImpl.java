@@ -85,15 +85,21 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         connectionCommonCache = new ConnectionCommonCache<>();
     }
 
+    /**
+     * Check that the mongodb connection information in metrics is complete
+     */
+    public void preCheck(Metrics metrics) throws IllegalArgumentException{
+        Assert.isTrue(metrics != null && metrics.getMongodb() != null, "Mongodb collect must has mongodb params");
+        MongodbProtocol mongodbProtocol = metrics.getMongodb();
+        Assert.hasText(mongodbProtocol.getCommand(), "Mongodb Protocol command is required.");
+        Assert.hasText(mongodbProtocol.getHost(), "Mongodb Protocol host is required.");
+        Assert.hasText(mongodbProtocol.getPort(), "Mongodb Protocol port is required.");
+        Assert.hasText(mongodbProtocol.getUsername(), "Mongodb Protocol username is required.");
+        Assert.hasText(mongodbProtocol.getPassword(), "Mongodb Protocol password is required.");
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        try {
-            preCheck(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         // The command naming convention is the command supported by the above mongodb diagnostic. Support subdocument
         // If the command does not include., execute the command directly and use the document it returns;
         // otherwise, you need to execute the metricsParts[0] command first and then obtain the related subdocument
@@ -169,19 +175,6 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
                 valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
             }
         });
-    }
-
-    /**
-     * Check that the mongodb connection information in metrics is complete
-     */
-    private void preCheck(Metrics metrics) {
-        Assert.isTrue(metrics != null && metrics.getMongodb() != null, "Mongodb collect must has mongodb params");
-        MongodbProtocol mongodbProtocol = metrics.getMongodb();
-        Assert.hasText(mongodbProtocol.getCommand(), "Mongodb Protocol command is required.");
-        Assert.hasText(mongodbProtocol.getHost(), "Mongodb Protocol host is required.");
-        Assert.hasText(mongodbProtocol.getPort(), "Mongodb Protocol port is required.");
-        Assert.hasText(mongodbProtocol.getUsername(), "Mongodb Protocol username is required.");
-        Assert.hasText(mongodbProtocol.getPassword(), "Mongodb Protocol password is required.");
     }
 
     public static CacheIdentifier getIdentifier(MongodbProtocol mongodbProtocol){
