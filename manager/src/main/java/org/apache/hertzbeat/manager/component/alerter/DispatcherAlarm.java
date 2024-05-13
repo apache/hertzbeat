@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.component.alerter;
 import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -27,7 +28,6 @@ import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.manager.config.PluginConfig;
 import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.IgnoreException;
@@ -48,20 +48,17 @@ public class DispatcherAlarm implements InitializingBean {
     private final NoticeConfigService noticeConfigService;
     private final AlertStoreHandler alertStoreHandler;
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
-    private final PluginConfig pluginConfig;
 
     public DispatcherAlarm(AlerterWorkerPool workerPool,
                            CommonDataQueue dataQueue,
                            NoticeConfigService noticeConfigService,
                            AlertStoreHandler alertStoreHandler,
-                           List<AlertNotifyHandler> alertNotifyHandlerList,
-                           PluginConfig pluginConfig) {
+                           List<AlertNotifyHandler> alertNotifyHandlerList) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.noticeConfigService = noticeConfigService;
         this.alertStoreHandler = alertStoreHandler;
         alertNotifyHandlerMap = Maps.newHashMapWithExpectedSize(alertNotifyHandlerList.size());
-        this.pluginConfig = pluginConfig;
         alertNotifyHandlerList.forEach(r -> alertNotifyHandlerMap.put(r.type(), r));
     }
 
@@ -119,11 +116,9 @@ public class DispatcherAlarm implements InitializingBean {
                         // Notice distribution
                         sendNotify(alert);
                         // Execute the plugin
-                        List<Object> beans = pluginConfig.getBean();
-                        for (Object bean : beans) {
-                            if (bean instanceof Plugin) {
-                                ((Plugin) bean).execute(alert);
-                            }
+                        ServiceLoader<Plugin> loader = ServiceLoader.load(Plugin.class, Plugin.class.getClassLoader());
+                        for (Plugin plugin : loader) {
+                            plugin.execute(alert);
                         }
                     }
                 } catch (IgnoreException ignored) {
