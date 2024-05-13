@@ -25,7 +25,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 
-
 /**
  * collector info
  */

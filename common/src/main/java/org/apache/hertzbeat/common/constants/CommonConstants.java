@@ -353,8 +353,7 @@ public interface CommonConstants {
      * status page component calculate method manual
      */
     byte STATUS_PAGE_CALCULATE_METHOD_MANUAL = 1;
-    
-    
+
     /**
      * status page incident state investigating
      */

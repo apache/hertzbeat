@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.common.entity.alerter;
 
-
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
