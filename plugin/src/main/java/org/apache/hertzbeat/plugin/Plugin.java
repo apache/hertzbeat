@@ -24,5 +24,9 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
  * Plugin
  */
 public interface Plugin {
-    void execute(Alert alert);
+
+    /*
+     *  execute when alert
+     */
+    void alert(Alert alert);
 }

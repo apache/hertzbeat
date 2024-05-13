@@ -118,7 +118,7 @@ public class DispatcherAlarm implements InitializingBean {
                         // Execute the plugin
                         ServiceLoader<Plugin> loader = ServiceLoader.load(Plugin.class, Plugin.class.getClassLoader());
                         for (Plugin plugin : loader) {
-                            plugin.execute(alert);
+                            plugin.alert(alert);
                         }
                     }
                 } catch (IgnoreException ignored) {
