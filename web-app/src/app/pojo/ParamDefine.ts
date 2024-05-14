@@ -17,6 +17,8 @@
  * under the License.
  */
 
+import {List} from "echarts";
+
 export class ParamDefine {
   name!: string;
   field!: string;
@@ -33,6 +35,6 @@ export class ParamDefine {
   valueAlias!: string;
   // 此参数是否隐藏 即默认不显示, 在高级设置区显示
   hide: boolean = false;
-  // 依赖的上级参数列表
-  parent: string | undefined;
+  // Map of dependent params
+  depend: Map<string, List<any>> | undefined;
 }
