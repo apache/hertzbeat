@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import {List} from "echarts";
+import { List } from 'echarts';
 
 export class ParamDefine {
   name!: string;
