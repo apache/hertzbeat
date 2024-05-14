@@ -22,6 +22,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
+import { List } from 'echarts';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
@@ -179,21 +180,29 @@ export class MonitorNewComponent implements OnInit {
     }
   }
 
-  onSnmpVersionChanged(snmpVersion: string, field: string) {
-    // 对不同snmp版本需要的参数进行动态展示
-    if (field === 'snmpVersion') {
-      this.paramDefines.forEach((paramDefine, index) => {
-        this.params[index].display = true;
-        if (paramDefine.parent != undefined && !paramDefine.parent.toString().includes(snmpVersion)) {
+  onDependChanged(dependValue: string, dependField: string) {
+    this.paramDefines.forEach((paramDefine, index) => {
+      if (paramDefine.depend) {
+        let fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
+        if (fieldValues) {
           this.params[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.params[index].display = true;
+          }
         }
-      });
-    }
-    this.refreshParams();
-  }
-
-  refreshParams() {
-    this.params = [...this.params];
+      }
+    });
+    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
+      if (advancedParamDefine.depend) {
+        let fieldValues = new Map(Object.entries(advancedParamDefine.depend)).get(dependField);
+        if (fieldValues) {
+          this.advancedParams[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.advancedParams[index].display = true;
+          }
+        }
+      }
+    });
   }
 
   onSubmit(formGroup: FormGroup) {
