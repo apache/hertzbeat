@@ -197,6 +197,12 @@ yarn package
 mvn clean package -Prelease
 ```
 
+then
+
+```shell
+mvn clean install
+```
+
 > Build HertzBeat collector binary, run script in `collector`
 
 ```shell

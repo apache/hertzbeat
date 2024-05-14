@@ -197,6 +197,12 @@ yarn package
 mvn clean package -Prelease
 ```
 
+然后
+
+```shell
+mvn clean install
+```
+
 > HertzBeat-Collector 编译打包，在项目`collector`目录下执行以下命令
 
 ```shell
