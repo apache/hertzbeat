@@ -131,3 +131,7 @@ More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert_threshold) <br />
 &emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br />
 &emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />
 &emsp;&#x1F449;&emsp;[Configure Huawei Cloud SMN Notification](alert_smn) <br />
+
+### Plugins
+
+&emsp;&#x1F449;&emsp;[Plugin](plugin) <br />
