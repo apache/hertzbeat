@@ -98,8 +98,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "buildTarget": "hertzbeat-web-app:build",
             "proxyConfig": "proxy.conf.js"
+            "browserTarget": "hertzbeat-web-app:build"
           },
           "configurations": {
             "production": {

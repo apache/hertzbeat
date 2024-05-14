@@ -30,11 +30,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.warehouse.store.AbstractHistoryDataStorage;
-import org.apache.hertzbeat.warehouse.store.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.HistoryDataReader;
+import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -59,33 +61,27 @@ class MetricsDataControllerTest {
     MetricsDataController metricsDataController;
 
     @Mock
-    AbstractHistoryDataStorage historyDataStorage;
+    HistoryDataReader historyDataReader;
 
     @Mock
-    AbstractRealTimeDataStorage realTimeDataStorage;
-
-    private List<AbstractHistoryDataStorage> historyDataStorages = new LinkedList<>();
-
-    private List<AbstractRealTimeDataStorage> realTimeDataStorages = new LinkedList<>();
+    RealTimeDataReader realTimeDataReader;
 
     @BeforeEach
     void setUp() {
-        historyDataStorages.add(historyDataStorage);
-        realTimeDataStorages.add(realTimeDataStorage);
-        metricsDataController = new MetricsDataController(realTimeDataStorages, historyDataStorages);
+        metricsDataController = new MetricsDataController(realTimeDataReader, Optional.of(historyDataReader));
         this.mockMvc = MockMvcBuilders.standaloneSetup(metricsDataController).build();
     }
 
     @Test
     void getWarehouseStorageServerStatus() throws Exception {
-        when(historyDataStorage.isServerAvailable()).thenReturn(true);
+        when(historyDataReader.isServerAvailable()).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/warehouse/storage/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andExpect(jsonPath("$.msg").isEmpty())
                 .andReturn();
-        when(historyDataStorage.isServerAvailable()).thenReturn(false);
+        when(historyDataReader.isServerAvailable()).thenReturn(false);
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/warehouse/storage/status"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
@@ -101,8 +97,8 @@ class MetricsDataControllerTest {
         final long time = System.currentTimeMillis();
         final String getUrl = "/api/monitor/" + monitorId + "/metrics/" + metric;
 
-        when(realTimeDataStorage.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(null);
-        when(realTimeDataStorage.isServerAvailable()).thenReturn(true);
+        when(realTimeDataReader.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(null);
+        when(realTimeDataReader.isServerAvailable()).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -116,8 +112,8 @@ class MetricsDataControllerTest {
                 .setMetrics(metric)
                 .setTime(time)
                 .build();
-        when(realTimeDataStorage.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(metricsData);
-        when(realTimeDataStorage.isServerAvailable()).thenReturn(true);
+        when(realTimeDataReader.getCurrentMetricsData(eq(monitorId), eq(metric))).thenReturn(metricsData);
+        when(realTimeDataReader.isServerAvailable()).thenReturn(true);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
@@ -150,7 +146,7 @@ class MetricsDataControllerTest {
         params.add("history", history);
         params.add("interval", interval);
 
-        when(historyDataStorage.isServerAvailable()).thenReturn(false);
+        when(historyDataReader.isServerAvailable()).thenReturn(false);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
@@ -158,7 +154,7 @@ class MetricsDataControllerTest {
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andReturn();
 
-        when(historyDataStorage.isServerAvailable()).thenReturn(true);
+        when(historyDataReader.isServerAvailable()).thenReturn(true);
         ServletException exception = assertThrows(ServletException.class, () -> {
             this.mockMvc.perform(MockMvcRequestBuilders.get(getUrlFail).params(params))
                     .andExpect(status().isOk())
@@ -171,8 +167,8 @@ class MetricsDataControllerTest {
         final Map<String, List<Value>> instanceValuesMap = new HashMap<>();
         List<Value> list = new ArrayList<>();
         instanceValuesMap.put(metric, list);
-        when(historyDataStorage.isServerAvailable()).thenReturn(true);
-        lenient().when(historyDataStorage.getHistoryMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric),
+        when(historyDataReader.isServerAvailable()).thenReturn(true);
+        lenient().when(historyDataReader.getHistoryMetricData(eq(monitorId), eq(app), eq(metrics), eq(metric),
                         eq(instance), eq(history)))
                 .thenReturn(instanceValuesMap);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))

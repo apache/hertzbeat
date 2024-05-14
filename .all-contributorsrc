@@ -1799,6 +1799,51 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "Aias00",
+      "name": "aias00",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25810623?v=4",
+      "profile": "https://github.com/Aias00",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "westboy",
+      "name": "Jin",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6385565?v=4",
+      "profile": "https://github.com/westboy",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "yuluo-yx",
+      "name": "YuLuo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77964041?v=4",
+      "profile": "https://blog.csdn.net/qq_52397471",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Yanshuming1",
+      "name": "xiaoming student",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118667222?v=4",
+      "profile": "https://github.com/Yanshuming1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "lwjxy",
+      "name": "lwjxy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52726400?v=4",
+      "profile": "https://github.com/lwjxy",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

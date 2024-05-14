@@ -374,6 +374,13 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         // app params verify
         verifyDefineAppContent(app, isModify);
         appDefineStore.save(app.getApp(), ymlContent);
+        // get and reset hide value
+        Job originalJob = appDefines.get(app.getApp().toLowerCase());
+        if (Objects.nonNull(originalJob)) {
+            boolean hide = originalJob.isHide();
+            app.setHide(hide);
+        }
+        
         appDefines.put(app.getApp().toLowerCase(), app);
         // resolve: after the template is modified, all monitoring instances of the same type of template need to be reissued in the task status
         SpringContextHolder.getBean(MonitorService.class).updateAppCollectJob(app);

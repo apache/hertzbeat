@@ -131,7 +131,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         response.setApp(app);
         response.setId(monitorId);
         response.setTenantId(tenantId);
-        // for prometheus auto 
+        // for prometheus auto
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
             List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
                     .getInstance().collect(response, metrics);
@@ -140,7 +140,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             return;
         }
         response.setMetrics(metrics.getName());
-        // According to the metrics collection protocol, application type, etc., 
+        // According to the metrics collection protocol, application type, etc.,
         // dispatch to the real application metrics collection implementation class
         AbstractCollect abstractCollect = CollectStrategyFactory.invoke(metrics.getProtocol());
         if (abstractCollect == null) {
@@ -151,13 +151,18 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     + metrics.getName() + ", " + metrics.getProtocol());
         } else {
             try {
+                abstractCollect.preCheck(metrics);
                 abstractCollect.collect(response, monitorId, app, metrics);
             } catch (Exception e) {
                 String msg = e.getMessage();
                 if (msg == null && e.getCause() != null) {
                     msg = e.getCause().getMessage();
                 }
-                log.error("[Metrics Collect]: {}.", msg, e);
+                if (e instanceof IllegalArgumentException){
+                    log.error("[Metrics PreCheck]: {}.", msg, e);
+                } else {
+                    log.error("[Metrics Collect]: {}.", msg, e);
+                }
                 response.setCode(CollectRep.Code.FAIL);
                 if (msg != null) {
                     response.setMsg(msg);
@@ -177,8 +182,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     /**
      * Calculate the real metrics value according to the calculates and aliasFields configuration
      *
-     * @param metrics     Metrics configuration     
-     * @param collectData Data collection    
+     * @param metrics     Metrics configuration
+     * @param collectData Data collection
      */
     private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
@@ -197,11 +202,11 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             return;
         }
         collectData.clearValues();
-        // Preprocess calculates first    
+        // Preprocess calculates first
         if (metrics.getCalculates() == null) {
             metrics.setCalculates(Collections.emptyList());
         }
-        // eg: database_pages=Database pages unconventional mapping 
+        // eg: database_pages=Database pages unconventional mapping
         Map<String, String> fieldAliasMap = new HashMap<>(8);
         Map<String, JexlExpression> fieldExpressionMap = metrics.getCalculates()
                 .stream()
@@ -233,7 +238,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     // whether the alias field is a number
                     CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
                             .extractDoubleAndUnitFromStr(aliasFieldValue);
-                    if (doubleAndUnit != null) {
+                    if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
                         fieldValueMap.put(aliasField, doubleAndUnit.getValue());
                         if (doubleAndUnit.getUnit() != null) {
                             aliasFieldUnitMap.put(aliasField, doubleAndUnit.getUnit());
@@ -275,7 +280,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     } else {
                         value = aliasFieldValueMap.get(realField);
                     }
-                    
+
                     if (value != null) {
                         final byte fieldType = field.getType();
                         if (fieldType == CommonConstants.TYPE_NUMBER) {
@@ -290,7 +295,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         }
                     }
                 }
-                
+
                 Pair<String, String> unitPair = fieldUnitMap.get(realField);
                 if (aliasFieldUnit != null) {
                     if (unitPair != null) {

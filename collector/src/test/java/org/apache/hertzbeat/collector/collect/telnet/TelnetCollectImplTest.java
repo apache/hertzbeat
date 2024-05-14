@@ -17,36 +17,137 @@
 
 package org.apache.hertzbeat.collector.collect.telnet;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.net.telnet.TelnetClient;
-
-import java.io.IOException;
-import java.net.ConnectException;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.MockedConstruction;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test case for {@link TelnetCollectImpl}
  */
+@ExtendWith(MockitoExtension.class)
 class TelnetCollectImplTest {
-    
-    void telnet() {
-        TelnetClient telnetClient = null;
-        try {
-            telnetClient = new TelnetClient("vt200");
-            telnetClient.setConnectTimeout(5000);
-            TelnetClient finalTelnetClient = telnetClient;
-            assertThrows(ConnectException.class,() -> finalTelnetClient.connect("127.0.0.1",0));
-            telnetClient.disconnect();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (telnetClient != null) {
-                try {
-                    telnetClient.disconnect();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+
+    @InjectMocks
+    private TelnetCollectImpl telnetCollect;
+
+    @Test
+    void testCollectWithEquals(){
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        TelnetProtocol telnetProtocol = TelnetProtocol.builder()
+                .timeout("10")
+                .port("21")
+                .cmd("ls")
+                .build();
+
+        String httpResponse = """
+                a=SomeValue
+                b=AnotherValue
+                c=YetAnotherValue""";
+        byte[] responseBytes = httpResponse.getBytes(StandardCharsets.UTF_8);
+        InputStream inputStream = new ByteArrayInputStream(responseBytes);
+
+        MockedConstruction<TelnetClient> mocked =
+                Mockito.mockConstruction(TelnetClient.class, (telnetClient, context) -> {
+                    Mockito.doNothing().when(telnetClient).connect(telnetProtocol.getHost(),
+                            Integer.parseInt(telnetProtocol.getPort()));
+                    Mockito.doNothing().when(telnetClient).disconnect();
+                    Mockito.when(telnetClient.isConnected()).thenReturn(true);
+
+                    OutputStream out = Mockito.mock(OutputStream.class);
+                    Mockito.when(telnetClient.getOutputStream()).thenReturn(out);
+                    Mockito.doNothing().when(out).write(Mockito.any());
+                    Mockito.doNothing().when(out).flush();
+
+                    Mockito.when(telnetClient.getInputStream()).thenReturn(inputStream);
+
+                });
+
+
+        List<String> aliasField = new ArrayList<>();
+        aliasField.add("responseTime");
+        aliasField.add("a");
+        aliasField.add("b");
+        aliasField.add("c");
+        Metrics metrics = new Metrics();
+        metrics.setTelnet(telnetProtocol);
+        metrics.setAliasFields(aliasField);
+        telnetCollect.preCheck(metrics);
+        telnetCollect.collect(builder, 1L, "test", metrics);
+        assertEquals(builder.getValuesCount(), 1);
+        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
+            assertNotNull(valueRow.getColumns(0));
+            assertEquals(valueRow.getColumns(1), "SomeValue");
+            assertEquals(valueRow.getColumns(2), "AnotherValue");
+            assertEquals(valueRow.getColumns(3), "YetAnotherValue");
         }
+        mocked.close();
+    }
+
+    @Test
+    void testCollectWithTab(){
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        TelnetProtocol telnetProtocol = TelnetProtocol.builder()
+                .timeout("10")
+                .port("21")
+                .cmd("ls")
+                .build();
+
+        String httpResponse = """
+                a\tSomeValue
+                b\tAnotherValue
+                c\tYetAnotherValue""";
+        byte[] responseBytes = httpResponse.getBytes(StandardCharsets.UTF_8);
+        InputStream inputStream = new ByteArrayInputStream(responseBytes);
+
+        MockedConstruction<TelnetClient> mocked =
+                Mockito.mockConstruction(TelnetClient.class, (telnetClient, context) -> {
+                    Mockito.doNothing().when(telnetClient).connect(telnetProtocol.getHost(),
+                            Integer.parseInt(telnetProtocol.getPort()));
+                    Mockito.doNothing().when(telnetClient).disconnect();
+                    Mockito.when(telnetClient.isConnected()).thenReturn(true);
+
+                    OutputStream out = Mockito.mock(OutputStream.class);
+                    Mockito.when(telnetClient.getOutputStream()).thenReturn(out);
+                    Mockito.doNothing().when(out).write(Mockito.any());
+                    Mockito.doNothing().when(out).flush();
+
+                    Mockito.when(telnetClient.getInputStream()).thenReturn(inputStream);
+
+                });
+
+
+        List<String> aliasField = new ArrayList<>();
+        aliasField.add("responseTime");
+        aliasField.add("a");
+        aliasField.add("b");
+        aliasField.add("c");
+        Metrics metrics = new Metrics();
+        metrics.setTelnet(telnetProtocol);
+        metrics.setAliasFields(aliasField);
+        telnetCollect.preCheck(metrics);
+        telnetCollect.collect(builder, 1L, "test", metrics);
+        assertEquals(builder.getValuesCount(), 1);
+        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
+            assertNotNull(valueRow.getColumns(0));
+            assertEquals(valueRow.getColumns(1), "SomeValue");
+            assertEquals(valueRow.getColumns(2), "AnotherValue");
+            assertEquals(valueRow.getColumns(3), "YetAnotherValue");
+        }
+        mocked.close();
     }
 }

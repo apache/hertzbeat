@@ -79,6 +79,13 @@
           "items": [
             "advanced/extend-push"
           ]
+        },
+        {
+          "type": "category",
+          "label": "NGQL",
+          "items": [
+            "advanced/extend-ngql"
+          ]
         }
       ]
     },
@@ -91,10 +98,12 @@
       "label": "Community",
       "items": [
         "community/contact",
+        "community/development",
         {
           "type": "category",
           "label": "contribution",
           "items": [
+            "community/contribution",
             "community/mailing_lists",
             "community/become_committer",
             "community/become_pmc_member",
@@ -170,9 +179,9 @@
             "help/dm",
             "help/opengauss",
             "help/nebulaGraph",
+            "help/nebulagraph_cluster",
             "help/tidb",
             "help/mongodb"
-
           ]
         },
         {
@@ -193,7 +202,11 @@
             "help/debian",
             "help/centos",
             "help/almalinux",
-            "help/opensuse"
+            "help/opensuse",
+            "help/freebsd",
+            "help/redhat",
+            "help/rockylinux",
+            "help/euleros"
           ]
         },
         {
@@ -219,14 +232,18 @@
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
+            "help/yarn",
             "help/hbase_master",
             "help/hbase_regionserver",
+            "help/hdfs_namenode",
+            "help/hdfs_datanode",
             "help/iotdb",
             "help/hive",
             "help/airflow",
             "help/clickhouse",
             "help/elasticsearch",
-            "help/influxdb"
+            "help/influxdb",
+            "help/hugegraph"
           ]
         },
         {
@@ -243,6 +260,28 @@
           "items": [
             "help/docker",
             "help/kubernetes"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "llm",
+          "items": [
+            "help/openai"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "custom",
+          "items": [
+            "help/kafka_promql",
+            "help/influxdb_promql"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "network",
+          "items": [
+            "help/huawei_switch"
           ]
         },
         {
@@ -270,21 +309,14 @@
             "help/alert_smn"
           ]
         },
-        {
-          "type": "category",
-          "label": "Network",
-          "items": [
-            "help/huawei_switch"
-          ]
-        },
-        "help/issue"
+        "help/issue",
+        "help/plugin"
       ]
     },
     {
       "type": "category",
       "label": "Others",
       "items": [
-        "others/contributing",
         "others/resource"
       ]
     }

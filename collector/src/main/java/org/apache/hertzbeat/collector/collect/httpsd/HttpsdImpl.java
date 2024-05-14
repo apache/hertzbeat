@@ -50,14 +50,16 @@ public class HttpsdImpl extends AbstractCollect {
     private DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        HttpsdProtocol httpsdProtocol = metrics.getHttpsd();
+        if (Objects.isNull(httpsdProtocol) || httpsdProtocol.isInvalid()){
+            throw new IllegalArgumentException("http_sd collect must have a valid http_sd protocol param! ");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         HttpsdProtocol httpsdProtocol = metrics.getHttpsd();
-        // check params
-        if (checkParamsFailed(httpsdProtocol)) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("http_sd collect must have a valid http_sd protocol param! ");
-            return;
-        }
 
         try (DiscoveryClient discoveryClient = discoveryClientManagement.getClient(httpsdProtocol)) {
             collectMetrics(builder, metrics, discoveryClient);

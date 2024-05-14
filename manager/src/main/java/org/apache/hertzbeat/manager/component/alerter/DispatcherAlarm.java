@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.component.alerter;
 import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -30,6 +31,7 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.IgnoreException;
+import org.apache.hertzbeat.plugin.Plugin;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
@@ -61,7 +63,7 @@ public class DispatcherAlarm implements InitializingBean {
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void afterPropertiesSet() {
         // Start alarm distribution
         DispatchTask dispatchTask = new DispatchTask();
         for (int i = 0; i < DISPATCH_THREADS; i++) {
@@ -113,6 +115,11 @@ public class DispatcherAlarm implements InitializingBean {
                         alertStoreHandler.store(alert);
                         // Notice distribution
                         sendNotify(alert);
+                        // Execute the plugin
+                        ServiceLoader<Plugin> loader = ServiceLoader.load(Plugin.class, Plugin.class.getClassLoader());
+                        for (Plugin plugin : loader) {
+                            plugin.alert(alert);
+                        }
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {

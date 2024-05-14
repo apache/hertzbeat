@@ -28,6 +28,8 @@ import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -91,25 +93,40 @@ import org.w3c.dom.NodeList;
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
-    
+
+    public static final String OpenAIHost = "api.openai.com";
+    public static final String OpenAIUsageAPI = "/dashboard/billing/usage";
+    public static final String startDate = "start_date";
+    public static final String endDate = "end_date";
+
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
     
     public HttpCollectImpl() {
     }
-    
+
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getHttp() == null) {
+            throw new IllegalArgumentException("Http/Https collect must has http params");
+        }
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
+
+        HttpProtocol httpProtocol = metrics.getHttp();
+        String url = httpProtocol.getUrl();
+        if (!StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
+            httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
         }
+        if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
+            httpProtocol.setSuccessCodes(List.of("200"));
+        }
+
         HttpContext httpContext = createHttpContext(metrics.getHttp());
         HttpUriRequest request = createHttpRequest(metrics.getHttp());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)) {
@@ -189,23 +206,6 @@ public class HttpCollectImpl extends AbstractCollect {
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_HTTP;
-    }
-    
-    private void validateParams(Metrics metrics) throws Exception {
-        if (metrics == null || metrics.getHttp() == null) {
-            throw new Exception("Http/Https collect must has http params");
-        }
-        
-        HttpProtocol httpProtocol = metrics.getHttp();
-        String url = httpProtocol.getUrl();
-        
-        if (StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
-            httpProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
-        }
-        
-        if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
-            httpProtocol.setSuccessCodes(List.of("200"));
-        }
     }
     
     private void parseResponseByWebsite(String resp, List<String> aliasFields, HttpProtocol http,
@@ -499,6 +499,14 @@ public class HttpCollectImpl extends AbstractCollect {
                     requestBuilder.addParameter(param.getKey(), param.getValue());
                 }
             }
+        }
+        // OpenAI /dashboard/billing/usage
+        if (OpenAIHost.equalsIgnoreCase(httpProtocol.getHost()) && OpenAIUsageAPI.equalsIgnoreCase(httpProtocol.getUrl())) {
+            LocalDate today = LocalDate.now();
+            LocalDate tomorrow = LocalDate.now().plusDays(1);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            requestBuilder.addParameter(startDate, today.format(formatter));
+            requestBuilder.addParameter(endDate, tomorrow.format(formatter));
         }
         // The default request header can be overridden if customized
         // keep-alive

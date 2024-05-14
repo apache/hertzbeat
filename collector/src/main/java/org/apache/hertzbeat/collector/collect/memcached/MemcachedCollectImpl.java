@@ -55,13 +55,16 @@ public class MemcachedCollectImpl extends AbstractCollect {
     private static final String STATS_END_RSP = "END";
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getMemcached() == null) {
+            throw new IllegalArgumentException("Memcached collect must has Memcached params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getMemcached() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Memcached collect must has Memcached params");
-            return;
-        }
+
         MemcachedProtocol memcachedProtocol = metrics.getMemcached();
         String memcachedHost = memcachedProtocol.getHost();
         String memcachedPort = memcachedProtocol.getPort();

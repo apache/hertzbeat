@@ -24,7 +24,10 @@ import java.time.temporal.TemporalAmount;
 /**
  * time util
  */
-public class TimePeriodUtil {
+public final class TimePeriodUtil {
+
+    private TimePeriodUtil() {
+    }
 
     /**
      * parse tokenTime to TemporalAmount

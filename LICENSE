@@ -206,9 +206,11 @@ MIT License
 
 The following components are provided under the MIT License
 These files from https://github.com/ng-alain/ng-alain
+The text of the license is included in material/licenses/frontend/LICENSE-ng-alain.txt
 
 web-app/src/app/core/**
 web-app/src/app/layout/**
+web-app/src/app/routes/exception/**
 web-app/src/app/routes/routes.module.ts
 web-app/src/app/routes/routes-routing.module.ts
 web-app/src/app/shared/json-schema/**

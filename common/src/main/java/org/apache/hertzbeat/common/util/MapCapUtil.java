@@ -20,8 +20,10 @@ package org.apache.hertzbeat.common.util;
 /**
  * map initial capacity calculation
  */
-public class MapCapUtil {
+public final class MapCapUtil {
 
+    private MapCapUtil() {
+    }
 
     private static final float LOAD_FACTOR = 0.75f;
 

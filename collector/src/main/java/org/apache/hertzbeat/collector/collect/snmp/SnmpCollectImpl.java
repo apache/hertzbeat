@@ -84,15 +84,19 @@ public class SnmpCollectImpl extends AbstractCollect {
 
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getSnmp() == null) {
+            throw new IllegalArgumentException("Snmp collect must has snmp params");
+        }
+        SnmpProtocol snmpProtocol = metrics.getSnmp();
+        Assert.hasText(snmpProtocol.getHost(), "snmp host is required.");
+        Assert.hasText(snmpProtocol.getPort(), "snmp port is required.");
+        Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         SnmpProtocol snmpProtocol = metrics.getSnmp();
         int timeout = CollectUtil.getTimeout(snmpProtocol.getTimeout());
         int snmpVersion = getSnmpVersion(snmpProtocol.getVersion());
@@ -261,16 +265,6 @@ public class SnmpCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SNMP;
     }
 
-
-    private void validateParams(Metrics metrics) {
-        if (metrics == null || metrics.getSnmp() == null) {
-            throw new IllegalArgumentException("Snmp collect must has snmp params");
-        }
-        SnmpProtocol snmpProtocol = metrics.getSnmp();
-        Assert.hasText(snmpProtocol.getHost(), "snmp host is required.");
-        Assert.hasText(snmpProtocol.getPort(), "snmp port is required.");
-        Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
-    }
 
     private synchronized Snmp getSnmpService(int snmpVersion, SnmpBuilder snmpBuilder) throws IOException {
         Snmp snmpService = versionSnmpService.get(snmpVersion);

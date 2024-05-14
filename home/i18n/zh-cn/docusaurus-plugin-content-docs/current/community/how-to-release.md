@@ -4,14 +4,15 @@ title: 如何进行版本发布
 sidebar_position: 4
 ---
 
-本教程详细描述了如何发布Apache HertzBeat，并以1.6.0版本的发布为例。
+本教程详细描述了如何发布Apache HertzBeat，并以 v1.6.0 版本的发布为例。
 
 ## 1. 环境要求
 
-此发布过程在Ubuntu OS中进行操作，并需要以下环境：
+此发布过程在 UbuntuOS(可在 Windows Mac) 中进行操作，并需要以下环境：
 
 - JDK 17
-- Apache Maven 3.x (此处使用 3.8.7)
+- Node18 Yarn
+- Apache Maven 3.x 
 - GnuPG 2.x
 - Git
 - SVN (Apache使用svn来托管项目发布)
@@ -59,9 +60,9 @@ GnuPG needs to construct a user ID to identify your key.
 
 Real name: muchunjin # Please enter 'gpg real name'
 Email address: muchunjin@apache.org # Please enter your apache email address here
-Comment: for apache HertzBeat release create at 20230501 # Please enter some comments here
+Comment: apache key # Please enter some comments here
 You selected this USER-ID:
-    "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>"
+    "muchunjin (apache key) <muchunjin@apache.org>"
 
 Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? O # Please enter O here
 We need to generate a lot of random bytes. It is a good idea to perform
@@ -94,7 +95,7 @@ public and secret key created and signed.
 
 pub   rsa4096 2023-05-01 [SC]
       85778A4CE4DD04B7E07813ABACFB69E705016886
-uid                      muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>
+uid                      muchunjin (apache key) <muchunjin@apache.org>
 sub   rsa4096 2023-05-01 [E]
 ```
 
@@ -108,11 +109,11 @@ $ gpg --keyid-format SHORT --list-keys
 ------------------------
 pub   rsa4096/05016886 2023-05-01 [SC]
       85778A4CE4DD04B7E07813ABACFB69E705016886
-uid         [ultimate] muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>
+uid         [ultimate] muchunjin (apache key) <muchunjin@apache.org>
 sub   rsa4096/0C5A4E1C 2023-05-01 [E]
 
 # Send public key to keyserver via key id
-$ gpg --keyserver keyserver.ubuntu.com --send-key 584EE68E
+$ gpg --keyserver keyserver.ubuntu.com --send-key 05016886
 # Among them, keyserver.ubuntu.com is the selected keyserver, it is recommended to use this, because the Apache Nexus verification uses this keyserver
 ```
 
@@ -122,32 +123,27 @@ $ gpg --keyserver keyserver.ubuntu.com --send-key 584EE68E
 
 ```shell
 $ gpg --keyserver keyserver.ubuntu.com --recv-keys 05016886   # If the following content appears, it means success
-gpg: key ACFB69E705016886: "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" not changed
+gpg: key ACFB69E705016886: "muchunjin (apache key) <muchunjin@apache.org>" not changed
 gpg: Total number processed: 1
 gpg:              unchanged: 1
 ```
 
-或者进入 https://keyserver.ubuntu.com/ 网址，输入密钥的名称，然后点击'Search key'
+或者进入 https://keyserver.ubuntu.com/ 网址，输入密钥的名称，然后点击'Search key' 按钮，查看是否有对应名称的密钥。
 
-![图片](https://github.com/apache/streampark/assets/19602424/b8fe193e-c137-42b0-a833-90a6d975f335)
-
-如果查询结果如下，表示密钥创建成功。
-
-![图片](https://github.com/apache/streampark/assets/19602424/73ada3f2-2d2e-4b76-b25c-34a52db6a069)
 
 #### 2.4 将 gpg 公钥添加到 Apache SVN 项目仓库的 KEYS 文件中
 
-- Apache HertzBeat Dev分支 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
-- Apache HertzBeat Release分支 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/
+- Apache HertzBeat Dev 分支 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
+- Apache HertzBeat Release 分支 https://dist.apache.org/repos/dist/release/incubator/hertzbeat
 
 ##### 2.4.1 将公钥添加到dev分支的KEYS
 
 ```shell
-$ mkdir -p hertzbeat_svn/dev
-$ cd hertzbeat_svn/dev
+$ mkdir -p svn/dev
+$ cd svn/dev
 
 $ svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
-$ cd hertzbeat_svn/dev/hertzbeat
+$ cd svn/dev/hertzbeat
 
 # 将生成的KEY追加到KEYS文件中，检查是否添加正确
 $ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS 
@@ -158,11 +154,11 @@ $ svn ci -m "add gpg key for muchunjin"
 ##### 2.4.2 将公钥添加到release分支的KEYS
 
 ```shell
-$ mkdir -p hertzbeat_svn/release
-$ cd hertzbeat_svn/release
+$ mkdir -p svn/release
+$ cd svn/release
 
-$ svn co https://dist.apache.org/repos/dist/release/incubator/hertzbeat/
-$ cd hertzbeat_svn/release/hertzbeat
+$ svn co https://dist.apache.org/repos/dist/release/incubator/hertzbeat
+$ cd svn/release/hertzbeat
 
 # 将生成的KEY追加到KEYS文件中，检查是否添加正确
 $ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache.org) >> KEYS 
@@ -170,197 +166,99 @@ $ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache
 $ svn ci -m "add gpg key for muchunjin"
 ```
 
-#### 2.5 配置 apache maven 路径和用户密码设置
+## 3. 准备物料 & 发布
 
-- 生成主密码
-```shell
-$ mvn --encrypt-master-password <apache password>
-{EM+4/TYVDXYHRbkwjjAS3mE1RhRJXJUSG8aIO5RSxuHU26rKCjuS2vG+/wMjz9te}
-```
-
-- 创建文件 ${user.home}/.m2/settings-security.xml 并配置上一步创建的密码
+#### 3.1 基于 master 分支，创建一个名为 release-${release_version}-rcx 的分支，例如 release-1.6.0-rc1。并基于 release-1.6.0-rc1 分支创建一个名为 v1.6.0-rc1 的标签，并将此标签设置为预发布。
 
 ```shell
-<settingsSecurity>
-  <master>{EM+4/TYVDXYHRbkwjjAS3mE1RhRJXJUSG8aIO5RSxuHU26rKCjuS2vG+/wMjz9te}</master>
-</settingsSecurity>
+git checkout master
+git checkout -b release-1.6.0-rc1
 ```
 
-- 生成最终的加密密码并将其添加到 ~/.m2/settings.xml 文件
+#### 3.2 本地切换到待发布分支
 
 ```shell
-$ mvn --encrypt-password <apache passphrase>
-{/ZLaH78TWboH5IRqNv9pgU4uamuqm9fCIbw0gRWT01c=}
+git checkout release-1.6.0-rc1
 ```
 
-> 在maven配置文件~/.m2/settings.xml中，添加以下服务端项
+#### 3.3 编译二进制包
 
-```
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
-  
-  <localRepository>/path/to/local/repo</localRepository>
-  
-  <servers>
-    <server>
-        <id>apache.snapshots.https</id>
-        <!-- APACHE LDAP UserName --> 
-        <username>muchunjin</username>
-        <!-- APACHE LDAP password (填写刚刚使用命令 `mvn --encrypt-password <apache passphrase>` 创建的密码) -->
-        <password>{/ZLaH78TWboH5IRqNv9pgU4uamuqm9fCIbw0gRWT01c=}</password>
-    </server>
-    <server>
-        <id>apache.releases.https</id>
-        <!-- APACHE LDAP UserName --> 
-        <username>muchunjin</username>
-        <!-- APACHE LDAP password (填写刚刚使用命令 `mvn --encrypt-password <apache passphrase>` 创建的密码) -->
-        <password>{/ZLaH78TWboH5IRqNv9pgU4uamuqm9fCIbw0gRWT01c=}</password>
-    </server>
-  </servers>
-
-  <profiles>
-        <profile>
-          <id>apache-release</id>
-          <properties>
-            <gpg.keyname>05016886</gpg.keyname>
-            <!-- Use an agent: Prevents being asked for the password during the build -->
-            <gpg.useagent>true</gpg.useagent>
-            <gpg.passphrase>passphrase for your gpg key</gpg.passphrase>
-          </properties>
-        </profile>
-  </profiles>
-```
-
-## 3. 准备物料 & 发布到Apache Nexus
-
-#### 3.1 基于dev分支，创建一个名为release-${release_version}-rcx的分支，例如release-2.1.0-rc1。并基于release-2.1.0-rc1分支创建一个名为v2.1.0-rc1的标签，并将此标签设置为预发布。
-
-![图片](https://user-images.githubusercontent.com/19602424/236656362-1d346faa-6582-44eb-9722-8bb2de0eaa92.png)
-
-#### 3.2 克隆发布分支到本地
+> HertzBeat 编译打包，在项目`web-app`目录下执行以下命令，
 
 ```shell
-git clone -b release-2.1.0-rc1 -c core.autocrlf=false git@github.com:apache/hertzbeat.git
+yarn install
+
+yarn package
 ```
 
-#### 3.3 发布相关JAR到Apache Nexus
-
-##### 3.3.1 发布scala 2.11到Apache Nexus仓库 
+> 在项目根目录下执行以下命令
 
 ```shell
-mvn clean install \
--Pscala-2.11 \
--DskipTests \
--Dcheckstyle.skip=true \
--Dmaven.javadoc.skip=true \
--pl 'hertzbeat-common,hertzbeat-flink' \
--pl '!hertzbeat-console/hertzbeat-console-service' \
--amd
+mvn clean package -Prelease
 ```
+
+> HertzBeat-Collector 编译打包，在项目`collector`目录下执行以下命令
 
 ```shell
-mvn deploy \
--Pscala-2.11,apache-release \
--DskipTests \
--Dmaven.javadoc.skip=true \
--DretryFailedDeploymentCount=3
+mvn clean package -Pcluster
 ```
 
-##### 3.3.2 发布scala 2.12到Apache Nexus仓库
+生成的二进制包在:
 
-```shell
-mvn clean install \
--Pscala-2.12 \
--DskipTests \
--Dcheckstyle.skip=true \
--Dmaven.javadoc.skip=true \
--pl 'hertzbeat-common,hertzbeat-flink' \
--pl '!hertzbeat-console/hertzbeat-console-service' \
--amd
-```
+- `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
+- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
+- `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
-```shell
-mvn deploy \
--Pscala-2.12,apache-release \
--DskipTests \
--Dmaven.javadoc.skip=true \
--DretryFailedDeploymentCount=3
-```
-
-```shell
-mvn deploy \
--Papache-release \
--DskipTests \
--Dmaven.javadoc.skip=true \
--DretryFailedDeploymentCount=3
-```
-
-##### 3.3.3 检查是否成功发布到Apache Nexus仓库
-
-> 访问 https://repository.apache.org/ 并登录，如果有scala 2.11、scala 2.12，说明发布成功。
-
-![图片](https://user-images.githubusercontent.com/19602424/236657233-08d142eb-5f81-427b-a04d-9ab3172199c1.png)
-
-#### 3.4 编译二进制包
-
-> Scala 2.11 编译打包
-
-```shell
-> ./build.sh # 选择 "mixed mode" 和 "scala 2.11"
-```
-
-> Scala 2.12 编译打包
-
-```shell
-> ./build.sh # 选择 "mixed mode" 和 "scala 2.12"
-```
+#### 3.4 打包项目源代码
 
 > 打包项目源码
 
 ```shell
 git archive \
 --format=tar.gz \
---output="dist/apache-hertzbeat-2.1.0-incubating-src.tar.gz" \
---prefix=apache-hertzbeat-2.1.0-incubating-src/ \
-release-2.1.0-rc1
+--output="dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz" \
+--prefix=apache-hertzbeat-1.6.0-incubating-src/ \
+release-1.6.0-rc1
 ```
 
-> 会生成以下3个文件
+生成的代码归档文件在 `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
 
-```
-apache-hertzbeat-2.1.0-incubating-src.tar.gz
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz
-```
+#### 3.5 对二进制和源码包进行签名
 
-#### 3.4 对二进制和源码包进行签名
+将上步骤生成的三个文件包放到`dist`目录下(若无则新建目录)，然后对文件包进行签名和SHA512校验和生成。   
+
+> 其中 `gpg -u 33545C76` 的 `33545C76` 是你的 GPG 密钥 ID，可以通过 `gpg --keyid-format SHORT --list-keys` 查看。   
 
 ```shell
 cd dist
 
 # sign
-for i in *.tar.gz; do echo $i; gpg --armor --output $i.asc --detach-sig $i ; done
+for i in *.tar.gz; do echo $i; gpg -u 33545C76 --armor --output $i.asc --detach-sig $i ; done
 
 # SHA512
 for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
+
+# if macos sha512sum not found, you can install by brew install coreutils
 ```
 
 > 最终文件列表如下
 
 ```
-apache-hertzbeat-2.1.0-incubating-src.tar.gz
-apache-hertzbeat-2.1.0-incubating-src.tar.gz.asc
-apache-hertzbeat-2.1.0-incubating-src.tar.gz.sha512
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz.asc
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz.asc
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-incubating-src.tar.gz
+apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc
+apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.asc
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.sha512
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512
 ```
 
-#### 3.5 验证签名
+#### 3.6 验证签名
 
 ```shell
 $ cd dist
@@ -368,97 +266,98 @@ $ cd dist
 # 验证签名
 $ for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 
-apache-hertzbeat-2.1.0-incubating-src.tar.gz
+apache-hertzbeat-1.6.0-incubating-src.tar.gz
 gpg: Signature made Tue May  2 12:16:35 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz
+gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:36 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: Good signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz
+gpg: Good signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 gpg: Signature made Tue May  2 12:16:37 2023 CST
 gpg:                using RSA key 85778A4CE4DD04B7E07813ABACFB69E705016886
-gpg: BAD signature from "muchunjin (for apache HertzBeat release create at 20230501) <muchunjin@apache.org>" [ultimate]
+gpg: BAD signature from "muchunjin (apache key) <muchunjin@apache.org>" [ultimate]
 
 # 验证 SHA512
 $ for i in *.tar.gz; do echo $i; sha512sum --check $i.sha512; done
 
-apache-hertzbeat-2.1.0-incubating-src.tar.gz
-apache-hertzbeat-2.1.0-incubating-src.tar.gz: OK
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.11-2.1.0-incubating-bin.tar.gz: OK
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz
-apache-hertzbeat_2.12-2.1.0-incubating-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-incubating-src.tar.gz
+apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-1.6.0-incubating-bin.tar.gz: OK
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
+apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz: OK
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
+apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 ```
 
-#### 3.6 发布Apache SVN仓库中dev目录的物料包
+#### 3.7 发布 Apache SVN 仓库中 dev 目录的物料包
+
+- 检出仓库
 
 ```shell
-# 检出Apache SVN仓库中的dev目录到Apache HertzBeat™项目根目录下的dist/hertzbeat_svn_dev目录下
-svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat dist/hertzbeat_svn_dev
+# 检出 Apache SVN 仓库中的 dev/incubator/hertzbeat 目录到 Apache HertzBeat™ 项目根目录下的 svn/dev 目录下
+svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat svn/dev
 
 svn co --depth empty https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
 ```
 
-创建一个版本号目录，并以${release_version}-${RC_version}的形式命名。RC_version从1开始，即候选版本从RC1开始。在发布过程中，如果出现导致投票失败的问题，需要进行修正，那么RC版本需要迭代，RC版本号需要+1。例如：为版本2.1.0-RC1投票。如果投票顺利通过，那么RC1版本的资料将作为最终版本的资料发布。如果出现问题（当hertzbeat/incubator社区进行投票时，投票者会严格检查各种发布要求和合规问题）并需要纠正，那么修正后重新启动投票，下一次的候选版本为2.1.0-RC2。
+- 复制物料包到 SVN 仓库
+
+创建一个版本号目录，并以${release_version}-${RC_version}的形式命名。RC_version从1开始，即候选版本从RC1开始。在发布过程中，如果出现导致投票失败的问题，需要进行修正，那么RC版本需要迭代，RC版本号需要+1。例如：为版本1.6.0-RC1投票。如果投票顺利通过，那么RC1版本的资料将作为最终版本的资料发布。如果出现问题（当hertzbeat/incubator社区进行投票时，投票者会严格检查各种发布要求和合规问题）并需要纠正，那么修正后重新启动投票，下一次的候选版本为1.6.0-RC2。
 
 ```shell
-mkdir -p dist/hertzbeat_svn_dev/2.1.0-RC1
-cp -f dist/* dist/hertzbeat_svn_dev/2.1.0-RC1
+mkdir -p svn/dev/1.6.0-RC1
+cp -f dist/* svn/dev/1.6.0-RC1
 ```
 
-提交到SVN
+- 提交到SVN
 
 ```shell
-cd dist/hertzbeat_svn_dev/
+cd svn/dev
 
 # 1. 检查svn状态
 svn status
 
 # 2. 添加到svn
-svn add 2.0.0-RC1
+svn add 1.6.0-RC1
 
 svn status
 
 # 3. 提交到svn远端服务器
-svn commit -m "release for HertzBeat 2.1.0"
+svn commit -m "release for HertzBeat 1.6.0-RC1"
 ```
 
-#### 3.7 检查Apache SVN提交结果
+- 检查 Apache SVN 提交结果
 
-> 在浏览器中访问 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/
+> 在浏览器中访问 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/ , 检查是否有新的版本内容
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/e4763537-af9f-4f2a-967d-912e6670b360)
+## 4. 进入社区投票阶段
 
-## 3. 进入社区投票阶段
-
-#### 3.1 发送社区投票邮件
+#### 4.1 发送社区投票邮件
 
 发送社区投票邮件需要至少三个`+1`，且无`-1`。
 
 > `Send to`: dev@hertzbeat.apache.org <br />
-> `Title`: [VOTE] Release Apache HertzBeat (incubating) 2.1.0 rc1 <br />
+> `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
 > `Body`: 
 
 ```
 Hello HertzBeat Community:
 
-This is a call for vote to release Apache HertzBeat (incubating) version release-2.1.0-RC1.
+This is a call for vote to release Apache HertzBeat (incubating) version release-1.6.0-RC1.
 
-Apache Streamark - Make stream processing easier! Easy-to-use streaming application development framework and operation platform.
+Apache HertzBeat - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Release notes:
-https://hertzbeat.apache.org/download/release-note/2.1.0/
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0
 
 The release candidates:
-https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/
-
-Maven artifacts are available in a staging repository at:
-https://repository.apache.org/content/repositories/orgapachehertzbeat-1012/
+https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
 
 Git tag for the release:
-https://github.com/apache/hertzbeat/releases/tag/v2.1.0-rc1
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
@@ -489,9 +388,7 @@ Steps to validate the release，Please refer to:
 https://hertzbeat.apache.org/community/release/how-to-verify
 
 How to Build:
-
-1.cd hertzbeat
-2.sh ./build.sh
+https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
 
 Thanks!
 ```
@@ -499,22 +396,19 @@ Thanks!
 在72小时后，将统计投票结果，并发送投票结果邮件，如下所示。
 
 > `Send to`: dev@hertzbeat.apache.org <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
+> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
 Dear HertzBeat community,
 
-Thanks for your review and vote for "Release Apache HertzBeat (incubating) 2.1.0-rc1"
+Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
 I'm happy to announce the vote has passed:
 
 
 4 binding +1, from:
 
-- Zhuoyu Chen
-- Huajie Wang
-- Linying Yu
-- Shaokang Lv
+- cc
 
 1 non-binding +1, from:
 
@@ -534,31 +428,25 @@ Best,
 ChunJin Mu
 ```
 
-邮件内容中的一项是`Vote thread`，链接获取方式如下：<br />
-访问此地址 https://lists.apache.org/list.html?dev@hertzbeat.apache.org ， 找到邮件标题并点击显示投票内容
+邮件内容中的一项是`Vote thread`，在 https://lists.apache.org/list.html?dev@hertzbeat.apache.org 查看获取
 
-![图片](https://github.com/apache/streampark/assets/19602424/5755ed06-529f-4739-96a8-1ac13bbb21ea)
-
-右键点击标题，点击复制链接地址获取链接
-
-![图片](https://github.com/apache/streampark/assets/19602424/1616da5b-7891-45cc-b956-a0ba5e7ce874)
 
 #### 3.2 发送孵化社区投票邮件
 
 发送孵化社区投票邮件需要至少三个`+1`，且无`-1`。
 
 > `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
-> `Title`: [VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
+> `cc`: dev@hertzbeat.apache.org、private@hertzbeat.apache.org <br />
+> `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
 Hello Incubator Community:
 
-This is a call for a vote to release Apache HertzBeat (incubating) version 2.1.0-RC1.
-The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat (incubating) version 2.1.0-RC1.
+This is a call for a vote to release Apache HertzBeat (incubating) version 1.6.0-RC1.
+The Apache HertzBeat community has voted on and approved a proposal to release Apache HertzBeat (incubating) version 1.6.0-RC1.
 We now kindly request the Incubator PMC members review and vote on this incubator release.
-Apache HertzBeat, Make stream processing easier! Easy-to-use streaming application development framework and operation platform.
+Apache HertzBeat, a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 HertzBeat community vote thread:
 https://lists.apache.org/thread/t01b2lbtqzyt7j4dsbdp5qjc3gngjsdq
@@ -567,13 +455,10 @@ Vote result thread:
 https://lists.apache.org/thread/t5z58mvrs1drgzfyc48c9lhmd8skswn7
 
 The release candidate:
-https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1/
+https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
 
 Git tag for the release:
-https://github.com/apache/hertzbeat/releases/tag/v2.1.0-rc1
-
-Maven artifacts are available in a staging repository at:
-https://repository.apache.org/content/repositories/orgapachehertzbeat-1012/
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
@@ -594,12 +479,7 @@ Steps to validate the release， Please refer to:
 
 
 How to Build:
-
-1) clone source code:
-> git clone -b v2.1.0-rc1 git@github.com:apache/hertzbeat.git
-
-2) build project:
-> cd hertzbeat && sh ./build.sh
+https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
 
 
 Thanks,
@@ -628,22 +508,20 @@ Chunjin Mu
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 2.1.0-rc1 <br />
+> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
 Hi all,
 
-Thanks for your review and vote for "Release Apache HertzBeat (incubating) 2.1.0-rc1"
+Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
 I'm happy to announce the vote has passed:
 
 3 binding votes, no +0 or -1 votes.
 Thanks for reviewing and voting.
 
 +3 (binding) +1, from:
-- tison
-- Gang Li
-- Willem Jiang
+- cc
 
 no 0 or -1 votes.
 
@@ -657,12 +535,7 @@ Best,
 ChunJin Mu
 ```
 
-邮件内容中的一项是`Vote thread`，链接获取方式如下：<br />
-访问此地址 https://lists.apache.org/list.html?general@incubator.apache.org ， 找到邮件标题并点击显示投票内容
-
-![图片](https://github.com/apache/streampark/assets/19602424/aea68925-7911-4413-8b2d-aea12685337f)
-
-右键点击标题，点击复制链接地址获取链接
+邮件内容中的一项是`Vote thread`，在 https://lists.apache.org/list.html?general@incubator.apache.org 查看获取
 
 等待一天，查看看导师是否有其他意见，如果没有，发送以下公告邮件
 
@@ -671,99 +544,69 @@ ChunJin Mu
 #### 4.1 迁移源代码和二进制包
 
 ```shell
-svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/2.1.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/2.1.0  -m "transfer packages for 2.1.0-RC1"
+svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/1.6.0  -m "transfer packages for 1.6.0-RC1"
 ```
 
-#### 4.2 发布版本到Apache Staging仓库
+#### 4.2 添加新版本下载地址到官网
 
-- 登录 http://repository.apache.org ，使用你的Apache账号登录
-- 点击左侧的 Staging repositories
-- 选择你最近上传的仓库，投票邮件中指定的仓库
-- 点击上方的Release按钮，这个过程会进行一系列的检查
-> 仓库同步到其他数据源通常需要24小时左右
+https://github.com/apache/hertzbeat/blob/master/home/docs/download.md
+https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md
 
-#### 4.3 添加新版本下载地址到官网
-
-添加以下内容到官网的src/pages/download/data.json文件中
-
-```
-{
-    "version": "2.1.0",
-    "date": "2023-05-11"
-}
-```
-
-最终文件内容如下
-
-```
-[
-    {
-    "version": "2.0.0",
-    "date": "2023-02-21"
-    },
-    {
-    "version": "2.1.0",
-    "date": "2023-05-11"
-    }
-]
-```
-
-打开官网地址 https://hertzbeat.apache.org/download/ 查看是否有新版本的下载
+完成后打开官网地址 https://hertzbeat.apache.org/docs/download/ 查看是否有新版本的下载
 
 > 需要注意的是，下载链接可能需要一个小时后才会生效，请注意。
 
-![图片](https://github.com/apache/hertzbeat/assets/19602424/e7900fb2-7bfc-4fa1-bd40-9806e6a822ef)
+#### 4.3 Github 生成 Release
 
-#### 4.4 在github上生成release
-
-基于release-2.1.0-rc1分支创建一个名为v2.1.0的标签，并将此标签设置为latest release。
+基于 release-1.6.0-rc1 分支创建一个名为 v1.6.0 的标签，并将此标签设置为 latest release。
 
 然后输入发版标题和描述
 
 - 发版标题: 
 ```
-v2.1.0-incubating
+v1.6.0-incubating
 ```
 - 描述:
 ```
-Release-2.1.0-incubating
-release note: https://hertzbeat.apache.org/download/release-note/2.1.0
+Release-1.6.0-incubating
+release note: xxx
 ```
-
-![图片](https://github.com/apache/streampark/assets/19602424/84723ff5-a295-471d-8265-1b8ef867c3d1)
 
 然后点击`Publish release`按钮。
 
-然后将release-2.1.0-rc1分支重命名为release-2.1.0。
+然后将 release-1.6.0-rc1 分支重命名 为release-1.6.0。
 
-#### 4.5 发送新版本公告邮件
+#### 4.4 发送新版本公告邮件
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org <br />
-> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 2.1.0 <br />
+> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 1.6.0 <br />
 > `Body`:
 
 ```
 Hi all,
 
-We are glad to announce the release of Apache HertzBeat (incubating) 2.1.0.
+We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
 Once again I would like to express my thanks to your help.
 
-Apache HertzBeat(https://hertzbeat.apache.org/) - Make stream processing easier! Easy-to-use streaming application development framework and operation platform.
+Apache HertzBeat(https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Download Links: https://hertzbeat.apache.org/download/
-Release Notes: https://hertzbeat.apache.org/download/release-note/2.1.0
+Release Notes: https://github.com/apache/hertzbeat/releases/tag/v1.6.0
 
 HertzBeat Resources:
 - Issue: https://github.com/apache/hertzbeat/issues
 - Mailing list: dev@hertzbeat.apache.org
 
-- Apache HertzBeat Team
+
+Apache HertzBeat Team
 
 Best,
 ChunJin Mu
 ```
 
 该版本的发布顺利结束。
+
+----
 
 This doc refer from [Apache StreamPark](https://streampark.apache.org/)   

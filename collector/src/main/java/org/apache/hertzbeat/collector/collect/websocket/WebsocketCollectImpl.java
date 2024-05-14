@@ -55,13 +55,16 @@ public class WebsocketCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getWebsocket() == null) {
+            throw new IllegalArgumentException("Websocket collect must has Websocket params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getWebsocket() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Websocket collect must has Websocket params");
-            return;
-        }
+
         WebsocketProtocol websocketProtocol = metrics.getWebsocket();
         // Compatible with monitoring templates without path parameters
         if (StringUtils.isBlank(websocketProtocol.getPath())) {
@@ -123,7 +126,7 @@ public class WebsocketCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_WEBSOCKET;
     }
 
-    private static void send(OutputStream out, WebsocketProtocol websocketProtocol) throws IOException {
+    private void send(OutputStream out, WebsocketProtocol websocketProtocol) throws IOException {
         byte[] key = generateRandomKey();
         String base64Key = base64Encode(key);
         String requestLine = "GET " + websocketProtocol.getPath() + " HTTP/1.1\r\n";
@@ -141,7 +144,7 @@ public class WebsocketCollectImpl extends AbstractCollect {
     }
 
     // Read response headers
-    private static Map<String, String> readHeaders(InputStream in) throws IOException {
+    private Map<String, String> readHeaders(InputStream in) throws IOException {
 
         Map<String, String> map = new HashMap<>(8);
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -173,7 +176,7 @@ public class WebsocketCollectImpl extends AbstractCollect {
         return map;
     }
 
-    private static byte[] generateRandomKey() {
+    private byte[] generateRandomKey() {
         SecureRandom secureRandom = new SecureRandom();
         byte[] key = new byte[16];
         secureRandom.nextBytes(key);
@@ -186,7 +189,7 @@ public class WebsocketCollectImpl extends AbstractCollect {
         Assert.hasText(protocol.getPath(), "Websocket Protocol path is required.");
     }
     
-    private static String base64Encode(byte[] data) {
+    private String base64Encode(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
     }
 }

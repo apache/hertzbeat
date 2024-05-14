@@ -68,7 +68,7 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apach
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
 4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`
 
-Detailed steps refer to [CONTRIBUTING](../others/contributing)   
+Detailed steps refer to [CONTRIBUTING](../community/contribution)   
 
 ##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose   
 

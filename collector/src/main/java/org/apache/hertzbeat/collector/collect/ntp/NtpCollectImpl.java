@@ -51,13 +51,15 @@ public class NtpCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getNtp() == null) {
+            throw new IllegalArgumentException("NTP collect must have NTP params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getNtp() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("NTP collect must have NTP params");
-            return;
-        }
         NtpProtocol ntpProtocol = metrics.getNtp();
         String host = ntpProtocol.getHost();
         int timeout = CollectUtil.getTimeout(ntpProtocol.getTimeout());
@@ -120,10 +122,10 @@ public class NtpCollectImpl extends AbstractCollect {
     private Map<String, String> getNtpInfo(TimeInfo timeInfo) {
         Map<String, String> valueMap = new HashMap<>(16);
 
-        TimeStamp timeStamp = timeInfo.getMessage().getTransmitTimeStamp();
+        NtpV3Packet message = timeInfo.getMessage();
+        TimeStamp timeStamp = message.getTransmitTimeStamp();
         Date date = timeStamp.getDate();
 
-        NtpV3Packet message = timeInfo.getMessage();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         valueMap.put("time", Long.toString(timeStamp.getTime()));
         valueMap.put("date", simpleDateFormat.format(date));

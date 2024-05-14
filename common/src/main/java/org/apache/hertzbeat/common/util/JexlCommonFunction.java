@@ -20,14 +20,11 @@
 package org.apache.hertzbeat.common.util;
 
 import java.util.regex.Pattern;
-import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 
 /**
  * the common function for jexl str equals, match, contains, etc.
  * sys:now() 
  */
-@Data
 public class JexlCommonFunction {
 
     /**
@@ -62,10 +59,13 @@ public class JexlCommonFunction {
      * @return true if contains
      */
     public boolean contains(String left, String right) {
+        if (left == null && right == null) {
+            return true;
+        }
         if (left == null || right == null) {
             return false;
         }
-        return StringUtils.containsIgnoreCase(left, right);
+        return left.toLowerCase().contains(right.toLowerCase());
     }
 
 
@@ -78,7 +78,7 @@ public class JexlCommonFunction {
         if (arg == null) {
             return false;
         }
-        return StringUtils.isNotEmpty(String.valueOf(arg));
+        return !String.valueOf(arg).isEmpty();
     }
 
     /**

@@ -56,7 +56,7 @@ params:
     # default value
     defaultValue: 161
   # field-param field key
-  - field: version
+  - field: snmpVersion
     # name-param field display i18n name
     name:
       zh-CN: SNMP 版本
@@ -85,6 +85,11 @@ params:
     required: true
     # param field input placeholder
     placeholder: 'Snmp community for v1 v2c'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 0
+        - 1
   # field-param field key
   - field: timeout
     # name-param field display i18n name
@@ -181,7 +186,7 @@ metrics:
       port: ^_^port^_^
       timeout: ^_^timeout^_^
       community: ^_^community^_^
-      version: ^_^version^_^
+      version: ^_^snmpVersion^_^
       operation: walk
       oids:
         hrSWRunIndex: 1.3.6.1.2.1.25.4.2.1.1
