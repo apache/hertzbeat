@@ -192,6 +192,17 @@ export class MonitorNewComponent implements OnInit {
         }
       }
     });
+    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
+      if (advancedParamDefine.depend) {
+        let fieldValues = (new Map(Object.entries(advancedParamDefine.depend))).get(dependField);
+        if (fieldValues) {
+          this.advancedParams[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.advancedParams[index].display = true;
+          }
+        }
+      }
+    });
   }
 
   onSubmit(formGroup: FormGroup) {
