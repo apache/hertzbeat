@@ -22,7 +22,6 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
-import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
@@ -112,20 +111,18 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             builder.setMsg("unsupported mongodb diagnostic command: " + command);
             return;
         }
-        ClientSession clientSession = null;
         MongoClient mongoClient;
         CacheIdentifier identifier = null;
         try {
             identifier = getIdentifier(metrics.getMongodb());
             mongoClient = getClient(metrics, identifier);
             MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
-            clientSession = mongoClient.startSession();
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             Document document;
             if (metricsParts.length == 1) {
-                document = mongoDatabase.runCommand(clientSession, new Document(command, 1));
+                document = mongoDatabase.runCommand(new Document(command, 1));
             } else {
-                document = mongoDatabase.runCommand(clientSession, new Document(command, 1));
+                document = mongoDatabase.runCommand(new Document(command, 1));
                 for (int i = 1; i < metricsParts.length; i++) {
                     document = (Document) document.get(metricsParts[i]);
                 }
@@ -145,12 +142,6 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             String message = CommonUtil.getMessageFromThrowable(e);
             builder.setMsg(message);
             log.warn(message, e);
-        } finally {
-            if (clientSession != null) {
-                try {
-                    clientSession.close();
-                } catch (Exception ignored) {}
-            }
         }
     }
 
