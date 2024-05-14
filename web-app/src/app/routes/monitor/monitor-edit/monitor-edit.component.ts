@@ -200,7 +200,7 @@ export class MonitorEditComponent implements OnInit {
   detectDepend() {
     this.paramDefines.forEach((paramDefine, index) => {
       if (paramDefine.type == 'radio') {
-        this.onDependChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field)
+        this.onDependChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
       }
     });
   }
@@ -223,7 +223,7 @@ export class MonitorEditComponent implements OnInit {
   onDependChanged(dependValue: string, dependField: string) {
     this.paramDefines.forEach((paramDefine, index) => {
       if (paramDefine.depend) {
-        let fieldValues = (new Map(Object.entries(paramDefine.depend))).get(dependField);
+        let fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
         if (fieldValues) {
           this.params[index].display = false;
           if (fieldValues.map(String).includes(dependValue)) {
@@ -234,7 +234,7 @@ export class MonitorEditComponent implements OnInit {
     });
     this.advancedParamDefines.forEach((advancedParamDefine, index) => {
       if (advancedParamDefine.depend) {
-        let fieldValues = (new Map(Object.entries(advancedParamDefine.depend))).get(dependField);
+        let fieldValues = new Map(Object.entries(advancedParamDefine.depend)).get(dependField);
         if (fieldValues) {
           this.advancedParams[index].display = false;
           if (fieldValues.map(String).includes(dependValue)) {
