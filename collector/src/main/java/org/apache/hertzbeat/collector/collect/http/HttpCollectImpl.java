@@ -101,7 +101,7 @@ public class HttpCollectImpl extends AbstractCollect {
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
-    
+
     public HttpCollectImpl() {
     }
 
@@ -139,7 +139,7 @@ public class HttpCollectImpl extends AbstractCollect {
             }
             // todo This code converts an InputStream directly to a String. For large data in Prometheus exporters,
             // this could create large objects, potentially impacting JVM memory space significantly.
-            // Option 1: Parse using InputStream, but this requires significant code changes; 
+            // Option 1: Parse using InputStream, but this requires significant code changes;
             // Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             if (StringUtils.hasText(resp)) {
@@ -148,22 +148,22 @@ public class HttpCollectImpl extends AbstractCollect {
             Long responseTime = System.currentTimeMillis() - startTime;
             String parseType = metrics.getHttp().getParseType();
             try {
-				switch (parseType) {
-				case DispatchConstants.PARSE_JSON_PATH ->
-						parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-				case DispatchConstants.PARSE_PROM_QL ->
-						parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-				case DispatchConstants.PARSE_PROMETHEUS ->
-						parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
-				case DispatchConstants.PARSE_XML_PATH ->
-						parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-				case DispatchConstants.PARSE_WEBSITE ->
-						parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-				case DispatchConstants.PARSE_SITE_MAP ->
-						parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
-				default ->
-						parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-				}
+                switch (parseType) {
+                    case DispatchConstants.PARSE_JSON_PATH ->
+                            parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                    case DispatchConstants.PARSE_PROM_QL ->
+                            parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                    case DispatchConstants.PARSE_PROMETHEUS ->
+                            parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
+                    case DispatchConstants.PARSE_XML_PATH ->
+                            parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+                    case DispatchConstants.PARSE_WEBSITE ->
+                            parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                    case DispatchConstants.PARSE_SITE_MAP ->
+                            parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
+                    default ->
+                            parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                }
             } catch (Exception e) {
                 log.info("parse error: {}.", e.getMessage(), e);
                 builder.setCode(CollectRep.Code.FAIL);
@@ -200,12 +200,12 @@ public class HttpCollectImpl extends AbstractCollect {
             }
         }
     }
-    
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_HTTP;
     }
-    
+
     private void parseResponseByWebsite(String resp, List<String> aliasFields, HttpProtocol http,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
@@ -221,7 +221,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         builder.addValues(valueRowBuilder.build());
     }
-    
+
     private void parseResponseBySiteMap(String resp, List<String> aliasFields,
                                         CollectRep.MetricsData.Builder builder) {
         List<String> siteUrls = new LinkedList<>();
@@ -304,11 +304,11 @@ public class HttpCollectImpl extends AbstractCollect {
             builder.addValues(valueRowBuilder.build());
         }
     }
-    
+
     private void parseResponseByXmlPath(String resp, List<String> aliasFields, HttpProtocol http,
                                         CollectRep.MetricsData.Builder builder) {
     }
-    
+
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
         List<Object> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
@@ -360,15 +360,15 @@ public class HttpCollectImpl extends AbstractCollect {
             }
         }
     }
-    
+
     private void parseResponseByPromQl(String resp, List<String> aliasFields, HttpProtocol http,
                                        CollectRep.MetricsData.Builder builder) {
         AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
         prometheusParser.handle(resp, aliasFields, http, builder);
     }
-    
+
     private static final Map<Long, ExporterParser> EXPORTER_PARSER_TABLE = new ConcurrentHashMap<>();
-    
+
     private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
                                                    CollectRep.MetricsData.Builder builder) {
         if (!EXPORTER_PARSER_TABLE.containsKey(builder.getId())) {
@@ -403,7 +403,7 @@ public class HttpCollectImpl extends AbstractCollect {
             }
         }
     }
-    
+
     private void parseResponseByDefault(String resp, List<String> aliasFields, HttpProtocol http,
                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         JsonElement element = JsonParser.parseString(resp);
@@ -417,7 +417,7 @@ public class HttpCollectImpl extends AbstractCollect {
             getValueFromJson(aliasFields, builder, responseTime, element, keywordNum);
         }
     }
-    
+
     private void getValueFromJson(List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime, JsonElement element, int keywordNum) {
         if (element.isJsonObject()) {
             JsonObject object = element.getAsJsonObject();
@@ -440,7 +440,7 @@ public class HttpCollectImpl extends AbstractCollect {
             builder.addValues(valueRowBuilder.build());
         }
     }
-    
+
     /**
      * create httpContext
      * @param httpProtocol http protocol
@@ -465,7 +465,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         return null;
     }
-    
+
     /**
      * create http request
      * @param httpProtocol http params
@@ -529,7 +529,7 @@ public class HttpCollectImpl extends AbstractCollect {
         } else {
             requestBuilder.addHeader(HttpHeaders.ACCEPT, "*/*");
         }
-        
+
         if (httpProtocol.getAuthorization() != null) {
             HttpProtocol.Authorization authorization = httpProtocol.getAuthorization();
             if (DispatchConstants.BEARER_TOKEN.equalsIgnoreCase(authorization.getType())) {
@@ -544,16 +544,16 @@ public class HttpCollectImpl extends AbstractCollect {
                 }
             }
         }
-        
+
         // if it has payload, would override post params
         if (StringUtils.hasLength(httpProtocol.getPayload())) {
             requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }
-        
+
         // uri
         String uri = CollectUtil.replaceUriSpecialChar(httpProtocol.getUrl());
         if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
-            
+
             requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(httpProtocol.getHost());
@@ -567,7 +567,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
             }
         }
-        
+
         // custom timeout
         int timeout = CollectUtil.getTimeout(httpProtocol.getTimeout(), 0);
         if (timeout > 0) {
@@ -580,7 +580,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         return requestBuilder.build();
     }
-    
+
     private boolean checkSuccessInvoke(Metrics metrics, int statusCode) {
         List<String> successCodes = metrics.getHttp().getSuccessCodes();
         Set<Integer> successCodeSet = successCodes != null ? successCodes.stream().map(code -> {

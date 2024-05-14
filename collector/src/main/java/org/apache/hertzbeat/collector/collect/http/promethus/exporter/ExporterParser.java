@@ -81,18 +81,17 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         switch (buffer.charAt(0)) {
-        case '#' -> {
-            buffer.read();
-            this.currentMetricFamily = null;
-            this.parseComment(metricMap, buffer);
-        }
-        case ENTER -> {
-        }
-        default -> {
-            this.currentBucket = null;
-            this.currentQuantile = null;
-            this.parseMetric(buffer);
-        }
+            case '#' -> {
+                buffer.read();
+                this.currentMetricFamily = null;
+                this.parseComment(metricMap, buffer);
+            }
+            case ENTER -> {}
+            default -> {
+                this.currentBucket = null;
+                this.currentQuantile = null;
+                this.parseMetric(buffer);
+            }
         }
     }
 
@@ -390,14 +389,12 @@ public class ExporterParser {
                 }
                 escaped = false;
             } else {
-				switch (c) {
-				case QUOTES -> {
-					return builder.toString();
-				}
-				case ENTER -> throw new ParseException("parse label value error, next line");
-				case '\\' -> escaped = true;
-				default -> builder.append(c);
-				}
+                switch (c) {
+                    case QUOTES -> { return builder.toString(); }
+                    case ENTER -> throw new ParseException("parse label value error, next line");
+                    case '\\' -> escaped = true;
+                    default -> builder.append(c);
+                }
             }
         }
         return builder.toString();
