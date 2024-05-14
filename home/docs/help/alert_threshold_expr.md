@@ -1,49 +1,66 @@
 ---
 id: alert_threshold_expr  
-title: Threshold trigger expression      
-sidebar_label: Threshold trigger expression      
+title: Threshold Trigger Expression  
+sidebar_label: Threshold Trigger Expression
 ---
 
-> When we configure the threshold alarm, we need to configure the threshold trigger expression. The system calculates whether to trigger the alarm according to the expression and the monitoring index value. Here is a detailed introduction to the use of the expression.    
+> When configuring threshold alerts, it is necessary to set up threshold trigger expressions. The system calculates whether to trigger an alert based on the expression and the monitored metric values. Here, we provide a detailed explanation of expression usage.
 
-#### Operators supported by expressions   
+#### Supported Operators in Expressions
 
-```
-equals(str1,str2) 
-==
-<
-<=
->
->=
-!=
-( )
-+
--
-&&
-||
-```
+| Operator (Visual Configuration) | Operator (Expression Configuration) | Supported Types          | Description                |
+| ------------------------------- | ----------------------------------- | ------------------------- | -------------------------- |
+| Equals                          | equals(str1,str2)                   | String                    | Check if strings are equal |
+| Not Equals                      | !equals(str1,str2)                  | String                    | Check if strings are not equal |
+| Contains                        | contains(str1,str2)                 | String                    | Check if string contains   |
+| Not Contains                    | !contains(str1,str2)                | String                    | Check if string does not contain |
+| Matches                         | matches(str1,str2)                  | String                    | Check if string matches regex |
+| Not Matches                     | !matches(str1,str2)                 | String                    | Check if string does not match regex |
+| Exists                          | exists(obj)                         | String, Numeric, Time     | Check if value exists      |
+| Not Exists                      | !exists(obj)                        | String, Numeric, Time     | Check if value does not exist |
+| Greater than                    | obj1 > obj2                         | Numeric, Time             | Check if value is greater than |
+| Less than                       | obj1 < obj2                         | Numeric, Time             | Check if value is less than |
+| Greater than or Equal to        | obj1 >= obj2                        | Numeric, Time             | Check if value is greater than or equal to |
+| Less than or Equal to           | obj1 <= obj2                        | Numeric, Time             | Check if value is less than or equal to |
+| Not Equal to                    | obj1 != obj2                        | Numeric, Time             | Check if values are not equal |
+| Equal to                        | obj1 == obj2                        | Numeric, Time             | Check if values are equal   |
 
-Rich operators allow us to define expressions freely.   
-Note⚠️ For the equality of string, please use `equals(str1,str2)`, while for the equality judgment of number, please use == or != 
+#### Expression Function Library List
 
-#### Supported environment variables    
-> Environment variables, i.e. supported variables such as Metric values, are used in the expression. When the threshold value is calculated and judged, the variables will be replaced with actual values for calculation.   
+| Supported Function Library       | Description                                                    |
+| -------------------------------- | -------------------------------------------------------------- |
+| condition ? trueExpression : falseExpression | Ternary operator                                         |
+| toDouble(str)                    | Convert string to Double type                                  |
+| toBoolean(str)                   | Convert string to Boolean type                                 |
+| toInteger(str)                   | Convert string to Integer type                                 |
+| array[n]                         | Retrieve the nth element of an array                            |
+| *                                | Multiplication                                                   |
+| /                                | Division                                                         |
+| %                                | Modulo                                                           |
+| ( and )                          | Parentheses for controlling the order of operations in logical or mathematical expressions |
+| +                                | Addition                                                         |
+| -                                | Subtraction                                                      |
+| &&                               | Logical AND operator                                             |
+| \|\|                             | Logical OR operator                                              |
 
-Non fixed environment variables：These variables will change dynamically according to the monitoring Metric object we choose. For example, if we choose **response time Metric of website monitoring**, the environment variables will have `responseTime - This is the response time variable`     
-If we want to set **when the response time of website monitoring is greater than 400** to trigger an alarm，the expression is `responseTime>400`
+#### Supported Environment Variables
 
-Fixed environment variables(Rarely used)：`instance : Row instance value`   
-This variable is mainly used to calculate multiple instances. For example, we collected `usage`(`usage is non fixed environment variables`) of disk C and disk D, but we only want to set the alarm when **the usage of C disk is greater than 80**. Then the expression is `equals(instance,"c")&&usage>80` 
+> Environment variables refer to variables supported by metric values, used in expressions. During threshold calculation and judgment, these variables will be replaced with actual values.
 
-#### Expression setting case   
+Non-fixed Environment Variables: These variables change dynamically based on the selected monitoring metric. For example, if we choose **response time metric for website monitoring**, the environment variable would be `responseTime - this represents response time variable`. If we want to set an alert trigger for **response time greater than 400 for website monitoring**, the expression would be `responseTime>400`.
 
-1. Website monitoring -> Trigger alarm when the response time is greater than or equal to 400ms    
-`responseTime>=400`    
-2. API monitoring -> Trigger alarm when the response time is greater than 3000ms    
-`responseTime>3000`   
-3. Entire site monitoring -> Trigger alarm when URL(instance) path is `https://baidu.com/book/3` and the response time is greater than 200ms   
-`equals(instance,"https://baidu.com/book/3")&&responseTime>200`     
-4. MYSQL monitoring -> status Metric group -> Trigger alarm when hreads_running(number of running threads) Metric is greater than 7   
-`threads_running>7`   
+Fixed Environment Variables (Less commonly used): `instance: instance value`
+This variable is mainly used for calculations involving multiple instances. For instance, if we collect usage metrics for C drive and D drive (`usage` being a non-fixed environment variable), and we only want to set an alert for **usage greater than 80 for the C drive**, the expression would be `equals(instance,"c")&&usage>80`.
 
-Other issues can be fed back through the communication group ISSUE!  
+#### Expression Configuration Examples
+
+1. Website Monitoring -> Alert when response time is greater than or equal to 400ms
+   `responseTime>=400`
+2. API Monitoring -> Alert when response time is greater than 3000ms
+   `responseTime>3000`
+3. Overall Monitoring -> Alert when response time for URL (instance) path 'https://baidu.com/book/3' is greater than 200ms
+   `equals(instance,"https://baidu.com/book/3")&&responseTime>200`
+4. MYSQL Monitoring -> Alert when 'threads_running' metric under 'status' exceeds 7
+   `threads_running>7`
+
+If you encounter any issues, feel free to discuss and provide feedback through our community group or ISSUE tracker!
