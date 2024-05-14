@@ -118,14 +118,9 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             mongoClient = getClient(metrics, identifier);
             MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-            Document document;
-            if (metricsParts.length == 1) {
-                document = mongoDatabase.runCommand(new Document(command, 1));
-            } else {
-                document = mongoDatabase.runCommand(new Document(command, 1));
-                for (int i = 1; i < metricsParts.length; i++) {
-                    document = (Document) document.get(metricsParts[i]);
-                }
+            Document document = mongoDatabase.runCommand(new Document(command, 1));
+            for (int i = 1; i < metricsParts.length; i++) {
+                document = (Document) document.get(metricsParts[i]);
             }
             if (document == null) {
                 throw new RuntimeException("the document get from command " + metrics.getMongodb().getCommand() + " is null.");
