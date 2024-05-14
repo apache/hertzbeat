@@ -35,7 +35,6 @@ import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
-
 /**
  * pop3 collect
  */

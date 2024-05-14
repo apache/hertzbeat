@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * the convert of time length
- * 时间长短转换
  */
 @Component
 public final class TimeLengthConvert implements UnitConvert {

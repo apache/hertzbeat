@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.net.ssl.SSLException;
@@ -86,7 +87,6 @@ import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
 
 /**
  * http https collect
@@ -149,23 +149,22 @@ public class HttpCollectImpl extends AbstractCollect {
             Long responseTime = System.currentTimeMillis() - startTime;
             String parseType = metrics.getHttp().getParseType();
             try {
-                if (DispatchConstants.PARSE_DEFAULT.equals(parseType)) {
-                    parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                } else if (DispatchConstants.PARSE_JSON_PATH.equals(parseType)) {
-                    parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                } else if (DispatchConstants.PARSE_PROM_QL.equalsIgnoreCase(parseType)) {
-                    parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-                } else if (DispatchConstants.PARSE_PROMETHEUS.equals(parseType)) {
-                    parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
-                } else if (DispatchConstants.PARSE_XML_PATH.equals(parseType)) {
-                    parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
-                } else if (DispatchConstants.PARSE_WEBSITE.equals(parseType)) {
-                    parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                } else if (DispatchConstants.PARSE_SITE_MAP.equals(parseType)) {
-                    parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
-                } else {
-                    parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
-                }
+				switch (parseType) {
+				case DispatchConstants.PARSE_JSON_PATH ->
+						parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+				case DispatchConstants.PARSE_PROM_QL ->
+						parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+				case DispatchConstants.PARSE_PROMETHEUS ->
+						parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
+				case DispatchConstants.PARSE_XML_PATH ->
+						parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
+				case DispatchConstants.PARSE_WEBSITE ->
+						parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+				case DispatchConstants.PARSE_SITE_MAP ->
+						parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
+				default ->
+						parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+				}
             } catch (Exception e) {
                 log.info("parse error: {}.", e.getMessage(), e);
                 builder.setCode(CollectRep.Code.FAIL);

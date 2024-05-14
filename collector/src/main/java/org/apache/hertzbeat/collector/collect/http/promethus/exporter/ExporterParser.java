@@ -81,23 +81,26 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         switch (buffer.charAt(0)) {
-            case '#':
-                buffer.read();
-                this.currentMetricFamily = null;
-                this.parseComment(metricMap, buffer);
-                break;
-            case ENTER:
-                break;
-            default:
-                this.currentBucket = null;
-                this.currentQuantile = null;
-                this.parseMetric(buffer);
+        case '#' -> {
+            buffer.read();
+            this.currentMetricFamily = null;
+            this.parseComment(metricMap, buffer);
+        }
+        case ENTER -> {
+        }
+        default -> {
+            this.currentBucket = null;
+            this.currentQuantile = null;
+            this.parseMetric(buffer);
+        }
         }
     }
 
     private void parseComment(Map<String, MetricFamily> metricMap, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         String token = this.readTokenUnitWhitespace(buffer);
         if (EOF.equals(token)) {
             return;
@@ -160,7 +163,9 @@ public class ExporterParser {
 
     private void readLabels(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         metric.setLabelPair(new ArrayList<>());
         if (buffer.charAt(0) == LEFT_CURLY_BRACKET) {
             buffer.read();
@@ -172,11 +177,15 @@ public class ExporterParser {
 
     private void startReadLabelName(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         if (buffer.charAt(0) == RIGHT_CURLY_BRACKET) {
             buffer.read();
             buffer.skipBlankTabs();
-            if (buffer.isEmpty()) return;
+            if (buffer.isEmpty()) {
+                return;
+            }
             this.readLabelValue(metric, new MetricFamily.Label(), buffer);
             return;
         }
@@ -194,7 +203,9 @@ public class ExporterParser {
 
     private void startReadLabelValue(MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         char c = buffer.read();
         if (c != QUOTES) {
             throw new ParseException("expected '\"' at start of label value, line: " + buffer.toStr());
@@ -211,7 +222,9 @@ public class ExporterParser {
         } else {
             metric.getLabelPair().add(label);
         }
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         c = buffer.read();
         switch (c) {
             case COMMA -> this.startReadLabelName(metric, buffer);
@@ -377,17 +390,14 @@ public class ExporterParser {
                 }
                 escaped = false;
             } else {
-                switch (c) {
-                    case QUOTES:
-                        return builder.toString();
-                    case ENTER:
-                        throw new ParseException("parse label value error, next line");
-                    case '\\':
-                        escaped = true;
-                        break;
-                    default:
-                        builder.append(c);
-                }
+				switch (c) {
+				case QUOTES -> {
+					return builder.toString();
+				}
+				case ENTER -> throw new ParseException("parse label value error, next line");
+				case '\\' -> escaped = true;
+				default -> builder.append(c);
+				}
             }
         }
         return builder.toString();
