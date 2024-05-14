@@ -165,7 +165,10 @@ params:
     # param field input placeholder
     placeholder: 'Available When POST PUT'
     # dependent parameter values list
-    parent: [ POST,PUT ]
+    depend:
+      httpMethod:
+        - POST
+        - PUT
     # required-true or false
     required: false
     # hide param-true or false
