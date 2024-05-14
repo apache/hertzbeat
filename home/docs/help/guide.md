@@ -61,6 +61,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[FreeBSD operating system monitoring](freebsd) <br />
 &emsp;&#x1F449;&emsp;[RedHat operating system monitoring](redhat) <br />
 &emsp;&#x1F449;&emsp;[Rocky Linux operating system monitoring](rockylinux) <br />
+&emsp;&#x1F449;&emsp;[EulerOS monitoring](euleros) <br />
 
 ### Middleware monitoring
 
@@ -130,3 +131,7 @@ More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert_threshold) <br />
 &emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br />
 &emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />
 &emsp;&#x1F449;&emsp;[Configure Huawei Cloud SMN Notification](alert_smn) <br />
+
+### Plugins
+
+&emsp;&#x1F449;&emsp;[Plugin](plugin) <br />

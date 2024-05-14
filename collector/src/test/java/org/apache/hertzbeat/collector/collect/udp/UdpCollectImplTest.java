@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.collect.udp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.PortUnreachableException;
@@ -46,18 +47,15 @@ class UdpCollectImplTest {
 
     @Test
     void testPreCheck() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         List<String> aliasField = new ArrayList<>();
         aliasField.add("responseTime");
         Metrics metrics = new Metrics();
         metrics.setAliasFields(aliasField);
-        udpCollect.collect(builder, 1L, "test", metrics);
-        assertEquals(builder.getCode(), CollectRep.Code.FAIL);
-
+        assertThrows(IllegalArgumentException.class, () -> udpCollect.preCheck(metrics));
     }
 
     @Test
-    void testCollect(){
+    void testCollect() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         UdpProtocol ftpProtocol = UdpProtocol.builder()
                 .timeout("10")
@@ -77,6 +75,7 @@ class UdpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setUdp(ftpProtocol);
         metrics.setAliasFields(aliasField);
+        udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
@@ -87,7 +86,7 @@ class UdpCollectImplTest {
     }
 
     @Test
-    void testCollectWithSocketException(){
+    void testCollectWithSocketException() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         UdpProtocol ftpProtocol = UdpProtocol.builder()
                 .timeout("10")
@@ -107,6 +106,7 @@ class UdpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setUdp(ftpProtocol);
         metrics.setAliasFields(aliasField);
+        udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getCode(), CollectRep.Code.UN_CONNECTABLE);
 
@@ -114,7 +114,7 @@ class UdpCollectImplTest {
     }
 
     @Test
-    void testCollectWithPortUnreachableException(){
+    void testCollectWithPortUnreachableException() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         UdpProtocol ftpProtocol = UdpProtocol.builder()
                 .timeout("10")
@@ -134,6 +134,7 @@ class UdpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setUdp(ftpProtocol);
         metrics.setAliasFields(aliasField);
+        udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getCode(), CollectRep.Code.UN_REACHABLE);
 

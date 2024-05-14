@@ -151,13 +151,18 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     + metrics.getName() + ", " + metrics.getProtocol());
         } else {
             try {
+                abstractCollect.preCheck(metrics);
                 abstractCollect.collect(response, monitorId, app, metrics);
             } catch (Exception e) {
                 String msg = e.getMessage();
                 if (msg == null && e.getCause() != null) {
                     msg = e.getCause().getMessage();
                 }
-                log.error("[Metrics Collect]: {}.", msg, e);
+                if (e instanceof IllegalArgumentException){
+                    log.error("[Metrics PreCheck]: {}.", msg, e);
+                } else {
+                    log.error("[Metrics Collect]: {}.", msg, e);
+                }
                 response.setCode(CollectRep.Code.FAIL);
                 if (msg != null) {
                     response.setMsg(msg);

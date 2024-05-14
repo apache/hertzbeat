@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.util;
 
-
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -33,7 +32,7 @@ import org.springframework.util.StringUtils;
  * ipv4 ipv6 domain util
  */
 @Slf4j
-public class IpDomainUtil {
+public final class IpDomainUtil {
     
     private static final Pattern DOMAIN_PATTERN =
             Pattern.compile("^[-\\w]+(\\.[-\\w]+)*$");
@@ -44,6 +43,9 @@ public class IpDomainUtil {
      * HTTP header schema
      */
     private static final Pattern DOMAIN_SCHEMA = Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://){1}[^\\s]*");
+
+    private IpDomainUtil() {
+    }
 
     /**
      * whether it is ip or domain

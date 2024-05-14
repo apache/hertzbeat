@@ -76,15 +76,15 @@ public class SshCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getSsh() == null) {
+            throw new IllegalArgumentException("ssh collect must has ssh params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         SshProtocol sshProtocol = metrics.getSsh();
         boolean reuseConnection = Boolean.parseBoolean(sshProtocol.getReuseConnection());
         int timeout = CollectUtil.getTimeout(sshProtocol.getTimeout(), DEFAULT_TIMEOUT);
@@ -326,11 +326,5 @@ public class SshCollectImpl extends AbstractCollect {
             connectionCommonCache.addCache(identifier, sshConnect);
         }
         return clientSession;
-    }
-
-    private void validateParams(Metrics metrics) throws Exception {
-        if (metrics == null || metrics.getSsh() == null) {
-            throw new Exception("ssh collect must has ssh params");
-        }
     }
 }

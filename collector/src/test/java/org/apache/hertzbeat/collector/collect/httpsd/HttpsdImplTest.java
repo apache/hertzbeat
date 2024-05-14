@@ -79,7 +79,7 @@ class HttpsdImplTest {
                 .build();
         Mockito.when(client.getServerInfo()).thenReturn(serverInfo);
         httpsd.setDiscoveryClientManagement(discoveryClientManagement);
-
+        httpsd.preCheck(metrics);
         httpsd.collect(builder, 1L, "test", metrics);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(host, valueRow.getColumns(0));
@@ -123,7 +123,7 @@ class HttpsdImplTest {
 
         Mockito.when(client.getServices()).thenReturn(serviceInstances);
         httpsd.setDiscoveryClientManagement(discoveryClientManagement);
-
+        httpsd.preCheck(metrics);
         httpsd.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
