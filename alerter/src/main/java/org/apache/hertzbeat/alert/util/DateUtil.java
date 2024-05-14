@@ -17,48 +17,67 @@
 
 package org.apache.hertzbeat.alert.util;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * date time common util
  */
 @Slf4j
-public class DateUtil {
+public final class DateUtil {
+
+    private DateUtil() {
+    }
 
     private static final String[] DATE_FORMATS = {
+            "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'",
             "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-            "yyyy-MM-dd HH:mm:ss"};
+            "yyyy-MM-dd HH:mm:ss"
+    };
 
     /**
      * convert date to timestamp
      * @param date date
+     * @return timestamp
      */
-    public static Long getTimeStampFromSomeFormats(String date) {
-        SimpleDateFormat sdf;
+    public static Optional<Long> getTimeStampFromSomeFormats(String date) {
         for (String dateFormat : DATE_FORMATS) {
             try {
-                sdf = new SimpleDateFormat(dateFormat);
-                return sdf.parse(date).getTime();
-            } catch (ParseException e) {
-                log.error(e.getMessage());
+                DateTimeFormatter dateTimeFormatter = new DateTimeFormatterBuilder()
+                        .appendPattern(dateFormat)
+                        // enable string conversion in strict mode.
+                        .parseStrict()
+                        .toFormatter();
+                LocalDateTime time = LocalDateTime.parse(date, dateTimeFormatter);
+                return Optional.of(time.toInstant(ZoneOffset.UTC).toEpochMilli());
+            } catch (Exception e) {
+                log.warn("Error parsing date '{}' with format '{}': {}",
+                        date, dateFormat, e.getMessage());
             }
         }
-        return null;
+
+        log.error("Error parsing date '{}', no corresponding date format", date);
+        return Optional.empty();
     }
 
     /**
      * convert format data to timestamp
      */
-    public static Long getTimeStampFromFormat(String date, String format) {
-        SimpleDateFormat sdf = new SimpleDateFormat(format);
+    public static Optional<Long> getTimeStampFromFormat(String date, String format) {
         try {
-            return sdf.parse(date).getTime();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+            LocalDateTime dateTime = LocalDateTime.parse(date, formatter);
+            return Optional.of(dateTime.toInstant(java.time.ZoneOffset.UTC).toEpochMilli());
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error parsing date '{}' with format '{}': {}",
+                    date, format, e.getMessage());
         }
-        return null;
+
+        return Optional.empty();
     }
 
 }

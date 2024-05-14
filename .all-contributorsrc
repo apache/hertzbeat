@@ -1817,6 +1817,33 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "yuluo-yx",
+      "name": "YuLuo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77964041?v=4",
+      "profile": "https://blog.csdn.net/qq_52397471",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Yanshuming1",
+      "name": "xiaoming student",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118667222?v=4",
+      "profile": "https://github.com/Yanshuming1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "lwjxy",
+      "name": "lwjxy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52726400?v=4",
+      "profile": "https://github.com/lwjxy",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

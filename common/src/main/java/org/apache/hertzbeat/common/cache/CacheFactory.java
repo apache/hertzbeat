@@ -22,7 +22,7 @@ import java.time.Duration;
 /**
  * common cache factory
  */
-public class CacheFactory {
+public final class CacheFactory {
     private CacheFactory() {}
 
     private static final CommonCacheService<String, Object> NOTICE_CACHE =

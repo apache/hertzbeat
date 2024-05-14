@@ -25,7 +25,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.stereotype.Component;
 
-
 /**
  * json str to id list
  */

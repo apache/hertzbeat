@@ -25,8 +25,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
-
 /**
  * Alarm Report Content Entity
  */

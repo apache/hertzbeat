@@ -39,7 +39,6 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-
 /**
  * Configure the import and export EXCEL format
  */
@@ -263,6 +262,4 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
             throw new RuntimeException(e);
         }
     }
-
-
 }
