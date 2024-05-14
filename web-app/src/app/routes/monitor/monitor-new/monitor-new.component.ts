@@ -35,6 +35,7 @@ import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
 import { MonitorService } from '../../../service/monitor.service';
 import { TagService } from '../../../service/tag.service';
+import {List} from "echarts";
 
 @Component({
   selector: 'app-monitor-add',
@@ -179,30 +180,18 @@ export class MonitorNewComponent implements OnInit {
     }
   }
 
-  onParentChanged(parentValue: string, field: string) {
-    // Cascade display of basic settings parameters
-    if (field === 'snmpVersion') {
-      this.paramDefines.forEach((paramDefine, index) => {
-        this.params[index].display = true;
-        if (paramDefine.parent != undefined && !paramDefine.parent.toString().includes(parentValue)) {
+  onDependChanged(dependValue: string, dependField: string) {
+    this.paramDefines.forEach((paramDefine, index) => {
+      if (paramDefine.depend) {
+        let fieldValues = (new Map(Object.entries(paramDefine.depend))).get(dependField);
+        if (fieldValues) {
           this.params[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.params[index].display = true;
+          }
         }
-      });
-    }
-    // Cascading display of advanced settings parameters
-    if (field === 'httpMethod') {
-      this.advancedParamDefines.forEach((advancedParamDefine, index) => {
-        this.advancedParams[index].display = true;
-        if (advancedParamDefine.parent != undefined && !advancedParamDefine.parent.toString().includes(parentValue)) {
-          this.advancedParams[index].display = false;
-        }
-      });
-    }
-    this.refreshParams();
-  }
-
-  refreshParams() {
-    this.params = [...this.params];
+      }
+    });
   }
 
   onSubmit(formGroup: FormGroup) {

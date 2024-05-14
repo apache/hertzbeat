@@ -165,8 +165,7 @@ export class MonitorEditComponent implements OnInit {
               }
             });
             this.onPageInit();
-            this.handleParameterChange('snmpVersion');
-            this.handleParameterChange('httpMethod');
+            this.detectDepend();
           } else {
             console.warn(message.msg);
           }
@@ -198,11 +197,12 @@ export class MonitorEditComponent implements OnInit {
     });
   }
 
-  handleParameterChange(paramField: string) {
-    const paramDefine = this.paramDefines.find(param => param.field === paramField);
-    if (paramDefine) {
-      this.onParentChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
-    }
+  detectDepend() {
+    this.paramDefines.forEach((paramDefine, index) => {
+      if (paramDefine.type == 'radio') {
+        this.onDependChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field)
+      }
+    });
   }
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {
@@ -220,25 +220,18 @@ export class MonitorEditComponent implements OnInit {
     }
   }
 
-  onParentChanged(parentValue: string, field: string) {
-    // Cascade display of basic settings parameters
-    if (field === 'snmpVersion') {
-      this.paramDefines.forEach((paramDefine, index) => {
-        this.params[index].display = true;
-        if (paramDefine.parent != undefined && !paramDefine.parent.toString().includes(parentValue)) {
+  onDependChanged(dependValue: string, dependField: string) {
+    this.paramDefines.forEach((paramDefine, index) => {
+      if (paramDefine.depend) {
+        let fieldValues = (new Map(Object.entries(paramDefine.depend))).get(dependField);
+        if (fieldValues) {
           this.params[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.params[index].display = true;
+          }
         }
-      });
-    }
-    // Cascading display of advanced settings parameters
-    if (field === 'httpMethod') {
-      this.advancedParamDefines.forEach((advancedParamDefine, index) => {
-        this.advancedParams[index].display = true;
-        if (advancedParamDefine.parent != undefined && !advancedParamDefine.parent.toString().includes(parentValue)) {
-          this.advancedParams[index].display = false;
-        }
-      });
-    }
+      }
+    });
   }
 
   onSubmit(formGroup: FormGroup) {
