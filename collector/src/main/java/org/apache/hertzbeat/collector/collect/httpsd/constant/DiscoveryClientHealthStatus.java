@@ -20,19 +20,18 @@
 package org.apache.hertzbeat.collector.collect.httpsd.constant;
 
 /**
- * @author yuluo
- * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
+ * Discovery client instance status.
  */
 public final class DiscoveryClientHealthStatus {
 
-	/**
+    /**
 	 * Discovery client instance status is UP.
 	 */
-	public static final String UP = "UP";
+    public static final String UP = "UP";
 
-	/**
+    /**
 	 * Discovery client instance status is DOWN.
 	 */
-	public static final String DOWN = "DOWN";
+    public static final String DOWN = "DOWN";
 
 }

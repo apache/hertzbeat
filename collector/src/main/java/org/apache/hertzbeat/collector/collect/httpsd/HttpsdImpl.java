@@ -115,7 +115,7 @@ public class HttpsdImpl extends AbstractCollect {
         try {
             Field declaredField = sourceObj.getClass().getDeclaredField(fieldName);
             declaredField.setAccessible(Boolean.TRUE);
-            columnValue = (String) declaredField.get(sourceObj);
+            columnValue = String.valueOf(declaredField.get(sourceObj));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             log.warn("No such field for {}", fieldName);
         }

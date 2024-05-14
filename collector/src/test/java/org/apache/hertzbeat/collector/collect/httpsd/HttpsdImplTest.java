@@ -82,7 +82,7 @@ class HttpsdImplTest {
         httpsd.collect(builder, 1L, "test", metrics);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(host, valueRow.getColumns(0));
-            assertEquals(port, valueRow.getColumns(1));
+            assertEquals(port, Integer.valueOf(valueRow.getColumns(1)));
             assertNotNull(valueRow.getColumns(2));
         }
     }
@@ -129,7 +129,7 @@ class HttpsdImplTest {
             assertEquals(serviceId, valueRow.getColumns(0));
             assertEquals(serviceName, valueRow.getColumns(1));
             assertEquals(host, valueRow.getColumns(2));
-            assertEquals(port, valueRow.getColumns(3));
+            assertEquals(port, Integer.valueOf(valueRow.getColumns(3)));
         }
     }
 

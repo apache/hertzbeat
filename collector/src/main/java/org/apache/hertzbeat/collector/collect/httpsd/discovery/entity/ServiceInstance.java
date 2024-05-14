@@ -20,7 +20,6 @@
 package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
 
 import java.util.Map;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
