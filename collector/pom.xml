@@ -198,12 +198,6 @@
             <artifactId>client</artifactId>
             <version>3.6.0</version>
         </dependency>
-        <!-- test support -->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.19.7</version>
-        </dependency>
     </dependencies>
 
     <build>
