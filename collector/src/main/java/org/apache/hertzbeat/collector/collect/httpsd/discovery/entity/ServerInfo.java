@@ -17,30 +17,21 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.constant;
+package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
 
-import java.util.Arrays;
-import org.apache.commons.lang3.StringUtils;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Discovery Client Instance Name For Http_sd monitor
+ * Server Info
  */
-public enum DiscoveryClientInstance {
-    CONSUL("Consul"),
-    NACOS("Nacos"),
-    NOT_SUPPORT("Not support discovery client instance!");
-
-    private final String name;
-
-    DiscoveryClientInstance(String name) {
-        this.name = name;
-    }
-
-    public static DiscoveryClientInstance getByName(String clientInstanceName) {
-        return Arrays.stream(DiscoveryClientInstance.values())
-                .filter(instance -> StringUtils.equalsIgnoreCase(instance.name, clientInstanceName))
-                .findFirst()
-                .orElse(DiscoveryClientInstance.NOT_SUPPORT);
-    }
-
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ServerInfo {
+    private String address;
+    private int port;
 }

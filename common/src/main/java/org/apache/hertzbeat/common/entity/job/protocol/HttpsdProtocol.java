@@ -34,10 +34,10 @@ import org.apache.commons.lang3.StringUtils;
 @NoArgsConstructor
 public class HttpsdProtocol {
     private String host;
-    private String port;
+    private int port;
     private String discoveryClientTypeName;
 
     public boolean isInvalid() {
-        return StringUtils.isAnyBlank(host, port, discoveryClientTypeName);
+        return StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
     }
 }

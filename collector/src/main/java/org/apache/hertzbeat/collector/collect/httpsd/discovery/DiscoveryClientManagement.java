@@ -44,16 +44,11 @@ public class DiscoveryClientManagement {
 
     private DiscoveryClient doCreateClient(HttpsdProtocol httpsdProtocol, DiscoveryClientInstance discoveryClientInstance) {
         DiscoveryClient discoveryClient;
-        switch (discoveryClientInstance) {
-            case CONSUL:
-                discoveryClient = new ConsulDiscoveryClient();
-                break;
-            case NACOS:
-                discoveryClient = new NacosDiscoveryClient();
-                break;
-            default:
-                return null;
-        }
+		switch (discoveryClientInstance) {
+		case CONSUL -> discoveryClient = new ConsulDiscoveryClient();
+		case NACOS -> discoveryClient = new NacosDiscoveryClient();
+		default -> { return null; }
+		}
 
         discoveryClient.initClient(discoveryClient.buildConnectConfig(httpsdProtocol));
         return discoveryClient;

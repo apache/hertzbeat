@@ -17,22 +17,22 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+package org.apache.hertzbeat.collector.collect.httpsd.constant;
 
 /**
- * Service Instance
+ * @author yuluo
+ * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class ServiceInstance {
-    private String serviceId;
-    private String serviceName;
-    private String address;
-    private String port;
-    private String healthStatus;
+public final class DiscoveryClientHealthStatus {
+
+	/**
+	 * Discovery client instance status is UP.
+	 */
+	public static final String UP = "UP";
+
+	/**
+	 * Discovery client instance status is DOWN.
+	 */
+	public static final String DOWN = "DOWN";
+
 }
