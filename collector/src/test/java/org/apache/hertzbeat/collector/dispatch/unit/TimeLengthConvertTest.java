@@ -61,7 +61,6 @@ class TimeLengthConvertTest {
         assertEquals("1000000", result);
     }
 
-
     /**
      * 测试纳秒转天
      */
@@ -70,6 +69,5 @@ class TimeLengthConvertTest {
         String result = convert.convert("86400000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.D.getUnit());
         assertEquals("1", result);
     }
-
 
 }

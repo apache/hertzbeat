@@ -15,4 +15,3 @@
 
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 org.apache.hertzbeat.collector.config.CollectorAutoConfiguration
-

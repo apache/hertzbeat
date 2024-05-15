@@ -41,8 +41,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test case for {@link RedisCommonCollectImpl}
- *
- *
  */
 @ExtendWith(MockitoExtension.class)
 public class RedisClusterCollectImplTest {

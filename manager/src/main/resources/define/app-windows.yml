@@ -70,7 +70,7 @@ params:
       - label: SNMPv1
         value: 0
       - label: SNMPv2c
-        value: 3
+        value: 1
   # field-param field key
   - field: community
     # name-param field display i18n name
@@ -86,7 +86,10 @@ params:
     # param field input placeholder
     placeholder: 'Snmp community for v1 v2c'
     # dependent parameter values list
-    parent: [ 0,1 ]
+    depend:
+      snmpVersion:
+        - 0
+        - 1
   # field-param field key
   - field: timeout
     # name-param field display i18n name
