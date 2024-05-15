@@ -189,9 +189,9 @@ public class ParamDefine {
     /**
      *  Depends on which parameters
      */
-    @Schema(title = "Depends on which parameters", example = "{0, 1}", accessMode = READ_WRITE)
-    @Convert(converter = JsonStringListAttributeConverter.class)
-    private List<Object> parent;
+    @Schema(title = "Depends on which parameters", example = "{field:[value1, value2, ...]}", accessMode = READ_WRITE)
+    @Convert(converter = JsonMapAttributeConverter.class)
+    private Map<String, List<Object>> depend;
 
     /**
      * Parameter option configuration

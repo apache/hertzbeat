@@ -25,7 +25,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * the convert of data size
- * 数据空间大小转换
  */
 @Component
 public final class DataSizeConvert implements UnitConvert {
