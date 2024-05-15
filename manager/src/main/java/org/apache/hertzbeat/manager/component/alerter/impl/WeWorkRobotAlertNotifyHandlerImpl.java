@@ -96,7 +96,6 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         if (StringUtils.isNotBlank(receiver.getPhone())) {
             textDto.setMentioned_mobile_list(analysisArgToList(receiver.getPhone()));
             weWorkWebHookTextDto.setText(textDto);
-            return weWorkWebHookTextDto;
         }
         if (StringUtils.isNotBlank(receiver.getTgUserId())) {
             textDto.setMentioned_list(analysisArgToList(receiver.getTgUserId()));
