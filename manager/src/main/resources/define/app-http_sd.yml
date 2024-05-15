@@ -47,7 +47,7 @@ params:
     # type-param field type(most mapping the html input type)
     type: number
     # when type is number, range is required
-    range: '[0,65535]'
+    range: "[0,65535]"
     # required-true or false
     required: true
   - field: discoveryClientTypeName
@@ -92,7 +92,7 @@ metrics:
     protocol: httpsd
     httpsd:
       host: ^_^host^_^
-      port: ^_^port^_^
+      port: 1234
       discoveryClientTypeName: ^_^discoveryClientTypeName^_^
   - name: service
     i18n:
@@ -130,7 +130,5 @@ metrics:
     protocol: httpsd
     httpsd:
       host: ^_^host^_^
-      port: ^_^port^_^
+      port: 1234
       discoveryClientTypeName: ^_^discoveryClientTypeName^_^
-
-
