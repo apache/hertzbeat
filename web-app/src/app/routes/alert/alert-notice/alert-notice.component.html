@@ -584,6 +584,20 @@
           />
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 4">
+        <nz-form-label [nzRequired]="receiver.type === 4" [nzSpan]="7" nzFor="phone">{{ 'alert.notice.type.phone' | i18n }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'validation.phone.invalid' | i18n" [nzSpan]="12">
+          <input [(ngModel)]="receiver.phone" [required]="receiver.type === 4" id="WePhone" name="phone" nz-input type="tel" />
+        </nz-form-control>
+      </nz-form-item>
+<!--      <nz-form-item *ngIf="receiver.type === 4">-->
+<!--        <nz-form-label [nzRequired]="receiver.type === 4" [nzSpan]="7" nzFor="tgUserId">{{-->
+<!--          'alert.notice.type.wework-userId' | i18n-->
+<!--          }}</nz-form-label>-->
+<!--        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">-->
+<!--          <input [(ngModel)]="receiver.tgUserId" [required]="receiver.type === 4" name="tgUserId" nz-input type="text" />-->
+<!--        </nz-form-control>-->
+<!--      </nz-form-item>-->
       <nz-form-item *ngIf="receiver.type === 5">
         <nz-form-label [nzSpan]="7" nzFor="accessToken" [nzRequired]="receiver.type === 5">{{
           'alert.notice.type.access-token' | i18n

@@ -23,9 +23,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +35,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Send alarm information through enterprise WeChat
@@ -58,6 +65,12 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
                 assert entity.getBody() != null;
                 if (entity.getBody().getErrCode() == 0) {
                     log.debug("Send WeWork webHook: {} Success", webHookUrl);
+                    WeWorkWebHookDto weWorkWebHookTextDto = checkNeedAtNominator(receiver, alert);
+                    if (!Objects.isNull(weWorkWebHookTextDto)) {
+                        HttpEntity<WeWorkWebHookDto> httpEntityText = new HttpEntity<>(weWorkWebHookTextDto, headers);
+                        restTemplate.postForEntity(webHookUrl, httpEntityText, CommonRobotNotifyResp.class);
+                    }
+
                 } else {
                     log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody().getErrMsg());
                     throw new AlertNoticeException(entity.getBody().getErrMsg());
@@ -69,6 +82,35 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         } catch (Exception e) {
             throw new AlertNoticeException("[WeWork Notify Error] " + e.getMessage());
         }
+    }
+
+    private WeWorkWebHookDto checkNeedAtNominator(NoticeReceiver receiver, Alert alert) {
+        if (StringUtils.isBlank(receiver.getPhone()) && StringUtils.isBlank(receiver.getTgUserId())) {
+            return null;
+        }
+        WeWorkWebHookDto weWorkWebHookTextDto = new WeWorkWebHookDto();
+        weWorkWebHookTextDto.setMsgtype(WeWorkWebHookDto.TEXT);
+        WeWorkWebHookDto.TextDTO textDto = new WeWorkWebHookDto.TextDTO();
+        String alertMessage = String.format("警告对象：%s\n详情：%s", alert.getTarget(), alert.getContent());
+        textDto.setContent(alertMessage);
+        if (StringUtils.isNotBlank(receiver.getPhone())) {
+            textDto.setMentioned_mobile_list(JsonUtil.toJson(analysisArgToList(receiver.getPhone())));
+            weWorkWebHookTextDto.setText(textDto);
+            return weWorkWebHookTextDto;
+        }
+        if (StringUtils.isNotBlank(receiver.getTgUserId())) {
+            textDto.setMentioned_list(JsonUtil.toJson(analysisArgToList(receiver.getTgUserId())));
+            weWorkWebHookTextDto.setText(textDto);
+        }
+        return weWorkWebHookTextDto;
+
+    }
+    private List<String> analysisArgToList(String arg) {
+        if (StringUtils.isBlank(arg)) {
+            return Collections.emptyList();
+        }
+        //english symbol
+        return Arrays.asList(arg.split("\\s*,\\s*"));
     }
 
     @Override
@@ -104,6 +146,10 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
          * markdown message
          */
         private MarkdownDTO markdown;
+        /**
+         * text message
+         */
+        private TextDTO text;
 
         @Data
         private static class MarkdownDTO {
@@ -112,6 +158,22 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
              * message content
              */
             private String content;
+        }
+        @Data
+        private static class TextDTO {
+
+            /**
+             * message content
+             */
+            private String content;
+            /**
+             * @ userId
+             */
+            private String mentioned_list;
+            /**
+             * @ phone
+             */
+            private String mentioned_mobile_list;
         }
 
     }
