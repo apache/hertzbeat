@@ -94,12 +94,12 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         String alertMessage = String.format("警告对象：%s\n详情：%s", alert.getTarget(), alert.getContent());
         textDto.setContent(alertMessage);
         if (StringUtils.isNotBlank(receiver.getPhone())) {
-            textDto.setMentioned_mobile_list(JsonUtil.toJson(analysisArgToList(receiver.getPhone())));
+            textDto.setMentioned_mobile_list(analysisArgToList(receiver.getPhone()));
             weWorkWebHookTextDto.setText(textDto);
             return weWorkWebHookTextDto;
         }
         if (StringUtils.isNotBlank(receiver.getTgUserId())) {
-            textDto.setMentioned_list(JsonUtil.toJson(analysisArgToList(receiver.getTgUserId())));
+            textDto.setMentioned_list(analysisArgToList(receiver.getTgUserId()));
             weWorkWebHookTextDto.setText(textDto);
         }
         return weWorkWebHookTextDto;
@@ -169,11 +169,11 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             /**
              * @ userId
              */
-            private String mentioned_list;
+            private List<String> mentioned_list;
             /**
              * @ phone
              */
-            private String mentioned_mobile_list;
+            private List<String> mentioned_mobile_list;
         }
 
     }
