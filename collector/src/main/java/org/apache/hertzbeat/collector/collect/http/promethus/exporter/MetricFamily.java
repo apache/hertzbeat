@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.ToString;
 
 /**
- *
+ * MetricFamily.
  */
 @Data
 @ToString

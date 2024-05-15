@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.common.cache;
 
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import java.util.Map;

@@ -47,7 +47,7 @@ class NtpCollectImplTest {
     private NtpCollectImpl ntpCollect;
 
     @Test
-    void testCollect(){
+    void testCollect() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         NtpProtocol telnetProtocol = NtpProtocol.builder()
                 .host("192.168.77.100")
@@ -61,7 +61,8 @@ class NtpCollectImplTest {
         packet.setOriginateTimeStamp(new TimeStamp(3000));
         packet.setReceiveTimeStamp(new TimeStamp(2000));
         packet.setTransmitTime(new TimeStamp(1000));
-        TimeInfo timeInfo = new TimeInfo(packet, 1000, false);;
+        TimeInfo timeInfo = new TimeInfo(packet, 1000, false);
+        ;
 
         MockedConstruction<NTPUDPClient> mocked =
                 Mockito.mockConstruction(NTPUDPClient.class, (client, context) -> {
@@ -86,6 +87,5 @@ class NtpCollectImplTest {
 
         mocked.close();
     }
-
 
 }

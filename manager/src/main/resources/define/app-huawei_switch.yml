@@ -88,7 +88,10 @@ params:
     # param field input placeholder
     placeholder: 'Snmp community for v1 v2c'
     # dependent parameter values list
-    parent: [ 0,1 ]
+    depend:
+      snmpVersion:
+        - 0
+        - 1
   # field-param field key
   - field: username
     # name-param field display i18n name
@@ -104,8 +107,10 @@ params:
     # param field input placeholder
     placeholder: 'Snmp username for v3'
     # dependent parameter values list
-    parent: [ 3 ]
-  # field-param field key
+    depend:
+      snmpVersion:
+        - 3
+      # field-param field key
   - field: contextName
     # name-param field display i18n name
     name:
@@ -120,7 +125,9 @@ params:
     # param field input placeholder
     placeholder: 'Snmp contextName for v3'
     # dependent parameter values list
-    parent: [ 3 ]
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: authPassphrase
     # name-param field display i18n name
@@ -136,7 +143,9 @@ params:
     # param field input placeholder
     placeholder: 'Snmp authPassword for v3'
     # dependent parameter values list
-    parent: [ 3 ]
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: authPasswordEncryption
     # name-param field display i18n name
@@ -154,7 +163,9 @@ params:
       - label: SHA1
         value: 1
     # dependent parameter values list
-    parent: [ 3 ]
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: privPassphrase
     # name-param field display i18n name
@@ -170,7 +181,9 @@ params:
     # param field input placeholder
     placeholder: 'Snmp authPassword for v3'
     # dependent parameter values list
-    parent: [ 3 ]
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: privPasswordEncryption
     # name-param field display i18n name
@@ -188,7 +201,9 @@ params:
       - label: AES128
         value: 1
     # dependent parameter values list
-    parent: [ 3 ]
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: timeout
     # name-param field display i18n name

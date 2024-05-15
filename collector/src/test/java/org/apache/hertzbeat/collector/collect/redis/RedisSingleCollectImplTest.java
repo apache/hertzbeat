@@ -38,7 +38,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
 /**
  * Test case for {@link RedisCommonCollectImpl}
  */

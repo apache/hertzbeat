@@ -1,36 +1,54 @@
 ---
-id: alert_threshold  
-title: Threshold alarm configuration      
-sidebar_label: Threshold alarm configuration      
+id: alert_threshold
+title: Threshold Alert Configuration
+sidebar_label: Threshold Alert Configuration
 ---
+> Configure alert thresholds for monitoring metrics (warning alert, critical alert, emergency alert). The system triggers alerts based on threshold configuration and collected metric data.
 
-> Configure the alarm threshold (warning alarm, critical alarm, emergency alarm) for the monitoring Metrics, and the system calculates and triggers the alarm according to the threshold configuration and the collected Metric data.         
+## Operational Steps
 
-### Operation steps   
+### 1. Setting Labels for Monitoring Services (Optional)
 
-1. **【Alarm configuration】->【Add new threshold】-> 【Confirm after configuration】**  
+If you need to categorize alerts, you can set labels for the monitored targets. For example: If you have multiple Linux systems to monitor, and each system has different monitoring metrics, such as: Server A has available memory greater than 1G, Server B has available memory greater than 2G, then you can set labels for Server A and Server B respectively, and then configure alerts based on these labels.
 
-![threshold](/img/docs/help/alert-threshold-1.png)  
+#### Creating Labels
 
-As shown above：     
+Navigate to **Label Management -> Add Label**
 
-**Metric object**：Select the monitoring Metric object for which we need to configure the threshold. Eg：website monitoring type -> summary Metric set -> responseTime-response time Metric    
-**Threshold trigger expression**：Calculate and judge whether to trigger the threshold according to this expression. See the page prompts for expression environment variables and operators. Eg：set the response time greater than 50 to trigger an alarm, and the expression is `responseTime > 50`. For detailed help on threshold expression, see [Threshold expression help](alert_threshold_expr)       
-**Alarm level**：The alarm level that triggers the threshold, from low to high: warning, critical, emergency.  
-**Trigger times**：How many times will the threshold be triggered before the alarm is really triggered.   
-**Notification template**：Notification information Template sent after alarm triggering, See page prompts for template environment variables, eg：`${app}.${metrics}.${metric} Metric's value is ${responseTime}, greater than 50 triggers an alarm`   
-**Global default**： Set whether this threshold is valid for such global Metrics, and the default is No. After adding a new threshold, you need to associate the threshold with the monitoring object, so that the threshold will take effect for this monitoring.   
-**Enable alarm**：This alarm threshold configuration is enabled or disabled.   
+![threshold](/img/docs/help/alert-threshold-2-en.png)
 
-2. **Threshold  association monitoring⚠️ 【Alarm configuration】-> 【Threshold just set】-> 【Configure associated monitoring】-> 【Confirm after configuration】**  
+As shown in the image above, add a new label. Here we set the label as: linux:dev (Linux used in development environment).
 
-> **Note⚠️ After adding a new threshold, you need to associate the threshold with the monitoring object(That is, to set this threshold for which monitoring is effective), so that the threshold will take effect for this monitoring.**。   
+#### Configuring Labels
 
-![threshold](/img/docs/help/alert-threshold-2.png)   
+TODO Update image name
+![threshold](/img/docs/help/alert-threshold-3-en.png)
 
-![threshold](/img/docs/help/alert-threshold-3.png)   
+As shown in the image above, click on `Add Label`.
 
-**After the threshold alarm is configured, the alarm information that has been successfully triggered can be seen in 【alarm center】.**      
-**If you need to notify the relevant personnel of the alarm information by email, Wechat, DingDing and Feishu, it can be configured in 【alarm notification】.**     
+![threshold](/img/docs/help/alert-threshold-4-en.png)
 
-Other issues can be fed back through the communication group ISSUE!  
+Select our label, here demonstrated as selecting the `linux:dev` label.
+
+### Creating Threshold Rules
+
+Navigate to **[Threshold Rules] -> [Add Threshold Rule] -> [Confirm Configuration]**
+
+![threshold](/img/docs/help/alert-threshold-1-en.png)
+
+The above image explains the configuration details:
+
+- **Metric Object**: Select the monitoring metric object for which we need to configure the threshold. For example: Under website monitoring type -> under the summary metric set -> responseTime metric.
+- **Threshold Rule**: Use this expression to calculate whether to trigger the threshold. Expression variables and operators are provided on the page for reference. For example: Set an alert to trigger if response time is greater than 50, the expression would be `responseTime > 50`. For detailed help on threshold expressions, see [Threshold Expression Help](alert_threshold_expr).
+- **Alert Level**: The alert level triggered by the threshold, from low to high: warning, critical, emergency.
+- **Trigger Count**: Set how many times the threshold must be triggered before the alert is actually triggered.
+- **Notification Template**: The template for the notification message sent after the alert is triggered. Template variables are provided on the page. For example: `${app}.${metrics}.${metric} metric value is ${responseTime}, which is greater than 50 triggering the alert`.
+- **Bind Label**: Select the label we need to apply. If no label is selected, it will apply to all services corresponding to the set metric object.
+- **Apply Globally**: Set whether this threshold applies globally to all such metrics, default is no. After adding a threshold, it needs to be associated with the monitoring object for the threshold to take effect.
+- **Recovery Notification**: Whether to send a recovery notification after the alert is triggered, default is not to send.
+- **Enable Alert**: Enable or disable this alert threshold configuration.
+
+**The threshold alert configuration is complete, and alerts that have been successfully triggered can be viewed in the [Alert Center].**
+**If you need to send alert notifications via email, WeChat, DingTalk, or Feishu, you can configure it in [Alert Notifications].**
+
+For other issues, you can provide feedback through the community chat group or issue tracker!
