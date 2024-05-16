@@ -22,6 +22,7 @@ import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
 /**
+ * Object store configuration change event.
  */
 @Getter
 public class ObjectStoreConfigChangeEvent extends ApplicationEvent {

@@ -66,7 +66,6 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.springframework.util.StringUtils;
 
-
 /**
  * prometheus auto collect
  */
