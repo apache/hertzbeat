@@ -17,6 +17,11 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,10 +39,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Send alarm information through enterprise WeChat
@@ -92,16 +93,17 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         String alertMessage = String.format("警告对象：%s\n详情：%s", alert.getTarget(), alert.getContent());
         textDto.setContent(alertMessage);
         if (StringUtils.isNotBlank(receiver.getPhone())) {
-            textDto.setMentioned_mobile_list(analysisArgToList(receiver.getPhone()));
+            textDto.setMentionedMobileList(analysisArgToList(receiver.getPhone()));
             weWorkWebHookTextDto.setText(textDto);
         }
         if (StringUtils.isNotBlank(receiver.getTgUserId())) {
-            textDto.setMentioned_list(analysisArgToList(receiver.getTgUserId()));
+            textDto.setMentionedList(analysisArgToList(receiver.getTgUserId()));
             weWorkWebHookTextDto.setText(textDto);
         }
         return weWorkWebHookTextDto;
 
     }
+
     private List<String> analysisArgToList(String arg) {
         if (StringUtils.isBlank(arg)) {
             return Collections.emptyList();
@@ -143,6 +145,7 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
          * markdown message
          */
         private MarkdownDTO markdown;
+
         /**
          * text message
          */
@@ -156,6 +159,7 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
              */
             private String content;
         }
+
         @Data
         private static class TextDTO {
 
@@ -166,11 +170,13 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             /**
              * @ userId
              */
-            private List<String> mentioned_list;
+            @JsonProperty(value = "mentioned_list")
+            private List<String> mentionedList;
             /**
              * @ phone
              */
-            private List<String> mentioned_mobile_list;
+            @JsonProperty(value = "mentioned_mobile_list")
+            private List<String> mentionedMobileList;
         }
 
     }

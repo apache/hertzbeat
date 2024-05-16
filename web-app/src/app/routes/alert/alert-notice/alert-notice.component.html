@@ -594,7 +594,7 @@
         <nz-form-label [nzSpan]="7" nzFor="tgUserId">{{
           'alert.notice.type.wework-userId' | i18n
           }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
+        <nz-form-control [nzErrorTip]="'validation.required'|i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.tgUserId" [required]="receiver.type === 4" name="tgUserId" nz-input type="text" />
         </nz-form-control>
       </nz-form-item>
