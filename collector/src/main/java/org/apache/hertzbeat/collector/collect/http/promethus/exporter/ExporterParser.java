@@ -38,7 +38,7 @@ public class ExporterParser {
     private static final String HELP = "HELP";
     private static final String TYPE = "TYPE";
     private static final String EOF = "EOF";
-
+    private static final String METRIC_NAME_LABEL = ".name";
     private static final String QUANTILE_LABEL = "quantile";
     private static final String BUCKET_LABEL = "le";
     private static final String NAME_LABEL = "__name__";
@@ -135,29 +135,28 @@ public class ExporterParser {
 
     private void parseMetric(StrBuffer buffer) {
         String metricName = this.readTokenAsMetricName(buffer);
+        MetricFamily.Label label = new MetricFamily.Label();
+        label.setName(METRIC_NAME_LABEL);
+        label.setValue(metricName);
+
         if (metricName.isEmpty()) {
             log.error("error parse metric, metric name is null, line: {}", buffer.toStr());
             return;
         }
+
         List<MetricFamily.Metric> metricList = this.currentMetricFamily.getMetricList();
         if (metricList == null) {
             metricList = new ArrayList<>();
             this.currentMetricFamily.setMetricList(metricList);
         }
-        // TODO: This part may have issues. The current logic creates only one metric for both HISTOGRAM and SUMMARY
-        // compared to the source code, there is a slight modification: the source code stores parsing results in a property
-        // here, the results are passed through parameters.
-        MetricFamily.Metric metric;
-        if (!metricList.isEmpty()
-                && (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM)
-                || this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
-            metric = metricList.get(0);
-        } else {
-            metric = new MetricFamily.Metric();
-            metricList.add(metric);
-        }
 
-        this.readLabels(metric, buffer);
+        // TODO For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+        MetricFamily.Metric metric = new MetricFamily.Metric();
+        metricList.add(metric);
+
+        metric.setLabelPair(new ArrayList<>());
+        metric.getLabelPair().add(label);
+        this.readLabels(metric,buffer);
     }
 
     private void readLabels(MetricFamily.Metric metric, StrBuffer buffer) {
@@ -165,7 +164,6 @@ public class ExporterParser {
         if (buffer.isEmpty()) {
             return;
         }
-        metric.setLabelPair(new ArrayList<>());
         if (buffer.charAt(0) == LEFT_CURLY_BRACKET) {
             buffer.read();
             this.startReadLabelName(metric, buffer);
@@ -218,15 +216,15 @@ public class ExporterParser {
             this.currentQuantile = labelValue;
         } else if (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) && label.getName().equals(BUCKET_LABEL)) {
             this.currentBucket = labelValue;
-        } else {
-            metric.getLabelPair().add(label);
         }
+        metric.getLabelPair().add(label);
+
         if (buffer.isEmpty()) {
             return;
         }
         c = buffer.read();
         switch (c) {
-            case COMMA -> this.startReadLabelName(metric, buffer);
+            case COMMA -> this.startReadLabelName(metric,buffer);
             case RIGHT_CURLY_BRACKET -> this.readLabelValue(metric, label, buffer);
             default -> throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
         }
@@ -257,47 +255,16 @@ public class ExporterParser {
                 metric.setUntyped(untyped);
             }
             case SUMMARY -> {
-                MetricFamily.Summary summary = metric.getSummary();
-                if (summary == null) {
-                    summary = new MetricFamily.Summary();
-                    metric.setSummary(summary);
-                }
-                // Process data for xxx_sum
-                if (label != null && this.isSum(label.getName())) {
-                    summary.setSum(buffer.toDouble());
-                }
-                // Process data for xxx_count
-                else if (label != null && this.isCount(label.getName())) {
-                    summary.setCount(buffer.toLong());
-                }
-                // Handle format for "xxx{quantile=\"0\"} 0"
-                else if (StringUtils.hasText(this.currentQuantile)) {
-                    List<MetricFamily.Quantile> quantileList = summary.getQuantileList();
-                    MetricFamily.Quantile quantile = new MetricFamily.Quantile();
-                    quantile.setXLabel(StrBuffer.parseDouble(this.currentQuantile));
-                    quantile.setValue(buffer.toDouble());
-                    quantileList.add(quantile);
-                }
+                // For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+                MetricFamily.Summary summary = new MetricFamily.Summary();
+                summary.setValue(buffer.toDouble());
+                metric.setSummary(summary);
             }
             case HISTOGRAM -> {
-                MetricFamily.Histogram histogram = metric.getHistogram();
-                if (histogram == null) {
-                    histogram = new MetricFamily.Histogram();
-                    metric.setHistogram(histogram);
-                }
-                if (label != null && this.isSum(label.getName())) {
-                    histogram.setSum(buffer.toDouble());
-                } else if (label != null && this.isCount(label.getName())) {
-                    histogram.setCount(buffer.toLong());
-                }
-                // Process the format "xxx{quantile=\"0\"} 0"
-                else if (StringUtils.hasText(this.currentBucket)) {
-                    List<MetricFamily.Bucket> bucketList = histogram.getBucketList();
-                    MetricFamily.Bucket bucket = new MetricFamily.Bucket();
-                    bucket.setUpperBound(StrBuffer.parseDouble(this.currentBucket));
-                    bucket.setCumulativeCount(buffer.toLong());
-                    bucketList.add(bucket);
-                }
+                // For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+                MetricFamily.Histogram histogram = new MetricFamily.Histogram();
+                histogram.setValue(buffer.toDouble());
+                metric.setHistogram(histogram);
             }
             default -> throw new ParseException("no such type in metricFamily");
         }
