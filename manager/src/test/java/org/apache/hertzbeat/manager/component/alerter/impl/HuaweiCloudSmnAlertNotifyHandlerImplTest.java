@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.StringUtils;
 
 /**
- *
+ * Test case for {@link HuaweiCloudSmnAlertNotifyHandlerImpl}
  */
 @Slf4j
 class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {

@@ -30,7 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.StringUtils;
 
 /**
- *
+ * Test case for {@link TelegramBotAlertNotifyHandlerImpl}
  * @version 2.1
  */
 @Slf4j
