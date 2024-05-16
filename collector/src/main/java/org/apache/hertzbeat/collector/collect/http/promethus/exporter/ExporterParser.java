@@ -27,7 +27,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
 import org.apache.hertzbeat.common.util.StrBuffer;
-import org.springframework.util.StringUtils;
 
 /**
  * Resolves the data passed by prometheus's exporter interface http:xxx/metrics
@@ -52,12 +51,10 @@ public class ExporterParser {
     private static final char ENTER = '\n';
     private static final char SPACE = ' ';
     private static final char COMMA = ',';
-
+    private final Lock lock = new ReentrantLock();
     private MetricFamily currentMetricFamily;
     private String currentQuantile;
     private String currentBucket;
-
-    private final Lock lock = new ReentrantLock();
 
     public Map<String, MetricFamily> textToMetric(String resp) {
         // key: metric name, value: metric family
@@ -86,7 +83,8 @@ public class ExporterParser {
                 this.currentMetricFamily = null;
                 this.parseComment(metricMap, buffer);
             }
-            case ENTER -> {}
+            case ENTER -> {
+            }
             default -> {
                 this.currentBucket = null;
                 this.currentQuantile = null;
@@ -114,7 +112,8 @@ public class ExporterParser {
         switch (token) {
             case HELP -> this.parseHelp(buffer);
             case TYPE -> this.parseType(buffer);
-            default -> {}
+            default -> {
+            }
         }
     }
 
@@ -156,7 +155,7 @@ public class ExporterParser {
 
         metric.setLabelPair(new ArrayList<>());
         metric.getLabelPair().add(label);
-        this.readLabels(metric,buffer);
+        this.readLabels(metric, buffer);
     }
 
     private void readLabels(MetricFamily.Metric metric, StrBuffer buffer) {
@@ -224,7 +223,7 @@ public class ExporterParser {
         }
         c = buffer.read();
         switch (c) {
-            case COMMA -> this.startReadLabelName(metric,buffer);
+            case COMMA -> this.startReadLabelName(metric, buffer);
             case RIGHT_CURLY_BRACKET -> this.readLabelValue(metric, label, buffer);
             default -> throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
         }
@@ -357,7 +356,9 @@ public class ExporterParser {
                 escaped = false;
             } else {
                 switch (c) {
-                    case QUOTES -> { return builder.toString(); }
+                    case QUOTES -> {
+                        return builder.toString();
+                    }
                     case ENTER -> throw new ParseException("parse label value error, next line");
                     case '\\' -> escaped = true;
                     default -> builder.append(c);
