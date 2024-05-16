@@ -586,7 +586,7 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 4">
         <nz-form-label [nzSpan]="7" nzFor="phone">{{ 'alert.notice.type.phone' | i18n }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="'validation.phone.invalid' | i18n" [nzSpan]="12">
+        <nz-form-control [nzErrorTip]="'validation.phone.invalid'|i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.phone" [required]="receiver.type === 4" id="WePhone" name="phone" nz-input type="tel" />
         </nz-form-control>
       </nz-form-item>
