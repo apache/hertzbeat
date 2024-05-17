@@ -44,8 +44,8 @@
               [(ngModel)]="config.config.accessKey"
               placeholder="{{
                 config.type == ObjectStoreType.OBS
-                  ? ('settings.object-store.obs.bucketName.placeholder' | i18n)
-                  : ('settings.object-store.oss.bucketName.placeholder' | i18n)
+                  ? ('settings.object-store.obs.accessKey.placeholder' | i18n)
+                  : ('settings.object-store.oss.accessKey.placeholder' | i18n)
               }}"
               nz-input
               required
@@ -64,8 +64,8 @@
               [(ngModel)]="config.config.secretKey"
               placeholder="{{
                 config.type == ObjectStoreType.OBS
-                  ? ('settings.object-store.obs.bucketName.placeholder' | i18n)
-                  : ('settings.object-store.oss.bucketName.placeholder' | i18n)
+                  ? ('settings.object-store.obs.secretKey.placeholder' | i18n)
+                  : ('settings.object-store.oss.secretKey.placeholder' | i18n)
               }}"
               nz-input
               required
@@ -104,8 +104,8 @@
               [(ngModel)]="config.config.endpoint"
               placeholder="{{
                 config.type == ObjectStoreType.OBS
-                  ? ('settings.object-store.obs.bucketName.placeholder' | i18n)
-                  : ('settings.object-store.oss.bucketName.placeholder' | i18n)
+                  ? ('settings.object-store.obs.endpoint.placeholder' | i18n)
+                  : ('settings.object-store.oss.endpoint.placeholder' | i18n)
               }}"
               nz-input
               required
@@ -124,8 +124,8 @@
               [(ngModel)]="config.config.savePath"
               placeholder="{{
                 config.type == ObjectStoreType.OBS
-                  ? ('settings.object-store.obs.bucketName.placeholder' | i18n)
-                  : ('settings.object-store.oss.bucketName.placeholder' | i18n)
+                  ? ('settings.object-store.obs.savePath.placeholder' | i18n)
+                  : ('settings.object-store.oss.savePath.placeholder' | i18n)
               }}"
               nz-input
               required
