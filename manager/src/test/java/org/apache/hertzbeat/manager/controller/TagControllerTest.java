@@ -77,8 +77,6 @@ class TagControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Add success"))
                 .andReturn();
-
-
     }
 
     @Test
@@ -99,7 +97,6 @@ class TagControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Modify success"))
                 .andReturn();
-
     }
 
     @Test
@@ -123,7 +120,6 @@ class TagControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Delete success"))
                 .andReturn();
-
     }
 
 }

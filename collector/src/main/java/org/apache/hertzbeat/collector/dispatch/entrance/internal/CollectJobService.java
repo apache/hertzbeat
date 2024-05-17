@@ -39,7 +39,6 @@ import org.springframework.util.StringUtils;
 
 /**
  * Collection job management provides api interface
- * 采集job管理提供api接口
  */
 @Service
 @Slf4j

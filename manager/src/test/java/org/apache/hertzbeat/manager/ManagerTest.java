@@ -55,7 +55,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 /**
- *
+ * Manager Test
  * @version 2.1
  */
 class ManagerTest extends AbstractSpringIntegrationTest {

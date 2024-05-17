@@ -125,8 +125,5 @@ class AppControllerTest {
                     .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                     .andExpect(jsonPath("$.data[0].category").value("os"))
                     .andReturn();
-
-
-
     }
 }
