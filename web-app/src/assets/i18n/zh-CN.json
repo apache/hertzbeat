@@ -568,7 +568,7 @@
   "settings.object-store.oss.secretKey": "SecretKey",
   "settings.object-store.oss.secretKey.placeholder": "阿里云的AccessKeySecret",
   "settings.object-store.oss.bucketName": "Bucket",
-  "settings.object-store.oss.bucketName.placeholder": "阿里云OsS中您创建的Bucket名称",
+  "settings.object-store.oss.bucketName.placeholder": "阿里云OSS中您创建的Bucket名称",
   "settings.object-store.oss.endpoint": "EndPoint",
   "settings.object-store.oss.endpoint.placeholder": "阿里云OSS地域域名，不包括Bucket名",
   "settings.object-store.oss.savePath": "保存路径",
