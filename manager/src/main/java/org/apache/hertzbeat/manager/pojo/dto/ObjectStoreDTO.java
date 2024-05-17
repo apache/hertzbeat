@@ -54,7 +54,12 @@ public class ObjectStoreDTO<T> {
         /**
          * <a href="https://support.huaweicloud.com/obs/index.html">Huawei Cloud OBS</a>
          */
-        OBS
+        OBS,
+
+        /**
+         * <a href="https://oss.console.aliyun.com/services/tools">Alibaba Cloud OSS</a>
+         */
+        OSS,
     }
 
     /**
@@ -62,6 +67,22 @@ public class ObjectStoreDTO<T> {
      */
     @Data
     public static class ObsConfig {
+        private String accessKey;
+        private String secretKey;
+        private String bucketName;
+        private String endpoint;
+
+        /**
+         * Save path
+         */
+        private String savePath = "hertzbeat";
+    }
+
+    /**
+     * file oss storage configuration
+     */
+    @Data
+    public static class OssConfig {
         private String accessKey;
         private String secretKey;
         private String bucketName;
