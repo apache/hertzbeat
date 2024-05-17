@@ -22,7 +22,7 @@ import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
-import { ObjectStore, ObjectStoreType, ObsConfig } from '../../../../pojo/ObjectStore';
+import {ObjectStore, ObjectStoreType, ObsConfig, OssConfig} from '../../../../pojo/ObjectStore';
 import { GeneralConfigService } from '../../../../service/general-config.service';
 
 const key = 'oss';
@@ -111,6 +111,9 @@ export class ObjectStoreComponent implements OnInit {
         break;
       case ObjectStoreType.OBS:
         this.config.config = new ObsConfig();
+        break;
+      case ObjectStoreType.OSS:
+        this.config.config = new OssConfig();
         break;
     }
   };

@@ -32,16 +32,17 @@
           >
             <nz-option [nzValue]="ObjectStoreType.FILE" [nzLabel]="'settings.object-store.type.file' | i18n"></nz-option>
             <nz-option [nzValue]="ObjectStoreType.OBS" [nzLabel]="'settings.object-store.type.obs' | i18n"></nz-option>
+            <nz-option [nzValue]="ObjectStoreType.OSS" [nzLabel]="'settings.object-store.type.oss' | i18n"></nz-option>
           </nz-select>
         </nz-form-item>
-        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS || config.type == ObjectStoreType.OSS">
           <nz-form-label [nzSpan]="6" nzFor="obs.accessKey" nzRequired="true">{{
             'settings.object-store.obs.accessKey' | i18n
           }}</nz-form-label>
           <nz-form-control [nzErrorTip]="'validation.required' | i18n">
             <input
               [(ngModel)]="config.config.accessKey"
-              placeholder="{{ 'settings.object-store.obs.accessKey.placeholder' | i18n }}"
+              placeholder="{{ config.type == ObjectStoreType.OBS?'settings.object-store.obs.bucketName.placeholder':'settings.object-store.oss.bucketName.placeholder' | i18n }}"
               nz-input
               required
               name="accessKey"
@@ -50,14 +51,14 @@
             />
           </nz-form-control>
         </nz-form-item>
-        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS || config.type == ObjectStoreType.OSS">
           <nz-form-label [nzSpan]="6" nzFor="obs.secretKey" nzRequired="true">{{
             'settings.object-store.obs.secretKey' | i18n
           }}</nz-form-label>
           <nz-form-control [nzErrorTip]="'validation.required' | i18n">
             <input
               [(ngModel)]="config.config.secretKey"
-              placeholder="{{ 'settings.object-store.obs.secretKey.placeholder' | i18n }}"
+              placeholder="{{config.type == ObjectStoreType.OBS?'settings.object-store.obs.bucketName.placeholder':'settings.object-store.oss.bucketName.placeholder' | i18n }}"
               nz-input
               required
               name="secretKey"
@@ -66,14 +67,14 @@
             />
           </nz-form-control>
         </nz-form-item>
-        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS || config.type == ObjectStoreType.OSS">
           <nz-form-label [nzSpan]="6" nzFor="obs.bucketName" nzRequired="true">{{
             'settings.object-store.obs.bucketName' | i18n
           }}</nz-form-label>
           <nz-form-control [nzErrorTip]="'validation.required' | i18n">
             <input
               [(ngModel)]="config.config.bucketName"
-              placeholder="{{ 'settings.object-store.obs.bucketName.placeholder' | i18n }}"
+              placeholder="{{config.type == ObjectStoreType.OBS?'settings.object-store.obs.bucketName.placeholder':'settings.object-store.oss.bucketName.placeholder' | i18n }}"
               nz-input
               required
               name="bucketName"
@@ -82,14 +83,14 @@
             />
           </nz-form-control>
         </nz-form-item>
-        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS || config.type == ObjectStoreType.OSS">
           <nz-form-label [nzSpan]="6" nzFor="obs.endpoint" nzRequired="true">{{
             'settings.object-store.obs.endpoint' | i18n
           }}</nz-form-label>
           <nz-form-control [nzErrorTip]="'validation.required' | i18n">
             <input
               [(ngModel)]="config.config.endpoint"
-              placeholder="{{ 'settings.object-store.obs.endpoint.placeholder' | i18n }}"
+              placeholder="{{ config.type == ObjectStoreType.OBS?'settings.object-store.obs.bucketName.placeholder':'settings.object-store.oss.bucketName.placeholder' | i18n }}"
               nz-input
               required
               name="endpoint"
@@ -98,14 +99,14 @@
             />
           </nz-form-control>
         </nz-form-item>
-        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS">
+        <nz-form-item *ngIf="config.type == ObjectStoreType.OBS || config.type == ObjectStoreType.OSS">
           <nz-form-label [nzSpan]="6" nzFor="obs.savePath" nzRequired="true">{{
             'settings.object-store.obs.savePath' | i18n
           }}</nz-form-label>
           <nz-form-control [nzErrorTip]="'validation.required' | i18n">
             <input
               [(ngModel)]="config.config.savePath"
-              placeholder="{{ 'settings.object-store.obs.savePath.placeholder' | i18n }}"
+              placeholder="{{ config.type == ObjectStoreType.OBS?'settings.object-store.obs.bucketName.placeholder':'settings.object-store.oss.bucketName.placeholder' | i18n }}"
               nz-input
               required
               name="savePath"
