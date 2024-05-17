@@ -766,7 +766,6 @@ class MonitorServiceTest {
         Assertions.assertDoesNotThrow(() -> appService.getAppDefineMetricNames("test"));
     }
 
-
     @Test
     void copyMonitors() {
         Monitor monitor = Monitor.builder()
