@@ -39,6 +39,10 @@ COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzb
 
 #COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat-collector:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION" --push"
 
+# Build Local
+
+#COMMAND="docker build -t apache/hertzbeat-collector:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg VERSION="$VERSION""
+
 echo "$COMMAND"
 
 $COMMAND
