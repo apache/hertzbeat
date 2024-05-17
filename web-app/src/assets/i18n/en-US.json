@@ -271,7 +271,7 @@
   "alert.notice.type.wechat-id": "WeChat OPENID",
   "alert.notice.type.wework": "WeWork Robot",
   "alert.notice.type.wework-key": "WeWork Robot KEY",
-  "alert.notice.type.wework-userId": "userId",
+  "alert.notice.type.wework-userId": "UserId",
   "alert.notice.type.access-token": "Robot ACCESS_TOKEN",
   "alert.notice.type.ding": "DingDing Robot",
   "alert.notice.type.fei-shu": "FeiShu Robot",

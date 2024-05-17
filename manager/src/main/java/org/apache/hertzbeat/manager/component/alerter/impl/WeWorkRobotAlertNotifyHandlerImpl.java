@@ -90,8 +90,6 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         WeWorkWebHookDto weWorkWebHookTextDto = new WeWorkWebHookDto();
         weWorkWebHookTextDto.setMsgtype(WeWorkWebHookDto.TEXT);
         WeWorkWebHookDto.TextDTO textDto = new WeWorkWebHookDto.TextDTO();
-        String alertMessage = String.format("警告对象：%s\n详情：%s", alert.getTarget(), alert.getContent());
-        textDto.setContent(alertMessage);
         if (StringUtils.isNotBlank(receiver.getPhone())) {
             textDto.setMentionedMobileList(analysisArgToList(receiver.getPhone()));
             weWorkWebHookTextDto.setText(textDto);
