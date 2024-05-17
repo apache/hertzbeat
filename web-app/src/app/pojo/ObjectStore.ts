@@ -36,7 +36,7 @@ export enum ObjectStoreType {
   /**
    * <a href="https://oss.console.aliyun.com/services/tools">Alibaba Cloud OSS</a>
    */
-  OSS = 'OSS',
+  OSS = 'OSS'
 }
 
 export class ObsConfig {
@@ -54,4 +54,3 @@ export class OssConfig {
   endpoint!: string;
   savePath: string = 'hertzbeat';
 }
-
