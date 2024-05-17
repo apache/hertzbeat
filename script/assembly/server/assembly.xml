@@ -21,7 +21,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <!--Required, will be appended to the end of the packaged file name-->
     <id>incubating-bin</id>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>apache-hertzbeat-${hzb.version}-incubating</baseDirectory>
+    <baseDirectory>apache-hertzbeat-${hzb.version}-incubating-bin</baseDirectory>
     <!--Packaging type, multiple types can be set, different types will be packaged when packaging-->
     <formats>
         <format>tar.gz</format>
