@@ -46,7 +46,7 @@ public class NacosDiscoveryClient implements DiscoveryClient {
     public ConnectConfig buildConnectConfig(HttpsdProtocol httpsdProtocol) {
         return ConnectConfig.builder()
                 .host(httpsdProtocol.getHost())
-                .port(httpsdProtocol.getPort())
+                .port(Integer.parseInt(httpsdProtocol.getPort()))
                 .build();
     }
 
@@ -69,7 +69,7 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         if (healthCheck()) {
             serverInfo = ServerInfo.builder()
                     .address(localConnectConfig.getHost())
-                    .port(localConnectConfig.getPort())
+                    .port(String.valueOf(localConnectConfig.getPort()))
                     .build();
         } else {
             throw new RuntimeException("NamingService is not healthy");

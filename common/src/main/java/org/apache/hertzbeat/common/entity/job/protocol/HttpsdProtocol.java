@@ -34,7 +34,7 @@ import org.apache.commons.lang3.StringUtils;
 @NoArgsConstructor
 public class HttpsdProtocol {
     private String host;
-    private int port;
+    private String port;
     private String discoveryClientTypeName;
 
     public boolean isInvalid() {

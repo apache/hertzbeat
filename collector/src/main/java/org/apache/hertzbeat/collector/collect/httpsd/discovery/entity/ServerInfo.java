@@ -33,5 +33,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ServerInfo {
     private String address;
-    private int port;
+    private String port;
 }

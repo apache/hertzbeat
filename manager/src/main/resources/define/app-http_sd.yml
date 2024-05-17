@@ -92,7 +92,7 @@ metrics:
     protocol: httpsd
     httpsd:
       host: ^_^host^_^
-      port: 1234
+      port: ^_^port^_^
       discoveryClientTypeName: ^_^discoveryClientTypeName^_^
   - name: service
     i18n:
@@ -130,5 +130,5 @@ metrics:
     protocol: httpsd
     httpsd:
       host: ^_^host^_^
-      port: 1234
+      port: ^_^port^_^
       discoveryClientTypeName: ^_^discoveryClientTypeName^_^

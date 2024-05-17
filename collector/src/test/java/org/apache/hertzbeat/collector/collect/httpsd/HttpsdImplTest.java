@@ -55,7 +55,7 @@ class HttpsdImplTest {
     void testServerCollect() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
 
-        int port = 123;
+        String port = "123";
         String host = "127.0.0.1";
         HttpsdProtocol httpsdProtocol = HttpsdProtocol.builder()
                 .port(port)
@@ -82,7 +82,7 @@ class HttpsdImplTest {
         httpsd.collect(builder, 1L, "test", metrics);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(host, valueRow.getColumns(0));
-            assertEquals(port, Integer.valueOf(valueRow.getColumns(1)));
+            assertEquals(port, valueRow.getColumns(1));
             assertNotNull(valueRow.getColumns(2));
         }
     }
@@ -91,7 +91,7 @@ class HttpsdImplTest {
     void testServiceCollect() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
 
-        int port = 123;
+        String port = "123";
         String host = "127.0.0.1";
         HttpsdProtocol httpsdProtocol = HttpsdProtocol.builder()
                 .port(port)
@@ -117,7 +117,7 @@ class HttpsdImplTest {
                 .serviceId(serviceId)
                 .serviceName(serviceName)
                 .address(host)
-                .port(port)
+                .port(Integer.parseInt(port))
                 .build());
 
         Mockito.when(client.getServices()).thenReturn(serviceInstances);
@@ -129,7 +129,7 @@ class HttpsdImplTest {
             assertEquals(serviceId, valueRow.getColumns(0));
             assertEquals(serviceName, valueRow.getColumns(1));
             assertEquals(host, valueRow.getColumns(2));
-            assertEquals(port, Integer.valueOf(valueRow.getColumns(3)));
+            assertEquals(port, valueRow.getColumns(3));
         }
     }
 

@@ -44,7 +44,7 @@ public class ConsulDiscoveryClient implements DiscoveryClient {
     public ConnectConfig buildConnectConfig(HttpsdProtocol httpsdProtocol) {
         return ConnectConfig.builder()
                 .host(httpsdProtocol.getHost())
-                .port(httpsdProtocol.getPort())
+                .port(Integer.parseInt(httpsdProtocol.getPort()))
                 .build();
     }
 
@@ -58,7 +58,7 @@ public class ConsulDiscoveryClient implements DiscoveryClient {
         Self self = consulClient.getAgentSelf().getValue();
         return ServerInfo.builder()
                 .address(self.getMember().getAddress())
-                .port(self.getMember().getPort())
+                .port(String.valueOf(self.getMember().getPort()))
                 .build();
     }
 
