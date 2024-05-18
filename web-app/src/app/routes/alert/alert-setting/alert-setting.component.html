@@ -194,7 +194,7 @@
             required
             name="target"
             id="target"
-            [nzShowSearch]="true"
+            [nzShowSearch]="{filter: caseInsensitiveFilter}"
             [nzPlaceHolder]="'alert.setting.target.place-holder' | i18n"
             [nzOptions]="appHierarchies"
             [(ngModel)]="cascadeValues"
