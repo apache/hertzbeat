@@ -53,13 +53,11 @@ import org.apache.hertzbeat.common.util.MapCapUtil;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-
 /**
  * Redis single cluster collector
  */
 @Slf4j
 public class RedisCommonCollectImpl extends AbstractCollect {
-
 
     private static final String CLUSTER = "3";
 

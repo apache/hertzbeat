@@ -90,7 +90,6 @@ public class DnsCollectImpl extends AbstractCollect {
     private static final String AUTHORITY_ROW_COUNT = "authorityRowCount";
     private static final String ADDITIONAL_ROW_COUNT = "additionalRowCount";
 
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         // compatible with monitoring template configurations of older versions
@@ -206,7 +205,6 @@ public class DnsCollectImpl extends AbstractCollect {
 
         return infoList;
     }
-
 
     @Data
     @Builder

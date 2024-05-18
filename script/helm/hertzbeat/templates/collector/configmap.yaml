@@ -57,9 +57,4 @@ data:
     
     common:
       queue:
-        # memory or kafka
-        type: ${QUEUE_TYPE:netty}
-        # properties when queue type is kafka
-        kafka:
-          servers: ${KAFKA_SERVERS:127.0.0.1:9092}
-          metrics-data-topic: ${KAFKA_TOPIC:async-metrics-data}
+        type: netty
