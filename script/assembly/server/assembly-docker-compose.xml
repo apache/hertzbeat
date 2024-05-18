@@ -88,14 +88,5 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>README.md</include>
             </includes>
         </fileSet>
-
-        <!-- license -->
-        <fileSet>
-            <directory>../material/licenses</directory>
-            <includes>
-                <include>**/*</include>
-            </includes>
-            <outputDirectory>licenses</outputDirectory>
-        </fileSet>
     </fileSets>
 </assembly>
