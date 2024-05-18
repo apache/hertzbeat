@@ -22,7 +22,7 @@ sidebar_label: 运行编译
 
 ### 前端启动
 
-1. 需要 `nodejs yarn` 环境, 版本要求 `Node.js >= 18`
+1. 需要 `nodejs yarn` 环境, 版本要求 `20 > Node.js >= 18`
 
 2. 进入 `web-app` 目录: `cd web-app`
 

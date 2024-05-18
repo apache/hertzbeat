@@ -23,7 +23,7 @@ sidebar_label: Development
 
 ### Frontend start
 
-1. Need `Node Yarn` Environment, Make sure `Node.js >= 18`
+1. Need `Node Yarn` Environment, Make sure `20 > Node.js >= 18`
 
 2. Cd to the `web-app` directory: `cd web-app`
 
