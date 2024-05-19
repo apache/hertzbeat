@@ -39,7 +39,6 @@ import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
-import org.apache.hertzbeat.manager.scheduler.sd.ServiceDiscoveryManager;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,7 +51,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -92,8 +90,6 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
     @Autowired
     private ParamDao paramDao;
-
-    private ServiceDiscoveryManager serviceDiscoveryManager;
 
     private ManageServer manageServer;
 
@@ -473,41 +469,5 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
 
     public void setManageServer(ManageServer manageServer) {
         this.manageServer = manageServer;
-    }
-
-    private void initSdProtocol(Job job) {
-        Configmap httpSdConfig = job.getConfigmap().stream()
-                .filter(config -> ServiceDiscoveryProtocol.Type.HTTP_SD.toString().equalsIgnoreCase(config.getKey()))
-                .findFirst()
-                .orElse(null);
-        // 验证httpSdConfig和url配置是否正确
-        if (Objects.isNull(httpSdConfig)) {
-            return;
-        }
-
-        job.setSdProtocol(ServiceDiscoveryProtocol.builder()
-                .sdSource((String) httpSdConfig.getValue())
-                .type(ServiceDiscoveryProtocol.Type.HTTP_SD)
-                .build());
-    }
-
-    private void createSdScheduleIfNecessary(Job job) {
-        Configmap httpSdConfig = job.getConfigmap().stream()
-                .filter(config -> ServiceDiscoveryProtocol.Type.HTTP_SD.toString().equalsIgnoreCase(config.getKey()))
-                .findFirst()
-                .orElse(null);
-        // 验证httpSdConfig和url配置是否正确
-        if (Objects.isNull(httpSdConfig)) {
-            return;
-        }
-
-        serviceDiscoveryManager.addSdProtocol(ServiceDiscoveryProtocol.builder()
-                .sdSource((String) httpSdConfig.getValue())
-                .type(ServiceDiscoveryProtocol.Type.HTTP_SD)
-                .build());
-    }
-
-    public void initServiceDiscoveryScheduler() {
-        this.serviceDiscoveryManager = new ServiceDiscoveryManager(this);
     }
 }
