@@ -56,6 +56,13 @@ class TimeExpressionUtilTest {
         assertEquals("02:40:00", TimeExpressionUtil.calculate("${@time}", now));
         assertEquals("1650768000000", TimeExpressionUtil.calculate("${@timestamp}", now));
         assertEquals("1650768000", TimeExpressionUtil.calculate("${@timestamp10}", now));
+        assertEquals("2022", TimeExpressionUtil.calculate("${@year}", now));
+        assertEquals("04", TimeExpressionUtil.calculate("${@month}", now));
+        assertEquals("24", TimeExpressionUtil.calculate("${@day}", now));
+        assertEquals("02", TimeExpressionUtil.calculate("${@hour}", now));
+        assertEquals("40", TimeExpressionUtil.calculate("${@minute}", now));
+        assertEquals("00", TimeExpressionUtil.calculate("${@second}", now));
+        assertEquals("000", TimeExpressionUtil.calculate("${@millisecond}", now));
 
         assertEquals("2022-04-24 02:25:00", TimeExpressionUtil.calculate("${@now-15m}", now));
         assertEquals("2022-05-01 02:40:00", TimeExpressionUtil.calculate("${@now+1w}", now));
@@ -68,5 +75,6 @@ class TimeExpressionUtilTest {
     @Test
     void testComplexTemplate() {
         assertEquals("Three days after 2022-04-24 , is 2022-04-27", TimeExpressionUtil.calculate("Three days after ${@date} , is ${@date+3d}", now));
+        assertEquals("2022年04月24日 02:40:00", TimeExpressionUtil.calculate("${@year}年${@month}月${@day}日 ${@time}", now));
     }
 }

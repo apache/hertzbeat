@@ -61,6 +61,13 @@ public class TimeExpressionUtil {
         FORMATTER.put("timestamp10", date -> String.valueOf(date.toEpochSecond(ZoneOffset.UTC)));
         FORMATTER.put("timestamp", date -> String.valueOf(date.toInstant(ZoneOffset.UTC).toEpochMilli()));
         FORMATTER.put("time", date -> DateTimeFormatter.ofPattern("HH:mm:ss").format(date));
+        FORMATTER.put("year", date -> DateTimeFormatter.ofPattern("yyyy").format(date));
+        FORMATTER.put("month", date -> DateTimeFormatter.ofPattern("MM").format(date));
+        FORMATTER.put("day", date -> DateTimeFormatter.ofPattern("dd").format(date));
+        FORMATTER.put("hour", date -> DateTimeFormatter.ofPattern("HH").format(date));
+        FORMATTER.put("minute", date -> DateTimeFormatter.ofPattern("mm").format(date));
+        FORMATTER.put("millisecond", date -> DateTimeFormatter.ofPattern("SSS").format(date));
+        FORMATTER.put("second", date -> DateTimeFormatter.ofPattern("ss").format(date));
 
         UNIT_MAP.put('y', ChronoUnit.YEARS);
         UNIT_MAP.put('M', ChronoUnit.MONTHS);
@@ -83,7 +90,7 @@ public class TimeExpressionUtil {
         if (StringUtils.isBlank(template)) {
             return template;
         }
-        final String regex = "(?<!\\\\)\\$\\{(@(" + FORMATTER_NAMES + ")(\\s*[-+]\\s*\\d+[" + UNIT_NAMES + "])*)}";
+        final String regex = "\\$\\{(@(" + FORMATTER_NAMES + ")(\\s*[-+]\\s*\\d+[" + UNIT_NAMES + "])*)}";
 
         final Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);
         final Matcher matcher = pattern.matcher(template);
