@@ -19,7 +19,6 @@ package org.apache.hertzbeat.collector.dispatch.unit.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.unit.DataUnit;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;

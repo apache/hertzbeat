@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 /**
  * Schedule Distribution Task Configuration Properties
  */
+@Component
 @ConfigurationProperties(prefix = DispatchProperties.DISPATCH_PREFIX)
 public class DispatchProperties {
 
