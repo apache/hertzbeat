@@ -440,6 +440,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     /**
      * create httpContext
+     *
      * @param httpProtocol http protocol
      * @return context
      */
@@ -465,6 +466,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     /**
      * create http request
+     *
      * @param httpProtocol http params
      * @return http uri request
      */
