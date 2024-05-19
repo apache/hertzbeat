@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.plugin;
 
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -25,8 +24,8 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
  */
 public interface Plugin {
 
-    /*
-     *  execute when alert
+    /**
+     * execute when alert
      */
     void alert(Alert alert);
 }
