@@ -15,11 +15,11 @@ sidebar_label: 自定义插件
 ### 具体使用
 1. 拉取主分支代码 `git clone https://github.com/apache/hertzbeat.git` ，定位到`plugin`模块的
    `Plugin`接口。
-    ![plugin-1.png](home/static/img/docs/help/plugin-1.png)
+    ![plugin-1.png](/img/docs/help/plugin-1.png)
 2. 在`org.apache.hertzbeat.plugin.impl`目录下, 新建一个接口实现类，如`org.apache.hertzbeat.plugin.impl.DemoPluginImpl`,在实现类中接收`Alert`类作为参数，实现`alert`方法，逻辑由用户自定义，这里我们简单打印一下对象。
-    ![plugin-2.png](home/static/img/docs/help/plugin-2.png)
+    ![plugin-2.png](/img/docs/help/plugin-2.png)
 3. 打包`hertzbeat-plugin`模块。
-    ![plugin-3.png](home/static/img/docs/help/plugin-3.png)
+    ![plugin-3.png](/img/docs/help/plugin-3.png)
 4. 将打包后的`jar`包，拷贝到安装目录下的`ext-lib`目录下（若为`docker`安装则先将`ext-lib`目录挂载出来，再拷贝到该目录下）
-    ![plugin-4.png](home/static/img/docs/help/plugin-4.png)
+    ![plugin-4.png](/img/docs/help/plugin-4.png)
 5. 然后重启`HertzBeat`，即可实现自定义告警后处理策略。
