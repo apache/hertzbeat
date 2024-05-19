@@ -20,7 +20,7 @@ package org.apache.hertzbeat.warehouse.store.history;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
- *
+ * history data writer
  */
 public interface HistoryDataWriter {
 

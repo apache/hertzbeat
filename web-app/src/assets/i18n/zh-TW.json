@@ -270,6 +270,7 @@
   "alert.notice.type.wechat-id": "微信OPENID",
   "alert.notice.type.wework": "企業微信機器人",
   "alert.notice.type.wework-key": "企業微信機器人KEY",
+  "alert.notice.type.wework-userId": "用户id",
   "alert.notice.type.access-token": "機器人ACCESS_TOKEN",
   "alert.notice.type.ding": "釘釘機器人",
   "alert.notice.type.fei-shu": "飛書機器人",
