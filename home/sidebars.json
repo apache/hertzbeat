@@ -310,7 +310,8 @@
           ]
         },
         "help/issue",
-        "help/plugin"
+        "help/plugin",
+        "help/time_expression"
       ]
     },
     {
