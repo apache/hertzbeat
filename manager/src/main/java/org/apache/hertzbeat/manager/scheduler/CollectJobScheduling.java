@@ -19,6 +19,8 @@ package org.apache.hertzbeat.manager.scheduler;
 
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.sd.ConnectionConfig;
+import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 
 import java.util.List;
 
@@ -83,4 +85,6 @@ public interface CollectJobScheduling {
      * @param metricsDataList collect data
      */
     void collectSyncJobResponse(List<CollectRep.MetricsData> metricsDataList);
+
+    List<ConnectionConfig> collectSdData(ServiceDiscoveryProtocol sdProtocol);
 }

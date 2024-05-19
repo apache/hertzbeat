@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.protocol.*;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.job.protocol.*;
+import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 
 import java.util.List;
 import java.util.Map;
@@ -186,6 +187,7 @@ public class Metrics {
      * Monitoring configuration information using the public http_sd protocol
      */
     private HttpsdProtocol httpsd;
+    private ServiceDiscoveryProtocol sdProtocol;
 
     /**
      * collector use - Temporarily store subTask metrics response data

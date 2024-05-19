@@ -119,6 +119,7 @@ public interface DispatchConstants {
      * protocol http_sd
      */
     String PROTOCOL_HTTP_SD = "httpsd";
+    String PROTOCOL_HTTP_SD_V1 = "httpsdv1";
 
     // Protocol type related - end
     // 协议类型相关 - end //
