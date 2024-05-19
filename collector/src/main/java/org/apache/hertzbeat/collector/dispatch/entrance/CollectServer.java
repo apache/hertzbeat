@@ -53,7 +53,7 @@ import org.springframework.stereotype.Component;
  * collect server
  */
 @Component
-@Order(value = Ordered.LOWEST_PRECEDENCE)
+@Order()
 @ConditionalOnProperty(prefix = "collector.dispatch.entrance.netty",
         name = "enabled", havingValue = "true")
 @Slf4j

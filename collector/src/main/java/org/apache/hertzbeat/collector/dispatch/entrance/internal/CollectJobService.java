@@ -76,10 +76,9 @@ public class CollectJobService {
 
     /**
      * Execute a one-time collection task and get the collected data response
-     * 执行一次性采集任务,获取采集数据响应
      *
-     * @param job Collect task details  采集任务详情
-     * @return Collection results       采集结果
+     * @param job Collect task details
+     * @return Collection results
      */
     public List<CollectRep.MetricsData> collectSyncJobData(Job job) {
         final List<CollectRep.MetricsData> metricsData = new LinkedList<>();
@@ -105,7 +104,7 @@ public class CollectJobService {
     /**
      * Execute a one-time collection task and send the collected data response
      *
-     * @param oneTimeJob Collect task details  采集任务详情
+     * @param oneTimeJob Collect task details
      */
     public void collectSyncOneTimeJobData(Job oneTimeJob) {
         workerPool.executeJob(() -> {
@@ -129,9 +128,8 @@ public class CollectJobService {
 
     /**
      * Issue periodic asynchronous collection tasks
-     * 下发周期性异步采集任务
      *
-     * @param job Collect task details      采集任务详情
+     * @param job Collect task details
      */
     public void addAsyncCollectJob(Job job) {
         timerDispatch.addJob(job.clone(), null);
@@ -139,9 +137,8 @@ public class CollectJobService {
 
     /**
      * Cancel periodic asynchronous collection tasks
-     * 取消周期性异步采集任务
      *
-     * @param jobId Job ID      采集任务ID
+     * @param jobId Job ID
      */
     public void cancelAsyncCollectJob(Long jobId) {
         if (jobId != null) {
