@@ -22,9 +22,9 @@ name:
   en-US: Pulsar
 # The description and help of this monitoring type
 help:
-  zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 Pulsar 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 Pulsar，需要从 Prometheus 服务器抓取 Pulsar 的监控数据。<br>您可以点击 “<i>新建 Pulsar</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat uses Prometheus PromQL query metrics data from Prometheus Server to monitoring Pulsar. This solution is suitable for Prometheus to monitor Pulsar, and it need to capture Pulsar monitoring data from the Prometheus server. <br>You could click the "<i>New Pulsar</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: Hertzbeat 使用 Prometheus PromQL 從 Prometheus 服務器中查詢到 Pulsar 的通用指標數據來進行監控。此方案適用于 Prometheus 已監控 Pulsar，需要從 Prometheus 服務器抓取 Pulsar 的監控數據。<br>您可以點擊 “<i>新建 Pulsar</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: Hertzbeat  从 Pulsar WebService接口查询到 Pulsar 的通用指标数据来进行监控。<br>您可以点击 “<i>新建 Pulsar</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat queries general metric data from Pulsar through the Pulsar WebService interface for monitoring. You can click "<i>Create Pulsar</i>" to configure a new monitoring task, or select "<i>More Actions</i>" to import existing configurations.
+  zh-TW: Hertzbeat 從 Pulsar WebService接口查詢到 Pulsar 的通用指標數據來進行監控。<br>您可以點擊 “<i>新建 Pulsar</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/pulsar
   en-US: https://hertzbeat.apache.org/docs/help/pulsar
@@ -155,6 +155,11 @@ metrics:
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
+      - field: .name
+        type: 1
+        i18n:
+          zh-CN: 指标名称
+          en-US: Metric Name
       - field: pool
         type: 1
       - field: value
@@ -211,7 +216,6 @@ metrics:
       method: GET
       parseType: prometheus
   - name: jvm_memory_pool_bytes_max
-
     priority: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -219,6 +223,64 @@ metrics:
       - field: pool
         type: 1
       - field: value
+        type: 0
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: pulsar_broker_publish_latency
+    priority: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    fields:
+      - field: .name
+        type: 1
+        i18n:
+          zh-CN: 指标名称
+          en-US: Metric Name
+      - field: cluster
+        type: 1
+      - field: quantile
+        type: 1
+      - field: value
+        type: 0
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: pulsar_metadata_store_ops_latency_ms
+    priority: 0
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    fields:
+      - field: .name
+        type: 1
+        i18n:
+          zh-CN: 指标名称
+          en-US: Metric Name
+      - field: cluster
+        type: 1
+      - field: name
+        type: 1
+      - field: type
+        type: 1
+      - field: status
+        type: 1
+      - field: le
         type: 0
     # the config content when protocol is http
     http:
