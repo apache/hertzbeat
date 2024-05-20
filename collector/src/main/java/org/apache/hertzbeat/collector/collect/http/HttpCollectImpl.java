@@ -28,8 +28,6 @@ import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,6 +51,7 @@ import org.apache.hertzbeat.collector.collect.http.promethus.exporter.MetricFami
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
+import org.apache.hertzbeat.collector.util.TimeExpressionUtil;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -92,11 +91,6 @@ import org.w3c.dom.NodeList;
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
-
-    public static final String OpenAIHost = "api.openai.com";
-    public static final String OpenAIUsageAPI = "/dashboard/billing/usage";
-    public static final String startDate = "start_date";
-    public static final String endDate = "end_date";
     private static final Map<Long, ExporterParser> EXPORTER_PARSER_TABLE = new ConcurrentHashMap<>();
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
@@ -499,17 +493,9 @@ public class HttpCollectImpl extends AbstractCollect {
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> param : params.entrySet()) {
                 if (StringUtils.hasText(param.getValue())) {
-                    requestBuilder.addParameter(param.getKey(), param.getValue());
+                    requestBuilder.addParameter(param.getKey(), TimeExpressionUtil.calculate(param.getValue()));
                 }
             }
-        }
-        // OpenAI /dashboard/billing/usage
-        if (OpenAIHost.equalsIgnoreCase(httpProtocol.getHost()) && OpenAIUsageAPI.equalsIgnoreCase(httpProtocol.getUrl())) {
-            LocalDate today = LocalDate.now();
-            LocalDate tomorrow = LocalDate.now().plusDays(1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            requestBuilder.addParameter(startDate, today.format(formatter));
-            requestBuilder.addParameter(endDate, tomorrow.format(formatter));
         }
         // The default request header can be overridden if customized
         // keep-alive
