@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.hertzbeat.plugin.impl;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +26,9 @@ import org.apache.hertzbeat.plugin.Plugin;
  */
 @Slf4j
 public class DemoPluginImpl implements Plugin {
-    /*
-     *  execute when alert
+
+    /**
+     * execute when alert
      */
     @Override
     public void alert(Alert alert) {
@@ -36,4 +36,5 @@ public class DemoPluginImpl implements Plugin {
             log.debug("DemoPluginImpl alert: {}", alert);   
         }
     }
+
 }

@@ -194,6 +194,7 @@ metrics:
       method: GET
       headers:
         apiVersion: v1
+      # 查询参数，支持使用时间表达式 
       params:
         param1: param1
         param2: param2
