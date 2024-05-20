@@ -186,6 +186,9 @@ public class Metrics {
      * Monitoring configuration information using the public http_sd protocol
      */
     private HttpsdProtocol httpsd;
+    /**
+     * Collect sd data protocol
+     */
     private ServiceDiscoveryProtocol sdProtocol;
 
     /**

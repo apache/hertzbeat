@@ -24,8 +24,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.sd.ConnectionConfig;
-import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -460,11 +458,6 @@ public class CollectorAndJobScheduler implements CollectorScheduling, CollectJob
         if (eventListener != null) {
             eventListener.response(metricsDataList);
         }
-    }
-
-    @Override
-    public List<ConnectionConfig> collectSdData(ServiceDiscoveryProtocol sdProtocol) {
-        return null;
     }
 
     public void setManageServer(ManageServer manageServer) {

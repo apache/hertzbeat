@@ -810,7 +810,6 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     private List<CollectRep.MetricsData> collectOneTimeSdData(Monitor monitor, String collector, Param sdParam) {
-        // sd主监控只需要添加一个Monitor
         Long monitorId = monitor.getId();
         if (monitorId == null || monitorId == 0) {
             monitorId = MONITOR_ID_TMP;

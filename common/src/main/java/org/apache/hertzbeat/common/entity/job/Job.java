@@ -26,7 +26,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 import org.apache.hertzbeat.common.util.JsonUtil;
 
 import java.util.*;
@@ -139,8 +138,6 @@ public class Job {
      */
     @JsonIgnore
     private transient List<CollectRep.MetricsData> responseDataTemp;
-
-    private volatile ServiceDiscoveryProtocol sdProtocol;
 
     /**
      * collector use - construct to initialize metrics execution view
