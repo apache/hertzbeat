@@ -25,5 +25,4 @@ $ docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/her
 
 # Inspect the image info
 $ docker buildx imagetools inspect apache/hertzbeat:v1.0.0
-
 ```

@@ -29,8 +29,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class SystemSecretServiceImpl extends AbstractGeneralConfigServiceImpl<SystemSecret> {
-    
-    
+
     /**
      *
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
