@@ -239,6 +239,19 @@ public interface CommonConstants {
     String TAG_CODE = "code";
 
     /**
+     * Tag Type: Auto-generated
+     */
+    byte TAG_TYPE_AUTO_GENERATE = 0;
+    /**
+     * Tag Type: User-generated
+     */
+    byte TAG_TYPE_USER_GENERATE = 1;
+    /**
+     * Tag Type: System preset
+     */
+    byte TAG_TYPE_SYSTEM_PRESET = 2;
+
+    /**
      * notice_period type Type field, daily type
      */
     int NOTICE_PERIOD_DAILY = 0;

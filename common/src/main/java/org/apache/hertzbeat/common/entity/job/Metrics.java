@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.protocol.*;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.entity.job.protocol.*;
 import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 
 import java.util.List;

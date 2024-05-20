@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class FtpProtocol {
+public class FtpProtocol implements CommonRequestProtocol {
     /**
      * Peer host ip or domain name
      */

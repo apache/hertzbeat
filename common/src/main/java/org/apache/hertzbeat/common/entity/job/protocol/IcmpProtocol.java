@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class IcmpProtocol {
+public class IcmpProtocol implements CommonRequestProtocol {
 
     /**
      * ip address or domain name of the peer host
@@ -41,4 +41,7 @@ public class IcmpProtocol {
      */
     private String timeout;
 
+    @Override
+    public void setPort(String port) {
+    }
 }

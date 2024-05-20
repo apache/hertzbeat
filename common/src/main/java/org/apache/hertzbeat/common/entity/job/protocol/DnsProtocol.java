@@ -30,7 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DnsProtocol {
+public class DnsProtocol implements CommonRequestProtocol {
     private String dnsServerIP;
     private String port;
     private String address;
@@ -39,5 +39,10 @@ public class DnsProtocol {
 
     public boolean isInvalid() {
         return StringUtils.isAnyBlank(dnsServerIP, port, address, timeout, tcp);
+    }
+
+    @Override
+    public void setHost(String host) {
+        this.address = host;
     }
 }

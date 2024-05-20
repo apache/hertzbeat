@@ -32,7 +32,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PushProtocol {
+public class PushProtocol implements CommonRequestProtocol {
     private String host;
     private String port;
     private String uri = "/api/push";

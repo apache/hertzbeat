@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.CommonRequestProtocol;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -144,19 +145,21 @@ public class MonitorServiceImpl implements MonitorService {
     public void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
         final Optional<Param> sdParam = getSdParam(params);
         if (sdParam.isPresent()) {
-            // 用一次性任务采集，然后批量创建
+            // collect sd data through one-time job
             List<CollectRep.MetricsData> sdDataList = collectOneTimeSdData(monitor, collector, sdParam.get());
-            // 删除sd的参数
             List<Param> paramsWithoutSd = removeSdParam(params);
-            // 批量创建任务
-            sdDataList.forEach(sdData -> {
-                addAndSaveMonitorJob(monitor, paramsWithoutSd, collector);
-            });
+            final CollectRep.MetricsData sdData = sdDataList.get(0);
+            final List<CollectRep.ValueRow> sdValueList = sdData.getValuesList();
+
+            // batch create task
+            for (CollectRep.ValueRow valueRow : sdValueList) {
+                addAndSaveMonitorJob(monitor.clone(), paramsWithoutSd, collector, valueRow.getColumns(0), valueRow.getColumns(1));
+            }
 
             return;
         }
 
-        addAndSaveMonitorJob(monitor, params, collector);
+        addAndSaveMonitorJob(monitor, params, collector, null, null);
     }
 
     @Override
@@ -802,7 +805,6 @@ public class MonitorServiceImpl implements MonitorService {
 
     private List<Param> removeSdParam(List<Param> params) {
         return params.stream()
-                .filter(param -> StringUtils.hasText(param.getField()) && StringUtils.hasText(param.getValue()))
                 .filter(param -> Objects.isNull(ServiceDiscoveryProtocol.Type.getType(param.getField())))
                 .collect(Collectors.toList());
     }
@@ -847,10 +849,12 @@ public class MonitorServiceImpl implements MonitorService {
         List<Metrics.Field> fields = Lists.newArrayList();
         fields.add(Metrics.Field.builder()
                         .field("host")
+                        .type(CommonConstants.TYPE_STRING)
                         .i18n(constructSdFieldI18n("主机", "host"))
                         .build());
         fields.add(Metrics.Field.builder()
                         .field("port")
+                        .type(CommonConstants.TYPE_STRING)
                         .i18n(constructSdFieldI18n("端口", "port"))
                         .build());
         metricsList.add(Metrics.builder()
@@ -910,7 +914,8 @@ public class MonitorServiceImpl implements MonitorService {
         }
     }
 
-    private void addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector) {
+    private void addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector,
+                                      String detectedHost, String detectedPort) {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         // Init Set Default Tags: monitorId monitorName app
@@ -919,8 +924,8 @@ public class MonitorServiceImpl implements MonitorService {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type((byte) 0).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
         // Construct the collection task Job entity
         Job appDefine = appService.getAppDefine(monitor.getApp());
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
@@ -930,6 +935,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
+        resetMetricsCommonField(monitor, appDefine, detectedHost, detectedPort);
 
         List<Configmap> configmaps = params.stream().map(param -> {
             param.setMonitorId(monitorId);
@@ -958,5 +964,37 @@ public class MonitorServiceImpl implements MonitorService {
             collectJobScheduling.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
+    }
+
+    private void resetMetricsCommonField(Monitor monitor, Job appDefine, String detectedHost, String detectedPort) {
+        if (org.apache.commons.lang3.StringUtils.isAnyBlank(detectedHost, detectedPort)) {
+            return;
+        }
+
+        for (Metrics metric : appDefine.getMetrics()) {
+            Arrays.stream(metric.getClass().getDeclaredFields())
+                    .filter(field -> metric.getProtocol().equalsIgnoreCase(field.getName()))
+                    .findFirst()
+                    .ifPresent(field -> {
+                        field.setAccessible(true);
+                        final Object obj;
+                        try {
+                            obj = field.get(metric);
+                            if (obj instanceof CommonRequestProtocol protocol) {
+                                protocol.setHost(detectedHost);
+                                protocol.setPort(detectedPort);
+                            }
+                        } catch (IllegalAccessException exception) {
+                            log.warn("Not such field {}", field.getName());
+                        }
+                    });
+        }
+
+        monitor.setHost(detectedHost);
+        monitor.getTags().add(Tag.builder()
+                .name(CommonConstants.TAG_MONITOR_HOST)
+                .value(String.valueOf(detectedHost))
+                .type(CommonConstants.TAG_TYPE_AUTO_GENERATE)
+                .build());
     }
 }

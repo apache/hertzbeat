@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RocketmqProtocol {
+public class RocketmqProtocol implements CommonRequestProtocol {
 
     /**
      * rocketmq namesrv host
@@ -55,4 +55,14 @@ public class RocketmqProtocol {
      * jsonpath解析脚本
      */
     private String parseScript;
+
+    @Override
+    public void setHost(String host) {
+        this.namesrvHost = host;
+    }
+
+    @Override
+    public void setPort(String port) {
+        this.namesrvPort = port;
+    }
 }

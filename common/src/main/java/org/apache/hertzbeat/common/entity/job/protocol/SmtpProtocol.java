@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SmtpProtocol {
+public class SmtpProtocol implements CommonRequestProtocol {
     /**
      * email Host ip address or domain name
      */

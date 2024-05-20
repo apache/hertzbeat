@@ -32,7 +32,7 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class HttpProtocol {
+public class HttpProtocol implements CommonRequestProtocol {
     /**
      * Peer host ip or domain name
      */
