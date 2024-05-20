@@ -33,7 +33,6 @@ import org.springframework.data.repository.query.Param;
  */
 public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificationExecutor<Monitor> {
 
-
     /**
      * Delete monitor based on monitor ID list
      * @param monitorIds Monitoring ID List

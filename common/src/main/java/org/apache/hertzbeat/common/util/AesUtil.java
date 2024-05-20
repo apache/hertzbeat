@@ -40,7 +40,7 @@ public final class AesUtil {
     private static final String ENCODE_RULES = "tomSun28HaHaHaHa";
 
     /**
-     *  Default algorithm
+     * Default algorithm
      */
     private static final String ALGORITHM_STR = "AES/CBC/PKCS5Padding";
 
@@ -143,7 +143,7 @@ public final class AesUtil {
     public static boolean isCiphertext(String text, String decryptKey) {
         // First use whether it is base64 to determine whether it has been encrypted
         if (Base64Util.isBase64(text)) {
-            // If it is base64, decrypt directly to determine
+            // if it is base64, decrypt directly to determine
             try {
                 SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
                 Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
@@ -152,6 +152,7 @@ public final class AesUtil {
                 byte[] byteDecode = cipher.doFinal(bytesContent);
                 return byteDecode != null;
             } catch (Exception e) {
+                log.warn("isCiphertext method error: {}", e.getMessage());
                 return false;
             }
         }
