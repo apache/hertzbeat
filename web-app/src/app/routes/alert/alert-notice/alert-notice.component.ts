@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import {Component, Inject, OnInit, ViewChild} from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -31,7 +32,7 @@ import { NoticeReceiverService } from '../../../service/notice-receiver.service'
 import { NoticeRuleService } from '../../../service/notice-rule.service';
 import { NoticeTemplateService } from '../../../service/notice-template.service';
 import { TagService } from '../../../service/tag.service';
-import { NgForm } from "@angular/forms";
+
 
 @Component({
   selector: 'app-alert-notice',
