@@ -160,8 +160,10 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Metric Name
+        label: true
       - field: pool
         type: 1
+        label: true
       - field: value
         type: 0
     # the config content when protocol is http
@@ -182,6 +184,7 @@ metrics:
     fields:
       - field: pool
         type: 1
+        label: true
       - field: value
         type: 0
     # the config content when protocol is http
@@ -202,6 +205,7 @@ metrics:
     fields:
       - field: pool
         type: 1
+        label: true
       - field: value
         type: 0
     # the config content when protocol is http
@@ -222,6 +226,7 @@ metrics:
     fields:
       - field: pool
         type: 1
+        label: true
       - field: value
         type: 0
     # the config content when protocol is http
@@ -245,10 +250,13 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Metric Name
+        label: true
       - field: cluster
         type: 1
+        label: true
       - field: quantile
         type: 1
+        label: true
       - field: value
         type: 0
     # the config content when protocol is http
@@ -272,14 +280,19 @@ metrics:
         i18n:
           zh-CN: 指标名称
           en-US: Metric Name
+        label: true
       - field: cluster
         type: 1
+        label: true
       - field: name
         type: 1
+        label: true
       - field: type
         type: 1
+        label: true
       - field: status
         type: 1
+        label: true
       - field: le
         type: 0
     # the config content when protocol is http
