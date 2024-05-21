@@ -313,6 +313,9 @@ metrics:
       method: GET
       # if enabled https
       ssl: false
+      params:
+        start_date: ${@date}
+        end_date: ${@date+1d}
       # http auth
       authorization:
         # http auth type: Basic Auth, Digest Auth, Bearer Token
