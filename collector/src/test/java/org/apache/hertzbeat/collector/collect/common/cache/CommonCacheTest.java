@@ -17,30 +17,35 @@
 
 package org.apache.hertzbeat.collector.collect.common.cache;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test case for {@link ConnectionCommonCache}
  */
-@ExtendWith(MockitoExtension.class)
 class CommonCacheTest {
 
-    @Mock
     private AbstractConnection<?> mockConnection;
 
-    @InjectMocks
     private ConnectionCommonCache<String, AbstractConnection<?>> cache;
 
     @BeforeEach
     void setUp() {
         cache = new ConnectionCommonCache<>();
+        mockConnection = new AbstractConnection<>() {
+            @Override
+            public Object getConnection() {
+                return null;
+            }
+
+            @Override
+            public void closeConnection() throws Exception {
+            }
+        };
     }
 
     @Test
