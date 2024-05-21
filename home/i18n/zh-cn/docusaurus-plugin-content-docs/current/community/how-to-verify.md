@@ -7,8 +7,9 @@ sidebar_position: 4
 
 详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
-## 1. 下载候选版本到本地
+在浏览器中可访问版本内容 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/
 
+## 1. 下载候选版本到本地
 
 > 需要依赖gpg工具，如果没有，建议安装gpg2
 
@@ -143,7 +144,6 @@ cd apache-hertzbeat-${release_version}-incubating-src
 - [ ] 只存在文本文件，不存在二进制文件
 - [ ] 所有文件的开头都有ASF许可证
 - [ ] 能够正确编译
-- [ ] 检查是否有多余文件或文件夹，例如空文件夹等
 - [ ] .....
 
 参考: https://apache.org/legal/resolved.html
