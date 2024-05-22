@@ -525,11 +525,17 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalCancel() {
+    this.isExpr = false;
+    this.isManageModalVisible = false;
+  }
+
+  resetManageModalData() {
     this.cascadeValues = [];
     this.alertRules = [{}];
     this.isExpr = false;
     this.isManageModalVisible = false;
   }
+
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.define.app = this.cascadeValues[0];
@@ -561,6 +567,7 @@ export class AlertSettingComponent implements OnInit {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.loadAlertDefineTable();
+              this.resetManageModalData();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
             }
