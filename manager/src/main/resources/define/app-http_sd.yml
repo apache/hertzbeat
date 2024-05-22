@@ -132,5 +132,3 @@ metrics:
       host: ^_^host^_^
       port: ^_^port^_^
       discoveryClientTypeName: ^_^discoveryClientTypeName^_^
-
-

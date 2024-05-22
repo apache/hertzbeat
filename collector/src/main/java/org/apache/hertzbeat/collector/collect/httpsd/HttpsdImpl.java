@@ -29,7 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClientManagement;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServerInfo;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -43,7 +43,7 @@ import org.apache.hertzbeat.common.util.CommonUtil;
  */
 @Slf4j
 public class HttpsdImpl extends AbstractCollect {
-    private static final  String SERVER = "server";
+    private static final String SERVER = "server";
 
     @Setter
     @VisibleForTesting
@@ -115,7 +115,7 @@ public class HttpsdImpl extends AbstractCollect {
         try {
             Field declaredField = sourceObj.getClass().getDeclaredField(fieldName);
             declaredField.setAccessible(Boolean.TRUE);
-            columnValue = (String) declaredField.get(sourceObj);
+            columnValue = String.valueOf(declaredField.get(sourceObj));
         } catch (NoSuchFieldException | IllegalAccessException e) {
             log.warn("No such field for {}", fieldName);
         }
