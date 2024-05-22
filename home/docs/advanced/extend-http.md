@@ -195,6 +195,7 @@ metrics:
       method: GET
       headers:
         apiVersion: v1
+      # query params,support time expression
       params:
         param1: param1
         param2: param2

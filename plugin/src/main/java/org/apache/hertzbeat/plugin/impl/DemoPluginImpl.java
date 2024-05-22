@@ -32,7 +32,9 @@ public class DemoPluginImpl implements Plugin {
      */
     @Override
     public void alert(Alert alert) {
-        log.info("DemoPluginImpl alert: {}", alert);
+        if (log.isDebugEnabled()) {
+            log.debug("DemoPluginImpl alert: {}", alert);   
+        }
     }
 
 }
