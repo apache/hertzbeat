@@ -31,7 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * json path parser
  */
-public class JsonPathParser {
+public final class JsonPathParser {
 
     private static final ParseContext PARSER;
 
@@ -41,6 +41,9 @@ public class JsonPathParser {
                 .addOptions(Option.ALWAYS_RETURN_LIST);
         CacheProvider.setCache(new LRUCache(128));
         PARSER = JsonPath.using(conf);
+    }
+
+    private JsonPathParser() {
     }
 
     /**
