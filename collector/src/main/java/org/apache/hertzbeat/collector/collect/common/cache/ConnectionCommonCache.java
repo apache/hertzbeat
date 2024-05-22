@@ -197,15 +197,18 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
             cacheMap.remove(key);
             return Optional.empty();
         }
-        C value = cacheMap.get(key);
-        if (value == null) {
-            log.error("[connection common cache] value is null, remove it, key {}.", key);
-            cacheMap.remove(key);
-            timeoutMap.remove(key);
-        } else if (refreshCache) {
-            cacheTime[0] = System.currentTimeMillis();
-            timeoutMap.put(key, cacheTime);
-        }
+        C value = cacheMap.compute(key, (k, v) -> {
+            if (v == null) {
+                log.error("[connection common cache] value is null, remove it, key {}.", key);
+                timeoutMap.remove(key);
+                return null;
+            }
+            if (refreshCache) {
+                cacheTime[0] = System.currentTimeMillis();
+                timeoutMap.put(key, cacheTime);
+            }
+            return v;
+        });
         return Optional.ofNullable(value);
     }
 
