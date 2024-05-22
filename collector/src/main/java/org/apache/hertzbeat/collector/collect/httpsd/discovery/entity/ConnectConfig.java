@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery;
+package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,7 +25,6 @@ import lombok.Data;
 
 /**
  * Discovery Client Connect Config
- *
  */
 @Data
 @Builder
