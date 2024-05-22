@@ -42,7 +42,7 @@ import org.apache.hertzbeat.common.util.JsonUtil;
  * util for collector
  */
 @Slf4j
-public class CollectUtil {
+public final class CollectUtil {
 
     private static final int DEFAULT_TIMEOUT = 60000;
     private static final int HEX_STR_WIDTH = 2;
@@ -54,6 +54,13 @@ public class CollectUtil {
     private static final String CRYING_PLACEHOLDER_REGEX = "(\\^o\\^)(\\w|-|$|\\.)+(\\^o\\^)";
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
     private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b");
+
+    /**
+     * private constructor, not allow to create instance.
+     */
+    private CollectUtil() {
+    }
+
     /**
      * Regularly verifying whether a string is a combination of numbers and units
      */

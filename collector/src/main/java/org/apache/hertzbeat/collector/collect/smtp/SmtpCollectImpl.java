@@ -41,8 +41,6 @@ import org.apache.hertzbeat.common.util.CommonUtil;
  */
 @Slf4j
 public class SmtpCollectImpl extends AbstractCollect {
-    public SmtpCollectImpl() {
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {

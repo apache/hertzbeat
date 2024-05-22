@@ -44,8 +44,6 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 @Slf4j
 public class TelnetCollectImpl extends AbstractCollect {
 
-    public TelnetCollectImpl(){}
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         if (metrics == null || metrics.getTelnet() == null) {
