@@ -33,7 +33,6 @@ import { NoticeRuleService } from '../../../service/notice-rule.service';
 import { NoticeTemplateService } from '../../../service/notice-template.service';
 import { TagService } from '../../../service/tag.service';
 
-
 @Component({
   selector: 'app-alert-notice',
   templateUrl: './alert-notice.component.html',
