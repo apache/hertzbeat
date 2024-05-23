@@ -22,7 +22,7 @@ import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Value;
 
 /**
- *
+ * history data reader
  */
 public interface HistoryDataReader {
 

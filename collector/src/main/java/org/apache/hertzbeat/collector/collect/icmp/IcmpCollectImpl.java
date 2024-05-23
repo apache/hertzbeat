@@ -36,8 +36,6 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 @Slf4j
 public class IcmpCollectImpl extends AbstractCollect {
 
-    public IcmpCollectImpl(){}
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         if (metrics == null || metrics.getIcmp() == null) {

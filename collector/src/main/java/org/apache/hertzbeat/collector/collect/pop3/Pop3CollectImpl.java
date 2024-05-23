@@ -35,7 +35,6 @@ import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
-
 /**
  * pop3 collect
  */
@@ -44,10 +43,6 @@ public class Pop3CollectImpl extends AbstractCollect {
 
     private static final String EMAIL_COUNT = "email_count";
     private static final String MAILBOX_SIZE = "mailbox_size";
-
-    public Pop3CollectImpl() {
-
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {

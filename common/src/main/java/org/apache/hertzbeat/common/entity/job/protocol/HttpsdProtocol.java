@@ -38,6 +38,6 @@ public class HttpsdProtocol {
     private String discoveryClientTypeName;
 
     public boolean isInvalid() {
-        return StringUtils.isAnyBlank(host, port, discoveryClientTypeName);
+        return StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
     }
 }

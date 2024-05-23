@@ -20,6 +20,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { NzCascaderFilter } from 'ng-zorro-antd/cascader';
 import { ModalButtonOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -396,6 +397,12 @@ export class AlertSettingComponent implements OnInit {
   currentMetrics: any[] = [];
   alertRules: any[] = [{}];
   isExpr = false;
+  caseInsensitiveFilter: NzCascaderFilter = (i, p) => {
+    return p.some(o => {
+      const label = o.label;
+      return !!label && label.toLowerCase().indexOf(i.toLowerCase()) !== -1;
+    });
+  };
   cascadeOnChange(values: string[]): void {
     if (values == null || values.length != 3) {
       return;
