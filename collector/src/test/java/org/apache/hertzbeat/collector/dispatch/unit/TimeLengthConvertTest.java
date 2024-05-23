@@ -35,7 +35,7 @@ class TimeLengthConvertTest {
     }
 
     /**
-     * 测试纳秒转秒
+     * test nanoseconds to second
      */
     @Test
     void convertNs2Sec() {
@@ -44,7 +44,7 @@ class TimeLengthConvertTest {
     }
 
     /**
-     * 测试纳秒转毫秒
+     * test nanoseconds to milliseconds
      */
     @Test
     void convertNs2Ms() {
@@ -53,7 +53,7 @@ class TimeLengthConvertTest {
     }
 
     /**
-     * 测试纳秒转微秒
+     * test nanosecond to microsecond
      */
     @Test
     void convertNs2Us() {
@@ -62,7 +62,7 @@ class TimeLengthConvertTest {
     }
 
     /**
-     * 测试纳秒转天
+     * test nanoseconds to sky
      */
     @Test
     void convertNs2Day() {

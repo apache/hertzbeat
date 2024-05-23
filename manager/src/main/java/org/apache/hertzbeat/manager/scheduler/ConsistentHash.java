@@ -243,10 +243,7 @@ public class ConsistentHash {
             dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
             return null;
         }
-        Map.Entry<Integer, Node> ceilEntry = hashCircle.ceilingEntry(dispatchHash);
-        if (ceilEntry == null) {
-            ceilEntry = hashCircle.firstEntry();
-        }
+        Map.Entry<Integer, Node> ceilEntry = hashCircle.ceilingOrFirstEntry(dispatchHash);
         int virtualKey = ceilEntry.getKey();
         Node curNode = ceilEntry.getValue();
 
@@ -265,10 +262,7 @@ public class ConsistentHash {
             log.warn("There is no available collector registered.");
             return null;
         }
-        Map.Entry<Integer, Node> ceilEntry = hashCircle.ceilingEntry(dispatchHash);
-        if (ceilEntry == null) {
-            ceilEntry = hashCircle.firstEntry();
-        }
+        Map.Entry<Integer, Node> ceilEntry = hashCircle.ceilingOrFirstEntry(dispatchHash);
         return ceilEntry.getValue();
     }
 
@@ -416,10 +410,10 @@ public class ConsistentHash {
             if (virtualNodeMap == null) {
                 virtualNodeMap = new ConcurrentHashMap<>(16);
             }
-            Set<Long[]> virtualNodeJobs = virtualNodeMap.get(virtualHashKey);
-            if (virtualNodeJobs != null) {
-                reDispatchJobs.addAll(virtualNodeJobs);
-            }
+            virtualNodeMap.computeIfPresent(virtualHashKey, (k, v) -> {
+                reDispatchJobs.addAll(v);
+                return v;
+            });
             virtualNodeMap.put(virtualHashKey, reDispatchJobs);
         }
         
