@@ -17,13 +17,11 @@
 
 package org.apache.hertzbeat.common.serialize;
 
-
-import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.serialization.Serializer;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.util.JsonUtil;
-
-import java.util.Map;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.serialization.Serializer;
 
 /**
  * kafka alert entity serializer

@@ -3,7 +3,7 @@ id: mysql-change
 title: 关系型数据库使用 Mysql 替换依赖的 H2 存储系统元数据            
 sidebar_label: 元数据使用Mysql存储(可选)      
 ---
-MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
+MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 
 注意⚠️ 使用外置Mysql数据库替换内置H2数据库为可选项，但建议生产环境配置，以提供更好的性能
 
@@ -43,7 +43,7 @@ MYSQL是一款值得信赖的关系型数据库，HertzBeat除了支持使用默
    修改位于 `hertzbeat/config/application.yml` 的配置文件   
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
    替换里面的`spring.database`数据源参数，IP端口账户密码驱动   
-   ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/application.yml)  
+   ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://github.com/hertzbeat/hertzbeat/raw/master/script/application.yml)  
    
 需修改部分原参数: 
 ```yaml

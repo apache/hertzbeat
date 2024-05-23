@@ -28,17 +28,17 @@ import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 public interface AlertNotifyHandler {
 
     /**
-     * 发送报警通知
-     * @param receiver       Notification configuration information   通知配置信息
-     * @param noticeTemplate Notification configuration information   通知配置信息
-     * @param alert          Alarm information                        告警信息
+     * send alarm notification
+     * @param receiver       Notification configuration information
+     * @param noticeTemplate Notification configuration information
+     * @param alert          Alarm information
      * @throws AlertNoticeException when send receiver error
      */
     void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException;
 
     /**
-     * 通知类型
-     * @return 通知类型
+     * notification type
+     * @return notification type
      */
     byte type();
 }

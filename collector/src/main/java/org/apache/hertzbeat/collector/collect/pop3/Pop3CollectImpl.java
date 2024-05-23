@@ -17,26 +17,23 @@
 
 package org.apache.hertzbeat.collector.collect.pop3;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.pop3.POP3MessageInfo;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import org.apache.commons.net.pop3.POP3SClient;
-import org.apache.commons.net.pop3.POP3Client;
-import org.apache.hertzbeat.common.util.CommonUtil;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.pop3.POP3Client;
+import org.apache.commons.net.pop3.POP3MessageInfo;
+import org.apache.commons.net.pop3.POP3SClient;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * pop3 collect
@@ -44,24 +41,24 @@ import java.util.Map;
 @Slf4j
 public class Pop3CollectImpl extends AbstractCollect {
 
-    private final static String EMAIL_COUNT = "email_count";
-    private final static String MAILBOX_SIZE = "mailbox_size";
+    private static final String EMAIL_COUNT = "email_count";
+    private static final String MAILBOX_SIZE = "mailbox_size";
 
     public Pop3CollectImpl() {
 
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        Pop3Protocol pop3Protocol;
+        if (metrics == null || (pop3Protocol = metrics.getPop3()) == null || pop3Protocol.isInvalid()) {
+            throw new IllegalArgumentException("Pop3 collect must has pop3 params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
 
         Pop3Protocol pop3Protocol = metrics.getPop3();
         POP3Client pop3Client = null;
@@ -78,11 +75,6 @@ public class Pop3CollectImpl extends AbstractCollect {
                 builder.setCode(CollectRep.Code.UN_CONNECTABLE);
                 builder.setMsg("Peer connect failed，Timeout " + pop3Protocol.getTimeout() + "ms");
             }
-        } catch (IOException e1) {
-            String errorMsg = CommonUtil.getMessageFromThrowable(e1);
-            log.info(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
         } catch (Exception e2) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
@@ -109,19 +101,7 @@ public class Pop3CollectImpl extends AbstractCollect {
     }
 
     /**
-     * 校验参数
-     * @param metrics metrics
-     * @throws Exception exception
-     */
-    private void validateParams(Metrics metrics) throws Exception {
-        Pop3Protocol pop3Protocol = metrics.getPop3();
-        if (metrics == null || pop3Protocol == null || pop3Protocol.isInvalid()) {
-            throw new Exception("Pop3 collect must has pop3 params");
-        }
-    }
-
-    /**
-     * 创建POP3连接【支持SSL加密】
+     * create a POP3 connection【 with SSL encryption support 】
      * @param pop3Protocol pop3 Protocol
      * @param ssl ssl
      * @return return
@@ -129,23 +109,23 @@ public class Pop3CollectImpl extends AbstractCollect {
      */
     private POP3Client createPOP3Client(Pop3Protocol pop3Protocol, boolean ssl) throws Exception {
         POP3Client pop3Client = null;
-        // 判断是否启用 SSL 加密连接
+        // determine whether to use SSL-encrypted connections
         if (ssl) {
             pop3Client = new POP3SClient(true);
         } else {
             pop3Client = new POP3Client();
         }
-        // 设置超时时间
+        // set timeout
         int timeout = Integer.parseInt(pop3Protocol.getTimeout());
         if (timeout > 0) {
             pop3Client.setConnectTimeout(timeout);
         }
         pop3Client.setCharset(StandardCharsets.UTF_8);
-        // 连接到POP3服务器
+        // connect to the POP3 server
         String host = pop3Protocol.getHost();
         int port = Integer.parseInt(pop3Protocol.getPort());
         pop3Client.connect(host, port);
-        // 验证凭据
+        // validate credentials
         String email = pop3Protocol.getEmail();
         String authorize = pop3Protocol.getAuthorize();
         boolean isAuthenticated = pop3Client.login(email, authorize);
@@ -156,7 +136,7 @@ public class Pop3CollectImpl extends AbstractCollect {
     }
 
     /**
-     * 获取Pop3指标信息
+     * retrieve Pop3 metric information
      * @param builder builder
      * @param pop3Client pop3 client
      * @param aliasFields alias Fields
@@ -189,7 +169,7 @@ public class Pop3CollectImpl extends AbstractCollect {
         double mailboxSize = 0.0;
         if (status != null) {
             emailCount = status.number;
-            // byte -> kb
+            // bytes to KB
             mailboxSize = (double) status.size / 1024.0;
             pop3Metrics.put(EMAIL_COUNT, emailCount);
             pop3Metrics.put(MAILBOX_SIZE, mailboxSize);

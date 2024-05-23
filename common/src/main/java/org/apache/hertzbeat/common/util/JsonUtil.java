@@ -24,20 +24,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import javax.annotation.concurrent.ThreadSafe;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
-
-
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * json util
  */
 @ThreadSafe
 @Slf4j
-public class JsonUtil {
+public final class JsonUtil {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private JsonUtil() {
+    }
 
     static {
         OBJECT_MAPPER
@@ -91,6 +92,26 @@ public class JsonUtil {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return null;
+        }
+    }
+
+    /**
+     * check if the string is a json string
+     * @param jsonStr json string
+     * @return true if the string is a json string
+     */
+    public static boolean isJsonStr(String jsonStr) {
+        if (!StringUtils.hasText(jsonStr)) {
+            return false;
+        }
+        if (!jsonStr.startsWith("{") || !jsonStr.endsWith("}")) {
+            return false;
+        }
+        try {
+            OBJECT_MAPPER.readTree(jsonStr);
+            return true;
+        } catch (Exception ignored) {
+            return false;
         }
     }
 }

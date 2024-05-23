@@ -18,21 +18,18 @@
 package org.apache.hertzbeat.common.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hertzbeat.common.entity.manager.TagItem;
+import org.junit.jupiter.api.Test;
+import static org.apache.hertzbeat.common.util.JsonUtil.isJsonStr;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Test case for {@link JsonUtil}
  */
 class JsonUtilTest {
-
-    @BeforeEach
-    void setUp() {
-    }
 
     @Test
     void toJson() {
@@ -40,22 +37,36 @@ class JsonUtilTest {
         TagItem proTag = new TagItem("test", "pro");
         tagList.add(proTag);
         tagList.add(new TagItem("test", "dev"));
-        System.out.println(JsonUtil.toJson(tagList));
-    }
 
-    @Test
-    void fromJson() {
+        assertEquals("[{\"name\":\"test\",\"value\":\"pro\"},{\"name\":\"test\",\"value\":\"dev\"}]",
+                JsonUtil.toJson(tagList));
     }
 
     @Test
     void testFromJson() {
         String jsonStr = "[{\"name\":\"test\",\"value\":\"pro\"},{\"name\":\"test\",\"value\":\"dev\"}]";
-        List<TagItem> tagItems = JsonUtil.fromJson(jsonStr, new TypeReference<List<TagItem>>() {
+        List<TagItem> tagItems = JsonUtil.fromJson(jsonStr, new TypeReference<>() {
         });
-        System.out.println(tagItems);
+        assertEquals("[TagItem(name=test, value=pro), TagItem(name=test, value=dev)]", tagItems.toString());
     }
 
     @Test
-    void testFromJson1() {
+    void testIsJsonStr() {
+        String jsonString = "{\"name\":\"John\", \"age\":30";
+        assertFalse(isJsonStr(jsonString));
+
+        assertFalse(isJsonStr(""));
+
+        assertFalse(isJsonStr(null));
+
+        String whitespaceString = " ";
+        assertFalse(isJsonStr(whitespaceString));
+
+        jsonString = "This is just a plain string.";
+        assertFalse(isJsonStr(jsonString));
+
+        String jsonStringArrays = "[{\"name\":\"John\"}, {\"name\":\"Doe\"}]";
+        assertFalse(isJsonStr(jsonStringArrays));
     }
+
 }

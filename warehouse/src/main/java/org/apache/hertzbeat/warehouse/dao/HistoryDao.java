@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.dao;
 
-
 import org.apache.hertzbeat.common.entity.warehouse.History;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

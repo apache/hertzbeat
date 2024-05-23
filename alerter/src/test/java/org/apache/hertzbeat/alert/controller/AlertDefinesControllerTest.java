@@ -17,9 +17,19 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
-import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,12 +45,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Test case for {@link AlertDefinesController}
@@ -66,7 +70,7 @@ class AlertDefinesControllerTest {
     Integer pageSize = 7;
   
     // Parameter collection
-    Map<String, Object> content = new HashMap<String, Object>();
+    Map<String, Object> content = new HashMap<>();
 
     // Object for mock
     PageRequest pageRequest;
@@ -85,7 +89,7 @@ class AlertDefinesControllerTest {
         content.put("pageIndex", pageIndex);
         content.put("pageSize", pageSize);
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(content.get("order").toString()), content.get("sort").toString()));
-        pageRequest = PageRequest.of(((Integer) content.get("pageIndex")).intValue(), ((Integer) content.get("pageSize")).intValue(), sortExp);
+        pageRequest = PageRequest.of((Integer) content.get("pageIndex"), (Integer) content.get("pageSize"), sortExp);
     }
 
     //    @Test

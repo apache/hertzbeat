@@ -128,4 +128,4 @@ HertzBeat Github: https://github.com/apache/hertzbeat
 
 > 只需要一条docker命令即可安装体验heartbeat:   
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`

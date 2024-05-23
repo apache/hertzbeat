@@ -17,6 +17,11 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.template.TemplateAvailabilityProvider;
 import org.springframework.boot.autoconfigure.template.TemplateAvailabilityProviders;
@@ -32,15 +37,9 @@ import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.View;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
 
 /**
  * Solve the front-end routing problem of angular static website resources with DefaultErrorViewResolver and route the 404 website request to the angular front-end
- * 同DefaultErrorViewResolver 解决angular静态网站资源前端路由问题 把404的网站请求给angular前端进行路由
  */
 @Configuration
 @Slf4j

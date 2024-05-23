@@ -194,7 +194,7 @@
             required
             name="target"
             id="target"
-            [nzShowSearch]="true"
+            [nzShowSearch]="{ filter: caseInsensitiveFilter }"
             [nzPlaceHolder]="'alert.setting.target.place-holder' | i18n"
             [nzOptions]="appHierarchies"
             [(ngModel)]="cascadeValues"
@@ -582,9 +582,9 @@
         <tr *ngFor="let data of smallTable.data">
           <td nzAlign="center" nzLeft [nzChecked]="checkedTags.has(data)" (nzCheckedChange)="onTagItemChecked(data, $event)"></td>
           <td nzAlign="left">
-            <nz-tag *ngIf="data.value == undefined || data.value.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
-            <nz-tag *ngIf="data.value != undefined && data.value.trim() != ''" [nzColor]="data.color">
-              {{ data.name + ':' + data.value }}
+            <nz-tag *ngIf="data.tagValue == undefined || data.tagValue.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
+            <nz-tag *ngIf="data.tagValue != undefined && data.tagValue.trim() != ''" [nzColor]="data.color">
+              {{ data.name + ':' + data.tagValue }}
             </nz-tag>
           </td>
         </tr>
@@ -643,7 +643,8 @@
 <!-- 导出告警定义弹出框 -->
 <nz-modal
   [(nzVisible)]="isSwitchExportTypeModalVisible"
-  [nzTitle]="'monitors.export.switch-type' | i18n"
+  [nzTitle]="'alert.export.switch-type' | i18n"
+  (nzOnCancel)="onExportTypeModalCancel()"
   nzOkDisabled="true"
   [nzFooter]="switchExportTypeModalFooter"
 >
@@ -651,19 +652,19 @@
     <p style="text-align: center">
       <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('YAML')" [nzLoading]="exportYamlButtonLoading">
         <span nz-icon nzType="download"></span>
-        {{ 'monitors.export.use-type' | i18n : { type: 'YAML' } }}
+        {{ 'alert.export.use-type' | i18n : { type: 'YAML' } }}
       </button>
     </p>
     <p style="text-align: center">
       <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('JSON')" [nzLoading]="exportJsonButtonLoading">
         <span nz-icon nzType="download"></span>
-        {{ 'monitors.export.use-type' | i18n : { type: 'JSON' } }}
+        {{ 'alert.export.use-type' | i18n : { type: 'JSON' } }}
       </button>
     </p>
     <p style="text-align: center">
       <button nz-button nzType="primary" nzSize="large" (click)="exportDefines('EXCEL')" [nzLoading]="exportExcelButtonLoading">
         <span nz-icon nzType="download"></span>
-        {{ 'monitors.export.use-type' | i18n : { type: 'EXCEL' } }}
+        {{ 'alert.export.use-type' | i18n : { type: 'EXCEL' } }}
       </button>
     </p>
   </ng-container>

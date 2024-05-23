@@ -17,13 +17,11 @@
 
 package org.apache.hertzbeat.collector.dispatch.timer;
 
-
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * timer dispatch service

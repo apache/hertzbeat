@@ -20,20 +20,6 @@ package org.apache.hertzbeat.manager.service.impl;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
-import org.apache.hertzbeat.alert.AlerterProperties;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
-import org.apache.hertzbeat.common.util.ResourceBundleUtil;
-import org.apache.hertzbeat.manager.service.MailService;
-import org.apache.hertzbeat.manager.service.NoticeConfigService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
-import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,10 +27,22 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import javax.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.AlerterProperties;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
+import org.apache.hertzbeat.common.util.ResourceBundleUtil;
+import org.apache.hertzbeat.manager.service.MailService;
+import org.apache.hertzbeat.manager.service.NoticeConfigService;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 /**
  * Mailbox sending service interface implementation class
- * 邮箱发送服务接口实现类
  */
 @Slf4j
 @Service

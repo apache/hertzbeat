@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -32,11 +33,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Objects;
-
 /**
  * Send alarm information by Slack Webhook
- * 通过Slack Webhook发送告警信息
  */
 @Component
 @RequiredArgsConstructor

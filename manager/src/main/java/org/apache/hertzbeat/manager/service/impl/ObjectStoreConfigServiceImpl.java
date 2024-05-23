@@ -20,6 +20,8 @@ package org.apache.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.obs.services.ObsClient;
+import java.lang.reflect.Type;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
@@ -33,11 +35,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import javax.annotation.Resource;
-import java.lang.reflect.Type;
-
 /**
- * 文件存储配置服务
  * File storage configuration service
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -53,12 +51,10 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
     private static final String BEAN_NAME = "ObjectStoreService";
 
     /**
-     * 构造方法，传入GeneralConfigDao、ObjectMapper和type。
-     *
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
      *
-     * @param generalConfigDao 配置Dao对象
-     * @param objectMapper     JSON工具类对象
+     * @param generalConfigDao  configDao object
+     * @param objectMapper     JSON tool object
      */
     protected ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
@@ -81,21 +77,18 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
 
     @Override
     public void handler(ObjectStoreDTO<T> config) {
-        // 初始化文件存储服务
+        // initialize file storage service
         if (config != null) {
-            switch (config.getType()) {
-                case OBS:
-                    initObs(config);
-                    break;
+            if (config.getType() == ObjectStoreDTO.Type.OBS) {
+                initObs(config);
                 // case other object store service
-                default:
             }
             ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
         }
     }
 
     /**
-     * 初始化华为云OBS
+     * init Huawei Cloud OBS
      */
     private void initObs(ObjectStoreDTO<T> config) {
         var obsConfig = objectMapper.convertValue(config.getConfig(), ObjectStoreDTO.ObsConfig.class);
@@ -114,7 +107,7 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        // 初始化文件存储
+        // init file storage
         handler(getConfig());
     }
 }

@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]
 ---
 
-> 非常高兴 Dromara HertzBeat 迎来了两位新晋社区Committer, 两位都是来自互联网公司的开发工程师，让我们来了解下他们的开源经历吧！
+> 非常高兴 HertzBeat 迎来了两位新晋社区Committer, 两位都是来自互联网公司的开发工程师，让我们来了解下他们的开源经历吧！
 
 
 ## 第一位 花城
@@ -108,7 +108,7 @@ github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 
 ## 如何参与Hertzbeat
 
-+ 官网有非常完善的贡献者指南：[贡献者指南 | HertzBeat](https://hertzbeat.com/docs/others/contributing)
++ 官网有非常完善的贡献者指南：[贡献者指南 | HertzBeat](https://hertzbeat.com/docs/community/contribution)
 
 + Github issues：[Issues · apache/hertzbeat (github.com)](https://github.com/apache/hertzbeat/issues)
 

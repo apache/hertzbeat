@@ -24,11 +24,14 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 /**
- * Server酱发送
  * Send alarm information through Server
  */
 @Component
@@ -36,10 +39,10 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     /**
-     * 发送报警通知
+     * Send alarm notification
      *
-     * @param receiver Notification configuration information   通知配置信息
-     * @param alert    Alarm information                        告警信息
+     * @param receiver Notification configuration information
+     * @param alert    Alarm information
      * @throws AlertNoticeException when send receiver error
      */
     @Override
@@ -66,9 +69,9 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     }
 
     /**
-     * 通知类型
+     * notification type
      *
-     * @return 通知类型
+     * @return notification type
      */
     @Override
     public byte type() {
@@ -78,16 +81,17 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @Data
     private static class ServerChanWebHookDto {
         private static final String MARKDOWN = "markdown";
+
         /**
-         * 标题
+         * title
          */
         private String title;
+
         /**
-         * markdown消息内容
+         * markdown message content
          */
         private String desp;
 
     }
-
 
 }

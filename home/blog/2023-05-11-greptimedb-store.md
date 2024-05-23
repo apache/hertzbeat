@@ -70,7 +70,7 @@ $ docker run -d -p 1157:1157 \
     -v /opt/data:/opt/hertzbeat/data \
     -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
     --restart=always \
-    --name hertzbeat tancloud/hertzbeat
+    --name hertzbeat apache/hertzbeat
 ```
 
 

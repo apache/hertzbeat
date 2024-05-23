@@ -17,9 +17,6 @@
 
 package org.apache.hertzbeat.common.util;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalTime;
@@ -27,18 +24,25 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * common util
  */
 @Slf4j
-public class CommonUtil {
+public final class CommonUtil {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*");
 
     private static final Pattern PHONE_PATTERN = Pattern.compile("^(((13[0-9])|(14[0-9])|(15[0-9])|(16[0-9])|(19[0-9])|(18[0-9])|(17[0-9]))+\\d{8})?$");
 
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("^[-+]?[0-9]*\\.?[0-9]+$");
+    
     private static final int PHONE_LENGTH = 11;
+
+    private CommonUtil() {
+    }
 
     /**
      * Converts the string str to the int numeric type
@@ -76,6 +80,18 @@ public class CommonUtil {
             log.debug(e.getMessage(), e);
             return null;
         }
+    }
+
+    /**
+     * whether the string is numeric
+     * @param str string
+     * @return boolean
+     */
+    public static boolean isNumeric(String str) {
+        if (StringUtils.isBlank(str)) {
+            return false;
+        }
+        return NUMBER_PATTERN.matcher(str).matches();
     }
 
     /**

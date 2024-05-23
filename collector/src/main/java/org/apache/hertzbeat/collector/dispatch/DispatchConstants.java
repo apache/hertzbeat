@@ -60,6 +60,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_NEBULAGRAPH = "nebulaGraph";
     /**
+     * protocol ngql
+     */
+    String PROTOCOL_NGQL = "ngql";
+    /**
      * protocol udp
      */
     String PROTOCOL_UDP = "udp";
@@ -119,6 +123,10 @@ public interface DispatchConstants {
      * protocol http_sd
      */
     String PROTOCOL_HTTP_SD = "httpsd";
+    /**
+     * protocol redfish
+     */
+    String PROTOCOL_REDFISH = "redfish";
     String PROTOCOL_HTTP_SD_V1 = "httpsdv1";
 
     // Protocol type related - end

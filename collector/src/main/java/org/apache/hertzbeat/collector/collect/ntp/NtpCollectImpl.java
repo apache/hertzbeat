@@ -17,21 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.ntp;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.ntp.NTPUDPClient;
-import org.apache.commons.net.ntp.NtpV3Packet;
-import org.apache.commons.net.ntp.TimeInfo;
-import org.apache.commons.net.ntp.TimeStamp;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.CommonUtil;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketException;
@@ -42,6 +27,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.ntp.NTPUDPClient;
+import org.apache.commons.net.ntp.NtpV3Packet;
+import org.apache.commons.net.ntp.TimeInfo;
+import org.apache.commons.net.ntp.TimeStamp;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  *  ntp collect
@@ -52,13 +51,15 @@ public class NtpCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getNtp() == null) {
+            throw new IllegalArgumentException("NTP collect must have NTP params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getNtp() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("NTP collect must have NTP params");
-            return;
-        }
         NtpProtocol ntpProtocol = metrics.getNtp();
         String host = ntpProtocol.getHost();
         int timeout = CollectUtil.getTimeout(ntpProtocol.getTimeout());
@@ -75,7 +76,7 @@ public class NtpCollectImpl extends AbstractCollect {
 
             timeInfo.computeDetails();
 
-            // 获取ntp服务器信息
+            // Obtain NTP server information
             Map<String, String> resultMap = getNtpInfo(timeInfo);
             resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
@@ -121,10 +122,10 @@ public class NtpCollectImpl extends AbstractCollect {
     private Map<String, String> getNtpInfo(TimeInfo timeInfo) {
         Map<String, String> valueMap = new HashMap<>(16);
 
-        TimeStamp timeStamp = timeInfo.getMessage().getTransmitTimeStamp();
+        NtpV3Packet message = timeInfo.getMessage();
+        TimeStamp timeStamp = message.getTransmitTimeStamp();
         Date date = timeStamp.getDate();
 
-        NtpV3Packet message = timeInfo.getMessage();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
         valueMap.put("time", Long.toString(timeStamp.getTime()));
         valueMap.put("date", simpleDateFormat.format(date));

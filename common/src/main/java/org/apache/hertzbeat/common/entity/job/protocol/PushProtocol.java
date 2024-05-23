@@ -17,13 +17,12 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.Field;
-
-import java.util.List;
 
 /**
  * push protocol definition

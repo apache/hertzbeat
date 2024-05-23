@@ -17,6 +17,13 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
@@ -32,14 +39,6 @@ import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * status page service implement.
@@ -162,25 +161,25 @@ public class StatusPageServiceImpl implements StatusPageService {
     private StatusPageHistory combineOneDayStatusPageHistory(List<StatusPageHistory> statusPageHistories, StatusPageComponent component, long nowTimestamp) {
         if (statusPageHistories.isEmpty()) {
             return StatusPageHistory.builder().timestamp(nowTimestamp)
-                    .normal(0).abnormal(0).unknown(0).componentId(component.getId()).state(component.getState()).build();
+                    .normal(0).abnormal(0).unknowing(0).componentId(component.getId()).state(component.getState()).build();
         }
         if (statusPageHistories.size() == 1) {
             return statusPageHistories.get(0);
         }
         StatusPageHistory oldOne = statusPageHistories.get(0);
         StatusPageHistory todayStatus = StatusPageHistory.builder().timestamp(nowTimestamp)
-                .normal(0).abnormal(0).unknown(0).gmtCreate(oldOne.getGmtCreate()).gmtUpdate(oldOne.getGmtUpdate())
+                .normal(0).abnormal(0).unknowing(0).gmtCreate(oldOne.getGmtCreate()).gmtUpdate(oldOne.getGmtUpdate())
                 .componentId(component.getId()).state(component.getState()).build();
         for (StatusPageHistory statusPageHistory : statusPageHistories) {
             if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                 todayStatus.setAbnormal(todayStatus.getAbnormal() + calculateStatus.getCalculateStatusIntervals());
             } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                todayStatus.setUnknown(todayStatus.getUnknown() + calculateStatus.getCalculateStatusIntervals());
+                todayStatus.setUnknowing(todayStatus.getUnknowing() + calculateStatus.getCalculateStatusIntervals());
             } else {
                 todayStatus.setNormal(todayStatus.getNormal() + calculateStatus.getCalculateStatusIntervals());
             }
         }
-        double total = todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknown();
+        double total = todayStatus.getNormal() + todayStatus.getAbnormal() + todayStatus.getUnknowing();
         double uptime = 0;
         if (total > 0) {
             uptime = (double) todayStatus.getNormal() / total;

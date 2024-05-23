@@ -36,31 +36,38 @@ public class AppCount {
     }
 
     /**
-     * 监控大类别
+     * monitor category
      */
     private String category;
+
     /**
-     * 监控类型
+     * monitor type
      */
     private String app;
+
     /**
      * 任务状态
+     * task status
      */
     private transient byte status;
+
     /**
-     * 监控数量
+     * monitor count
      */
     private long size;
+
     /**
-     * 任务状态可用的数量
+     * number of available tasks
      */
     private long availableSize;
+
     /**
-     * 任务状态未监控的数量
+     * number of tasks with unmonitored status
      */
     private long unManageSize;
+
     /**
-     * 任务状态不可用的数量
+     * number of tasks with unavailable status
      */
     private long unAvailableSize;
 }

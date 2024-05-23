@@ -19,6 +19,8 @@
 
 package org.apache.hertzbeat.manager.nativex;
 
+import java.lang.reflect.Constructor;
+import java.util.Set;
 import org.apache.sshd.common.channel.ChannelListener;
 import org.apache.sshd.common.forward.PortForwardingEventListener;
 import org.apache.sshd.common.io.nio2.Nio2ServiceFactory;
@@ -33,10 +35,9 @@ import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
 import org.springframework.util.ClassUtils;
 
-import java.lang.reflect.Constructor;
-import java.util.Set;
-
 /**
+ * Derived from SpringCloud org.springframework.cloud.config.server.config.ConfigServerRuntimeHints
+ * @see <a href="https://github.com/spring-cloud/spring-cloud-config/blob/main/spring-cloud-config-server/src/main/java/org/springframework/cloud/config/server/config/ConfigServerRuntimeHints.java">ConfigServerRuntimeHints</a>
  */
 public class HertzbeatRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
 

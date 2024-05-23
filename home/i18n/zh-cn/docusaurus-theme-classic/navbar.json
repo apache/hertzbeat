@@ -142,5 +142,21 @@
   "item.label.how_to_verify_release": {
     "message": "如何验证版本",
     "description": "Navbar item with label how_to_verify_release"
+  },
+  "item.label.team": {
+    "message": "团队",
+    "description": "Navbar item with label team"
+  },
+  "item.label.download": {
+    "message": "下载",
+    "description": "Navbar item with label download"
+  },
+  "item.label.contribution": {
+    "message": "贡献指南",
+    "description": "Navbar item with label contribution"
+  },
+  "item.label.development": {
+    "message": "运行编译",
+    "description": "Navbar item with label development"
   }
 }

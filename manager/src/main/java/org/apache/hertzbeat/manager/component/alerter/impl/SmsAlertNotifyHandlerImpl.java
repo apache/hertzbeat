@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import java.util.ResourceBundle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -28,8 +29,6 @@ import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-
-import java.util.ResourceBundle;
 
 /**
  * Send alarm information through Sms
@@ -46,7 +45,7 @@ final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
-        // SMS notification 短信通知
+        // SMS notification
         try {
             String monitorName = null;
             if (alert.getTags() != null) {

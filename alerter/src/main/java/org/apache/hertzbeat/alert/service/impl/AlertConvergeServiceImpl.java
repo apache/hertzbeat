@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertConvergeDao;
 import org.apache.hertzbeat.alert.service.AlertConvergeService;
@@ -30,8 +31,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Set;
 
 /**
  * implement for alert converge service

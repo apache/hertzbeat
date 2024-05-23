@@ -27,7 +27,6 @@ import org.apache.hertzbeat.manager.service.GeneralConfigService;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 提供通用配置Service的抽象实现，实现了增删查改等操作。
  * <p>Abstract implementation of GeneralConfigService, providing CRUD operations for configurations.</p>
  */
 @Slf4j
@@ -36,10 +35,9 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
     protected final ObjectMapper objectMapper;
 
     /**
-     * 构造方法，传入GeneralConfigDao、ObjectMapper和type。
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
-     * @param generalConfigDao 配置Dao对象
-     * @param objectMapper     JSON工具类对象
+     * @param generalConfigDao Dao object
+     * @param objectMapper     JSON tool object
      */
     protected AbstractGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         this.generalConfigDao = generalConfigDao;
@@ -47,9 +45,8 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
     }
 
     /**
-     * 保存配置。
      * <p>Save a configuration.</p>
-     * @param config 需要保存的配置对象
+     * @param config need to save configuration object
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -62,7 +59,7 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
                     .content(contentJson)
                     .build();
             generalConfigDao.save(generalConfig2Save);
-            log.info("配置保存成功|Configuration saved successfully");
+            log.info("Configuration saved successfully");
             handler(getConfig());
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Configuration saved failed: " + e.getMessage());
@@ -70,9 +67,8 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
     }
 
     /**
-     * 获取配置。
      * <p>Get a configuration.</p>
-     * @return 查询到的配置对象
+     * @return query configuration object
      */
     @Override
     public T getConfig() {
@@ -88,9 +84,8 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
     }
 
     /**
-     * 获取配置类型的TypeReference对象。
      * <p>Get TypeReference object of configuration type.</p>
-     * @return 配置类型的TypeReference对象
+     * @return TypeReference object
      */
     protected abstract TypeReference<T> getTypeReference();
 

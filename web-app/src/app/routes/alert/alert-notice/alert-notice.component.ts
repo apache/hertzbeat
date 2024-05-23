@@ -619,8 +619,8 @@ export class AlertNoticeComponent implements OnInit {
           if (page.content != undefined) {
             page.content.forEach(item => {
               let tag = `${item.name}`;
-              if (item.value != undefined) {
-                tag = `${tag}:${item.value}`;
+              if (item.tagValue != undefined) {
+                tag = `${tag}:${item.tagValue}`;
               }
               this.tagsOption.push({
                 value: tag,

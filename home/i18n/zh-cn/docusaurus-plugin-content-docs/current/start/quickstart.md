@@ -6,7 +6,7 @@ sidebar_label: 快速开始
 
 ### 🐕 开始使用
 
-- 如果您是想将HertzBeat部署到本地搭建监控系统，请参考下面的部署文档进行操作。
+- 如果您是想将 Apache HertzBeat (incubating) 部署到本地搭建监控系统，请参考下面的部署文档进行操作。
 
 
 ### 🍞 HertzBeat安装   
@@ -16,7 +16,7 @@ sidebar_label: 快速开始
 
 1. `docker` 环境仅需一条命令即可开始
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
 ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 
@@ -27,7 +27,7 @@ sidebar_label: 快速开始
 3. 部署采集器集群(可选)
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
 - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
@@ -38,12 +38,12 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 #### 方式二：通过安装包安装    
 
-1. 下载您系统环境对应的安装包`hertzbeat-xx.tar.gz` [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [GITHUB Release](https://github.com/apache/hertzbeat/releases)
+1. 下载您系统环境对应的安装包`hertzbeat-xx.tar.gz` [GITHUB Release](https://github.com/apache/hertzbeat/releases)
 2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
 3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 5. 部署采集器集群(可选)
-   - 下载您系统环境对应采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [GITHUB Release](https://github.com/apache/hertzbeat/releases)
+   - 下载您系统环境对应采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [GITHUB Release](https://github.com/apache/hertzbeat/releases)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:
@@ -68,7 +68,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在`web-app`目录下启动 `ng serve --open`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
-详细步骤参考 [参与贡献之本地代码启动](../others/contributing)
+详细步骤参考 [参与贡献之本地代码启动](../community/contribution)
 
 ##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+iotdb/tdengine
 

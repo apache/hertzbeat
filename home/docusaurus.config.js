@@ -71,6 +71,11 @@ module.exports = {
           to: '/blog/',
         },
         {
+          label: 'download',
+          position: 'left',
+          to: '/docs/download',
+        },
+        {
           label: 'Community',
           position: 'left',
           items: [
@@ -79,8 +84,8 @@ module.exports = {
               to: '/docs/community/contact',
             },
             {
-              label: 'code_of_conduct',
-              to: 'https://www.apache.org/foundation/policies/conduct',
+              label: 'contribution',
+              to: '/docs/community/contribution',
             },
             {
               label: 'join_the_mailing_lists',
@@ -125,9 +130,10 @@ module.exports = {
           ],
         },
         {
-          label : 'Team',
+          label : 'team',
           position: 'left',
-          to : '/team/'
+          to : '/team/',
+          activeBaseRegex: `/team`,
         },
         {
           label: 'ASF',
@@ -169,11 +175,12 @@ module.exports = {
           items: [
             {
               label: 'contributors',
-              to: '/docs/others/developer',
+              to : '/team/',
+              activeBaseRegex: `/team`,
             },
             {
-              label: 'contributing',
-              to: '/docs/community/mailing_lists',
+              label: 'development',
+              to: '/docs/community/development',
             },
             {
               label: 'kanban',
@@ -265,7 +272,27 @@ module.exports = {
         href: 'https://github.com/apache/hertzbeat',
       },
       copyright:
-        `Copyright © ${new Date().getFullYear()} Apache HertzBeat`,
+        `
+        <div style="text-align: left;margin-top:30px">
+          <div style="align-items: center; display: flex">
+            <div style="width: 1200px; background-color: #282c77; padding: 10px; border-radius: 6px">
+              <a href="https://incubator.apache.org/">
+                <img src="/img/icons/apache-incubator.svg" alt="Apache Incubator logo">
+              </a>
+            </div>
+            <div style="margin-left: 40px">
+              <p style="font-size: 14px;line-height: 25px;">
+              Apache HertzBeat is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache Incubator. Incubation is required of all newly accepted projects until a further review indicates that the infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it does indicate that the project has yet to be fully endorsed by the ASF.
+              </p>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid #525252;min-height: 60px;line-height: 25px;text-align: left;font-size: 14px;display: flex;align-items: center;">
+            <span>
+              Copyright © ${new Date().getFullYear()} The Apache Software Foundation. Apache HertzBeat, HertzBeat, and its feather logo are trademarks of The Apache Software Foundation.
+            </span>
+          </div>
+        </div>`,
     },
   },
   presets: [
@@ -324,7 +351,6 @@ module.exports = {
         debug: false,
         offlineModeActivationStrategies: ['appInstalled', 'queryString'],
         // swRegister: false,
-        swCustom: path.resolve(__dirname, 'src/sw.js'),
         pwaHead: [
           {
             tagName: 'link',
@@ -376,11 +402,5 @@ module.exports = {
       },
     ],
   ],
-  themes: ['@docusaurus/theme-live-codeblock'],
-  scripts: [
-    {
-      src: 'https://hm.baidu.com/hm.js?77fb03ed1c6c1267119fec6d84dd88f3',
-      async: true,
-    },
-  ],
+  themes: ['@docusaurus/theme-live-codeblock']
 }

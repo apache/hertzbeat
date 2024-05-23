@@ -19,6 +19,13 @@ package org.apache.hertzbeat.push.service.impl;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.push.PushMetrics;
@@ -29,8 +36,6 @@ import org.apache.hertzbeat.push.dao.PushMonitorDao;
 import org.apache.hertzbeat.push.service.PushService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.*;
 
 /**
  * push service impl
@@ -62,9 +67,9 @@ public class PushServiceImpl implements PushService {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
-                try{
+                try {
                     deletePeriodically();
-                }catch (Exception e) {
+                } catch (Exception e) {
                     log.error("periodical deletion failed. {}", e.getMessage());
                 }
             }
@@ -117,7 +122,7 @@ public class PushServiceImpl implements PushService {
                 if (pushMetrics == null || pushMetrics.getMetrics() == null) {
                     return pushMetricsDto;
                 }
-                List<Map<String, String>> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<List<Map<String, String>>>() {
+                List<Map<String, String>> jsonMap = JsonUtil.fromJson(pushMetrics.getMetrics(), new TypeReference<>() {
                 });
                 metrics = PushMetricsDto.Metrics.builder().monitorId(monitorId).metrics(jsonMap).time(pushMetrics.getTime()).build();
                 lastPushMetrics.put(monitorId, metrics);

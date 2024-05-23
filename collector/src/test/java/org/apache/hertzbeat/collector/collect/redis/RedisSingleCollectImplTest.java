@@ -38,7 +38,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
 /**
  * Test case for {@link RedisCommonCollectImpl}
  */
@@ -126,6 +125,7 @@ class RedisSingleCollectImplTest {
         Mockito.when(connection.sync()).thenReturn(cmd);
         Mockito.when(cmd.info(metrics.getName())).thenReturn(redisInfo);
 
+        redisSingleCollect.preCheck(metrics);
         redisSingleCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
         for (CollectRep.ValueRow row : builder.getValuesList()) {

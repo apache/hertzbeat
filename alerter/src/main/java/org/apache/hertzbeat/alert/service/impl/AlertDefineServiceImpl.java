@@ -17,14 +17,24 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-import com.googlecode.aviator.AviatorEvaluator;
+import jakarta.servlet.http.HttpServletResponse;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
+import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
-import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -34,12 +44,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import jakarta.servlet.http.HttpServletResponse;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Alarm definition management interface implementation
@@ -66,7 +70,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         // todo
         if (StringUtils.hasText(alertDefine.getExpr())) {
             try {
-                AviatorEvaluator.compile(alertDefine.getExpr(), false);
+                JexlExpressionRunner.compile(alertDefine.getExpr());
             } catch (Exception e) {
                 throw new IllegalArgumentException("alert expr error: " + e.getMessage());
             }

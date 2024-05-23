@@ -14,18 +14,14 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
-# 监控类型 eg: linux windows tomcat mysql aws...
 app: elasticsearch
 # The monitoring i18n name
-# 监控类型国际化名称
 name:
   zh-CN: ElasticSearch
   en-US: ElasticSearch
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 对 ElasticSearch 数据库监控通用指标进行测量监控。<br>您可以点击 “<i>新建 ElasticSearch</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: Hertzbeat monitoring ElasticSearch through general performance metrics. You could click the "<i>New ElasticSearch</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
@@ -33,145 +29,104 @@ help:
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/elasticsearch
   en-US: https://hertzbeat.apache.org/docs/help/elasticsearch
-# 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
-  # field-变量字段标识符
   - field: host
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 目标Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
   # field-param field key
-  # field-变量字段标识符
   - field: port
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     # default value
-    # 默认值
     defaultValue: 9200
   # field-param field key
-  # field-变量字段标识符
   - field: timeout
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 查询超时时间
       en-US: Query Timeout
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: false
     # hide param-true or false
-    # 是否隐藏字段 true or false
     hide: true
     # default value
-    # 默认值
     defaultValue: 6000
   # field-param field key
-  # field-变量字段标识符
   - field: ssl
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 启用HTTPS
       en-US: SSL
     # type-param field type(boolean mapping the html h tag)
-    # type-字段类型,样式(boolean映射switch展示开关)
     type: boolean
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
   # field-param field key
-  # field-变量字段标识符
   - field: authType
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 认证方式
       en-US: Auth Type
     # type-param field type(most mapping the html input tag)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: radio
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: false
     # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
-    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
     options:
       - label: Basic Auth
         value: Basic Auth
       - label: Digest Auth
         value: Digest Auth
   # field-param field key
-  # field-变量字段标识符
   - field: username
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 用户名
       en-US: Username
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
     # when type is text, use limit to limit string length
-    # 当type为text时,用limit表示字符串限制大小
     limit: 20
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: false
   # field-param field key
-  # field-变量字段标识符
   - field: password
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 密码
       en-US: Password
     # type-param field type(most mapping the html input tag)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: password
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: false
 # collect metrics config list
-# 采集指标配置列表
 metrics:
   # metrics - cpu
-  # 监控指标 - cpu
   - name: health
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: cluster_name
         type: 1
         label: true
@@ -232,7 +187,6 @@ metrics:
       - unassigned_shards
       - active_shards_percent_as_number
     # mapping and conversion expressions, use these and aliasField above to calculate metrics value
-    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - cluster_name=cluster_name
@@ -267,7 +221,6 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
-      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
       parseType: default
 
   - name: nodes
@@ -302,7 +255,6 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
-      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
       parseType: jsonPath
       # parse script when parse type is josnPath
       parseScript: '$._nodes'
@@ -385,8 +337,8 @@ metrics:
     calculates:
       - node_name=$.name
       - ip=$.ip
-      - cpu_load_average=#`$.os.cpu.load_average.1m` | $.os.load_average
-      - cpu_percent=$.os.cpu.percent | $.os.cpu_percent
+      - cpu_load_average=$.os.cpu.load_average.1m!=null?$.os.cpu.load_average.1m:$.os.load_average
+      - cpu_percent=$.os.cpu.percent!=null?$.os.cpu.percent:$.os.cpu_percent
       - heap_used=$.jvm.mem.heap_used_in_bytes
       - heap_used_percent=$.jvm.mem.heap_used_percent
       - heap_total=$.jvm.mem.heap_max_in_bytes

@@ -4,7 +4,7 @@ title: 教程一:适配一款基于HTTP协议的监控类型
 sidebar_label: 教程一:适配一款HTTP协议监控    
 ---
 
-通过此教程我们一步一步描述如何在hertzbeat监控系统下新增适配一款基于http协议的监控类型。  
+通过此教程我们一步一步描述如何在 Apache HertzBeat (incubating) 监控系统下新增适配一款基于http协议的监控类型。  
 
 阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http)了解熟悉了怎么自定义类型，指标，协议等。   
 
@@ -223,5 +223,3 @@ HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数
 如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
 
 **github: https://github.com/apache/hertzbeat**
-
-**gitee: https://gitee.com/hertzbeat/hertzbeat**

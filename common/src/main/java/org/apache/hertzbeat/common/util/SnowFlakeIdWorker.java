@@ -17,9 +17,8 @@
 
 package org.apache.hertzbeat.common.util;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Random;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * SnowFlakeId Instance 

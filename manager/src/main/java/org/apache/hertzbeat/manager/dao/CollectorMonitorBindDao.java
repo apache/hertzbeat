@@ -17,21 +17,18 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-
 /**
  * CollectorMonitorBind repository
  */
 public interface CollectorMonitorBindDao extends JpaRepository<CollectorMonitorBind, Long>, JpaSpecificationExecutor<CollectorMonitorBind> {
-    
     
     /**
      * find monitors by collector

@@ -14,18 +14,14 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: os
 # The monitoring type eg: linux windows tomcat mysql aws...
-# 监控类型 eg: linux windows tomcat mysql aws...
 app: windows
 # The monitoring i18n name
-# 监控类型国际化名称
 name:
   zh-CN: Windows操作系统
   en-US: OS Windows
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP 协议</a> 对 Windows操作系统 的通用指标(用户数、进程数量、响应时间等)进行采集监控。<br><span class='help_module_span'>注意⚠️：Windows 服务器需要开启 SNMP 服务，<a class='help_module_content' href='https://learn.microsoft.com/zh-cn/troubleshoot/windows-server/networking/configure-snmp-service'>点击查看开启步骤</a>。</span>您可以点击 “<i>新建 Windows操作系统</i>” 并进行配置SNMP相关参数添加，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-snmp'> SNMP Protocol</a> to monitoring OS Windows general performance metrics such as number of users, number of processes, response time. <br><span class='help_module_span'>Note⚠️:Windows server need enable the SNMP services <a class='help_module_content' href='https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-snmp-service'>Click here to view the specific steps.</a></span> You can click the "<i>New OS Windows</i>" button and config snmp params to add monitor or import an existing setup through the "<i>More Actions</i>" menu.
@@ -33,117 +29,89 @@ help:
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/windows
   en-US: https://hertzbeat.apache.org/docs/help/windows
-# 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
-  # field-变量字段标识符
   - field: host
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 目标Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
   # field-param field key
-  # field-变量字段标识符
   - field: port
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     # default value
-    # 默认值
     defaultValue: 161
   # field-param field key
-  # field-变量字段标识符
-  - field: version
+  - field: snmpVersion
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: SNMP 版本
       en-US: SNMP Version
     # type-param field type(radio mapping the html radio tag)
-    # type-当type为radio时,前端用radio展示开关
     type: radio
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
-    # 当type为radio单选框, checkbox复选框时, option表示可选项值列表 {name1:value1,name2:value2}
     options:
       - label: SNMPv1
         value: 0
       - label: SNMPv2c
         value: 1
   # field-param field key
-  # field-变量字段标识符
   - field: community
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: SNMP 团体字
       en-US: SNMP Community
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
     # when type is text, use limit to limit string length
-    # 当type为text时,用limit表示字符串限制大小
     limit: 100
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
-    # 参数输入框提示信息
     # param field input placeholder
     placeholder: 'Snmp community for v1 v2c'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 0
+        - 1
   # field-param field key
-  # field-变量字段标识符
   - field: timeout
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 超时时间(ms)
       en-US: Timeout(ms)
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,100000]'
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: false
     # hide-is hide this field and put it in advanced layout
-    # hide-是否隐藏此参数将其放入高级设置中
     hide: true
     # default value
-    # 默认值
     defaultValue: 6000
 # collect metrics config list
-# 采集指标配置列表
 metrics:
   # metrics - system
-  # 监控指标 - system
   - name: system
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     fields:
       - field: name
@@ -218,7 +186,7 @@ metrics:
       port: ^_^port^_^
       timeout: ^_^timeout^_^
       community: ^_^community^_^
-      version: ^_^version^_^
+      version: ^_^snmpVersion^_^
       operation: walk
       oids:
         hrSWRunIndex: 1.3.6.1.2.1.25.4.2.1.1
@@ -326,14 +294,14 @@ metrics:
       - field: usage
         type: 0
         unit: '%'
-    # (非必须)监控指标别名，与上面的指标名映射。用于采集接口数据字段不直接是最终指标名称,需要此别名做映射转换
+    # (Not required) Monitor indicator alias, which maps to the indicator name above. The field used to collect interface data is not directly the final indicator name, and this alias is required for mapping translation
     aliasFields:
       - hrStorageIndex
       - hrStorageDescr
       - hrStorageSize
       - hrStorageUsed
       - hrStorageAllocationUnits
-    # (非必须)指标计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # The (optional) metric evaluation expression, which works with the aliases above, calculates the final desired metric value
     # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - index=hrStorageIndex

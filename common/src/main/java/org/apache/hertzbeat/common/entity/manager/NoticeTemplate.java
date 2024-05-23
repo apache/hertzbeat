@@ -17,30 +17,34 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
-
 /**
  * Notification template entity
- * 通知模版
  */
 @Entity
 @Table(name = "hzb_notice_template")
@@ -62,16 +66,16 @@ public class NoticeTemplate {
     @Schema(title = "Template name",
             description = "Template name",
             example = "dispatch-1", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotBlank
     private String name;
 
-    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot " +
-            "5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
-            description = "Notification information method: " +
-                    "0-SMS 1-Email 2-webhook 3-WeChat Official Account " +
-                    "4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot " +
-                    "7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
+    @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot "
+            + "5-DingTalk Robot 6-FeiShu Robot 7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
+            description = "Notification information method: "
+                    + "0-SMS 1-Email 2-webhook 3-WeChat Official Account "
+                    + "4-Enterprise WeChat Robot 5-DingTalk Robot 6-FeiShu Robot "
+                    + "7-Telegram Bot 8-SlackWebHook 9-Discord Bot 10-Enterprise WeChat app message",
             accessMode = READ_WRITE)
     @Min(0)
     @NotNull
@@ -85,15 +89,15 @@ public class NoticeTemplate {
 
     @Schema(title = "Template content",
             description = "Template content",
-            example = "[${title}]\n" +
-                    "${targetLabel} : ${target}\n" +
-                    "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n" +
-                    "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n" +
-                    "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n" +
-                    "${priorityLabel} : ${priority}\n" +
-                    "${triggerTimeLabel} : ${triggerTime}\n" +
-                    "${contentLabel} : ${content}", accessMode = READ_WRITE)
-    @Length(max = 60000)
+            example = "[${title}]\n"
+                    + "${targetLabel} : ${target}\n"
+                    + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
+                    + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
+                    + "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n"
+                    + "${priorityLabel} : ${priority}\n"
+                    + "${triggerTimeLabel} : ${triggerTime}\n"
+                    + "${contentLabel} : ${content}", accessMode = READ_WRITE)
+    @Size(max = 60000)
     @Lob
     @NotBlank
     private String content;

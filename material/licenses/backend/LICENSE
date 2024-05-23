@@ -383,7 +383,7 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/org.xerial.snappy/snappy-java/1.1.8.4 Apache-2.0
     https://mvnrepository.com/artifact/org.yaml/snakeyaml/2.2 Apache-2.0
     https://mvnrepository.com/artifact/xerces/xercesImpl/2.11.0 Apache-2.0
-    https://mvnrepository.com/artifact/io.dropwizard.metrics/metrics-core/4.2.25 
+    https://mvnrepository.com/artifact/io.dropwizard.metrics/metrics-core/4.2.25
     https://mvnrepository.com/artifact/org.jboss.logging/jboss-logging/3.5.3.Final
     https://mvnrepository.com/artifact/org.apache.commons/commons-math3/3.6.1
     https://mvnrepository.com/artifact/org.apache.thrift/libthrift/0.14.1 Apache-2.0
@@ -409,6 +409,11 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/com.github.GreptimeTeam/greptime-proto/0.4.0
     https://mvnrepository.com/artifact/org.webjars/swagger-ui/5.10.3
     https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java/1.12.0
+    https://mvnrepository.com/artifact/org.apache.commons/commons-jexl3/3.2.1
+    https://mvnrepository.com/artifact/org.flywaydb/flyway-core/10.11.1
+    https://mvnrepository.com/artifact/org.flywaydb/flyway-mysql/10.11.1
+    https://mvnrepository.com/artifact/org.flywaydb/flyway-database-postgresql/10.11.1
+    https://mvnrepository.com/artifact/com.vesoft/client/3.6.0
 
 
 ========================================================================
@@ -477,11 +482,13 @@ EPL-2.0 licenses
 The following components are provided under the EPL-2.0 and BSD-3-Clause License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api/3.1.0 
-    https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api/2.1.1 
-    https://mvnrepository.com/artifact/jakarta.transaction/jakarta.transaction-api/2.0.1 
-    https://mvnrepository.com/artifact/org.eclipse.angus/jakarta.mail/2.0.2 
+    https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api/3.1.0
+    https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api/2.1.1
+    https://mvnrepository.com/artifact/jakarta.transaction/jakarta.transaction-api/2.0.1
+    https://mvnrepository.com/artifact/org.eclipse.angus/jakarta.mail/2.0.2
     https://mvnrepository.com/artifact/org.aspectj/aspectjweaver/1.9.21
+    https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.jpa/4.0.2
+    https://mvnrepository.com/artifact/org.eclipse.persistence/eclipselink/4.0.2
 
 
 ========================================================================
@@ -525,15 +532,3 @@ The following components are provided under the https://spdx.org/licenses/MIT-0.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/org.reactivestreams/reactive-streams/1.0.4 https://spdx.org/licenses/MIT-0.html
-
-
-========================================================================
-LGPL-2.1 licenses
-========================================================================
-The following components are provided under the LGPL-2.1 License. See project link for details.
-The text of each license is also included in licenses/LICENSE-[project].txt.
-
-    https://mvnrepository.com/artifact/org.hibernate.common/hibernate-commons-annotations/6.0.6.Final LGPL-2.1
-    https://mvnrepository.com/artifact/org.hibernate.orm/hibernate-core/6.4.4.Final LGPL-2.1
-    https://mvnrepository.com/artifact/com.googlecode.aviator/aviator/5.4.1 http://www.gnu.org/licenses/lgpl.html
-

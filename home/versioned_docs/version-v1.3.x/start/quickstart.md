@@ -16,7 +16,7 @@ sidebar_label: Quick Start
 
 1. Just one command to get started:
 
-```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat```
 
 ```or use quay.io (if dockerhub network connect timeout)```
 

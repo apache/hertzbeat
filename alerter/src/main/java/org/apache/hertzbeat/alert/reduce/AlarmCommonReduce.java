@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
@@ -25,10 +28,6 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * reduce alarm and send alert data
@@ -61,7 +60,7 @@ public class AlarmCommonReduce {
             List<Tag> tagList = alertMonitorDao.findMonitorIdBindTags(monitorId);
             for (Tag tag : tagList) {
                 if (!tags.containsKey(tag.getName())) {
-                    tags.put(tag.getName(), tag.getValue());
+                    tags.put(tag.getName(), tag.getTagValue());
                 }
             }
         }

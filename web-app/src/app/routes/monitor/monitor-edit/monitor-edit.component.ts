@@ -127,24 +127,24 @@ export class MonitorEditComponent implements OnInit {
                   param.type = 1;
                 }
                 if (define.type === 'boolean') {
-                  param.value = define.defaultValue == 'true';
+                  param.paramValue = define.defaultValue == 'true';
                 } else if (param.field === 'host') {
-                  param.value = this.monitor.host;
+                  param.paramValue = this.monitor.host;
                 } else if (define.defaultValue != undefined) {
                   if (define.type === 'number') {
-                    param.value = Number(define.defaultValue);
+                    param.paramValue = Number(define.defaultValue);
                   } else if (define.type === 'boolean') {
-                    param.value = define.defaultValue.toLowerCase() == 'true';
+                    param.paramValue = define.defaultValue.toLowerCase() == 'true';
                   } else {
-                    param.value = define.defaultValue;
+                    param.paramValue = define.defaultValue;
                   }
                 }
               } else {
                 if (define.type === 'boolean') {
-                  if (param.value != null) {
-                    param.value = param.value.toLowerCase() == 'true';
+                  if (param.paramValue != null) {
+                    param.paramValue = param.paramValue.toLowerCase() == 'true';
                   } else {
-                    param.value = false;
+                    param.paramValue = false;
                   }
                 }
               }
@@ -164,6 +164,8 @@ export class MonitorEditComponent implements OnInit {
                 this.hostName = define.name;
               }
             });
+            this.onPageInit();
+            this.detectDepend();
           } else {
             console.warn(message.msg);
           }
@@ -186,19 +188,61 @@ export class MonitorEditComponent implements OnInit {
       );
   }
 
+  onPageInit() {
+    this.paramDefines.forEach((paramDefine, index) => {
+      this.params[index].display = true;
+    });
+    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
+      this.advancedParams[index].display = true;
+    });
+  }
+
+  detectDepend() {
+    this.paramDefines.forEach((paramDefine, index) => {
+      if (paramDefine.type == 'radio') {
+        this.onDependChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
+      }
+    });
+  }
+
   onParamBooleanChanged(booleanValue: boolean, field: string) {
     // 对SSL的端口联动处理, 不开启SSL默认80端口，开启SSL默认443
     if (field === 'ssl') {
       this.params.forEach(param => {
         if (param.field === 'port') {
           if (booleanValue) {
-            param.value = '443';
+            param.paramValue = '443';
           } else {
-            param.value = '80';
+            param.paramValue = '80';
           }
         }
       });
     }
+  }
+
+  onDependChanged(dependValue: string, dependField: string) {
+    this.paramDefines.forEach((paramDefine, index) => {
+      if (paramDefine.depend) {
+        let fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
+        if (fieldValues) {
+          this.params[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.params[index].display = true;
+          }
+        }
+      }
+    });
+    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
+      if (advancedParamDefine.depend) {
+        let fieldValues = new Map(Object.entries(advancedParamDefine.depend)).get(dependField);
+        if (fieldValues) {
+          this.advancedParams[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.advancedParams[index].display = true;
+          }
+        }
+      }
+    });
   }
 
   onSubmit(formGroup: FormGroup) {
@@ -216,15 +260,15 @@ export class MonitorEditComponent implements OnInit {
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
-        param.value = this.monitor.host;
+        param.paramValue = this.monitor.host;
       }
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     this.advancedParams.forEach(param => {
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     let addMonitor = {
@@ -271,15 +315,15 @@ export class MonitorEditComponent implements OnInit {
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
-        param.value = this.monitor.host;
+        param.paramValue = this.monitor.host;
       }
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     this.advancedParams.forEach(param => {
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     let detectMonitor = {
@@ -319,8 +363,8 @@ export class MonitorEditComponent implements OnInit {
   }
 
   sliceTagName(tag: Tag): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
+    if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
+      return `${tag.name}:${tag.tagValue}`;
     } else {
       return tag.name;
     }

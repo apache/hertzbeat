@@ -82,6 +82,11 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-push</artifactId>
         </dependency>
+        <!-- plugin -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-plugin</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -116,9 +121,18 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-jdbc</artifactId>
         </dependency>
+        <!-- database migration -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
         <!-- mysql -->
         <dependency>
@@ -140,11 +154,6 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-        </dependency>
-        <!-- validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
         <!--sureness-->
         <dependency>
@@ -192,7 +201,7 @@
     </dependencies>
 
     <build>
-        <finalName>hertzbeat</finalName>
+        <finalName>apache-hertzbeat-${hzb.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -203,6 +212,7 @@
                     <include>*.xml</include>
                     <include>banner.txt</include>
                     <include>define/**</include>
+                    <include>db/**</include>
                     <include>templates/**</include>
                     <include>**/*.html</include>
                 </includes>
@@ -238,10 +248,7 @@
 
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>release</id>
             <build>
                 <plugins>
                     <!--Critical plugin, assembly plugin provided by maven, should be placed last-->
@@ -259,8 +266,24 @@
                                     <goal>single</goal>
                                 </goals>
                                 <configuration>
+                                    <outputDirectory>../dist</outputDirectory>
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly.xml</descriptor>
+                                    </descriptors>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>make-docker-compose-script</id>
+                                <!--Bound maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>../dist</outputDirectory>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/server/assembly-docker-compose.xml</descriptor>
                                     </descriptors>
                                 </configuration>
                             </execution>
@@ -290,6 +313,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-macos-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -304,6 +328,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-macos-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -318,6 +343,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-linux-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -332,6 +358,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-linux-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -346,6 +373,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-windows-64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -360,6 +388,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-docker-compose.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>

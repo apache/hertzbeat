@@ -17,16 +17,14 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit.impl;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.apache.hertzbeat.collector.dispatch.unit.TimeLengthUnit;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-
 /**
  * the convert of time length
- * 时间长短转换
  */
 @Component
 public final class TimeLengthConvert implements UnitConvert {

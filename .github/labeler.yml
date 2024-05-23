@@ -64,7 +64,7 @@ docker-compose:
       - any-glob-to-any-file:
           - "script/docker-compose/**/*"
 
-docs:
+doc:
   - changed-files:
       - any-glob-to-any-file:
           - "**/README.md"
@@ -108,3 +108,8 @@ monitoring-template:
   - changed-files:
       - any-glob-to-any-file:
           - "manager/src/main/resources/define/**/*"
+
+HIP:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'hip/**'

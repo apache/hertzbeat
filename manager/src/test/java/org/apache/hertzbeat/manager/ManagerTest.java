@@ -17,6 +17,10 @@
 
 package org.apache.hertzbeat.manager;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import javax.annotation.Resource;
+import javax.naming.NamingException;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.calculate.CalculateAlarm;
@@ -35,33 +39,24 @@ import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatcher;
 import org.apache.hertzbeat.collector.dispatch.unit.impl.DataSizeConvert;
-import org.apache.hertzbeat.common.config.AviatorConfiguration;
 import org.apache.hertzbeat.common.config.CommonConfig;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.apache.hertzbeat.common.service.TencentSmsClient;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
 import org.apache.hertzbeat.warehouse.controller.MetricsDataController;
-import org.apache.hertzbeat.warehouse.store.HistoryIotDbDataStorage;
-import org.apache.hertzbeat.warehouse.store.HistoryTdEngineDataStorage;
-import org.apache.hertzbeat.warehouse.store.RealTimeMemoryDataStorage;
-import org.apache.hertzbeat.warehouse.store.RealTimeRedisDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.iotdb.IotDbDataStorage;
+import org.apache.hertzbeat.warehouse.store.history.tdengine.TdEngineDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.redis.RedisDataStorage;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
-import javax.annotation.Resource;
-import javax.naming.NamingException;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 /**
- *
+ * Manager Test
  * @version 2.1
- * Created by Musk.Chen on 2023/1/14
  */
 class ManagerTest extends AbstractSpringIntegrationTest {
 
@@ -95,31 +90,29 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         // test common module
         assertNotNull(ctx.getBean(CommonProperties.class));
         assertNotNull(ctx.getBean(CommonConfig.class));
-        assertNotNull(ctx.getBean(AviatorConfiguration.class));
         assertNotNull(ctx.getBean(InMemoryCommonDataQueue.class));
         // condition on common.sms.tencent.app-id
         assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(TencentSmsClient.class));
         assertNotNull(ctx.getBean(SpringContextHolder.class));
 
         // test warehouse module
-        assertNotNull(ctx.getBean(WarehouseProperties.class));
         assertNotNull(ctx.getBean(WarehouseWorkerPool.class));
 
         // default DataStorage is RealTimeMemoryDataStorage
-        assertNotNull(ctx.getBean(RealTimeMemoryDataStorage.class));
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(RealTimeRedisDataStorage.class));
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(HistoryTdEngineDataStorage.class));
-        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(HistoryIotDbDataStorage.class));
+        assertNotNull(ctx.getBean(MemoryDataStorage.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(RedisDataStorage.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(TdEngineDataStorage.class));
+        assertThrows(NoSuchBeanDefinitionException.class, () -> ctx.getBean(IotDbDataStorage.class));
 
         assertNotNull(ctx.getBean(MetricsDataController.class));
     }
 
     @Test
-    void testJNDI() throws NamingException {
-//        System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
+    void testJndi() throws NamingException {
+        //System.setProperty("jdk.jndi.object.factoriesFilter", "!com.zaxxer.hikari.HikariJNDIFactory");
         // for CI
-//        InitialContext initialContext = new InitialContext();
-//        initialContext.lookup("rmi://localhost:1099/Exploit");
+        //InitialContext initialContext = new InitialContext();
+        //initialContext.lookup("rmi://localhost:1099/Exploit");
     }
 
 }

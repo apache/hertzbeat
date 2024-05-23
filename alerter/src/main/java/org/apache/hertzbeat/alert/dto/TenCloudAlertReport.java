@@ -19,15 +19,14 @@ package org.apache.hertzbeat.alert.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.alert.util.DateUtil;
-
-import java.io.Serializable;
-import java.util.Map;
 
 /**
  *
@@ -133,7 +132,9 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
 
     @Override
     public long getAlertTime() {
-        return DateUtil.getTimeStampFromFormat(getFirstOccurTime(), "yyyy-MM-dd HH:mm:ss");
+
+        return DateUtil.getTimeStampFromFormat(getFirstOccurTime(), "yyyy-MM-dd HH:mm:ss")
+                .orElse(0L);
     }
 
     @Override

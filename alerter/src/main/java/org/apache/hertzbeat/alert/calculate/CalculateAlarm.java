@@ -17,17 +17,31 @@
 
 package org.apache.hertzbeat.alert.calculate;
 
-import com.googlecode.aviator.AviatorEvaluator;
-import com.googlecode.aviator.Expression;
-import com.googlecode.aviator.exception.CompileExpressionErrorException;
-import com.googlecode.aviator.exception.ExpressionRuntimeException;
-import com.googlecode.aviator.exception.ExpressionSyntaxErrorException;
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_CODE_NOT_REACH;
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_CODE_PENDING;
+import static org.apache.hertzbeat.common.constants.CommonConstants.ALERT_STATUS_CODE_SOLVED;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_METRIC;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_METRICS;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_APP;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_ID;
+import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_NAME;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.jexl3.JexlException;
+import org.apache.commons.jexl3.JexlExpression;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
-import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
+import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -40,18 +54,13 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import jakarta.persistence.criteria.Predicate;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import static org.apache.hertzbeat.common.constants.CommonConstants.*;
 
 /**
  * Calculate alarms based on the alarm definition rules and collected data
@@ -67,7 +76,7 @@ public class CalculateAlarm {
      * key - monitorId+alertDefineId+tags ｜ The alarm is a common threshold alarm
      * key - monitorId ｜ Indicates the monitoring status availability reachability alarm
      */
-    private final Map<String, Alert>  triggeredAlertMap;
+    private final Map<String, Alert> triggeredAlertMap;
     /**
      * The not recover alert
      * key - monitorId + alertDefineId + tags
@@ -100,7 +109,7 @@ public class CalculateAlarm {
                 tags.put(TAG_MONITOR_NAME, monitor.getName());
                 tags.put(TAG_MONITOR_APP, monitor.getApp());
                 this.notRecoveredAlertMap.put(monitor.getId() + CommonConstants.AVAILABILITY,
-                        Alert.builder().tags(tags).target(AVAILABILITY).status(ALERT_STATUS_CODE_PENDING).build());
+                        Alert.builder().tags(tags).target(CommonConstants.AVAILABILITY).status(ALERT_STATUS_CODE_PENDING).build());
             }
         }
         startCalculate();
@@ -310,23 +319,24 @@ public class CalculateAlarm {
 
     private boolean execAlertExpression(Map<String, Object> fieldValueMap, String expr) {
         Boolean match;
+        JexlExpression expression;
         try {
-            Expression expression = AviatorEvaluator.compile(expr, true);
-            expression.getVariableNames().forEach(variable -> {
-                if (!fieldValueMap.containsKey(variable)) {
-                    throw new ExpressionRuntimeException("metrics value not contains expr field: " + variable);
-                }
-            });
-            match = (Boolean) expression.execute(fieldValueMap);
-        } catch (CompileExpressionErrorException |
-                 ExpressionSyntaxErrorException compileException) {
-            log.error("Alert Define Rule: {} Compile Error: {}.", expr, compileException.getMessage());
-            throw compileException;
-        } catch (ExpressionRuntimeException expressionRuntimeException) {
-            log.error("Alert Define Rule: {} Run Error: {}.", expr, expressionRuntimeException.getMessage());
-            throw expressionRuntimeException;
+            expression = JexlExpressionRunner.compile(expr);
+        } catch (JexlException jexlException) {
+            log.error("Alarm Rule: {} Compile Error: {}.", expr, jexlException.getMessage());
+            throw jexlException;
         } catch (Exception e) {
-            log.error("Alert Define Rule: {} Unknown Error: {}.", expr, e.getMessage());
+            log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
+            throw e;
+        }
+
+        try {
+            match = (Boolean) JexlExpressionRunner.evaluate(expression, fieldValueMap);
+        } catch (JexlException jexlException) {
+            log.error("Alarm Rule: {} Run Error: {}.", expr, jexlException.getMessage());
+            throw jexlException;
+        } catch (Exception e) {
+            log.error("Alarm Rule: {} Unknown Error: {}.", expr, e.getMessage());
             throw e;
         }
         return match != null && match;

@@ -17,34 +17,49 @@
 
 package org.apache.hertzbeat.collector.collect.snmp;
 
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.CommonUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
-import org.snmp4j.mp.MPv3;
-import org.snmp4j.mp.SnmpConstants;
-import org.snmp4j.security.*;
-import org.snmp4j.smi.*;
-import org.snmp4j.util.*;
-import org.springframework.util.Assert;
-import org.snmp4j.*;
+import org.snmp4j.Target;
 import org.snmp4j.fluent.SnmpBuilder;
 import org.snmp4j.fluent.SnmpCompletableFuture;
 import org.snmp4j.fluent.TargetBuilder;
+import org.snmp4j.mp.MPv3;
+import org.snmp4j.mp.SnmpConstants;
+import org.snmp4j.security.AuthMD5;
+import org.snmp4j.security.PrivDES;
+import org.snmp4j.security.SecurityModel;
+import org.snmp4j.security.SecurityModels;
+import org.snmp4j.security.SecurityProtocols;
+import org.snmp4j.security.USM;
+import org.snmp4j.security.UsmUser;
+import org.snmp4j.smi.Address;
+import org.snmp4j.smi.GenericAddress;
+import org.snmp4j.smi.OID;
+import org.snmp4j.smi.OctetString;
+import org.snmp4j.smi.TimeTicks;
+import org.snmp4j.smi.Variable;
+import org.snmp4j.smi.VariableBinding;
+import org.snmp4j.util.DefaultPDUFactory;
+import org.snmp4j.util.TableEvent;
+import org.snmp4j.util.TableUtils;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Snmp protocol collection implementation
@@ -60,24 +75,28 @@ public class SnmpCollectImpl extends AbstractCollect {
     private static final String OPERATION_WALK = "walk";
     private static final String HEX_SPLIT = ":";
     private static final String FORMAT_PATTERN =
-            "{0,choice,0#|1#1 day, |1<{0,number,integer} days, }" +
-                    "{1,choice,0#|1#1 hour, |1<{1,number,integer} hours, }" +
-                    "{2,choice,0#|1#1 minute, |1<{2,number,integer} minutes, }" +
-                    "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
+            "{0,choice,0#|1#1 day, |1<{0,number,integer} days, }"
+                    + "{1,choice,0#|1#1 hour, |1<{1,number,integer} hours, }"
+                    + "{2,choice,0#|1#1 minute, |1<{2,number,integer} minutes, }"
+                    + "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
 
     private final Map<Integer, Snmp> versionSnmpService = new ConcurrentHashMap<>(3);
 
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getSnmp() == null) {
+            throw new IllegalArgumentException("Snmp collect must has snmp params");
+        }
+        SnmpProtocol snmpProtocol = metrics.getSnmp();
+        Assert.hasText(snmpProtocol.getHost(), "snmp host is required.");
+        Assert.hasText(snmpProtocol.getPort(), "snmp port is required.");
+        Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         SnmpProtocol snmpProtocol = metrics.getSnmp();
         int timeout = CollectUtil.getTimeout(snmpProtocol.getTimeout());
         int snmpVersion = getSnmpVersion(snmpProtocol.getVersion());
@@ -140,8 +159,8 @@ public class SnmpCollectImpl extends AbstractCollect {
                         continue;
                     }
                     Variable variable = binding.getVariable();
-                    if (variable instanceof TimeTicks) {
-                        String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
+                    if (variable instanceof TimeTicks timeTicks) {
+                        String value = timeTicks.toString(FORMAT_PATTERN);
                         oidsValueMap.put(binding.getOid().toDottedString(), value);
                     } else {
                         oidsValueMap.put(binding.getOid().toDottedString(), binding.toValueString());
@@ -181,8 +200,8 @@ public class SnmpCollectImpl extends AbstractCollect {
                             continue;
                         }
                         Variable variable = binding.getVariable();
-                        if (variable instanceof TimeTicks) {
-                            String value = ((TimeTicks) variable).toString(FORMAT_PATTERN);
+                        if (variable instanceof TimeTicks timeTicks) {
+                            String value = timeTicks.toString(FORMAT_PATTERN);
                             oidsValueMap.put(binding.getOid().trim().toDottedString(), value);
                         } else {
                             oidsValueMap.put(binding.getOid().trim().toDottedString(), bingdingHexValueToString(binding));
@@ -246,16 +265,6 @@ public class SnmpCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SNMP;
     }
 
-
-    private void validateParams(Metrics metrics) {
-        if (metrics == null || metrics.getSnmp() == null) {
-            throw new IllegalArgumentException("Snmp collect must has snmp params");
-        }
-        SnmpProtocol snmpProtocol = metrics.getSnmp();
-        Assert.hasText(snmpProtocol.getHost(), "snmp host is required.");
-        Assert.hasText(snmpProtocol.getPort(), "snmp port is required.");
-        Assert.notNull(snmpProtocol.getVersion(), "snmp version is required.");
-    }
 
     private synchronized Snmp getSnmpService(int snmpVersion, SnmpBuilder snmpBuilder) throws IOException {
         Snmp snmpService = versionSnmpService.get(snmpVersion);

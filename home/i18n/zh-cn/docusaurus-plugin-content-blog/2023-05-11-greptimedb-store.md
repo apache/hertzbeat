@@ -70,7 +70,7 @@ $ docker run -d -p 1157:1157 \
     -v /opt/data:/opt/hertzbeat/data \
     -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
     --restart=always \
-    --name hertzbeat tancloud/hertzbeat
+    --name hertzbeat apache/hertzbeat
 ```
 
 - `-v /opt/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失

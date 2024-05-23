@@ -28,6 +28,9 @@ jdk/
 *.iml
 *.ipr
 
+### For icon.png ###
+!.idea/icon.png
+
 ### NetBeans ###
 nbproject/private/
 build/
@@ -50,3 +53,4 @@ node_modules
 # debug env
 application-dev.yml
 application-mysql.yml
+application-pg.yml

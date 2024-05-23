@@ -17,7 +17,11 @@
 
 package org.apache.hertzbeat.alert.dto;
 
-import lombok.*;
+import java.util.Optional;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.util.DateUtil;
 import org.apache.hertzbeat.common.entity.dto.AlertReport;
@@ -51,10 +55,18 @@ public class GeneralCloudAlertReport extends AlertReport {
         if (StringUtils.isNotBlank(alertDateTime)) {
             Long timeStamp = null;
             if (StringUtils.isNotBlank(dateTimeFormat)) {
-                timeStamp = DateUtil.getTimeStampFromFormat(alertDateTime, dateTimeFormat);
+                Optional<Long> tsf = DateUtil.getTimeStampFromFormat(alertDateTime, dateTimeFormat);
+                boolean present = tsf.isPresent();
+                if (present) {
+                    timeStamp = tsf.get();
+                }
             }
             if (timeStamp == null) {
-                timeStamp = DateUtil.getTimeStampFromSomeFormats(alertDateTime);
+                Optional<Long> tsf = DateUtil.getTimeStampFromSomeFormats(alertDateTime);
+                boolean present = tsf.isPresent();
+                if (present) {
+                    timeStamp = tsf.get();
+                }
             }
             if (timeStamp != null) {
                 setAlertTime(timeStamp);

@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.common.support;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,6 +29,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * i18n resource bundle control
@@ -50,8 +49,8 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
         if (JAVA_CLASS.equals(format)) {
             try {
                 @SuppressWarnings("unchecked")
-                Class<? extends ResourceBundle> bundleClass
-                        = (Class<? extends ResourceBundle>) loader.loadClass(bundleName);
+                Class<? extends ResourceBundle> bundleClass =
+                        (Class<? extends ResourceBundle>) loader.loadClass(bundleName);
 
                 // If the class isn't a ResourceBundle subclass, throw a
                 // ClassCastException.

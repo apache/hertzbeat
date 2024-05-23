@@ -18,33 +18,35 @@
           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
 http://maven.apache.org/ASSEMBLY/2.0.0 ">
-    <!--必填,会追加到打包文件名称的末尾-->
-    <id>linux_amd64_1.5.0</id>
-    <!--打包类型,可以设置多种类型,打包的时候不同的类型都会打包打出来-->
+    <!--Required, will be appended to the end of the packaged file name-->
+    <id>incubating-bin-linux_amd64</id>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>apache-hertzbeat-${hzb.version}-incubating</baseDirectory>
+    <!--Packaging type, multiple types can be set, different types will be packaged when packaging-->
     <formats>
         <format>tar.gz</format>
     </formats>
-    <!--第三方依赖设置-->
+    <!--Third-party dependency settings-->
     <dependencySets>
         <dependencySet>
-            <!--使用项目中的artifact,第三方包打包进tar.gz文件的lib目录下-->
+            <!--Use artifacts in the project, third-party packages packaged into the lib directory of the tar.gz file-->
             <useProjectArtifact>true</useProjectArtifact>
             <outputDirectory>lib</outputDirectory>
         </dependencySet>
     </dependencySets>
 
-    <!--文件相关设置-->
+    <!--File-related settings-->
     <fileSets>
-        <!--bin文件下的所有脚本文件输出到打包后的bin目录下-->
+        <!--All script files under the bin directory are output to the bin directory after packaging-->
         <fileSet>
             <directory>../script/assembly/server/bin</directory>
-            <!-- 是否进行属性替换 即使用 ${project.artifactId} -->
+            <!-- Whether to perform property replacement, that is, use ${project.artifactId} -->
             <filtered>true</filtered>
             <outputDirectory>bin</outputDirectory>
             <fileMode>0755</fileMode>
         </fileSet>
 
-        <!-- src/main/resources目录下配置文件打包到config目录下 -->
+        <!-- Configuration files under the src/main/resources directory are packaged to the config directory-->
         <fileSet>
             <directory>src/main/resources</directory>
             <includes>
@@ -52,11 +54,12 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>logback-spring.xml</include>
                 <include>sureness.yml</include>
             </includes>
+            <!-- Whether to perform property replacement, that is, use ${project.artifactId} -->
             <filtered>true</filtered>
             <outputDirectory>${file.separator}config</outputDirectory>
         </fileSet>
 
-        <!-- src/main/resources/define目录下配置文件打包到define目录下 -->
+        <!-- Configuration files under the src/main/resources/define directory are packaged to the define directory -->
         <fileSet>
             <directory>src/main/resources</directory>
             <includes>
@@ -66,7 +69,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <outputDirectory>${file.separator}</outputDirectory>
         </fileSet>
 
-        <!-- 将target目录下的启动jar打包到目录下-->
+        <!-- Pack the startup jar in the target directory to the directory-->
         <fileSet>
             <directory>target</directory>
             <outputDirectory>/</outputDirectory>
@@ -75,7 +78,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             </includes>
         </fileSet>
 
-        <!-- 将webapp的静态资源打包到目录下-->
+        <!-- Pack the static resources of the web app into the directory-->
         <fileSet>
             <directory>../web-app/dist</directory>
             <outputDirectory>dist</outputDirectory>
@@ -94,6 +97,38 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>**/*</include>
             </includes>
             <outputDirectory>ext-lib</outputDirectory>
+        </fileSet>
+
+        <!-- license -->
+        <fileSet>
+            <directory>../</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>DISCLAIMER</include>
+                <include>README.md</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../material/licenses</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>LICENSE</include>
+                <include>NOTICE</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../material/licenses/backend</directory>
+            <outputDirectory>licenses</outputDirectory>
+            <includes>
+                <include>LICENSE-*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>../material/licenses/frontend</directory>
+            <outputDirectory>licenses</outputDirectory>
+            <includes>
+                <include>LICENSE-*</include>
+            </includes>
         </fileSet>
     </fileSets>
 </assembly>

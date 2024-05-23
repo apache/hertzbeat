@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_LOGIN_FAILED_CODE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
 import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
@@ -26,35 +28,34 @@ import io.jsonwebtoken.Claims;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_LOGIN_FAILED_CODE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Authentication registration TOKEN management API
- * 认证注册TOKEN管理API
  */
-@Tag(name = "Auth Manage API | 认证注册TOKEN管理API")
+@Tag(name = "Auth Manage API")
 @RestController()
 @RequestMapping(value = "/api/account/auth", produces = {APPLICATION_JSON_VALUE})
 @Slf4j
 public class AccountController {
     /**
      * Token validity time in seconds
-     * TOKEN有效期时间 单位秒
      */
     private static final long PERIOD_TIME = 3600L;
     /**
@@ -63,7 +64,7 @@ public class AccountController {
     private SurenessAccountProvider accountProvider = new DocumentAccountProvider();
 
     @PostMapping("/form")
-    @Operation(summary = "Account password login to obtain associated user information", description = "账户密码登录获取关联用户信息")
+    @Operation(summary = "Account password login to obtain associated user information", description = "Account password login to obtain associated user information")
     public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
         if (account == null || account.getPassword() == null) {
@@ -95,9 +96,9 @@ public class AccountController {
     }
 
     @GetMapping("/refresh/{refreshToken}")
-    @Operation(summary = "Use refresh TOKEN to re-acquire TOKEN", description = "使用刷新TOKEN重新获取TOKEN")
+    @Operation(summary = "Use refresh TOKEN to re-acquire TOKEN", description = "Use refresh TOKEN to re-acquire TOKEN")
     public ResponseEntity<Message<RefreshTokenResponse>> refreshToken(
-            @Parameter(description = "Refresh TOKEN | 刷新TOKEN", example = "xxx")
+            @Parameter(description = "Refresh TOKEN", example = "xxx")
             @PathVariable("refreshToken") @NotNull final String refreshToken) {
         try {
             Claims claims = JsonWebTokenUtil.parseJwt(refreshToken);

@@ -17,21 +17,19 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import jakarta.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
-
-import jakarta.annotation.Resource;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Test case for {@link ParamDao}
@@ -46,7 +44,7 @@ class ParamDaoTest extends AbstractSpringIntegrationTest {
     void setUp() {
         Param param = Param.builder()
                 .field("mock field")
-                .value("mock value")
+                .paramValue("mock value")
                 .gmtCreate(LocalDateTime.now())
                 .gmtUpdate(LocalDateTime.now())
                 .monitorId(1L)

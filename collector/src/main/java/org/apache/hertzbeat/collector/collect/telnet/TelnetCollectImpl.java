@@ -17,23 +17,26 @@
 
 package org.apache.hertzbeat.collector.collect.telnet;
 
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.net.telnet.TelnetClient;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ConnectException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.net.telnet.TelnetClient;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * telnet collect
@@ -44,14 +47,15 @@ public class TelnetCollectImpl extends AbstractCollect {
     public TelnetCollectImpl(){}
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getTelnet() == null) {
+            throw new IllegalArgumentException("Telnet collect must has Telnet params");
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getTelnet() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Telnet collect must has telnet params");
-            return;
-        }
-
         TelnetProtocol telnet = metrics.getTelnet();
         int timeout = CollectUtil.getTimeout(telnet.getTimeout());
         TelnetClient telnetClient = null;

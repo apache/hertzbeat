@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * prometheus metric sparser
  */
-public class PrometheusUtil {
+public final class PrometheusUtil {
 
     //An unknown format occurred during parsing because parsing cannot continue
     // or the end of the input stream has been reached
@@ -39,6 +39,8 @@ public class PrometheusUtil {
 
     private static final int COMMENT_LINE = -3;
 
+    private PrometheusUtil() {
+    }
 
     private static int parseMetricName(InputStream inputStream, Metric.MetricBuilder metricBuilder) throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
@@ -230,7 +232,7 @@ public class PrometheusUtil {
     }
 
     public static List<Metric> parseMetrics(InputStream inputStream) throws IOException {
-        List<Metric> metricList= new ArrayList<>();
+        List<Metric> metricList = new ArrayList<>();
         int i = parseMetric(inputStream, metricList);
         while (i == '\n' || i == COMMENT_LINE) {
             if (i == COMMENT_LINE) {

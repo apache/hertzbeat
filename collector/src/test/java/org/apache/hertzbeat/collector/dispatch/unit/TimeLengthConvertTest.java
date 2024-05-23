@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.hertzbeat.collector.dispatch.unit.impl.TimeLengthConvert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test case for {@link TimeLengthConvert}
@@ -62,7 +61,6 @@ class TimeLengthConvertTest {
         assertEquals("1000000", result);
     }
 
-
     /**
      * 测试纳秒转天
      */
@@ -71,6 +69,5 @@ class TimeLengthConvertTest {
         String result = convert.convert("86400000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.D.getUnit());
         assertEquals("1", result);
     }
-
 
 }

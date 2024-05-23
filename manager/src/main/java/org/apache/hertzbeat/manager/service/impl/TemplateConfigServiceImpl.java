@@ -19,13 +19,12 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.Resource;
+import java.lang.reflect.Type;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.AppService;
 import org.springframework.stereotype.Service;
-
-import jakarta.annotation.Resource;
-import java.lang.reflect.Type;
 
 /**
  * template config service impl
@@ -35,15 +34,13 @@ public class TemplateConfigServiceImpl extends AbstractGeneralConfigServiceImpl<
     
     @Resource
     private AppService appService;
-    
-    
+
     /**
-     * 构造方法，传入GeneralConfigDao、ObjectMapper和type。
      *
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
      *
-     * @param generalConfigDao 配置Dao对象
-     * @param objectMapper     JSON工具类对象
+     * @param generalConfigDao configDao object
+     * @param objectMapper     JSON tool object
      */
     protected TemplateConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
@@ -60,7 +57,6 @@ public class TemplateConfigServiceImpl extends AbstractGeneralConfigServiceImpl<
     public String type() {
         return "template";
     }
-    
     
     @Override
     protected TypeReference<TemplateConfig> getTypeReference() {
