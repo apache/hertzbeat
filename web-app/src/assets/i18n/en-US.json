@@ -105,10 +105,10 @@
     "status": {
       "": "Task Status",
       "all": "All Status",
-      "available": "Up",
-      "unavailable": "Down",
+      "up": "Up",
+      "down": "Down",
       "unreachable": "Unreachable",
-      "unmonitored": "Paused"
+      "paused": "Paused"
     }
   },
   "alert": {

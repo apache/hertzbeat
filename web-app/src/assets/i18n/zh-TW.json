@@ -105,10 +105,10 @@
     "status": {
       "": "任務狀態",
       "all": "全部狀態",
-      "available": "正常",
-      "unavailable": "宕機",
+      "up": "正常",
+      "down": "宕機",
       "unreachable": "不可達",
-      "unmonitored": "暫停"
+      "paused": "暫停"
     }
   },
   "alert": {

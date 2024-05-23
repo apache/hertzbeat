@@ -117,9 +117,9 @@
     [(ngModel)]="filterStatus"
   >
     <nz-option [nzLabel]="'monitor.status.all' | i18n" nzValue="9"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.available' | i18n" nzValue="1"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.unavailable' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.unmonitored' | i18n" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.up' | i18n" nzValue="1"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.down' | i18n" nzValue="2"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.paused' | i18n" nzValue="0"></nz-option>
   </nz-select>
 </div>
 
@@ -162,15 +162,15 @@
       <td nzAlign="center">
         <nz-tag *ngIf="data.status == 0" [nzColor]="'#b2b2b2'">
           <i nz-icon nzType="meh" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.unmonitored' | i18n }}</span>
+          <span>{{ 'monitor.status.paused' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.status == 1" [nzColor]="'#498765'">
           <i nz-icon nzType="smile" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.available' | i18n }}</span>
+          <span>{{ 'monitor.status.up' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.status == 2" [nzColor]="'#fd4357'">
           <i nz-icon nzType="frown" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.unavailable' | i18n }}</span>
+          <span>{{ 'monitor.status.down' | i18n }}</span>
         </nz-tag>
       </td>
       <td nzAlign="center">
