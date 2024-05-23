@@ -17,13 +17,12 @@
 
 package org.apache.hertzbeat.common.entity.sd;
 
+import java.util.Arrays;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * service discovery common field

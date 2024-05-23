@@ -2,6 +2,9 @@ package org.apache.hertzbeat.collector.collect.sd.http;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -19,14 +22,15 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.util.EntityUtils;
 import org.springframework.util.CollectionUtils;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 /**
  */
 @Slf4j
 public class HttpSdCollectImpl extends AbstractCollect {
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         List<ConnectionConfig> configList = Lists.newArrayList();

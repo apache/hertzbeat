@@ -18,10 +18,13 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -31,8 +34,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -144,7 +145,7 @@ public class MonitorServiceImpl implements MonitorService {
 
         if (sdParam.isPresent()) {
             collectOneTimeSdData(monitor, collector, sdParam.get());
-        }else {
+        } else {
             detectMonitorDirectly(monitor, params, collector);
         }
     }
@@ -785,7 +786,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     private Optional<Param> getSdParam(List<Param> params) {
         return params.stream()
-                .filter(param -> StringUtils.hasText(param.getField()) && StringUtils.hasText(param.getValue()))
+                .filter(param -> StringUtils.hasText(param.getField()) && StringUtils.hasText(param.getParamValue()))
                 .filter(param -> Objects.nonNull(ServiceDiscoveryProtocol.Type.getType(param.getField())))
                 .findFirst();
     }
@@ -849,13 +850,13 @@ public class MonitorServiceImpl implements MonitorService {
                 .i18n(i18n)
                 .protocol(DispatchConstants.PROTOCOL_HTTP_SD_V1)
                 .sdProtocol(ServiceDiscoveryProtocol.builder()
-                        .sdSource(sdParam.getValue())
+                        .sdSource(sdParam.getParamValue())
                         .type(ServiceDiscoveryProtocol.Type.getType(sdParam.getField()))
                         .build())
                 .build());
 
         sdJob.setMetrics(metricsList);
-        sdJob.setConfigmap(Lists.newArrayList(new Configmap(sdParam.getField(), sdParam.getValue(), sdParam.getType())));
+        sdJob.setConfigmap(Lists.newArrayList(new Configmap(sdParam.getField(), sdParam.getParamValue(), sdParam.getType())));
         return sdJob;
     }
 
@@ -879,7 +880,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param ->
-                new Configmap(param.getField(), param.getValue(), param.getType())).collect(Collectors.toList());
+                new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
         // To detect availability, you only need to collect the set of availability metrics with a priority of 0.
         List<Metrics> availableMetrics = appDefine.getMetrics().stream()
@@ -910,8 +911,8 @@ public class MonitorServiceImpl implements MonitorService {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).value(String.valueOf(monitorId)).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).value(String.valueOf(monitor.getName())).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
         // Construct the collection task Job entity
         Job appDefine = appService.getAppDefine(monitor.getApp());
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
@@ -925,7 +926,7 @@ public class MonitorServiceImpl implements MonitorService {
 
         List<Configmap> configmaps = params.stream().map(param -> {
             param.setMonitorId(monitorId);
-            return new Configmap(param.getField(), param.getValue(), param.getType());
+            return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
 
@@ -979,7 +980,7 @@ public class MonitorServiceImpl implements MonitorService {
         monitor.setHost(detectedHost);
         monitor.getTags().add(Tag.builder()
                 .name(CommonConstants.TAG_MONITOR_HOST)
-                .value(String.valueOf(detectedHost))
+                .tagValue(String.valueOf(detectedHost))
                 .type(CommonConstants.TAG_TYPE_AUTO_GENERATE)
                 .build());
     }
