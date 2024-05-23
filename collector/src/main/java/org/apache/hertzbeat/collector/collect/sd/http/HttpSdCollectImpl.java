@@ -24,6 +24,7 @@ import org.springframework.util.CollectionUtils;
 
 
 /**
+ * http sd collector
  */
 @Slf4j
 public class HttpSdCollectImpl extends AbstractCollect {
