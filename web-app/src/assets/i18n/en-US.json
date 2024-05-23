@@ -105,10 +105,10 @@
     "status": {
       "": "Task Status",
       "all": "All Status",
-      "available": "Available",
-      "unavailable": "Unavailable",
+      "available": "Up",
+      "unavailable": "Down",
       "unreachable": "Unreachable",
-      "unmonitored": "Unmonitored"
+      "unmonitored": "Paused"
     }
   },
   "alert": {
@@ -353,7 +353,7 @@
   "monitor_icon.cache": "group",
   "monitor_icon.bigdata": "dot-chart",
   "monitor_icon.webserver": "database",
-  "monitors.center.help": "Monitoring Center is the monitoring resource management portal of HertzBeat. Displays the currently added monitors in the form of list, and supports tag grouping, query filtering, and access to view monitoring details. <br> You can add, modify, delete, cancel monitoring, import/export, batch management, and other operations on the monitors.",
+  "monitors.center.help": "Monitoring Center is the monitoring resource management portal of HertzBeat. Displays the currently added monitors in the form of list, and supports tag grouping, query filtering, and access to view monitoring details. <br> You can add, modify, delete, pause monitoring, import/export, batch management, and other operations on the monitors.",
   "monitors.center.help.link": "https://hertzbeat.apache.org/docs/",
   "monitors.center.search.placeholder": "Search monitor type to add: Linux, Redis",
   "monitors.list": "Monitor List",
@@ -369,8 +369,8 @@
   "monitors.delete": "Delete",
   "monitors.edit-monitor": "Edit Monitor",
   "monitors.delete-monitor": "Delete Monitor",
-  "monitors.enable": "Enable Monitor",
-  "monitors.cancel": "Cancel Monitor",
+  "monitors.enable": "Resume Monitor",
+  "monitors.cancel": "Pause Monitor",
   "monitors.export": "Export Monitor",
   "monitors.export.switch-type": "Please select the export file format!",
   "monitors.export.use-type": "Export monitors in {{type}} file format",
