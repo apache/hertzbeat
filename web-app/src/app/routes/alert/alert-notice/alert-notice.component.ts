@@ -707,9 +707,7 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageRuleModalOk() {
-    // @ts-ignore
-    if (this.ruleForm.invalid) {
-      // @ts-ignore
+    if (this.ruleForm?.invalid) {
       Object.values(this.ruleForm.controls).forEach(control => {
         if (control.invalid) {
           control.markAsDirty();
