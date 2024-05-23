@@ -8,6 +8,8 @@ sidebar_position: 4
 
 For detailed check list, please refer to the official [check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
+Version content accessible in browser https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/
+
 ## 1. Download the candidate version
 
 Download the candidate version to be released to the local environment Need to rely on gpg tool, if not, it is recommended to install `gpg2`.
@@ -119,7 +121,6 @@ check as follows:
 - [ ] Only text files exist, not binary files
 - [ ] All files have ASF license at the beginning
 - [ ] Able to compile correctly
-- [ ] Check for extra files or folders, such as empty folders, etc.
 - [ ] .....
 
 

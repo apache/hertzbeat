@@ -47,8 +47,6 @@ import org.apache.hertzbeat.common.util.CommonUtil;
  */
 @Slf4j
 public class NtpCollectImpl extends AbstractCollect {
-    public NtpCollectImpl() {
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
