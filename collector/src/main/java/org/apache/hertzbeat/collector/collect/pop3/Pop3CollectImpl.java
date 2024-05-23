@@ -44,10 +44,6 @@ public class Pop3CollectImpl extends AbstractCollect {
     private static final String EMAIL_COUNT = "email_count";
     private static final String MAILBOX_SIZE = "mailbox_size";
 
-    public Pop3CollectImpl() {
-
-    }
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         Pop3Protocol pop3Protocol;

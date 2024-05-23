@@ -66,7 +66,6 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
 
     private static final String STORAGE_API = "/rocksdb_stats";
 
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         if (metrics == null || metrics.getNebulaGraph() == null) {
