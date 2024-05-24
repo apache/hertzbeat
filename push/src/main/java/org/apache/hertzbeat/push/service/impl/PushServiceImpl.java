@@ -52,11 +52,11 @@ public class PushServiceImpl implements PushService {
 
     private final Map<Long, Long> monitorIdCache; // key: monitorId, value: time stamp of last query
 
-    private static final long cacheTimeout = 5000; // ms
+    private static final long cacheTimeout = 5000L; // ms
 
     private final Map<Long, PushMetricsDto.Metrics> lastPushMetrics;
 
-    private static final long deleteMetricsPeriod = 1000 * 60 * 60 * 12;
+    private static final long deleteMetricsPeriod = 1000 * 60 * 60 * 12L;
 
     private static final long deleteBeforeTime = deleteMetricsPeriod / 2;
 
