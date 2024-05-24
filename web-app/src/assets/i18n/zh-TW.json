@@ -494,6 +494,7 @@
   "app.login.message-need-identifier": "請輸入用戶名",
   "app.login.message-need-credential": "請輸入密碼",
   "app.login.message-invalid-credentials": "賬戶或密碼錯誤",
+  "app.login.need-change-password": "請及時更新初始默認密碼!",
   "app.login.tab-login-credentials": "登錄 HertzBeat",
   "app.login.remember-me": "自動登錄",
   "app.login.login": "登錄",
