@@ -353,9 +353,7 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageReceiverModalOk() {
-    // @ts-ignore
-    if (this.receiverForm.invalid) {
-      // @ts-ignore
+    if (this.receiverForm?.invalid) {
       Object.values(this.receiverForm.controls).forEach(control => {
         if (control.invalid) {
           control.markAsDirty();
@@ -802,9 +800,7 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageTemplateModalOk() {
-    // @ts-ignore
-    if (this.templateForm.invalid) {
-      // @ts-ignore
+    if (this.templateForm?.invalid) {
       Object.values(this.templateForm.controls).forEach(control => {
         if (control.invalid) {
           control.markAsDirty();
