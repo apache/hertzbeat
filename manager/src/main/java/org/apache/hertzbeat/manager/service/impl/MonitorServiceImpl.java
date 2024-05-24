@@ -943,7 +943,7 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.AVAILABLE_CODE);
+            monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
