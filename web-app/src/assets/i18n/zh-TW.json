@@ -105,10 +105,10 @@
     "status": {
       "": "任務狀態",
       "all": "全部狀態",
-      "available": "正常",
-      "unavailable": "不可用",
+      "up": "正常",
+      "down": "宕機",
       "unreachable": "不可達",
-      "unmonitored": "未監控"
+      "paused": "暫停"
     }
   },
   "alert": {
@@ -353,7 +353,7 @@
   "monitor_icon.cache": "group",
   "monitor_icon.bigdata": "dot-chart",
   "monitor_icon.webserver": "database",
-  "monitors.center.help": "監控中心是HertzBeat的監控資源管理入口，以清單的形式展示當前已添加的監控，同時支持標籤分組，査詢過濾，查看監控詳情入口等。<br>您可以對監控進行新增，修改，删除，取消監控，導入匯出，批量管理等操作。",
+  "monitors.center.help": "監控中心是HertzBeat的監控資源管理入口，以清單的形式展示當前已添加的監控，同時支持標籤分組，査詢過濾，查看監控詳情入口等。<br>您可以對監控進行新增，修改，删除，暫停監控，導入匯出，批量管理等操作。",
   "monitors.center.help.link": "https://hertzbeat.apache.org/zh-cn/docs/#%E7%9B%91%E6%8E%A7%E4%B8%AD%E5%BF%83",
   "monitors.center.search.placeholder": "搜索待添加監控任務的類型: Linux, Redis",
   "monitors.list": "監控列表",
@@ -369,8 +369,8 @@
   "monitors.delete": "刪除",
   "monitors.edit-monitor": "編輯監控",
   "monitors.delete-monitor": "刪除監控",
-  "monitors.enable": "啓用監控",
-  "monitors.cancel": "取消監控",
+  "monitors.enable": "恢復監控",
+  "monitors.cancel": "暫停監控",
   "monitors.export": "導出監控",
   "monitors.export.switch-type": "請選擇導出文件格式!",
   "monitors.export.use-type": "以 {{type}} 文件格式導出監控",

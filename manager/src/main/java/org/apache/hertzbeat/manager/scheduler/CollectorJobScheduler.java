@@ -133,7 +133,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 continue;
             }
             Monitor monitor = monitorOptional.get();
-            if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+            if (monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
                 continue;
             }
             try {
