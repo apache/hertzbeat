@@ -61,9 +61,6 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String SHOW_DATABASE = "show databases %s";
 
-    /**
-     * create database (version 1.0.*)
-     */
     private static final String CREATE_DATABASE = "create database %s";
 
     private static final String SET_TTL = "set ttl to %s %s";
@@ -80,8 +77,6 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
             "SELECT FIRST_VALUE(%s), AVG(%s), MIN_VALUE(%s), MAX_VALUE(%s) FROM %s GROUP BY ([now() - %s, now()), 4h)";
 
     private SessionPool sessionPool;
-
-    private IotDbVersion version;
 
     private long queryTimeoutInMs;
 
@@ -107,25 +102,26 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
         if (properties.zoneId() != null) {
             builder.zoneId(properties.zoneId());
         }
-        if (properties.version() != null) {
-            this.version = properties.version();
-        }
         this.queryTimeoutInMs = properties.queryTimeoutInMs();
         this.sessionPool = builder.build();
         boolean available = checkConnection();
-        if (available) {
-            available = this.createDatabase();
-            if (available) {
-                this.initTtl(properties.expireTime());
-                log.info("IotDB session pool init success");
-            }
+        if (!available) {
+            log.error("IotDB session pool init error with check connection");
+            return available;
         }
+        available = this.createDatabase();
+        if (!available) {
+            log.error("IotDB session pool init error with create database");
+            return available;
+        }
+        this.initTtl(properties.expireTime());
+        log.info("IotDB session pool init success");
         return available;
     }
 
     private boolean checkConnection() {
         try {
-            this.sessionPool.executeQueryStatement(SHOW_STORAGE_GROUP);
+            this.sessionPool.executeNonQueryStatement(SHOW_STORAGE_GROUP);
             return true;
         } catch (Exception e) {
             log.error(e.getMessage(), e);
@@ -136,15 +132,12 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     private boolean createDatabase() {
         SessionDataSetWrapper dataSet = null;
         try {
-            // v1.0.* create database
-            if (IotDbVersion.V_1_0.equals(this.version)) {
-                String showDatabaseSql = String.format(SHOW_DATABASE, STORAGE_GROUP);
-                dataSet = this.sessionPool.executeQueryStatement(showDatabaseSql);
-                // root.hertzbeat database not exist
-                if (!dataSet.hasNext()) {
-                    String createDatabaseSql = String.format(CREATE_DATABASE, STORAGE_GROUP);
-                    this.sessionPool.executeNonQueryStatement(createDatabaseSql);
-                }
+            // if root.hertzbeat database not exist, create database
+            String showDatabaseSql = String.format(SHOW_DATABASE, STORAGE_GROUP);
+            dataSet = this.sessionPool.executeQueryStatement(showDatabaseSql);
+            if (!dataSet.hasNext()) {
+                String createDatabaseSql = String.format(CREATE_DATABASE, STORAGE_GROUP);
+                this.sessionPool.executeNonQueryStatement(createDatabaseSql);
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             log.error("create database error, error: {}", e.getMessage());
@@ -188,7 +181,6 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
         List<MeasurementSchema> schemaList = new ArrayList<>();
 
         // todo Measurement schema is a data structure that is generated on the client side, and encoding and compression have no effect
-        // todo Do you want to use the specified data structure, or do you want to create a timeSeries or template manually
         List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
         for (CollectRep.Field field : fieldsList) {
             MeasurementSchema schema = new MeasurementSchema();
@@ -198,6 +190,8 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                 schema.setType(TSDataType.DOUBLE);
             } else if (field.getType() == CommonConstants.TYPE_STRING) {
                 schema.setType(TSDataType.TEXT);
+            } else {
+                continue;
             }
             schemaList.add(schema);
         }
@@ -421,7 +415,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
         String deviceId = STORAGE_GROUP + "."
                 + (useQuote ? addQuote(app) : app) + "."
                 + (useQuote ? addQuote(metrics) : metrics) + "."
-                + ((IotDbVersion.V_1_0.equals(version) || useQuote) ? addQuote(monitorId.toString()) : monitorId.toString());
+                + addQuote(monitorId.toString());
         if (labels != null && !labels.isEmpty() && !labels.equals(CommonConstants.NULL_VALUE)) {
             deviceId += "." + addQuote(labels);
         }
