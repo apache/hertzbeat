@@ -73,7 +73,7 @@ params:
       en-US: Username
     type: text
     # When type is text, use limit to indicate the string limit size
-    limit: 20
+    limit: 50
     required: false
   - field: password
     name:
