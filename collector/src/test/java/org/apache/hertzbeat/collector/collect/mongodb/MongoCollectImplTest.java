@@ -19,14 +19,14 @@ package org.apache.hertzbeat.collector.collect.mongodb;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -72,7 +72,7 @@ public class MongoCollectImplTest {
     }
 
     @Test
-    void MockTest() {
+    void mockTest() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         mongodbProtocol.setCommand("hostInfo.os");
         Metrics metrics = new Metrics();
