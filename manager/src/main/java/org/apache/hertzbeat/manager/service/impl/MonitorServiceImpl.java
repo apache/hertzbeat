@@ -211,7 +211,7 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.AVAILABLE_CODE);
+            monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -258,7 +258,7 @@ public class MonitorServiceImpl implements MonitorService {
         try {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.AVAILABLE_CODE);
+            monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -514,7 +514,7 @@ public class MonitorServiceImpl implements MonitorService {
                 tag.setTagValue(monitor.getName());
             }
         }
-        if (preMonitor.getStatus() != CommonConstants.UN_MANAGE_CODE) {
+        if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             Job appDefine = appService.getAppDefine(monitor.getApp());
             if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
@@ -640,8 +640,8 @@ public class MonitorServiceImpl implements MonitorService {
         // The jobId is not deleted, and the jobId is reused again after the management is started.
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
-                        monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.UN_MANAGE_CODE))
+                        monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
+                .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE))
                 .collect(Collectors.toList());
         if (!managedMonitors.isEmpty()) {
             for (Monitor monitor : managedMonitors) {
@@ -656,8 +656,8 @@ public class MonitorServiceImpl implements MonitorService {
         // Update monitoring status Add corresponding monitoring periodic task
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
-                        monitor.getStatus() == CommonConstants.UN_MANAGE_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.AVAILABLE_CODE))
+                        monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
+                .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
                 .collect(Collectors.toList());
         if (!unManagedMonitors.isEmpty()) {
             for (Monitor monitor : unManagedMonitors) {
@@ -708,9 +708,9 @@ public class MonitorServiceImpl implements MonitorService {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
             appCount.setApp(item.getApp());
             switch (item.getStatus()) {
-                case CommonConstants.AVAILABLE_CODE -> appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
-                case CommonConstants.UN_AVAILABLE_CODE -> appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
-                case CommonConstants.UN_MANAGE_CODE -> appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
+                case CommonConstants.MONITOR_UP_CODE -> appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
+                case CommonConstants.MONITOR_DOWN_CODE -> appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
+                case CommonConstants.MONITOR_PAUSED_CODE -> appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
                 default -> {}
             }
             appCountMap.put(item.getApp(), appCount);
@@ -750,7 +750,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void updateAppCollectJob(Job job) {
         List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp())
-                .stream().filter(monitor -> monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
+                .stream().filter(monitor -> monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
                 .toList();
         if (monitors.isEmpty()) {
             return;

@@ -194,7 +194,7 @@
             required
             name="target"
             id="target"
-            [nzShowSearch]="true"
+            [nzShowSearch]="{ filter: caseInsensitiveFilter }"
             [nzPlaceHolder]="'alert.setting.target.place-holder' | i18n"
             [nzOptions]="appHierarchies"
             [(ngModel)]="cascadeValues"
@@ -418,7 +418,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="10">
           <span style="color: red">
-            <nz-tag nzColor="error">{{ 'monitor.status.unavailable' | i18n }}</nz-tag>
+            <nz-tag nzColor="error">{{ 'monitor.status.down' | i18n }}</nz-tag>
             <nz-tag nzColor="error">{{ 'monitor.status.unreachable' | i18n }}</nz-tag>
             {{ 'alert.setting.trigger' | i18n }}
           </span>

@@ -43,14 +43,6 @@ class CollectUtilTest {
 
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
     void countMatchKeyword() {
         int keyword = CollectUtil.countMatchKeyword("hertzbeat", "e");

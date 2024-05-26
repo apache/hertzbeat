@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClientManagement;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServerInfo;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServiceInstance;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -50,7 +50,6 @@ class HttpsdImplTest {
 
     @Mock
     private DiscoveryClientManagement discoveryClientManagement;
-
 
     @Test
     void testServerCollect() {
@@ -115,10 +114,10 @@ class HttpsdImplTest {
         String serviceName = "service";
         List<ServiceInstance> serviceInstances = new ArrayList<>();
         serviceInstances.add(ServiceInstance.builder()
-                        .serviceId(serviceId)
-                        .serviceName(serviceName)
-                        .address(host)
-                        .port(port)
+                .serviceId(serviceId)
+                .serviceName(serviceName)
+                .address(host)
+                .port(Integer.parseInt(port))
                 .build());
 
         Mockito.when(client.getServices()).thenReturn(serviceInstances);

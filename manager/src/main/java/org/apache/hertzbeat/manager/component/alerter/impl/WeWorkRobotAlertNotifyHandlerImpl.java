@@ -17,12 +17,18 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
@@ -58,6 +64,12 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
                 assert entity.getBody() != null;
                 if (entity.getBody().getErrCode() == 0) {
                     log.debug("Send WeWork webHook: {} Success", webHookUrl);
+                    WeWorkWebHookDto weWorkWebHookTextDto = checkNeedAtNominator(receiver, alert);
+                    if (!Objects.isNull(weWorkWebHookTextDto)) {
+                        HttpEntity<WeWorkWebHookDto> httpEntityText = new HttpEntity<>(weWorkWebHookTextDto, headers);
+                        restTemplate.postForEntity(webHookUrl, httpEntityText, CommonRobotNotifyResp.class);
+                    }
+
                 } else {
                     log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody().getErrMsg());
                     throw new AlertNoticeException(entity.getBody().getErrMsg());
@@ -69,6 +81,33 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         } catch (Exception e) {
             throw new AlertNoticeException("[WeWork Notify Error] " + e.getMessage());
         }
+    }
+
+    private WeWorkWebHookDto checkNeedAtNominator(NoticeReceiver receiver, Alert alert) {
+        if (StringUtils.isBlank(receiver.getPhone()) && StringUtils.isBlank(receiver.getTgUserId())) {
+            return null;
+        }
+        WeWorkWebHookDto weWorkWebHookTextDto = new WeWorkWebHookDto();
+        weWorkWebHookTextDto.setMsgtype(WeWorkWebHookDto.TEXT);
+        WeWorkWebHookDto.TextDTO textDto = new WeWorkWebHookDto.TextDTO();
+        if (StringUtils.isNotBlank(receiver.getPhone())) {
+            textDto.setMentionedMobileList(analysisArgToList(receiver.getPhone()));
+            weWorkWebHookTextDto.setText(textDto);
+        }
+        if (StringUtils.isNotBlank(receiver.getTgUserId())) {
+            textDto.setMentionedList(analysisArgToList(receiver.getTgUserId()));
+            weWorkWebHookTextDto.setText(textDto);
+        }
+        return weWorkWebHookTextDto;
+
+    }
+
+    private List<String> analysisArgToList(String arg) {
+        if (StringUtils.isBlank(arg)) {
+            return Collections.emptyList();
+        }
+        //english symbol
+        return Arrays.asList(arg.split("\\s*,\\s*"));
     }
 
     @Override
@@ -105,6 +144,11 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
          */
         private MarkdownDTO markdown;
 
+        /**
+         * text message
+         */
+        private TextDTO text;
+
         @Data
         private static class MarkdownDTO {
 
@@ -112,6 +156,25 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
              * message content
              */
             private String content;
+        }
+
+        @Data
+        private static class TextDTO {
+
+            /**
+             * message content
+             */
+            private String content;
+            /**
+             * @ userId
+             */
+            @JsonProperty(value = "mentioned_list")
+            private List<String> mentionedList;
+            /**
+             * @ phone
+             */
+            @JsonProperty(value = "mentioned_mobile_list")
+            private List<String> mentionedMobileList;
         }
 
     }

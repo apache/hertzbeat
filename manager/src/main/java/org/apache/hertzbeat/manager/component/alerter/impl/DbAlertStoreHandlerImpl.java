@@ -58,17 +58,17 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             if (!tags.containsKey(CommonConstants.TAG_MONITOR_HOST)) {
                 tags.put(CommonConstants.TAG_MONITOR_HOST, monitor.getHost());
             }
-            if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+            if (monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
                 // When monitoring is not monitored, ignore and silence its alarm messages
                 return;
             }
             if (CommonConstants.AVAILABILITY.equals(alert.getTarget())) {
-                if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING && monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
+                if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING && monitor.getStatus() == CommonConstants.MONITOR_UP_CODE) {
                     // Availability Alarm Need to change the monitoring status to unavailable
-                    monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_AVAILABLE_CODE);
-                } else if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED && monitor.getStatus() == CommonConstants.UN_AVAILABLE_CODE) {
+                    monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.MONITOR_DOWN_CODE);
+                } else if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED && monitor.getStatus() == CommonConstants.MONITOR_DOWN_CODE) {
                     // If the alarm is restored, the monitoring state needs to be restored
-                    monitorService.updateMonitorStatus(monitorId, CommonConstants.AVAILABLE_CODE);
+                    monitorService.updateMonitorStatus(monitorId, CommonConstants.MONITOR_UP_CODE);
                 }
             }
         } else {
