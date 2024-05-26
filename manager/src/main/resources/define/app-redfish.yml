@@ -103,7 +103,7 @@ params:
     type: text
     # when type is text, use limit to limit string length
     # 当type为text时,用limit表示字符串限制大小
-    limit: 20
+    limit: 50
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false

@@ -20,7 +20,6 @@ package org.apache.hertzbeat.collector.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import com.jayway.jsonpath.TypeRef;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -78,62 +77,26 @@ class JsonPathParserTest {
     @Test
     void parseContentWithJsonPath() {
         // process array
-        List<Object> tom = JsonPathParser.parseContentWithJsonPath(JSON_ARRAY,"$[0].name");
+        List<Object> tom = JsonPathParser.parseContentWithJsonPath(JSON_ARRAY, "$[0].name");
         assertNotNull(tom);
-        assertEquals("tom",tom.get(0));
+        assertEquals("tom", tom.get(0));
         // get json array map
-        List<Object> entry = JsonPathParser.parseContentWithJsonPath(JSON_ARRAY,"$[1]");
+        List<Object> entry = JsonPathParser.parseContentWithJsonPath(JSON_ARRAY, "$[1]");
         assertNotNull(entry);
         entry.forEach(e -> {
             assertInstanceOf(Map.class, e);
-            assertEquals("543",((Map)e).get("speed"));
+            assertEquals("543", ((Map) e).get("speed"));
         });
         // process object
-        List<Object> author = JsonPathParser.parseContentWithJsonPath(JSON_OBJECT,"$.store.book[0].author");
+        List<Object> author = JsonPathParser.parseContentWithJsonPath(JSON_OBJECT, "$.store.book[0].author");
         assertNotNull(author);
-        assertEquals("Nigel Rees",author.get(0));
+        assertEquals("Nigel Rees", author.get(0));
         // get json object map
-        List<Object> book = JsonPathParser.parseContentWithJsonPath(JSON_OBJECT,"$.store.book[1]");
+        List<Object> book = JsonPathParser.parseContentWithJsonPath(JSON_OBJECT, "$.store.book[1]");
         assertNotNull(book);
         book.forEach(e -> {
             assertInstanceOf(Map.class, e);
-            assertEquals("Sword of Honour",((Map)e).get("title"));
-        });
-    }
-
-    /**
-     * @throws java.lang.UnsupportedOperationException: Json-smart provider does not support TypeRef! Use a Jackson or Gson based provider
-     * need provid an provider to support TypeRef,like this:
-     *   final Configuration configuration = Configuration.builder()//
-     *         .jsonProvider(new JacksonJsonProvider(Json.mapper()))//
-     *         .mappingProvider(new JacksonMappingProvider(Json.mapper()))//
-     *         .build();
-     */
-//    @Test
-    void parseContentWithJsonPath2() {
-        TypeRef<List<String>> typeStringRef = new TypeRef<List<String>>() {};
-        // process array
-        List<String> tom = JsonPathParser.parseContentWithJsonPath(JSON_ARRAY,"$[0].name",typeStringRef);
-        assertNotNull(tom);
-        assertEquals("tom",tom.get(0));
-        TypeRef<List<Map>> typeMapRef = new TypeRef<List<Map>>() {};
-        // get json array map
-        List<Map> entry = JsonPathParser.parseContentWithJsonPath(JSON_ARRAY,"$[1]",typeMapRef);
-        assertNotNull(entry);
-        entry.forEach(e -> {
-            assertEquals("543",e.get("speed"));
-        });
-        TypeRef<List<String>> typeStrRef = new TypeRef<List<String>>() {};
-        // process object
-        List<String> author = JsonPathParser.parseContentWithJsonPath(JSON_OBJECT,"$.store.book[0].author",typeStrRef);
-        assertNotNull(author);
-        assertEquals("Nigel Rees",author.get(0));
-        TypeRef<List<Map>> typeObjMapRef = new TypeRef<List<Map>>() {};
-        // get json object map
-        List<Map> book = JsonPathParser.parseContentWithJsonPath(JSON_OBJECT,"$.store.book[1]",typeObjMapRef);
-        assertNotNull(book);
-        book.forEach(e -> {
-            assertEquals("Sword of Honour",e.get("title"));
+            assertEquals("Sword of Honour", ((Map) e).get("title"));
         });
     }
 }
