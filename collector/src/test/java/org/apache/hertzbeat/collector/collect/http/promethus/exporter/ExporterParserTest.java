@@ -17,12 +17,9 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus.exporter;
 
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.junit.jupiter.api.Test;
-
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link ExporterParser}
