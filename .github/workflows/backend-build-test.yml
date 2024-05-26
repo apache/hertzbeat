@@ -49,10 +49,6 @@ jobs:
         java-version: 17
     - name: Build with Maven
       run: mvn clean -B package -Prelease --file pom.xml
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4.0.1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Build Image
       env:
         IMAGE_PUSH: false
