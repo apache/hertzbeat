@@ -457,7 +457,7 @@ Thanks these wonderful people, welcome to join us:
 
 微信交流群 : 加 `tan-cloud` 好友邀请进群.
 
-微信公众号 : 搜索 `Apache HertzBeat` or `usthecom`.
+微信公众号 : 搜索 ID `usthecom`.
 
 [QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : 群号 `630061200`
 
