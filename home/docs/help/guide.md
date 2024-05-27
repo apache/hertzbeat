@@ -113,7 +113,7 @@ sidebar_label: Help Center
 > The Metric threshold configuration provides the Metric threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
 
 More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert-threshold) <br /> 
-&emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert-threshold_expr)   
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert-threshold-expr)   
 
 ### Alarm notification  
 
