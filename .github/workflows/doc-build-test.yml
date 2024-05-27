@@ -19,11 +19,11 @@ name: DOC CI
 
 on:
   push:
-    branches: [ master, dev,filename-check]
+    branches: [ master, dev ]
     paths:
       - 'home/**'
   pull_request:
-    branches: [ master, dev,filename-check]
+    branches: [ master, dev ]
     paths:
       - 'home/**'
 
