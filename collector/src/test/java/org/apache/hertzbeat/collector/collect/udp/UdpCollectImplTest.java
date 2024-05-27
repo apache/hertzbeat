@@ -57,7 +57,7 @@ class UdpCollectImplTest {
     @Test
     void testCollect() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        UdpProtocol ftpProtocol = UdpProtocol.builder()
+        UdpProtocol udpProtocol = UdpProtocol.builder()
                 .timeout("10")
                 .port("21")
                 .host("127.0.0.1")
@@ -73,7 +73,7 @@ class UdpCollectImplTest {
         List<String> aliasField = new ArrayList<>();
         aliasField.add("responseTime");
         Metrics metrics = new Metrics();
-        metrics.setUdp(ftpProtocol);
+        metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);
@@ -88,7 +88,7 @@ class UdpCollectImplTest {
     @Test
     void testCollectWithSocketException() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        UdpProtocol ftpProtocol = UdpProtocol.builder()
+        UdpProtocol udpProtocol = UdpProtocol.builder()
                 .timeout("10")
                 .port("21")
                 .host("127.0.0.1")
@@ -104,7 +104,7 @@ class UdpCollectImplTest {
         List<String> aliasField = new ArrayList<>();
         aliasField.add("responseTime");
         Metrics metrics = new Metrics();
-        metrics.setUdp(ftpProtocol);
+        metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);
@@ -116,7 +116,7 @@ class UdpCollectImplTest {
     @Test
     void testCollectWithPortUnreachableException() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        UdpProtocol ftpProtocol = UdpProtocol.builder()
+        UdpProtocol udpProtocol = UdpProtocol.builder()
                 .timeout("10")
                 .port("21")
                 .host("127.0.0.1")
@@ -132,7 +132,7 @@ class UdpCollectImplTest {
         List<String> aliasField = new ArrayList<>();
         aliasField.add("responseTime");
         Metrics metrics = new Metrics();
-        metrics.setUdp(ftpProtocol);
+        metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
         udpCollect.collect(builder, 1L, "test", metrics);

@@ -496,6 +496,7 @@
   "app.passport.intro-2": "Real-Time Monitoring",  "app.login.message-need-identifier": "Please enter your username",
   "app.login.message-need-credential": "Please enter password",
   "app.login.message-invalid-credentials": "Invalid username or password",
+  "app.login.need-change-password": "Please update the initial default password in time!",
   "app.login.tab-login-credentials": "Sign In HertzBeat",
   "app.login.remember-me": "Remember me",
   "app.login.login": "Login",
