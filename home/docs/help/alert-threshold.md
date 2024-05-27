@@ -39,6 +39,7 @@ Navigate to **[Threshold Rules] -> [Add Threshold Rule] -> [Confirm Configuratio
 The above image explains the configuration details:
 
 - **Metric Object**: Select the monitoring metric object for which we need to configure the threshold. For example: Under website monitoring type -> under the summary metric set -> responseTime metric.
+- **Threshold Rule**: Use this expression to calculate whether to trigger the threshold. Expression variables and operators are provided on the page for reference. For example: Set an alert to trigger if response time is greater than 50, the expression would be `responseTime > 50`. For detailed help on threshold expressions, see [Threshold Expression Help](alert-threshold-expr.md).
 - **Alert Level**: The alert level triggered by the threshold, from low to high: warning, critical, emergency.
 - **Trigger Count**: Set how many times the threshold must be triggered before the alert is actually triggered.
 - **Notification Template**: The template for the notification message sent after the alert is triggered. Template variables are provided on the page. For example: `${app}.${metrics}.${metric} metric value is ${responseTime}, which is greater than 50 triggering the alert`.
