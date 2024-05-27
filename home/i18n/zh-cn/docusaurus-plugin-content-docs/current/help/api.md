@@ -20,7 +20,7 @@ keywords: [开源监控系统, 开源网站监控, HTTP API监控]
 | 用户名      | 接口Basic认证或Digest认证时使用的用户名 |
 | 密码        | 接口Basic认证或Digest认证时使用的密码 |
 | 请求Headers | HTTP 请求头 |
-| 查询Params | HTTP查询参数,支持[时间表达式](time_expression) |
+| 查询Params | HTTP查询参数,支持[时间表达式](time-expression) |
 | Content-Type  | 设置携带BODY请求体数据请求时的资源类型  |
 | 请求BODY    | 设置携带BODY请求体数据，PUT POST请求方式时有效  |
 | 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒  |

@@ -19,7 +19,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[PING连通性](ping) <br />
   &emsp;&#x1F449;&emsp;[端口可用性](port) <br />
   &emsp;&#x1F449;&emsp;[全站监控](fullsite) <br />
-  &emsp;&#x1F449;&emsp;[SSL证书有效期](ssl_cert) <br />
+  &emsp;&#x1F449;&emsp;[SSL证书有效期](ssl-cert) <br />
   &emsp;&#x1F449;&emsp;[JVM虚拟机](jvm) <br />
   &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
   &emsp;&#x1F449;&emsp;[DNS服务器](dns) <br />
@@ -32,7 +32,7 @@ sidebar_label: 帮助入门
 &emsp;&#x1F449;&emsp;[JVM虚拟机](jvm) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot3.0](springboot3) <br />
-&emsp;&#x1F449;&emsp;[DynamicTp线程池](dynamic_tp) <br />
+&emsp;&#x1F449;&emsp;[DynamicTp线程池](dynamic-tp) <br />
 
 
 ### 数据库监控  
@@ -47,7 +47,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[IoTDB数据库监控](iotdb) <br />
   &emsp;&#x1F449;&emsp;[TiDB数据库监控](tidb) <br />
   &emsp;&#x1F449;&emsp;[MongoDB数据库监控](mongodb) <br />
-  &emsp;&#x1F449;&emsp;[NebulaGraph集群监控](nebulagraph_cluster) <br />
+  &emsp;&#x1F449;&emsp;[NebulaGraph集群监控](nebulagraph-cluster) <br />
 
 ### 缓存监控
 
@@ -71,7 +71,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[Kafka](kafka) <br />
   &emsp;&#x1F449;&emsp;[Tomcat](tomcat) <br />
   &emsp;&#x1F449;&emsp;[ShenYu](shenyu) <br />
-  &emsp;&#x1F449;&emsp;[DynamicTp](dynamic_tp) <br />
+  &emsp;&#x1F449;&emsp;[DynamicTp](dynamic-tp) <br />
   &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
   &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
   &emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
@@ -94,7 +94,7 @@ sidebar_label: 帮助入门
 
 ### 网络监控 
  
-  &emsp;&#x1F449;&emsp;[华为通用交换机](huawei_switch) <br /> 
+  &emsp;&#x1F449;&emsp;[华为通用交换机](huawei-switch) <br /> 
 
 ### 服务器监控
 
@@ -111,8 +111,8 @@ sidebar_label: 帮助入门
 
 > 指标阈值配置，提供表达式形式的指标阈值配置，可设置告警级别，触发次数，告警通知模版和是否启用，关联监控等功能。
 
-详见&emsp;&#x1F449;&emsp;[阈值告警](alert_threshold) <br />
-&emsp;&emsp;&emsp;&#x1F449;&emsp;[阈值表达式](alert_threshold_expr)   
+详见&emsp;&#x1F449;&emsp;[阈值告警](alert-threshold) <br />
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[阈值表达式](alert-threshold-expr)   
 
 ### 告警通知  
 
@@ -121,15 +121,15 @@ sidebar_label: 帮助入门
 > 接收人设置后需要设置关联的告警通知策略，来配置哪些告警信息发给哪些接收人。   
 
 
-&emsp;&#x1F449;&emsp;[配置邮箱通知](alert_email) <br />
-&emsp;&#x1F449;&emsp;[配置 Webhook 通知](alert_webhook) <br />
-&emsp;&#x1F449;&emsp;[配置 Telegram 通知](alert_telegram) <br />
-&emsp;&#x1F449;&emsp;[配置 Discord 通知](alert_discord) <br />
-&emsp;&#x1F449;&emsp;[配置 Slack 通知](alert_slack) <br />
-&emsp;&#x1F449;&emsp;[配置企业微信机器人通知](alert_wework) <br />
-&emsp;&#x1F449;&emsp;[配置钉钉机器人通知](alert_dingtalk) <br />
-&emsp;&#x1F449;&emsp;[配置飞书机器人通知](alert_feishu) <br />
-&emsp;&#x1F449;&emsp;[配置华为云SMN通知](alert_smn) <br />
+&emsp;&#x1F449;&emsp;[配置邮箱通知](alert-email) <br />
+&emsp;&#x1F449;&emsp;[配置 Webhook 通知](alert-webhook) <br />
+&emsp;&#x1F449;&emsp;[配置 Telegram 通知](alert-telegram) <br />
+&emsp;&#x1F449;&emsp;[配置 Discord 通知](alert-discord) <br />
+&emsp;&#x1F449;&emsp;[配置 Slack 通知](alert-slack) <br />
+&emsp;&#x1F449;&emsp;[配置企业微信机器人通知](alert-wework) <br />
+&emsp;&#x1F449;&emsp;[配置钉钉机器人通知](alert-dingtalk) <br />
+&emsp;&#x1F449;&emsp;[配置飞书机器人通知](alert-feishu) <br />
+&emsp;&#x1F449;&emsp;[配置华为云SMN通知](alert-smn) <br />
 
 ### 插件
 

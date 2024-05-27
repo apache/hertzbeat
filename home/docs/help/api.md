@@ -20,7 +20,7 @@ keywords: [open source monitoring tool, monitoring http api]
 | Username      | User name used for interface Basic authentication or Digest authentication |
 | Password        | Password used for interface Basic authentication or Digest authentication |
 | Headers        | HTTP request headers                                          |
-| Params        | HTTP query params, support [time expression](time_expression) |
+| Params        | HTTP query params, support [time expression](time-expression) |
 | Content-Type  | Set the resource type when carrying the BODY request body data request |
 | Request BODY    | Set the carry BODY request body data, which is valid when PUT or POST request method is used |
 | Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
