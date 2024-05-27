@@ -64,6 +64,7 @@
           },
           "configurations": {
             "production": {
+              "extractLicenses": false,
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
