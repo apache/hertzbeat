@@ -266,7 +266,7 @@
   "alert.notice.type.sms": "SMS",
   "alert.notice.type.phone": "Phone",
   "alert.notice.type.email": "Email",
-  "alert.notice.type.userId": "User Id",
+  "alert.notice.type.userId": "User ID",
   "alert.notice.type.url": "URL",
   "alert.notice.type.wechat": "Open WeChat",
   "alert.notice.type.wechat-id": "WeChat OPENID",

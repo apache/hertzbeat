@@ -266,7 +266,7 @@
   "alert.notice.type.sms": "短信",
   "alert.notice.type.phone": "手机号",
   "alert.notice.type.email": "邮箱",
-  "alert.notice.type.userId": "用户id",
+  "alert.notice.type.userId": "用户ID",
   "alert.notice.type.url": "URL地址",
   "alert.notice.type.wechat": "微信公众号",
   "alert.notice.type.wechat-id": "微信OPENID",
