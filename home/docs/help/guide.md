@@ -19,7 +19,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[PING Connectivity](ping) <br /> 
 &emsp;&#x1F449;&emsp;[Port availability](port) <br /> 
 &emsp;&#x1F449;&emsp;[Full site monitoring](fullsite) <br />
-&emsp;&#x1F449;&emsp;[SSL Cert monitoring](ssl-cert) <br />
+&emsp;&#x1F449;&emsp;[SSL Cert monitoring](ssl-cert.md) <br />
 &emsp;&#x1F449;&emsp;[DNS monitoring](dns) <br />
 &emsp;&#x1F449;&emsp;[FTP monitoring](ftp) <br />
 &emsp;&#x1F449;&emsp;[Websocket monitoring](websocket) <br />
@@ -30,7 +30,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[JVM monitoring](jvm) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot3.0](springboot3) <br />
-&emsp;&#x1F449;&emsp;[DynamicTp](dynamic-tp) <br />
+&emsp;&#x1F449;&emsp;[DynamicTp](dynamic-tp.md) <br />
 
 ### Database monitoring  
 
@@ -44,7 +44,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[IoTDB database monitoring](iotdb) <br />
 &emsp;&#x1F449;&emsp;[TiDB database monitoring](tidb) <br />
 &emsp;&#x1F449;&emsp;[MongoDB database monitoring](mongodb) <br />
-&emsp;&#x1F449;&emsp;[NebulaGraph cluster monitoring](nebulagraph-cluster) <br />
+&emsp;&#x1F449;&emsp;[NebulaGraph cluster monitoring](nebulagraph-cluster.md) <br />
 
 ### Cache monitoring
 
@@ -69,7 +69,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[Kafka](kafka) <br />
 &emsp;&#x1F449;&emsp;[Tomcat](tomcat) <br />
 &emsp;&#x1F449;&emsp;[ShenYu](shenyu) <br />
-&emsp;&#x1F449;&emsp;[DynamicTp](dynamic-tp) <br />
+&emsp;&#x1F449;&emsp;[DynamicTp](dynamic-tp.md) <br />
 &emsp;&#x1F449;&emsp;[RabbitMQ](rabbitmq) <br />
 &emsp;&#x1F449;&emsp;[ActiveMQ](activemq) <br />
 &emsp;&#x1F449;&emsp;[Jetty](jetty) <br />
@@ -92,7 +92,7 @@ sidebar_label: Help Center
 
 ### Network monitoring
 
-&emsp;&#x1F449;&emsp;[Huawei-switch](huawei-switch) <br /> 
+&emsp;&#x1F449;&emsp;[Huawei-switch](huawei-switch.md) <br /> 
 
 ### Server monitoring
 
@@ -112,8 +112,8 @@ sidebar_label: Help Center
 
 > The Metric threshold configuration provides the Metric threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
 
-More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert-threshold) <br /> 
-&emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert-threshold-expr)   
+More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert_threshold) <br /> 
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert_threshold_expr)   
 
 ### Alarm notification  
 
@@ -122,15 +122,15 @@ More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert-threshold) <br />
 > After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.   
 
 
-&emsp;&#x1F449;&emsp;[Configure Email Notification](alert-email) <br />
-&emsp;&#x1F449;&emsp;[Configure Discord Notification](alert-webhook) <br />
-&emsp;&#x1F449;&emsp;[Configure Slack Notification](alert-webhook) <br />
-&emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert-webhook) <br />
-&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert-webhook) <br />
-&emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert-wework) <br />
-&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert-dingtalk) <br />
-&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert-feishu) <br />
-&emsp;&#x1F449;&emsp;[Configure Huawei Cloud SMN Notification](alert-smn) <br />
+&emsp;&#x1F449;&emsp;[Configure Email Notification](alert-email.md) <br />
+&emsp;&#x1F449;&emsp;[Configure Discord Notification](alert-discord.md) <br />
+&emsp;&#x1F449;&emsp;[Configure Slack Notification](alert-slack.md) <br />
+&emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert-telegram.md) <br />
+&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert-webhook.md) <br />
+&emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert-enterprise-wechat-app.md) <br />
+&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert-dingtalk.md) <br />
+&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert-feishu.md) <br />
+&emsp;&#x1F449;&emsp;[Configure Huawei Cloud SMN Notification](alert-smn.md) <br />
 
 ### Plugins
 
