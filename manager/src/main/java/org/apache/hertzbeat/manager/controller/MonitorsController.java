@@ -50,7 +50,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Monitor and manage batch API
- * 监控管理批量API
  */
 @Tag(name = "Monitor Manage Batch API")
 @RestController

@@ -45,10 +45,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @ExtendWith(MockitoExtension.class)
 class MonitorControllerTest {
 
-
-
     private MockMvc mockMvc;
-
 
     @Mock
     private MonitorServiceImpl monitorService;
@@ -136,8 +133,6 @@ class MonitorControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(status().isOk())
                 .andReturn();
-
-
     }
 
     @Test
@@ -175,7 +170,6 @@ class MonitorControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Detect success."))
                 .andReturn();
-
     }
 
     @Test

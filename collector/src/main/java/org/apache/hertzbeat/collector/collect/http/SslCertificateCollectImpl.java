@@ -54,8 +54,6 @@ public class SslCertificateCollectImpl extends AbstractCollect {
     private static final String NAME_END_TIME = "end_time";
     private static final String NAME_END_TIMESTAMP = "end_timestamp";
 
-    public SslCertificateCollectImpl() {}
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         if (metrics == null || metrics.getHttp() == null) {

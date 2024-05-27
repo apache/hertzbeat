@@ -264,7 +264,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                                 break;
                             }
                         }
-                        // valueList为空时也执行,涵盖纯字符串赋值表达式
+                        // Also executed when valueList is empty, covering pure string assignment expressions
                         Object objValue = JexlExpressionRunner.evaluate(expression, fieldValueMap);
                         if (objValue != null) {
                             value = String.valueOf(objValue);

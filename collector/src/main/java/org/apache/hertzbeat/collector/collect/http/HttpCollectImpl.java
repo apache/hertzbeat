@@ -28,8 +28,6 @@ import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -53,6 +51,7 @@ import org.apache.hertzbeat.collector.collect.http.promethus.exporter.MetricFami
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
+import org.apache.hertzbeat.collector.util.TimeExpressionUtil;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -92,18 +91,10 @@ import org.w3c.dom.NodeList;
  */
 @Slf4j
 public class HttpCollectImpl extends AbstractCollect {
-
-    public static final String OpenAIHost = "api.openai.com";
-    public static final String OpenAIUsageAPI = "/dashboard/billing/usage";
-    public static final String startDate = "start_date";
-    public static final String endDate = "end_date";
-
+    private static final Map<Long, ExporterParser> EXPORTER_PARSER_TABLE = new ConcurrentHashMap<>();
     private final Set<Integer> defaultSuccessStatusCodes = Stream.of(HttpStatus.SC_OK, HttpStatus.SC_CREATED,
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
-
-    public HttpCollectImpl() {
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -367,8 +358,6 @@ public class HttpCollectImpl extends AbstractCollect {
         prometheusParser.handle(resp, aliasFields, http, builder);
     }
 
-    private static final Map<Long, ExporterParser> EXPORTER_PARSER_TABLE = new ConcurrentHashMap<>();
-
     private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
                                                    CollectRep.MetricsData.Builder builder) {
         if (!EXPORTER_PARSER_TABLE.containsKey(builder.getId())) {
@@ -381,8 +370,8 @@ public class HttpCollectImpl extends AbstractCollect {
             MetricFamily metricFamily = metricFamilyMap.get(metrics);
             for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
                 Map<String, String> labelMap = metric.getLabelPair()
-                                                       .stream()
-                                                       .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
+                        .stream()
+                        .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String aliasField : aliasFields) {
                     if ("value".equals(aliasField)) {
@@ -394,9 +383,14 @@ public class HttpCollectImpl extends AbstractCollect {
                             valueRowBuilder.addColumns(String.valueOf(metric.getUntyped().getValue()));
                         } else if (metric.getInfo() != null) {
                             valueRowBuilder.addColumns(String.valueOf(metric.getInfo().getValue()));
+                        } else if (metric.getSummary() != null) {
+                            valueRowBuilder.addColumns(String.valueOf(metric.getSummary().getValue()));
+                        } else if (metric.getHistogram() != null) {
+                            valueRowBuilder.addColumns(String.valueOf(metric.getHistogram().getValue()));
                         }
                     } else {
-                        valueRowBuilder.addColumns(labelMap.get(aliasField));
+                        String columnValue = labelMap.get(aliasField);
+                        valueRowBuilder.addColumns(columnValue == null ? CommonConstants.NULL_VALUE : columnValue);
                     }
                 }
                 builder.addValues(valueRowBuilder.build());
@@ -443,6 +437,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     /**
      * create httpContext
+     *
      * @param httpProtocol http protocol
      * @return context
      */
@@ -451,7 +446,7 @@ public class HttpCollectImpl extends AbstractCollect {
         if (auth != null && DispatchConstants.DIGEST_AUTH.equals(auth.getType())) {
             HttpClientContext clientContext = new HttpClientContext();
             if (StringUtils.hasText(auth.getDigestAuthUsername())
-                        && StringUtils.hasText(auth.getDigestAuthPassword())) {
+                    && StringUtils.hasText(auth.getDigestAuthPassword())) {
                 CredentialsProvider provider = new BasicCredentialsProvider();
                 UsernamePasswordCredentials credentials = new UsernamePasswordCredentials(auth.getDigestAuthUsername(),
                         auth.getDigestAuthPassword());
@@ -468,6 +463,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     /**
      * create http request
+     *
      * @param httpProtocol http params
      * @return http uri request
      */
@@ -494,17 +490,9 @@ public class HttpCollectImpl extends AbstractCollect {
         if (params != null && !params.isEmpty()) {
             for (Map.Entry<String, String> param : params.entrySet()) {
                 if (StringUtils.hasText(param.getValue())) {
-                    requestBuilder.addParameter(param.getKey(), param.getValue());
+                    requestBuilder.addParameter(param.getKey(), TimeExpressionUtil.calculate(param.getValue()));
                 }
             }
-        }
-        // OpenAI /dashboard/billing/usage
-        if (OpenAIHost.equalsIgnoreCase(httpProtocol.getHost()) && OpenAIUsageAPI.equalsIgnoreCase(httpProtocol.getUrl())) {
-            LocalDate today = LocalDate.now();
-            LocalDate tomorrow = LocalDate.now().plusDays(1);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            requestBuilder.addParameter(startDate, today.format(formatter));
-            requestBuilder.addParameter(endDate, tomorrow.format(formatter));
         }
         // The default request header can be overridden if customized
         // keep-alive
@@ -522,7 +510,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         // add accept
         if (DispatchConstants.PARSE_DEFAULT.equals(httpProtocol.getParseType())
-                    || DispatchConstants.PARSE_JSON_PATH.equals(httpProtocol.getParseType())) {
+                || DispatchConstants.PARSE_JSON_PATH.equals(httpProtocol.getParseType())) {
             requestBuilder.addHeader(HttpHeaders.ACCEPT, "application/json");
         } else if (DispatchConstants.PARSE_XML_PATH.equals(httpProtocol.getParseType())) {
             requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/xml,application/xml");
@@ -537,7 +525,7 @@ public class HttpCollectImpl extends AbstractCollect {
                 requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, value);
             } else if (DispatchConstants.BASIC_AUTH.equals(authorization.getType())) {
                 if (StringUtils.hasText(authorization.getBasicAuthUsername())
-                            && StringUtils.hasText(authorization.getBasicAuthPassword())) {
+                        && StringUtils.hasText(authorization.getBasicAuthPassword())) {
                     String authStr = authorization.getBasicAuthUsername() + ":" + authorization.getBasicAuthPassword();
                     String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
                     requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, DispatchConstants.BASIC + " " + encodedAuth);
@@ -558,8 +546,8 @@ public class HttpCollectImpl extends AbstractCollect {
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(httpProtocol.getHost());
             String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
-                                     ? String.format("[%s]:%s%s", httpProtocol.getHost(), httpProtocol.getPort(), uri)
-                                     : String.format("%s:%s%s", httpProtocol.getHost(), httpProtocol.getPort(), uri);
+                    ? String.format("[%s]:%s%s", httpProtocol.getHost(), httpProtocol.getPort(), uri)
+                    : String.format("%s:%s%s", httpProtocol.getHost(), httpProtocol.getPort(), uri);
             boolean ssl = Boolean.parseBoolean(httpProtocol.getSsl());
             if (ssl) {
                 requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
@@ -572,10 +560,10 @@ public class HttpCollectImpl extends AbstractCollect {
         int timeout = CollectUtil.getTimeout(httpProtocol.getTimeout(), 0);
         if (timeout > 0) {
             RequestConfig requestConfig = RequestConfig.custom()
-                                                  .setConnectTimeout(timeout)
-                                                  .setSocketTimeout(timeout)
-                                                  .setRedirectsEnabled(true)
-                                                  .build();
+                    .setConnectTimeout(timeout)
+                    .setSocketTimeout(timeout)
+                    .setRedirectsEnabled(true)
+                    .build();
             requestBuilder.setConfig(requestConfig);
         }
         return requestBuilder.build();

@@ -127,7 +127,6 @@ public class GlobalExceptionHandler {
         }
     }
 
-
     /**
      * handler the exception thrown for data input verify
      * @param e data input verify exception
@@ -186,7 +185,6 @@ public class GlobalExceptionHandler {
         Message<Void> message = Message.fail(PARAM_INVALID_CODE, errorMsg);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
-
 
     /**
      * handler the exception thrown for datastore error
