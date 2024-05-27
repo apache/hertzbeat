@@ -19,11 +19,11 @@ name: DOC CI
 
 on:
   push:
-    branches: [ master, dev]
+    branches: [ master, dev,filename-check]
     paths:
       - 'home/**'
   pull_request:
-    branches: [ master, dev]
+    branches: [ master, dev,filename-check]
     paths:
       - 'home/**'
 
@@ -34,6 +34,73 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - uses: batista/lint-filenames@v1
+        name: Validating blog filenames
+        with:
+          path: './home/blog'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating docs filenames
+        with:
+          path: './home/docs'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating docs/community filenames
+        with:
+          path: './home/docs/community'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating docs/help filenames
+        with:
+          path: './home/docs/help'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating docs/others filenames
+        with:
+          path: './home/docs/others'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating doc/start filenames
+        with:
+          path: './home/docs/start'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+
+      - uses: batista/lint-filenames@v1
+        name: Validating i18n/blog filenames
+        with:
+          path: './home/i18n/zh-cn/docusaurus-plugin-content-blog'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating current filenames
+        with:
+          path: './home/i18n/zh-cn/docusaurus-plugin-content-docs/current'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating current/advanced filenames
+        with:
+          path: './home/i18n/zh-cn/docusaurus-plugin-content-docs/current/advanced'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating current/community filenames
+        with:
+          path: './home/i18n/zh-cn/docusaurus-plugin-content-docs/current/community'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating current/help filenames
+        with:
+          path: './home/i18n/zh-cn/docusaurus-plugin-content-docs/current/help'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating current/others filenames
+        with:
+          path: './home/i18n/zh-cn/docusaurus-plugin-content-docs/current/others'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+      - uses: batista/lint-filenames@v1
+        name: Validating current/start filenames
+        with:
+          path: './home/i18n/zh-cn/docusaurus-plugin-content-docs/current/start'
+          pattern: '^[a-z0-9-]+(\.[a-z0-9-]+)+$'
+
       - name: NPM INSTALL
         working-directory: home
         run: npm install
