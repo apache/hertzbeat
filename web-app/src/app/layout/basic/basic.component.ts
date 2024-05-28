@@ -92,7 +92,7 @@ export class LayoutBasicComponent {
   };
   avatar: string = `./assets/img/avatar.svg`;
   searchToggleStatus = false;
-  showSettingDrawer = !environment.production;
+  showSettingDrawer = false;
   version = CONSTANTS.VERSION;
   currentYear = new Date().getFullYear();
   get user(): User {
