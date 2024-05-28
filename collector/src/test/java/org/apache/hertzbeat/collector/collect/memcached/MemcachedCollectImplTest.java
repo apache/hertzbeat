@@ -47,14 +47,12 @@ public class MemcachedCollectImplTest {
     @Mock
     MemcachedProtocol memcachedProtocol;
 
-    @Mock
-    Metrics metrics;
-
-    @Mock
-    CollectRep.MetricsData.Builder builder;
-
     @InjectMocks
     private MemcachedCollectImpl memcachedCollect;
+
+    private Metrics metrics;
+
+    private CollectRep.MetricsData.Builder builder;
 
     @BeforeEach
     void setUp() {
