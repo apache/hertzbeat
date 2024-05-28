@@ -18,16 +18,13 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;

@@ -13,7 +13,7 @@ public class StrUtil {
 
     /**
      * Handle Comma Separated Data
-     * @param arg
+     * @param arg Comma separated data
      * @return Data List
      */
     public static List<String> analysisArgToList(String arg) {

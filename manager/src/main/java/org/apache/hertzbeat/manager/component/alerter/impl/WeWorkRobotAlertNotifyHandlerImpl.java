@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
