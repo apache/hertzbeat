@@ -190,15 +190,6 @@
   dependencies:
     tslib "^2.3.0"
 
-"@angular/cdk@^15.0.0":
-  version "15.2.9"
-  resolved "https://registry.yarnpkg.com/@angular/cdk/-/cdk-15.2.9.tgz#e22df07b296fec6dccf66d569c3acc3c504c2058"
-  integrity sha512-koaM07N1AIQ5oHU27l0/FoQSSoYAwlAYwVZ4Di3bYrJsTBNCN2Xsby7wI8gZxdepMnV4Fe9si382BDBov+oO4Q==
-  dependencies:
-    tslib "^2.3.0"
-  optionalDependencies:
-    parse5 "^7.1.2"
-
 "@angular/cdk@^17.0.0":
   version "17.3.10"
   resolved "https://registry.yarnpkg.com/@angular/cdk/-/cdk-17.3.10.tgz#4a3bab529cd65bb19cb89c89b3548dcc534d1a44"
@@ -309,27 +300,12 @@
   dependencies:
     tslib "^2.3.0"
 
-"@ant-design/colors@^5.0.0":
-  version "5.1.1"
-  resolved "https://registry.yarnpkg.com/@ant-design/colors/-/colors-5.1.1.tgz#800b2186b1e27e66432e67d03ed96af3e21d8940"
-  integrity sha512-Txy4KpHrp3q4XZdfgOBqLl+lkQIc3tEvHXOimRN1giX1AEC7mGtyrO9p8iRGJ3FLuVMGa2gNEzQyghVymLttKQ==
-  dependencies:
-    "@ctrl/tinycolor" "^3.3.1"
-
 "@ant-design/colors@^7.0.0":
   version "7.0.2"
   resolved "https://registry.yarnpkg.com/@ant-design/colors/-/colors-7.0.2.tgz#c5c753a467ce8d86ba7ca4736d2c01f599bb5492"
   integrity sha512-7KJkhTiPiLHSu+LmMJnehfJ6242OCxSlR3xHVBecYxnMW8MS/878NXct1GqYARyL59fyeFdKRxXTfvR9SnDgJg==
   dependencies:
     "@ctrl/tinycolor" "^3.6.1"
-
-"@ant-design/icons-angular@^15.0.0":
-  version "15.0.0"
-  resolved "https://registry.yarnpkg.com/@ant-design/icons-angular/-/icons-angular-15.0.0.tgz#fa6119e6c1f710f2c03ba11aff25bfd87b5a0243"
-  integrity sha512-9DMpuoqZBvS7+VJ0s3tl2g/kI1sTLDQWfykiXYa+AkZ2AvJwHebvR7Cw7/xfiXFDLyZTjPgtC0x0gex13EShuA==
-  dependencies:
-    "@ant-design/colors" "^5.0.0"
-    tslib "^2.0.0"
 
 "@ant-design/icons-angular@^17.0.0":
   version "17.0.0"
@@ -1396,7 +1372,7 @@
   resolved "https://registry.yarnpkg.com/@csstools/selector-specificity/-/selector-specificity-2.2.0.tgz#2cbcf822bf3764c9658c4d2e568bd0c0cb748016"
   integrity sha512-+OJ9konv95ClSTOJCmMZqpd5+YGsB2S+x6w3E1oaM8UuR5j8nTNHYSz8c9BEPGDOCMQYIEEGlVPj/VY64iTbGw==
 
-"@ctrl/tinycolor@^3.3.1", "@ctrl/tinycolor@^3.6.1":
+"@ctrl/tinycolor@^3.6.1":
   version "3.6.1"
   resolved "https://registry.yarnpkg.com/@ctrl/tinycolor/-/tinycolor-3.6.1.tgz#b6c75a56a1947cc916ea058772d666a2c8932f31"
   integrity sha512-SITSV6aIXsuVNV3f3O0f2n/cgyEDWoSqtZMYiAmcsYHydcKrOz3gUxB/iXd/Qf08+IZX4KpgNbvUdMBmWz+kcA==
@@ -1417,14 +1393,6 @@
     plyr "^3.7.8"
     tslib "^2.3.0"
     xlsx "^0.18.5"
-
-"@delon/acl@^15.2.1":
-  version "15.2.1"
-  resolved "https://registry.yarnpkg.com/@delon/acl/-/acl-15.2.1.tgz#08b70744045d5645841f42999f64020abda0e54f"
-  integrity sha512-+7l9S7srPQ/YEjFMNeD0AUuBMrMgTuhPlFpVUoHMN9q16nAZC7ZiHtT7oKJ0wOj9MZ8ffIHc0ZgxDeeCYBh7zA==
-  dependencies:
-    "@delon/util" "^15.2.1"
-    tslib "^2.3.0"
 
 "@delon/acl@^17.3.1":
   version "17.3.1"
@@ -1479,16 +1447,6 @@
   dependencies:
     tslib "^2.3.0"
 
-"@delon/theme@15.2.1":
-  version "15.2.1"
-  resolved "https://registry.yarnpkg.com/@delon/theme/-/theme-15.2.1.tgz#9aa4b66c8b3aa854d7bcdb89f8870c660db3695b"
-  integrity sha512-kxGNS+8xbBnJ+PcdLfwj9VjBr5nvWyTAj0mSeWdBXby/hHA3Xnq/66t/mnte/Pz4iSdRnMlW/jIUsnaNw6MZuw==
-  dependencies:
-    "@delon/acl" "^15.2.1"
-    "@delon/util" "^15.2.1"
-    ng-zorro-antd "^15.1.0"
-    tslib "^2.3.0"
-
 "@delon/theme@^17.3.1":
   version "17.3.1"
   resolved "https://registry.yarnpkg.com/@delon/theme/-/theme-17.3.1.tgz#f17a6f8962d36630d27a3612d9e75b4042473b53"
@@ -1499,14 +1457,6 @@
     "@delon/form" "^17.3.1"
     "@delon/util" "^17.3.1"
     ng-zorro-antd "^17.3.0"
-    tslib "^2.3.0"
-
-"@delon/util@15.2.1", "@delon/util@^15.2.1":
-  version "15.2.1"
-  resolved "https://registry.yarnpkg.com/@delon/util/-/util-15.2.1.tgz#23be01054ffa0eb387d6323b787472e8010c53e4"
-  integrity sha512-XvLA9ywbTFDj62Ldkr4t/R+A13EWUGh3CsTyhgbSzMoarJakt38w7ilNL3ieoWW0zArZyOw49JfLPz9WJ9Rkaw==
-  dependencies:
-    extend "^3.0.2"
     tslib "^2.3.0"
 
 "@delon/util@^17.3.1":
@@ -8057,16 +8007,6 @@ ng-zorro-antd@17.4.0, ng-zorro-antd@^17.3.0:
   dependencies:
     "@angular/cdk" "^17.0.0"
     "@ant-design/icons-angular" "^17.0.0"
-    date-fns "^2.16.1"
-    tslib "^2.3.0"
-
-ng-zorro-antd@^15.1.0:
-  version "15.1.1"
-  resolved "https://registry.yarnpkg.com/ng-zorro-antd/-/ng-zorro-antd-15.1.1.tgz#55701da3d28bf41b91db2400a3b660328a6cc03a"
-  integrity sha512-u69Lt3qCA9nYJFzAJitVZ21XGP9uuBA5acvtbC24cTjHMKFs699t2UTp1umUNwb7Ix54vPfKyjovZpnqcebC6g==
-  dependencies:
-    "@angular/cdk" "^15.0.0"
-    "@ant-design/icons-angular" "^15.0.0"
     date-fns "^2.16.1"
     tslib "^2.3.0"
 
