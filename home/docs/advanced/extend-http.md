@@ -73,7 +73,7 @@ params:
       en-US: Username
     type: text
     # When type is text, use limit to indicate the string limit size
-    limit: 20
+    limit: 50
     required: false
   - field: password
     name:
@@ -195,6 +195,7 @@ metrics:
       method: GET
       headers:
         apiVersion: v1
+      # query params,support time expression
       params:
         param1: param1
         param2: param2

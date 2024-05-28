@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -42,14 +40,6 @@ import org.junit.jupiter.api.Test;
 class CollectUtilTest {
 
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
 
     @Test
     void countMatchKeyword() {

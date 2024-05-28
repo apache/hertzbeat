@@ -287,11 +287,11 @@ public class GrepTimeDbDataStorage extends AbstractHistoryDataStorage {
         try {
             TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
             ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-            expireTime = dateTime.toEpochSecond() * 1000;
+            expireTime = dateTime.toEpochSecond() * 1000L;
         } catch (Exception e) {
             log.error("parse history time error: {}. use default: 6h", e.getMessage());
             ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(6));
-            expireTime = dateTime.toEpochSecond() * 1000;
+            expireTime = dateTime.toEpochSecond() * 1000L;
         }
         return expireTime;
     }

@@ -28,6 +28,11 @@ public final class Base64Util {
     }
 
     public static boolean isBase64(String base64) {
+
+        if (base64 == null || base64.isEmpty()) {
+            return false;
+        }
+
         try {
             return Base64.getDecoder().decode(base64) != null;
         } catch (Exception e) {

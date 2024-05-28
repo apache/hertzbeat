@@ -25,7 +25,7 @@ export class Monitor {
   app!: string;
   host!: string;
   intervals: number = 60;
-  // 任务状态 0:未监控,1:可用,2:不可用
+  // Monitoring status 0: Paused, 1: Up, 2: Down
   status!: number;
   description!: string;
   creator!: string;
