@@ -2,7 +2,7 @@
 id: httpsd
 title: Monitoring Httpsd
 sidebar_label: Httpsd Monitor
-keywords: [open source monitoring tool, open source java monitoring tool, monitoring httpsd metrics]
+keywords: [ open source monitoring tool, open source java monitoring tool, monitoring httpsd metrics ]
 ---
 
 > Collect and monitor the general performance Metrics of Httpsd.
@@ -21,22 +21,22 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 
 # Configuration parameter
 
-| Parameter name        | Parameter help description                                   |
-| --------------------- | ------------------------------------------------------------ |
-| Host                  | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://) |
-| Task name             | Identify the name of this monitoring. The name needs to be unique |
-| Port                  | Port provided by Register center                             |
-| Discovery Client Type | Select one Register center that you want to monitor          |
-| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds |
+| Parameter name        | Parameter help description                                                                                                                                                |
+|-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Host                  | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
+| Task name             | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
+| Port                  | Port provided by Register center                                                                                                                                          |
+| Discovery Client Type | Select one Register center that you want to monitor                                                                                                                       |
+| Collection interval   | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds                                                   |
 | Whether to detect     | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
-| Description remarks   | For more information about identifying and describing this monitoring, users can note information here |
+| Description remarks   | For more information about identifying and describing this monitoring, users can note information here                                                                    |
 
 # Collection Metrics
 
 ## Metrics Set：server
 
 | Metric name   | Metric unit | Metric help description |
-| ------------- | ----------- | ----------------------- |
+|---------------|-------------|-------------------------|
 | Address       |             |                         |
 | Port          |             |                         |
 | Response Time | ms          |                         |
@@ -44,7 +44,7 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 ## Metrics Set：service
 
 | Metric name   | Metric unit | Metric help description          |
-| ------------- | ----------- | -------------------------------- |
+|---------------|-------------|----------------------------------|
 | Service Id    |             |                                  |
 | Service Name  |             |                                  |
 | Address       |             |                                  |

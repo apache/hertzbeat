@@ -1,44 +1,44 @@
 ---
-id: rabbitmq  
-title: 监控 RabbitMQ 消息中间件      
-sidebar_label: RabbitMQ消息中间件    
-keywords: [开源监控系统, 开源消息中间件监控, RabbitMQ消息中间件监控]
+id: rabbitmq
+title: 监控 RabbitMQ 消息中间件
+sidebar_label: RabbitMQ消息中间件
+keywords: [ 开源监控系统, 开源消息中间件监控, RabbitMQ消息中间件监控 ]
 ---
 
-> 对 RabbitMQ 消息中间件的运行状态，节点，队列等相关指标进行监测。         
+> 对 RabbitMQ 消息中间件的运行状态，节点，队列等相关指标进行监测。
 
-### 监控前操作  
+### 监控前操作
 
 > HertzBeat 使用 RabbitMQ Management 的 Rest Api 对 RabbitMQ 进行指标数据采集。  
-> 故需要您的 RabbitMQ 环境开启 Management 插件 
+> 故需要您的 RabbitMQ 环境开启 Management 插件
 
-1. 开启 Management 插件，或使用自开启版本  
+1. 开启 Management 插件，或使用自开启版本
 
 ```shell
 rabbitmq-plugins enable rabbitmq_management 
 ```
 
-2. 浏览器访问 http://ip:15672/ ，默认账户密码 `guest/guest`. 成功登录即开启成功。  
+2. 浏览器访问 http://ip:15672/ ，默认账户密码 `guest/guest`. 成功登录即开启成功。
 
 3. 在 HertzBeat 添加对应 RabbitMQ 监控即可，参数使用 Management 的 IP 端口，默认账户密码。
 
-### 配置参数   
+### 配置参数
 
-| 参数名称     | 参数帮助描述                                      |
-|----------|---------------------------------------------|
-| 监控Host   | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
-| 任务名称     | 标识此监控的名称，名称需要保证唯一性。                         |
-| 端口       | RabbitMQ Management 对外提供的HTTP端口，默认为15672。   |
-| 用户名      | 接口Basic认证时使用的用户名                            |
-| 密码       | 接口Basic认证时使用的密码                             |
-| 超时时间     | HTTP请求查询超时时间                                |
-| 采集间隔     | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒              |
-| 是否探测     | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作            |
-| 描述备注     | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                 |
+| 参数名称   | 参数帮助描述                                               |
+|--------|------------------------------------------------------|
+| 监控Host | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
+| 任务名称   | 标识此监控的名称，名称需要保证唯一性。                                  |
+| 端口     | RabbitMQ Management 对外提供的HTTP端口，默认为15672。            |
+| 用户名    | 接口Basic认证时使用的用户名                                     |
+| 密码     | 接口Basic认证时使用的密码                                      |
+| 超时时间   | HTTP请求查询超时时间                                         |
+| 采集间隔   | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒                       |
+| 是否探测   | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                     |
+| 描述备注   | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                          |
 
-### 采集指标   
+### 采集指标
 
-#### 指标集合：overview  
+#### 指标集合：overview
 
 | 指标名称               | 指标单位 | 指标帮助描述                   |
 |--------------------|------|--------------------------|
@@ -99,7 +99,6 @@ rabbitmq-plugins enable rabbitmq_management
 | queue_created      | 无    | queue created num              |
 | queue_deleted      | 无    | queue deleted num              |
 | connection_closed  | 无    | connection closed num          |
-
 
 #### 指标集合：queues
 

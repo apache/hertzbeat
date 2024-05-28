@@ -1,19 +1,20 @@
 ---
 id: openai
-title: 监控：OpenAI 账户情况   
+title: 监控：OpenAI 账户情况
 sidebar_label: OpenAI 账户情况
-keywords: [开源监控系统, 开源网络监控, OpenAI账户监控]
+keywords: [ 开源监控系统, 开源网络监控, OpenAI账户监控 ]
 ---
 
 ### 准备工作
 
 #### 获取会话密钥
-> 1. 打开 Chrome 浏览器的网络请求界面 
->    `Mac: cmd + option + i`
->    `Windows: ctrl + shift + i`
+
+> 1. 打开 Chrome 浏览器的网络请求界面
+     > `Mac: cmd + option + i`
+     > `Windows: ctrl + shift + i`
 > 2. 访问 https://platform.openai.com/usage
 > 3. 找到 https://api.openai.com/dashboard/billing/usage 请求
-> 4. 找到请求头中 Authorization 字段，并复制 `Bearer ` 之后的内容。例如： `sess-123456` 
+> 4. 找到请求头中 Authorization 字段，并复制 `Bearer ` 之后的内容。例如： `sess-123456`
 
 ### 注意事项
 
@@ -45,10 +46,10 @@ keywords: [开源监控系统, 开源网络监控, OpenAI账户监控]
 
 #### 指标集合：模型花费
 
-| 指标名称    | 指标单位   | 指标帮助描述  |
-|---------|--------|---------|
-| 模型名称   | 无      | 模型名称   |
-| 花费   | 美元 ($) | 花费   |
+| 指标名称 | 指标单位   | 指标帮助描述 |
+|------|--------|--------|
+| 模型名称 | 无      | 模型名称   |
+| 花费   | 美元 ($) | 花费     |
 
 #### 指标集合：订阅计费
 

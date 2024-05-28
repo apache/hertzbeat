@@ -32,19 +32,17 @@ sidebar_position: 1
 - 使用此列表提出您对 HertzBeat 的问题
 - 由 HertzBeat 贡献者用来讨论 HertzBeat 的开发
 
-
-| 列表名称         | 地址                           | 订阅                                                   | 退订                                                      | 归档                                                                     |
-|--------------|------------------------------|------------------------------------------------------|---------------------------------------------------------|------------------------------------------------------------------------|
-| **开发者列表**    | dev@hertzbeat.apache.org     | [订阅](mailto:dev-subscribe@hertzbeat.apache.org)      | [退订](mailto:dev-unsubscribe@hertzbeat.apache.org)       | [归档](https://lists.apache.org/list.html?dev@hertzbeat.apache.org)      |
-
+| 列表名称      | 地址                       | 订阅                                              | 退订                                                | 归档                                                                |
+|-----------|--------------------------|-------------------------------------------------|---------------------------------------------------|-------------------------------------------------------------------|
+| **开发者列表** | dev@hertzbeat.apache.org | [订阅](mailto:dev-subscribe@hertzbeat.apache.org) | [退订](mailto:dev-unsubscribe@hertzbeat.apache.org) | [归档](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) |
 
 ### 通知列表
 
 - 关于 HertzBeat 代码库的更改的通知，频繁通知
 
-| 列表名称      | 地址                      | 订阅                                                          | 退订                                                           | 归档                                                                          |
-|-----------|------------------------------|-------------------------------------------------------------|--------------------------------------------------------------|-----------------------------------------------------------------------------|
-| **通知列表**  | notifications@hertzbeat.apache.org | [订阅](mailto:notifications-subscribe@hertzbeat.apache.org)   | [退订](mailto:notifications-unsubscribe@hertzbeat.apache.org)  | [归档](https://lists.apache.org/list.html?notifications@hertzbeat.apache.org) |
+| 列表名称     | 地址                                 | 订阅                                                        | 退订                                                          | 归档                                                                          |
+|----------|------------------------------------|-----------------------------------------------------------|-------------------------------------------------------------|-----------------------------------------------------------------------------|
+| **通知列表** | notifications@hertzbeat.apache.org | [订阅](mailto:notifications-subscribe@hertzbeat.apache.org) | [退订](mailto:notifications-unsubscribe@hertzbeat.apache.org) | [归档](https://lists.apache.org/list.html?notifications@hertzbeat.apache.org) |
 
 ## 订阅步骤
 
