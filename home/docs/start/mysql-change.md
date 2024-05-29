@@ -32,8 +32,8 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 
 ### Modify hertzbeat's configuration file application.yml and switch data source  
 
-1. Configure HertzBeat's configuration file
-   Modify `hertzbeat/config/application.yml` configuration file
+1. Configure HertzBeat's configuration file  
+   Modify `hertzbeat/config/application.yml` configuration file  
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`  
    Replace `spring.database` data source parameters, URL account and password.
 ```yaml
