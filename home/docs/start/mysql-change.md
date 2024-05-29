@@ -17,7 +17,12 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
    ```
 2. Install MYSQl with Docker 
    ```
-   $ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
+   $ docker run -d --name mysql \
+    -p 3306:3306 \
+   -v /opt/data:/var/lib/mysql \
+   -e MYSQL_ROOT_PASSWORD=123456 \
+   --restart=always \
+   mysql:5.7
    ```
    `-v /opt/data:/var/lib/mysql` is local persistent mount of mysql data directory. `/opt/data` should be replaced with the actual local directory.          
    use ```$ docker ps``` to check if the database started successfully
