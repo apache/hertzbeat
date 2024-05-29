@@ -9,7 +9,7 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 
 ### Install MYSQL via Docker   
 1. Download and install the Docker environment   
-   Docker's installation refer to [Docker official document](https://docs.docker.com/get-docker/).
+   For Docker installation, please refer to the [Docker official documentation](https://docs.docker.com/get-docker/).
    After the installation, please verify in the terminal that the Docker version can be printed normally.
    ```
    $ docker -v
