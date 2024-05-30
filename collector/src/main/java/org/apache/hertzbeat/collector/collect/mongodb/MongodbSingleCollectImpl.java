@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
@@ -196,7 +195,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             url = String.format("mongodb+srv://%s:%s@%s/%s?authSource=%s", mongodbProtocol.getUsername(),
                     URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(),
                     mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
-        }else {
+        } else {
             // If the multiplexing fails, create a new connection to connect to mongodb
             // Passwords may contain special characters and need to be encoded using JS-like encodeURIComponent, which uses java URLEncoder
             url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
