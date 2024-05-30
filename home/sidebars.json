@@ -180,7 +180,8 @@
             "help/nebulaGraph",
             "help/nebulagraph_cluster",
             "help/tidb",
-            "help/mongodb"
+            "help/mongodb",
+            "help/mongodb_atlas"
           ]
         },
         {
