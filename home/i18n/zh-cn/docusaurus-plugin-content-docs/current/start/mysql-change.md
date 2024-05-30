@@ -11,8 +11,8 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 
 ### 通过Docker方式安装MYSQL   
 1. 下载安装Docker环境   
-   Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-   安装完毕后终端查看Docker版本是否正常输出。  
+   Docker 的安装请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
+   安装完毕后请于终端检查Docker版本输出是否正常。  
    ```
    $ docker -v
    Docker version 20.10.12, build e91ed57
@@ -39,33 +39,35 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 
 ### 修改hertzbeat的配置文件application.yml切换数据源   
 
-1. 配置HertzBeat的配置文件
-   修改位于 `hertzbeat/config/application.yml` 的配置文件   
-   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
-   替换里面的`spring.database`数据源参数，IP端口账户密码驱动   
-   ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://github.com/hertzbeat/hertzbeat/raw/master/script/application.yml)  
-   
-需修改部分原参数: 
-```yaml
-spring:
-  datasource:
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 123456
-    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
-```
-具体替换参数如下,需根据mysql环境配置账户密码IP:   
-```yaml
-spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: root
-    password: 123456
-    url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
-```
+- 配置HertzBeat的配置文件  
+  修改位于 `hertzbeat/config/application.yml` 的配置文件   
+  注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
+  替换里面的`spring.database`数据源参数，IP端口账户密码驱动   
+  ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://github.com/hertzbeat/hertzbeat/raw/master/script/application.yml)  
 
-2. 通过docker启动时，需要修改host为宿主机的外网Ip，包括mysql连接字符串和redis。
+  需修改部分原参数: 
+  ```yaml
+  spring:
+    datasource:
+      driver-class-name: org.h2.Driver
+      username: sa
+      password: 123456
+      url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+  ```
+  具体替换参数如下,需根据mysql环境配置账户密码IP:   
+  ```yaml
+  spring:
+    datasource:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: root
+      password: 123456
+      url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
+      platform: mysql
+  jpa:
+    database: mysql
+  ```
 
+- 通过docker启动时，建议修改host为宿主机的外网IP地址，包括mysql连接字符串和redis。  
 
 **启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**  
 
