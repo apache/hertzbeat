@@ -78,9 +78,9 @@ This website is compiled using node, using Docusaurus framework components
 
 ### Naming convention of  files
 
-All lowercase, separated by a dash
+Consist entirely of lowercase letters, numbers, underscores, and dashes.
 
-Positive example: `render-dom.js / signup.css / index.html / company-logo.png`
+Positive example: `render-dom.js / signup.css / index.html / company-logo.png / hertz_beat.md`
 
 Counter example: `renderDom.js / UserManagement.html`
 
