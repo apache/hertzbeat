@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import com.aliyun.oss.OSSClientBuilder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.obs.services.ObsClient;
@@ -83,8 +84,26 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
                 initObs(config);
                 // case other object store service
             }
+            if (config.getType() == ObjectStoreDTO.Type.OSS) {
+                initOss(config);
+            }
             ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
         }
+    }
+
+    private void initOss(ObjectStoreDTO<T> config) {
+        var ossConfig = objectMapper.convertValue(config.getConfig(), ObjectStoreDTO.OssConfig.class);
+        Assert.hasText(ossConfig.getAccessKey(), "cannot find oss accessKey");
+        Assert.hasText(ossConfig.getSecretKey(), "cannot find oss secretKey");
+        Assert.hasText(ossConfig.getEndpoint(), "cannot find oss endpoint");
+        Assert.hasText(ossConfig.getBucketName(), "cannot find oss bucket name");
+
+        var ossClient = new OSSClientBuilder().build(ossConfig.getEndpoint(), ossConfig.getAccessKey(), ossConfig.getSecretKey());
+
+        beanFactory.destroySingleton(BEAN_NAME);
+        beanFactory.registerSingleton(BEAN_NAME, new OssObjectStoreServiceImpl(ossClient, ossConfig.getBucketName(), ossConfig.getSavePath()));
+
+        log.info("oss store service init success.");
     }
 
     /**

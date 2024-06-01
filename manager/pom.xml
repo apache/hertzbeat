@@ -37,6 +37,7 @@
         <easy-poi.version>4.3.0</easy-poi.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
         <huawei.obs.version>3.23.5</huawei.obs.version>
+        <alibaba.oss.version>3.17.4</alibaba.oss.version>
     </properties>
 
     <dependencies>
@@ -197,6 +198,11 @@
                     <artifactId>bgmprovider</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.aliyun.oss</groupId>
+            <artifactId>aliyun-sdk-oss</artifactId>
+            <version>${alibaba.oss.version}</version>
         </dependency>
     </dependencies>
 

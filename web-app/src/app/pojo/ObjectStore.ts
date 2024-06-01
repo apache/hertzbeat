@@ -32,10 +32,22 @@ export enum ObjectStoreType {
   /**
    * <a href="https://support.huaweicloud.com/obs/index.html">华为云OBS</a>
    */
-  OBS = 'OBS'
+  OBS = 'OBS',
+  /**
+   * <a href="https://oss.console.aliyun.com/services/tools">Alibaba Cloud OSS</a>
+   */
+  OSS = 'OSS'
 }
 
 export class ObsConfig {
+  accessKey!: string;
+  secretKey!: string;
+  bucketName!: string;
+  endpoint!: string;
+  savePath: string = 'hertzbeat';
+}
+
+export class OssConfig {
   accessKey!: string;
   secretKey!: string;
   bucketName!: string;
