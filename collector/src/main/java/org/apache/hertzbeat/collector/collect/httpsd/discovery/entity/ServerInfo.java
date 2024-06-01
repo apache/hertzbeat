@@ -17,22 +17,21 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery;
+package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Service Instance
+ * Server Info
  */
 @Data
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
-public class ServiceInstance {
-    private String serviceId;
-    private String serviceName;
+public class ServerInfo {
     private String address;
     private String port;
-    private String healthStatus;
 }

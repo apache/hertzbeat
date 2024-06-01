@@ -74,11 +74,6 @@ public class NginxCollectImpl extends AbstractCollect {
     private static final String REGEX_SPLIT = "\\r?\\n";
     private static final String REGEX_LINE_SPLIT = "\\s+";
 
-
-    public NginxCollectImpl() {
-        
-    }
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         final NginxProtocol nginxProtocol;

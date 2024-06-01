@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.common.util;
 
-import org.junit.jupiter.api.Test;
-
 import static org.apache.hertzbeat.common.util.Base64Util.isBase64;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link Base64Util}

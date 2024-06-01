@@ -23,7 +23,6 @@
         "start/influxdb-init",
         "start/mysql-change",
         "start/postgresql-change",
-        "start/account-modify",
         "start/custom-config",
         "start/ssl-cert-practice"
       ]
@@ -220,7 +219,8 @@
             "help/rocketmq",
             "help/spring_gateway",
             "help/nacos",
-            "help/kafka"
+            "help/kafka",
+            "help/pulsar"
           ]
         },
         {
@@ -310,7 +310,8 @@
           ]
         },
         "help/issue",
-        "help/plugin"
+        "help/plugin",
+        "help/time_expression"
       ]
     },
     {

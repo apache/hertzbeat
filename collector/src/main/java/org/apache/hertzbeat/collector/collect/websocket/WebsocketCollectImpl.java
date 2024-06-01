@@ -51,8 +51,6 @@ import org.springframework.util.Assert;
  */
 @Slf4j
 public class WebsocketCollectImpl extends AbstractCollect {
-    public WebsocketCollectImpl() {
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {

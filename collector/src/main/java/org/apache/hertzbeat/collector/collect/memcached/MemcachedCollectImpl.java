@@ -45,8 +45,6 @@ import org.apache.hertzbeat.common.util.CommonUtil;
  */
 @Slf4j
 public class MemcachedCollectImpl extends AbstractCollect {
-    public MemcachedCollectImpl() {
-    }
 
     private static final String STATS = "stats";
     private static final String STATS_SETTINGS = "stats settings";

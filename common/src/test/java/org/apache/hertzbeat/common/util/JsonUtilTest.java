@@ -17,14 +17,14 @@
 
 package org.apache.hertzbeat.common.util;
 
+import static org.apache.hertzbeat.common.util.JsonUtil.isJsonStr;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.junit.jupiter.api.Test;
-import static org.apache.hertzbeat.common.util.JsonUtil.isJsonStr;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Test case for {@link JsonUtil}

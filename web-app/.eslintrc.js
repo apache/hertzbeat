@@ -20,7 +20,13 @@ module.exports = {
       ],
       rules: {
         'prettier/prettier': ['error', prettierConfig],
-        'jsdoc/newline-after-description': 1,
+        'jsdoc/tag-lines': [
+          'error',
+          'any',
+          {
+            startLines: 1,
+          },
+        ],
         '@angular-eslint/component-class-suffix': [
           'error',
           {

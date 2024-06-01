@@ -148,8 +148,6 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-      # config.org.apache.hertzbeat.warehouse.IotDbVersion: V_0_13 || V_1_0
-      version: V_1_0
       query-timeout-in-ms: -1
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
       expire-time: '7776000000'
