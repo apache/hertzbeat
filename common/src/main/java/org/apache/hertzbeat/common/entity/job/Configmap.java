@@ -40,7 +40,7 @@ public class Configmap {
     private String key;
 
     /**
-     * parameter value  参数value
+     * parameter value
      */
     private Object value;
 
