@@ -224,10 +224,10 @@ export class MonitorListComponent implements OnInit {
     });
   }
 
-  onCopyMonitor(data:any) {
+  onCopyMonitor(data: any) {
     this.monitorSvc.setMonitorData(data);
     // 传入action 用于区分是复制还是新建
-    this.router.navigate(['/monitors/new'], { queryParams: { action: 'copy' }}).then(r => {});
+    this.router.navigate(['/monitors/new'], { queryParams: { action: 'copy' } }).then(r => {});
   }
 
   onDeleteMonitors() {

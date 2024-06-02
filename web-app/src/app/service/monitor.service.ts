@@ -19,7 +19,7 @@
 
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 import { Message } from '../pojo/Message';
 import { Monitor } from '../pojo/Monitor';
@@ -109,7 +109,6 @@ export class MonitorService {
   public getMonitorsByApp(app: string): Observable<Message<Monitor[]>> {
     return this.http.get<Message<Monitor[]>>(`${monitors_uri}/${app}`);
   }
-
 
   private monitorDataSubject: BehaviorSubject<any> = new BehaviorSubject(null);
 

@@ -24,7 +24,7 @@ import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { List } from 'echarts';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
-import {switchMap, take} from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
 import { Message } from '../../../pojo/Message';
