@@ -122,7 +122,7 @@ public class ImapCollectImpl extends AbstractCollect {
         }
         //set Charset
         imapClient.setCharset(StandardCharsets.US_ASCII);
-        // connect to the POP3 server
+        // connect to the IMAP server
         String host = imapProtocol.getHost();
         int port = Integer.parseInt(imapProtocol.getPort());
         imapClient.connect(host, port);
