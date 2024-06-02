@@ -23,12 +23,12 @@ name:
   en-US: NetEase Mailbox
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> 通过开启邮箱 pop3 服务 对 POP3服务器 的通用性能指标(email_count、mailbox_size)进行采集监控。<br>您可以点击“<i>新建 POP3</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat uses <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> to open pop3 service for collecting general metrics of POP3 Server (email_count, mailbox_size.). <br>You can click "<i>New POP3</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
-  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> 通過开启邮箱 pop3 服务 對 POP3服务器 的通用性能指標(邮件数量、邮箱大小等)進行采集監控。<br>您可以點擊“<i>新建 POP3</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: HertzBeat 使用 IMAP 协议对网易邮箱的详细信息进行采集监控。<br>您可以点击“<i>新建 POP3</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses IMAP protocol to collect detailed metrics of NetEase mailbox. <br>You can click "<i>New POP3</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 IMAP 協議對網易郵箱的詳細信息進行採集監控。<br>您可以點擊“<i>新建 POP3</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/pop3
-  en-US: https://hertzbeat.apache.org/docs/help/pop3
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/imap
+  en-US: https://hertzbeat.apache.org/docs/help/imap
 # Input params define for app api(render web ui by the definition)
 params:
   # field-param field key
