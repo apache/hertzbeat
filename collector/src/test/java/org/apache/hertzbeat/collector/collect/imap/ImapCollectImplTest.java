@@ -17,7 +17,10 @@
 
 package org.apache.hertzbeat.collector.collect.imap;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import org.apache.commons.net.imap.IMAPClient;
 import org.apache.commons.net.imap.IMAPSClient;
