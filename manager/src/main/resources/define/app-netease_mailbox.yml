@@ -16,11 +16,11 @@
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
 category: service
 # Monitoring application type name (consistent with file name) eg: linux windows tomcat mysql aws...
-app: Wangyi Mailbox
+app: NetEase Mailbox
 # The app api i18n name
 name:
   zh-CN: 网易邮箱监控
-  en-US: Wangyi Mailbox
+  en-US: NetEase Mailbox
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://www.alibabacloud.com/help/zh/alibaba-mail/latest/how-to-turn-off-or-open-the-pop3-or-imap-protocol-for-accounts'> POP3 </a> 通过开启邮箱 pop3 服务 对 POP3服务器 的通用性能指标(email_count、mailbox_size)进行采集监控。<br>您可以点击“<i>新建 POP3</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
