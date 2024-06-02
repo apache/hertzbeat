@@ -212,7 +212,6 @@ mvn clean package -Pcluster
 The release package are here:
 
 - `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
-- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
 - `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
 #### 3.4 Package the source code
@@ -254,9 +253,6 @@ apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.asc
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.sha512
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512
@@ -290,8 +286,6 @@ apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz: OK
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz: OK
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 ```
