@@ -63,7 +63,7 @@
           "type": "category",
           "label": "telnet",
           "items": [
-            "advanced/extend-ssh"
+            "advanced/extend-telnet"
           ]
         },
         {
