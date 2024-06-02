@@ -1871,6 +1871,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "lw-yang",
+      "name": "lwyang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23456873?v=4",
+      "profile": "https://github.com/lw-yang",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
