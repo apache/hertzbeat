@@ -369,6 +369,7 @@
   "monitors.delete": "Delete",
   "monitors.edit-monitor": "Edit Monitor",
   "monitors.delete-monitor": "Delete Monitor",
+  "monitors.copy-monitor": "Copy Monitor",
   "monitors.enable": "Resume Monitor",
   "monitors.cancel": "Pause Monitor",
   "monitors.export": "Export Monitor",

@@ -225,6 +225,17 @@
             </li>
             <li nz-menu-item>
               <button
+                nz-button
+                nzType="primary"
+                (click)="onCopyMonitor(data)"
+                nz-tooltip
+                [nzTooltipTitle]="'monitors.copy-monitor' | i18n"
+              >
+                <i nz-icon nzType="copy" nzTheme="outline"></i>
+              </button>
+            </li>
+            <li nz-menu-item>
+              <button
                 *ngIf="data.status == 0"
                 nz-button
                 nzType="primary"

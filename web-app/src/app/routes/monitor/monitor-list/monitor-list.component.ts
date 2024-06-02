@@ -224,6 +224,12 @@ export class MonitorListComponent implements OnInit {
     });
   }
 
+  onCopyMonitor(data:any) {
+    this.monitorSvc.setMonitorData(data);
+    // 传入action 用于区分是复制还是新建
+    this.router.navigate(['/monitors/new'], { queryParams: { action: 'copy' }}).then(r => {});
+  }
+
   onDeleteMonitors() {
     if (this.checkedMonitorIds == null || this.checkedMonitorIds.size === 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');

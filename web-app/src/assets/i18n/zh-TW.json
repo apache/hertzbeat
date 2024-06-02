@@ -369,6 +369,7 @@
   "monitors.delete": "刪除",
   "monitors.edit-monitor": "編輯監控",
   "monitors.delete-monitor": "刪除監控",
+  "monitors.copy-monitor": "複製監控",
   "monitors.enable": "恢復監控",
   "monitors.cancel": "暫停監控",
   "monitors.export": "導出監控",

@@ -370,6 +370,7 @@
   "monitors.delete": "删除",
   "monitors.edit-monitor": "编辑监控",
   "monitors.delete-monitor": "删除监控",
+  "monitors.copy-monitor": "复制监控",
   "monitors.enable": "恢复监控",
   "monitors.cancel": "暂停监控",
   "monitors.export": "导出监控",
