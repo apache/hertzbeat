@@ -16,7 +16,7 @@
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
 category: service
 # Monitoring application type name (consistent with file name) eg: linux windows tomcat mysql aws...
-app: NetEase Mailbox
+app: netease_mailbox
 # The app api i18n name
 name:
   zh-CN: 网易邮箱监控
