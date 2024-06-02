@@ -441,6 +441,7 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://thespica.github.io/"><img src="https://avatars.githubusercontent.com/u/119573640?v=4?s=100" width="100px;" alt="John"/><br /><sub><b>John</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/boatrainlsz"><img src="https://avatars.githubusercontent.com/u/18243785?v=4?s=100" width="100px;" alt="boatrainlsz"/><br /><sub><b>boatrainlsz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=boatrainlsz" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
