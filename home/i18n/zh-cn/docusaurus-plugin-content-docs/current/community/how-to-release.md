@@ -197,6 +197,12 @@ yarn package
 mvn clean package -Prelease
 ```
 
+然后
+
+```shell
+mvn clean install
+```
+
 > HertzBeat-Collector 编译打包，在项目`collector`目录下执行以下命令
 
 ```shell
@@ -206,7 +212,6 @@ mvn clean package -Pcluster
 生成的二进制包在:
 
 - `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
-- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
 - `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
 #### 3.4 打包项目源代码
@@ -250,9 +255,6 @@ apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.asc
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.sha512
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512
@@ -286,8 +288,6 @@ apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz: OK
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz: OK
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 ```
@@ -351,7 +351,7 @@ This is a call for vote to release Apache HertzBeat (incubating) version release
 Apache HertzBeat - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Release notes:
-https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The release candidates:
 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
@@ -359,7 +359,7 @@ https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
 Git tag for the release:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
-The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
+The artifacts signed with PGP key [33545C76], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
 
 The vote will be open for at least 72 hours or until the necessary number of votes are reached.
@@ -385,7 +385,7 @@ More detail checklist please refer:
 https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist
 
 Steps to validate the release，Please refer to:
-https://hertzbeat.apache.org/community/release/how-to-verify
+https://hertzbeat.apache.org/docs/community/how_to_verify_release
 
 How to Build:
 https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
@@ -460,7 +460,7 @@ https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
 Git tag for the release:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
-The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
+The artifacts signed with PGP key [33545C76], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
 
 The vote will be open for at least 72 hours or until the necessary number of votes are reached.
@@ -475,7 +475,7 @@ More detailed checklist please refer:
 
 Steps to validate the release， Please refer to:
 • https://www.apache.org/info/verification.html
-• https://hertzbeat.apache.org/community/release/how-to-verify
+• https://hertzbeat.apache.org/docs/community/how_to_verify_release
 
 
 How to Build:

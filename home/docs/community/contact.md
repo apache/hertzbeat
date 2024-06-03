@@ -12,7 +12,7 @@ sidebar_label: Discussion
 
 WeChat Group : Add friend `tan-cloud` and invite to the group.
 
-WeChat Public : Search `Apache HertzBeat` or `usthecom`.
+WeChat Public : Search  ID `usthecom`.
 
 [QQ Group](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Group num `630061200`
 

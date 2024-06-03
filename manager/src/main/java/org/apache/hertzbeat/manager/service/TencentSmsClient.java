@@ -15,72 +15,61 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.service;
+package org.apache.hertzbeat.manager.service;
 
-import com.aliyun.dysmsapi20170525.models.SendSmsResponse;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.sms.v20210111.SmsClient;
 import com.tencentcloudapi.sms.v20210111.models.SendSmsRequest;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
+import com.tencentcloudapi.sms.v20210111.models.SendSmsResponse;
+import com.tencentcloudapi.sms.v20210111.models.SendStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.support.exception.SendMessageException;
-import org.apache.hertzbeat.common.util.AliYunSendSmsUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * sms service client for aliyun cloud
+ * sms service client for tencent cloud
  */
 @Component
-@ConditionalOnProperty("common.sms.aliyun.app-id")
+@ConditionalOnProperty("common.sms.tencent.app-id")
 @Slf4j
-public class AliYunSmsClient {
+public class TencentSmsClient {
 
-    private static final String RESPONSE_OK = "OK";
+    private static final String RESPONSE_OK = "Ok";
     private static final String REGION = "ap-guangzhou";
 
     private SmsClient smsClient;
     private String appId;
     private String signName;
     private String templateId;
-    private String secretId;
-    private String secretKey;
 
-    public AliYunSmsClient(CommonProperties properties) {
+    public TencentSmsClient(CommonProperties properties) {
         if (properties == null || properties.getSms() == null || properties.getSms().getTencent() == null) {
             log.error("init error, please config TencentSmsClient props in application.yml");
             throw new IllegalArgumentException("please config TencentSmsClient props");
         }
-        initSmsClient(properties.getSms().getAliYun());
+        initSmsClient(properties.getSms().getTencent());
     }
 
-    private void initSmsClient(CommonProperties.AliYunSmsProperties tencent) {
+    private void initSmsClient(CommonProperties.TencentSmsProperties tencent) {
         this.appId = tencent.getAppId();
         this.signName = tencent.getSignName();
         this.templateId = tencent.getTemplateId();
-        this.secretId = tencent.getSecretId();
-        this.secretKey = tencent.getSecretKey();
         Credential cred = new Credential(tencent.getSecretId(), tencent.getSecretKey());
         smsClient = new SmsClient(cred, REGION);
     }
 
     /**
-     * Alibaba cloud sends SMS messages
+     * send text message
      * @param appId appId
      * @param signName sign name
      * @param templateId template id
      * @param templateValues template values
      * @param phones phones num
      */
-    public void sendMessage(String appId, String signName, String templateId, String secretId, String  secretKey,
-                            String[] templateValues, String[] phones){
-
-        LocalDateTime dateTime = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public void sendMessage(String appId, String signName, String templateId,
+                            String[] templateValues, String[] phones) {
         SendSmsRequest req = new SendSmsRequest();
         req.setSmsSdkAppId(appId);
         req.setSignName(signName);
@@ -88,16 +77,10 @@ public class AliYunSmsClient {
         req.setTemplateParamSet(templateValues);
         req.setPhoneNumberSet(phones);
         try {
-            Map<String, Object> param = new HashMap<>();
-            // taskName: monitoring name,  alert: alarm level, message: alarm content, sysTime:system time
-            param.put("taskName", templateValues[0]);
-            param.put("alert", templateValues[1]);
-            param.put("message", templateValues[2]);
-            param.put("sysTime", dateTime.format(formatter));
-            SendSmsResponse smsResponse = AliYunSendSmsUtil.send(param, signName, templateId, phones[0], secretId, secretKey);
-            String code = smsResponse.body.code;
-            if (!RESPONSE_OK.equals(code)) {
-                throw new SendMessageException(code + ":" + smsResponse.body.message);
+            SendSmsResponse smsResponse = this.smsClient.SendSms(req);
+            SendStatus sendStatus = smsResponse.getSendStatusSet()[0];
+            if (!RESPONSE_OK.equals(sendStatus.getCode())) {
+                throw new SendMessageException(sendStatus.getCode() + ":" + sendStatus.getMessage());
             }
         } catch (Exception e) {
             log.warn(e.getMessage());
@@ -106,12 +89,12 @@ public class AliYunSmsClient {
     }
 
     /**
-     * Send a text message
+     * send text message
      * @param templateValues template values
      * @param phones phones num
      */
     public void sendMessage(String[] templateValues, String[] phones) {
-        sendMessage(this.appId, this.signName, this.templateId, this.secretId, this.secretKey, templateValues, phones);
+        sendMessage(this.appId, this.signName, this.templateId, templateValues, phones);
     }
 
 

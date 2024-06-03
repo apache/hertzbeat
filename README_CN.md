@@ -439,6 +439,13 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Yanshuming1"><img src="https://avatars.githubusercontent.com/u/118667222?v=4?s=100" width="100px;" alt="xiaoming student"/><br /><sub><b>xiaoming student</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Yanshuming1" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lwjxy"><img src="https://avatars.githubusercontent.com/u/52726400?v=4?s=100" width="100px;" alt="lwjxy"/><br /><sub><b>lwjxy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lwjxy" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://thespica.github.io/"><img src="https://avatars.githubusercontent.com/u/119573640?v=4?s=100" width="100px;" alt="John"/><br /><sub><b>John</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/boatrainlsz"><img src="https://avatars.githubusercontent.com/u/18243785?v=4?s=100" width="100px;" alt="boatrainlsz"/><br /><sub><b>boatrainlsz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=boatrainlsz" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.yitianyigexiangfa.com/"><img src="https://avatars.githubusercontent.com/u/3973419?v=4?s=100" width="100px;" alt="Bill Lau"/><br /><sub><b>Bill Lau</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=JavaProgrammerLB" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lw-yang"><img src="https://avatars.githubusercontent.com/u/23456873?v=4?s=100" width="100px;" alt="lwyang"/><br /><sub><b>lwyang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lw-yang" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xfl12345"><img src="https://avatars.githubusercontent.com/u/17960863?v=4?s=100" width="100px;" alt="xfl12345"/><br /><sub><b>xfl12345</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xfl12345" title="Documentation">📖</a></td>
+    </tr>
   </tbody>
 </table>
 
@@ -457,7 +464,7 @@ Thanks these wonderful people, welcome to join us:
 
 微信交流群 : 加 `tan-cloud` 好友邀请进群.
 
-微信公众号 : 搜索 `Apache HertzBeat` or `usthecom`.
+微信公众号 : 搜索 ID `usthecom`.
 
 [QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : 群号 `630061200`
 

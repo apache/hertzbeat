@@ -19,6 +19,8 @@ keywords: [开源监控系统, 开源网站监控, HTTP API监控]
 | 启用HTTPS   | 是否通过HTTPS访问网站，注意⚠️开启HTTPS一般默认对应端口需要改为443  |
 | 用户名      | 接口Basic认证或Digest认证时使用的用户名 |
 | 密码        | 接口Basic认证或Digest认证时使用的密码 |
+| 请求Headers | HTTP 请求头 |
+| 查询Params | HTTP查询参数,支持[时间表达式](time_expression) |
 | Content-Type  | 设置携带BODY请求体数据请求时的资源类型  |
 | 请求BODY    | 设置携带BODY请求体数据，PUT POST请求方式时有效  |
 | 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒  |
