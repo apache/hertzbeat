@@ -40,6 +40,8 @@ public class DnsCollectImplTest {
                 .dnsServerIP("8.8.8.8")
                 .queryClass("IN")
                 .address("www.google.com")
+                .timeout("3000")
+                .port("53")
                 .build();
     }
 
