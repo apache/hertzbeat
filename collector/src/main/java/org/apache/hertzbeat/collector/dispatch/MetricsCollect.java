@@ -255,12 +255,14 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                             }
                         }
                         String fieldValue = fieldValueMap.get(expression.getSourceText()).toString();
-                        CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                .extractDoubleAndUnitFromStr(fieldValue, field.getType());
-                        if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
-                            fieldValueMap.put(fieldValue, doubleAndUnit.getValue());
-                            if (doubleAndUnit.getUnit() != null) {
-                                aliasFieldUnitMap.put(fieldValue, doubleAndUnit.getUnit());
+                        if (CommonConstants.TYPE_STRING != field.getType()) {
+                            CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                    .extractDoubleAndUnitFromStr(fieldValue);
+                            if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
+                                fieldValueMap.put(fieldValue, doubleAndUnit.getValue());
+                                if (doubleAndUnit.getUnit() != null) {
+                                    aliasFieldUnitMap.put(fieldValue, doubleAndUnit.getUnit());
+                                }
                             }
                         }
                         // Also executed when valueList is empty, covering pure string assignment expressions
@@ -284,7 +286,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         final byte fieldType = field.getType();
                         if (fieldType == CommonConstants.TYPE_NUMBER) {
                             CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                    .extractDoubleAndUnitFromStr(value, field.getType());
+                                    .extractDoubleAndUnitFromStr(value);
                             final Double tempValue = doubleAndUnit == null ? null : doubleAndUnit.getValue();
                             value = tempValue == null ? null : String.valueOf(tempValue);
                             aliasFieldUnit = doubleAndUnit == null ? null : doubleAndUnit.getUnit();
