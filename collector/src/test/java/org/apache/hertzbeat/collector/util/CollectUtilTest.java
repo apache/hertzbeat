@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.junit.jupiter.api.Test;
@@ -64,23 +65,22 @@ class CollectUtilTest {
 
     @Test
     void extractDoubleAndUnitFromStr() {
-        CollectUtil.DoubleAndUnit res1 = CollectUtil.extractDoubleAndUnitFromStr("20.5%");
+        CollectUtil.DoubleAndUnit res1 = CollectUtil.extractDoubleAndUnitFromStr("20.5%", CommonConstants.TYPE_NUMBER);
         assertNotNull(res1);
         assertEquals(20.5, res1.getValue());
         assertEquals("%", res1.getUnit());
 
-        CollectUtil.DoubleAndUnit res2 = CollectUtil.extractDoubleAndUnitFromStr("");
+        CollectUtil.DoubleAndUnit res2 = CollectUtil.extractDoubleAndUnitFromStr("",CommonConstants.TYPE_NUMBER);
         assertNull(res2);
 
-        CollectUtil.DoubleAndUnit res3 = CollectUtil.extractDoubleAndUnitFromStr("KB");
+        CollectUtil.DoubleAndUnit res3 = CollectUtil.extractDoubleAndUnitFromStr("KB",CommonConstants.TYPE_NUMBER);
         assertNotNull(res3);
         assertEquals(0, res3.getValue());
         assertEquals("KB", res3.getUnit());
 
-        CollectUtil.DoubleAndUnit res4 = CollectUtil.extractDoubleAndUnitFromStr("GRAPH0");
+        CollectUtil.DoubleAndUnit res4 = CollectUtil.extractDoubleAndUnitFromStr("GRAPH0",CommonConstants.TYPE_NUMBER);
         assertNull(res4.getValue());
         assertNull(res4.getUnit());
-
     }
 
 

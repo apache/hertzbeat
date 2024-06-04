@@ -89,11 +89,14 @@ public final class CollectUtil {
         }
     }
 
-    public static DoubleAndUnit extractDoubleAndUnitFromStr(String str) {
+    public static DoubleAndUnit extractDoubleAndUnitFromStr(String str,byte type) {
         if (StringUtils.isEmpty(str)) {
             return null;
         }
         DoubleAndUnit doubleAndUnit = new DoubleAndUnit();
+        if(CommonConstants.TYPE_STRING == type) {
+            return null;
+        }
         try {
             Double doubleValue = Double.parseDouble(str);
             doubleAndUnit.setValue(doubleValue);

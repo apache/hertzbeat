@@ -235,17 +235,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String aliasField = aliasFields.get(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
                     aliasFieldValueMap.put(aliasField, aliasFieldValue);
-                    // whether the alias field is a number
-                    CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                            .extractDoubleAndUnitFromStr(aliasFieldValue);
-                    if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
-                        fieldValueMap.put(aliasField, doubleAndUnit.getValue());
-                        if (doubleAndUnit.getUnit() != null) {
-                            aliasFieldUnitMap.put(aliasField, doubleAndUnit.getUnit());
-                        }
-                    } else {
-                        fieldValueMap.put(aliasField, aliasFieldValue);
-                    }
+                    fieldValueMap.put(aliasField, aliasFieldValue);
                 } else {
                     fieldValueMap.put(aliasField, null);
                 }
@@ -262,6 +252,15 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                             if (expression.getSourceText().contains(unitEntry.getKey())) {
                                 aliasFieldUnit = unitEntry.getValue();
                                 break;
+                            }
+                        }
+                        String fieldValue = fieldValueMap.get(expression.getSourceText()).toString();
+                        CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                .extractDoubleAndUnitFromStr(fieldValue, field.getType());
+                        if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
+                            fieldValueMap.put(fieldValue, doubleAndUnit.getValue());
+                            if (doubleAndUnit.getUnit() != null) {
+                                aliasFieldUnitMap.put(fieldValue, doubleAndUnit.getUnit());
                             }
                         }
                         // Also executed when valueList is empty, covering pure string assignment expressions
@@ -285,7 +284,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                         final byte fieldType = field.getType();
                         if (fieldType == CommonConstants.TYPE_NUMBER) {
                             CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                    .extractDoubleAndUnitFromStr(value);
+                                    .extractDoubleAndUnitFromStr(value, field.getType());
                             final Double tempValue = doubleAndUnit == null ? null : doubleAndUnit.getValue();
                             value = tempValue == null ? null : String.valueOf(tempValue);
                             aliasFieldUnit = doubleAndUnit == null ? null : doubleAndUnit.getUnit();
@@ -313,10 +312,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
                 // Handle metrics values that may have units such as 34%, 34Mb, and limit values to 4 decimal places
                 if (CommonConstants.TYPE_NUMBER == field.getType()) {
-                    value = CommonUtil.parseDoubleStr(value, field.getUnit());
-                }
-                // Handle the case where the value is string type and value is numeric
-                if (CommonConstants.TYPE_STRING == field.getType() && CommonUtil.isNumeric(value)) {
                     value = CommonUtil.parseDoubleStr(value, field.getUnit());
                 }
                 if (value == null) {
