@@ -18,6 +18,9 @@
 package org.apache.hertzbeat.collector.collect.dns;
 
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.util.Collections;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -51,8 +54,10 @@ public class DnsCollectImplTest {
         long monitorId = 666;
         String app = "testDNS";
         Metrics metrics = new Metrics();
+        metrics.setName("question");
         metrics.setDns(dnsProtocol);
-
+        metrics.setAliasFields(Collections.singletonList("section"));
         dnsCollect.collect(builder, monitorId, app, metrics);
+        assertNotNull(builder.getValues(0).getColumns(0));
     }
 }
