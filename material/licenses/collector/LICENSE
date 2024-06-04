@@ -200,9 +200,11 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations/2.15.4 Apache-2.0
     https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core/2.15.4 Apache-2.0
     https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind/2.15.4 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jdk8/2.15.4 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.15.4 Apache-2.0
+    https://mvnrepository.com/artifact/com.fasterxml.jackson.module/jackson-module-parameter-names/2.15.4 Apache-2.0
     https://mvnrepository.com/artifact/com.fasterxml/classmate/1.6.0 Apache-2.0
     https://mvnrepository.com/artifact/com.github.ben-manes.caffeine/caffeine/2.9.3 Apache-2.0
-    https://mvnrepository.com/artifact/com.google.android/annotations/4.1.1.4 Apache-2.0
     https://mvnrepository.com/artifact/com.google.code.findbugs/jsr305/3.0.2 Apache-2.0
     https://mvnrepository.com/artifact/com.google.code.gson/gson/2.10.1 Apache-2.0
     https://mvnrepository.com/artifact/com.google.errorprone/error_prone_annotations/2.18.0 Apache-2.0
@@ -211,11 +213,13 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/com.google.j2objc/j2objc-annotations/2.8 Apache-2.0
     https://mvnrepository.com/artifact/com.googlecode.concurrentlinkedhashmap/concurrentlinkedhashmap-lru/1.4.2 Apache-2.0
     https://mvnrepository.com/artifact/com.jayway.jsonpath/json-path/2.7.0 Apache-2.0
+    https://mvnrepository.com/artifact/com.zaxxer/HikariCP/5.0.1 Apache-2.0
     https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils/1.9.4 Apache-2.0
     https://mvnrepository.com/artifact/commons-cli/commons-cli/1.2 Apache-2.0
     https://mvnrepository.com/artifact/commons-codec/commons-codec/1.16.1 Apache-2.0
     https://mvnrepository.com/artifact/commons-collections/commons-collections/3.2.2 Apache-2.0
     https://mvnrepository.com/artifact/commons-digester/commons-digester/2.1 Apache-2.0
+    https://mvnrepository.com/artifact/commons-lang/commons-lang/2.6 Apache-2.0
     https://mvnrepository.com/artifact/commons-net/commons-net/3.10.0 Apache-2.0
     https://mvnrepository.com/artifact/commons-validator/commons-validator/1.7 Apache-2.0
     https://mvnrepository.com/artifact/io.lettuce/lettuce-core/6.3.1.RELEASE Apache-2.0
@@ -264,6 +268,8 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/net.minidev/json-smart/2.5.0 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.commons/commons-collections4/4.4 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.commons/commons-lang3/3.13.0 Apache-2.0
+    https://mvnrepository.com/artifact/org.apache.commons/commons-jexl3/3.2.1
+    https://mvnrepository.com/artifact/org.apache.commons/commons-pool2/2.12.0 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.httpcomponents/httpasyncclient/4.1.5 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient/4.5.14 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.httpcomponents/httpcore/4.4.16 Apache-2.0
@@ -282,17 +288,8 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/org.apache.sshd/sshd-core/2.8.0 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-el/10.1.19 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-websocket/10.1.19 Apache-2.0
-    https://mvnrepository.com/artifact/org.dromara.hertzbeat/hertzbeat-common/2.0-SNAPSHOT Apache-2.0
-    https://mvnrepository.com/artifact/org.dromara.hertzbeat/hertzbeat-remoting/2.0-SNAPSHOT Apache-2.0
     https://mvnrepository.com/artifact/org.hibernate.validator/hibernate-validator/8.0.1.Final Apache-2.0
-    https://mvnrepository.com/artifact/org.ini4j/ini4j/0.5.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib/1.9.22 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.9.22 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.9.22 Apache-2.0
-    https://mvnrepository.com/artifact/org.jetbrains/annotations/13.0 Apache-2.0
     https://mvnrepository.com/artifact/org.lz4/lz4-java/1.8.0 Apache-2.0
-    https://mvnrepository.com/artifact/org.mongodb/bson/4.11.1 Apache-2.0
-    https://mvnrepository.com/artifact/org.mongodb/bson-record-codec/4.11.1 Apache-2.0
     https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-core/4.6.1 Apache-2.0
     https://mvnrepository.com/artifact/org.mongodb/mongodb-driver-sync/4.6.1 Apache-2.0
     https://mvnrepository.com/artifact/org.snmp4j/snmp4j/3.6.7 Apache-2.0
@@ -325,9 +322,8 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/org.springframework/spring-tx/6.1.4 Apache-2.0
     https://mvnrepository.com/artifact/org.springframework/spring-web/6.1.4 Apache-2.0
     https://mvnrepository.com/artifact/org.springframework/spring-webmvc/6.1.4 Apache-2.0
-    https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core/10.1.19
-    https://mvnrepository.com/artifact/org.apache.commons/commons-jexl3/3.2.1
-    https://mvnrepository.com/artifact/com.vesoft/client/3.6.0
+    https://mvnrepository.com/artifact/org.apache.tomcat.embed/tomcat-embed-core/10.1.19 Apache-2.0
+    https://mvnrepository.com/artifact/com.vesoft/client/3.6.0 Apache-2.0
 
 
 ========================================================================
@@ -348,10 +344,6 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java/3.19.4 BSD-3-Clause
     https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java-util/3.19.4 BSD-3-Clause
     https://mvnrepository.com/artifact/dnsjava/dnsjava/3.5.2 BSD-3-Clause
-    https://mvnrepository.com/artifact/jakarta.activation/jakarta.activation-api/2.1.2 BSD-3-Clause
-    https://mvnrepository.com/artifact/jakarta.xml.bind/jakarta.xml.bind-api/4.0.1 BSD-3-Clause
-    https://mvnrepository.com/artifact/org.eclipse.angus/angus-activation/2.0.1 BSD-3-Clause
-    https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-core/4.0.4 BSD-3-Clause
     https://mvnrepository.com/artifact/org.ow2.asm/asm/9.3
     https://mvnrepository.com/artifact/org.antlr/antlr4-runtime/4.13.0
 
@@ -363,16 +355,6 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/net.i2p.crypto/eddsa/0.3.0 CC0-1.0
 
-
-
-========================================================================
-CDDL-1.1 licenses
-========================================================================
-The following components are provided under the CDDL-1.1 License. See project link for details.
-The text of each license is also included in licenses/LICENSE-[project].txt.
-
-    https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api/2.3.0 CDDL-1.1
-
 ========================================================================
 EPL-1.0 licenses
 ========================================================================
@@ -381,6 +363,7 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/ch.qos.logback/logback-classic/1.4.14 EPL-1.0
     https://mvnrepository.com/artifact/ch.qos.logback/logback-core/1.4.14 EPL-1.0
+    https://mvnrepository.com/artifact/org.locationtech.jts/jts-core/1.16.1 EPL-1.0
 
 ========================================================================
 EPL-2.0 licenses
@@ -391,7 +374,10 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api/3.1.0
     https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api/2.1.1
     https://mvnrepository.com/artifact/org.aspectj/aspectjweaver/1.9.21
-    https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.jpa/4.0.2
+    https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.asm/9.5.0 
+    https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.core/4.0.2 
+    https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.jpa/4.0.2 
+    https://mvnrepository.com/artifact/org.eclipse.persistence/org.eclipse.persistence.jpa.jpql/4.0.2
 
 
 ========================================================================
@@ -401,6 +387,9 @@ The following components are provided under the MIT License. See project link fo
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
     https://mvnrepository.com/artifact/com.microsoft.sqlserver/mssql-jdbc/10.2.0.jre8 MIT
+    https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk15on/1.69 MIT
+    https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on/1.69 MIT
+    https://mvnrepository.com/artifact/org.bouncycastle/bcutil-jdk15on/1.69 MIT
     https://mvnrepository.com/artifact/org.checkerframework/checker-qual/3.33.0 MIT
     https://mvnrepository.com/artifact/org.slf4j/jcl-over-slf4j/2.0.9 MIT
     https://mvnrepository.com/artifact/org.slf4j/jul-to-slf4j/2.0.9 MIT

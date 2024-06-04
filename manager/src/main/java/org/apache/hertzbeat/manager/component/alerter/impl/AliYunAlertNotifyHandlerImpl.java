@@ -24,7 +24,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.apache.hertzbeat.common.service.AliYunSmsClient;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -38,8 +37,6 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @ConditionalOnProperty("common.sms.aliyun.app-id")
 final class AliYunAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
-
-    private final AliYunSmsClient aliYunSmsClient;
 
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
 
@@ -55,7 +52,7 @@ final class AliYunAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
             params[0] = monitorName == null ? alert.getTarget() : monitorName;
             params[1] = bundle.getString("alerter.priority." + alert.getPriority());
             params[2] = alert.getContent();
-            aliYunSmsClient.sendMessage(params, new String[]{receiver.getPhone()});
+            // todo send aliyun sms
         } catch (Exception e) {
             throw new AlertNoticeException("[Sms Notify Error] " + e.getMessage());
         }
