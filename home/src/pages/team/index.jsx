@@ -1043,6 +1043,29 @@ export default function () {
                     alt="lwjxy"/><br/><sub><b>lwjxy</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=lwjxy" title="Code">💻</a></td>
                 </tr>
+                <tr>
+                  <td align="center" valign="top" width="14.28%"><a href="https://thespica.github.io/"><img
+                    src="https://avatars.githubusercontent.com/u/119573640?v=4?s=100" width="100px;"
+                    alt="John"/><br/><sub><b>John</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/boatrainlsz"><img
+                    src="https://avatars.githubusercontent.com/u/18243785?v=4?s=100" width="100px;"
+                    alt="boatrainlsz"/><br/><sub><b>boatrainlsz</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=boatrainlsz" title="Documentation">📖</a>
+                  </td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://www.yitianyigexiangfa.com/"><img
+                    src="https://avatars.githubusercontent.com/u/3973419?v=4?s=100" width="100px;" alt="Bill Lau"/><br/><sub><b>Bill
+                    Lau</b></sub></a><br/><a href="https://github.com/apache/hertzbeat/commits?author=JavaProgrammerLB"
+                                             title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/lw-yang"><img
+                    src="https://avatars.githubusercontent.com/u/23456873?v=4?s=100" width="100px;"
+                    alt="lwyang"/><br/><sub><b>lwyang</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=lw-yang" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/xfl12345"><img
+                    src="https://avatars.githubusercontent.com/u/17960863?v=4?s=100" width="100px;"
+                    alt="xfl12345"/><br/><sub><b>xfl12345</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=xfl12345" title="Documentation">📖</a></td>
+                </tr>
                 </tbody>
               </table>
 

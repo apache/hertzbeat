@@ -78,9 +78,9 @@ git clone git@github.com:<your-github-user-name>/hertzbeat.git
 
 ### 文件的命名规范
 
-全部小写，由破折号分隔。
+全部由小写，数字，下划线和破折号组成。
 
-正例：`render-dom.js / signup.css / index.html / company-logo.png`
+正例：`render-dom.js / signup.css / index.html / company-logo.png / hertz_beat.md`
 
 反例：`renderDom.js / UserManagement.html`
 
