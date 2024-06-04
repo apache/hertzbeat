@@ -94,7 +94,6 @@ public final class CollectUtil {
             return null;
         }
         DoubleAndUnit doubleAndUnit = new DoubleAndUnit();
-
         try {
             Double doubleValue = Double.parseDouble(str);
             doubleAndUnit.setValue(doubleValue);

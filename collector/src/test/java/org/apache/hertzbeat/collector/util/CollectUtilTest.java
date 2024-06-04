@@ -80,6 +80,7 @@ class CollectUtilTest {
         CollectUtil.DoubleAndUnit res4 = CollectUtil.extractDoubleAndUnitFromStr("GRAPH0");
         assertNull(res4.getValue());
         assertNull(res4.getUnit());
+
     }
 
 
