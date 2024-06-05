@@ -60,6 +60,13 @@
         },
         {
           "type": "category",
+          "label": "telnet",
+          "items": [
+            "advanced/extend-telnet"
+          ]
+        },
+        {
+          "type": "category",
           "label": "jmx",
           "items": [
             "advanced/extend-jmx"
