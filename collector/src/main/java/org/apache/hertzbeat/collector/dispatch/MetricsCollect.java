@@ -254,8 +254,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                                 break;
                             }
                         }
-                        String fieldValue = fieldValueMap.get(expression.getSourceText()).toString();
+                        // Also executed when valueList is empty, covering pure string assignment expressions
+                        Object objValue = JexlExpressionRunner.evaluate(expression, fieldValueMap);
                         if (CommonConstants.TYPE_STRING != field.getType()) {
+                            String fieldValue = String.valueOf(objValue);
                             CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
                                     .extractDoubleAndUnitFromStr(fieldValue);
                             if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
@@ -265,8 +267,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                                 }
                             }
                         }
-                        // Also executed when valueList is empty, covering pure string assignment expressions
-                        Object objValue = JexlExpressionRunner.evaluate(expression, fieldValueMap);
                         if (objValue != null) {
                             value = String.valueOf(objValue);
                         }
