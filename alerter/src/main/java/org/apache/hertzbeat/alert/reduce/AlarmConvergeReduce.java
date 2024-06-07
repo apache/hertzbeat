@@ -75,7 +75,6 @@ public class AlarmConvergeReduce {
             converageAlertMap.remove(alertHash);
             if (isHasIgnore) {
                 tags.put(CommonConstants.IGNORE, CommonConstants.IGNORE);
-
             }
             return true;
         }
