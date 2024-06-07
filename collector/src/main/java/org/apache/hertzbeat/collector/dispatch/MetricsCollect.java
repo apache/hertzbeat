@@ -227,6 +227,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, String> aliasFieldValueMap = new HashMap<>(8);
         Map<String, Object> fieldValueMap = new HashMap<>(8);
+        Map<String, Object> stringTypefieldValueMap = new HashMap<>(8);
         Map<String, String> aliasFieldUnitMap = new HashMap<>(8);
         CollectRep.ValueRow.Builder realValueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (CollectRep.ValueRow aliasRow : aliasRowList) {
@@ -235,11 +236,24 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String aliasField = aliasFields.get(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
                     aliasFieldValueMap.put(aliasField, aliasFieldValue);
-                    fieldValueMap.put(aliasField, aliasFieldValue);
+                    // whether the alias field is a number
+                    CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                            .extractDoubleAndUnitFromStr(aliasFieldValue);
+                    if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
+                        fieldValueMap.put(aliasField, doubleAndUnit.getValue());
+                        if (doubleAndUnit.getUnit() != null) {
+                            aliasFieldUnitMap.put(aliasField, doubleAndUnit.getUnit());
+                        }
+                    } else {
+                        fieldValueMap.put(aliasField, aliasFieldValue);
+                    }
+                    stringTypefieldValueMap.put(aliasField, aliasFieldValue);
                 } else {
                     fieldValueMap.put(aliasField, null);
+                    stringTypefieldValueMap.put(aliasField, null);
                 }
             }
+
 
             for (Metrics.Field field : fields) {
                 String realField = field.getField();
@@ -248,25 +262,22 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 String aliasFieldUnit = null;
                 if (expression != null) {
                     try {
-                        for (Map.Entry<String, String> unitEntry : aliasFieldUnitMap.entrySet()) {
-                            if (expression.getSourceText().contains(unitEntry.getKey())) {
-                                aliasFieldUnit = unitEntry.getValue();
-                                break;
-                            }
-                        }
-                        // Also executed when valueList is empty, covering pure string assignment expressions
-                        Object objValue = JexlExpressionRunner.evaluate(expression, fieldValueMap);
-                        if (CommonConstants.TYPE_STRING != field.getType()) {
-                            String fieldValue = String.valueOf(objValue);
-                            CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                    .extractDoubleAndUnitFromStr(fieldValue);
-                            if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
-                                fieldValueMap.put(fieldValue, doubleAndUnit.getValue());
-                                if (doubleAndUnit.getUnit() != null) {
-                                    aliasFieldUnitMap.put(fieldValue, doubleAndUnit.getUnit());
+                        Map<String, Object> context;
+                        if (CommonConstants.TYPE_STRING == field.getType()) {
+                            context = stringTypefieldValueMap;
+                        } else {
+                            for (Map.Entry<String, String> unitEntry : aliasFieldUnitMap.entrySet()) {
+                                if (expression.getSourceText().contains(unitEntry.getKey())) {
+                                    aliasFieldUnit = unitEntry.getValue();
+                                    break;
                                 }
                             }
+                            context = fieldValueMap;
                         }
+
+                        // Also executed when valueList is empty, covering pure string assignment expressions
+                        Object objValue = JexlExpressionRunner.evaluate(expression, context);
+
                         if (objValue != null) {
                             value = String.valueOf(objValue);
                         }
@@ -324,6 +335,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             aliasFieldValueMap.clear();
             fieldValueMap.clear();
             aliasFieldUnitMap.clear();
+            stringTypefieldValueMap.clear();
             collectData.addValues(realValueRowBuilder.build());
             realValueRowBuilder.clear();
         }
