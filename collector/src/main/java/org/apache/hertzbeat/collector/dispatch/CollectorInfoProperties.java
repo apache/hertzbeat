@@ -15,36 +15,35 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
+package org.apache.hertzbeat.collector.dispatch;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 /**
- * collector info
+ * Collector info configuration Properties
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "collector info")
-public class CollectorInfo {
-    
-    @NotNull
-    private String name;
-    
-    @NotNull
-    private String ip;
-
-    private String publicIp;
+@Component
+@ConfigurationProperties(prefix = CollectorInfoProperties.INFO_PREFIX)
+public class CollectorInfoProperties {
+    protected static final String INFO_PREFIX = "collector.info";
 
     private String version;
+    private String publicIpEnv;
 
-    @NotNull
-    private String mode = CommonConstants.MODE_PUBLIC;
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getPublicIpEnv() {
+        return publicIpEnv;
+    }
+
+    public void setPublicIpEnv(String publicIpEnv) {
+        this.publicIpEnv = publicIpEnv;
+    }
 }

@@ -107,6 +107,8 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             if (collectorInfo != null) {
                 collector.setIp(collectorInfo.getIp());
                 collector.setMode(collectorInfo.getMode());
+                collector.setPublicIp(collectorInfo.getPublicIp());
+                collector.setVersion(collectorInfo.getVersion());
             }
         } else {
             if (collectorInfo == null) {
@@ -117,6 +119,8 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     .name(identity)
                     .ip(collectorInfo.getIp())
                     .mode(collectorInfo.getMode())
+                    .publicIp(collectorInfo.getPublicIp())
+                    .version(collectorInfo.getVersion())
                     .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
                     .build();
         }
@@ -267,6 +271,8 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         CollectorInfo collectorInfo = CollectorInfo.builder()
                 .name(collector.getName())
                 .ip(collector.getIp())
+                .publicIp(collector.getPublicIp())
+                .version(collector.getVersion())
                 .mode(collector.getMode())
                 .build();
         this.collectorGoOnline(identity, collectorInfo);
