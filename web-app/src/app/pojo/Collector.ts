@@ -21,8 +21,6 @@ export class Collector {
   id!: number;
   name!: string;
   ip!: string;
-  publicIp!: string;
-  version!: string;
   // public or private
   mode!: string;
   // collector status: 0-online 1-offline

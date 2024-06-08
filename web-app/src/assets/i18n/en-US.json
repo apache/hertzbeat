@@ -573,8 +573,6 @@
   "collector.task": "Total Tasks",
   "collector.start-time": "Start Time",
   "collector.ip": "IP Address",
-  "collector.publicIp": "Public IP Address",
-  "collector.version": "Version",
   "collector.node": "Node Name",
   "collector.pinned": "Pinned Tasks",
   "collector.dispatched": "Dispatched Tasks",

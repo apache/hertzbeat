@@ -40,11 +40,7 @@ public class CollectorInfo {
     
     @NotNull
     private String ip;
-
-    private String publicIp;
-
-    private String version;
-
+    
     @NotNull
     private String mode = CommonConstants.MODE_PUBLIC;
 }

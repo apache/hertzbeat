@@ -38,9 +38,6 @@ spring:
       on-profile: cluster
 
 collector:
-  info:
-    version: v1.5.1
-    public-ip-env: PUBLIC_IP
   dispatch:
     entrance:
       netty:
