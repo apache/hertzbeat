@@ -135,9 +135,8 @@ public class CollectServer implements CommandLineRunner {
             String mode = CollectServer.this.collectJobService.getCollectorMode();
             CollectorInfo collectorInfo = CollectorInfo.builder()
                     .name(identity)
-                    .ip(IpDomainUtil.getLocalhostIp())
+                    .ip(info.ip)
                     .mode(mode)
-                    .publicIp(info.publicIp)
                     .version(info.version)
                     // todo more info
                     .build();
@@ -186,19 +185,19 @@ public class CollectServer implements CommandLineRunner {
     private void initInfo(final CollectorInfoProperties infoProperties) {
         info = new Info();
         info.setVersion(infoProperties.getVersion());
-        info.setPublicIp(IpDomainUtil.getIpFromEnvOrDefault(infoProperties.getPublicIpEnv(), IpDomainUtil.getLocalhostIp()));
+        info.setIp(IpDomainUtil.getIpFromEnvOrDefault(infoProperties.getIp(), IpDomainUtil.getLocalhostIp()));
     }
 
     private static class Info {
         private String version;
-        private String publicIp;
+        private String ip;
 
         public void setVersion(String version) {
             this.version = version;
         }
 
-        public void setPublicIp(String publicIp) {
-            this.publicIp = publicIp;
+        public void setIp(String ip) {
+            this.ip = ip;
         }
     }
 }

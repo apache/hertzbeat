@@ -29,7 +29,7 @@ public class CollectorInfoProperties {
     protected static final String INFO_PREFIX = "collector.info";
 
     private String version;
-    private String publicIpEnv;
+    private String ip;
 
     public String getVersion() {
         return version;
@@ -39,11 +39,11 @@ public class CollectorInfoProperties {
         this.version = version;
     }
 
-    public String getPublicIpEnv() {
-        return publicIpEnv;
+    public String getIp() {
+        return ip;
     }
 
-    public void setPublicIpEnv(String publicIpEnv) {
-        this.publicIpEnv = publicIpEnv;
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 }

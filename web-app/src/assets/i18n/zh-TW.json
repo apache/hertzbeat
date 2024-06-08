@@ -571,7 +571,6 @@
   "collector.mode.private": "私有云邊模式",
   "collector.start-time": "啟動時間",
   "collector.ip": "IP地址",
-  "collector.publicIp": "公網IP地址",
   "collector.version": "版本",
   "collector.node": "節點名稱",
   "collector.pinned": "固定任務",

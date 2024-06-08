@@ -85,7 +85,6 @@ public class SchedulerInit implements CommandLineRunner {
         CollectorInfo collectorInfo = CollectorInfo.builder()
                 .name(CommonConstants.MAIN_COLLECTOR_NODE)
                 .ip(MAIN_COLLECTOR_NODE_IP)
-                .publicIp(MAIN_COLLECTOR_NODE_IP)
                 .version(DEFAULT_COLLECTOR_VERSION)
                 .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);

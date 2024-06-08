@@ -64,9 +64,6 @@ public class Collector {
     @NotNull
     private String ip;
 
-    @Schema(title = "collector public ip", description = "collector remote public ip")
-    private String publicIp;
-
     @Schema(title = "collector version", description = "collector version")
     private String version;
 

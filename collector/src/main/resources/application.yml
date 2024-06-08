@@ -39,8 +39,8 @@ spring:
 
 collector:
   info:
-    version: v1.5.1
-    public-ip-env: PUBLIC_IP
+    version: 1.5.0
+    ip: IP
   dispatch:
     entrance:
       netty:
