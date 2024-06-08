@@ -17,7 +17,10 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import org.apache.hertzbeat.alert.dao.AlertConvergeDao;
 import org.apache.hertzbeat.common.cache.CacheFactory;
