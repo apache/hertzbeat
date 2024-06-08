@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import {Component, Inject, OnInit, ViewChild} from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
