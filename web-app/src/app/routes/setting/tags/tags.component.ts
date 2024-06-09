@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -34,6 +35,8 @@ import { formatTagName } from '../../../shared/utils/common-util';
   templateUrl: './tags.component.html'
 })
 export class SettingTagsComponent implements OnInit {
+  @ViewChild('tagForm', { static: false }) tagForm: NgForm | undefined;
+
   constructor(
     private notifySvc: NzNotificationService,
     private modal: NzModalService,
@@ -183,6 +186,15 @@ export class SettingTagsComponent implements OnInit {
     this.isManageModalVisible = false;
   }
   onManageModalOk() {
+    if (this.tagForm?.invalid) {
+      Object.values(this.tagForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.isManageModalOkLoading = true;
     this.tag.name = this.tag.name.trim();
     if (this.tag.tagValue != undefined) {
