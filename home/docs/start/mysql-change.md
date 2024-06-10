@@ -35,6 +35,12 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 3. Check if hertzbeat database has been successfully created
    `show databases;`
 
+### Add MYSQL jdbc driver jar
+
+- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- Copy the jar package to the `hertzbeat/ext-lib` directory.
+
+
 ### Modify hertzbeat's configuration file application.yml and switch data source  
 
 - Configure HertzBeat's configuration file  
@@ -50,6 +56,8 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
       username: sa
       password: 123456
       url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    jpa:
+      database: h2
   ```
   Specific replacement parameters are as follows and you need to configure account according to the mysql environment:   
   ```yaml
