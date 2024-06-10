@@ -52,8 +52,7 @@ sidebar_label: Docker方式部署
    下载源 [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)       
    - 若需使用邮件发送告警，需替换 `application.yml` 里面的邮件服务器参数
    - **推荐**若需使用外置Mysql数据库替换内置H2数据库，需替换`application.yml`里面的`spring.datasource`参数 具体步骤参见 [H2数据库切换为MYSQL](mysql-change)）       
-   - **推荐**若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.td-engine`参数 具体步骤参见 [使用TDengine存储指标数据](tdengine-init)   
-   - **推荐**若需使用时序数据库IotDB来存储指标数据库，需替换`application.yml`里面的`warehouse.storeiot-db`参数 具体步骤参见 [使用IotDB存储指标数据](iotdb-init)    
+   - **推荐**若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.victoria-metrics`参数 具体步骤参见 [使用victoria-metrics存储指标数据](victoria-metrics-init)
 
 5. 挂载并配置HertzBeat用户配置文件，自定义用户密码(可选)         
    HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
@@ -141,23 +140,14 @@ $ docker run -d \
 > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  
 > 三：若都无问题可以 `docker logs hertzbeat` 查看容器日志是否有明显错误，提issue或交流群或社区反馈
 
-3. **日志报错TDengine连接或插入SQL失败**  
-> 一：排查配置的数据库账户密码是否正确，数据库是否创建   
-> 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
-
-4. **监控历史图表长时间都一直无数据**  
-> 一：Tdengine或IoTDB是否配置，未配置则无历史图表数据  
-> 二：Tdengine的数据库`hertzbeat`是否创建
-> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 IotDB或Tdengine IP账户密码等配置是否正确  
-
-5. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖时序数据库]
+3. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖时序数据库]
 > 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 -
-> 安装初始化此数据库参考 [TDengine安装初始化](tdengine-init) 或 [IoTDB安装初始化](iotdb-init)  
+> 安装初始化此时序数据库
 
-6. 安装配置了时序数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
-> 请检查配置参数是否正确
-> iot-db 或td-engine enable 是否设置为true
-> 注意⚠️若hertzbeat和IotDB，TDengine都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
+4. 安装配置了时序数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
+> 请检查配置的时许数据库参数是否正确
+> 时序数据库对应的 enable 是否设置为true
+> 注意⚠️若hertzbeat和外置数据库都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
 > 可根据logs目录下启动日志排查
 
 
