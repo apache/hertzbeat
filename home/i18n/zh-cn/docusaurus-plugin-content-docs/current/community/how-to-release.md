@@ -494,7 +494,6 @@ ChunJin Mu
 如果72小时后没有-1，回复邮件如下
 
 > `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org <br />
 > `Body`:
 
 ```
@@ -507,27 +506,24 @@ Chunjin Mu
 然后将统计投票结果，并发送投票结果邮件，如下所示。
 
 > `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
-Hi all,
+Hi Incubator Community,
 
-Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
-I'm happy to announce the vote has passed:
+The vote to release Apache HertzBeat (incubating) 1.6.0-rc4 has passed with 3 +1 binding and no +0 or -1 votes.
 
 3 binding votes, no +0 or -1 votes.
-Thanks for reviewing and voting.
 
 +3 (binding) +1, from:
-- cc
+- xxx
 
 no 0 or -1 votes.
 
 Vote thread:
-https://lists.apache.org/thread/k3cvcbzxqs6qy62d1o6r9pqpykcgvvhm
 
+https://lists.apache.org/thread/m1kyn4l30y55p6q39m0ys5djvdd73h0f
 
 Thanks everyone for your feedback and help with HertzBeat apache release. The HertzBeat team will take the steps to complete this release and will announce it soon.
 
@@ -558,23 +554,27 @@ https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugi
 
 #### 4.3 Github 生成 Release
 
-基于 release-1.6.0-rc1 分支创建一个名为 v1.6.0 的标签，并将此标签设置为 latest release。
+基于 release-1.6.0-rc1 分支修改创建一个名为 v1.6.0 的标签，并将此标签设置为 latest release。
+
+:::tip
+在原有的 Release 上面修改，无需重新创建 Release。
+:::
 
 然后输入发版标题和描述
 
 - 发版标题: 
 ```
-v1.6.0-incubating
+v1.6.0
 ```
 - 描述:
 ```
-Release-1.6.0-incubating
+xxx
 release note: xxx
 ```
 
 然后点击`Publish release`按钮。
 
-然后将 release-1.6.0-rc1 分支重命名 为release-1.6.0。
+然后将 release-1.6.0-rc1 分支重命名 为 release-1.6.0。
 
 #### 4.4 发送新版本公告邮件
 
