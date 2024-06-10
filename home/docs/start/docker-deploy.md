@@ -17,7 +17,7 @@ sidebar_label: Install via Docker
 
 2. pull HertzBeat Docker mirror  
    you can look up the mirror version TAG in [dockerhub mirror repository](https://hub.docker.com/r/apache/hertzbeat/tags)  
-   or in [quay.io mirror repository](https://quay.io/repository/apache/hertzbeat)     
+   or in [quay.io mirror repository](https://quay.io/repository/tancloud/hertzbeat)     
    ```shell
    $ docker pull apache/hertzbeat   
    $ docker pull apache/hertzbeat-collector       

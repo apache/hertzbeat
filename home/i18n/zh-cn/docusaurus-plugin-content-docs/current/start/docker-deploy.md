@@ -19,7 +19,7 @@ sidebar_label: Docker方式部署
 
 2. 拉取HertzBeat Docker镜像   
    镜像版本TAG可查看 [dockerhub 官方镜像仓库](https://hub.docker.com/r/apache/hertzbeat/tags)     
-   或者使用 [quay.io 镜像仓库](https://quay.io/repository/apache/hertzbeat)
+   或者使用 [quay.io 镜像仓库](https://quay.io/repository/tancloud/hertzbeat)
 
    ```shell
    $ docker pull apache/hertzbeat   
