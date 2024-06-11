@@ -19,7 +19,6 @@
         "start/victoria-metrics-init",
         "start/iotdb-init",
         "start/tdengine-init",
-        "start/greptime-init",
         "start/influxdb-init",
         "start/postgresql-change",
         "start/mysql-change",
