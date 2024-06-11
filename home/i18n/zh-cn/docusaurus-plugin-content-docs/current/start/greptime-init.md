@@ -39,7 +39,7 @@ $ docker run -p 4000-4004:4000-4004 \
 ### 在hertzbeat的`application.yml`配置文件配置此数据库连接   
 
 1. 配置HertzBeat的配置文件
-   修改位于 `hertzbeat/config/application.yml` 的配置文件 [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)      
+   修改位于 `hertzbeat/config/application.yml` 的配置文件       
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
 
 **修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.greptime`数据源参数，URL账户密码，并启用`enabled`为`true`**    

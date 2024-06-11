@@ -23,7 +23,6 @@
         "start/influxdb-init",
         "start/mysql-change",
         "start/postgresql-change",
-        "start/account-modify",
         "start/custom-config",
         "start/ssl-cert-practice"
       ]
@@ -57,6 +56,13 @@
           "label": "ssh",
           "items": [
             "advanced/extend-ssh"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "telnet",
+          "items": [
+            "advanced/extend-telnet"
           ]
         },
         {
