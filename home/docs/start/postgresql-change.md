@@ -1,7 +1,7 @@
 ---
 id: postgresql-change  
 title: Use PostgreSQL Replace H2 Database to Store Metadata(Recommended)     
-sidebar_label: Use PostgreSQL Instead of H2(Recommended)
+sidebar_label: Meta Store PostgreSQL (Recommended)
 ---
 PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition to default built-in H2 database, Apache HertzBeat (incubating) allow you to use PostgreSQL to store structured relational data such as monitoring information, alarm information and configuration information.
 

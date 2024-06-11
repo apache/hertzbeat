@@ -1,7 +1,7 @@
 ---
 id: mysql-change  
 title: Use MYSQL Replace H2 Database to Store Metadata(Optional)     
-sidebar_label: Use MYSQL Instead of H2    
+sidebar_label: Meta Store MYSQL  
 ---
 MYSQL is a reliable relational database. In addition to default built-in H2 database, Apache HertzBeat (incubating) allow you to use MYSQL to store structured relational data such as monitoring information, alarm information and configuration information.   
 
