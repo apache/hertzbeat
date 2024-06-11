@@ -159,13 +159,13 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)
 
-##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+tsdb
+##### 方式四：Docker-Compose 统一安装 hertzbeat+postgresql+tsdb
 
-通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 mysql/postgresql 数据库, iotdb/tdengine/victoria-metrics 时序数据库和 hertzbeat 安装部署。
+通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 postgresql/mysql 数据库, victoria-metrics/iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
 详细步骤参考 [通过Docker-Compose安装HertzBeat](script/docker-compose/README.md)  
 
-##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+mysql+tsdb
+##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+postgresql+tsdb
 
 通过 Helm Chart 一次性将 HertzBeat 集群组件部署到 Kubernetes 集群中。
 
