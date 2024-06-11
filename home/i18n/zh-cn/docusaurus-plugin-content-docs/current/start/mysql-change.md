@@ -37,9 +37,14 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 3. 查看hertzbeat数据库是否创建成功
    `show databases;`
 
+### 添加 MYSQL jdbc 驱动 jar
+
+- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
+
 ### 修改hertzbeat的配置文件application.yml切换数据源   
 
-- 配置HertzBeat的配置文件  
+- 配置 HertzBeat 的配置文件  
   修改位于 `hertzbeat/config/application.yml` 的配置文件   
   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
   替换里面的`spring.database`数据源参数，IP端口账户密码驱动   
@@ -53,6 +58,8 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
       username: sa
       password: 123456
       url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    jpa:
+      database: h2
   ```
   具体替换参数如下,需根据mysql环境配置账户密码IP:   
   ```yaml
@@ -69,21 +76,4 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 
 - 通过docker启动时，建议修改host为宿主机的外网IP地址，包括mysql连接字符串和redis。  
 
-**启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**  
-
-### 常见问题   
-
-1. 缺少hibernate的mysql方言，导致启动异常 Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set
-
-如果上述配置启动系统，出现` Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set`异常，   
-需要在`application.yml`文件中增加以下配置：
-
-```yaml
-spring:
-  jpa:
-    hibernate:
-      ddl-auto: update 
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
-```
+**启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**

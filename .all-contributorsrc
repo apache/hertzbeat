@@ -1844,6 +1844,51 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "Thespica",
+      "name": "John",
+      "avatar_url": "https://avatars.githubusercontent.com/u/119573640?v=4",
+      "profile": "https://thespica.github.io/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "boatrainlsz",
+      "name": "boatrainlsz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/18243785?v=4",
+      "profile": "https://github.com/boatrainlsz",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "JavaProgrammerLB",
+      "name": "Bill Lau",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3973419?v=4",
+      "profile": "https://www.yitianyigexiangfa.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "lw-yang",
+      "name": "lwyang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23456873?v=4",
+      "profile": "https://github.com/lw-yang",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "xfl12345",
+      "name": "xfl12345",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17960863?v=4",
+      "profile": "https://github.com/xfl12345",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
