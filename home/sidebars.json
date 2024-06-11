@@ -21,8 +21,8 @@
         "start/tdengine-init",
         "start/greptime-init",
         "start/influxdb-init",
-        "start/mysql-change",
         "start/postgresql-change",
+        "start/mysql-change",
         "start/custom-config",
         "start/ssl-cert-practice"
       ]
