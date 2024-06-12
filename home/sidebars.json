@@ -236,6 +236,7 @@
           "items": [
             "help/spark",
             "help/flink",
+            "help/flink_on_yarn",
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
