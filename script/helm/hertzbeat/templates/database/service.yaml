@@ -24,8 +24,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-    - port: 3306
-      targetPort: 3306
+    - port: 5432
+      targetPort: 5432
       protocol: TCP
   selector:
     {{- include "hertzbeat.selectorLabels" . | nindent 4 }}

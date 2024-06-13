@@ -212,7 +212,6 @@ mvn clean package -Pcluster
 The release package are here:
 
 - `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
-- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
 - `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
 #### 3.4 Package the source code
@@ -254,9 +253,6 @@ apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.asc
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.sha512
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512
@@ -290,8 +286,6 @@ apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz: OK
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz: OK
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 ```
@@ -440,7 +434,7 @@ One item of the email content is `Vote thread`, and the link is obtained here: h
 Send a voting email in the incubator community requires at least three `+1` and no `-1`.
 
 > `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
+> `cc`: dev@hertzbeat.apache.org、private@hertzbeat.apache.org <br />
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
@@ -498,7 +492,6 @@ ChunJin Mu
 If there is no -1 after 72 hours, reply to the email as follows
 
 > `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org <br />
 > `Body`:
 
 ```
@@ -511,27 +504,24 @@ Chunjin Mu
 Then the voting results will be counted, and the voting result email will be sent, as follows.
 
 > `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
-Hi all,
+Hi Incubator Community,
 
-Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
-I'm happy to announce the vote has passed:
+The vote to release Apache HertzBeat (incubating) 1.6.0-rc4 has passed with 3 +1 binding and no +0 or -1 votes.
 
 3 binding votes, no +0 or -1 votes.
-Thanks for reviewing and voting.
 
 +3 (binding) +1, from:
-- cc
+- xxx
 
 no 0 or -1 votes.
 
 Vote thread:
-https://lists.apache.org/thread/k3cvcbzxqs6qy62d1o6r9pqpykcgvvhm
 
+https://lists.apache.org/thread/m1kyn4l30y55p6q39m0ys5djvdd73h0f
 
 Thanks everyone for your feedback and help with HertzBeat apache release. The HertzBeat team will take the steps to complete this release and will announce it soon.
 
@@ -563,16 +553,20 @@ Open the official website address https://hertzbeat.apache.org/docs/download/ to
 
 #### 4.3 Generate a release on github
 
-Create a tag named v1.6.0 based on the release-1.6.0-rc1 branch, and set this tag to latest release.
+Update pre-release to create a tag named v1.6.0 based on the release-1.6.0-rc1 branch, and set this tag to latest release.
+
+:::tip
+You can modify it on the original RC Release without creating a new Release.
+:::
 
 Then enter Release Title and Describe
 - Release Title: 
 ```
-v1.6.0-incubating
+v1.6.0
 ```
 - Describe:
 ```
-Release-1.6.0-incubating
+xxx
 release note: xxx
 ```
 
@@ -584,19 +578,25 @@ The rename the release-1.6.0-rc1 branch to release-1.6.0.
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org <br />
-> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 1.6.0 <br />
+> `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
 ```
-Hi all,
+Hi Community,
 
 We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
-Once again I would like to express my thanks to your help.
+Thanks again for your help. 
 
-Apache HertzBeat(https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-Download Links: https://hertzbeat.apache.org/download/
-Release Notes: https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+Download Link: 
+https://hertzbeat.apache.org/docs/download/
+
+Release Note: 
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+
+Website: 
+https://hertzbeat.apache.org/
 
 HertzBeat Resources:
 - Issue: https://github.com/apache/hertzbeat/issues
@@ -604,6 +604,7 @@ HertzBeat Resources:
 
 
 Apache HertzBeat Team
+
 
 Best,
 ChunJin Mu
