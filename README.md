@@ -160,13 +160,13 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apach
 
 Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)        
 
-##### 4：Install All(hertzbeat+mysql+tsdb) via Docker-compose  
+##### 4：Install All(hertzbeat+postgresql+tsdb) via Docker-compose  
 
-Install the mysql/postgresql database, iotdb/tdengine/victoria-metrics database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
+Install the postgresql/mysql database, victoria-metrics/iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
 
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
 
-##### 5. Install All(hertzbeat+collector+mysql+tsdb) via kubernetes helm charts
+##### 5. Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
 
 Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 
