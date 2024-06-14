@@ -153,6 +153,7 @@
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
+            "help/imap",
             "help/pop3",
             "help/smtp",
             "help/ntp",
