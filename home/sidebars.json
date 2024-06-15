@@ -80,13 +80,6 @@
         },
         {
           "type": "category",
-          "label": "push",
-          "items": [
-            "advanced/extend-push"
-          ]
-        },
-        {
-          "type": "category",
           "label": "NGQL",
           "items": [
             "advanced/extend-ngql"
