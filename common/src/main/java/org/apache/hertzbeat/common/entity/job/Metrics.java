@@ -33,6 +33,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
@@ -201,7 +202,7 @@ public class Metrics {
      */
     private NginxProtocol nginx;
     /**
-     * Monitoring configuration information using the public Nginx protocol
+     * Monitoring configuration information using the public pop3 protocol
      */
     private Pop3Protocol pop3;
     /**
@@ -213,13 +214,17 @@ public class Metrics {
      */
     private RedfishProtocol redfish;
     /**
-     * Monitoring configuration information using the public redfish protocol
+     * Monitoring configuration information using the public ngql protocol
      */
     private NgqlProtocol ngql;
     /**
      * Collect sd data protocol
      */
     private ServiceDiscoveryProtocol sdProtocol;
+    /**
+     * Monitoring configuration information using the public imap protocol
+     */
+    private ImapProtocol imap;
 
     /**
      * collector use - Temporarily store subTask metrics response data

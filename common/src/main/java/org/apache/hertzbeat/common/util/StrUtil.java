@@ -15,38 +15,29 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.common.util;
+
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
- * collector constant
+ * String processing tools
  */
-public interface CollectorConstants {
-
-    String RESPONSE_TIME = "responseTime";
-
-    String KEYWORD = "keyword";
-
-    String STATUS_CODE = "statusCode";
-
-    String ERROR_MSG = "errorMsg";
-
-    String URL = "url";
-
-    String HTTP_HEADER = "http://";
-
-    String HTTPS_HEADER = "https://";
+public class StrUtil {
 
     /**
-     * POSTGRESQL un reachable status code
+     * Handle Comma Separated Data
+     * @param arg Comma separated data
+     * @return Data List
      */
-    String POSTGRESQL_UN_REACHABLE_CODE = "08001";
+    public static List<String> analysisArgToList(String arg) {
+        if (Objects.isNull(arg)) {
+            return Collections.emptyList();
+        }
+        return Arrays.asList(arg.split("\\s*,\\s*"));
+    }
 
-    String IPV6 = "ipv6";
-
-    String IPV4 = "ipv4";
-
-    /**
-     * MongoDB Atlas model
-     */
-    String MONGO_DB_ATLAS_MODEL = "mongodb-atlas";
 }
