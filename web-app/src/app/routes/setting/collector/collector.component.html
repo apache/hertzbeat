@@ -90,6 +90,7 @@
       <th nzAlign="center" nzWidth="9%">{{ 'collector.pinned' | i18n }}</th>
       <th nzAlign="center" nzWidth="9%">{{ 'collector.dispatched' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.ip' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'collector.version' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.start-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -130,6 +131,7 @@
         </nz-tag>
       </td>
       <td nzAlign="center">{{ data.collector.ip }}</td>
+      <td nzAlign="center">{{ data.collector.version }}</td>
       <td nzAlign="center">
         {{ (data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}
       </td>
