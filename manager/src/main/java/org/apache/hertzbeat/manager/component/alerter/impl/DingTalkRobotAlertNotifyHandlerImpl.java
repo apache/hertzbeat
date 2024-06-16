@@ -17,12 +17,16 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.util.StrUtil;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -43,7 +47,7 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
-            MarkdownDTO markdownDTO = new MarkdownDTO();
+            DingTalkWebHookDto.MarkdownDTO markdownDTO = new DingTalkWebHookDto.MarkdownDTO();
             markdownDTO.setText(renderContent(noticeTemplate, alert));
             markdownDTO.setTitle(bundle.getString("alerter.notify.title"));
             dingTalkWebHookDto.setMarkdown(markdownDTO);
@@ -57,6 +61,13 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
                 assert responseEntity.getBody() != null;
                 if (responseEntity.getBody().getErrCode() == 0) {
                     log.debug("Send dingTalk webHook: {} Success", webHookUrl);
+                    DingTalkWebHookDto dingTalkWebHookTextDto = checkNeedAtNominator(receiver);
+                    if (dingTalkWebHookTextDto != null) {
+                        HttpEntity<DingTalkWebHookDto> httpEntityText = new HttpEntity<>(dingTalkWebHookTextDto, headers);
+                        restTemplate.postForEntity(webHookUrl,
+                                httpEntityText, CommonRobotNotifyResp.class);
+                    }
+                    log.debug("Send dingTalk @ message webHook: {} Success", webHookUrl);
                 } else {
                     log.warn("Send dingTalk webHook: {} Failed: {}", webHookUrl, responseEntity.getBody().getErrMsg());
                     throw new AlertNoticeException(responseEntity.getBody().getErrMsg());
@@ -70,6 +81,27 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
         }
     }
 
+
+    private DingTalkWebHookDto checkNeedAtNominator(NoticeReceiver receiver) {
+        if (StringUtils.isBlank(receiver.getPhone()) && StringUtils.isBlank(receiver.getTgUserId())) {
+            return null;
+        }
+        DingTalkWebHookDto dingTalkWebHookDto = new DingTalkWebHookDto();
+        dingTalkWebHookDto.setMsgType(DingTalkWebHookDto.TEXT_MSG_TYPE);
+        DingTalkWebHookDto.AtDTO atDTO = new DingTalkWebHookDto.AtDTO();
+        dingTalkWebHookDto.setAt(atDTO);
+        if (StringUtils.isNotBlank(receiver.getPhone())) {
+            atDTO.setAtMobiles(StrUtil.analysisArgToList(receiver.getPhone()));
+        }
+        if (StringUtils.isNotBlank(receiver.getTgUserId())) {
+            atDTO.setAtUserIds(StrUtil.analysisArgToList(receiver.getTgUserId()));
+        }
+        DingTalkWebHookDto.TextDTO textDTO = new DingTalkWebHookDto.TextDTO();
+        textDTO.setContent(bundle.getString("alerter.notify.title"));
+        dingTalkWebHookDto.setText(textDTO);
+        return dingTalkWebHookDto;
+    }
+
     @Override
     public byte type() {
         return 5;
@@ -81,31 +113,79 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
      */
     @Data
     private static class DingTalkWebHookDto {
-        private static final String MARKDOWN = "markdown";
+
+        private static final String DEFAULT_MSG_TYPE = "markdown";
+
+        /**
+         * text format
+         */
+        private static final String TEXT_MSG_TYPE = "text";
 
         /**
          * Message type
          */
-        private String msgtype = MARKDOWN;
+        @JsonProperty(value = "msgtype")
+        private String msgType = DEFAULT_MSG_TYPE;
 
         /**
          * markdown message
          */
         private MarkdownDTO markdown;
 
-    }
-
-    @Data
-    private static class MarkdownDTO {
         /**
-         * Message content
+         * @ UserId list
          */
-        private String text;
+        private AtDTO at;
 
         /**
-         * Message title
+         * text message
          */
-        private String title;
+        private TextDTO text;
+
+        @Data
+        private static class TextDTO {
+            /**
+             * Message content
+             */
+            private String content;
+
+        }
+
+        @Data
+        private static class MarkdownDTO {
+            /**
+             * Message content
+             */
+            private String text;
+
+            /**
+             * Message title
+             */
+            private String title;
+        }
+
+
+        @Data
+        private static class AtDTO {
+            /**
+             * Message content
+             */
+            private Boolean isAtAll;
+
+            /**
+             * @ UserId list
+             */
+            private List<String> atUserIds;
+
+            /**
+             * @ Mobiles list
+             */
+            private List<String> atMobiles;
+
+        }
+
     }
+
+
 
 }

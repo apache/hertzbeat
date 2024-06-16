@@ -23,58 +23,45 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Mongodb Protocol
- * @version 1.0
+ * imap protocol
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MongodbProtocol {
-
+public class ImapProtocol {
     /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
+     * Receiving server address
      */
     private String host;
 
     /**
-     * Port number
+     * Receiving server port
      */
     private String port;
-
-    /**
-     * Mongodb model
-     */
-    private String model;
-
-    /**
-     * Mongodb User name (optional)
-     */
-    private String username;
-
-    /**
-     * Mongodb Password (optional)
-     */
-    private String password;
-
-    /**
-     * Mongodb database name (optional)
-     */
-    private String database;
-
-    /**
-     * Mongodb Authentication Database name (optional)
-     */
-    private String authenticationDatabase;
-
-    /**
-     * run command
-     */
-    private String command;
 
     /**
      * TIME OUT PERIOD
      */
     private String timeout;
+
+    /**
+     * Whether to enable SSL encryption [Email Transmission]
+     */
+    private String ssl = "false";
+
+    /**
+     * IMAP Email address
+     */
+    private String email;
+
+    /**
+     * Authorization code
+     */
+    private String authorize;
+    /**
+     * Mailbox folder name
+     */
+    private String folderName;
 
 }

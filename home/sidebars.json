@@ -146,6 +146,7 @@
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
+            "help/imap",
             "help/pop3",
             "help/smtp",
             "help/ntp",
@@ -179,7 +180,8 @@
             "help/nebulaGraph",
             "help/nebulagraph_cluster",
             "help/tidb",
-            "help/mongodb"
+            "help/mongodb",
+            "help/mongodb_atlas"
           ]
         },
         {
