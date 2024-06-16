@@ -6,7 +6,7 @@ sidebar_label: Version Upgrade Guide
 
 **HertzBeat Release Version List**
 
-- [Download Page](/docs/download)
+- [Download Page](https://hertzbeat.apache.org/docs/download)
 - [Github Release](https://github.com/apache/hertzbeat/releases)
 - [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
 
@@ -26,12 +26,12 @@ Apache HertzBeat (incubating)'s metadata information is stored in H2 or Mysql, P
 2. If using the built-in default H2 database  
    - Need to mount or back up `-v $(pwd)/data:/opt/hertzbeat/data` database file directory in the container `/opt/hertzbeat/data`
    - Stop and delete the container, delete the local HertzBeat docker image, and pull the new version image
-   - Refer to [Docker installation of HertzBeat] (docker-deploy) to create a new container using a new image. Note that the database file directory needs to be mounted `-v $(pwd)/data:/opt/hertzbeat/data`
+   - Refer to [Docker installation of HertzBeat](docker-deploy) to create a new container using a new image. Note that the database file directory needs to be mounted `-v $(pwd)/data:/opt/hertzbeat/data`
 
 3. If using external relational database Mysql, PostgreSQL  
    - No need to mount the database file directory in the backup container
    - Stop and delete the container, delete the local HertzBeat docker image, and pull the new version image
-   - Refer to [Docker installation HertzBeat] (docker-deploy) to create a new container using the new image, and configure the database connection in `application.yml`
+   - Refer to [Docker installation HertzBeat](docker-deploy) to create a new container using the new image, and configure the database connection in `application.yml`
 
 
 ### Upgrade For Package Deploy

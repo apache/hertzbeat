@@ -80,6 +80,7 @@ export class UserLoginComponent implements OnDestroy {
   error = '';
   type = 0;
   loading = false;
+  needUpdatePassword = false;
 
   // #region get captcha
 
@@ -102,6 +103,10 @@ export class UserLoginComponent implements OnDestroy {
       this.password.markAsDirty();
       this.password.updateValueAndValidity();
       if (this.userName.invalid || this.password.invalid) {
+        return;
+      }
+      if (!this.needUpdatePassword && this.password.value === 'hertzbeat') {
+        this.needUpdatePassword = true;
         return;
       }
     } else {

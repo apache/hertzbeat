@@ -42,8 +42,8 @@ import org.apache.hertzbeat.collector.dispatch.unit.impl.DataSizeConvert;
 import org.apache.hertzbeat.common.config.CommonConfig;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
-import org.apache.hertzbeat.common.service.TencentSmsClient;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
+import org.apache.hertzbeat.manager.service.TencentSmsClient;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.controller.MetricsDataController;
 import org.apache.hertzbeat.warehouse.store.history.iotdb.IotDbDataStorage;
@@ -55,7 +55,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 
 /**
- *
+ * Manager Test
  * @version 2.1
  */
 class ManagerTest extends AbstractSpringIntegrationTest {

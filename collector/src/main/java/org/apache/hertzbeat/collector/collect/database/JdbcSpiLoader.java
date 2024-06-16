@@ -31,7 +31,6 @@ import org.springframework.stereotype.Service;
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
 public class JdbcSpiLoader implements CommandLineRunner {
 
-
     @Override
     public void run(String... args) throws Exception {
         log.info("start load jdbc drivers");

@@ -37,12 +37,10 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
- *  smtp collect
+ * smtp collect
  */
 @Slf4j
 public class SmtpCollectImpl extends AbstractCollect {
-    public SmtpCollectImpl() {
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {

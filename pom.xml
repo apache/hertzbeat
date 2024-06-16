@@ -445,6 +445,8 @@
                 <version>3.3.0</version>
                 <configuration>
                     <configLocation>./script/checkstyle/checkstyle.xml</configLocation>
+                    <suppressionsLocation>./script/checkstyle/suppressions.xml</suppressionsLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <linkXRef>false</linkXRef>
@@ -479,7 +481,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 </project>

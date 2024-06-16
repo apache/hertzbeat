@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -69,6 +70,10 @@ export class AlertNoticeComponent implements OnInit {
   tagsOption: any[] = [];
   filterTags: string[] = [];
   isLimit: boolean = false;
+  @ViewChild('receiverForm', { static: false }) receiverForm: NgForm | undefined;
+  @ViewChild('templateForm', { static: false }) templateForm: NgForm | undefined;
+  @ViewChild('ruleForm', { static: false }) ruleForm: NgForm | undefined;
+
   dayCheckOptions = [
     { label: this.i18nSvc.fanyi('common.week.7'), value: 7, checked: true },
     { label: this.i18nSvc.fanyi('common.week.1'), value: 1, checked: true },
@@ -348,6 +353,15 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageReceiverModalOk() {
+    if (this.receiverForm?.invalid) {
+      Object.values(this.receiverForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.isManageReceiverModalOkLoading = true;
     if (this.isManageReceiverModalAdd) {
       const modalOk$ = this.noticeReceiverSvc
@@ -691,6 +705,15 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageRuleModalOk() {
+    if (this.ruleForm?.invalid) {
+      Object.values(this.ruleForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.rule.receiverName = [];
     this.receiversOption.forEach(option => {
       this.rule.receiverId.forEach(id => {
@@ -777,6 +800,15 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageTemplateModalOk() {
+    if (this.templateForm?.invalid) {
+      Object.values(this.templateForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.isManageTemplateModalOkLoading = true;
     if (this.isManageTemplateModalAdd) {
       this.template.preset = false;

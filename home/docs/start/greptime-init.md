@@ -1,7 +1,7 @@
 ---
 id: greptime-init  
 title: Use Time Series Database GreptimeDB to Store Metrics Data (Optional)       
-sidebar_label: Use GreptimeDB Store Metrics
+sidebar_label: Metrics Store GreptimeDB
 ---
 
 Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
@@ -39,7 +39,7 @@ $ docker run -p 4000-4004:4000-4004 \
 ### Configure the database connection in hertzbeat `application.yml` configuration file  
 
 1. Configure HertzBeat's configuration file   
-   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)        
+   Modify `hertzbeat/config/application.yml` configuration file         
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
    Replace `warehouse.store.greptime` data source parameters, URL account and password.
 

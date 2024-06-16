@@ -39,7 +39,6 @@ public class TemplateConfig {
      */
     private Map<String, AppTemplate> apps;
 
-
     /**
      * app template
      */

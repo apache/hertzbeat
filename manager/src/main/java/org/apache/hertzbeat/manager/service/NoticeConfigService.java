@@ -140,7 +140,6 @@ public interface NoticeConfigService {
      */
     void deleteNoticeTemplate(Long templateId);
 
-
     /**
      * Query specific notification templates according to the template ID (primary key ID)
      * @param templateId Template ID
@@ -161,6 +160,5 @@ public interface NoticeConfigService {
      * @return true send success | false send fail
      */
     boolean sendTestMsg(NoticeReceiver noticeReceiver);
-
 
 }

@@ -39,94 +39,156 @@ eg：Define a custom monitoring type `app` named `example_http` which use the HT
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: custom
-# Monitoring application type(consistent with the file name) eg: linux windows tomcat mysql aws...
-app: example_http
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: a_example
+# The monitoring i18n name
 name:
-  zh-CN: 模拟应用类型
+  zh-CN: 模拟应用
   en-US: EXAMPLE APP
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 支持自定义监控，您只需配置监控模版 YML 就能适配一款自定义的监控类型。<br>定义流程如下：HertzBeat 页面 -> 监控模版菜单 -> 新增监控类型 -> 配置自定义监控模版YML -> 点击保存应用 -> 使用新监控类型添加监控。
+  en-US: "HertzBeat supports custom monitoring, and you only need to configure the monitoring template YML to adapt to a custom monitoring type. <br>Definition process as follow: HertzBeat Pages -> Main Menu -> Monitor Template -> edit and save -> apply this template."
+  zh-TW: HertzBeat支持自定義監控，您只需配寘監控模版YML就能適配一款自定義的監控類型。<br>定義流程如下：HertzBeat頁面->監控模版選單->新增監控類型->配寘自定義監控模版YML ->點擊保存應用->使用新監控類型添加監控。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-point/
+  en-US: https://hertzbeat.apache.org/docs/advanced/extend-point/
+# Input params define for monitoring(render web ui by the definition)
 params:
-  # field-field name identifier
+  # field-param field key
   - field: host
-    # name-parameter field display name
+    # name-param field display i18n name
     name:
-      zh-CN: 主机Host
-      en-US: Host
-    # type-field type, style(most mappings are input label type attribute)
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
     type: host
-    # required or not  true-required  false-optional
+    # required-true or false
     required: true
+  # field-param field key
   - field: port
+    # name-param field display i18n name
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
     type: number
-    # When type is number, range is used to represent the range.
+    # when type is number, range is required
     range: '[0,65535]'
+    # required-true or false
     required: true
-    # port default
+    # default value
     defaultValue: 80
-    # Prompt information of parameter input box
-    placeholder: 'Please enter the port'
+    # param field input placeholder
+    placeholder: 'Please Input Port'
+  # field-param field key
   - field: username
+    # name-param field display i18n name
     name:
       zh-CN: 用户名
       en-US: Username
+    # type-param field type(most mapping the html input type)
     type: text
-    # When type is text, use limit to indicate the string limit size
-    limit: 20
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
     required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
   - field: password
+    # name-param field display i18n name
     name:
-      zh-CN: 密码
+      zh-CN: 用户密码
       en-US: Password
+    # type-param field type(most mapping the html input tag)
     type: password
+    # required-true or false
     required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
   - field: ssl
+    # name-param field display i18n name
     name:
       zh-CN: 启动SSL
-      en-US: Enable SSL
-    # When type is boolean, front end uses switch to show the switch
+      en-US: SSL
+    # type-param field type(boolean mapping the html switch tag)
     type: boolean
+    # required-true or false
     required: false
+  # field-param field key
   - field: method
+    # name-param field display i18n name
     name:
       zh-CN: 请求方式
       en-US: Method
+    # type-param field type(radio mapping the html radio tag)
     type: radio
+    # required-true or false
     required: true
-    # When type is radio or checkbox, option indicates the list of selectable values {name1:value1,name2:value2}
+    # when type is radio checkbox, use option to show optional values {name1:value1,name2:value2}
     options:
-      - label: GET request
+      - label: GET
         value: GET
-      - label: POST request
+      - label: POST
         value: POST
-      - label: PUT request
+      - label: PUT
         value: PUT
-      - label: DELETE request
+      - label: DELETE
         value: DELETE
-# Metric group list
+  # field-param field key
+  - field: headers
+    # name-param field display i18n name
+    name:
+      zh-CN: 请求Headers
+      en-US: Headers
+    # type-param field type(key-value mapping the html key-value input tags)
+    type: key-value
+    # required-true or false
+    required: false
+    # when type is key-value, use keyAlias to config key alias name
+    keyAlias: Header Name
+    # when type is key-value, use valueAlias to config value alias name
+    valueAlias: Header Value
+# collect metrics config list
 metrics:
-# The first monitoring Metric group cpu
-# Note：the built-in monitoring Metrics have (responseTime - response time)
+  # metrics - cpu
   - name: cpu
-    # The smaller Metric group scheduling priority(0-127), the higher the priority. After completion of the high priority Metric group collection,the low priority Metric group will then be scheduled. Metric groups with the same priority  will be scheduled in parallel.
-    # Metric group with a priority of 0 is an availability group which will be scheduled first. If the collection succeeds, the  scheduling will continue otherwise interrupt scheduling.
+    # metrics name i18n label
+    i18n:
+      zh-CN: CPU 信息
+      en-US: CPU Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
-    # metrics fields list
+    # collect metrics content
     fields:
-      # Metric information include   field: name   type: field type(0-number: number, 1-string: string)   label-if is metrics label   unit: Metric unit
+      # field-metric name, i18n-metric name i18n label, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: hostname
         type: 1
         label: true
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
       - field: usage
         type: 0
         unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
       - field: cores
         type: 0
+        i18n:
+          zh-CN: 核数
+          en-US: Cores
       - field: waitTime
         type: 0
         unit: s
-# (optional)Monitoring Metric alias mapping to the Metric name above. The field used to collect interface data is not the final Metric name directly. This alias is required for mapping conversion.
+        i18n:
+          zh-CN: 主机名称
+          en-US: Host Name
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - hostname
       - core1
@@ -134,59 +196,73 @@ metrics:
       - usage
       - allTime
       - runningTime
-# (optional)The Metric calculation expression works with the above alias to calculate the final required Metric value.
-# eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
     calculates:
       - hostname=hostname
       - cores=core1+core2
       - usage=usage
       - waitTime=allTime-runningTime
-# protocol for monitoring and collection eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-# Specific collection configuration when the protocol is HTTP protocol
+    # the config content when protocol is http
     http:
-      # host: ipv4 ipv6 domain name
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # port
+      # http port
       port: ^_^port^_^
-      # url request interface path
+      # http url
       url: /metrics/cpu
-      # request mode: GET POST PUT DELETE PATCH
+      # http method: GET POST PUT DELETE PATCH
       method: GET
-      # enable ssl/tls or not, that is to say, HTTP or HTTPS. The default is false
+      # if enabled https
       ssl: false
-      # request header content
+      # http request header content
       headers:
-        apiVersion: v1
-      # request parameter content
+        ^_^headers^_^: ^_^headers^_^
+      # http request params
       params:
         param1: param1
         param2: param2
-      # authorization
+      # http auth
       authorization:
-        # authorization method: Basic Auth, Digest Auth, Bearer Token
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
         type: Basic Auth
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # parsing method for reponse data: default-system rules, jsonPath-jsonPath script, website-website availability Metric monitoring
-      # todo xmlPath-xmlPath script, prometheus-Prometheus data rules
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       parseScript: '$'
 
   - name: memory
+    i18n:
+      zh-CN: 内存信息
+      en-US: Memory Info
     priority: 1
     fields:
       - field: hostname
         type: 1
         label: true
+        i18n:
+          zh-CN: 主机名称
+          en-US: Hostname
       - field: total
         type: 0
         unit: kb
+        i18n:
+          zh-CN: 总量
+          en-US: Total
       - field: usage
         type: 0
         unit: '%'
+        i18n:
+          zh-CN: 使用率
+          en-US: Usage
       - field: speed
         type: 0
+        i18n:
+          zh-CN: 速率
+          en-US: Speed
     protocol: http
     http:
       host: ^_^host^_^
@@ -203,4 +279,5 @@ metrics:
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
       parseType: default
+
 ```

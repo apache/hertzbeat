@@ -29,10 +29,19 @@ import org.springframework.context.annotation.Configuration;
  * for collector instance
  * send collect response data by netty
  */
-@Configuration
-@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "netty")
 @Slf4j
+@Configuration
+@ConditionalOnProperty(
+        prefix = NettyDataQueue.NETTY_DATA_QUEUE_PREFIX,
+        name = "type",
+        havingValue = "netty"
+)
 public class NettyDataQueue implements CommonDataQueue {
+
+    /**
+     * netty data queue prefix.
+     */
+    protected static final String NETTY_DATA_QUEUE_PREFIX = "common.queue";
     
     private final CollectJobService collectJobService;
     
