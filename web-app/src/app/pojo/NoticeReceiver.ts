@@ -27,6 +27,7 @@ export class NoticeReceiver {
   email!: string;
   tgBotToken!: string;
   tgUserId!: string;
+  userId!: string;
   slackWebHookUrl!: string;
   discordChannelId!: string;
   discordBotToken!: string;

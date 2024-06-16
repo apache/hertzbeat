@@ -159,13 +159,13 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)
 
-##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+tsdb
+##### 方式四：Docker-Compose 统一安装 hertzbeat+postgresql+tsdb
 
-通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 mysql/postgresql 数据库, iotdb/tdengine/victoria-metrics 时序数据库和 hertzbeat 安装部署。
+通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 postgresql/mysql 数据库, victoria-metrics/iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
 详细步骤参考 [通过Docker-Compose安装HertzBeat](script/docker-compose/README.md)  
 
-##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+mysql+tsdb
+##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+postgresql+tsdb
 
 通过 Helm Chart 一次性将 HertzBeat 集群组件部署到 Kubernetes 集群中。
 
@@ -445,6 +445,11 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://www.yitianyigexiangfa.com/"><img src="https://avatars.githubusercontent.com/u/3973419?v=4?s=100" width="100px;" alt="Bill Lau"/><br /><sub><b>Bill Lau</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=JavaProgrammerLB" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lw-yang"><img src="https://avatars.githubusercontent.com/u/23456873?v=4?s=100" width="100px;" alt="lwyang"/><br /><sub><b>lwyang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lw-yang" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/xfl12345"><img src="https://avatars.githubusercontent.com/u/17960863?v=4?s=100" width="100px;" alt="xfl12345"/><br /><sub><b>xfl12345</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xfl12345" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yykaue"><img src="https://avatars.githubusercontent.com/u/22905143?v=4?s=100" width="100px;" alt="Limbo"/><br /><sub><b>Limbo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yykaue" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/irenhongyan"><img src="https://avatars.githubusercontent.com/u/53438321?v=4?s=100" width="100px;" alt="哈哈哈哈哈哈哈哈哈"/><br /><sub><b>哈哈哈哈哈哈哈哈哈</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=irenhongyan" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ileonli"><img src="https://avatars.githubusercontent.com/u/45332412?v=4?s=100" width="100px;" alt="Leon Li"/><br /><sub><b>Leon Li</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ileonli" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

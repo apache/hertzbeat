@@ -98,9 +98,8 @@ sidebar_label: JsonPath解析方式
 **对应的监控模版YML可以配置为如下**   
 
 ```yaml
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# 监控应用类型 eg: linux windows tomcat mysql aws...
 app: example
 name:
   zh-CN: 模拟应用类型
