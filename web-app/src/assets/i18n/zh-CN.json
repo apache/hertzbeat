@@ -574,6 +574,7 @@
   "collector.task": "总任务数量",
   "collector.start-time": "启动时间",
   "collector.ip": "IP地址",
+  "collector.version": "版本",
   "collector.node": "节点名称",
   "collector.pinned": "固定任务",
   "collector.dispatched": "调度任务",

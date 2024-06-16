@@ -73,11 +73,35 @@ Subject: [VOTE] New committer: ${NEW_COMMITTER_NAME}
 ```text
 Hi HertzBeat PPMC,
 
-This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our new committer.
+This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our community new committer.
 
-${Work list}[1]
+Work list: https://github.com/apache/hertzbeat/commits?author=${NEW_COMMITTER_NAME}
 
-[1] https://github.com/apache/hertzbeat/commits?author=${NEW_COMMITTER_NAME}
+Here is the list of ${NEW_COMMITTER_NAME}'s contributions in HertzBeat Community:
+
+> [27 commits](https://github.com/apache/hertzbeat/commits?author=xxx)
+>
+> 7,495 ++    627 --
+
+Submitted PR (27 commits)
+- [ISSUE #4534] [feature] add new feature in hertzbeat #3445
+- xxx
+
+Submitted Issues (18 commits)
+
+- [bug] find some bugs in hertzbeat nodes #6565
+- xxx
+
+Please vote:
+
++1: I support this proposal and will welcome ${NEW_COMMITTER_NAME} as a committer.
++0: I don't care.
+-1: I object to this proposal and here are my reasons.
+
+This vote will be open for at least 7 days.
+
+Best Wishes,
+ttt
 ```
 
 Note that, Voting ends one week from today, i.e.

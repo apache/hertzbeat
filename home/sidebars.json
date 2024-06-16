@@ -80,13 +80,6 @@
         },
         {
           "type": "category",
-          "label": "push",
-          "items": [
-            "advanced/extend-push"
-          ]
-        },
-        {
-          "type": "category",
           "label": "NGQL",
           "items": [
             "advanced/extend-ngql"
@@ -237,6 +230,7 @@
           "items": [
             "help/spark",
             "help/flink",
+            "help/flink_on_yarn",
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
