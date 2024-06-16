@@ -38,6 +38,9 @@ spring:
       on-profile: cluster
 
 collector:
+  info:
+    version: 1.5.0
+    ip: IP
   dispatch:
     entrance:
       netty:

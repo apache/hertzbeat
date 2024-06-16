@@ -133,7 +133,7 @@ public class HttpCollectImpl extends AbstractCollect {
             // Option 1: Parse using InputStream, but this requires significant code changes;
             // Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            if (StringUtils.hasText(resp)) {
+            if (!StringUtils.hasText(resp)) {
                 log.info("http response entity is empty, status: {}.", statusCode);
             }
             Long responseTime = System.currentTimeMillis() - startTime;
