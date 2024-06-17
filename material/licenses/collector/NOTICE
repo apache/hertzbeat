@@ -152,12 +152,6 @@ Copyright 2001-2024 The Apache Software Foundation
 This product includes software developed at
 The Apache Software Foundation (https://www.apache.org/).
 ========================================================================
-Apache Commons IO
-Copyright 2002-2024 The Apache Software Foundation
-
-This product includes software developed at
-The Apache Software Foundation (https://www.apache.org/).
-========================================================================
 Apache Commons Net
 Copyright 2001-2024 The Apache Software Foundation
 
@@ -169,6 +163,52 @@ Copyright 2002-2024 The Apache Software Foundation
 
 This product includes software developed at
 The Apache Software Foundation (https://www.apache.org/).
+========================================================================
+Micrometer
+
+Copyright (c) 2017-Present VMware, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+-------------------------------------------------------------------------------
+
+This product contains a modified portion of 'io.netty.util.internal.logging',
+in the Netty/Common library distributed by The Netty Project:
+
+  * Copyright 2013 The Netty Project
+  * License: Apache License v2.0
+  * Homepage: https://netty.io
+
+This product contains a modified portion of 'StringUtils.isBlank()',
+in the Commons Lang library distributed by The Apache Software Foundation:
+
+  * Copyright 2001-2019 The Apache Software Foundation
+  * License: Apache License v2.0
+  * Homepage: https://commons.apache.org/proper/commons-lang/
+
+This product contains a modified portion of 'JsonUtf8Writer',
+in the Moshi library distributed by Square, Inc:
+
+  * Copyright 2010 Google Inc.
+  * License: Apache License v2.0
+  * Homepage: https://github.com/square/moshi
+
+This product contains a modified portion of the 'org.springframework.lang'
+package in the Spring Framework library, distributed by VMware, Inc:
+
+  * Copyright 2002-2019 the original author or authors.
+  * License: Apache License v2.0
+  * Homepage: https://spring.io/projects/spring-framework
 ========================================================================
                             The Netty Project
                             =================
@@ -434,48 +474,6 @@ decompression for Java., which can be obtained at:
   * HOMEPAGE:
     * https://github.com/hyperxpro/Brotli4j
 ========================================================================
-perfmark
-Copyright 2019 Google LLC
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
------------------------------------------------------------------------
-
-This product contains a modified portion of 'Catapult', an open source
-Trace Event viewer for Chome, Linux, and Android applications, which can 
-be obtained at:
-
-  * LICENSE:
-    * traceviewer/src/main/resources/io/perfmark/traceviewer/third_party/catapult/LICENSE (New BSD License)
-  * HOMEPAGE:
-    * https://github.com/catapult-project/catapult
-
-This product contains a modified portion of 'Polymer', a library for Web
-Components, which can be obtained at:
-  * LICENSE:
-    * traceviewer/src/main/resources/io/perfmark/traceviewer/third_party/polymer/LICENSE (New BSD License)
-  * HOMEPAGE:
-    * https://github.com/Polymer/polymer
-
-
-This product contains a modified portion of 'ASM', an open source
-Java Bytecode library, which can be obtained at:
-
-  * LICENSE:
-    * agent/src/main/resources/io/perfmark/agent/third_party/asm/LICENSE (BSD style License)
-  * HOMEPAGE:
-    * https://asm.ow2.io/
-========================================================================
 Prometheus instrumentation library for JVM applications
 Copyright 2012-2015 The Prometheus Authors
 
@@ -487,11 +485,6 @@ SoundCloud Ltd. (http://soundcloud.com/).
 
 This product includes software developed as part of the
 Ocelli project by Netflix Inc. (https://github.com/Netflix/ocelli/).
-========================================================================
-Swagger Core - ${pom.name}
-Copyright (c) 2015. SmartBear Software Inc.
-Swagger Core - ${pom.name}  is licensed under Apache 2.0 license.
-Copy of the Apache 2.0 license can be found in `LICENSE` file.
 ========================================================================
 # Notices for Eclipse Jakarta Validation
 
@@ -538,12 +531,6 @@ Test dependencies:
 ========================================================================
 Apache Commons Collections
 Copyright 2001-2024 The Apache Software Foundation
-
-This product includes software developed at
-The Apache Software Foundation (https://www.apache.org/).
-========================================================================
-Apache Commons Compress
-Copyright 2002-2024 The Apache Software Foundation
 
 This product includes software developed at
 The Apache Software Foundation (https://www.apache.org/).
@@ -701,60 +688,6 @@ The original XML Schemas for Java EE Deployment Descriptors:
 may be obtained from:
 http://www.oracle.com/webfolder/technetwork/jsc/xml/ns/javaee/index.html
 ========================================================================
-   ==  NOTICE file corresponding to section 4(d) of the Apache License,   ==
-   ==  Version 2.0, in this case for the Apache XmlBeans distribution.    ==
-
-   This product includes software developed at
-   The Apache Software Foundation (http://www.apache.org/).
-
-   Portions of this software were originally based on the following:
-     - software copyright (c) 2000-2003, BEA Systems, <http://www.bea.com/>.
-   Note: The ASF Secretary has on hand a Software Grant Agreement (SGA) from
-   BEA Systems, Inc. dated 9 Sep 2003 for XMLBeans signed by their EVP/CFO.
-
-   Aside from contributions to the Apache XMLBeans project, this
-   software also includes:
-
-    - one or more source files from the Apache Xerces-J and Apache Axis
-      products, Copyright (c) 1999-2003 Apache Software Foundation
-
-    - W3C XML Schema documents Copyright 2001-2003 (c) World Wide Web
-      Consortium (Massachusetts Institute of Technology, European Research
-      Consortium for Informatics and Mathematics, Keio University)
-
-    - resolver.jar from Apache Xml Commons project,
-      Copyright (c) 2001-2003 Apache Software Foundation
-
-ExceptionUtils is derived from `scala.util.control.NonFatal` in scala-library
-which was released under the Apache 2.0 license.
-
-Copyright (c) 2002-2023 EPFL
-Copyright (c) 2011-2023 Lightbend, Inc.
-
-Scala includes software developed at
-LAMP/EPFL (https://lamp.epfl.ch/) and
-Lightbend, Inc. (https://www.lightbend.com/).
-========================================================================
-   Copyright (c) 2012-2022, The ATTOPARSER team (https://www.attoparser.org)
- 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
- 
-       https://www.apache.org/licenses/LICENSE-2.0
- 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-========================================================================
-Apache FreeMarker
-Copyright 2015-2018 The Apache Software Foundation
-
-This product includes software developed at
-The Apache Software Foundation (http://www.apache.org/).
-========================================================================
 Copyright 2005,2009 Ivan SZKIBA
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -773,34 +706,6 @@ This product includes the software developed by third-party:
 
  * Google Guava https://code.google.com/p/guava-libraries/  (Apache-2.0)
  * sbt-extras: https://github.com/paulp/sbt-extras  (BSD)  (LICENSE.sbt-extras.txt)
-========================================================================
-   Copyright (c) 2011-2022, The THYMELEAF team (http://www.thymeleaf.org)
- 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
- 
-       http://www.apache.org/licenses/LICENSE-2.0
- 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
-========================================================================
-   Copyright (c) 2014-2017, The UNBESCAPE team (http://www.unbescape.org)
- 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
- 
-       http://www.apache.org/licenses/LICENSE-2.0
- 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
 ========================================================================
 This product includes software developed by Google
  Snappy: http://code.google.com/p/snappy/ (New BSD License)
@@ -825,24 +730,6 @@ Third-Party Notices and Licenses:
   License: Apache License 2.0
   Source/Reference: https://github.com/apache/hadoop/blob/trunk/NOTICE.txt
 ========================================================================
-   Apache Xerces Java
-   Copyright 1999-2018 The Apache Software Foundation
-
-   This product includes software developed at
-   The Apache Software Foundation (http://www.apache.org/).
-
-   Portions of this software were originally based on the following:
-     - software copyright (c) 1999, IBM Corporation., http://www.ibm.com.
-     - software copyright (c) 1999, Sun Microsystems., http://www.sun.com.
-     - voluntary contributions made by Paul Eng on behalf of the 
-       Apache Software Foundation that were originally developed at iClick, Inc.,
-       software copyright (c) 1999.
-========================================================================
-Dropwizard
-Copyright 2010-2013 Coda Hale and Yammer, Inc., 2014-2020 Dropwizard Team
-
-This product includes software developed by Coda Hale and Yammer, Inc.
-========================================================================
 Apache Commons Math
 Copyright 2001-2022 The Apache Software Foundation
 
@@ -852,25 +739,6 @@ The Apache Software Foundation (http://www.apache.org/).
 This product includes software developed for Orekit by
 CS Systèmes d'Information (http://www.c-s.fr/)
 Copyright 2010-2012 CS Systèmes d'Information
-========================================================================
-Apache Thrift
-Copyright (C) 2006 - 2019, The Apache Software Foundation
-
-This product includes software developed at
-The Apache Software Foundation (http://www.apache.org/).
-========================================================================
-   Apache Xerces Java
-   Copyright 1999-2018 The Apache Software Foundation
-
-   This product includes software developed at
-   The Apache Software Foundation (http://www.apache.org/).
-
-   Portions of this software were originally based on the following:
-     - software copyright (c) 1999, IBM Corporation., http://www.ibm.com.
-     - software copyright (c) 1999, Sun Microsystems., http://www.sun.com.
-     - voluntary contributions made by Paul Eng on behalf of the 
-       Apache Software Foundation that were originally developed at iClick, Inc.,
-       software copyright (c) 1999.
 ========================================================================
 Apache Commons JEXL
 Copyright 2001-2024 The Apache Software Foundation

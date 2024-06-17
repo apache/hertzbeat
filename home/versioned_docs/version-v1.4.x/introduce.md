@@ -105,7 +105,7 @@ Do you believe that users can just write a monitoring template on the UI page, c
 
 ### No Agent Required
 
-> For users who have used various systems, the most troublesome thing is the installation, deployment, debugging and upgrading of various `agents'.     
+> For users who have used various systems, the most troublesome thing is the installation, deployment, debugging and upgrading of various `agents`.     
 > You need to install one `agent` per host, and several corresponding `agents` to monitor different application middleware, and the number of monitoring can easily reach thousands, so writing a batch script may ease the burden.    
 > The problem of whether the version of `agent` is compatible with the main application, debugging the communication between `agent` and the main application, upgrading the `agent` synchronization and so on and so forth, are all big headaches.   
 

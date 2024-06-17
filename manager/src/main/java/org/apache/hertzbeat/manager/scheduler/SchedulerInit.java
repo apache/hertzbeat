@@ -57,7 +57,8 @@ public class SchedulerInit implements CommandLineRunner {
     private CollectJobScheduling collectJobScheduling;
    
     private static final String MAIN_COLLECTOR_NODE_IP = "127.0.0.1";
-    
+    private static final String DEFAULT_COLLECTOR_VERSION = "DEBUG";
+
     @Autowired
     private AppService appService;
     
@@ -84,6 +85,7 @@ public class SchedulerInit implements CommandLineRunner {
         CollectorInfo collectorInfo = CollectorInfo.builder()
                 .name(CommonConstants.MAIN_COLLECTOR_NODE)
                 .ip(MAIN_COLLECTOR_NODE_IP)
+                .version(DEFAULT_COLLECTOR_VERSION)
                 .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
