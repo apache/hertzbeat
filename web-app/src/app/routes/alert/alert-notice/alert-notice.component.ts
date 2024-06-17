@@ -387,7 +387,7 @@ export class AlertNoticeComponent implements OnInit {
         if (control.invalid && !(Object.keys(control?.errors || {}).length === 0)) {
           isWaring = true;
           control.markAsDirty();
-          control.updateValueAndValidity({ onlySelf: true});
+          control.updateValueAndValidity({ onlySelf: true });
         }
       });
       if (isWaring) {
