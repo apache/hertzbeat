@@ -19,10 +19,9 @@
         "start/victoria-metrics-init",
         "start/iotdb-init",
         "start/tdengine-init",
-        "start/greptime-init",
         "start/influxdb-init",
-        "start/mysql-change",
         "start/postgresql-change",
+        "start/mysql-change",
         "start/custom-config",
         "start/ssl-cert-practice"
       ]
@@ -77,13 +76,6 @@
           "label": "snmp",
           "items": [
             "advanced/extend-snmp"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "push",
-          "items": [
-            "advanced/extend-push"
           ]
         },
         {
@@ -154,6 +146,7 @@
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
+            "help/imap",
             "help/pop3",
             "help/smtp",
             "help/ntp",
@@ -187,7 +180,8 @@
             "help/nebulaGraph",
             "help/nebulagraph_cluster",
             "help/tidb",
-            "help/mongodb"
+            "help/mongodb",
+            "help/mongodb_atlas"
           ]
         },
         {
@@ -236,6 +230,7 @@
           "items": [
             "help/spark",
             "help/flink",
+            "help/flink_on_yarn",
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",

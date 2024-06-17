@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -40,7 +40,7 @@ import { formatTagName } from '../../../shared/utils/common-util';
   templateUrl: './monitor-list.component.html',
   styleUrls: ['./monitor-list.component.less']
 })
-export class MonitorListComponent implements OnInit {
+export class MonitorListComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -74,6 +74,7 @@ export class MonitorListComponent implements OnInit {
   appSearchOrigin: any[] = [];
   appSearchResult: any[] = [];
   appSearchLoading = false;
+  intervalId: any;
 
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
@@ -99,6 +100,16 @@ export class MonitorListComponent implements OnInit {
       this.tableLoading = true;
       this.loadMonitorTable();
     });
+    // Set up an interval to refresh the table every 2 minutes
+    this.intervalId = setInterval(() => {
+      this.sync();
+    }, 12000); // 120000 ms = 2 minutes
+  }
+
+  ngOnDestroy(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
   }
 
   onFilterSearchMonitors() {
