@@ -37,10 +37,9 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Dashboard API
- * @author zqr10159
  */
 @Slf4j
-@Tag(name = "Dashboard API | 仪表盘API")
+@Tag(name = "Dashboard API")
 @RestController
 @RequestMapping(path = "/api/grafana/dashboard", produces = {APPLICATION_JSON_VALUE})
 public class DashboardController {
@@ -57,7 +56,7 @@ public class DashboardController {
      * create dashboard
      */
 
-    @Operation(summary = "Create dashboard | 创建仪表盘", description = "Create dashboard | 创建仪表盘")
+    @Operation(summary = "Create dashboard", description = "Create dashboard")
     @PostMapping
     public ResponseEntity<Message<?>> createDashboardByFile(MultipartFile file, Long monitorId) {
         String content = null;
@@ -79,7 +78,7 @@ public class DashboardController {
     /**
      * get dashboard by monitor id
      */
-    @Operation(summary = "Get dashboard by monitor id | 根据监控id获取仪表盘", description = "Get dashboard by monitor id | 根据监控id获取仪表盘")
+    @Operation(summary = "Get dashboard by monitor id", description = "Get dashboard by monitor id")
     @GetMapping
     public ResponseEntity<Message<?>> getDashboardByMonitorId(@RequestParam Long monitorId) {
         return ResponseEntity.ok(Message.success(dashboardService.getDashboardByMonitorId(monitorId)));
@@ -88,7 +87,7 @@ public class DashboardController {
     /**
      * get dashboard by monitor id
      */
-    @Operation(summary = "Get dashboardUrl by monitor id | 根据监控id获取仪表盘Url", description = "Get dashboardUrl by monitor id | 根据监控id获取仪表盘Url")
+    @Operation(summary = "Get dashboardUrl by monitor id", description = "Get dashboardUrl by monitor id")
     @GetMapping("/url")
     public ResponseEntity<Message<?>> getDashboardUrlByMonitorId(@RequestParam Long monitorId) {
         String suffix;

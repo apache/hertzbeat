@@ -63,11 +63,11 @@ public class DashboardService {
                     if (dashboard != null) {
                         dashboard.setMonitorId(monitorId);
                         dashboardDao.save(dashboard);
-                        log.info("create token success, token: {}", res.getContent());
+                        log.info("create dashboard success, token: {}", res.getContent());
                     }
                 })
                 .onError((ex, req, res) -> {
-                    log.error("create token error", ex);
+                    log.error("create dashboard error", ex);
                 }).executeAsResponse();
         return forestResponse;
     }

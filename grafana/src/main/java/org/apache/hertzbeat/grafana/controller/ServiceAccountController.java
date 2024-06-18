@@ -36,9 +36,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
  * Service Account API
- * @author zqr10159
  */
-@Tag(name = "Service Account API | 服务账号API")
+@Tag(name = "Service Account API")
 @RestController
 @RequestMapping(path = "/api/grafana/service-account", produces = {APPLICATION_JSON_VALUE})
 public class ServiceAccountController {
@@ -62,7 +61,7 @@ public class ServiceAccountController {
      * get service accounts
      */
     @GetMapping(path = "/accounts")
-    @Operation(summary = "Get service account | 获取服务账号", description = "Get service account | 获取服务账号")
+    @Operation(summary = "Get service account", description = "Get service account")
     public ResponseEntity<Message<?>> getServiceAccount() {
         ForestResponse<?> response = serviceAccountService.getAccounts();
         if (response.isError()) {
@@ -75,7 +74,7 @@ public class ServiceAccountController {
      * create api token
      */
     @PostMapping(path = "/token")
-    @Operation(summary = "Create service account token | 创建服务账号token", description = "Create service account token | 创建服务账号token")
+    @Operation(summary = "Create service account token", description = "Create service account token")
     public ResponseEntity<Message<?>> createToken() {
         ForestResponse<?> response = serviceAccountService.createToken();
         if (response.isError()) {

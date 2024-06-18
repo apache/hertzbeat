@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.grafana.dao.ServiceAccountDao;
 import org.apache.hertzbeat.grafana.dao.ServiceTokenDao;
-import org.apache.hertzbeat.warehouse.config.WarehouseProperties;
+import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -49,14 +49,14 @@ public class DatasourceService {
 
 
     private final GrafanaConfiguration grafanaConfiguration;
-    private final WarehouseProperties warehouseProperties;
+    private final VictoriaMetricsProperties warehouseProperties;
 
     @Autowired
     public DatasourceService(
             GrafanaConfiguration grafanaConfiguration,
             ServiceAccountDao serviceAccountDao,
             ServiceTokenDao serviceTokenDao,
-            WarehouseProperties warehouseProperties
+            VictoriaMetricsProperties warehouseProperties
 
     ) {
         this.grafanaConfiguration = grafanaConfiguration;
@@ -68,7 +68,7 @@ public class DatasourceService {
         this.grafanaUrl = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
         this.grafanaUsername = grafanaConfiguration.getUsername();
         this.grafanaPassword = grafanaConfiguration.getPassword();
-        this.victoriaMetricsUrl = warehouseProperties.getStore().getVictoriaMetrics().getUrl();
+        this.victoriaMetricsUrl = warehouseProperties.url();
     }
 
     public ForestResponse<?> createDatasource() {
