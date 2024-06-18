@@ -2,8 +2,8 @@
 
 - 如果想自己本地快速部署的话，可以参考下面进行操作。
 
-> docker-compose 部署方案使用了 PostgreSQL + IoTDB 作为 Hertzbeat 依赖存储服务。   
-> 此方案会启动三个容器服务 PostgreSQL, IoTDB, HertzBeat   
+> docker-compose 部署方案使用了 PostgreSQL + victoria-metrics 作为 Hertzbeat 依赖存储服务。   
+> 此方案会启动三个容器服务 PostgreSQL, victoria-metrics, HertzBeat   
 
 ##### 安装Docker & Docker-compose
 
@@ -17,7 +17,7 @@
 ##### docker compose部署hertzbeat及其依赖服务     
 
 1. 下载hertzbeat-docker-compose安装部署脚本文件  
-   脚本文件位于代码仓库下`script/docker-compose/hertzbeat-postgre-iotdb` 链接 [script/docker-compose](https://github.com/hertzbeat/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgre-iotdb)   
+   脚本文件位于代码仓库下`script/docker-compose/hertzbeat-postgre-victoria-metrics` 链接 [script/docker-compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgre-victoria-metrics)   
 
 
 2. 进入部署脚本 docker-compose 目录, 执行  

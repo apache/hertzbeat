@@ -394,6 +394,7 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://mvnrepository.com/artifact/org.slf4j/jcl-over-slf4j/2.0.9 MIT
     https://mvnrepository.com/artifact/org.slf4j/jul-to-slf4j/2.0.9 MIT
     https://mvnrepository.com/artifact/org.slf4j/slf4j-api/2.0.9 MIT
+    https://mvnrepository.com/artifact/com.beetstra.jutf7/jutf7/1.0.0
 
 ========================================================================
 MIT-0 licenses

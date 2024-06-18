@@ -34,32 +34,33 @@ services:
     ports:
       - '5432:5432'
     environment:
-        - POSTGRES_USER=root
-        - POSTGRES_PASSWORD=123456
-        - TZ=Asia/Shanghai
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: 123456
+      TZ: Asia/Shanghai
     volumes:
-        - ./conf/sql:/docker-entrypoint-initdb.d/
+      - ./dbdata/pgdata/data:/var/lib/postgresql/data
+      - ./conf/sql:/docker-entrypoint-initdb.d/
+      - ./ext-lib:/opt/hertzbeat/ext-lib
     networks:
       - hertzbeat
 
-  iotdb:
-    image: apache/iotdb:1.2.2-standalone
-    container_name: compose-iotdb
-    hostname: iotdb
+  victoria-metrics:
+    image: victoriametrics/victoria-metrics:v1.95.1
+    container_name: compose-victoria-metrics
+    hostname: victoria-metrics
     restart: always
     healthcheck:
-      test: ["CMD", "ls", "/iotdb/data"]
+      test: ["CMD", "wget", "-q", "-O", "-", "http://victoria-metrics:8428/-/healthy"]
       interval: 10s
-      timeout: 5s
       retries: 5
+      timeout: 5s
       start_period: 30s
     environment:
       TZ: Asia/Shanghai
     ports:
-      - "8181"
-      - "6667"
+      - "8428"
     volumes:
-      - ./dbdata/iotdbdata:/iotdb/data
+      - ./dbdata/tsdbdata:/victoria-metrics-data
     networks:
       - hertzbeat
 
@@ -74,7 +75,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      iotdb:
+      victoria-metrics:
         condition: service_healthy
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
