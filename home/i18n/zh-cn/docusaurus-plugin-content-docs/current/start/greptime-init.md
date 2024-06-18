@@ -1,7 +1,7 @@
 ---
 id: greptime-init  
-title: 依赖时序数据库服务GreptimeDB安装初始化
-sidebar_label: 指标数据存储GreptimeDB
+title: 依赖时序数据库服务 GreptimeDB 安装初始化（可选）
+sidebar_label: 指标数据存储 GreptimeDB
 ---
 
 Apache HertzBeat (incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
