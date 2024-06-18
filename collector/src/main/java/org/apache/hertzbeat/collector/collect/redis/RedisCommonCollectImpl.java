@@ -17,19 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.redis;
 
-import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
-import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
-import org.apache.hertzbeat.collector.collect.common.cache.RedisConnect;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.MapCapUtil;
-import org.apache.hertzbeat.common.constants.SignConstants;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
@@ -41,19 +28,36 @@ import io.lettuce.core.cluster.models.partitions.Partitions;
 import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
 import io.lettuce.core.resource.DefaultClientResources;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
+import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
+import org.apache.hertzbeat.collector.collect.common.cache.RedisConnect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.MapCapUtil;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
-
-import java.time.Duration;
-import java.util.*;
 
 /**
  * Redis single cluster collector
  */
 @Slf4j
 public class RedisCommonCollectImpl extends AbstractCollect {
-
 
     private static final String CLUSTER = "3";
 
@@ -62,20 +66,22 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     private static final String UNIQUE_IDENTITY = "identity";
 
     private final ClientResources defaultClientResources;
-
+    private final ConnectionCommonCache<CacheIdentifier, RedisConnect> connectionCommonCache;
+    
     public RedisCommonCollectImpl() {
         defaultClientResources = DefaultClientResources.create();
+        connectionCommonCache = new ConnectionCommonCache<>();
+    }
+
+    public void preCheck(Metrics metrics) throws IllegalArgumentException{
+        Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
+        RedisProtocol redisProtocol = metrics.getRedis();
+        Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
+        Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        try {
-            preCheck(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         try {
             if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 List<Map<String, String>> redisInfoList = getClusterRedisInfo(metrics);
@@ -179,7 +185,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClient redisClient = buildSingleClient(redisProtocol);
             connection = redisClient.connect();
-            ConnectionCommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
+            connectionCommonCache.addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -217,7 +223,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             // reuse connection failed, new one
             RedisClusterClient redisClusterClient = buildClusterClient(redisProtocol);
             connection = redisClusterClient.connect();
-            ConnectionCommonCache.getInstance().addCache(identifier, new RedisConnect(connection));
+            connectionCommonCache.addCache(identifier, new RedisConnect(connection));
         }
         return connection;
     }
@@ -230,9 +236,9 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      */
     private StatefulConnection<String, String> getStatefulConnection(CacheIdentifier identifier) {
         StatefulConnection<String, String> connection = null;
-        Optional<Object> cacheOption = ConnectionCommonCache.getInstance().getCache(identifier, true);
+        Optional<RedisConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
         if (cacheOption.isPresent()) {
-            RedisConnect redisConnect = (RedisConnect) cacheOption.get();
+            RedisConnect redisConnect = cacheOption.get();
             connection = redisConnect.getConnection();
             if (!connection.isOpen()) {
                 try {
@@ -241,7 +247,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                     log.info("The redis connect form cache, close error: {}", e.getMessage());
                 }
                 connection = null;
-                ConnectionCommonCache.getInstance().removeCache(identifier);
+                connectionCommonCache.removeCache(identifier);
             }
         }
         return connection;
@@ -268,16 +274,16 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     private RedisURI redisUri(RedisProtocol redisProtocol) {
-        RedisURI redisUri = RedisURI.create(redisProtocol.getHost(), Integer.parseInt(redisProtocol.getPort()));
+        RedisURI.Builder redisUriBuilder = RedisURI.builder().withHost(redisProtocol.getHost()).withPort(Integer.parseInt(redisProtocol.getPort()));
         if (StringUtils.hasText(redisProtocol.getUsername())) {
-            redisUri.setUsername(redisProtocol.getUsername());
+            redisUriBuilder.withClientName(redisProtocol.getUsername());
         }
         if (StringUtils.hasText(redisProtocol.getPassword())) {
-            redisUri.setPassword(redisProtocol.getPassword().toCharArray());
+            redisUriBuilder.withPassword(redisProtocol.getPassword().toCharArray());
         }
         Duration timeout = Duration.ofMillis(CollectUtil.getTimeout(redisProtocol.getTimeout()));
-        redisUri.setTimeout(timeout);
-        return redisUri;
+        redisUriBuilder.withTimeout(timeout);
+        return redisUriBuilder.build();
     }
 
     private String removeCr(String value) {
@@ -299,7 +305,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     private Map<String, String> parseInfo(String info, Metrics metrics) {
-        // yml配置的指标总和
+        // total of metrics configured in yml
         int fieldTotalSize = metrics.getFields().size();
         String[] lines = info.split(SignConstants.LINE_FEED);
         Map<String, String> result = new HashMap<>(MapCapUtil.calInitMap(fieldTotalSize));
@@ -312,7 +318,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .forEach(it -> {
                     result.put(it[0], it[1]);
                 });
-        // fix https://github.com/dromara/hertzbeat/pull/913
+        // fix https://github.com/apache/hertzbeat/pull/913
         if (result.size() < fieldTotalSize) {
             for (Metrics.Field field : metrics.getFields()) {
                 if (!result.containsKey(field.getField())) {
@@ -321,15 +327,6 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             }
         }
         return result;
-    }
-
-    private void preCheck(Metrics metrics) {
-        if (metrics == null || metrics.getRedis() == null) {
-            throw new IllegalArgumentException("Redis collect must has redis params");
-        }
-        RedisProtocol redisProtocol = metrics.getRedis();
-        Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
-        Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
     }
 
     @Override

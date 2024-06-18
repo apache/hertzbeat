@@ -17,7 +17,16 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,14 +37,6 @@ import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-
-import java.time.LocalDateTime;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
-
 /**
  * Common Config Entity
  */
@@ -45,17 +46,17 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Common server config entity | 公共服务端配置实体")
+@Schema(description = "Common server config entity")
 @EntityListeners(AuditingEntityListener.class)
 public class GeneralConfig {
 
     @Id
-    @Schema(title = "Config type: email sms, primary key ", description = "配置类型: email sms, 主键",
+    @Schema(title = "Config type: email sms, primary key ", description = "Config type: email sms, primary key ",
             accessMode = READ_WRITE)
     @NotNull
     private String type;
 
-    @Schema(title = "Config content", description = "配置内容，格式为json", accessMode = READ_WRITE)
+    @Schema(title = "Config content", description = "Config content，formatjson", accessMode = READ_WRITE)
     @Column(length = 8192)
     private String content;
 

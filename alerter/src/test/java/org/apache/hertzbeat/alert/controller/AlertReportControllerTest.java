@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.apache.hertzbeat.alert.dto.GeneralCloudAlertReport;
 import org.apache.hertzbeat.alert.dto.TenCloudAlertReport;
 import org.apache.hertzbeat.alert.service.AlertService;
@@ -33,13 +36,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * unit test for {@link AlertReportController }
- *
  */
 @ExtendWith(MockitoExtension.class)
 class AlertReportControllerTest {
@@ -63,8 +61,8 @@ class AlertReportControllerTest {
         dimensions.setUnInstanceId("3333");
 
         TenCloudAlertReport.AlarmObjInfo alarmObjInfo = new TenCloudAlertReport.AlarmObjInfo();
-        alarmObjInfo.setRegion("广东");
-        alarmObjInfo.setNamespace("广州节点1");
+        alarmObjInfo.setRegion("Guangzhou");
+        alarmObjInfo.setNamespace("Guangzhou1");
         alarmObjInfo.setAppId("1111");
         alarmObjInfo.setUin("2222");
         alarmObjInfo.setDimensions(dimensions);
@@ -78,13 +76,13 @@ class AlertReportControllerTest {
         conditions.setCurrentValue("b");
         conditions.setCalcUnit("bb");
         conditions.setProductName("guangzhou");
-        conditions.setProductShowName("广州");
+        conditions.setProductShowName("Guangzhou1");
         conditions.setEventName("CVS");
-        conditions.setEventShowName("内核异常");
+        conditions.setEventShowName("Core error");
 
         TenCloudAlertReport.AlarmPolicyInfo alarmPolicyInfo = new TenCloudAlertReport.AlarmPolicyInfo();
         alarmPolicyInfo.setPolicyTypeCname("x");
-        alarmPolicyInfo.setPolicyName("测试1");
+        alarmPolicyInfo.setPolicyName("Test1");
         alarmPolicyInfo.setConditions(conditions);
 
         TenCloudAlertReport report = TenCloudAlertReport.builder()

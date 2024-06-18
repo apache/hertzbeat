@@ -55,7 +55,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 1. `docker` 环境仅需一条命令即可开始
 
-```docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat```
 
 ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 
@@ -67,7 +67,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 #### 方式二：通过安装包安装    
 
-1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [GITHUB Release](https://github.com/apache/hertzbeat/releases)
 2. 需要已安装java环境, `jdk11`
 3. [可选]配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`
 4. 部署启动 `$ ./startup.sh `
@@ -85,8 +85,8 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 ##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+iotdb/tdengine
 
-通过 [docker-compose部署脚本](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose) 一次性把 mysql 数据库, iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
+通过 [docker-compose部署脚本](https://github.com/apache/hertzbeat/tree/master/script/docker-compose) 一次性把 mysql 数据库, iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
-详细步骤参考 [docker-compose部署方案](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose/README.md)  
+详细步骤参考 [docker-compose部署方案](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/README.md)  
 
 **HAVE FUN**

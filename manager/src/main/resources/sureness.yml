@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-## -- sureness.yml文本数据源 -- ##
+## -- sureness.yml account source -- ##
 
-# 加载到匹配字典的资源,也就是需要被保护的,设置了所支持角色访问的资源
-# 没有配置的资源也默认被认证保护,但不鉴权
-# eg: /api/v1/source1===get===[admin] 表示 /api/v2/host===post 这条资源支持 admin 这一种角色访问
-# eg: /api/v1/source2===get===[] 表示 /api/v1/source2===get 这条资源不支持任何角色访问
+# config the resource restful api that need auth protection, base rbac
+# rule: api===method===role 
+# eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
+# eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
   - /api/account/auth/refresh===post===[admin,user,guest]
   - /api/apps/**===get===[admin,user,guest]
@@ -58,12 +58,10 @@ resourceRole:
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
   - /api/status/page/**===delete===[admin]
-  - /api/grafana/**===get===[admin,user,guest]
-  - /api/grafana/**===post===[admin,user]
-  - /api/grafana/**===put===[admin,user]
-  - /api/grafana/**===delete===[admin]
-# 需要被过滤保护的资源,不认证鉴权直接访问
-# /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
+
+# config the resource restful api that need bypass auth protection
+# rule: api===method 
+# eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
   - /api/alerts/report/**===*
   - /api/account/auth/**===*
@@ -71,7 +69,7 @@ excludedResource:
   - /api/apps/hierarchy===get
   - /api/push/**===*
   - /api/status/page/public/**===*
-  # web ui 前端静态资源
+  # web ui resource
   - /===get
   - /dashboard/**===get
   - /monitors/**===get
@@ -92,18 +90,17 @@ excludedResource:
   - /**/*.json===get
   - /**/*.woff===get
   - /**/*.eot===get
-  # swagger ui 资源
+  # swagger ui resource
   - /swagger-resources/**===get
   - /v2/api-docs===get
   - /v3/api-docs===get
   # h2 database
   - /h2-console/**===*
 
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为hertzbeat
-# eg: tom 拥有[user],密码为hertzbeat
-# eg: lili 拥有[guest],明文密码为lili, 加盐密码为1A676730B0C7F54654B0E09184448289
+# account info config
+# eg: admin has role [admin,user], password is hertzbeat
+# eg: tom has role [user], password is hertzbeat
+# eg: lili has role [guest], plain password is lili, salt is 123, salted password is 1A676730B0C7F54654B0E09184448289
 account:
   - appId: admin
     credential: hertzbeat
@@ -115,9 +112,9 @@ account:
     credential: hertzbeat
     role: [guest]
   - appId: lili
-    # 注意 Digest认证不支持加盐加密的密码账户
-    # 加盐加密的密码，通过 MD5(password+salt)计算
-    # 此账户的原始密码为 lili
-    credential: 1A676730B0C7F54654B0E09184448289
+    # credential = MD5(password + salt)
+    # plain password: hertzbeat
+    # attention: digest authentication does not support salted encrypted password accounts
+    credential: 94C6B34E7A199A9F9D4E1F208093B489
     salt: 123
-    role: [guest]
+    role: [user]

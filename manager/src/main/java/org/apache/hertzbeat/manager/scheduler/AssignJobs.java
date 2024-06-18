@@ -17,19 +17,18 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
- * 分配的采集任务列表
  * List of assigned collection tasks
  */
 @Slf4j
 @Data
 public class AssignJobs {
+
     /**
      * current assign jobIds
      */

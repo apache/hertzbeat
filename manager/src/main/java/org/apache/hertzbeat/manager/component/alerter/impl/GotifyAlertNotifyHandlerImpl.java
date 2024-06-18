@@ -25,7 +25,11 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 /**
@@ -37,11 +41,11 @@ import org.springframework.stereotype.Component;
 public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl{
 
     /**
-     * 发送报警通知
+     * Send alarm notification
      *
-     * @param receiver       Notification configuration information   通知配置信息
-     * @param noticeTemplate Notification configuration information   通知配置信息
-     * @param alert          Alarm information                        告警信息
+     * @param receiver       Notification configuration information
+     * @param noticeTemplate Notification configuration information
+     * @param alert          Alarm information
      * @throws AlertNoticeException when send receiver error
      */
     @Override
@@ -73,9 +77,9 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     }
 
     /**
-     * 通知类型
+     * notification type
      *
-     * @return 通知类型
+     * @return notification type
      */
     @Override
     public byte type() {
@@ -88,7 +92,6 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         private String message;
         private Extras extras;
 
-
         @Data
         public static class Extras {
             @JsonProperty("client::display")
@@ -99,7 +102,6 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         public static class ClientDisplay {
             private String contentType;
         }
-
 
     }
 }

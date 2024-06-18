@@ -17,9 +17,13 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
@@ -35,22 +39,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * Test case for {@link MonitorController}
  */
 @ExtendWith(MockitoExtension.class)
 class MonitorControllerTest {
 
-
-
     private MockMvc mockMvc;
-
 
     @Mock
     private MonitorServiceImpl monitorService;
@@ -74,7 +69,7 @@ class MonitorControllerTest {
         List<Param> params = new ArrayList<>();
         Param param = new Param();
         param.setField("host");
-        param.setValue("124.222.98.77");
+        param.setParamValue("124.222.98.77");
         params.add(param);
 
         MonitorDto monitorDto = new MonitorDto();
@@ -138,8 +133,6 @@ class MonitorControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(status().isOk())
                 .andReturn();
-
-
     }
 
     @Test
@@ -177,7 +170,6 @@ class MonitorControllerTest {
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Detect success."))
                 .andReturn();
-
     }
 
     @Test

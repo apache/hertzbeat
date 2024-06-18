@@ -17,64 +17,56 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
-import java.util.List;
-
 /**
  * Collection job management provides api interface
- * 调度采集job管理api接口
  */
 public interface CollectJobScheduling {
 
     /**
      * Execute a one-time collection task and get the collected data response
-     * 执行一次性采集任务,获取采集数据响应
-     * @param job Collect task details  采集任务详情
-     * @return Collection results       采集结果
+     * @param job Collect task details
+     * @return Collection results
      */
     List<CollectRep.MetricsData> collectSyncJobData(Job job);
     
     /**
      * Execute a one-time collection task and get the collected data response
-     * 执行一次性采集任务,获取采集数据响应
-     * @param job Collect task details  采集任务详情
+     * @param job Collect task details
      * @param collector collector identity name
-     * @return Collection results       采集结果
+     * @return Collection results
      */
     List<CollectRep.MetricsData> collectSyncJobData(Job job, String collector);
 
     /**
      * Issue periodic asynchronous collection tasks
-     * 下发周期性异步采集任务
-     * @param job Collect task details      采集任务详情
+     * @param job Collect task details
      * @param collector collector identity name
-     * @return long Job ID      采集任务ID
+     * @return long Job ID
      */
     long addAsyncCollectJob(Job job, String collector);
 
     /**
      * Update the periodic asynchronous collection tasks that have been delivered
-     * 更新已经下发的周期性异步采集任务
-     * @param modifyJob Collect task details        采集任务详情
-     * @return long Job ID      新采集任务ID
+     * @param modifyJob Collect task details
+     * @return long Job ID
      */
     long updateAsyncCollectJob(Job modifyJob);
     
     /**
      * Update the periodic asynchronous collection tasks that have been delivered
-     * 更新已经下发的周期性异步采集任务
-     * @param modifyJob Collect task details        采集任务详情
+     * @param modifyJob Collect task details
      * @param collector collector identity name
-     * @return long Job ID      新采集任务ID
+     * @return long Job ID
      */
     long updateAsyncCollectJob(Job modifyJob, String collector);
 
     /**
      * Cancel periodic asynchronous collection tasks
-     * 取消周期性异步采集任务
-     * @param jobId Job ID      采集任务ID
+     * @param jobId Job ID
      */
     void cancelAsyncCollectJob(Long jobId);
     

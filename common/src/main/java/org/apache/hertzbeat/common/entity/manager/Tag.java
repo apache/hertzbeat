@@ -17,7 +17,21 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,15 +41,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-import java.util.Objects;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Tag Entity
@@ -46,30 +51,31 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Tag Entity | 标签实体")
+@Schema(description = "Tag Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class Tag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(title = "Tag主键索引ID", example = "87584674384", accessMode = READ_ONLY)
+    @Schema(title = "Tag Primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
-    @Schema(title = "Tag Field | 标签名称", example = "app", accessMode = READ_WRITE)
+    @Schema(title = "Tag Field", example = "app", accessMode = READ_WRITE)
     @NotNull
     private String name;
 
-    @Schema(title = "Tag Value | 标签值", example = "23", accessMode = READ_WRITE)
-    @Column(name = "`value`", length = 2048)
-    private String value;
+    @Schema(title = "Tag Value", example = "23", accessMode = READ_WRITE)
+    @Column(length = 2048)
+    private String tagValue;
 
-    @Schema(title = "Tag Color | 标签颜色", example = "#ffff", accessMode = READ_WRITE)
+    @Schema(title = "Tag Color", example = "#ffff", accessMode = READ_WRITE)
     private String color;
 
-    @Schema(title = "Tag Color | 标签描述", example = "用于监控mysql", accessMode = READ_WRITE)
+    @Schema(title = "Tag Color", example = "Used for monitoring mysql", accessMode = READ_WRITE)
     private String description;
 
-    @Schema(title = "标记类型 0:监控自动生成(monitorId,monitorName) 1: 用户生成 2: 系统预置", accessMode = READ_WRITE)
+    @Schema(title = "Tag type 0: Auto-generated monitor (monitorId,monitorName) 1: user-generated 2: system preset",
+            accessMode = READ_WRITE)
     @Min(0)
     @Max(3)
     private byte type;
@@ -99,13 +105,13 @@ public class Tag {
             return false;
         }
         Tag tag = (Tag) o;
-        return Objects.equals(name, tag.name) && Objects.equals(value, tag.value);
+        return Objects.equals(name, tag.name) && Objects.equals(tagValue, tag.tagValue);
     }
 
     @Override
     public int hashCode() {
         int hash = 7;
-        hash = 13 * hash + (name == null ? 0 : name.hashCode()) + (value == null ? 0 : value.hashCode());
+        hash = 13 * hash + (name == null ? 0 : name.hashCode()) + (tagValue == null ? 0 : tagValue.hashCode());
         return hash;
     }
 }

@@ -6,12 +6,11 @@ sidebar_label: Version Upgrade Guide
 
 **HertzBeat Release Version List**
 
-- [Github Release](https://github.com/dromara/hertzbeat/releases)
-- [Gitee Release](https://gitee.com/dromara/hertzbeat/releases)
-- [DockerHub Release](https://hub.docker.com/r/tancloud/hertzbeat/tags)
-- [Docker quay.io Release](https://quay.io/repository/tancloud/hertzbeat?tab=tags)
+- [Download Page](https://hertzbeat.apache.org/docs/download)
+- [Github Release](https://github.com/apache/hertzbeat/releases)
+- [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
 
-HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL relational databases, and the collected metric data is stored in time series databases such as TDengine and IotDB.
+Apache HertzBeat (incubating)'s metadata information is stored in H2 or Mysql, PostgreSQL relational databases, and the collected metric data is stored in time series databases such as TDengine and IotDB.
 
 **You need to save and back up the data files of the database and monitoring templates yml files before upgrading**
 
@@ -27,12 +26,12 @@ HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL relational
 2. If using the built-in default H2 database  
    - Need to mount or back up `-v $(pwd)/data:/opt/hertzbeat/data` database file directory in the container `/opt/hertzbeat/data`
    - Stop and delete the container, delete the local HertzBeat docker image, and pull the new version image
-   - Refer to [Docker installation of HertzBeat] (docker-deploy) to create a new container using a new image. Note that the database file directory needs to be mounted `-v $(pwd)/data:/opt/hertzbeat/data`
+   - Refer to [Docker installation of HertzBeat](docker-deploy) to create a new container using a new image. Note that the database file directory needs to be mounted `-v $(pwd)/data:/opt/hertzbeat/data`
 
 3. If using external relational database Mysql, PostgreSQL  
    - No need to mount the database file directory in the backup container
    - Stop and delete the container, delete the local HertzBeat docker image, and pull the new version image
-   - Refer to [Docker installation HertzBeat] (docker-deploy) to create a new container using the new image, and configure the database connection in `application.yml`
+   - Refer to [Docker installation HertzBeat](docker-deploy) to create a new container using the new image, and configure the database connection in `application.yml`
 
 
 ### Upgrade For Package Deploy

@@ -90,6 +90,7 @@
       <th nzAlign="center" nzWidth="9%">{{ 'collector.pinned' | i18n }}</th>
       <th nzAlign="center" nzWidth="9%">{{ 'collector.dispatched' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.ip' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'collector.version' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.start-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -130,6 +131,7 @@
         </nz-tag>
       </td>
       <td nzAlign="center">{{ data.collector.ip }}</td>
+      <td nzAlign="center">{{ data.collector.version }}</td>
       <td nzAlign="center">
         {{ (data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}
       </td>
@@ -251,9 +253,6 @@
       <nz-badge nzStatus="processing" style="font-weight: bold" [nzText]="'collector.deploy.package' | i18n"></nz-badge>
       <a style="margin-left: 20px" href="https://github.com/apache/hertzbeat/releases" target="_blank">
         <span>{{ 'collector.deploy.package.github' | i18n }}</span>
-      </a>
-      <a style="margin-left: 10px" href="https://gitee.com/dromara/hertzbeat/releases" target="_blank">
-        <span>{{ 'collector.deploy.package.gitee' | i18n }}</span>
       </a>
       <div style="margin: 4px 10px 4px 4px; height: 260px; width: 100%; border-radius: 10px">
         <nz-code-editor

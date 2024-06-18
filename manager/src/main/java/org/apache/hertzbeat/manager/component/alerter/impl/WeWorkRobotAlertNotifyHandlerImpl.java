@@ -17,18 +17,30 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.List;
+import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.util.StrUtil;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 /**
  * Send alarm information through enterprise WeChat
- * 通过企业微信发送告警信息
  */
 @Component
 @RequiredArgsConstructor
@@ -51,6 +63,12 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
                 assert entity.getBody() != null;
                 if (entity.getBody().getErrCode() == 0) {
                     log.debug("Send WeWork webHook: {} Success", webHookUrl);
+                    WeWorkWebHookDto weWorkWebHookTextDto = checkNeedAtNominator(receiver, alert);
+                    if (!Objects.isNull(weWorkWebHookTextDto)) {
+                        HttpEntity<WeWorkWebHookDto> httpEntityText = new HttpEntity<>(weWorkWebHookTextDto, headers);
+                        restTemplate.postForEntity(webHookUrl, httpEntityText, CommonRobotNotifyResp.class);
+                    }
+
                 } else {
                     log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody().getErrMsg());
                     throw new AlertNoticeException(entity.getBody().getErrMsg());
@@ -64,6 +82,26 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
         }
     }
 
+    private WeWorkWebHookDto checkNeedAtNominator(NoticeReceiver receiver, Alert alert) {
+        if (StringUtils.isBlank(receiver.getPhone()) && StringUtils.isBlank(receiver.getUserId())) {
+            return null;
+        }
+        WeWorkWebHookDto weWorkWebHookTextDto = new WeWorkWebHookDto();
+        weWorkWebHookTextDto.setMsgtype(WeWorkWebHookDto.TEXT_MSG_TYPE);
+        WeWorkWebHookDto.TextDTO textDto = new WeWorkWebHookDto.TextDTO();
+        if (StringUtils.isNotBlank(receiver.getPhone())) {
+            textDto.setMentionedMobileList(StrUtil.analysisArgToList(receiver.getPhone()));
+            weWorkWebHookTextDto.setText(textDto);
+        }
+        if (StringUtils.isNotBlank(receiver.getUserId())) {
+            textDto.setMentionedList(StrUtil.analysisArgToList(receiver.getUserId()));
+            weWorkWebHookTextDto.setText(textDto);
+        }
+        return weWorkWebHookTextDto;
+
+    }
+
+
     @Override
     public byte type() {
         return 4;
@@ -76,32 +114,59 @@ final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     private static class WeWorkWebHookDto {
 
         public static final String WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
-        /**
-         * markdown格式
-         */
-        private static final String MARKDOWN = "markdown";
-        /**
-         * 文本格式
-         */
-        private static final String TEXT = "text";
 
         /**
-         * 消息类型
+         * default msg type : markdown format
+         */
+        private static final String DEFAULT_MSG_TYPE = "markdown";
+
+        /**
+         * text format
+         */
+        private static final String TEXT_MSG_TYPE = "text";
+
+        /**
+         * message type
          */
         @Builder.Default
-        private String msgtype = MARKDOWN;
+        private String msgtype = DEFAULT_MSG_TYPE;
 
         /**
-         * markdown消息
+         * markdown message
          */
         private MarkdownDTO markdown;
 
+        /**
+         * text message
+         */
+        private TextDTO text;
+
         @Data
         private static class MarkdownDTO {
+
             /**
-             * 消息内容
+             * message content
              */
             private String content;
+        }
+
+        @Data
+        private static class TextDTO {
+
+            /**
+             * message content
+             */
+            private String content;
+            /**
+             * @ userId
+             */
+            @JsonProperty(value = "mentioned_list")
+            private List<String> mentionedList;
+            /**
+             * @ phone
+             */
+            @JsonProperty(value = "mentioned_mobile_list")
+            private List<String> mentionedMobileList;
         }
 
     }

@@ -18,29 +18,40 @@
 package org.apache.hertzbeat.manager.component.status;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.ListJoin;
+import jakarta.persistence.criteria.Predicate;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.manager.*;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
+import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
+import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
+import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.manager.config.StatusProperties;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.StatusPageComponentDao;
 import org.apache.hertzbeat.manager.dao.StatusPageHistoryDao;
 import org.apache.hertzbeat.manager.dao.StatusPageOrgDao;
-import org.apache.hertzbeat.common.entity.manager.*;
-import org.apache.hertzbeat.manager.dao.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.ListJoin;
-import jakarta.persistence.criteria.Predicate;
-import java.time.*;
-import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * calculate component status for status page
@@ -106,7 +117,7 @@ public class CalculateStatus {
                                                     .getList("tags", Tag.class), JoinType.LEFT);
                                     if (StringUtils.hasText(tagItem.getValue())) {
                                         andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
-                                        andList.add(criteriaBuilder.equal(tagJoin.get("value"), tagItem.getValue()));
+                                        andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagItem.getValue()));
                                     } else {
                                         andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
                                     }
@@ -117,10 +128,10 @@ public class CalculateStatus {
                                 List<Monitor> monitorList = monitorDao.findAll(specification);
                                 state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN;
                                 for (Monitor monitor : monitorList) {
-                                    if (monitor.getStatus() == CommonConstants.UN_AVAILABLE_CODE) {
+                                    if (monitor.getStatus() == CommonConstants.MONITOR_DOWN_CODE) {
                                         state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL;
                                         break;
-                                    } else if (monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
+                                    } else if (monitor.getStatus() == CommonConstants.MONITOR_UP_CODE) {
                                         state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL;
                                     }
                                 }   
@@ -188,13 +199,13 @@ public class CalculateStatus {
                 for (StatusPageHistory statusPageHistory : statusPageHistoryList) {
                     statusPageHistory.setNormal(0);
                     statusPageHistory.setAbnormal(0);
-                    statusPageHistory.setUnknown(0);
+                    statusPageHistory.setUnknowing(0);
                     if (statusPageHistoryMap.containsKey(statusPageHistory.getComponentId())) {
                         StatusPageHistory history = statusPageHistoryMap.get(statusPageHistory.getComponentId());
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                             history.setAbnormal(history.getAbnormal() + intervals);
                         } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                            history.setUnknown(history.getUnknown() + intervals);
+                            history.setUnknowing(history.getUnknowing() + intervals);
                         } else {
                             history.setNormal(history.getNormal() + intervals);
                         }
@@ -203,7 +214,7 @@ public class CalculateStatus {
                         if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL) {
                             statusPageHistory.setAbnormal(intervals);
                         } else if (statusPageHistory.getState() == CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN) {
-                            statusPageHistory.setUnknown(intervals);
+                            statusPageHistory.setUnknowing(intervals);
                         } else {
                             statusPageHistory.setNormal(intervals);
                         }
@@ -212,7 +223,7 @@ public class CalculateStatus {
                 }
                 statusPageHistoryDao.deleteAll(statusPageHistoryList);
                 for (StatusPageHistory history : statusPageHistoryMap.values()) {
-                    double total = history.getNormal() + history.getAbnormal() + history.getUnknown();
+                    double total = history.getNormal() + history.getAbnormal() + history.getUnknowing();
                     double uptime = 0;
                     if (total > 0) {
                         uptime = (double) history.getNormal() / total;

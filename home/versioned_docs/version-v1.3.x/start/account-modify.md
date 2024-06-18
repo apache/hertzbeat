@@ -6,7 +6,7 @@ sidebar_label: Update Account
 
 HertzBeat default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat     
 If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.
-The configuration file content refer to project repository[/script/sureness.yml](https://gitee.com/dromara/hertzbeat/blob/master/script/sureness.yml)   
+The configuration file content refer to project repository[/script/sureness.yml](https://gitee.com/hertzbeat/hertzbeat/blob/master/script/sureness.yml)   
 Modify the following **part parameters** in sureness.yml：**[Note⚠️Other default sureness configuration parameters should be retained]**
 
 ```yaml
@@ -110,5 +110,20 @@ account:
     role: [guest]
 ```
 
+## Update Security Secret
+
+> This secret is the key for account security encryption management and needs to be updated to your custom key string of the same length.
+
+
+Update the `application.yml` file in the `config` directory, modify the `sureness.jwt.secret` parameter to your custom key string of the same length.
+
+```yaml
+sureness:
+  jwt:
+    secret: 'CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
+             LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+             8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
+             dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
+```
 
 **Restart HertzBeat, access http://ip:1157/ to explore**  

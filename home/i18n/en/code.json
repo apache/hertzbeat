@@ -263,13 +263,13 @@
     "message": "Makes protocols such as Http, Jmx, Ssh, Snmp, Jdbc configurable, you can collect any metrics by simply configuring the yml online. {br} High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration. {br} Flexible threshold rules and timely notifications delivered via discord slack email webhook more."
   },
   "opensource-content": {
-    "message": "HertzBeat's stand-alone and cluster version code are all open source, unlimited and anyone who are interested in it are very welcome to contribute. No matter how small the contribution is, whether it is a document code or a typo, we respect everyone and learn and grow together. {br} Hope that the code we participate in can be deployed to thousands of machines in this world.{github}"
+    "message": "Apache HertzBeat (incubating)'s stand-alone and cluster version code are all open source, unlimited and anyone who are interested in it are very welcome to contribute. No matter how small the contribution is, whether it is a document code or a typo, we respect everyone and learn and grow together. {br} Look forward our code to be deployed on thousands of machines worldwide.{github}"
   },
   "slogan": {
     "message": "Open Source Real-time Monitoring System"
   },
   "Who uses HertzBeat?": {
-    "message": "Who uses HertzBeat?"
+    "message": "Who uses Apache HertzBeat (incubating)?"
   },
   "theme.admonition.note": {
     "message": "note",
@@ -468,5 +468,37 @@
   },
   "Go to Github": {
     "message": "Go to Github"
+  },
+  "theme.NavBar.navAriaLabel": {
+    "message": "Main",
+    "description": "The ARIA label for the main navigation"
+  },
+  "theme.docs.sidebar.navAriaLabel": {
+    "message": "Docs sidebar",
+    "description": "The ARIA label for the sidebar navigation"
+  },
+  "theme.docs.sidebar.closeSidebarButtonAriaLabel": {
+    "message": "Close navigation bar",
+    "description": "The ARIA label for close button of mobile sidebar"
+  },
+  "theme.docs.sidebar.toggleSidebarButtonAriaLabel": {
+    "message": "Toggle navigation bar",
+    "description": "The ARIA label for hamburger menu button of mobile navigation"
+  },
+  "theme.tags.tagsPageTitle": {
+    "message": "Tags",
+    "description": "The title of the tag list page"
+  },
+  "team.name": {
+    "message": "Apache HertzBeat (incubating) Team"
+  },
+  "team.desc": {
+    "message": "The HertzBeat team is composed of contributors from various fields around the world. We embrace the community philosophy of openness and collaboration, welcoming👏 more people to join us and grow together with the community."
+  },
+  "team.tip": {
+    "message": "(In no particular order)"
+  },
+  "team.thanks": {
+    "message": "Thanks to these wonderful people, who already contributed to HertzBeat!"
   }
 }

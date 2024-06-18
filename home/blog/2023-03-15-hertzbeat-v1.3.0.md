@@ -29,9 +29,9 @@ Website: hertzbeat.com | tancloud.cn
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
 
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### v1.3.0 release is here
 
@@ -56,7 +56,7 @@ and more new features welcome to explore
 
 Only one docker command is needed to install and experience heartbeat
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 Thanks to the hertzbeat contributors for their contributions! 👍👍👍
 
@@ -97,5 +97,5 @@ COMMIT;
 
 ----
 
-**Github: https://github.com/dromara/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**      
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**

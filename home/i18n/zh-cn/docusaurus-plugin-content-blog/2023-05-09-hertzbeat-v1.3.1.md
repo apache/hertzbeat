@@ -29,9 +29,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
 
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### v1.3.1 来了
 
@@ -41,7 +41,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 支持监控EulerOS指标和SpringBoot3指标。修复若干BUG，完善了文档，重构了代码，提高了整体的稳定可用性还有更多新功能欢迎探索！快来体验下吧!
 
 只需要一条docker命令即可安装体验hertzbeat ：  
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 ## 升级注意⚠️.
 
@@ -72,5 +72,5 @@ COMMIT;
 
 ----
 
-**Github: https://github.com/dromara/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**      
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**

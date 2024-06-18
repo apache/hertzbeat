@@ -18,7 +18,12 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import java.util.Objects;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
@@ -30,8 +35,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.Objects;
 
 /**
  * WeChat app alert notify impl
@@ -52,7 +55,7 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     private static final String SECRET_URL = "https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=%s&corpsecret=%s";
 
     /**
-     * 应用消息发送对象
+     * app message send object
      */
     private static final String DEFAULT_ALL = "@all";
 
@@ -117,7 +120,7 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     private static class WeChatAppDTO {
 
         /**
-         * markdown格式
+         * markdown format
          */
         public static final String MARKDOWN = "markdown";
 
@@ -142,14 +145,14 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
         private TextDTO text;
 
         /**
-         * markdown消息
+         * markdown message
          */
         private MarkdownDTO markdown;
 
         @Data
         private static class MarkdownDTO {
             /**
-             * 消息内容
+             * message content
              */
             private String content;
         }
@@ -157,7 +160,7 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
         @Data
         private static class TextDTO {
             /**
-             * 消息内容
+             * message content
              */
             private String content;
         }

@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * expression calculate for number range
- * 数值区间表达式计算
  * [a,b] = {a <= x <= b}
  * [a,b) = {a <= x < b}
  * [a,+∞) = {a <= x}
@@ -29,7 +28,7 @@ import lombok.extern.slf4j.Slf4j;
  * (-∞,a]||[b,+∞) = {x <= a || x >= b}
  */
 @Slf4j
-public class IntervalExpressionUtil {
+public final class IntervalExpressionUtil {
 
     private static final String SPLIT_OR = "\\|\\|";
     private static final String SPLIT_AND = ",";
@@ -40,11 +39,14 @@ public class IntervalExpressionUtil {
     private static final String NEGATIVE = "-∞";
     private static final String POSITIVE = "+∞";
 
+    private IntervalExpressionUtil() {
+    }
+
     /**
      * CHECK WHETHER THE VALUE IS IN AN INTERVAL RANGE
      * @param numberValue NumericalValue
      * @param expression INTERVAL EXPRESSION
-     * @return true-是 false-否
+     * @return true-yes false-no
      */
     public static boolean validNumberIntervalExpress(Double numberValue, String expression) {
         if (expression == null || "".equals(expression)) {

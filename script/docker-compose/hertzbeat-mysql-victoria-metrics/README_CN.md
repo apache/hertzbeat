@@ -1,6 +1,5 @@
 ##  docker-compose部署 HertzBeat+Mysql+VictoriaMetrics 方案   
 
-- 如果不想部署而是直接使用，我们提供SAAS监控云-[TanCloud探云](https://console.tancloud.cn)，即刻 **[登录注册](https://console.tancloud.cn)** 免费使用。
 - 如果想自己本地快速部署的话，可以参考下面进行操作。
 
 > docker-compose 部署方案使用了 Mysql + VictoriaMetrics 作为 Hertzbeat 依赖存储服务。   
@@ -18,10 +17,13 @@
 ##### docker compose部署hertzbeat及其依赖服务     
 
 1. 下载hertzbeat-docker-compose安装部署脚本文件  
-   脚本文件位于代码仓库下`script/docker-compose/hertzbeat-mysql-victoria-metrics` 链接 [script/docker-compose](https://gitee.com/dromara/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-mysql-victoria-metrics)   
+   脚本文件位于代码仓库下`script/docker-compose/hertzbeat-mysql-victoria-metrics` 链接 [script/docker-compose](https://github.com/hertzbeat/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-mysql-victoria-metrics)   
 
+2. 添加 MYSQL jdbc 驱动 jar
+   下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+   将此 jar 包拷贝放入 ext-lib 目录下.
 
-2. 进入部署脚本 docker-compose 目录, 执行  
+3. 进入部署脚本 docker-compose 目录, 执行  
 
    `docker compose up -d`
 

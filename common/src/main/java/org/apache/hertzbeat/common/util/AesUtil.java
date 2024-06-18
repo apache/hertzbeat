@@ -17,37 +17,38 @@
 
 package org.apache.hertzbeat.common.util;
 
-import lombok.extern.slf4j.Slf4j;
-
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * AES Decode Encode Util
  */
 @Slf4j
-public class AesUtil {
+public final class AesUtil {
 
     /**
-     *  Default encryption key The AES encryption key is 16 bits by default. If the AES encryption key is larger than or smaller than 16 bits, an error message is displayed
+     *  Default encryption key The AES encryption key is 16 bits by default.
+     *  If the AES encryption key is larger than or smaller than 16 bits, an error message is displayed
      */
     private static final String ENCODE_RULES = "tomSun28HaHaHaHa";
 
     /**
-     *  Default algorithm
+     * Default algorithm
      */
     private static final String ALGORITHM_STR = "AES/CBC/PKCS5Padding";
 
     private static final String AES = "AES";
 
     /**
-     * Encryption key The AES encryption key is 16 bits. If the AES encryption key is larger than 16 bits, an error message is displayed
+     * Encryption key The AES encryption key is 16 bits.
+     * If the AES encryption key is larger than 16 bits, an error message is displayed
      */
     private static String secretKey = ENCODE_RULES;
 
@@ -142,7 +143,7 @@ public class AesUtil {
     public static boolean isCiphertext(String text, String decryptKey) {
         // First use whether it is base64 to determine whether it has been encrypted
         if (Base64Util.isBase64(text)) {
-            // If it is base64, decrypt directly to determine
+            // if it is base64, decrypt directly to determine
             try {
                 SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
                 Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
@@ -151,6 +152,7 @@ public class AesUtil {
                 byte[] byteDecode = cipher.doFinal(bytesContent);
                 return byteDecode != null;
             } catch (Exception e) {
+                log.warn("isCiphertext method error: {}", e.getMessage());
                 return false;
             }
         }

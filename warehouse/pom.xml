@@ -56,16 +56,6 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-jdbc</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
         <dependency>
@@ -85,7 +75,7 @@
             <artifactId>iotdb-session</artifactId>
             <version>${iotdb-session.version}</version>
         </dependency>
-        <!-- influxdb 这里支持1.7版本因此使用influxdb-java, 完全支持2.x版本需要使用influxdb-client-java -->
+        <!-- influxdb Here, support for version 1.7, use influxdb-java, Full support for version 2.x requires influxdb-client-java -->
         <dependency>
             <groupId>org.influxdb</groupId>
             <artifactId>influxdb-java</artifactId>

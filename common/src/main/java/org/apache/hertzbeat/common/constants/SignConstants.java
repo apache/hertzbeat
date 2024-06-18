@@ -26,7 +26,6 @@ public interface SignConstants {
 
     String WELL_NO = "#";
 
-
     String LINE_FEED = "\n";
 
     String CARRIAGE_RETURN = "\r";

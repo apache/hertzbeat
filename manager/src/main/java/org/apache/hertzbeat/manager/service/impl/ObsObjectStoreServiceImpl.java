@@ -19,19 +19,17 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import com.obs.services.ObsClient;
 import com.obs.services.model.ListObjectsRequest;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.manager.pojo.dto.FileDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.service.ObjectStoreService;
 
-import java.io.InputStream;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 /**
- * 华为云存储服务
  * Huawei cloud storage service
  */
 @Slf4j

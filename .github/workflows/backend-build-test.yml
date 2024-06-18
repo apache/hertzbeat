@@ -48,15 +48,19 @@ jobs:
       with:
         java-version: 17
     - name: Build with Maven
-      run: mvn clean -B package --file pom.xml
+      run: mvn clean -B package -Prelease --file pom.xml
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v4.0.1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Build Image
       env:
         IMAGE_PUSH: false
         IMAGE_LOAD: true
         IMAGE_PLATFORM: linux/amd64
       run: |
-        docker buildx create --use --name mybuilder --driver docker-container
-        docker buildx use mybuilder
+        docker buildx create --use --name myBuilder --driver docker-container
+        docker buildx use myBuilder
 
         ./script/docker/server/build.sh
     - name: Run E2E

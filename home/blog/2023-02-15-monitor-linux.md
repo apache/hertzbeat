@@ -18,7 +18,7 @@ keywords: [Open source monitoring tool, operating system monitoring, Linux monit
 - It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. You only need to configure YML to use these protocols to customize and collect any metrics you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 - HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring tools.
 
-Github: https://github.com/dromara/hertzbeat
+Github: https://github.com/apache/hertzbeat
 
 ### Get Linux Monitoring Done in HertzBeat in 5 Minutes
 
@@ -124,19 +124,19 @@ This practical article took us to experience how to use the open source real-tim
 
 > Only one docker command is needed to install and experience heartbeat:
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 ## What is Hertz Beat?
 
-> [HertzBeat Hertz Beat](https://github.com/dromara/hertzbeat) is a real-time monitoring and alarm system with powerful custom monitoring capabilities and no Agent required. Monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, and alarm notifications (email, WeChat, Dingding, Feishu, SMS, Discord, Slack, Telegram).
+> [HertzBeat Hertz Beat](https://github.com/apache/hertzbeat) is a real-time monitoring and alarm system with powerful custom monitoring capabilities and no Agent required. Monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, and alarm notifications (email, WeChat, Dingding, Feishu, SMS, Discord, Slack, Telegram).
 
 > We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure YML to use these protocols to customize and collect any metrics you want to collect.
 > Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 
 > The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.
 
-**Github: https://github.com/dromara/hertzbeat**
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ## ⛄ Supported
 

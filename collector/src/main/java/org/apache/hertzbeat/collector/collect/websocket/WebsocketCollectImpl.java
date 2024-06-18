@@ -17,17 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.websocket;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.CommonUtil;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,24 +34,41 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.springframework.util.Assert;
 
 /**
  * Websocket Collect
  */
 @Slf4j
 public class WebsocketCollectImpl extends AbstractCollect {
-    public WebsocketCollectImpl() {
+
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getWebsocket() == null) {
+            throw new IllegalArgumentException("Websocket collect must has Websocket params");
+        }
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getWebsocket() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Websocket collect must has Websocket params");
-            return;
-        }
+
         WebsocketProtocol websocketProtocol = metrics.getWebsocket();
+        // Compatible with monitoring templates without path parameters
+        if (StringUtils.isBlank(websocketProtocol.getPath())) {
+            websocketProtocol.setPath("/");
+        }
+        checkParam(websocketProtocol);
         String host = websocketProtocol.getHost();
         String port = websocketProtocol.getPort();
         Socket socket = null;
@@ -75,13 +81,12 @@ public class WebsocketCollectImpl extends AbstractCollect {
                 long responseTime = System.currentTimeMillis() - startTime;
                 OutputStream out = socket.getOutputStream();
                 InputStream in = socket.getInputStream();
-
-
-                send(out);
+                
+                send(out, websocketProtocol);
                 Map<String, String> resultMap = readHeaders(in);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
-                //  关闭输出流和Socket连接
+                // Close the output stream and socket connection
                 in.close();
                 out.close();
                 socket.close();
@@ -119,10 +124,10 @@ public class WebsocketCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_WEBSOCKET;
     }
 
-    private static void send(OutputStream out) throws IOException {
+    private void send(OutputStream out, WebsocketProtocol websocketProtocol) throws IOException {
         byte[] key = generateRandomKey();
         String base64Key = base64Encode(key);
-        String requestLine = "GET / HTTP/1.1\r\n";
+        String requestLine = "GET " + websocketProtocol.getPath() + " HTTP/1.1\r\n";
         out.write(requestLine.getBytes());
         String hostName = InetAddress.getLocalHost().getHostAddress();
         out.write(("Host:" + hostName + "\r\n").getBytes());
@@ -136,8 +141,8 @@ public class WebsocketCollectImpl extends AbstractCollect {
         out.flush();
     }
 
-    // 读取响应头
-    private static Map<String, String> readHeaders(InputStream in) throws IOException {
+    // Read response headers
+    private Map<String, String> readHeaders(InputStream in) throws IOException {
 
         Map<String, String> map = new HashMap<>(8);
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -148,19 +153,19 @@ public class WebsocketCollectImpl extends AbstractCollect {
             if (separatorIndex != -1) {
                 String key = line.substring(0, separatorIndex).trim();
                 String value = line.substring(separatorIndex + 1).trim();
-                // 首字母小写化
+                // Lowercase first letter
                 map.put(StringUtils.uncapitalize(key), value);
             } else {
-                // 切割HTTP/1.1, 101, Switching Protocols
+                // Cut HTTP/1.1, 101, Switching Protocols
                 String[] parts = line.split("\\s+", 3);
                 if (parts.length == 3) {
-                    for (int i = 0; i < parts.length; i++) {
-                        if (parts[i].startsWith("HTTP")) {
-                            map.put("httpVersion", parts[i]);
-                        } else if (Character.isDigit(parts[i].charAt(0))) {
-                            map.put("responseCode", parts[i]);
+                    for (String part : parts) {
+                        if (part.startsWith("HTTP")) {
+                            map.put("httpVersion", part);
+                        } else if (StringUtils.isNotBlank(part) && Character.isDigit(part.charAt(0))) {
+                            map.put("responseCode", part);
                         } else {
-                            map.put("statusMessage", parts[i]);
+                            map.put("statusMessage", part);
                         }
                     }
                 }
@@ -169,14 +174,20 @@ public class WebsocketCollectImpl extends AbstractCollect {
         return map;
     }
 
-    private static byte[] generateRandomKey() {
+    private byte[] generateRandomKey() {
         SecureRandom secureRandom = new SecureRandom();
         byte[] key = new byte[16];
         secureRandom.nextBytes(key);
         return key;
     }
 
-    private static String base64Encode(byte[] data) {
+    private void checkParam(WebsocketProtocol protocol) {
+        Assert.hasText(protocol.getHost(), "Websocket Protocol host is required.");
+        Assert.hasText(protocol.getPort(), "Websocket Protocol port is required.");
+        Assert.hasText(protocol.getPath(), "Websocket Protocol path is required.");
+    }
+    
+    private String base64Encode(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
     }
 }

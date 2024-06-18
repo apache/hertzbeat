@@ -17,10 +17,9 @@
 
 package org.apache.hertzbeat.collector.collect.mq;
 
-import lombok.Data;
-
 import java.util.List;
 import java.util.Map;
+import lombok.Data;
 
 /**
  * rocketmq collect data

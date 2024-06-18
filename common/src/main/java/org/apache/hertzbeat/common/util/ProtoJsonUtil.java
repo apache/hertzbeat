@@ -25,10 +25,13 @@ import lombok.extern.slf4j.Slf4j;
  * protobuf json convert util
  */
 @Slf4j
-public class ProtoJsonUtil {
+public final class ProtoJsonUtil {
 
     private static final JsonFormat.Printer PRINTER = JsonFormat.printer();
     private static final JsonFormat.Parser PARSER = JsonFormat.parser();
+
+    private ProtoJsonUtil() {
+    }
 
     /**
      * protobuf to json

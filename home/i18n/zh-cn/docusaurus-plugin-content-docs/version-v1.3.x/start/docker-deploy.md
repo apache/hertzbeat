@@ -18,11 +18,11 @@ sidebar_label: Docker方式部署
    ```
 
 2. 拉取HertzBeat Docker镜像   
-   镜像版本TAG可查看 [dockerhub 官方镜像仓库](https://hub.docker.com/r/tancloud/hertzbeat/tags)     
-   或者使用 [quay.io 镜像仓库](https://quay.io/repository/tancloud/hertzbeat)
+   镜像版本TAG可查看 [dockerhub 官方镜像仓库](https://hub.docker.com/r/apache/hertzbeat/tags)     
+   或者使用 [quay.io 镜像仓库](https://quay.io/repository/apache/hertzbeat)
 
    ```shell
-   $ docker pull tancloud/hertzbeat   
+   $ docker pull apache/hertzbeat   
    ```
    若网络超时或者使用
    ```shell
@@ -47,7 +47,7 @@ sidebar_label: Docker方式部署
 
 4. 配置挂载的HertzBeat的配置文件(可选)      
    在主机目录下创建application.yml，eg:/opt/application.yml        
-   配置文件完整内容见项目仓库[/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml) 您可以根据需求修改配置文件
+   配置文件完整内容见项目仓库[/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml) 您可以根据需求修改配置文件
    - 若需使用邮件发送告警，需替换`application.yml`里面的邮件服务器参数
    - **推荐**若需使用外置Mysql数据库替换内置H2数据库，需替换`application.yml`里面的`spring.datasource`参数 具体步骤参见 [H2数据库切换为MYSQL](mysql-change)）       
    - **推荐**若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.td-engine`参数 具体步骤参见 [使用TDengine存储指标数据](tdengine-init)   
@@ -57,7 +57,7 @@ sidebar_label: Docker方式部署
    HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
    若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤    
    在主机目录下创建sureness.yml，eg:/opt/sureness.yml    
-   配置文件完整内容见项目仓库[/script/sureness.yml](https://github.com/dromara/hertzbeat/blob/master/script/sureness.yml)   
+   配置文件完整内容见项目仓库[/script/sureness.yml](https://github.com/apache/hertzbeat/blob/master/script/sureness.yml)   
    具体修改步骤参考 [配置修改账户密码](account-modify)   
 
 6. 启动HertzBeat Docker容器    
@@ -71,7 +71,7 @@ $ docker run -d -p 1157:1157 \
     -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
     -v /opt/sureness.yml:/opt/hertzbeat/config/sureness.yml \
     --restart=always \
-    --name hertzbeat tancloud/hertzbeat
+    --name hertzbeat apache/hertzbeat
 ```
 
  	这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
@@ -101,7 +101,7 @@ $ docker run -d -p 1157:1157 \
      $ docker update --restart=always hertzbeat
      ```
 
-   - `tancloud/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,**若使用`quay.io`镜像需用参数`quay.io/tancloud/hertzbeat`代替。**   
+   - `apache/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,**若使用`quay.io`镜像需用参数`quay.io/tancloud/hertzbeat`代替。**   
 
 7. 开始探索HertzBeat  
    浏览器访问 http://ip:1157/ 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。  

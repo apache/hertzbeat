@@ -23,7 +23,7 @@ Cloud: **[GreptimePlay](https://greptime.com/playground)**
 
 ### 什么是 HertzBeat
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) 一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
+> [HertzBeat](https://github.com/apache/hertzbeat) 一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
 
 - 集 **监控+告警+通知** All in one，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控，阈值告警通知一步到位。
 - 更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。
@@ -70,14 +70,14 @@ $ docker run -d -p 1157:1157 \
     -v /opt/data:/opt/hertzbeat/data \
     -v /opt/application.yml:/opt/hertzbeat/config/application.yml \
     --restart=always \
-    --name hertzbeat tancloud/hertzbeat
+    --name hertzbeat apache/hertzbeat
 ```
 
 - `-v /opt/data:/opt/hertzbeat/data` : (可选，数据持久化)重要⚠️ 挂载H2数据库文件到本地主机，保证数据不会因为容器的创建删除而丢失
 
 - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml`  : 挂载自定义本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。
 
-注意⚠️ 本地挂载配置文件 `application.yml` 需提前存在，文件完整内容见项目仓库[/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml)
+注意⚠️ 本地挂载配置文件 `application.yml` 需提前存在，文件完整内容见项目仓库[/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
 
 2. 浏览器访问 http://ip:1157/ 默认账户密码 admin/hertzbeat，查看 HertzBeat 是否启动成功。
 
@@ -85,7 +85,7 @@ $ docker run -d -p 1157:1157 \
 
 1. 修改 HertzBeat 端配置文件
 
-修改挂载到本地的 HertzBeat 配置文件 [application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml), 安装包模式下修改 `hertzbeat/config/application.yml`
+修改挂载到本地的 HertzBeat 配置文件 [application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml), 安装包模式下修改 `hertzbeat/config/application.yml`
 
 **修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.greptime`数据源参数，URL账户密码，并启用`enabled`为`true`**
 
@@ -123,11 +123,11 @@ $ docker restart hertzbeat
 ## 小结
 
 这篇文章带我们体验了如何使用开源时序数据库 GreptimeDB 存储开源实时监控 HertzBeat 的指标度量数据，总的来看两款开源产品上手是非常简单的，关键是如果嫌麻烦不想部署他俩都还有云服务😂让你折腾。   
-作为特性 [HertzBeat支持GreptimeDB](https://github.com/dromara/hertzbeat/pull/834) 的开发者之一，在实际适配使用过程中，GreptimeDB的丝滑原生SDK和类似关系数据库的SQL，让我们从其它时序数据库 `TDengine, IotDB, InfluxDB` 切换过去还是非常容易，体验丝滑的。
+作为特性 [HertzBeat支持GreptimeDB](https://github.com/apache/hertzbeat/pull/834) 的开发者之一，在实际适配使用过程中，GreptimeDB的丝滑原生SDK和类似关系数据库的SQL，让我们从其它时序数据库 `TDengine, IotDB, InfluxDB` 切换过去还是非常容易，体验丝滑的。
 
 GreptimeDB Github: https://github.com/GreptimeTeam/greptimedb    
-HertzBeat Github: https://github.com/dromara/hertzbeat
+HertzBeat Github: https://github.com/apache/hertzbeat
 
 **最后就是欢迎大家一定要多多了解，多多使用，多多提意见，多多ISSUE，多多PR，多多Star支持这俩没出来多久希望得到呵护的开源牛牛不怕困难 一颗小星星哦！做开源，我们是蒸(真)的，爱心💗**
 
-感谢此特性 [HertzBeat支持GreptimeDB](https://github.com/dromara/hertzbeat/pull/834) 的贡献者们 @zqr10159, @fengjiachun, @killme2008, @tomsun28
+感谢此特性 [HertzBeat支持GreptimeDB](https://github.com/apache/hertzbeat/pull/834) 的贡献者们 @zqr10159, @fengjiachun, @killme2008, @tomsun28

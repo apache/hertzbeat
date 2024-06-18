@@ -18,16 +18,6 @@
 package org.apache.hertzbeat.common.entity.manager;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedBy;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
@@ -38,6 +28,15 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
  * collector entity
@@ -48,7 +47,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "slave collector entity | 注册采集器实体")
+@Schema(description = "slave collector entity")
 @EntityListeners(AuditingEntityListener.class)
 public class Collector {
 
@@ -64,6 +63,9 @@ public class Collector {
     @Schema(title = "collector ip", description = "collector remote ip")
     @NotNull
     private String ip;
+
+    @Schema(title = "collector version", description = "collector version")
+    private String version;
 
     @Schema(title = "collector status: 0-online 1-offline")
     @Min(0)

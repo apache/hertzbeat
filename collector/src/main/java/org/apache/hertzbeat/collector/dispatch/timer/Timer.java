@@ -18,9 +18,12 @@
 package org.apache.hertzbeat.collector.dispatch.timer;
 
 import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * Derived from Apache Dubbo org.apache.dubbo.common.timer.Timer 
+ * <a href="https://github.com/apache/dubbo/blob/3.2/dubbo-common/src/main/java/org/apache/dubbo/common/timer/Timer.java">Timer.java</a>
  * Schedules {@link TimerTask}s for one-time future execution in a background
  * thread.
  */

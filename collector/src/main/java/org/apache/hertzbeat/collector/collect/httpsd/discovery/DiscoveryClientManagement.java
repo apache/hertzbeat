@@ -19,12 +19,11 @@
 
 package org.apache.hertzbeat.collector.collect.httpsd.discovery;
 
+import java.util.Objects;
+import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientInstance;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.ConsulDiscoveryClient;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.NacosDiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientInstance;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
-
-import java.util.Objects;
 
 /**
  * Discovery Client Management
@@ -46,16 +45,10 @@ public class DiscoveryClientManagement {
     private DiscoveryClient doCreateClient(HttpsdProtocol httpsdProtocol, DiscoveryClientInstance discoveryClientInstance) {
         DiscoveryClient discoveryClient;
         switch (discoveryClientInstance) {
-            case CONSUL:
-                discoveryClient = new ConsulDiscoveryClient();
-                break;
-            case NACOS:
-                discoveryClient = new NacosDiscoveryClient();
-                break;
-            default:
-                return null;
+            case CONSUL -> discoveryClient = new ConsulDiscoveryClient();
+            case NACOS -> discoveryClient = new NacosDiscoveryClient();
+            default -> { return null; }
         }
-
         discoveryClient.initClient(discoveryClient.buildConnectConfig(httpsdProtocol));
         return discoveryClient;
     }

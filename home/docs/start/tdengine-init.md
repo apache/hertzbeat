@@ -1,11 +1,12 @@
 ---
 id: tdengine-init  
 title: Use Time Series Database TDengine to Store Metrics Data (Optional)     
-sidebar_label: Use TDengine Store Metrics  
+sidebar_label: Metrics Store TDengine  
 ---
 
-HertzBeat's historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
-We recommend VictoriaMetrics for long term support.
+Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
+
+> It is recommended to use VictoriaMetrics as metrics storage.
 
 TDengine is an open-source IoT time-series database, which we use to store the collected historical data of monitoring metrics. Pay attention to support ⚠️ 3.x version.  
 
@@ -76,7 +77,7 @@ Note⚠️ Need TDengine 3.x Version.
 ### Configure the database connection in hertzbeat `application.yml` configuration file  
 
 1. Configure HertzBeat's configuration file   
-   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml)        
+   Modify `hertzbeat/config/application.yml` configuration file         
    Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
    Replace `warehouse.store.td-engine` data source parameters, URL account and password.       
 

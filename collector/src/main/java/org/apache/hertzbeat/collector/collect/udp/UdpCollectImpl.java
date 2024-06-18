@@ -17,9 +17,16 @@
 
 package org.apache.hertzbeat.collector.collect.udp;
 
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.net.PortUnreachableException;
+import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -28,9 +35,6 @@ import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-
 /**
  * udp collect
  */
@@ -38,18 +42,17 @@ import java.nio.charset.StandardCharsets;
 public class UdpCollectImpl extends AbstractCollect {
     
     private static final byte[] HELLO = "hello".getBytes(StandardCharsets.UTF_8);
-    
-    public UdpCollectImpl() {
+
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getUdp() == null) {
+            throw new IllegalArgumentException("Udp collect must has udp params");
+        }
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getUdp() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Udp collect must has udp params");
-            return;
-        }
         UdpProtocol udpProtocol = metrics.getUdp();
         int timeout = CollectUtil.getTimeout(udpProtocol.getTimeout());
         try (DatagramSocket socket = new DatagramSocket()) {

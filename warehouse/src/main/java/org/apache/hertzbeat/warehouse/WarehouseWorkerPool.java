@@ -18,17 +18,15 @@
 package org.apache.hertzbeat.warehouse;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
- * warehouse 工作线程池
  * warehouse worker thread pool
  */
 @Component
@@ -42,7 +40,7 @@ public class WarehouseWorkerPool {
     }
 
     private void initWorkExecutor() {
-        // 线程工厂
+        // Thread factory
         ThreadFactory threadFactory = new ThreadFactoryBuilder()
                 .setUncaughtExceptionHandler((thread, throwable) -> {
                     log.error("workerExecutor has uncaughtException.");

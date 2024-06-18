@@ -17,11 +17,6 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus.exporter;
 
-import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
-import org.apache.hertzbeat.common.util.StrBuffer;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
-
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +24,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
+import org.apache.hertzbeat.common.util.StrBuffer;
 
 /**
  * Resolves the data passed by prometheus's exporter interface http:xxx/metrics
@@ -39,7 +37,7 @@ public class ExporterParser {
     private static final String HELP = "HELP";
     private static final String TYPE = "TYPE";
     private static final String EOF = "EOF";
-
+    private static final String METRIC_NAME_LABEL = ".name";
     private static final String QUANTILE_LABEL = "quantile";
     private static final String BUCKET_LABEL = "le";
     private static final String NAME_LABEL = "__name__";
@@ -53,12 +51,10 @@ public class ExporterParser {
     private static final char ENTER = '\n';
     private static final char SPACE = ' ';
     private static final char COMMA = ',';
-
+    private final Lock lock = new ReentrantLock();
     private MetricFamily currentMetricFamily;
     private String currentQuantile;
     private String currentBucket;
-
-    private final Lock lock = new ReentrantLock();
 
     public Map<String, MetricFamily> textToMetric(String resp) {
         // key: metric name, value: metric family
@@ -82,23 +78,26 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         switch (buffer.charAt(0)) {
-            case '#':
+            case '#' -> {
                 buffer.read();
                 this.currentMetricFamily = null;
                 this.parseComment(metricMap, buffer);
-                break;
-            case ENTER:
-                break;
-            default:
+            }
+            case ENTER -> {
+            }
+            default -> {
                 this.currentBucket = null;
                 this.currentQuantile = null;
                 this.parseMetric(buffer);
+            }
         }
     }
 
     private void parseComment(Map<String, MetricFamily> metricMap, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         String token = this.readTokenUnitWhitespace(buffer);
         if (EOF.equals(token)) {
             return;
@@ -111,13 +110,10 @@ public class ExporterParser {
         this.currentMetricFamily = metricMap.computeIfAbsent(metricName, key -> new MetricFamily());
         this.currentMetricFamily.setName(metricName);
         switch (token) {
-            case HELP:
-                this.parseHelp(buffer);
-                break;
-            case TYPE:
-                this.parseType(buffer);
-                break;
-            default:
+            case HELP -> this.parseHelp(buffer);
+            case TYPE -> this.parseType(buffer);
+            default -> {
+            }
         }
     }
 
@@ -138,34 +134,35 @@ public class ExporterParser {
 
     private void parseMetric(StrBuffer buffer) {
         String metricName = this.readTokenAsMetricName(buffer);
+        MetricFamily.Label label = new MetricFamily.Label();
+        label.setName(METRIC_NAME_LABEL);
+        label.setValue(metricName);
+
         if (metricName.isEmpty()) {
             log.error("error parse metric, metric name is null, line: {}", buffer.toStr());
             return;
         }
+
         List<MetricFamily.Metric> metricList = this.currentMetricFamily.getMetricList();
         if (metricList == null) {
             metricList = new ArrayList<>();
             this.currentMetricFamily.setMetricList(metricList);
         }
-        // todo 这里可能存在问题, 目前逻辑是HISTOGRAM和SUMMARY只创建一个metric
-        //  相比源码有所改动: 源码通过属性存储解析结果; 这边通过参数传递
-        MetricFamily.Metric metric;
-        if (!metricList.isEmpty() &&
-                (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) ||
-                        this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
-            metric = metricList.get(0);
-        } else {
-            metric = new MetricFamily.Metric();
-            metricList.add(metric);
-        }
 
+        // TODO For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+        MetricFamily.Metric metric = new MetricFamily.Metric();
+        metricList.add(metric);
+
+        metric.setLabelPair(new ArrayList<>());
+        metric.getLabelPair().add(label);
         this.readLabels(metric, buffer);
     }
 
     private void readLabels(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
-        metric.setLabelPair(new ArrayList<>());
+        if (buffer.isEmpty()) {
+            return;
+        }
         if (buffer.charAt(0) == LEFT_CURLY_BRACKET) {
             buffer.read();
             this.startReadLabelName(metric, buffer);
@@ -176,11 +173,15 @@ public class ExporterParser {
 
     private void startReadLabelName(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         if (buffer.charAt(0) == RIGHT_CURLY_BRACKET) {
             buffer.read();
             buffer.skipBlankTabs();
-            if (buffer.isEmpty()) return;
+            if (buffer.isEmpty()) {
+                return;
+            }
             this.readLabelValue(metric, new MetricFamily.Label(), buffer);
             return;
         }
@@ -198,7 +199,9 @@ public class ExporterParser {
 
     private void startReadLabelValue(MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         char c = buffer.read();
         if (c != QUOTES) {
             throw new ParseException("expected '\"' at start of label value, line: " + buffer.toStr());
@@ -212,20 +215,17 @@ public class ExporterParser {
             this.currentQuantile = labelValue;
         } else if (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) && label.getName().equals(BUCKET_LABEL)) {
             this.currentBucket = labelValue;
-        } else {
-            metric.getLabelPair().add(label);
         }
-        if (buffer.isEmpty()) return;
+        metric.getLabelPair().add(label);
+
+        if (buffer.isEmpty()) {
+            return;
+        }
         c = buffer.read();
         switch (c) {
-            case COMMA:
-                this.startReadLabelName(metric, buffer);
-                break;
-            case RIGHT_CURLY_BRACKET:
-                this.readLabelValue(metric, label, buffer);
-                break;
-            default:
-                throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
+            case COMMA -> this.startReadLabelName(metric, buffer);
+            case RIGHT_CURLY_BRACKET -> this.readLabelValue(metric, label, buffer);
+            default -> throw new ParseException("expected '}' or ',' at end of label value, line: " + buffer.toStr());
         }
     }
 
@@ -233,78 +233,46 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         switch (this.currentMetricFamily.getMetricType()) {
-            case INFO:
+            case INFO -> {
                 MetricFamily.Info info = new MetricFamily.Info();
                 info.setValue(buffer.toDouble());
                 metric.setInfo(info);
-                break;
-            case COUNTER:
+            }
+            case COUNTER -> {
                 MetricFamily.Counter counter = new MetricFamily.Counter();
                 counter.setValue(buffer.toDouble());
                 metric.setCounter(counter);
-                break;
-            case GAUGE:
+            }
+            case GAUGE -> {
                 MetricFamily.Gauge gauge = new MetricFamily.Gauge();
                 gauge.setValue(buffer.toDouble());
                 metric.setGauge(gauge);
-                break;
-            case UNTYPED:
+            }
+            case UNTYPED -> {
                 MetricFamily.Untyped untyped = new MetricFamily.Untyped();
                 untyped.setValue(buffer.toDouble());
                 metric.setUntyped(untyped);
-                break;
-            case SUMMARY:
-                MetricFamily.Summary summary = metric.getSummary();
-                if (summary == null) {
-                    summary = new MetricFamily.Summary();
-                    metric.setSummary(summary);
-                }
-                // 处理 xxx_sum 的数据
-                if (label != null && this.isSum(label.getName())) {
-                    summary.setSum(buffer.toDouble());
-                }
-                // 处理 xxx_count 的数据
-                else if (label != null && this.isCount(label.getName())) {
-                    summary.setCount(buffer.toLong());
-                }
-                // 处理 "xxx{quantile=\"0\"} 0" 的格式
-                else if (StringUtils.hasText(this.currentQuantile)) {
-                    List<MetricFamily.Quantile> quantileList = summary.getQuantileList();
-                    MetricFamily.Quantile quantile = new MetricFamily.Quantile();
-                    quantile.setXLabel(StrBuffer.parseDouble(this.currentQuantile));
-                    quantile.setValue(buffer.toDouble());
-                    quantileList.add(quantile);
-                }
-                break;
-            case HISTOGRAM:
-                MetricFamily.Histogram histogram = metric.getHistogram();
-                if (histogram == null) {
-                    histogram = new MetricFamily.Histogram();
-                    metric.setHistogram(histogram);
-                }
-                if (label != null && this.isSum(label.getName())) {
-                    histogram.setSum(buffer.toDouble());
-                } else if (label != null && this.isCount(label.getName())) {
-                    histogram.setCount(buffer.toLong());
-                }
-                // 处理 "xxx{quantile=\"0\"} 0" 的格式
-                else if (StringUtils.hasText(this.currentBucket)) {
-                    List<MetricFamily.Bucket> bucketList = histogram.getBucketList();
-                    MetricFamily.Bucket bucket = new MetricFamily.Bucket();
-                    bucket.setUpperBound(StrBuffer.parseDouble(this.currentBucket));
-                    bucket.setCumulativeCount(buffer.toLong());
-                    bucketList.add(bucket);
-                }
-                break;
-            default:
-                throw new ParseException("no such type in metricFamily");
+            }
+            case SUMMARY -> {
+                // For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+                MetricFamily.Summary summary = new MetricFamily.Summary();
+                summary.setValue(buffer.toDouble());
+                metric.setSummary(summary);
+            }
+            case HISTOGRAM -> {
+                // For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+                MetricFamily.Histogram histogram = new MetricFamily.Histogram();
+                histogram.setValue(buffer.toDouble());
+                metric.setHistogram(histogram);
+            }
+            default -> throw new ParseException("no such type in metricFamily");
         }
     }
 
     /**
-     * 读取第一个空格符前的token
+     * Reads the token before the first whitespace
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return token unit
      */
     private String readTokenUnitWhitespace(StrBuffer buffer) {
@@ -320,9 +288,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取指标的名称
+     * Gets the name of the metric
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return token name
      */
     private String readTokenAsMetricName(StrBuffer buffer) {
@@ -343,9 +311,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取label的名称
+     * Gets the name of the label
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return label name
      */
     private String readTokenAsLabelName(StrBuffer buffer) {
@@ -368,9 +336,9 @@ public class ExporterParser {
     }
 
     /**
-     * 获取Label的值
+     * Gets the value of the label
      *
-     * @param buffer 行数据对象
+     * @param buffer A line data object
      * @return label value
      */
     private String readTokenAsLabelValue(StrBuffer buffer) {
@@ -378,31 +346,22 @@ public class ExporterParser {
         boolean escaped = false;
         while (!buffer.isEmpty()) {
             char c = buffer.read();
-            // 处理 '\\' 转义
+            // Handle '\\' escape sequences
             if (escaped) {
                 switch (c) {
-                    case QUOTES:
-                    case '\\':
-                        builder.append(c);
-                        break;
-                    case 'n':
-                        builder.append('\n');
-                        break;
-                    default:
-                        throw new ParseException("parse label value error");
+                    case QUOTES, '\\' -> builder.append(c);
+                    case 'n' -> builder.append('\n');
+                    default -> throw new ParseException("parse label value error");
                 }
                 escaped = false;
             } else {
                 switch (c) {
-                    case QUOTES:
+                    case QUOTES -> {
                         return builder.toString();
-                    case ENTER:
-                        throw new ParseException("parse label value error, next line");
-                    case '\\':
-                        escaped = true;
-                        break;
-                    default:
-                        builder.append(c);
+                    }
+                    case ENTER -> throw new ParseException("parse label value error, next line");
+                    case '\\' -> escaped = true;
+                    default -> builder.append(c);
                 }
             }
         }
@@ -410,9 +369,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合metric name首字符规则
+     * Checks whether a character conforms to the first character rule for metric names
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidMetricNameStart(char c) {
@@ -420,9 +379,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合metric name除首字符其他字符规则
+     * Checks whether a character conforms to rules for metric name characters other than the first
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidMetricNameContinuation(char c) {
@@ -430,9 +389,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合label name首字符规则
+     * Checks whether a character conforms to the first character rule for label names
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidLabelNameStart(char c) {
@@ -440,9 +399,9 @@ public class ExporterParser {
     }
 
     /**
-     * 是否符合label name除首字符其他字符规则
+     * Checks whether a character conforms to rules for label name characters other than the first
      *
-     * @param c metric字符
+     * @param c metric character
      * @return true/false
      */
     private boolean isValidLabelNameContinuation(char c) {
@@ -450,7 +409,7 @@ public class ExporterParser {
     }
 
     /**
-     * 检测是否是有效的utf8编码的字符串
+     * Checks if a string is a valid UTF-8 encoded string
      *
      * @param s label value
      * @return true/false

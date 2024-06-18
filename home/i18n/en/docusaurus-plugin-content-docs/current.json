@@ -1,6 +1,6 @@
 {
   "version.label": {
-    "message": "v1.5.x",
+    "message": "v1.6.x",
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
@@ -90,5 +90,33 @@
   "sidebar.docs.category.webserver": {
     "message": "WebServer Monitor",
     "description": "The label for category webserver in sidebar docs"
+  },
+  "sidebar.docs.category.contribution": {
+    "message": "Contribution Guide",
+    "description": "The label for category contribution in sidebar docs"
+  },
+  "sidebar.docs.category.submit": {
+    "message": "Submit Guide",
+    "description": "The label for category submit in sidebar docs"
+  },
+  "sidebar.docs.category.release": {
+    "message": "Release Guide",
+    "description": "The label for category release in sidebar docs"
+  },
+  "sidebar.docs.category.Community": {
+    "message": "Community",
+    "description": "The label for category Community in sidebar docs"
+  },
+  "sidebar.docs.category.network": {
+    "message": "Network Monitor",
+    "description": "The label for category network in sidebar docs"
+  },
+  "sidebar.docs.category.NGQL": {
+    "message": "NGQL",
+    "description": "The label for category NGQL in sidebar docs"
+  },
+  "sidebar.docs.category.llm": {
+    "message": "Ai LLM Monitor",
+    "description": "The label for category llm in sidebar docs"
   }
 }

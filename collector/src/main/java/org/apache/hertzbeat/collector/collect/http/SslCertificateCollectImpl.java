@@ -17,20 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.http;
 
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.IpDomainUtil;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
+import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.ConnectException;
@@ -39,9 +26,20 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
-
-import static org.apache.hertzbeat.common.constants.SignConstants.RIGHT_DASH;
-
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.springframework.util.StringUtils;
 
 /**
  * ssl Certificate
@@ -56,20 +54,24 @@ public class SslCertificateCollectImpl extends AbstractCollect {
     private static final String NAME_END_TIME = "end_time";
     private static final String NAME_END_TIMESTAMP = "end_timestamp";
 
-    public SslCertificateCollectImpl() {}
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getHttp() == null) {
+            throw new IllegalArgumentException("Http/Https collect must has http params");
+        }
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
+
         HttpProtocol httpProtocol = metrics.getHttp();
+        String url = httpProtocol.getUrl();
+        if (!StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
+            httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
+        }
+
         HttpsURLConnection urlConnection = null;
         try {
             String uri = "";
@@ -98,7 +100,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(Long.toString(responseTime));
                     } else if (NAME_SUBJECT.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(x509Certificate.getSubjectDN().getName());
+                        valueRowBuilder.addColumns(x509Certificate.getSubjectX500Principal().getName());
                     } else if (NAME_EXPIRED.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(Boolean.toString(expired));
                     } else if (NAME_START_TIME.equalsIgnoreCase(alias)) {
@@ -155,15 +157,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SSL_CERT;
     }
 
-    private void validateParams(Metrics metrics) throws Exception {
-        if (metrics == null || metrics.getHttp() == null) {
-            throw new Exception("Http/Https collect must has http params");
-        }
-        HttpProtocol httpProtocol = metrics.getHttp();
-        if (httpProtocol.getUrl() == null
-                || "".equals(httpProtocol.getUrl())
-                || !httpProtocol.getUrl().startsWith(RIGHT_DASH)) {
-            httpProtocol.setUrl(httpProtocol.getUrl() == null ? RIGHT_DASH : RIGHT_DASH + httpProtocol.getUrl().trim());
-        }
+    private void validateParams(Metrics metrics) {
+
     }
 }

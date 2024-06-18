@@ -14,8 +14,8 @@ HertzBeat is a real-time monitoring tool with powerful custom monitoring capabil
 
 **Official website: https://hertzbeat.com | https://tancloud.cn**
 
-github: https://github.com/dromara/hertzbeat
-gitee: https://gitee.com/dromara/hertzbeat
+github: https://github.com/apache/hertzbeat
+gitee: https://gitee.com/hertzbeat/hertzbeat
 
 #### Install HertzBeat
 
@@ -23,7 +23,7 @@ gitee: https://gitee.com/dromara/hertzbeat
 
 2. The `docker` environment can be installed with just one command
 
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 3. After the installation is successful, the browser can access `localhost:1157` to start, the default account password is `admin/hertzbeat`
 
@@ -113,6 +113,6 @@ https://tancloud.cn/docs/help/alert_dingtalk
 
 The practice of monitoring SSL certificates is here. Of course, for hertzbeat, this function is just the tip of the iceberg. If you think hertzbeat is a good open source project, please give us a Gitee star on GitHub, thank you very much. Thank you for your support. Refill!
 
-**github: https://github.com/dromara/hertzbeat**
+**github: https://github.com/apache/hertzbeat**
 
-**gitee: https://gitee.com/dromara/hertzbeat**
+**gitee: https://gitee.com/hertzbeat/hertzbeat**

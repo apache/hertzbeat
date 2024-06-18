@@ -17,16 +17,21 @@
 
 package org.apache.hertzbeat.collector.util;
 
-import com.jayway.jsonpath.*;
+import com.jayway.jsonpath.Configuration;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
+import com.jayway.jsonpath.ParseContext;
+import com.jayway.jsonpath.TypeRef;
 import com.jayway.jsonpath.spi.cache.CacheProvider;
 import com.jayway.jsonpath.spi.cache.LRUCache;
-
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * json path parser
  */
-public class JsonPathParser {
+public final class JsonPathParser {
 
     private static final ParseContext PARSER;
 
@@ -38,6 +43,9 @@ public class JsonPathParser {
         PARSER = JsonPath.using(conf);
     }
 
+    private JsonPathParser() {
+    }
+
     /**
      * use json path to parse content 
      * @param content json content
@@ -45,7 +53,7 @@ public class JsonPathParser {
      * @return content [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
     public static List<Object> parseContentWithJsonPath(String content, String jsonPath) {
-        if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {
+        if (StringUtils.isAnyEmpty(content, jsonPath)) {
             return Collections.emptyList();
         }
         return PARSER.parse(content).read(jsonPath);
@@ -58,7 +66,7 @@ public class JsonPathParser {
      * @return content [{'name': 'tom', 'speed': '433'},{'name': 'lili', 'speed': '543'}]
      */
     public static <T> T parseContentWithJsonPath(String content, String jsonPath, TypeRef<T> typeRef) {
-        if (content == null || jsonPath == null || "".equals(content) || "".equals(jsonPath)) {
+        if (StringUtils.isAnyEmpty(content, jsonPath)) {
             return null;
         }
         return PARSER.parse(content).read(jsonPath, typeRef);

@@ -1,9 +1,9 @@
 ---
 id: postgresql-change  
-title: Use PostgreSQL Replace H2 Database to Store Metadata(Optional)     
-sidebar_label: Use PostgreSQL Instead of H2
+title: Use PostgreSQL Replace H2 Database to Store Metadata(Recommended)     
+sidebar_label: Meta Store PostgreSQL (Recommended)
 ---
-PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition to default built-in H2 database, HertzBeat allow you to use PostgreSQL to store structured relational data such as monitoring information, alarm information and configuration information.
+PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition to default built-in H2 database, Apache HertzBeat (incubating) allow you to use PostgreSQL to store structured relational data such as monitoring information, alarm information and configuration information.
 
 > If you have the PostgreSQL environment, can be directly to database creation step.
 
@@ -20,7 +20,7 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
    $ docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
    ```
    use```$ docker ps```to check if the database started successfully
-3. Create database in container manually or with [script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgresql-iotdb/conf/sql/schema.sql).
+3. Create database in container manually or with [script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgresql-iotdb/conf/sql/schema.sql).
 
 ### Database creation
 1. Enter postgreSQL or use the client to connect postgreSQL service   
@@ -46,28 +46,36 @@ spring:
     username: sa
     password: 123456
     url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    hikari:
+      max-lifetime: 120000
+
+  jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: h2
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
 ```
 Specific replacement parameters are as follows and you need to configure account, ip, port according to the postgresql environment:
 ```yaml
 spring:
-   config:
-      activate:
-         on-profile: prod
-   datasource:
-      driver-class-name: org.postgresql.Driver
-      username: root
-      password: 123456
-      url: jdbc:postgresql://127.0.0.1:5432/hertzbeat
-      hikari:
-         max-lifetime: 120000
-
-   jpa:
-      database: postgresql
-      hibernate:
-         ddl-auto: update
-      properties:
-         hibernate:
-            dialect: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: root
+    password: 123456
+    url: jdbc:postgresql://postgresql:5432/hertzbeat
+    hikari:
+      max-lifetime: 120000
+  jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.PostgreSQLPlatform
+    database: postgresql
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
 ```
 
 **Start HertzBeat  visit http://ip:1157/ on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**  

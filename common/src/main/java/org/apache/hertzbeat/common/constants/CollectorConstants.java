@@ -42,5 +42,11 @@ public interface CollectorConstants {
     String POSTGRESQL_UN_REACHABLE_CODE = "08001";
 
     String IPV6 = "ipv6";
+
     String IPV4 = "ipv4";
+
+    /**
+     * MongoDB Atlas model
+     */
+    String MONGO_DB_ATLAS_MODEL = "mongodb-atlas";
 }

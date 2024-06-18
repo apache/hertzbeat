@@ -63,7 +63,7 @@ services:
       - hertzbeat
 
   hertzbeat:
-    image: tancloud/hertzbeat
+    image: apache/hertzbeat
     container_name: compose-hertzbeat
     hostname: hertzbeat
     restart: always
@@ -78,6 +78,7 @@ services:
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
+      - ./ext-lib:/opt/hertzbeat/ext-lib
     ports:
       - "1157:1157"
       - "1158:1158"

@@ -6,17 +6,17 @@ sidebar_label: Quick Start
 
 ### 🐕 Quick Start
 
-- If you wish to deploy HertzBeat locally, please refer to the following Deployment Documentation for instructions.
+- If you wish to deploy Apache HertzBeat (incubating) locally, please refer to the following Deployment Documentation for instructions.
 
 ### 🍞 Install HertzBeat
 
-> HertzBeat supports installation through source code, docker or package, cpu support X86/ARM64.
+> Apache HertzBeat (incubating) supports installation through source code, docker or package, cpu support X86/ARM64.
 
 ##### 1：Install quickly via docker
 
 1. Just one command to get started:
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
 ```or use quay.io (if dockerhub network connect timeout)```
 
@@ -27,7 +27,7 @@ sidebar_label: Quick Start
 3. Deploy collector clusters(Optional)
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
 - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
@@ -38,12 +38,12 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 
 ##### 2：Install via package
 
-1. Download the release package `hertzbeat-xx.tar.gz` [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+1. Download the release package `hertzbeat-xx.tar.gz` [Download Page](https://hertzbeat.apache.org/docs/download)
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
 3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
 4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 5. Deploy collector clusters(Optional)
-   - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [GITEE Release](https://gitee.com/dromara/hertzbeat/releases) [GITHUB Release](https://github.com/dromara/hertzbeat/releases)
+   - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [Download Page](https://hertzbeat.apache.org/docs/download)
    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
      ```yaml
      collector:
@@ -59,7 +59,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
    - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
    - Access `http://localhost:1157` and you will see the registered new collector in dashboard
 
-Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apache.org/docs/start/package-deploy)
+Detailed config refer to [Install HertzBeat via Package](package-deploy)
 
 ##### 3：Start via source code
 
@@ -68,15 +68,15 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apach
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
 4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`
 
-Detailed steps refer to [CONTRIBUTING](../others/contributing)   
+Detailed steps refer to [CONTRIBUTING](../community/contribution)   
 
-##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose   
+##### 4：Install All(hertzbeat+postgresql+tsdb) via Docker-compose   
 
-Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose).
+Install and deploy the postgresql/mysql database, victoria-metrics/iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose).
 
-Detailed steps refer to [Install via Docker-Compose](https://github.com/dromara/hertzbeat/tree/master/script/docker-compose)
+Detailed steps refer to [Install via Docker-Compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose)
 
-##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
+##### 5. Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
 
 Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 

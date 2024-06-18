@@ -17,16 +17,15 @@
 
 package org.apache.hertzbeat.collector.collect.nebulagraph;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -38,49 +37,49 @@ import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 
 /**
  *  NebulaGraph collect
  */
 @Slf4j
 public class NebulaGraphCollectImpl extends AbstractCollect {
-    private final static int SUCCESS_CODE = 200;
+    private static final int SUCCESS_CODE = 200;
 
-    private final static String[] TIME_RANGE = new String[]{"5", "60", "600", "3600"};
+    private static final String[] TIME_RANGE = new String[]{"5", "60", "600", "3600"};
 
-    private final static String REGEX = "\\.%s\\=";
+    private static final String REGEX = "\\.%s\\=";
 
-    private final static String STR_SPLIT = "\n";
+    private static final String STR_SPLIT = "\n";
 
-    private final static String STORAGE_SPLIT_KEY_VALUE = "=";
+    private static final String STORAGE_SPLIT_KEY_VALUE = "=";
 
-    private final static String GRAPH_API = "/stats";
+    private static final String GRAPH_API = "/stats";
 
-    private final static String STORAGE_API = "/rocksdb_stats";
+    private static final String STORAGE_API = "/rocksdb_stats";
 
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getNebulaGraph() == null) {
+            throw new IllegalArgumentException("NebulaGraph collect must has NebulaGraph params");
+        }
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getNebulaGraph() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("NebulaGraph collect must has NebulaGraph params");
-            return;
-        }
         NebulaGraphProtocol nebulaGraph = metrics.getNebulaGraph();
         String timePeriod = nebulaGraph.getTimePeriod();
 
-        if (!Objects.isNull(nebulaGraph.getTimePeriod())&&!Arrays.asList(TIME_RANGE).contains(timePeriod)) {
+        if (!Objects.isNull(nebulaGraph.getTimePeriod()) && !Arrays.asList(TIME_RANGE).contains(timePeriod)) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg("The time range for metric statistics, currently supporting 5 seconds, 60 seconds, 600 seconds, and 3600 seconds.");
             return;
@@ -100,7 +99,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         HttpUriRequest request = createHttpRequest(nebulaGraph.getHost(), nebulaGraph.getPort(),
                 nebulaGraph.getUrl(), nebulaGraph.getTimeout());
         try {
-            // 发起http请求，获取响应数据
+            // Send an HTTP request to obtain response data
             response = CommonHttpClient.getHttpClient().execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
@@ -111,7 +110,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
             resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             responseTime = System.currentTimeMillis() - startTime;
             resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
-            // 根据API进行不同解析
+            // Parse the response differently depending on the API
             if (GRAPH_API.equals(nebulaGraph.getUrl())) {
                 parseStatsResponse(resp, nebulaGraph.getTimePeriod(), resultMap);
             } else if (STORAGE_API.equals(nebulaGraph.getUrl())) {
@@ -178,13 +177,13 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
     }
 
     /**
-     * 解析Stats响应通过时间间隔进行筛选
+     * Parse Stats response and filter by time period
      *
-     * @param responseBody 响应体
-     * @param timePeriod   时间间隔
+     * @param responseBody response body
+     * @param timePeriod   time period
      */
     private void parseStatsResponse(String responseBody, String timePeriod, HashMap<String, String> resultMap) {
-        // 设置正则匹配
+        // Set up regular expression matching
         String timeRegex = String.format(REGEX, timePeriod);
         Pattern pattern = Pattern.compile(timeRegex);
         String[] strArray = responseBody.split(STR_SPLIT);
@@ -199,9 +198,9 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
 
 
     /**
-     * 解析Storage响应通过时间间隔进行筛选
+     * Parse the Storage response and filter by time period
      *
-     * @param responseBody 响应体
+     * @param responseBody response body
      */
     private void parseStorageResponse(String responseBody, HashMap<String, String> resultMap) {
         String[] strArray = responseBody.split(STR_SPLIT);

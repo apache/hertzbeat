@@ -17,28 +17,32 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
-
-
 /**
  * Monitor parameter values
- * 监控参数值
  */
 @Entity
 @Table(name = "hzb_param", indexes = { @Index(columnList = "monitorId") },
@@ -47,7 +51,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Parameter Entity | 参数实体")
+@Schema(description = "Parameter Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class Param {
 
@@ -56,39 +60,36 @@ public class Param {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(title = "参数主键索引ID", example = "87584674384", accessMode = READ_ONLY)
+    @Schema(title = "Parameter primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     /**
      * Monitor ID
-     * 监控任务ID
      */
-    @Schema(title = "监控任务ID", example = "875846754543", accessMode = READ_WRITE)
+    @Schema(title = "Monitor task ID", example = "875846754543", accessMode = READ_WRITE)
     private Long monitorId;
 
     /**
      * Parameter Field Identifier
-     * 参数字段标识符
      */
-    @Schema(title = "参数标识符字段", example = "port", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Schema(title = "Parameter identifier field", example = "port", accessMode = READ_WRITE)
+    @Size(max = 100)
     @NotNull
     private String field;
 
     /**
      * Param Value
-     * 参数值
      */
-    @Schema(title = "参数值", example = "8080", accessMode = READ_WRITE)
-    @Length(max = 8126)
-    @Column(name = "`value`", length = 8126)
-    private String value;
+    @Schema(title = "parameter values", example = "8080", accessMode = READ_WRITE)
+    @Size(max = 8126)
+    @Column(length = 8126)
+    private String paramValue;
 
     /**
      * Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
-     * 参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串
      */
-    @Schema(title = "参数类型 0:数字 1:字符串 2:加密串 3:map映射的json串 4:arrays string", accessMode = READ_WRITE)
+    @Schema(title = "Parameter types 0: number 1: string 2: encrypted string 3:map mapped json string 4:arrays string",
+            accessMode = READ_WRITE)
     @Min(0)
     private byte type;
 

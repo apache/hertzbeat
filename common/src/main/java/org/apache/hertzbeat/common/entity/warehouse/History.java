@@ -17,17 +17,20 @@
 
 package org.apache.hertzbeat.common.entity.warehouse;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.GenericGenerator;
-
-import jakarta.persistence.*;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * metrics history data entity
@@ -43,13 +46,12 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Metrics History Data Entity | 指标数据历史实体")
+@Schema(description = "Metrics History Data Entity")
 public class History {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY, generator = "myid")
-    @GenericGenerator(name = "myid", strategy = "org.apache.hertzbeat.common.util.SnowFlakeIdGenerator")
-    @Schema(description = "指标数据历史实体主键索引ID", example = "87584674384", accessMode = READ_ONLY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "Metric data history entity primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
 
     @Schema(title = "Monitoring Id", example = "87432674336", accessMode = READ_WRITE)

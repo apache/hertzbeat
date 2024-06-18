@@ -15,10 +15,14 @@
 ##### docker compose deploys hertzbeat and its dependent services
 
 1. Download the hertzbeat-docker-compose installation deployment script file
-   The script file is located in `script/docker-compose/hertzbeat-mysql-iotdb` link [script/docker-compose](https://gitee.com/dromara/hertzbeat/tree/master/script/docker-compose/ hertzbeat-mysql-iotdb)
+   The script file is located in `script/docker-compose/hertzbeat-mysql-iotdb` link [script/docker-compose](https://github.com/hertzbeat/hertzbeat/tree/master/script/docker-compose/ hertzbeat-mysql-iotdb)
 
+2. Add MYSQL jdbc driver jar
 
-2. Enter the deployment script docker-compose directory, execute
+   Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+   Copy the jar package to the ext-lib directory.
+   
+3. Enter the deployment script docker-compose directory, execute
 
    `docker compose up -d`
 

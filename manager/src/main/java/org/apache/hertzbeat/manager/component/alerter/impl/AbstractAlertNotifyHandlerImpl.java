@@ -20,6 +20,15 @@ package org.apache.hertzbeat.manager.component.alerter.impl;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.ResourceBundle;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -33,17 +42,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.Resource;
-import java.io.IOException;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.ResourceBundle;
-
 /**
+ * Abstract alert notify handler implementation.
  */
 @Slf4j
 abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
@@ -114,7 +114,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
             log.error("alert does not have mapping default notice template. type: {}.", type());
             throw new NullPointerException(type() + " does not have mapping default notice template");
         }
-        // TODO 单实例复用缓存 考虑多线程问题
+        // Single instance reuse cache considers mulitple-threading issues
         String templateName = "freeMakerTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
         cfg.setTemplateLoader(stringLoader);
@@ -129,5 +129,3 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
 }
-
-

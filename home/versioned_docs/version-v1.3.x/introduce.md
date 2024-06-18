@@ -9,22 +9,22 @@ slug: /
 
 [![discord](https://img.shields.io/badge/chat-on%20discord-brightgreen)](https://discord.gg/Fb6M73htGr)
 [![QQ](https://img.shields.io/badge/qq-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/web-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/ping-connect.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/port-available.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/database-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/os-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/web-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/ping-connect.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/port-available.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/database-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/os-monitor.svg)
 ![hertzbeat](https://img.shields.io/badge/monitor-cloud%20native-brightgreen)
 ![hertzbeat](https://img.shields.io/badge/monitor-middleware-blueviolet)
 ![hertzbeat](https://img.shields.io/badge/monitor-network-red)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
-![hertzbeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat@gh-pages/img/badge/alert.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/custom-monitor.svg)
+![hertzbeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat@gh-pages/img/badge/alert.svg)
 
 
 
 ## 🎡 <font color="green">Introduction</font>
 
-> [HertzBeat](https://github.com/dromara/hertzbeat) is an open source, real-time monitoring system with custom-monitor and agentLess.       
+> [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring system with custom-monitor and agentLess.       
 > **Monitoring+Alarm+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.   
 > Easy to use, full web-based operation, monitoring and alerting at the click of a mouse, zero learning cost.     
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
@@ -46,20 +46,20 @@ slug: /
 
 ## 🥐 Architecture
 
-- **[manager](https://github.com/dromara/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
+- **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
 > Provides monitoring management, monitoring configuration management, system user management, etc.
-- **[collector](https://github.com/dromara/hertzbeat/tree/master/collector)** Provide metrics data collection services.
+- **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
-- **[scheduler](https://github.com/dromara/hertzbeat/tree/master/scheduler)** Provide monitoring task scheduling service.
+- **[scheduler](https://github.com/apache/hertzbeat/tree/master/scheduler)** Provide monitoring task scheduling service.
 > Collection task management, scheduling and distribution of one-time tasks and periodic tasks.
-- **[warehouse](https://github.com/dromara/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
+- **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
 > Metrics data management, data query, calculation and statistics.
-- **[alerter](https://github.com/dromara/hertzbeat/tree/master/alerter)** Provide alert service.
+- **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** Provide alert service.
 > Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
-- **[web-app](https://github.com/dromara/hertzbeat/tree/master/web-app)** Provide web ui.
+- **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.   
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/dromara/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)     
+![hertzBeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)     
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)  
 

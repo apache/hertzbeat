@@ -17,9 +17,10 @@
 
 package org.apache.hertzbeat.common.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test case for {@link CommonUtil}
@@ -28,10 +29,10 @@ class CommonUtilTest {
 
     @Test
     void testParseDoubleStr() {
-        assertEquals("9.3454",CommonUtil.parseDoubleStr("9.345435345", null));
-        assertEquals("9.3454",CommonUtil.parseDoubleStr("9.345435345%", "%"));
-        assertEquals("10",CommonUtil.parseDoubleStr("10%", "%"));
-        assertEquals("588",CommonUtil.parseDoubleStr("588Mb", "Mb"));
+        assertEquals("9.3454", CommonUtil.parseDoubleStr("9.345435345", null));
+        assertEquals("9.3454", CommonUtil.parseDoubleStr("9.345435345%", "%"));
+        assertEquals("10", CommonUtil.parseDoubleStr("10%", "%"));
+        assertEquals("588", CommonUtil.parseDoubleStr("588Mb", "Mb"));
     }
 
     @Test

@@ -17,21 +17,19 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.component.alerter.AlertStoreHandler;
+import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.manager.support.exception.IgnoreException;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 /**
- * 报警持久化 - 落地到数据库
  * Alarm data persistence - landing in the database
  */
 @Component
@@ -60,19 +58,17 @@ final class DbAlertStoreHandlerImpl implements AlertStoreHandler {
             if (!tags.containsKey(CommonConstants.TAG_MONITOR_HOST)) {
                 tags.put(CommonConstants.TAG_MONITOR_HOST, monitor.getHost());
             }
-            if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+            if (monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
                 // When monitoring is not monitored, ignore and silence its alarm messages
                 return;
             }
             if (CommonConstants.AVAILABILITY.equals(alert.getTarget())) {
-                if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING && monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
+                if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_PENDING && monitor.getStatus() == CommonConstants.MONITOR_UP_CODE) {
                     // Availability Alarm Need to change the monitoring status to unavailable
-                    // 可用性告警 需变更任务状态为不可用
-                    monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.UN_AVAILABLE_CODE);
-                } else if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED && monitor.getStatus() == CommonConstants.UN_AVAILABLE_CODE) {
+                    monitorService.updateMonitorStatus(monitor.getId(), CommonConstants.MONITOR_DOWN_CODE);
+                } else if (alert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED && monitor.getStatus() == CommonConstants.MONITOR_DOWN_CODE) {
                     // If the alarm is restored, the monitoring state needs to be restored
-                    // 若是恢复告警 需对任务状态进行恢复
-                    monitorService.updateMonitorStatus(monitorId, CommonConstants.AVAILABLE_CODE);
+                    monitorService.updateMonitorStatus(monitorId, CommonConstants.MONITOR_UP_CODE);
                 }
             }
         } else {

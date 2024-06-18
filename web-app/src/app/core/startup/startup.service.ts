@@ -31,9 +31,6 @@ export class StartupService {
     private storageService: MemoryStorageService
   ) {
     iconSrv.addIcon(...ICONS_AUTO, ...ICONS);
-    iconSrv.fetchFromIconfont({
-      scriptUrl: './assets/img/icon-gitee.js'
-    });
   }
 
   public loadConfigResourceViaHttp(): Observable<void> {
@@ -42,7 +39,7 @@ export class StartupService {
     return zip(
       this.i18n.loadLangData(defaultLang),
       this.httpClient.get('./assets/app-data.json', { headers: headers }),
-      this.httpClient.get('/apps/hierarchy')
+      this.httpClient.get(`/apps/hierarchy?lang=${defaultLang}`)
     ).pipe(
       catchError((res: NzSafeAny) => {
         console.warn(`StartupService.load: Network request failed`, res);

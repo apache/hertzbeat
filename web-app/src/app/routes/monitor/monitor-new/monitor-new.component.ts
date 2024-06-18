@@ -22,6 +22,7 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
+import { List } from 'echarts';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
@@ -110,15 +111,15 @@ export class MonitorNewComponent implements OnInit {
                 param.type = 1;
               }
               if (define.type === 'boolean') {
-                param.value = false;
+                param.paramValue = false;
               }
               if (define.defaultValue != undefined) {
                 if (define.type === 'number') {
-                  param.value = Number(define.defaultValue);
+                  param.paramValue = Number(define.defaultValue);
                 } else if (define.type === 'boolean') {
-                  param.value = define.defaultValue.toLowerCase() == 'true';
+                  param.paramValue = define.defaultValue.toLowerCase() == 'true';
                 } else {
-                  param.value = define.defaultValue;
+                  param.paramValue = define.defaultValue;
                 }
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
@@ -173,13 +174,38 @@ export class MonitorNewComponent implements OnInit {
       this.params.forEach(param => {
         if (param.field === 'port') {
           if (booleanValue) {
-            param.value = '443';
+            param.paramValue = '443';
           } else {
-            param.value = '80';
+            param.paramValue = '80';
           }
         }
       });
     }
+  }
+
+  onDependChanged(dependValue: string, dependField: string) {
+    this.paramDefines.forEach((paramDefine, index) => {
+      if (paramDefine.depend) {
+        let fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
+        if (fieldValues) {
+          this.params[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.params[index].display = true;
+          }
+        }
+      }
+    });
+    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
+      if (advancedParamDefine.depend) {
+        let fieldValues = new Map(Object.entries(advancedParamDefine.depend)).get(dependField);
+        if (fieldValues) {
+          this.advancedParams[index].display = false;
+          if (fieldValues.map(String).includes(dependValue)) {
+            this.advancedParams[index].display = true;
+          }
+        }
+      }
+    });
   }
 
   onSubmit(formGroup: FormGroup) {
@@ -197,15 +223,15 @@ export class MonitorNewComponent implements OnInit {
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
-        param.value = this.monitor.host;
+        param.paramValue = this.monitor.host;
       }
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     this.advancedParams.forEach(param => {
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     let addMonitor = {
@@ -253,15 +279,15 @@ export class MonitorNewComponent implements OnInit {
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
-        param.value = this.monitor.host;
+        param.paramValue = this.monitor.host;
       }
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     this.advancedParams.forEach(param => {
-      if (param.value != null && typeof param.value == 'string') {
-        param.value = (param.value as string).trim();
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
       }
     });
     let detectMonitor = {
@@ -301,8 +327,8 @@ export class MonitorNewComponent implements OnInit {
   }
 
   sliceTagName(tag: Tag): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
+    if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
+      return `${tag.name}:${tag.tagValue}`;
     } else {
       return tag.name;
     }

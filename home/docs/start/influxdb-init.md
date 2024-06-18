@@ -1,13 +1,13 @@
 ---
 id: influxdb-init  
 title: Use Time Series Database InfluxDB to Store Metrics Data (Optional)     
-sidebar_label: Use InfluxDB Store Metrics  
+sidebar_label: Metrics Store InfluxDB  
 ---
 
-HertzBeat's historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
-We recommend VictoriaMetrics for long term support.
+Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
 
-TDengine is the Time Series Data Platform where developers build IoT, analytics, and cloud applications.
+> It is recommended to use VictoriaMetrics as metrics storage.
+
 
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**  
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**   
@@ -43,7 +43,7 @@ Note⚠️ Need InfluxDB 1.x Version.
 ### Configure the database connection in hertzbeat `application.yml` configuration file  
 
 1. Configure HertzBeat's configuration file   
-   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml)        
+   Modify `hertzbeat/config/application.yml` configuration file          
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
    Replace `warehouse.store.influxdb` data source parameters, URL account and password.       
 

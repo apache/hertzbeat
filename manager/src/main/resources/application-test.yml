@@ -19,12 +19,19 @@ spring:
     driver-class-name: org.h2.Driver
     username: sa
     password: 123456
-    url: jdbc:h2:./data/hertzbeat-test;MODE=MYSQL
+    url: jdbc:h2:./data/test;MODE=MYSQL
     hikari:
       max-lifetime: 120000
   jpa:
-    hibernate:
-      ddl-auto: update
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: h2
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
+  flyway:
+    enabled: false
   mail:
     host: smtp.exmail.qq.com
     username: example@tancloud.cn

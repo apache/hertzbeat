@@ -11,7 +11,7 @@ keywords: [open source monitoring system, alerting system]
 
 ![hertzBeat](/img/blog/new-committer.png)
 
-> 热烈欢迎 Dromara HertzBeat 有三位小伙伴新晋社区 Committer, 让我们来了解下他们的开源经历吧！
+> 热烈欢迎 HertzBeat 有三位小伙伴新晋社区 Committer, 让我们来了解下他们的开源经历吧！
 
 # New Committer - vinci
 
@@ -78,7 +78,7 @@ keywords: [open source monitoring system, alerting system]
 
 感谢HertzBeat的作者、HertzBeat/Sms4j Committer铁甲小宝同学、Sms4j Committer东风同学，在我遇到自己不能解决的问题时，常常向三位哥哥请教，他们也总是不厌其烦，耐心的帮助我解决问题，实在是无以言表。
 
-感谢社区的其它小伙伴，在与他们交流讨论的过程中收获满满，也感受到了Dromara社区活跃的开源氛围。
+感谢社区的其它小伙伴，在与他们交流讨论的过程中收获满满，也感受到了社区活跃的开源氛围。
 
 ## 给新人的一些建议
 
@@ -131,7 +131,7 @@ keywords: [open source monitoring system, alerting system]
 
 ## 什么是 HertzBeat?
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，兼容 Prometheus，无需 Agent 的开源实时监控告警系统。
+[HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，兼容 Prometheus，无需 Agent 的开源实时监控告警系统。
 
 ### 特点
 
@@ -146,8 +146,8 @@ keywords: [open source monitoring system, alerting system]
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
 
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 欢迎更多小伙伴参与到HertzBeat的开源协作中来，不管是一个错别字还是标点符号我们都非常欢迎，大家一起学习进步，目标做一个世界级开源软件。

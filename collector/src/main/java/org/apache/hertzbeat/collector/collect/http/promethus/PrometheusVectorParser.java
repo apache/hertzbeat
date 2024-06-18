@@ -18,17 +18,16 @@
 package org.apache.hertzbeat.collector.collect.http.promethus;
 
 import com.google.gson.JsonElement;
+import java.math.BigDecimal;
+import java.util.List;
+import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.PromVectorOrMatrix;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Processing prometheus returns a response format of type "vector"
@@ -70,8 +69,8 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
                 } else {
                     if (CommonConstants.PROM_TIME.equals(aliasField)) {
                         for (Object o : r.getValue()) {
-                            if (o instanceof Double) {
-                                valueRowBuilder.addColumns(String.valueOf(BigDecimal.valueOf((Double) o * 1000)));
+                            if (o instanceof Double time) {
+                                valueRowBuilder.addColumns(String.valueOf(BigDecimal.valueOf(time * 1000)));
                                 setTimeFlag = true;
                             }
                         }
@@ -80,8 +79,8 @@ public class PrometheusVectorParser extends AbstractPrometheusParse {
                         }
                     } else {
                         for (Object o : r.getValue()) {
-                            if (o instanceof String) {
-                                valueRowBuilder.addColumns((String) o);
+                            if (o instanceof String str) {
+                                valueRowBuilder.addColumns(str);
                                 setValueFlag = true;
                             }
                         }

@@ -17,14 +17,12 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * Hierarchical structure
@@ -33,7 +31,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-@Schema(description = "Monitor Hierarchy | 监控类型指标信息层级关系")
+@Schema(description = "Monitor Hierarchy")
 public class Hierarchy {
 
     /**
@@ -51,7 +49,7 @@ public class Hierarchy {
     /**
      * Attribute internationalization tag
      */
-    @Schema(description = "Attribute internationalization tag", example = "Linux系统", accessMode = READ_WRITE)
+    @Schema(description = "Attribute internationalization tag", example = "Linux system", accessMode = READ_WRITE)
     String label;
 
     /**

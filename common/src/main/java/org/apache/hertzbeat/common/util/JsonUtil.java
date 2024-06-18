@@ -24,21 +24,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import javax.annotation.concurrent.ThreadSafe;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
-
-
-import javax.annotation.concurrent.ThreadSafe;
-import java.io.File;
 
 /**
  * json util
  */
 @ThreadSafe
 @Slf4j
-public class JsonUtil {
+public final class JsonUtil {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private JsonUtil() {
+    }
 
     static {
         OBJECT_MAPPER
@@ -82,32 +82,7 @@ public class JsonUtil {
             return null;
         }
     }
-
-    public static <T> T fromJson(File jsonFile, Class<T> clazz) {
-        if (!jsonFile.exists()) {
-            return null;
-        }
-        try {
-            return OBJECT_MAPPER.readValue(jsonFile, clazz);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return null;
-        }
-    }
-
-    public static String fromJson(File jsonFile) {
-        if (!jsonFile.exists()) {
-            return null;
-        }
-        try {
-            Object object = OBJECT_MAPPER.readValue(jsonFile, Object.class);
-            return OBJECT_MAPPER.writeValueAsString(object);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return null;
-        }
-    }
-
+    
     public static JsonNode fromJson(String jsonStr) {
         if (!StringUtils.hasText(jsonStr)) {
             return null;
@@ -117,6 +92,26 @@ public class JsonUtil {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return null;
+        }
+    }
+
+    /**
+     * check if the string is a json string
+     * @param jsonStr json string
+     * @return true if the string is a json string
+     */
+    public static boolean isJsonStr(String jsonStr) {
+        if (!StringUtils.hasText(jsonStr)) {
+            return false;
+        }
+        if (!jsonStr.startsWith("{") || !jsonStr.endsWith("}")) {
+            return false;
+        }
+        try {
+            OBJECT_MAPPER.readTree(jsonStr);
+            return true;
+        } catch (Exception ignored) {
+            return false;
         }
     }
 }

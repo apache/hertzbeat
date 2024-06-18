@@ -59,16 +59,10 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-remoting</artifactId>
         </dependency>
-        <!-- validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
         <!-- run sql script-->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>5.3.23</version>
         </dependency>
         <!-- kafka -->
         <dependency>
@@ -198,16 +192,32 @@
             <artifactId>nacos-client</artifactId>
             <version>2.2.1</version>
         </dependency>
+        <!-- nebula graph client -->
+        <dependency>
+            <groupId>com.vesoft</groupId>
+            <artifactId>client</artifactId>
+            <version>3.6.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>javax.servlet-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba</groupId>
+                    <artifactId>fastjson</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
-    
+
+    <build>
+        <finalName>apache-hertzbeat-collector-${hzb.version}</finalName>
+    </build>
+
     <profiles>
         <profile>
             <id>inner</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
-                <finalName>hertzbeat-collector</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -229,7 +239,6 @@
         <profile>
             <id>cluster</id>
             <build>
-                <finalName>hertzbeat-collector</finalName>
                 <resources>
                     <resource>
                         <directory>src/main/resources</directory>
@@ -248,8 +257,8 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <source>11</source>
-                            <target>11</target>
+                            <source>17</source>
+                            <target>17</target>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -259,15 +268,15 @@
                         <configuration>
                             <classesDirectory>target/classes/</classesDirectory>
                             <archive>
-                                <!--生成的jar包不包含maven描述相关文件-->
+                                <!--Generated JAR does not include Maven descriptor-related files-->
                                 <addMavenDescriptor>false</addMavenDescriptor>
                                 <manifest>
-                                    <!--项目启动类-->
+                                    <!--Project startup class-->
                                     <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
                                     <useUniqueVersions>false</useUniqueVersions>
-                                    <!--第三方JAR加入类构建的路径maven-dependency-plugin-->
+                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
                                     <addClasspath>true</addClasspath>
-                                    <!--外部依赖jar包的位置-->
+                                    <!--Location of external dependency JARs-->
                                     <classpathPrefix>lib/</classpathPrefix>
                                 </manifest>
                                 <manifestEntries>
@@ -283,9 +292,9 @@
                         <executions>
                             <execution>
                                 <id>without-jdk</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -293,13 +302,88 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>runtime</id>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                        <filtering>true</filtering>
+                        <includes>
+                            <include>*.yml</include>
+                            <include>*.properties</include>
+                            <include>*.xml</include>
+                            <include>banner.txt</include>
+                            <include>META-INF/**</include>
+                        </includes>
+                    </resource>
+                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>17</source>
+                            <target>17</target>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>${maven-jar-plugin.version}</version>
+                        <configuration>
+                            <classesDirectory>target/classes/</classesDirectory>
+                            <archive>
+                                <!--Generated JAR does not include Maven descriptor-related files-->
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <!--Project startup class-->
+                                    <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
+                                    <useUniqueVersions>false</useUniqueVersions>
+                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
+                                    <addClasspath>true</addClasspath>
+                                    <!--Location of external dependency JARs-->
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                </manifest>
+                                <manifestEntries>
+                                    <Class-Path>. config</Class-Path>
+                                </manifestEntries>
+                            </archive>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>${maven-assembly-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>without-jdk</id>
+                                <!--Bound Maven operation-->
+                                <phase>package</phase>
+                                <!--Run once-->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                                <configuration>
+                                    <descriptors>
+                                        <descriptor>../script/assembly/collector/assembly.xml</descriptor>
+                                    </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>make-macos-arm64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -307,13 +391,14 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-macos-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>make-macos-amd64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -321,13 +406,14 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-macos-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>make-linux-arm64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -335,13 +421,14 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-linux-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>make-linux-amd64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -349,13 +436,14 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-linux-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
                                 <id>make-windows-64</id>
-                                <!--绑定的maven操作-->
+                                <!--Bound Maven operation-->
                                 <phase>package</phase>
-                                <!--运行一次-->
+                                <!--Run once-->
                                 <goals>
                                     <goal>single</goal>
                                 </goals>
@@ -363,6 +451,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-windows-64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>
@@ -371,5 +460,5 @@
             </build>
         </profile>
     </profiles>
-    
+
 </project>

@@ -17,15 +17,14 @@
 
 package org.apache.hertzbeat.collector.collect.common.cache;
 
-import lombok.extern.slf4j.Slf4j;
-
 import java.sql.Connection;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * jdbc common connection
  */
 @Slf4j
-public class JdbcConnect implements CacheCloseable {
+public class JdbcConnect extends AbstractConnection<Connection> {
 
     private final Connection connection;
 
@@ -34,16 +33,13 @@ public class JdbcConnect implements CacheCloseable {
     }
 
     @Override
-    public void close() {
-        try {
-            if (connection != null) {
-                connection.close();
-            }
-        } catch (Exception e) {
-            log.error("[connection common cache] close jdbc connect error: {}", e.getMessage());
+    public void closeConnection() throws Exception {
+        if (connection != null) {
+            connection.close();
         }
     }
 
+    @Override
     public Connection getConnection() {
         return connection;
     }

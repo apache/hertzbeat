@@ -17,10 +17,17 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.serialize.AlertDeserializer;
 import org.apache.hertzbeat.common.serialize.AlertSerializer;
 import org.apache.hertzbeat.common.serialize.KafkaMetricsDataDeserializer;
@@ -34,16 +41,9 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
-
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
-
 
 /**
  * common data queue implement kafka
@@ -111,12 +111,14 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             
             Map<String, Object> metricsToPersistentConsumerConfig = new HashMap<>(consumerConfig);
             metricsToPersistentConsumerConfig.put("group.id", "metrics-persistent-consumer");
-            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(),
+                    new KafkaMetricsDataDeserializer());
             metricsDataToPersistentStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
             
             Map<String, Object> metricsToRealTimeConsumerConfig = new HashMap<>(consumerConfig);
             metricsToRealTimeConsumerConfig.put("group.id", "metrics-memory-consumer");
-            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(),
+                    new KafkaMetricsDataDeserializer());
             metricsDataToRealTimeStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);

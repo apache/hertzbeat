@@ -17,32 +17,26 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import jakarta.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.StringUtils;
 
-import jakarta.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * unit test case for WeChatAppAlertNotifyHandlerImpl
- *
- *
- * @create 2023/04/05
  */
 @Slf4j
 public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
 
-
     @Resource
     private WeWorkAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
-
 
     @Test
     public void send() {
@@ -77,6 +71,5 @@ public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrati
 
         weChatAppAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
-
 
 }

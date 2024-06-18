@@ -86,11 +86,12 @@
         <module>warehouse</module>
         <module>remoting</module>
         <module>push</module>
-        <module>grafana</module>
+        <module>plugin</module>
     </modules>
 
     <properties>
-
+        <hzb.version>1.6.0</hzb.version>
+        
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -100,7 +101,7 @@
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <maven-pmd-plugin.version>3.21.0</maven-pmd-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!--hertzbeat 相关模块-->
+        <!--hertzbeat related modules-->
         <hertzbeat.version>2.0-SNAPSHOT</hertzbeat.version>
 
         <springdoc.version>2.3.0</springdoc.version>
@@ -108,11 +109,11 @@
 
         <nekohtml.version>1.9.22</nekohtml.version>
         <json-path.version>2.9.0</json-path.version>
-        <aviator.version>5.4.1</aviator.version>
         <gson.version>2.10.1</gson.version>
         <guava.version>32.1.2-jre</guava.version>
         <protobuf.version>3.19.6</protobuf.version>
         <tencentcloud-sdk-java-sms.version>3.1.648</tencentcloud-sdk-java-sms.version>
+        <aliYun-sdk-java-sms.version>2.0.24</aliYun-sdk-java-sms.version>
         <caffeine.version>2.9.3</caffeine.version>
         <httpclient.version>4.5.14</httpclient.version>
 
@@ -133,8 +134,11 @@
         <h2.version>2.2.224</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
+        <flyway.version>10.11.1</flyway.version>
         <commons-collections4.version>4.4</commons-collections4.version>
+        <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
+        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -175,15 +179,17 @@
                 <artifactId>hertzbeat-push</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
+            <!-- plugin -->
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
-                <artifactId>hertzbeat-grafana</artifactId>
+                <artifactId>hertzbeat-plugin</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- spring -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-devtools</artifactId>
+                <version>${spring-boot-dependencies.version}</version>
                 <scope>provided</scope>
             </dependency>
             <dependency>
@@ -232,6 +238,27 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-jexl3</artifactId>
+                <version>${commons-jexl3}</version>
+            </dependency>
+            <!-- database migration -->
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-mysql</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-postgresql</artifactId>
+                <version>${flyway.version}</version>
             </dependency>
             <!-- mysql -->
             <dependency>
@@ -322,12 +349,7 @@
                 <artifactId>json-path</artifactId>
                 <version>${json-path.version}</version>
             </dependency>
-            <!-- 表达式计算 -->
-            <dependency>
-                <groupId>com.googlecode.aviator</groupId>
-                <artifactId>aviator</artifactId>
-                <version>${aviator.version}</version>
-            </dependency>
+            <!-- protobuf -->
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java-util</artifactId>
@@ -344,6 +366,11 @@
                 <groupId>com.tencentcloudapi</groupId>
                 <artifactId>tencentcloud-sdk-java-sms</artifactId>
                 <version>${tencentcloud-sdk-java-sms.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.aliyun</groupId>
+                <artifactId>dysmsapi20170525</artifactId>
+                <version>${aliYun-sdk-java-sms.version}</version>
             </dependency>
             <!-- okhttp -->
             <dependency>
@@ -418,6 +445,8 @@
                 <version>3.3.0</version>
                 <configuration>
                     <configLocation>./script/checkstyle/checkstyle.xml</configLocation>
+                    <suppressionsLocation>./script/checkstyle/suppressions.xml</suppressionsLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <linkXRef>false</linkXRef>
@@ -428,6 +457,26 @@
                         <phase>validate</phase>
                         <goals>
                             <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
                         </goals>
                     </execution>
                 </executions>

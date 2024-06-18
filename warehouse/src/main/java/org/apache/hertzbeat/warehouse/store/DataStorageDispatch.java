@@ -17,13 +17,14 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
-import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.warehouse.store.history.HistoryDataWriter;
+import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 /**
  * dispatch storage metrics data
@@ -34,35 +35,32 @@ public class DataStorageDispatch {
 
     private final CommonDataQueue commonDataQueue;
     private final WarehouseWorkerPool workerPool;
-    private final List<AbstractHistoryDataStorage> historyDataStorages;
-    private final List<AbstractRealTimeDataStorage> realTimeDataStorages;
+
+    private final RealTimeDataWriter realTimeDataWriter;
+    private final Optional<HistoryDataWriter> historyDataWriter;
 
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
-                               List<AbstractHistoryDataStorage> historyDataStorages,
-                               List<AbstractRealTimeDataStorage> realTimeDataStorages) {
+                               Optional<HistoryDataWriter> historyDataWriter,
+                               RealTimeDataWriter realTimeDataWriter) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
-        this.historyDataStorages = historyDataStorages;
-        this.realTimeDataStorages = realTimeDataStorages;
-        startStoragePersistentData();
-        startStorageRealTimeData();
+        this.realTimeDataWriter = realTimeDataWriter;
+        this.historyDataWriter = historyDataWriter;
+        startPersistentDataStorage();
+        startRealTimeDataStorage();
     }
 
-    private void startStorageRealTimeData() {
+    private void startRealTimeDataStorage() {
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-realtime-data-storage");
-            if (realTimeDataStorages != null && realTimeDataStorages.size() > 1) {
-                realTimeDataStorages.removeIf(item -> item instanceof RealTimeMemoryDataStorage);
-            }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToRealTimeStorage();
-                    if (metricsData != null && realTimeDataStorages != null) {
-                        for (AbstractRealTimeDataStorage realTimeDataStorage : realTimeDataStorages) {
-                            realTimeDataStorage.saveData(metricsData);
-                        }
+                    if (metricsData == null) {
+                        continue;
                     }
+                    realTimeDataWriter.saveData(metricsData);
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -71,19 +69,17 @@ public class DataStorageDispatch {
         workerPool.executeJob(runnable);
     }
 
-    protected void startStoragePersistentData() {
+    protected void startPersistentDataStorage() {
         Runnable runnable = () -> {
             Thread.currentThread().setName("warehouse-persistent-data-storage");
-            if (historyDataStorages != null && historyDataStorages.size() > 1) {
-                historyDataStorages.removeIf(item -> item instanceof HistoryJpaDatabaseDataStorage);
-            }
             while (!Thread.currentThread().isInterrupted()) {
                 try {
                     CollectRep.MetricsData metricsData = commonDataQueue.pollMetricsDataToPersistentStorage();
-                    if (metricsData != null && historyDataStorages != null) {
-                        for (AbstractHistoryDataStorage historyDataStorage : historyDataStorages) {
-                            historyDataStorage.saveData(metricsData);
-                        }
+                    if (metricsData == null) {
+                        continue;
+                    }
+                    if (historyDataWriter.isPresent()) {
+                        historyDataWriter.get().saveData(metricsData);
                     }
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

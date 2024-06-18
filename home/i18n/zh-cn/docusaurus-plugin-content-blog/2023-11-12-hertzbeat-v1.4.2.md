@@ -25,7 +25,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ### 什么是 HertzBeat?
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
+[HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
 
 ### 特点
 
@@ -40,9 +40,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 
 ### 尝试部署
@@ -50,7 +50,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 1. `docker` 环境仅需一条命令即可开始
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
 ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 
@@ -61,7 +61,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 3. 部署采集器集群
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
 - `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
@@ -89,27 +89,27 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 ----
 
-**Github: https://github.com/dromara/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**      
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### **下载链接**
 
 **hertzbeat server**
 
-- ⬇️ [hertzbeat-1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.tar.gz)
-- ⬇️ [hertzbeat-1.4.2.zip](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.zip)
-- ⬇️ [hertzbeat-linux_amd64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_amd64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-linux_arm64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_arm64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-macos_arm64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_arm64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-macos_amd64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_amd64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-windows64_1.4.2.zip](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-windows64_1.4.2.zip)
+- ⬇️ [hertzbeat-1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.tar.gz)
+- ⬇️ [hertzbeat-1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-1.4.2.zip)
+- ⬇️ [hertzbeat-linux_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_amd64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-linux_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-linux_arm64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-macos_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_arm64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-macos_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-macos_amd64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-windows64_1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-windows64_1.4.2.zip)
 
 **hertzbeat collector**
 
-- ⬇️ [hertzbeat-collector-1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-1.4.2.zip](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.zip)
-- ⬇️ [hertzbeat-collector-linux_amd64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_amd64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-linux_arm64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_arm64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-macos_arm64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_arm64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-macos_amd64_1.4.2.tar.gz](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_amd64_1.4.2.tar.gz)
-- ⬇️ [hertzbeat-collector-windows64_1.4.2.zip](https://github.com/dromara/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-windows64_1.4.2.zip)
+- ⬇️ [hertzbeat-collector-1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-1.4.2.zip)
+- ⬇️ [hertzbeat-collector-linux_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_amd64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-linux_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-linux_arm64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-macos_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_arm64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-macos_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_amd64_1.4.2.tar.gz)
+- ⬇️ [hertzbeat-collector-windows64_1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-windows64_1.4.2.zip)

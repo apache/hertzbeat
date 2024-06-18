@@ -17,6 +17,24 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import static java.util.Objects.isNull;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -52,22 +70,9 @@ import org.springframework.util.StreamUtils;
 import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.annotation.Resource;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
-
-import static java.util.Objects.isNull;
-
 /**
  * Monitoring Type Management Implementation
- * 监控类型管理实现
  * temporarily stores the monitoring configuration and parameter configuration in memory and then stores it in the
- * 暂时将监控配置和参数配置存放内存 之后存入数据库
  */
 @Service
 @Order(value = Ordered.HIGHEST_PRECEDENCE)
@@ -118,7 +123,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             if (PUSH_PROTOCOL_METRICS_NAME.equals(metric.getName())) {
                 List<Param> params = paramDao.findParamsByMonitorId(monitorId);
                 List<Configmap> configmaps = params.stream()
-                        .map(param -> new Configmap(param.getField(), param.getValue(),
+                        .map(param -> new Configmap(param.getField(), param.getParamValue(),
                                 param.getType())).collect(Collectors.toList());
                 Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
                 CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
@@ -248,7 +253,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     public List<Hierarchy> getAllAppHierarchy(String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
         for (var job : appDefines.values()) {
-            // todo 暂时先过滤掉push以解决前端问题，待后续设计优化后放开
+            // TODO temporarily filter out push to solve the front-end problem, and open it after the subsequent design optimization
             if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
                 continue;
             }
@@ -369,8 +374,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         // app params verify
         verifyDefineAppContent(app, isModify);
         appDefineStore.save(app.getApp(), ymlContent);
+        // get and reset hide value
+        Job originalJob = appDefines.get(app.getApp().toLowerCase());
+        if (Objects.nonNull(originalJob)) {
+            boolean hide = originalJob.isHide();
+            app.setHide(hide);
+        }
+        
         appDefines.put(app.getApp().toLowerCase(), app);
-        // 解决 ：模板修改后，同类型模板的所有监控实例 ，在任务状态中，需要重新下发任务
+        // resolve: after the template is modified, all monitoring instances of the same type of template need to be reissued in the task status
         SpringContextHolder.getBean(MonitorService.class).updateAppCollectJob(app);
     }
 
@@ -454,21 +466,18 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     }
 
     /**
-     * 刷新配置存储
+     * flush config store
      *
-     * @param objectStoreConfig 文件服务配置
+     * @param objectStoreConfig file service configuration
      */
     private void refreshStore(ObjectStoreDTO<?> objectStoreConfig) {
         if (objectStoreConfig == null) {
             appDefineStore = new LocalFileAppDefineStoreImpl();
         } else {
-            switch (objectStoreConfig.getType()) {
-                case OBS:
-                    appDefineStore = new ObjectStoreAppDefineStoreImpl();
-                    break;
-                case FILE:
-                default:
-                    appDefineStore = new LocalFileAppDefineStoreImpl();
+            if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
+                appDefineStore = new ObjectStoreAppDefineStoreImpl();
+            } else {
+                appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
         var success = appDefineStore.loadAppDefines();
@@ -480,15 +489,16 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     private interface AppDefineStore {
 
         /**
-         * 加载所有采集任务配置
+         * The configuration of all collection tasks is loaded
+         *
          */
         boolean loadAppDefines();
 
         /**
-         * 加载某个采集任务配置
+         * Load a collection task configuration
          *
-         * @param app 应用名称
-         * @return 采集任务配置文本
+         * @param app app name
+         * @return collect task configuration text
          */
         String loadAppDefine(String app);
 

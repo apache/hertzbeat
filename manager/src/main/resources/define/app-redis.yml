@@ -14,18 +14,14 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: cache
 # The monitoring type eg: linux windows tomcat mysql aws...
-# 监控类型 eg: linux windows tomcat mysql aws..
 app: redis
 # The monitoring i18n name
-# 监控类型国际化名称
 name:
   zh-CN: Redis数据库
   en-US: Redis
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 对 REDIS 数据库的通用性能指标进行采集监控(server、clients、memory、persistence、stats、replication、cpu、errorstats、cluster、commandstats)，支持版本为 REDIS1.0+。<br>您可以点击“<i>新建 REDIS 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors REDIS database of general performance metrics such as memory, persistence, replication and so on. The versions we support is REDIS1.0+. <br>You could click the "<i>New REDIS</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
@@ -33,74 +29,55 @@ help:
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/redis
   en-US: https://hertzbeat.apache.org/docs/help/redis
-# 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by
 params:
   # field-param field key
-  # field-变量字段标识符
   - field: host
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 目标Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
   # field-param field key
-  # field-变量字段标识符
   - field: port
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 端口
       en-US: Port
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     # default value
-    # 默认值
     defaultValue: 6379
   # field-param field key
-  # field-变量字段标识符
   - field: timeout
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 超时时间
       en-US: Timeout
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,100000]'
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     # default value
-    # 默认值
     defaultValue: 3000
   # field-param field key
-  # field-变量字段标识符
   - field: username
     name:
       zh-CN: 用户名
       en-US: Username
     type: text
-    limit: 20
+    limit: 50
     required: false
   # field-param field key
-  # field-变量字段标识符
   - field: password
     name:
       zh-CN: 密码
@@ -109,22 +86,17 @@ params:
     required: false
 
 # collect metrics config list
-# 采集指标配置列表
 metrics:
   # metrics - server
-  # 监控指标 - server
   - name: server
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     i18n:
       zh-CN: 服务器信息
       en-US: Server
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: identity
         type: 1
         i18n:
@@ -246,39 +218,28 @@ metrics:
           zh-CN: 活跃IO线程数
           en-US: Active IO Threads
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
   # metrics - clients
-  # 监控指标 - clients
   - name: clients
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     i18n:
       zh-CN: 客户端信息
       en-US: Clients
     # collect metrics content
-    # 具体监控指标列表
     fields:
       - field: connected_clients
         type: 0
@@ -328,21 +289,16 @@ metrics:
       password: ^_^password^_^
       timeout: ^_^timeout^_^
   # metrics - memory
-  # 监控指标 - memory
   - name: memory
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 2
     i18n:
       zh-CN: 内存信息
       en-US: Memory
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: used_memory
         type: 0
         i18n:
@@ -558,43 +514,31 @@ metrics:
           zh-CN: 已经执行的惰性删除对象数量
           en-US: Lazyfreed Objects
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
   # metrics - persistence
-  # 监控指标 - persistence
   - name: persistence
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 3
     i18n:
       zh-CN: 持久化信息
       en-US: Persistence
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: loading
         type: 0
         i18n:
@@ -711,43 +655,31 @@ metrics:
           zh-CN: 最近一次执行fork操作的COW区域内存大小
           en-US: Module Fork Last Cow Size
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
   # metrics - stats
-  # 监控指标 - stats
   - name: stats
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 4
     i18n:
       zh-CN: 全局统计信息
       en-US: Stats
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: total_connections_received
         type: 0
         i18n:
@@ -939,43 +871,31 @@ metrics:
           zh-CN: 使用线程进行写操作时处理的请求数量
           en-US: IO Threaded Writes Processed
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
   # metrics - replication
-  # 监控指标 - replication
   - name: replication
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 5
     i18n:
       zh-CN: 主从同步信息
       en-US: Replication
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: role
         type: 1
         i18n:
@@ -1032,43 +952,31 @@ metrics:
           zh-CN: 复制缓冲区的有效数据长度
           en-US: Repl Backlog Histlen
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
   # metrics - cpu
-  # 监控指标 - cpu
   - name: cpu
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 6
     i18n:
       zh-CN: CPU消耗信息
       en-US: CPU
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: used_cpu_sys
         type: 0
         i18n:
@@ -1100,43 +1008,31 @@ metrics:
           zh-CN: 主进程使用的CPU时钟总和(用户态)
           en-US: Used CPU User Main Thread
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
   # metrics - errorstats
-  # 监控指标 - errorstats
   - name: errorstats
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 8
     i18n:
       zh-CN: 错误信息
       en-US: Error Stats
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: errorstat_ERR
         type: 1
         i18n:
@@ -1148,82 +1044,60 @@ metrics:
           zh-CN: 执行命令时出现misconf错误的次数
           en-US: Error Stat Misconf
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
   # metrics - cluster
-  # 监控指标 - cluster
   - name: cluster
     # collect metrics content
-    # 具体监控指标列表
     priority: 9
     i18n:
       zh-CN: 集群信息
       en-US: Cluster
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: cluster_enabled
         type: 0
         i18n:
           zh-CN: 节点是否开启集群模式
           en-US: Cluster Enabled
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
   # metrics - commandstats
-  # 监控指标 - commandstats
   - name: commandstats
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 9
     i18n:
       zh-CN: 命令统计信息
       en-US: Command Stats
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: cmdstat_set
         type: 1
         i18n:
@@ -1275,43 +1149,31 @@ metrics:
           zh-CN: llen
           en-US: llen
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^
 
   # metrics - keyspace
-  # 监控指标 - keyspace
   - name: keyspace
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 9
     i18n:
       zh-CN: 数据库统计信息
       en-US: Keyspace
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: db0
         type: 1
         i18n:
@@ -1393,23 +1255,16 @@ metrics:
           zh-CN: db15
           en-US: db15
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
-    # 用于监控的协议, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
     # the config content when protocol is redis
-    # 协议为redis时的配置内容
     redis:
       # redis host: ipv4 ipv6 host
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # redis port
-      # 端口
       port: ^_^port^_^
       # username
-      # 用户名
       username: ^_^username^_^
       # password
-      # 密码
       password: ^_^password^_^
       # timeout unit：ms
-      # 超时时间 单位：ms
       timeout: ^_^timeout^_^

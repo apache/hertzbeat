@@ -1,11 +1,12 @@
 ---
 id: influxdb-init  
-title: 依赖时序数据库服务InfluxDB安装初始化        
-sidebar_label: 使用InfluxDB存储指标数据(可选)    
+title: 依赖时序数据库服务InfluxDB安装初始化(可选)        
+sidebar_label: 指标数据存储InfluxDB  
 ---
 
-HertzBeat的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
-我们推荐使用并长期支持VictoriaMetrics
+Apache HertzBeat (incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
+
+> 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
 
 InfluxDB是一个由InfluxData开发的开源时序型数据库，专注于海量时序数据的高性能读、高性能写、高效存储与实时分析等。 注意支持⚠️ 1.x版本。   
 
@@ -44,7 +45,7 @@ $ docker run -p 8086:8086 \
 ### 在hertzbeat的`application.yml`配置文件配置此数据库连接   
 
 1. 配置HertzBeat的配置文件
-   修改位于 `hertzbeat/config/application.yml` 的配置文件 [/script/application.yml](https://github.com/dromara/hertzbeat/raw/master/script/application.yml)      
+   修改位于 `hertzbeat/config/application.yml` 的配置文件       
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可     
 
 **修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.influxdb`数据源参数，URL账户密码，并启用`enabled`为`true`**    

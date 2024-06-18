@@ -17,25 +17,24 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.manager.service.AppService;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
+import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.Map;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 /**
- * Internationalization I 18 N
- * 国际化I18N
+ * Internationalization I18N
  */
-@Tag(name = "I18N API | I18N国际化资源API")
+@Tag(name = "I18N International Resource API")
 @RestController
 @RequestMapping(path = "/api/i18n", produces = {APPLICATION_JSON_VALUE})
 public class I18nController {
@@ -44,9 +43,9 @@ public class I18nController {
     private AppService appService;
 
     @GetMapping("/{lang}")
-    @Operation(summary = "Query total i 18 n internationalized text resources", description = "查询总的i18n国际化文本资源")
+    @Operation(summary = "Query total i 18 n internationalized text resources", description = "Query total i18n internationalized text resources")
     public ResponseEntity<Message<Map<String, String>>> queryI18n(
-            @Parameter(description = "en: language type,zh: 语言类型", example = "zh-CN")
+            @Parameter(description = "en: language type", example = "zh-CN")
             @PathVariable(name = "lang", required = false) String lang) {
         if (lang == null || lang.isEmpty()) {
             lang = "zh-CN";

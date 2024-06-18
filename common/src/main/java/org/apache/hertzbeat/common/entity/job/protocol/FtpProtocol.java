@@ -31,32 +31,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class FtpProtocol {
     /**
-     * 对端主机ip或域名
+     * Peer host ip or domain name
      */
     private String host;
 
     /**
-     * 端口号
+     * port number
      */
     private String port;
 
     /**
-     * Redis用户名(可选)
+     * Redis Username (optional)
      */
     private String username;
 
     /**
-     * Redis密码(可选)
+     * Redis password(optional)
      */
     private String password;
 
     /**
-     * 文件目录
+     * file catalog
      */
     private String direction;
 
     /**
-     * 超时
+     * Timeout
      */
     private String timeout;
 }

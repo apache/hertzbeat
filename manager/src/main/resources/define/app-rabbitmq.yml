@@ -14,18 +14,14 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: mid
 # The monitoring type eg: linux windows tomcat mysql aws...
-# 监控类型 eg: linux windows tomcat mysql aws...
 app: rabbitmq
 # The monitoring i18n name
-# 监控类型国际化名称
 name:
   zh-CN: RabbitMQ消息系统
   en-US: RabbitMQ Message
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 help:
   zh-CN: HertzBeat 对 RabbitMQ 消息中间件的运行状态，节点，队列等相关指标（overview、object_totals、nodes、queues）进行监测。<br><span class='help_module_span'>⚠️注意：HertzBeat 使用 RabbitMQ Management 的 Rest Api 对 RabbitMQ 进行指标数据采集，因此您的 RabbitMQ 环境需要开启 Management 插件，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>点击查看开启步骤</a>。</span>
   en-US: HertzBeat monitors RabbitMQ of the runtime status, nodes, queues and other metrics through message-oriented middleware. <br><span class='help_module_span'>⚠️Note:HertzBeat uses the Rest Api of RabbitMQ Management to collect metric data for RabbitMQ, so you need to enable Management plug-in component, <a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/rabbitmq#%E7%9B%91%E6%8E%A7%E5%89%8D%E6%93%8D%E4%BD%9C'>Click here to view the specific steps.</a></span>
@@ -33,119 +29,87 @@ help:
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/rabbitmq
   en-US: https://hertzbeat.apache.org/docs/help/rabbitmq
-# 监控所需输入参数定义(根据定义渲染页面UI)
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
-  # field-变量字段标识符
   - field: host
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 目标Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: host
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
   # field-param field key
-  # field-变量字段标识符
   - field: port
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: HTTP 端口
       en-US: HTTP Port
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: number
     # when type is number, range is required
-    # 当type为number时,用range表示范围
     range: '[0,65535]'
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     defaultValue: 15672
   # field-param field key
-  # field-变量字段标识符
   - field: ssl
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 启动SSL
       en-US: SSL
     # When the type is boolean, the front end displays the switch with a switch
-    # 当type为boolean时,前端用switch展示开关
     type: boolean
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: false
   # field-param field key
-  # field-变量字段标识符
   - field: authType
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 认证方式
       en-US: Auth Type
     # When the type is radio radio radio and checkbox, option represents a list of optional values {name1: value1, name2: value2}
-    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
     type: radio
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
     #When the type is radio radio radio and checkbox, option represents a list of optional values {name1: value1, name2: value2}
-    # 当type为radio单选框,checkbox复选框时,option表示可选项值列表 {name1:value1,name2:value2}
     options:
       - label: Basic Auth
         value: Basic Auth
     defaultValue: Basic Auth
   # field-param field key
-  # field-变量字段标识符
   - field: username
     name:
       zh-CN: 用户名
       en-US: Username
     # type-param field type(most mapping the html input type)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: text
     # When the type is text, use limit to indicate the string limit size
-    # 当type为text时,用limit表示字符串限制大小
-    limit: 20
+    limit: 50
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
   # field-param field key
-  # field-变量字段标识符
   - field: password
     # name-param field display i18n name
-    # name-参数字段显示名称
     name:
       zh-CN: 密码
       en-US: Password
     # type-param field type(most mapping the html input tag)
-    # type-字段类型,样式(大部分映射input标签type属性)
     type: password
     # required-true or false
-    # required-是否是必输项 true-必填 false-可选
     required: true
 
 metrics:
   # Note: The built-in monitoring metrics include (responseTime - response time)
-  # 注意：内置监控指标有 (responseTime - 响应时间)
   - name: overview
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: product_version
         type: 1
         i18n:
@@ -181,40 +145,37 @@ metrics:
         i18n:
           zh-CN: 速率模式
           en-US: Rates Mode
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url Indicates the path of the request interface
       url: /api/overview
-      # 请求方式 GET POST PUT DELETE PATCH
+      # Request mode GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
       ssl: ^_^ssl^_^
-      # 认证
+      # authentication
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        # Authentication mode: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: default
 
   - name: object_totals
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: channels
         type: 0
         i18n:
@@ -242,37 +203,33 @@ metrics:
           en-US: Queues
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url Indicates the path of the request interface
       url: /api/overview
-      # 请求方式 GET POST PUT DELETE PATCH
+      # Request mode GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
       ssl: ^_^ssl^_^
-      # 认证
+      # Authentication
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        # Authentication mode: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       parseScript: '$.object_totals'
 
   - name: nodes
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: name
         type: 1
         label: true
@@ -465,37 +422,33 @@ metrics:
       - io_write_bytes=B->KB
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url Indicates the path of the request interface
       url: /api/nodes
-      # 请求方式 GET POST PUT DELETE PATCH
+      # request mode: GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
       ssl: ^_^ssl^_^
-      # 认证
+      # Authentication
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        # Authentication mode: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       parseScript: '$.*'
 
   - name: queues
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     # collect metrics content
-    # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
       - field: name
         type: 1
         label: true
@@ -600,23 +553,24 @@ metrics:
           en-US: Persistent Message Bytes
     protocol: http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # Host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # port
       port: ^_^port^_^
-      # url请求接口路径
+      # url Indicates the path of the request interface
       url: /api/queues
-      # 请求方式 GET POST PUT DELETE PATCH
+      # request mode GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
       ssl: ^_^ssl^_^
       # 认证
+      # Authentication
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
+        # Authentication mode: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
+      # response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       parseScript: '$.*'
 

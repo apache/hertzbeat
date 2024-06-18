@@ -20,33 +20,6 @@ package org.apache.hertzbeat.collector.collect.mq;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.rocketmq.acl.common.AclClientRPCHook;
-import org.apache.rocketmq.acl.common.SessionCredentials;
-import org.apache.rocketmq.common.MixAll;
-import org.apache.rocketmq.common.admin.ConsumeStats;
-import org.apache.rocketmq.common.protocol.body.ClusterInfo;
-import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
-import org.apache.rocketmq.common.protocol.body.KVTable;
-import org.apache.rocketmq.common.protocol.body.SubscriptionGroupWrapper;
-import org.apache.rocketmq.common.protocol.body.TopicList;
-import org.apache.rocketmq.common.protocol.route.BrokerData;
-import org.apache.rocketmq.common.utils.ThreadUtils;
-import org.apache.rocketmq.remoting.RPCHook;
-import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
-import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.util.JsonPathParser;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.CommonUtil;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.util.Assert;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -61,6 +34,32 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.JsonPathParser;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.rocketmq.acl.common.AclClientRPCHook;
+import org.apache.rocketmq.acl.common.SessionCredentials;
+import org.apache.rocketmq.common.MixAll;
+import org.apache.rocketmq.common.admin.ConsumeStats;
+import org.apache.rocketmq.common.protocol.body.ClusterInfo;
+import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
+import org.apache.rocketmq.common.protocol.body.KVTable;
+import org.apache.rocketmq.common.protocol.body.SubscriptionGroupWrapper;
+import org.apache.rocketmq.common.protocol.body.TopicList;
+import org.apache.rocketmq.common.protocol.route.BrokerData;
+import org.apache.rocketmq.common.utils.ThreadUtils;
+import org.apache.rocketmq.remoting.RPCHook;
+import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.util.Assert;
 
 /**
  * rocketmq collect
@@ -107,15 +106,19 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
         ThreadUtils.shutdownGracefully(this.executorService, 10L, TimeUnit.SECONDS);
     }
 
+    /**
+     * preCheck params
+     * @param metrics metrics config
+     */
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        Assert.isTrue(metrics != null && metrics.getRocketmq() != null, "Mongodb collect must has rocketmq params");
+        RocketmqProtocol rocketmq = metrics.getRocketmq();
+        Assert.hasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
+        Assert.hasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        try {
-            preCheck(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         DefaultMQAdminExt mqAdminExt = null;
         try {
             mqAdminExt = this.createMqAdminExt(metrics);
@@ -142,18 +145,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
         return DispatchConstants.PROTOCOL_ROCKETMQ;
     }
 
-    /**
-     * preCheck params
-     * @param metrics metrics config
-     */
-    private void preCheck(Metrics metrics) {
-        if (metrics == null || metrics.getRocketmq() == null) {
-            throw new IllegalArgumentException("Mongodb collect must has rocketmq params");
-        }
-        RocketmqProtocol rocketmq = metrics.getRocketmq();
-        Assert.hasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
-        Assert.hasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
-    }
 
     /**
      * create the DefaultMQAdminExt
@@ -340,7 +331,8 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
                 Map<String, List<RocketmqCollectData.TopicQueueInfo>> topicQueueInfoTable = new HashMap<>(32);
                 List<RocketmqCollectData.TopicQueueInfo> topicQueueInfoList = new ArrayList<>();
 
-                // todo 查询topic的queue信息需要for循环调用 mqAdminExt.examineTopicStats(), topic数量很大的情况, 调用次数也会很多
+                // When querying queue information for a topic, you need to use a for-loop to call mqAdminExt.examineTopicStats().
+                // If the number of topics is large, the number of calls will also be high
                 topicQueueInfoTable.put(topic, topicQueueInfoList);
                 topicInfoList.add(topicQueueInfoTable);
                 rocketmqCollectData.setTopicInfoList(topicInfoList);

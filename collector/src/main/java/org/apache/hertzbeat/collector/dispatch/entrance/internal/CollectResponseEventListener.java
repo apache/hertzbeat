@@ -17,20 +17,17 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.internal;
 
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-
 import java.util.EventListener;
 import java.util.List;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * One-time collection task response result listener
- * 一次性采集任务响应结果监听器
  */
 public interface CollectResponseEventListener extends EventListener {
 
     /**
      * Collection task completion result notification
-     * 采集任务完成结果通知
      * @param responseMetrics Response Metrics
      */
     default void response(List<CollectRep.MetricsData> responseMetrics) {}

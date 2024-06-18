@@ -17,13 +17,13 @@
 
 package org.apache.hertzbeat.remoting;
 
+import org.apache.hertzbeat.common.entity.message.ClusterMsg;
+import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingClient;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingServer;
 import org.apache.hertzbeat.remoting.netty.NettyServerConfig;
 import org.assertj.core.util.Lists;
-import org.apache.hertzbeat.common.entity.message.ClusterMsg;
-import org.apache.hertzbeat.common.support.CommonThreadPool;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

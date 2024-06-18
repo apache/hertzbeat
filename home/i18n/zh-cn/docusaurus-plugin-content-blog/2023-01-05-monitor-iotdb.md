@@ -126,11 +126,11 @@ metricReporterList:
 这篇实践文章带我们体验了如何使用 HertzBeat 监控 IoTDB 数据库指标数据，可以发现将 监控-告警-通知 集一体的 HertzBeat 在操作与使用方面更加的便捷，在页面上简单点一点就能把 IoTDB 纳入监控，再也不需要部署多个组件，写多个有门槛的YML配置文件了。  
 
 IoTDB Github: https://github.com/apache/iotdb    
-HertzBeat Github: https://github.com/dromara/hertzbeat 
+HertzBeat Github: https://github.com/apache/hertzbeat 
 
 **欢迎了解使用Star支持哦！**
 
 只需要一条docker命令即可安装体验heartbeat ：   
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 注意⚠️HertzBeat v1.2.3 版本支持 IoTDB v0.12 v0.13, 由于其v1.0刚发布, 暂未对此版本全部指标兼容。   

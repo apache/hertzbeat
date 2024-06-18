@@ -17,32 +17,35 @@
 
 package org.apache.hertzbeat.common.entity.alerter;
 
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import com.google.common.base.Objects;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
-
 
 /**
  * Alarm Define Rule Entity
@@ -53,7 +56,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Alarm Threshold Entity | 告警阈值实体")
+@Schema(description = "Alarm Threshold Entity")
 @EntityListeners(AuditingEntityListener.class)
 public class AlertDefine {
 
@@ -63,24 +66,24 @@ public class AlertDefine {
     private Long id;
 
     @Schema(title = "Monitoring Type", example = "linux", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String app;
 
     @Schema(title = "Monitoring Metrics", example = "cpu", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     @NotNull
     private String metric;
 
     @Schema(title = "Monitoring Metrics Field", example = "usage", accessMode = READ_WRITE)
-    @Length(max = 100)
+    @Size(max = 100)
     private String field;
 
-    @Schema(title = "Is Apply All Default | 是否是全局默认告警", example = "false", accessMode = READ_WRITE)
+    @Schema(title = "Is Apply All Default", example = "false", accessMode = READ_WRITE)
     private boolean preset;
 
-    @Schema(title = "Alarm Threshold Expr | 告警阈值触发条件表达式", example = "usage>90", accessMode = READ_WRITE)
-    @Length(max = 2048)
+    @Schema(title = "Alarm Threshold Expr", example = "usage>90", accessMode = READ_WRITE)
+    @Size(max = 2048)
     @Column(length = 2048)
     private String expr;
 
@@ -90,7 +93,8 @@ public class AlertDefine {
     @Max(2)
     private byte priority;
 
-    @Schema(title = "Alarm Trigger Times | 阈值触发次数,即达到次数要求后才触发告警", example = "3", accessMode = READ_WRITE)
+    @Schema(title = "Alarm Trigger Times.The alarm is triggered only after the required number of times is reached",
+            example = "3", accessMode = READ_WRITE)
     @Min(0)
     @Max(10)
     private Integer times;
@@ -104,13 +108,13 @@ public class AlertDefine {
     @Schema(title = "Is Enable", example = "true", accessMode = READ_WRITE)
     private boolean enable = true;
     
-    @Schema(title = "Is Send Alarm Recover Notice | 是否发送告警恢复通知", example = "false", accessMode = READ_WRITE)
+    @Schema(title = "Is Send Alarm Recover Notice", example = "false", accessMode = READ_WRITE)
     @Column(columnDefinition = "boolean default false")
     private boolean recoverNotice = false;
 
-    @Schema(title = "Alarm Template | 告警通知内容模版", example = "linux {monitor_name}: {monitor_id} cpu usage high",
+    @Schema(title = "Alarm Template", example = "linux {monitor_name}: {monitor_id} cpu usage high",
             accessMode = READ_WRITE)
-    @Length(max = 2048)
+    @Size(max = 2048)
     @Column(length = 2048)
     private String template;
 

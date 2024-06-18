@@ -17,7 +17,26 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -25,14 +44,13 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
-import org.apache.hertzbeat.manager.dao.MonitorDao;
-import org.apache.hertzbeat.manager.pojo.dto.AppCount;
-import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
+import org.apache.hertzbeat.manager.pojo.dto.AppCount;
+import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
@@ -53,18 +71,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 /**
  * newBranch feature-clickhouse#179
- * 配置带密码的clickhouse
  * <a href="https://www.cnblogs.com/it1042290135/p/16202478.html">...</a>
  * <p>
- * 9363是promethus的http端口(在config.xml里面打开), <a href="http://clickhouse:9363/metrics">...</a>
- * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363 --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
+ * <a href="http://clickhouse:9363/metrics">...</a>
+ * docker run -d --name some-clickhouse-server -p 8123:8123 -p 9009:9009 -p 9090:9000 -p 9363:9363
+ * --ulimit nofile=262144:262144 --volume=/opt/clickhouse/data:/var/lib/clickhouse --volume=/opt/clickhouse/log:/var/log/clickhouse-server
+ * --volume=/opt/clickhouse/conf/config.xml:/etc/clickhouse-server/config.xml --volume=/opt/clickhouse/conf/users.xml:/etc/clickhouse-server/users.xml clickhouse/clickhouse-server
  * <p>
  * <p>
  * <a href="https://hub.docker.com/r/clickhouse/clickhouse-server/">...</a>
@@ -73,7 +87,6 @@ import static org.mockito.Mockito.*;
  * web UI
  * <a href="http://localhost:18123/play">...</a>
  * <p>
- * 明文密码linux可以登录了,但是navicat还是无法登录
  * clickhouse client -h 127.0.0.1 -d default -m -u default --password 123456
  * Test case for {@link MonitorService}
  *
@@ -119,7 +132,7 @@ class MonitorServiceTest {
     Map<String, Alert> triggeredAlertMap = spy(new HashMap<>());
 
     /**
-     * 属性无法直接mock,测试执行前-手动赋值
+     * Properties cannot be directly mock, test execution before - manual assignment
      */
     @BeforeEach
     public void setUp() {
@@ -145,7 +158,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 探测失败-超时
+     * Probe failed - Timed out
      */
     @Test
     void detectMonitorFail() {
@@ -202,7 +215,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-数据库已经存在相同的任务名称
+     * Parameter verification - The same task name already exists in the database
      */
     @Test
     void validateMonitorName() {
@@ -222,7 +235,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-为必填的参数没有填
+     * Parameter check - The required parameter is not filled
      */
     @Test
     void validateRequireMonitorParams() {
@@ -231,7 +244,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(null)
+                .paramValue(null)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -255,7 +268,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-为必填的参数类型错误
+     * Parameter check - Error for required parameter type
      */
     @Test
     void validateMonitorParamsType() {
@@ -264,7 +277,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value("str")
+                .paramValue("str")
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -291,7 +304,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-为必填的-整形参数范围
+     * Parameter verification - This parameter is mandatory. - Integer parameter range
      */
     @Test
     void validateMonitorParamsRange() {
@@ -300,7 +313,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value("1150")
+                .paramValue("1150")
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -327,7 +340,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-为必填的-文本参数长度
+     * Parameter check - Required - Length of the text parameter
      */
     @Test
     void validateMonitorParamsTextLimit() {
@@ -336,7 +349,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value("1150")
+                .paramValue("1150")
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -364,7 +377,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-主机IP参数格式
+     * Parameter verification - Host IP address Parameter format
      */
     @ParameterizedTest
     @CsvSource({
@@ -380,7 +393,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -409,7 +422,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-布尔类型
+     * Parameter check - Boolean type
      */
     @ParameterizedTest
     @CsvSource({
@@ -425,7 +438,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -456,7 +469,7 @@ class MonitorServiceTest {
     }
 
     /**
-     * 参数校验-布尔类型
+     * Parameter check - Boolean type
      */
     @ParameterizedTest
     @CsvSource({
@@ -472,7 +485,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -501,13 +514,13 @@ class MonitorServiceTest {
         } catch (IllegalArgumentException e) {
             if (checkException) {
                 assertEquals("Params field " + field + " value "
-                        + param.getValue() + " is invalid option value", e.getMessage());
+                        + param.getParamValue() + " is invalid option value", e.getMessage());
             }
         }
     }
 
     /**
-     * 参数校验-没有定义的类型
+     * Parameter check - No defined type
      */
     @ParameterizedTest
     @CsvSource({
@@ -523,7 +536,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -558,9 +571,6 @@ class MonitorServiceTest {
 
     @Test
     void modifyMonitor() {
-        /**
-         * 修改一个DB中不存在的的monitor
-         */
         String value = "value";
 
         MonitorDto dto = new MonitorDto();
@@ -568,7 +578,7 @@ class MonitorServiceTest {
         String field = "field";
         Param param = Param.builder()
                 .field(field)
-                .value(value)
+                .paramValue(value)
                 .build();
         params.add(param);
         dto.setParams(params);
@@ -582,8 +592,8 @@ class MonitorServiceTest {
             assertEquals("The Monitor " + monitorId + " not exists", e.getMessage());
         }
         reset();
-        /**
-         * 不能修改monitor的[监控类型]
+        /*
+          The [monitoring type] of monitor cannot be modified.
          */
         Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").host("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));
@@ -593,8 +603,8 @@ class MonitorServiceTest {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
         reset();
-        Monitor existOKMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
-        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOKMonitor));
+        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
         assertThrows(MonitorDatabaseException.class, () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null));
@@ -603,8 +613,8 @@ class MonitorServiceTest {
     @Test
     void deleteMonitor() {
         long id = 1L;
-        Monitor existOKMonitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
-        when(monitorDao.findById(id)).thenReturn(Optional.of(existOKMonitor));
+        Monitor existOkMonitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+        when(monitorDao.findById(id)).thenReturn(Optional.of(existOkMonitor));
         doNothing().when(alertDefineBindDao).deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
         doNothing().when(tagMonitorBindDao).deleteTagMonitorBindsByMonitorId(id);
         assertDoesNotThrow(() -> monitorService.deleteMonitor(id));
@@ -671,7 +681,7 @@ class MonitorServiceTest {
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
             Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
-            monitor.setStatus(CommonConstants.UN_MANAGE_CODE);
+            monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -690,7 +700,7 @@ class MonitorServiceTest {
         List<AppCount> appCounts = new ArrayList<>();
         AppCount appCount = new AppCount();
         appCount.setApp("test");
-        appCount.setStatus(CommonConstants.AVAILABLE_CODE);
+        appCount.setStatus(CommonConstants.MONITOR_UP_CODE);
         appCounts.add(appCount);
         when(monitorDao.findAppsStatusCount()).thenReturn(appCounts);
 
@@ -711,7 +721,7 @@ class MonitorServiceTest {
 
     @Test
     void updateMonitorStatus() {
-        assertDoesNotThrow(() -> monitorService.updateMonitorStatus(1L, CommonConstants.AVAILABLE_CODE));
+        assertDoesNotThrow(() -> monitorService.updateMonitorStatus(1L, CommonConstants.MONITOR_UP_CODE));
     }
 
     @Test
@@ -755,7 +765,6 @@ class MonitorServiceTest {
     void getMonitorMetrics() {
         Assertions.assertDoesNotThrow(() -> appService.getAppDefineMetricNames("test"));
     }
-
 
     @Test
     void copyMonitors() {

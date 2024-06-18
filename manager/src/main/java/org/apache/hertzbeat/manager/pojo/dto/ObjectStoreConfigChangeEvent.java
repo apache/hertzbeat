@@ -17,12 +17,12 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
+import java.util.UUID;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
-import java.util.UUID;
-
 /**
+ * Object store configuration change event.
  */
 @Getter
 public class ObjectStoreConfigChangeEvent extends ApplicationEvent {

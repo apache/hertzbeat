@@ -17,38 +17,34 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus.exporter;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Data;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
- *
+ * MetricFamily.
  */
 @Data
 @ToString
 public class MetricFamily {
     /**
-     * 指标名称
      * metric name
      */
     private String name;
 
     /**
-     * 指标描述
      * metric help
      */
     private String help;
 
     /**
-     * 指标类型
      * metric type
      */
     private MetricType metricType;
 
     /**
-     * 具体的指标
+     * Specific metric
      */
     private List<Metric> metricList;
 
@@ -59,7 +55,7 @@ public class MetricFamily {
     public static class Metric {
 
         /**
-         * 标签数据, 主要对应{}内容
+         * Label data, mainly corresponding to the content within {}
          */
         private List<Label> labelPair;
 
@@ -174,6 +170,11 @@ public class MetricFamily {
     public static class Summary {
 
         /**
+         * value
+         */
+        private double value;
+
+        /**
          * count
          */
         private long count;
@@ -195,7 +196,7 @@ public class MetricFamily {
     @Data
     public static class Quantile {
         /**
-         * 对应 prometheus 的 quantile 字段
+         * Corresponding to the quantile field in Prometheus
          */
         private double xLabel;
 
@@ -210,6 +211,11 @@ public class MetricFamily {
      */
     @Data
     public static class Histogram {
+
+        /**
+         * value
+         */
+        private double value;
 
         /**
          * count

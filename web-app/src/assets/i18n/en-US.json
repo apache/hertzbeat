@@ -22,7 +22,9 @@
       "webserver": "Webserver Monitor",
       "cache": "Cache Monitor",
       "bigdata": "Bigdata Monitor",
-      "promql": "Data Query"
+      "promql": "Data Query",
+      "llm": "Ai LLM",
+      "server": "Server Monitor"
     },
     "account": {
       "": "Personal",
@@ -103,20 +105,10 @@
     "status": {
       "": "Task Status",
       "all": "All Status",
-      "available": "Available",
-      "unavailable": "Unavailable",
+      "up": "Up",
+      "down": "Down",
       "unreachable": "Unreachable",
-      "unmonitored": "Unmonitored"
-    },
-    "grafana": {
-      "enabled":{
-        "label": "Enable Grafana",
-        "tip": "Enable Grafana to display the monitoring data of this task in the form of a dashboard"
-      },
-      "upload": {
-        "label": "Upload Grafana Template",
-        "tip": "Upload Grafana template file, support json format"
-      }
+      "paused": "Paused"
     }
   },
   "alert": {
@@ -274,6 +266,7 @@
   "alert.notice.type.sms": "SMS",
   "alert.notice.type.phone": "Phone",
   "alert.notice.type.email": "Email",
+  "alert.notice.type.userId": "User ID",
   "alert.notice.type.url": "URL",
   "alert.notice.type.wechat": "Open WeChat",
   "alert.notice.type.wechat-id": "WeChat OPENID",
@@ -331,6 +324,8 @@
   "alert.notice.sender.mail.port": "Email Port",
   "alert.notice.sender.mail.ssl": "Enable SSL",
   "alert.notice.sender.mail.enable": "Enable Email Configuration",
+  "alert.export.switch-type": "Please select the export file format!",
+  "alert.export.use-type": "Export rules in {{type}} file format",
   "dashboard.alerts.title": "Recently Alarms List",
   "dashboard.alerts.title-no": "Recently Pending Alarms",
   "dashboard.alerts.no": "No Pending Alarms",
@@ -358,7 +353,7 @@
   "monitor_icon.cache": "group",
   "monitor_icon.bigdata": "dot-chart",
   "monitor_icon.webserver": "database",
-  "monitors.center.help": "Monitoring Center is the monitoring resource management portal of HertzBeat. Displays the currently added monitors in the form of list, and supports tag grouping, query filtering, and access to view monitoring details. <br> You can add, modify, delete, cancel monitoring, import/export, batch management, and other operations on the monitors.",
+  "monitors.center.help": "Monitoring Center is the monitoring resource management portal of HertzBeat. Displays the currently added monitors in the form of list, and supports tag grouping, query filtering, and access to view monitoring details. <br> You can add, modify, delete, pause monitoring, import/export, batch management, and other operations on the monitors.",
   "monitors.center.help.link": "https://hertzbeat.apache.org/docs/",
   "monitors.center.search.placeholder": "Search monitor type to add: Linux, Redis",
   "monitors.list": "Monitor List",
@@ -374,8 +369,8 @@
   "monitors.delete": "Delete",
   "monitors.edit-monitor": "Edit Monitor",
   "monitors.delete-monitor": "Delete Monitor",
-  "monitors.enable": "Enable Monitor",
-  "monitors.cancel": "Cancel Monitor",
+  "monitors.enable": "Resume Monitor",
+  "monitors.cancel": "Pause Monitor",
   "monitors.export": "Export Monitor",
   "monitors.export.switch-type": "Please select the export file format!",
   "monitors.export.use-type": "Export monitors in {{type}} file format",
@@ -501,6 +496,7 @@
   "app.passport.intro-2": "Real-Time Monitoring",  "app.login.message-need-identifier": "Please enter your username",
   "app.login.message-need-credential": "Please enter password",
   "app.login.message-invalid-credentials": "Invalid username or password",
+  "app.login.need-change-password": "Please update the initial default password in time!",
   "app.login.tab-login-credentials": "Sign In HertzBeat",
   "app.login.remember-me": "Remember me",
   "app.login.login": "Login",
@@ -577,6 +573,7 @@
   "collector.task": "Total Tasks",
   "collector.start-time": "Start Time",
   "collector.ip": "IP Address",
+  "collector.version": "Version",
   "collector.node": "Node Name",
   "collector.pinned": "Pinned Tasks",
   "collector.dispatched": "Dispatched Tasks",
@@ -593,7 +590,7 @@
   "collector.deploy.docker.help.3": "# -e MANAGER_HOST=127.0.0.1 : Set the main HertzBeat service address for connection",
   "collector.deploy.docker.help.4": "# -e MODE=public : Set the running mode(public or private), public cluster or private cloud-edge.",
   "collector.deploy.docker.help.5": "# --name hertzbeat-collector: Name the container name hertzbeat-collector",
-  "collector.deploy.docker.help.6": "# tancloud/hertzbeat-collector: Use the HertzBeat official application image source, or use quay.io/tancloud/hertzbeat-collector to replace it",
+  "collector.deploy.docker.help.6": "# apache/hertzbeat-collector: Use the HertzBeat official application image source, or use quay.io/tancloud/hertzbeat-collector to replace it",
   "collector.deploy.package": "Deploy via Package",
   "collector.deploy.package.github": "Download From Github",
   "collector.deploy.package.gitee": "Download From Gitee",
@@ -645,7 +642,7 @@
   "status.public.org.state.2": "All Systems Abnormal",
   "status.public.today": "Today",
   "status.public.30-day": "30 days ago",
-  "status.public.power-by": "Power by HertzBeat. Star Us !",
+  "status.public.power-by": "Power by Apache HertzBeat. Star Us !",
   "status.public.to-incident": "Incident History",
   "status.public.to-component": "Status Page",
   "status.incident": "Incident",

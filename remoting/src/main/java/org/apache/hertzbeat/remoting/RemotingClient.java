@@ -26,18 +26,17 @@ import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
 public interface RemotingClient extends RemotingService {
 
     /**
-     * register remoting processor
-     * 根据不同的type注册不同的processor
+     * register remoting processor by type
      * @param messageType type
      * @param processor remoting processor
      */
-    void registerProcessor(final ClusterMsg.MessageType messageType, final NettyRemotingProcessor processor);
+    void registerProcessor(ClusterMsg.MessageType messageType, NettyRemotingProcessor processor);
 
     /**
      * send message to server
      * @param request request message
      */
-    void sendMsg(final ClusterMsg.Message request);
+    void sendMsg(ClusterMsg.Message request);
 
     /**
      * send message to server and sync waiting receive server message
@@ -45,5 +44,5 @@ public interface RemotingClient extends RemotingService {
      * @param timeoutMillis timeout millis
      * @return response message
      */
-    ClusterMsg.Message sendMsgSync(final ClusterMsg.Message request, final  int timeoutMillis);
+    ClusterMsg.Message sendMsgSync(ClusterMsg.Message request,  int timeoutMillis);
 }

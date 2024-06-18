@@ -11,7 +11,7 @@ keywords: [open source monitoring system, alerting system]
 
 ! [hertzBeat](/img/blog/new-committer.png)
 
-> Welcome to Dromara HertzBeat's three new community committeers, let's learn more about their open source experience!
+> Welcome to HertzBeat's three new community committeers, let's learn more about their open source experience!
 
 # New Committer - vinci
 
@@ -78,7 +78,7 @@ In July this year, after basically completing the study of Java framework develo
 
 Thanks to the author of HertzBeat, HertzBeat/Sms4j Committer Tiejia Xiaobao, Sms4j Committer Dongfeng, when I encountered problems that I could not solve, I often asked the three brothers to ask for advice, and they are always tired of patiently helping me solve the problem, there are really no words.
 
-Thanks to the other partners in the community, I've gained a lot from communicating and discussing with them, and I've also felt the active open source atmosphere in the Dromara community.
+Thanks to the other partners in the community, I've gained a lot from communicating and discussing with them, and I've also felt the active open source atmosphere in the community.
 
 ## Some advice for newcomers
 
@@ -131,7 +131,7 @@ Thanks to the authors of hertzbeat for the documentation and help. Thanks to my 
 
 ## What is HertzBeat?
 
-[HertzBeat HertzBeat](https://github.com/dromara/hertzbeat) is an open source real-time monitoring and alerting system with powerful customizable monitoring capabilities, high performance clustering, Prometheus compatibility, and no Agent required.
+[HertzBeat HertzBeat](https://github.com/apache/hertzbeat) is an open source real-time monitoring and alerting system with powerful customizable monitoring capabilities, high performance clustering, Prometheus compatibility, and no Agent required.
 
 ### Features
 
@@ -146,8 +146,8 @@ Thanks to the authors of hertzbeat for the documentation and help. Thanks to my 
 > ``HertzBeat``s powerful customization, multi-type support, high performance, easy to extend, low coupling, hope to help developers and teams quickly build their own monitoring system.
 
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 Welcome more partners to participate in HertzBeat's open source collaboration, no matter a typo or punctuation we are very welcome, we learn together to make progress, the goal is to do a world-class open source software.

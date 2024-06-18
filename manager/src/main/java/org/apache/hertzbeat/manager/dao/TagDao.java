@@ -17,13 +17,12 @@
 
 package org.apache.hertzbeat.manager.dao;
 
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * tag repository
@@ -49,6 +48,6 @@ public interface TagDao extends JpaRepository<Tag, Long>, JpaSpecificationExecut
      * @param value tag value
      * @return tag
      */
-    Optional<Tag> findTagByNameAndValue(String name, String value);
+    Optional<Tag> findTagByNameAndTagValue(String name, String value);
     
 }

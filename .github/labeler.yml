@@ -64,7 +64,7 @@ docker-compose:
       - any-glob-to-any-file:
           - "script/docker-compose/**/*"
 
-docs:
+doc:
   - changed-files:
       - any-glob-to-any-file:
           - "**/README.md"
@@ -109,22 +109,7 @@ monitoring-template:
       - any-glob-to-any-file:
           - "manager/src/main/resources/define/**/*"
 
-
-# Add 'feature' label to any PR where the head branch name starts with `feature` or has a `feature` section in the name
-feature:
-  - head-branch: ['^[feature]', 'feature']
-
-bugfix:
-  - head-branch: ['^[bugfix]', 'bugfix']
-    
-doc:
-  - head-branch: ['^[doc]', 'doc']
-    
-improve:
-  - head-branch: ['^[improve]', 'improve']
-    
-refactor:
-  - head-branch: ['^[refactor]', 'refactor']
-    
-cleanup:
-  - head-branch: ['^[cleanup]', 'cleanup']
+HIP:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'hip/**'

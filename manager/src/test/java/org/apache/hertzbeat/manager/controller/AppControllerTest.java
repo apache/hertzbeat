@@ -17,9 +17,13 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
 import org.apache.hertzbeat.manager.service.impl.AppServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,13 +36,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 /**
  * Test case for {@link AppController}
@@ -53,6 +50,7 @@ class AppControllerTest {
 
     @InjectMocks
     private AppController appController;
+
     @BeforeEach
     void setUp() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(appController).build();
@@ -60,7 +58,7 @@ class AppControllerTest {
 
     @Test
     void queryAppParamDefines() throws Exception {
-        // Data to make ｜ 制造数据
+        // Data to make
         List<ParamDefine> paramDefines = new ArrayList<>();
         ParamDefine paramDefine = new ParamDefine();
         paramDefine.setId(1L);
@@ -74,11 +72,11 @@ class AppControllerTest {
         paramDefine.setModifier("tom");
         paramDefines.add(paramDefine);
 
-        // The interface is called to return manufactured data｜ 调用接口返回制造的数据
+        // The interface is called to return manufactured data
         Mockito.when(appService.getAppParamDefines("api"))
                 .thenReturn(paramDefines);
 
-        // Request interface ｜ 请求接口
+        // Request interface
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/apps/{app}/params", "api"))
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data[0].id").value(1))
@@ -87,7 +85,7 @@ class AppControllerTest {
 
     @Test
     void queryAppDefine() throws Exception {
-        // Data to make ｜ 制造数据
+        // Data to make
         Job define = new Job();
         define.setId(1L);
         define.setMonitorId(1L);
@@ -97,11 +95,11 @@ class AppControllerTest {
         define.setMetrics(new ArrayList<>());
         define.setConfigmap(new ArrayList<>());
 
-        // The interface is called to return manufactured data｜ 调用接口返回制造的数据
+        // The interface is called to return manufactured data
         Mockito.when(appService.getAppDefine("api"))
                 .thenReturn(define);
 
-        // Request interface ｜ 请求接口
+        // Request interface
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/apps/{app}/define", "api"))
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.id").value(1))
@@ -110,7 +108,7 @@ class AppControllerTest {
 
     @Test
     void queryAppsHierarchy() throws Exception {
-        // Data to make ｜ 制造数据
+        // Data to make
         Hierarchy hierarchy = new Hierarchy();
         hierarchy.setLabel("Linux系统");
         hierarchy.setValue("linux");
@@ -118,17 +116,14 @@ class AppControllerTest {
         List<Hierarchy> list = new ArrayList<>();
         list.add(hierarchy);
 
-        // The interface is called to return manufactured data｜ 调用接口返回制造的数据
+        // The interface is called to return manufactured data
         Mockito.when(appService.getAllAppHierarchy("zh-CN"))
                 .thenReturn(list);
 
-        // Request interface ｜ 请求接口
+        // Request interface
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/apps/hierarchy", "zh-CN"))
-                    .andExpect( jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                     .andExpect(jsonPath("$.data[0].category").value("os"))
                     .andReturn();
-
-
-
     }
 }

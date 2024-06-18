@@ -17,13 +17,12 @@
 
 package org.apache.hertzbeat.collector.collect.http.promethus;
 
-import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.constants.CommonConstants;
+import java.util.List;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * Prometheus Last Parser
@@ -40,8 +39,6 @@ public class PrometheusLastParser extends AbstractPrometheusParse {
     @Override
     public void parse(String resp, List<String> aliasFields, HttpProtocol http, CollectRep.MetricsData.Builder builder) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        for (String aliasField : aliasFields) {
-            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-        }
+        aliasFields.forEach(aliasField -> valueRowBuilder.addColumns(CommonConstants.NULL_VALUE));
     }
 }

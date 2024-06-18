@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -69,6 +70,10 @@ export class AlertNoticeComponent implements OnInit {
   tagsOption: any[] = [];
   filterTags: string[] = [];
   isLimit: boolean = false;
+  @ViewChild('receiverForm', { static: false }) receiverForm: NgForm | undefined;
+  @ViewChild('templateForm', { static: false }) templateForm: NgForm | undefined;
+  @ViewChild('ruleForm', { static: false }) ruleForm: NgForm | undefined;
+
   dayCheckOptions = [
     { label: this.i18nSvc.fanyi('common.week.7'), value: 7, checked: true },
     { label: this.i18nSvc.fanyi('common.week.1'), value: 1, checked: true },
@@ -347,7 +352,48 @@ export class AlertNoticeComponent implements OnInit {
     this.isManageReceiverModalVisible = false;
   }
 
+  private markAllControlsAsTouched(form: NgForm | undefined): void {
+    Object.keys(form!.controls).forEach(field => {
+      const control = form!.controls[field];
+      control.markAsTouched();
+    });
+  }
+
+  private markAllControlsAsUnTouched(form: NgForm | undefined): void {
+    Object.keys(form!.controls).forEach(field => {
+      const control = form!.controls[field];
+      control.markAsUntouched();
+    });
+  }
+
   onManageReceiverModalOk() {
+    if (this.receiver.type == 4) {
+      if (!this.receiver.phone && !this.receiver.userId) {
+        this.markAllControlsAsTouched(this.receiverForm);
+        this.receiverForm!.controls['phone'].setErrors({ invalidPhone: this.i18nSvc.fanyi('validation.phone.or.userid.invalid') });
+        this.markAllControlsAsUnTouched(this.receiverForm);
+        return;
+      } else {
+        const errors = this.receiverForm!.controls['phone'].errors;
+        if (errors && errors.invalidPhone) {
+          delete errors.invalidPhone;
+          this.receiverForm!.controls['phone'].setErrors(errors);
+        }
+      }
+    }
+    if (this.receiverForm?.invalid) {
+      let isWaring = false;
+      Object.values(this.receiverForm.controls).forEach(control => {
+        if (control.invalid && !(Object.keys(control?.errors || {}).length === 0)) {
+          isWaring = true;
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      if (isWaring) {
+        return;
+      }
+    }
     this.isManageReceiverModalOkLoading = true;
     if (this.isManageReceiverModalAdd) {
       const modalOk$ = this.noticeReceiverSvc
@@ -619,8 +665,8 @@ export class AlertNoticeComponent implements OnInit {
           if (page.content != undefined) {
             page.content.forEach(item => {
               let tag = `${item.name}`;
-              if (item.value != undefined) {
-                tag = `${tag}:${item.value}`;
+              if (item.tagValue != undefined) {
+                tag = `${tag}:${item.tagValue}`;
               }
               this.tagsOption.push({
                 value: tag,
@@ -691,6 +737,15 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageRuleModalOk() {
+    if (this.ruleForm?.invalid) {
+      Object.values(this.ruleForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.rule.receiverName = [];
     this.receiversOption.forEach(option => {
       this.rule.receiverId.forEach(id => {
@@ -777,6 +832,15 @@ export class AlertNoticeComponent implements OnInit {
   }
 
   onManageTemplateModalOk() {
+    if (this.templateForm?.invalid) {
+      Object.values(this.templateForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.isManageTemplateModalOkLoading = true;
     if (this.isManageTemplateModalAdd) {
       this.template.preset = false;

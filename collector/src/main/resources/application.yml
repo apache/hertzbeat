@@ -29,7 +29,7 @@ spring:
     default-property-inclusion: ALWAYS
   # need to disable spring boot mongodb auto config, or default mongodb connection tried and failed...
   autoconfigure:
-    exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+    exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration, org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration, org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
 
 ---
 spring:
@@ -38,6 +38,9 @@ spring:
       on-profile: cluster
 
 collector:
+  info:
+    version: 1.5.0
+    ip: IP
   dispatch:
     entrance:
       netty:
@@ -55,9 +58,4 @@ push:
 
 common:
   queue:
-    # memory or kafka
-    type: ${QUEUE_TYPE:netty}
-    # properties when queue type is kafka
-    kafka:
-      servers: ${KAFKA_SERVERS:127.0.0.1:9092}
-      metrics-data-topic: ${KAFKA_TOPIC:async-metrics-data}
+    type: netty

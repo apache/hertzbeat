@@ -17,35 +17,39 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.criteria.Predicate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
-import org.apache.hertzbeat.manager.service.CollectorService;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
+import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import jakarta.persistence.criteria.Predicate;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * collector API
  */
-@Tag(name = "Collector Manage API | 采集器信息管理API")
+@Tag(name = "Collector Manage API")
 @RestController()
 @RequestMapping(value = "/api/collector", produces = {APPLICATION_JSON_VALUE})
 public class CollectorController {
@@ -58,11 +62,11 @@ public class CollectorController {
 
     @GetMapping
     @Operation(summary = "Get a list of collectors based on query filter items",
-            description = "根据查询过滤项获取采集器列表")
+            description = "Get a list of collectors based on query filter items")
     public ResponseEntity<Message<Page<CollectorSummary>>> getCollectors(
             @Parameter(description = "collector name", example = "tom") @RequestParam(required = false) final String name,
-            @Parameter(description = "List current page | 列表当前分页", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(description = "Number of list pagination | 列表分页数量", example = "8") @RequestParam(required = false) Integer pageSize) {
+            @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
+            @Parameter(description = "Number of list pagination", example = "8") @RequestParam(required = false) Integer pageSize) {
         if (pageSize == null) {
             pageSize = Integer.MAX_VALUE;
         }
@@ -106,7 +110,7 @@ public class CollectorController {
     @DeleteMapping
     @Operation(summary = "Delete collectors")
     public ResponseEntity<Message<Void>> deleteCollector(
-            @Parameter(description = "collector name | 采集器名称", example = "demo-collector")
+            @Parameter(description = "collector name", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
         this.collectorService.deleteRegisteredCollector(collectors);
         return ResponseEntity.ok(Message.success("Delete success"));

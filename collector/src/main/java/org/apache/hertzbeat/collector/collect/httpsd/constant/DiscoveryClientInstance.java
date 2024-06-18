@@ -19,18 +19,16 @@
 
 package org.apache.hertzbeat.collector.collect.httpsd.constant;
 
+import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Arrays;
-
 /**
- * Discovery Client Instance Name For Httpsd monitor
+ * Discovery Client Instance Name For Http_sd monitor
  */
 public enum DiscoveryClientInstance {
     CONSUL("Consul"),
     NACOS("Nacos"),
-    NOT_SUPPORT("Not support discovery client instance! "),
-    ;
+    NOT_SUPPORT("Not support discovery client instance!");
 
     private final String name;
 
@@ -44,4 +42,5 @@ public enum DiscoveryClientInstance {
                 .findFirst()
                 .orElse(DiscoveryClientInstance.NOT_SUPPORT);
     }
+
 }

@@ -28,28 +28,28 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 - 新的登陆页面UI
 
-  <img width="1952" alt="image" src="https://github.com/dromara/hertzbeat/assets/24788200/5bc5015a-9343-472d-9754-6b06b9138893"/>
+  <img width="1952" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/5bc5015a-9343-472d-9754-6b06b9138893"/>
 
-  <img width="1950" alt="image" src="https://github.com/dromara/hertzbeat/assets/24788200/71a29284-9cad-4ed2-983a-50430ddb1e2f"/>
+  <img width="1950" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/71a29284-9cad-4ed2-983a-50430ddb1e2f"/>
 
 - 支持采集器集群管理
 
-<img width="1943" alt="image" src="https://github.com/dromara/hertzbeat/assets/24788200/ba79f743-a450-4b01-adf0-5f15f3722c19"/>
+<img width="1943" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/ba79f743-a450-4b01-adf0-5f15f3722c19"/>
 
-<img width="1901" alt="image" src="https://github.com/dromara/hertzbeat/assets/24788200/b090ec18-5aae-444e-9ef6-e62fd1d8d239"/>
+<img width="1901" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/b090ec18-5aae-444e-9ef6-e62fd1d8d239"/>
 
 - 友好的帮助文档头
 
-<img width="1942" alt="image" src="https://github.com/dromara/hertzbeat/assets/24788200/c635fab6-504b-47de-9b7e-0c2df86f7e6a"/>
+<img width="1942" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/c635fab6-504b-47de-9b7e-0c2df86f7e6a"/>
 
 - 监控指标名称国际化
 
-<img width="1802" alt="image" src="https://github.com/dromara/hertzbeat/assets/24788200/d5c74647-6c18-4b12-b858-f29cf1c61661"/>
+<img width="1802" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/d5c74647-6c18-4b12-b858-f29cf1c61661"/>
 
 
 ### 什么是 HertzBeat?
 
-[HertzBeat 赫兹跳动](https://github.com/dromara/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
+[HertzBeat 赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，高性能集群，无需 Agent 的开源实时监控告警系统。
 
 ### 特点
 
@@ -64,9 +64,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: https://github.com/dromara/hertzbeat**
+**Github: https://github.com/apache/hertzbeat**
 
-**Gitee: https://gitee.com/dromara/hertzbeat**
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 
 ### 尝试部署
@@ -74,7 +74,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 1. `docker` 环境仅需一条命令即可开始
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat tancloud/hertzbeat```
+```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
 ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 
@@ -85,7 +85,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 3. 部署采集器集群
 
 ```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector tancloud/hertzbeat-collector
+docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
 - `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
@@ -113,6 +113,6 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 ----
 
-**Github: https://github.com/dromara/hertzbeat**      
-**Gitee: https://gitee.com/dromara/hertzbeat**  
+**Github: https://github.com/apache/hertzbeat**      
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
 

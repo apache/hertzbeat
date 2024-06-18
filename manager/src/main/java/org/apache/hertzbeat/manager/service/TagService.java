@@ -17,18 +17,16 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
- * 标签服务
  * tag service
  */
 public interface TagService {
@@ -47,8 +45,8 @@ public interface TagService {
 
     /**
      * get tag page list
-     * @param specification 查询条件
-     * @param pageRequest   分页条件
+     * @param specification Query condition
+     * @param pageRequest   Paging condition
      * @return Tags
      */
     Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest);

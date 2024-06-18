@@ -4,7 +4,7 @@ title: Quick Tutorial Customize and adapt a monitoring based on HTTP protocol
 sidebar_label: Tutorial Case
 ---
 
-Through this tutorial, we describe step by step how to customize and adapt a monitoring type based on the http protocol under the hertzbeat monitoring tool.
+Through this tutorial, we describe step by step how to customize and adapt a monitoring type based on the http protocol under the Apache HertzBeat (incubating).
 
 Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [Http Protocol Customization](extend-http).
 
@@ -82,6 +82,14 @@ app: hertzbeat
 name:
   zh-CN: HertzBeat监控系统
   en-US: HertzBeat Monitor
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Hertzbeat 监控系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控系统</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor through general performance metric. You could click the "<i>New HertzBeat Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對Hertzbeat監控系統的通用名額進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat
+  en-US: https://hertzbeat.apache.org/docs/help/hertzbeat
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -138,7 +146,7 @@ params:
       zh-CN: 用户名
       en-US: Username
     type: text
-    limit: 20
+    limit: 50
     required: false
     hide: true
   - field: password
@@ -233,6 +241,4 @@ This is the end of the practice of custom monitoring of the HTTP protocol. The H
 
 If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much. Thanks for the old iron support. Refill!
 
-**github: https://github.com/dromara/hertzbeat**
-
-**gitee: https://gitee.com/dromara/hertzbeat**
+**github: https://github.com/apache/hertzbeat**

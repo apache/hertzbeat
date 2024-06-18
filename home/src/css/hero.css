@@ -4,7 +4,7 @@
 }
 
 html[data-theme=dark] .hero--primary {
-    --ifm-hero-background-color: var(--ifm-footer-background-color);
+    --ifm-hero-background-color: #0c0c0c;
     --ifm-hero-text-color: #fff;
 }
 
@@ -22,7 +22,6 @@ html[data-theme=dark] .hero--primary {
     font-weight: bolder;
     font-family: monospace;
     color: #d97700;
-    max-width: 900px;
     width: 100%;
     margin: 0 auto;
 }
@@ -32,11 +31,4 @@ html[data-theme=dark] .hero--primary {
         font-size: 1.3em;
         font-weight: bolder;
     }
-}
-
-#fblike {
-    height: 20px;
-}
-#fblike, #twitter-widget-1 {
-    margin-right: 20px;
 }

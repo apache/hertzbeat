@@ -125,11 +125,11 @@ Content details: The status of IOTDB node 127.0.0.1 is monitored as OFFLINE, ple
 This practical article took us to experience that if HertzBeat is used to monitor the IoTDB database metric data, we can find that HertzBeat, which integrates monitoring-alarm-notification, is more convenient in operation and use, and IoTDB can be included in the monitoring with a simple click on the page, it is no longer necessary to deploy multiple components and write multiple YML configuration files with thresholds.
 
 IoTDB Github: https://github.com/apache/iotdb
-HertzBeat Github: https://github.com/dromara/hertzbeat
+HertzBeat Github: https://github.com/apache/hertzbeat
 
 **Welcome to learn about using Star Support! **
 
 Only one docker command is needed to install and experience heartbeat:
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
 Note ⚠️HertzBeat v1.2.3 version supports IoTDB v0.12 v0.13. Since its v1.0 has just been released, all metrics of this version are not yet compatible.

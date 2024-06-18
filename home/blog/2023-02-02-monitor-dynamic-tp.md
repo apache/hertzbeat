@@ -172,9 +172,9 @@ This practical article takes us to experience how to use HertzBeat to monitor Dy
 :::
 
 DynamicTp Github: https://github.com/dromara/dynamic-tp           
-HertzBeat Github: https://github.com/dromara/hertzbeat
+HertzBeat Github: https://github.com/apache/hertzbeat
 
 **Welcome to learn how to use Star Support!**
 
 Experience heartbeat with a single docker command:   
-`docker run -d -p 1157:1157 --name hertzbeat tancloud/hertzbeat`
+`docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`

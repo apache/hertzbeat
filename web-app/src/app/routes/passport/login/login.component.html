@@ -36,6 +36,26 @@
             </nz-input-group>
           </nz-form-control>
         </nz-form-item>
+        <nz-alert
+          *ngIf="needUpdatePassword"
+          [nzType]="'warning'"
+          [nzMessage]="showPasswdChange"
+          [nzShowIcon]="true"
+          class="mb-lg"
+        ></nz-alert>
+        <ng-template #showPasswdChange>
+          <a href="https://hertzbeat.apache.org/docs/start/account-modify" target="_blank">
+            <span>
+              {{ 'app.login.need-change-password' | i18n }}
+              <svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" style="margin-left: 4px">
+                <path
+                  fill="currentColor"
+                  d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"
+                ></path>
+              </svg>
+            </span>
+          </a>
+        </ng-template>
         <nz-form-item>
           <nz-col [nzSpan]="12">
             <label nz-checkbox formControlName="remember">{{ 'app.login.remember-me' | i18n }}</label>
@@ -47,16 +67,16 @@
           </button>
         </nz-form-item>
       </nz-tab>
-      <nz-tab [nzTitle]="'app.login.explore.cloud' | i18n">
-        <div style="margin-top: 20%; margin-bottom: 20%; text-align: center">
-          <a href="https://console.tancloud.cn/" target="_blank">
-            <div class="hoverClass" style="border-radius: 4px; background-color: #3f51b5; padding: 6px; color: white">
-              {{ 'app.login.explore.cloud.detail' | i18n }}
-              <span nz-icon nzType="global" nzTheme="outline"></span>
-            </div>
-          </a>
-        </div>
-      </nz-tab>
+      <!--      <nz-tab [nzTitle]="'app.login.explore.cloud' | i18n">-->
+      <!--        <div style="margin-top: 20%; margin-bottom: 20%; text-align: center">-->
+      <!--          <a href="https://console.tancloud.cn/" target="_blank">-->
+      <!--            <div class="hoverClass" style="border-radius: 4px; background-color: #3f51b5; padding: 6px; color: white">-->
+      <!--              {{ 'app.login.explore.cloud.detail' | i18n }}-->
+      <!--              <span nz-icon nzType="global" nzTheme="outline"></span>-->
+      <!--            </div>-->
+      <!--          </a>-->
+      <!--        </div>-->
+      <!--      </nz-tab>-->
     </nz-tabset>
   </form>
 </div>

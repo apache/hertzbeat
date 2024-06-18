@@ -22,6 +22,8 @@ package org.apache.hertzbeat.push.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.io.InputStream;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.push.service.PushGatewayService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +32,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 /**
  * push gateway controller
  */
-@Tag(name = "Metrics Push Gateway API | 监控数据推送网关API")
+@Tag(name = "Metrics Push Gateway API")
 @RestController
 @RequestMapping(value = "/api/push/pushgateway")
 public class PushGatewayController {
@@ -45,7 +44,7 @@ public class PushGatewayController {
     private PushGatewayService pushGatewayService;
 
     @PostMapping()
-    @Operation(summary = "Push metric data to hertzbeat pushgateway", description = "推送监控数据到hertzbeat推送网关")
+    @Operation(summary = "Push metric data to hertzbeat pushgateway", description = "Push metric data to hertzbeat pushgateway")
     public ResponseEntity<Message<Void>> pushMetrics(HttpServletRequest request) throws IOException {
         InputStream inputStream = request.getInputStream();
         boolean result = pushGatewayService.pushMetricsData(inputStream);

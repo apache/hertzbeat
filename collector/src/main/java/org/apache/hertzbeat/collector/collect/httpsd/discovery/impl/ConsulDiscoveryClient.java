@@ -24,20 +24,18 @@ import com.ecwid.consul.v1.agent.model.Check;
 import com.ecwid.consul.v1.agent.model.Self;
 import com.ecwid.consul.v1.agent.model.Service;
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ConnectConfig;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServerInfo;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServiceInstance;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ConnectConfig;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 
 /**
  * DiscoveryClient impl of Consul
- *
  */
 public class ConsulDiscoveryClient implements DiscoveryClient {
     private ConsulClient consulClient;
@@ -74,7 +72,8 @@ public class ConsulDiscoveryClient implements DiscoveryClient {
                 .serviceId(serviceId)
                 .serviceName(instance.getService())
                 .address(instance.getAddress())
-                .port(String.valueOf(instance.getPort()))
+                .port(instance.getPort())
+                .metadata(instance.getMeta())
                 .healthStatus(getHealthStatus(serviceId, healthCheckList))
                 .build()));
 
@@ -82,7 +81,24 @@ public class ConsulDiscoveryClient implements DiscoveryClient {
     }
 
     @Override
+    public boolean healthCheck() {
+
+        List<com.ecwid.consul.v1.health.model.Check> consulHealth = consulClient.getHealthChecksForNode("consul", null)
+                .getValue();
+        for (com.ecwid.consul.v1.health.model.Check check : consulHealth) {
+            com.ecwid.consul.v1.health.model.Check.CheckStatus status = check.getStatus();
+            if (status != com.ecwid.consul.v1.health.model.Check.CheckStatus.PASSING) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
     public void close() {
+
+        consulClient = null;
     }
 
     private String getHealthStatus(String serviceId, Collection<Check> healthCheckList) {
@@ -92,4 +108,5 @@ public class ConsulDiscoveryClient implements DiscoveryClient {
                 .map(check -> check.getStatus().name())
                 .orElse("");
     }
+
 }

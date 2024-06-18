@@ -14,16 +14,13 @@
 # limitations under the License.
 
 # The monitoring type category: service-application service monitoring, db-database monitoring, custom-custom monitoring.
-# 此监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
 # The monitoring application type name (consistent with the file name)
-# 监控应用类型名称(与文件名保持一致)
 app: influxdb_promql
 name:
   zh-CN: InfluxDB-PromQL
   en-US: InfluxDB-PromQL
 # The description and help of this monitoring type
-# 监控类型的帮助描述信息
 help:
   zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 InfluxDB 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 InfluxDB，需要从 Prometheus 服务器抓取 InfluxDB 的监控数据。<br>您可以点击 “<i>新建 InfluxDB-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat uses Prometheus PromQL query metrics data from Prometheus Server to monitoring InfluxDB. This solution is suitable for Prometheus to monitor InfluxDB, and it need to capture InfluxDB monitoring data from the Prometheus server. <br>You could click the "<i>New InfluxDB-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
@@ -45,7 +42,7 @@ params:
     type: number
     range: '[0,65535]'
     required: true
-    defaultValue: 80
+    defaultValue: 9090
   - field: method
     name:
       zh-CN: 请求方式
@@ -61,6 +58,7 @@ params:
         value: PUT
       - label: DELETE请求
         value: DELETE
+    defaultValue: GET
   - field: uri
     name:
       zh-CN: 相对路径
@@ -69,6 +67,7 @@ params:
     limit: 200
     required: true
     placeholder: 'API地址除IP端口外的路径 例如:/v2/book/bar'
+    defaultValue: /api/v1/query
   - field: ssl
     name:
       zh-CN: 启动SSL
@@ -124,7 +123,7 @@ params:
       zh-CN: 用户名
       en-US: Username
     type: text
-    limit: 20
+    limit: 50
     required: false
     hide: true
   - field: password
@@ -141,14 +140,10 @@ metrics:
   - name: basic_influxdb_memstats_alloc
     # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
     # metrics fields list.
-    # 具体监控指标列表
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: instance
         type: 1
       - field: timestamp
@@ -156,41 +151,30 @@ metrics:
       - field: value
         type: 1
 # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
-# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
 # When the protocol is HTTP, the specific collection configuration is as follows
-# 当protocol为http协议时具体的采集配置
     http:
       # Host: IPv4, IPv6 or domain name of the host.
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # port
-      # 端口
       port: ^_^port^_^
       #URL request path.
-      # url请求接口路径
       url: ^_^uri^_^
       # request methods:GET POST PUT DELETE PATCH
-      # 请求方式 GET POST PUT DELETE PATCH
       method: ^_^method^_^
       # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
       # Header content
-      # 请求头内容
       headers:
         content-type: ^_^contentType^_^
         ^_^headers^_^: ^_^headers^_^
       # Request parameter content
-      # 请求参数内容
       params:
         ^_^params^_^: ^_^params^_^
       # authorization
-      # 认证
       authorization:
         # Authentication method: Basic Auth, Digest Auth, Bearer Token
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
@@ -198,21 +182,15 @@ metrics:
         digestAuthPassword: ^_^password^_^
       # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
       # todo xmlPath-xmlPath script, PromQL-PromQL data rule
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
-      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
       parseType: PromQL
 
   - name: influxdb_database_numMeasurements
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     # metrics fields list.
-    # 具体监控指标列表
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: job
         type: 1
       - field: instance
@@ -224,41 +202,30 @@ metrics:
       - field: value
         type: 1
     # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # When the protocol is HTTP, the specific collection configuration is as follows
-    # 当protocol为http协议时具体的采集配置
     http:
       # Host: IPv4, IPv6 or domain name of the host.
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # port
-      # 端口
       port: ^_^port^_^
       #URL request path.
-      # url请求接口路径
       url: ^_^uri^_^
       # request methods:GET POST PUT DELETE PATCH
-      # 请求方式 GET POST PUT DELETE PATCH
       method: ^_^method^_^
       # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
       # Header content
-      # 请求头内容
       headers:
         content-type: ^_^contentType^_^
         ^_^headers^_^: ^_^headers^_^
       # Request parameter content
-      # 请求参数内容
       params:
         query: influxdb_database_numMeasurements
       # Authentication
-      # 认证
       authorization:
         # Authentication method: Basic Auth, Digest Auth, Bearer Token
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
@@ -266,21 +233,15 @@ metrics:
         digestAuthPassword: ^_^password^_^
       # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
       # todo xmlPath-xmlPath script, PromQL-PromQL data rule
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
-      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
       parseType: PromQL
 
-  - name: influxdb_query_rate_seconds    # Query rate per second 每秒查询率
+  - name: influxdb_query_rate_seconds    # Query rate per second
     # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     # metrics fields list.
-    # 具体监控指标列表
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: instance
         type: 1
       - field: timestamp
@@ -288,41 +249,30 @@ metrics:
       - field: value
         type: 1
     # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # When the protocol is HTTP, the specific collection configuration is as follows
-    # 当protocol为http协议时具体的采集配置
     http:
       # Host: IPv4, IPv6 or domain name of the host.
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # port
-      # 端口
       port: ^_^port^_^
       #URL request path.
-      # url请求接口路径
       url: ^_^uri^_^
       # request methods:GET POST PUT DELETE PATCH
-      # 请求方式 GET POST PUT DELETE PATCH
       method: ^_^method^_^
       # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
       # Header content
-      # 请求头内容
       headers:
         content-type: ^_^contentType^_^
         ^_^headers^_^: ^_^headers^_^
       # Request parameter content
-      # 请求参数内容
       params:
         query: irate(influxdb_queryExecutor_queriesFinished[5m])
       # authorization
-      # 认证
       authorization:
         # Authentication method: Basic Auth, Digest Auth, Bearer Token
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
@@ -330,21 +280,15 @@ metrics:
         digestAuthPassword: ^_^password^_^
       # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
       # todo xmlPath-xmlPath script, PromQL-PromQL data rule
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
-      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
       parseType: PromQL
 
-  - name: influxdb_queryExecutor_queriesFinished_10s    # Query rate per second 每秒查询率
+  - name: influxdb_queryExecutor_queriesFinished_10s    # Query rate per second
     # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
     # metrics fields list.
-    # 具体监控指标列表
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label-是否是指标标签字段   unit:指标单位
       - field: instance
         type: 1
       - field: timestamp
@@ -352,41 +296,30 @@ metrics:
       - field: value
         type: 1
     # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # When the protocol is HTTP, the specific collection configuration is as follows
-    # 当protocol为http协议时具体的采集配置
     http:
       # Host: IPv4, IPv6 or domain name of the host.
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
       # port
-      # 端口
       port: ^_^port^_^
       #URL request path.
-      # url请求接口路径
       url: ^_^uri^_^
       # request methods:GET POST PUT DELETE PATCH
-      # 请求方式 GET POST PUT DELETE PATCH
       method: ^_^method^_^
       # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
       # Header content
-      # 请求头内容
       headers:
         content-type: ^_^contentType^_^
         ^_^headers^_^: ^_^headers^_^
       # Request parameter content
-      # 请求参数内容
       params:
         query: influxdb_queryExecutor_queriesFinished[10s]
       # authorization
-      # 认证
       authorization:
         # Authentication method: Basic Auth, Digest Auth, Bearer Token
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: ^_^authType^_^
         basicAuthUsername: ^_^username^_^
         basicAuthPassword: ^_^password^_^
@@ -394,6 +327,4 @@ metrics:
         digestAuthPassword: ^_^password^_^
       # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
       # todo xmlPath-xmlPath script,PromQL-PromQL data rule
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-api可用性指标监控
-      # todo xmlPath-xmlPath脚本,PromQL-PromQL数据规则
       parseType: PromQL

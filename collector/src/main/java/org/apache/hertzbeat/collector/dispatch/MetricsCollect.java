@@ -17,26 +17,30 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import com.googlecode.aviator.AviatorEvaluator;
-import com.googlecode.aviator.Expression;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
-import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
-import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
+import org.apache.commons.jexl3.JexlExpression;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
 import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
+import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
+import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
+import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.Pair;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * metrics collection
@@ -127,7 +131,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         response.setApp(app);
         response.setId(monitorId);
         response.setTenantId(tenantId);
-        // for prometheus auto 
+        // for prometheus auto
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
             List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
                     .getInstance().collect(response, metrics);
@@ -136,7 +140,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             return;
         }
         response.setMetrics(metrics.getName());
-        // According to the metrics collection protocol, application type, etc., 
+        // According to the metrics collection protocol, application type, etc.,
         // dispatch to the real application metrics collection implementation class
         AbstractCollect abstractCollect = CollectStrategyFactory.invoke(metrics.getProtocol());
         if (abstractCollect == null) {
@@ -147,13 +151,18 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                     + metrics.getName() + ", " + metrics.getProtocol());
         } else {
             try {
+                abstractCollect.preCheck(metrics);
                 abstractCollect.collect(response, monitorId, app, metrics);
             } catch (Exception e) {
                 String msg = e.getMessage();
                 if (msg == null && e.getCause() != null) {
                     msg = e.getCause().getMessage();
                 }
-                log.error("[Metrics Collect]: {}.", msg, e);
+                if (e instanceof IllegalArgumentException){
+                    log.error("[Metrics PreCheck]: {}.", msg, e);
+                } else {
+                    log.error("[Metrics Collect]: {}.", msg, e);
+                }
                 response.setCode(CollectRep.Code.FAIL);
                 if (msg != null) {
                     response.setMsg(msg);
@@ -173,8 +182,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     /**
      * Calculate the real metrics value according to the calculates and aliasFields configuration
      *
-     * @param metrics     Metrics configuration     
-     * @param collectData Data collection    
+     * @param metrics     Metrics configuration
+     * @param collectData Data collection
      */
     private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
         collectData.setPriority(metrics.getPriority());
@@ -193,17 +202,17 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             return;
         }
         collectData.clearValues();
-        // Preprocess calculates first    
+        // Preprocess calculates first
         if (metrics.getCalculates() == null) {
             metrics.setCalculates(Collections.emptyList());
         }
-        // eg: database_pages=Database pages unconventional mapping 
+        // eg: database_pages=Database pages unconventional mapping
         Map<String, String> fieldAliasMap = new HashMap<>(8);
-        Map<String, Expression> fieldExpressionMap = metrics.getCalculates()
+        Map<String, JexlExpression> fieldExpressionMap = metrics.getCalculates()
                 .stream()
                 .map(cal -> transformCal(cal, fieldAliasMap))
                 .filter(Objects::nonNull)
-                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Expression) arr[1], (oldValue, newValue) -> newValue));
+                .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (JexlExpression) arr[1], (oldValue, newValue) -> newValue));
 
         if (metrics.getUnits() == null) {
             metrics.setUnits(Collections.emptyList());
@@ -216,46 +225,47 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
         List<Metrics.Field> fields = metrics.getFields();
         List<String> aliasFields = metrics.getAliasFields();
-        Map<String, String> aliasFieldValueMap = new HashMap<>(16);
-        Map<String, Object> fieldValueMap = new HashMap<>(16);
+        Map<String, String> aliasFieldValueMap = new HashMap<>(8);
+        Map<String, Object> fieldValueMap = new HashMap<>(8);
+        Map<String, String> aliasFieldUnitMap = new HashMap<>(8);
         CollectRep.ValueRow.Builder realValueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (CollectRep.ValueRow aliasRow : aliasRowList) {
             for (int aliasIndex = 0; aliasIndex < aliasFields.size(); aliasIndex++) {
                 String aliasFieldValue = aliasRow.getColumns(aliasIndex);
+                String aliasField = aliasFields.get(aliasIndex);
                 if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
-                    aliasFieldValueMap.put(aliasFields.get(aliasIndex), aliasFieldValue);
+                    aliasFieldValueMap.put(aliasField, aliasFieldValue);
+                    // whether the alias field is a number
+                    CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                            .extractDoubleAndUnitFromStr(aliasFieldValue);
+                    if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
+                        fieldValueMap.put(aliasField, doubleAndUnit.getValue());
+                        if (doubleAndUnit.getUnit() != null) {
+                            aliasFieldUnitMap.put(aliasField, doubleAndUnit.getUnit());
+                        }
+                    } else {
+                        fieldValueMap.put(aliasField, aliasFieldValue);
+                    }
+                } else {
+                    fieldValueMap.put(aliasField, null);
                 }
             }
 
             for (Metrics.Field field : fields) {
                 String realField = field.getField();
-                Expression expression = fieldExpressionMap.get(realField);
+                JexlExpression expression = fieldExpressionMap.get(realField);
                 String value = null;
                 String aliasFieldUnit = null;
                 if (expression != null) {
-                    // If there is a calculation expression, calculate the value
-                    if (CommonConstants.TYPE_NUMBER == field.getType()) {
-                        for (String variable : expression.getVariableFullNames()) {
-                            // extract double value and unit from aliasField value
-                            CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                    .extractDoubleAndUnitFromStr(aliasFieldValueMap.get(variable));
-                            if (doubleAndUnit != null) {
-                                Double doubleValue = doubleAndUnit.getValue();
-                                aliasFieldUnit = doubleAndUnit.getUnit();
-                                fieldValueMap.put(variable, doubleValue);
-                            } else {
-                                fieldValueMap.put(variable, null);
+                    try {
+                        for (Map.Entry<String, String> unitEntry : aliasFieldUnitMap.entrySet()) {
+                            if (expression.getSourceText().contains(unitEntry.getKey())) {
+                                aliasFieldUnit = unitEntry.getValue();
+                                break;
                             }
                         }
-                    } else {
-                        for (String variable : expression.getVariableFullNames()) {
-                            String strValue = aliasFieldValueMap.get(variable);
-                            fieldValueMap.put(variable, strValue);
-                        }
-                    }
-                    try {
-                        // valueList为空时也执行,涵盖纯字符串赋值表达式
-                        Object objValue = expression.execute(fieldValueMap);
+                        // Also executed when valueList is empty, covering pure string assignment expressions
+                        Object objValue = JexlExpressionRunner.evaluate(expression, fieldValueMap);
                         if (objValue != null) {
                             value = String.valueOf(objValue);
                         }
@@ -273,20 +283,19 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
 
                     if (value != null) {
                         final byte fieldType = field.getType();
-
                         if (fieldType == CommonConstants.TYPE_NUMBER) {
                             CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
                                     .extractDoubleAndUnitFromStr(value);
-                            final Double tempValue = doubleAndUnit.getValue();
+                            final Double tempValue = doubleAndUnit == null ? null : doubleAndUnit.getValue();
                             value = tempValue == null ? null : String.valueOf(tempValue);
-                            aliasFieldUnit = doubleAndUnit.getUnit();
+                            aliasFieldUnit = doubleAndUnit == null ? null : doubleAndUnit.getUnit();
                         } else if (fieldType == CommonConstants.TYPE_TIME) {
                             final int tempValue;
                             value = (tempValue = CommonUtil.parseTimeStrToSecond(value)) == -1 ? null : String.valueOf(tempValue);
                         }
                     }
                 }
-                
+
                 Pair<String, String> unitPair = fieldUnitMap.get(realField);
                 if (aliasFieldUnit != null) {
                     if (unitPair != null) {
@@ -306,13 +315,18 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 if (CommonConstants.TYPE_NUMBER == field.getType()) {
                     value = CommonUtil.parseDoubleStr(value, field.getUnit());
                 }
+                // Handle the case where the value is string type and value is numeric
+                if (CommonConstants.TYPE_STRING == field.getType() && CommonUtil.isNumeric(value)) {
+                    value = CommonUtil.parseDoubleStr(value, field.getUnit());
+                }
                 if (value == null) {
                     value = CommonConstants.NULL_VALUE;
                 }
                 realValueRowBuilder.addColumns(value);
-                fieldValueMap.clear();
             }
             aliasFieldValueMap.clear();
+            fieldValueMap.clear();
+            aliasFieldUnitMap.clear();
             collectData.addValues(realValueRowBuilder.build());
             realValueRowBuilder.clear();
         }
@@ -328,9 +342,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         int splitIndex = cal.indexOf("=");
         String field = cal.substring(0, splitIndex).trim();
         String expressionStr = cal.substring(splitIndex + 1).trim().replace("\\#", "#");
-        Expression expression;
+        JexlExpression expression;
         try {
-            expression = AviatorEvaluator.compile(expressionStr, true);
+            expression = JexlExpressionRunner.compile(expressionStr);
         } catch (Exception e) {
             fieldAliasMap.put(field, expressionStr);
             return null;
@@ -395,13 +409,13 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     }
 
     private void setNewThreadName(long monitorId, String app, long startTime, Metrics metrics) {
-        String builder = monitorId + "-" + app + "-" + metrics.getName() +
-                "-" + String.valueOf(startTime).substring(9);
+        String builder = monitorId + "-" + app + "-" + metrics.getName()
+                + "-" + String.valueOf(startTime).substring(9);
         Thread.currentThread().setName(builder);
     }
 
     @Override
     public int compareTo(MetricsCollect collect) {
-        return runPriority - collect.runPriority;
+        return collect.runPriority - this.runPriority;
     }
 }

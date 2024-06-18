@@ -17,10 +17,17 @@
 
 package org.apache.hertzbeat.collector.collect.smtp;
 
+import java.io.IOException;
+import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.smtp.SMTP;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -29,30 +36,22 @@ import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
-import java.io.IOException;
-import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
 /**
- *  smtp collect
+ * smtp collect
  */
 @Slf4j
 public class SmtpCollectImpl extends AbstractCollect {
-    public SmtpCollectImpl() {
+
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getSmtp() == null) {
+            throw new IllegalArgumentException("Smtp collect must has Smtp params");
+        }
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getSmtp() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Smtp collect must has Smtp params");
-            return;
-        }
         SmtpProtocol smtpProtocol = metrics.getSmtp();
         String host = smtpProtocol.getHost();
         String port = smtpProtocol.getPort();
@@ -120,10 +119,10 @@ public class SmtpCollectImpl extends AbstractCollect {
 
     private static Map<String, String> execCmdAndParseResult(SMTP smtp, String cmd, SmtpProtocol smtpProtocol) throws IOException {
         Map<String, String> result = new HashMap<>(8);
-        // 存入smtp连接的响应
+        // Store the response of the SMTP connection
         result.put("smtpBanner", smtp.getReplyString());
         smtp.helo(smtpProtocol.getEmail());
-        // 获取helo的响应
+        // Retrieve the response for the HELO command
         String replyString = smtp.getReplyString();
         result.put("heloInfo", replyString);
         String[] lines = replyString.split("\n");

@@ -17,14 +17,23 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance;
 
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.channel.Channel;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
-import org.apache.hertzbeat.collector.dispatch.entrance.processor.*;
+import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
-import org.apache.hertzbeat.collector.dispatch.entrance.processor.*;
+import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.CollectCyclicDataProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.CollectOneTimeDataProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.DeleteCyclicTaskProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoCloseProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOfflineProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.GoOnlineProcessor;
+import org.apache.hertzbeat.collector.dispatch.entrance.processor.HeartbeatProcessor;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
@@ -37,20 +46,14 @@ import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingClient;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
 /**
  * collect server
  */
 @Component
-@Order(value = Ordered.LOWEST_PRECEDENCE)
+@Order
 @ConditionalOnProperty(prefix = "collector.dispatch.entrance.netty",
         name = "enabled", havingValue = "true")
 @Slf4j
@@ -64,10 +67,13 @@ public class CollectServer implements CommandLineRunner {
 
     private ScheduledExecutorService scheduledExecutor;
 
+    private Info info;
+
     public CollectServer(final CollectJobService collectJobService,
                          final TimerDispatch timerDispatch,
                          final DispatchProperties properties,
-                         final CommonThreadPool threadPool) {
+                         final CommonThreadPool threadPool,
+                         final CollectorInfoProperties infoProperties) {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
             log.error("init error, please config dispatch entrance netty props in application.yml");
             throw new IllegalArgumentException("please config dispatch entrance netty props");
@@ -79,14 +85,15 @@ public class CollectServer implements CommandLineRunner {
         this.collectJobService = collectJobService;
         this.timerDispatch = timerDispatch;
         this.collectJobService.setCollectServer(this);
-        this.init(properties, threadPool);
+        this.init(properties, threadPool, infoProperties);
     }
 
-    private void init(final DispatchProperties properties, final CommonThreadPool threadPool) {
+    private void init(final DispatchProperties properties, final CommonThreadPool threadPool, final CollectorInfoProperties infoProperties) {
         NettyClientConfig nettyClientConfig = new NettyClientConfig();
         DispatchProperties.EntranceProperties.NettyProperties nettyProperties = properties.getEntrance().getNetty();
         nettyClientConfig.setServerHost(nettyProperties.getManagerHost());
         nettyClientConfig.setServerPort(nettyProperties.getManagerPort());
+        this.initInfo(infoProperties);
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, new CollectNettyEventListener(), threadPool);
 
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor());
@@ -128,8 +135,9 @@ public class CollectServer implements CommandLineRunner {
             String mode = CollectServer.this.collectJobService.getCollectorMode();
             CollectorInfo collectorInfo = CollectorInfo.builder()
                     .name(identity)
-                    .ip(IpDomainUtil.getLocalhostIp())
+                    .ip(info.ip)
                     .mode(mode)
+                    .version(info.version)
                     // todo more info
                     .build();
             timerDispatch.goOnline();
@@ -171,6 +179,25 @@ public class CollectServer implements CommandLineRunner {
         @Override
         public void onChannelIdle(Channel channel) {
             log.info("handle idle event triggered. collector is going offline.");
+        }
+    }
+
+    private void initInfo(final CollectorInfoProperties infoProperties) {
+        info = new Info();
+        info.setVersion(infoProperties.getVersion());
+        info.setIp(IpDomainUtil.getIpFromEnvOrDefault(infoProperties.getIp(), IpDomainUtil.getLocalhostIp()));
+    }
+
+    private static class Info {
+        private String version;
+        private String ip;
+
+        public void setVersion(String version) {
+            this.version = version;
+        }
+
+        public void setIp(String ip) {
+            this.ip = ip;
         }
     }
 }

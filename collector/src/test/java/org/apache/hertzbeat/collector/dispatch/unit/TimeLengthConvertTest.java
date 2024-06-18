@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.hertzbeat.collector.dispatch.unit.impl.TimeLengthConvert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Test case for {@link TimeLengthConvert}
@@ -36,7 +35,7 @@ class TimeLengthConvertTest {
     }
 
     /**
-     * 测试纳秒转秒
+     * test nanoseconds to second
      */
     @Test
     void convertNs2Sec() {
@@ -45,7 +44,7 @@ class TimeLengthConvertTest {
     }
 
     /**
-     * 测试纳秒转毫秒
+     * test nanoseconds to milliseconds
      */
     @Test
     void convertNs2Ms() {
@@ -54,7 +53,7 @@ class TimeLengthConvertTest {
     }
 
     /**
-     * 测试纳秒转微秒
+     * test nanosecond to microsecond
      */
     @Test
     void convertNs2Us() {
@@ -62,15 +61,13 @@ class TimeLengthConvertTest {
         assertEquals("1000000", result);
     }
 
-
     /**
-     * 测试纳秒转天
+     * test nanoseconds to sky
      */
     @Test
     void convertNs2Day() {
         String result = convert.convert("86400000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.D.getUnit());
         assertEquals("1", result);
     }
-
 
 }

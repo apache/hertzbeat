@@ -17,24 +17,34 @@
 
 package org.apache.hertzbeat.collector.util;
 
+import com.beetstra.jutf7.CharsetProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.util.JsonUtil;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
 /**
  * util for collector
  */
 @Slf4j
-public class CollectUtil {
+public final class CollectUtil {
 
     private static final int DEFAULT_TIMEOUT = 60000;
     private static final int HEX_STR_WIDTH = 2;
@@ -48,13 +58,24 @@ public class CollectUtil {
     private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b");
 
     /**
+     * private constructor, not allow to create instance.
+     */
+    private CollectUtil() {
+    }
+
+    /**
+     * Regularly verifying whether a string is a combination of numbers and units
+     */
+    private static final String DOUBLE_AND_UNIT_CHECK_REGEX = "^[.\\d+" + String.join("", UNIT_SYMBOLS) + "]+$";
+
+    /**
      * count match keyword number
      * @param content content
      * @param keyword keyword
      * @return match num
      */
     public static int countMatchKeyword(String content, String keyword) {
-        if (content == null || "".equals(content) || keyword == null || "".equals(keyword.trim())) {
+        if (StringUtils.isAnyEmpty(content, keyword)) {
             return 0;
         }
         try {
@@ -71,7 +92,7 @@ public class CollectUtil {
     }
 
     public static DoubleAndUnit extractDoubleAndUnitFromStr(String str) {
-        if (str == null || "".equals(str)) {
+        if (StringUtils.isEmpty(str)) {
             return null;
         }
         DoubleAndUnit doubleAndUnit = new DoubleAndUnit();
@@ -81,6 +102,10 @@ public class CollectUtil {
             return doubleAndUnit;
         } catch (Exception e) {
             log.debug(e.getMessage());
+        }
+
+        if (!str.matches(DOUBLE_AND_UNIT_CHECK_REGEX)){
+            return doubleAndUnit;
         }
         // extract unit from str value, eg: 23.43GB, 33KB, 44.22G
         try {
@@ -105,7 +130,7 @@ public class CollectUtil {
         } catch (Exception e) {
             log.debug(e.getMessage());
         }
-        return doubleAndUnit;
+        return null;
     }
 
     /**
@@ -151,7 +176,7 @@ public class CollectUtil {
      * @return timeout
      */
     public static int getTimeout(String timeout, int defaultTimeout) {
-        if (timeout == null || "".equals(timeout.trim())) {
+        if (StringUtils.isEmpty(timeout)) {
             return defaultTimeout;
         }
         try {
@@ -165,10 +190,7 @@ public class CollectUtil {
      * assert prom field
      */
     public static Boolean assertPromRequireField(String aliasField) {
-        if (CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField)) {
-            return true;
-        }
-        return false;
+        return CommonConstants.PROM_TIME.equals(aliasField) || CommonConstants.PROM_VALUE.equals(aliasField);
     }
 
 
@@ -309,7 +331,7 @@ public class CollectUtil {
                         Map<String, String> map = JsonUtil.fromJson(jsonValue, typeReference);
                         if (map != null) {
                             map.forEach((name, value) -> {
-                                if (name != null && !"".equals(name.trim())) {
+                                if (!StringUtils.isEmpty(name)) {
                                     jsonObject.addProperty(name, value);
                                 }
                             });
@@ -407,11 +429,11 @@ public class CollectUtil {
         // todo more special
         return uri;
     }
-    
+
 
     public static void replaceFieldsForPushStyleMonitor(Metrics metrics, Map<String, Configmap> configmap) {
 
-        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<List<Metrics.Field>>() {
+        List<Metrics.Field> pushFieldList = JsonUtil.fromJson((String) configmap.get("fields").getValue(), new TypeReference<>() {
         });
         metrics.setFields(pushFieldList);
     }
@@ -424,7 +446,7 @@ public class CollectUtil {
      * @return byte[]
      */
     public static byte[] fromHexString(String hexString) {
-        if (null == hexString || "".equals(hexString.trim())) {
+        if (StringUtils.isEmpty(hexString)) {
             return null;
         }
         byte[] bytes = new byte[hexString.length() / HEX_STR_WIDTH];
@@ -434,5 +456,25 @@ public class CollectUtil {
             bytes[i] = (byte) Integer.parseInt(hex, 16);
         }
         return bytes;
+    }
+
+    /**
+     * convert original string to UTF-7 String
+     * @param original original text
+     * @param charset encode charset
+     * @return String
+     */
+    public  static  String stringEncodeUtf7String(String original, String charset) {
+        return new String(original.getBytes(new CharsetProvider().charsetForName(charset)), StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * convert UTF-7 string to original String
+     * @param encoded encoded String
+     * @param charset encode charset
+     * @return String
+     */
+    public  static  String utf7StringDecodeString(String encoded, String charset) {
+        return new String(encoded.getBytes(StandardCharsets.US_ASCII), new CharsetProvider().charsetForName(charset));
     }
 }

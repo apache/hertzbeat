@@ -17,24 +17,22 @@
 
 package org.apache.hertzbeat.collector.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import org.apache.hertzbeat.common.entity.job.Configmap;
-import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.apache.hertzbeat.common.entity.job.Configmap;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link CollectUtil}
@@ -42,14 +40,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class CollectUtilTest {
 
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
 
     @Test
     void countMatchKeyword() {
@@ -75,6 +65,7 @@ class CollectUtilTest {
     @Test
     void extractDoubleAndUnitFromStr() {
         CollectUtil.DoubleAndUnit res1 = CollectUtil.extractDoubleAndUnitFromStr("20.5%");
+        assertNotNull(res1);
         assertEquals(20.5, res1.getValue());
         assertEquals("%", res1.getUnit());
 
@@ -82,8 +73,14 @@ class CollectUtilTest {
         assertNull(res2);
 
         CollectUtil.DoubleAndUnit res3 = CollectUtil.extractDoubleAndUnitFromStr("KB");
+        assertNotNull(res3);
         assertEquals(0, res3.getValue());
         assertEquals("KB", res3.getUnit());
+
+        CollectUtil.DoubleAndUnit res4 = CollectUtil.extractDoubleAndUnitFromStr("GRAPH0");
+        assertNull(res4.getValue());
+        assertNull(res4.getUnit());
+
     }
 
 
@@ -138,7 +135,6 @@ class CollectUtilTest {
         Metrics metricsTarget = Metrics.builder().name("张三").build();
         JsonElement jsonElement2 = new Gson().toJsonTree(metricsTarget);
         assertEquals(JSON_MAPPER.readTree(jsonElement2.toString()), JSON_MAPPER.readTree(res.toString()));
-
 
         List<Metrics> metricsList = new ArrayList<>();
         metricsList.add(metrics);
