@@ -64,6 +64,8 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
+    private static final String CONSTANT_DB_TTL = "30d";
+
     private static final String QUERY_HISTORY_SQL = "SELECT CAST (ts AS Int64) ts, instance, `%s` FROM `%s` WHERE ts >= now() -  interval '%s' and monitor_id = %s order by ts desc;";
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -76,7 +78,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
     private static final String TABLE_NOT_EXIST = "not found";
 
-    private static final String CONSTANTS_CREATE_DATABASE = "CREATE DATABASE IF NOT EXISTS `%s`";
+    private static final String CONSTANTS_CREATE_DATABASE = "CREATE DATABASE IF NOT EXISTS `%s` WITH(ttl='%s')";
 
     private static final Runnable INSTANCE_EXCEPTION_PRINT = () -> {
 	if (log.isErrorEnabled()) {
@@ -97,7 +99,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 	    log.error("init error, please config Warehouse GreptimeDB props in application.yml");
 	    throw new IllegalArgumentException("please config Warehouse GreptimeDB props");
 	}
-	
+
 	serverAvailable = initGreptimeDbClient(greptimeProperties) && initGreptimeDbDataSource(greptimeProperties);
     }
 
@@ -107,10 +109,15 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 	final String port = ObjectUtils.requireNonEmpty(properties[1].value);
 	final String dbName = ObjectUtils.requireNonEmpty(properties[2].value);
 
+	String ttl = greptimeProperties.expireTime();
+	if (ttl == null || "".equals(ttl.trim())) {
+	    ttl = CONSTANT_DB_TTL;
+	}
+
 	try (final Connection tempConnection = DriverManager.getConnection("jdbc:mysql://" + host + ":" + port,
 		greptimeProperties.username(), greptimeProperties.password());
 		final PreparedStatement pstmt = tempConnection
-			.prepareStatement(String.format(CONSTANTS_CREATE_DATABASE, dbName))) {
+			.prepareStatement(String.format(CONSTANTS_CREATE_DATABASE, dbName, ttl))) {
 	    log.info("[warehouse greptime] try to create database `{}` if not exists", dbName);
 	    pstmt.execute();
 	}
@@ -121,7 +128,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 	try {
 	    final DriverPropertyInfo[] properties = new Driver().getPropertyInfo(greptimeProperties.url(), null);
 	    final String dbName = ObjectUtils.requireNonEmpty(properties[2].value);
-	   
+
 	    GreptimeOptions opts = GreptimeOptions.newBuilder(endpoints.split(","), dbName) //
 		    .writeMaxRetries(3) //
 		    .authInfo(new AuthInfo(greptimeProperties.username(), greptimeProperties.password()))

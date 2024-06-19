@@ -60,9 +60,10 @@ warehouse:
          driver-class-name: com.mysql.cj.jdbc.Driver
          username: greptime
          password: greptime
+         expire-time: 30d
 ```
 
-The default database is `hertzbeat` in the `url`.
+The default database is `hertzbeat` in the `url`, and it will be created automatically. The `expire-time` specifies the TTL(time-to-live) of the auto-created database, it's 30 days by default.
 
 2. Restart HertzBeat
 
