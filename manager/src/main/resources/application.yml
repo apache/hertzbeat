@@ -63,7 +63,7 @@ sureness:
 spring:
   config:
     activate:
-      on-profile: prod
+      on-profile: dev
 
   datasource:
     driver-class-name: org.h2.Driver

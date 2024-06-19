@@ -1,0 +1,25 @@
+# AI Configuration template
+
+
+openai:
+  chatgpt:
+    # 设置使用的GPT模型
+    # Set the GPT model to use
+    model: gpt-3.5-turbo
+
+    api:
+      # 替换为你的API密钥
+      # Replace with your API key
+      key: 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
+
+    # 每次请求的最大完成数量，通常范围是1到5
+    # Maximum number of completions per request, typically ranges from 1 to 5
+    max_completions: 1
+
+    # 控制生成文本的随机性，范围是0到1，0表示最确定的输出，1表示随机性更高
+    # Controls the randomness of text generation, range is from 0 to 1, 0 for the most deterministic output
+    temperature: 1
+
+    # 设置返回文本的最大token数量
+    # Maximum number of tokens for the response text
+    max_tokens: 1000

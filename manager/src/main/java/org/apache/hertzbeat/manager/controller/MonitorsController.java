@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.manager.controller;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+import com.alibaba.fastjson.JSON;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,6 +33,8 @@ import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.manager.pojo.dto.AIResponse;
+import org.apache.hertzbeat.manager.service.AIService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,6 +52,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
+
 /**
  * Monitor and manage batch API
  * 监控管理批量API
@@ -63,7 +69,8 @@ public class MonitorsController {
 
     @Autowired
     private MonitorService monitorService;
-
+    @Resource(name = "chatGptServiceImpl")
+    private AIService aiService;
     @GetMapping
     @Operation(summary = "Obtain a list of monitoring information based on query filter items",
             description = "Obtain a list of monitoring information based on query filter items")
@@ -156,14 +163,12 @@ public class MonitorsController {
     @DeleteMapping
     @Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",
             description = "Delete monitoring items in batches according to the monitoring ID list")
-    public ResponseEntity<Message<Void>> deleteMonitors(
+    public ResponseEntity<String> deleteMonitors(
             @Parameter(description = "Monitoring ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
-        if (ids != null && !ids.isEmpty()) {
-            monitorService.deleteMonitors(new HashSet<>(ids));
-        }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
+        AIResponse aiResponse = aiService.aiResponse("今天天气怎么样");
+        return  ResponseEntity.ok(JSON.toJSONString(aiResponse));
+
     }
 
     @DeleteMapping("manage")
