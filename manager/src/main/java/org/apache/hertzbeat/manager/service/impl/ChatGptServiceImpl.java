@@ -46,7 +46,7 @@ public class ChatGptServiceImpl implements AIService {
     private RestTemplate restTemplate;
 
     public static final String MODEL = "gpt-3.5-turbo";
-    public static final String API_KEY = "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";
+    public static final String API_KEY = "无";
     public static final int MAX_COMPLETIONS = 1;
     public static final double TEMPERATURE = 1;
     public static final int MAX_TOKENS = 1000;
