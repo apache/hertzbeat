@@ -10,7 +10,7 @@ openai:
     api:
       # 替换为你的API密钥
       # Replace with your API key
-      key: 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
+      key: test
 
     # 每次请求的最大完成数量，通常范围是1到5
     # Maximum number of completions per request, typically ranges from 1 to 5
