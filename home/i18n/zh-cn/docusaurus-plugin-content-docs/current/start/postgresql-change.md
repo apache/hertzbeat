@@ -1,7 +1,7 @@
 ---
 id: postgresql-change
-title: 关系型数据库使用 PostgreSQL 替换依赖的 H2 存储系统元数据
-sidebar_label: 元数据使用PostgreSQL存储(可选)
+title: 关系型数据库使用 PostgreSQL 替换依赖的 H2 存储系统元数据(推荐)
+sidebar_label: 元数据存储PostgreSQL(推荐)
 ---
 PostgreSQL是一个功能强大，开源的关系型数据库管理系统（RDBMS）。Apache HertzBeat (incubating) 除了支持使用默认内置的H2数据库外，还可以切换为使用PostgreSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 
@@ -57,28 +57,36 @@ spring:
     username: sa
     password: 123456
     url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    hikari:
+      max-lifetime: 120000
+
+  jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: h2
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
 ```
 具体替换参数如下,需根据 PostgreSQL 环境配置账户密码IP:
 ```yaml
 spring:
-   config:
-      activate:
-         on-profile: prod
-   datasource:
-      driver-class-name: org.postgresql.Driver
-      username: root
-      password: 123456
-      url: jdbc:postgresql://127.0.0.1:5432/hertzbeat
-      hikari:
-         max-lifetime: 120000
-
-   jpa:
-      database: postgresql
-      hibernate:
-         ddl-auto: update
-      properties:
-         hibernate:
-            dialect: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: root
+    password: 123456
+    url: jdbc:postgresql://postgresql:5432/hertzbeat
+    hikari:
+      max-lifetime: 120000
+  jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.PostgreSQLPlatform
+    database: postgresql
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
 ```
 
 **启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**  

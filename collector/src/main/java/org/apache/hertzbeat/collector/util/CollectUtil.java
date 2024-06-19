@@ -17,12 +17,14 @@
 
 package org.apache.hertzbeat.collector.util;
 
+import com.beetstra.jutf7.CharsetProvider;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -454,5 +456,25 @@ public final class CollectUtil {
             bytes[i] = (byte) Integer.parseInt(hex, 16);
         }
         return bytes;
+    }
+
+    /**
+     * convert original string to UTF-7 String
+     * @param original original text
+     * @param charset encode charset
+     * @return String
+     */
+    public  static  String stringEncodeUtf7String(String original, String charset) {
+        return new String(original.getBytes(new CharsetProvider().charsetForName(charset)), StandardCharsets.US_ASCII);
+    }
+
+    /**
+     * convert UTF-7 string to original String
+     * @param encoded encoded String
+     * @param charset encode charset
+     * @return String
+     */
+    public  static  String utf7StringDecodeString(String encoded, String charset) {
+        return new String(encoded.getBytes(StandardCharsets.US_ASCII), new CharsetProvider().charsetForName(charset));
     }
 }
