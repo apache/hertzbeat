@@ -141,7 +141,11 @@ warehouse:
       password: taosdata
     greptime:
       enabled: false
-      endpoint: localhost:4001
+      grpc-endpoints: localhost:4001
+      url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: greptime
+      password: greptime
     iot-db:
       enabled: false
       host: 127.0.0.1
