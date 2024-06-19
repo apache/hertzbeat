@@ -695,7 +695,6 @@
   "validation.email.wrong-format": "邮箱地址格式错误！",
   "validation.email.invalid": "无效的邮箱地址！",
   "validation.phone.invalid": "无效的手机号！",
-  "validation.phone.or.userid.invalid": "用户ID或手机号至少填写一个！",
   "validation.verification-code.invalid": "无效的验证码,应是6位数字！",
   "validation.password.required": "请输入密码！",
   "validation.password.twice": "两次输入的密码不匹配!",

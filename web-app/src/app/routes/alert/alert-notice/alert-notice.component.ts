@@ -300,10 +300,10 @@ export class AlertNoticeComponent implements OnInit {
         }
         break;
       case 6:
-        if (this.receiver?.wechatId) {
-          index = this.receiver.wechatId.indexOf('hook');
+        if (this.receiver?.accessToken) {
+          index = this.receiver.accessToken.indexOf('hook');
           if (index > 0) {
-            this.receiver.wechatId = this.receiver.wechatId.substring(index + 5);
+            this.receiver.accessToken = this.receiver.accessToken.substring(index + 5);
           }
         }
         break;
@@ -352,35 +352,7 @@ export class AlertNoticeComponent implements OnInit {
     this.isManageReceiverModalVisible = false;
   }
 
-  private markAllControlsAsTouched(form: NgForm | undefined): void {
-    Object.keys(form!.controls).forEach(field => {
-      const control = form!.controls[field];
-      control.markAsTouched();
-    });
-  }
-
-  private markAllControlsAsUnTouched(form: NgForm | undefined): void {
-    Object.keys(form!.controls).forEach(field => {
-      const control = form!.controls[field];
-      control.markAsUntouched();
-    });
-  }
-
   onManageReceiverModalOk() {
-    if (this.receiver.type == 4) {
-      if (!this.receiver.phone && !this.receiver.userId) {
-        this.markAllControlsAsTouched(this.receiverForm);
-        this.receiverForm!.controls['phone'].setErrors({ invalidPhone: this.i18nSvc.fanyi('validation.phone.or.userid.invalid') });
-        this.markAllControlsAsUnTouched(this.receiverForm);
-        return;
-      } else {
-        const errors = this.receiverForm!.controls['phone'].errors;
-        if (errors && errors.invalidPhone) {
-          delete errors.invalidPhone;
-          this.receiverForm!.controls['phone'].setErrors(errors);
-        }
-      }
-    }
     if (this.receiverForm?.invalid) {
       let isWaring = false;
       Object.values(this.receiverForm.controls).forEach(control => {
