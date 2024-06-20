@@ -60,9 +60,10 @@ warehouse:
          driver-class-name: com.mysql.cj.jdbc.Driver
          username: greptime
          password: greptime
+         expire-time: 30d
 ```
 
-默认数据库是 URL 中配置的  `hertzbeat` 。
+默认数据库是 URL 中配置的  `hertzbeat` ，将自动创建。 `expire-time` 是自动创建的数据库的 TTL （数据过期）时间，默认为 30 天。
 
 2. 重启 HertzBeat
 
