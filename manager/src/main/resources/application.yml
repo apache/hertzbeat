@@ -146,6 +146,7 @@ warehouse:
       driver-class-name: com.mysql.cj.jdbc.Driver
       username: greptime
       password: greptime
+      expire-time: 30d
     iot-db:
       enabled: false
       host: 127.0.0.1
