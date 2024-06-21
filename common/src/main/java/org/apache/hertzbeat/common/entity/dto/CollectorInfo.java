@@ -38,7 +38,6 @@ public class CollectorInfo {
     @NotNull
     private String name;
     
-    @NotNull
     private String ip;
 
     private String version;
