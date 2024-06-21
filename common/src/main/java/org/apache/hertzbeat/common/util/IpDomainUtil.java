@@ -106,11 +106,7 @@ public final class IpDomainUtil {
         }
         return null;
     }
-
-    public static String getIpFromEnvOrDefault(String env, String defaultIp) {
-        return System.getenv().getOrDefault(env, defaultIp);
-    }
-
+    
     /**
      *
      * @param ipDomain ip domain
