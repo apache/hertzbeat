@@ -429,7 +429,6 @@ export class AlertSettingComponent implements OnInit {
   }
 
   switchAlertRuleShow() {
-    this.isExpr = !this.isExpr;
     if (this.isExpr) {
       let expr = this.calculateAlertRuleExpr();
       if (expr != '') {
