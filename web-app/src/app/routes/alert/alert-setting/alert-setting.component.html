@@ -428,7 +428,12 @@
           {{ 'alert.priority' | i18n }}
         </nz-form-label>
         <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-select [(ngModel)]="define.priority" [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n" name="priority" id="priority">
+          <nz-select
+            [(ngModel)]="define.priority"
+            [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n"
+            name="priority"
+            id="priority"
+          >
             <nz-option [nzValue]="0" [nzLabel]="'alert.priority.0' | i18n"></nz-option>
             <nz-option [nzValue]="1" [nzLabel]="'alert.priority.1' | i18n"></nz-option>
             <nz-option [nzValue]="2" [nzLabel]="'alert.priority.2' | i18n"></nz-option>
