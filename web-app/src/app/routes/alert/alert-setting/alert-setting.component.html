@@ -222,20 +222,20 @@
               {{ 'alert.setting.rule.switch-expr.1' | i18n }}
             </label>
           </nz-radio-group>
-          <div *ngIf="cascadeValues.length != 2 && isExpr" style="margin-top: 5px;">
+          <div *ngIf="cascadeValues.length != 2 && isExpr" style="margin-top: 5px">
             <nz-textarea-count [nzMaxCharacterCount]="100">
-            <textarea
-              [(ngModel)]="define.expr"
-              required
-              rows="3"
-              nz-input
-              name="expr"
-              id="expr"
-              [placeholder]="('alert.setting.expr.example' | i18n) + ': responseTime&gt;40'"
-            >
-            </textarea>
+              <textarea
+                [(ngModel)]="define.expr"
+                required
+                rows="3"
+                nz-input
+                name="expr"
+                id="expr"
+                [placeholder]="('alert.setting.expr.example' | i18n) + ': responseTime&gt;40'"
+              >
+              </textarea>
             </nz-textarea-count>
-            <nz-collapse style="margin-top: 20px;">
+            <nz-collapse style="margin-top: 20px">
               <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.expr.tip' | i18n">
                 <nz-list nzSize="small" nzSplit="false">
                   <nz-list-item *ngFor="let item of currentMetrics; let i = index">
@@ -255,15 +255,15 @@
                   </nz-list-item>
                   <nz-list-item>
                     <code>
-                      {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
-                      <, <=, >, >=, !=, ( ), +, -, &&, ||
+                      {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex),
+                      ==, <, <=, >, >=, !=, ( ), +, -, &&, ||
                     </code>
                   </nz-list-item>
                 </nz-list>
               </nz-collapse-panel>
             </nz-collapse>
           </div>
-          <div *ngIf="cascadeValues.length != 2 && !isExpr" style="margin-top: 5px;">
+          <div *ngIf="cascadeValues.length != 2 && !isExpr" style="margin-top: 5px">
             <div id="rule">
               <div style="width: 100%; margin-bottom: 2px" nz-row *ngFor="let alertRule of alertRules; let i = index">
                 <nz-select
@@ -286,8 +286,8 @@
                         item.type === 0
                           ? ('alert.setting.number' | i18n)
                           : item.type === 3
-                            ? ('alert.setting.time' | i18n)
-                            : ('alert.setting.string' | i18n)
+                          ? ('alert.setting.time' | i18n)
+                          : ('alert.setting.string' | i18n)
                       }}
                     </nz-tag>
                     <nz-tag *ngIf="item.unit">
@@ -376,12 +376,12 @@
                   [(ngModel)]="alertRule.value"
                   [ngModelOptions]="{ standalone: true }"
                   [placeholder]="
-                  alertRule.operator == 'exists' || alertRule.operator == '!exists'
-                    ? ''
-                    : alertRule.metric?.type === 0
-                    ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
-                    : ('alert.setting.rule.string-value.place-holder' | i18n)
-                "
+                    alertRule.operator == 'exists' || alertRule.operator == '!exists'
+                      ? ''
+                      : alertRule.metric?.type === 0
+                      ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
+                      : ('alert.setting.rule.string-value.place-holder' | i18n)
+                  "
                   nz-col
                   nzSpan="10"
                 />
@@ -476,7 +476,7 @@
                 </nz-list-item>
                 <nz-list-item *ngFor="let item of filterMetrics(currentMetrics, cascadeValues)">
                   <code
-                  >&#36;{{ '{' + item.value + '}' }} :
+                    >&#36;{{ '{' + item.value + '}' }} :
                     {{
                       item.value == item.label
                         ? ('alert.setting.template.other-value' | i18n)
