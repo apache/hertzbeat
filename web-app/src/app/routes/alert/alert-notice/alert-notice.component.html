@@ -393,7 +393,7 @@
             nzMode="multiple"
             id="receiver"
             name="receiver"
-            nzPlaceHolder="Select a receiver"
+            [nzPlaceHolder]="'alert.notice.receiver.people.placeholder' | i18n"
             nzShowSearch
             required
           >
@@ -409,7 +409,7 @@
             [nzOptions]="templatesOption"
             id="templates"
             name="templates"
-            nzPlaceHolder="Select a template"
+            [nzPlaceHolder]="'alert.notice.template.placeholder' | i18n"
             nzShowSearch
             nzAllowClear
           >
@@ -435,7 +435,7 @@
             name="tags"
             nzAllowClear
             nzMode="multiple"
-            nzPlaceHolder="Select Tags"
+            [nzPlaceHolder]="'alert.notice.rule.tag.placeholder' | i18n"
             nzShowSearch
             required
           >
@@ -453,7 +453,7 @@
             name="priorities"
             nzAllowClear
             nzMode="multiple"
-            nzPlaceHolder="Select Priorities"
+            [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n"
             nzShowSearch
             required
           >
