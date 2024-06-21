@@ -102,7 +102,7 @@ export class CollectorComponent implements OnInit {
 
   onGoOnlineCollectors() {
     if (this.checkedCollectors == null || this.checkedCollectors.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('collector.notify.no-select-online'), '');
       return;
     }
     this.modal.confirm({
@@ -118,7 +118,7 @@ export class CollectorComponent implements OnInit {
 
   onGoOfflineCollectors() {
     if (this.checkedCollectors == null || this.checkedCollectors.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('collector.notify.no-select-offline'), '');
       return;
     }
     this.modal.confirm({

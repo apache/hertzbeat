@@ -92,7 +92,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             List<List<FlyBookContent>> contents = Collections.singletonList(contentList);
             zhCn.setContent(contents);
 
-            String webHookUrl = alerterProperties.getFlyBookWebhookUrl() + receiver.getWechatId();
+            String webHookUrl = alerterProperties.getFlyBookWebhookUrl() + receiver.getAccessToken();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<FlyBookWebHookDto> flyEntity = new HttpEntity<>(flyBookWebHookDto, headers);

@@ -586,19 +586,9 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 4">
         <nz-form-label [nzSpan]="7" nzFor="phone">{{ 'alert.notice.type.phone' | i18n }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="phoneErrorTpl" [nzSpan]="12">
+        <nz-form-control [nzErrorTip]="'validation.phone.invalid' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.phone" pattern="^(1\d{10})(,\s*1\d{10})*$" id="WePhone" name="phone" nz-input type="tel" />
         </nz-form-control>
-        <ng-template #phoneErrorTpl>
-          <ng-container *ngIf="receiverForm.controls['phone'].errors">
-            <div *ngIf="receiverForm.controls['phone'].hasError('invalidPhone')">
-              {{ receiverForm.controls['phone'].errors['invalidPhone'] }}
-            </div>
-            <div *ngIf="receiverForm.controls['phone'].hasError('pattern')">
-              {{ 'validation.phone.invalid' | i18n }}
-            </div>
-          </ng-container>
-        </ng-template>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 4">
         <nz-form-label [nzSpan]="7" nzFor="userId">{{ 'alert.notice.type.userId' | i18n }}</nz-form-label>
@@ -634,16 +624,16 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 6">
-        <nz-form-label [nzSpan]="7" nzFor="wechatId" [nzRequired]="receiver.type === 6">{{
+        <nz-form-label [nzSpan]="7" nzFor="accessToken" [nzRequired]="receiver.type === 6">{{
           'alert.notice.type.fei-shu-key' | i18n
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input
-            [(ngModel)]="receiver.wechatId"
+            [(ngModel)]="receiver.accessToken"
             (ngModelChange)="onSplitTokenStr(6)"
             nz-input
             [required]="receiver.type === 6"
-            name="wechatId"
+            name="accessToken"
             type="text"
           />
         </nz-form-control>
