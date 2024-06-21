@@ -39,8 +39,8 @@ spring:
 
 collector:
   info:
-    version: 1.5.0
-    ip: IP
+    version: ${COLLECTOR_VERSION:1.6.0}
+    ip: ${COLLECTOR_IP:}
   dispatch:
     entrance:
       netty:

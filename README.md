@@ -15,7 +15,7 @@
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
 [![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
-[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/apache/hertzbeat/general)
+[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
@@ -452,6 +452,8 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ileonli"><img src="https://avatars.githubusercontent.com/u/45332412?v=4?s=100" width="100px;" alt="Leon Li"/><br /><sub><b>Leon Li</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ileonli" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://fnil.net/"><img src="https://avatars.githubusercontent.com/u/14142?v=4?s=100" width="100px;" alt="dennis zhuang"/><br /><sub><b>dennis zhuang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=killme2008" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kerwin612"><img src="https://avatars.githubusercontent.com/u/3371163?v=4?s=100" width="100px;" alt="Kerwin Bryant"/><br /><sub><b>Kerwin Bryant</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=kerwin612" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
