@@ -1083,6 +1083,10 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/14142?v=4?s=100" width="100px;"
                     alt="dennis zhuang"/><br/><sub><b>dennis zhuang</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=killme2008" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/kerwin612"><img
+                    src="https://avatars.githubusercontent.com/u/3371163?v=4?s=100" width="100px;" alt="Kerwin Bryant"/><br/><sub><b>Kerwin
+                    Bryant</b></sub></a><br/><a href="https://github.com/apache/hertzbeat/commits?author=kerwin612"
+                                                title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>
