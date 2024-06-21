@@ -157,13 +157,7 @@
         </a>
       </button>
     </div>
-    <nz-table
-      #fixedTable
-      [nzData]="statusComponents"
-      nzFrontPagination="false"
-      [nzLoading]="componentLoading"
-      [nzScroll]="{ x: '1240px' }"
-    >
+    <nz-table #fixedTable [nzData]="statusComponents" nzFrontPagination="false" [nzLoading]="componentLoading" [nzScroll]="{ x: '1240px' }">
       <thead>
         <tr>
           <th nzAlign="center" nzWidth="15%">{{ 'status.component.name' | i18n }}</th>
