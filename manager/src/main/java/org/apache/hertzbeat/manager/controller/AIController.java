@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.hertzbeat.manager.service.AIService;
 import org.apache.hertzbeat.manager.service.impl.AIServiceFactoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -24,6 +25,8 @@ public class AIController {
     @Autowired
     private AIServiceFactoryImpl aiServiceFactory;
 
+    @Value("${aiConfig.type:0}")
+    private String type;
 
     /**
      * request AI

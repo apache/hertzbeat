@@ -15,8 +15,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class AIServiceFactoryImpl {
-    @Value("${aiConfig.type:0}")
-    private String type;
+
     @Autowired
     private List<AIService> aiService;
     private Map<String,AIService> aiServiceFactoryMap = new HashMap<>();;
