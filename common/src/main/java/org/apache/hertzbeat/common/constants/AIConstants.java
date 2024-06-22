@@ -15,7 +15,7 @@ public interface AIConstants {
         /**
          * zhiPu request url
          */
-        String URL="https://open.bigmodel.cn/api/paas/v4/chat/completions";
+        String URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
 
         /**
          * request role param
@@ -25,7 +25,7 @@ public interface AIConstants {
         /**
          * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 1024
          */
-         Integer maxTokens =1024;
+         Integer maxTokens = 1024;
 
         /**
          * The sampling temperature, which controls the randomness of the output, must be positive
