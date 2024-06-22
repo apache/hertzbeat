@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * chatgpt
+ * 智普AI
  */
 @Service("ZhiPuServiceImpl")
 @Slf4j
