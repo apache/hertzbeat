@@ -8,8 +8,17 @@ public interface AIConstants {
     /**
      * chatgpt constants
      */
-    interface ChatgptConstants {
+    interface ZhiPuConstants {
 
-        String url="https://api.openai.com/v1/chat/completions";
+        /**
+         * zhiPu request url
+         */
+        String URL="https://open.bigmodel.cn/api/paas/v4/chat/completions";
+
+        /**
+         * request role param
+         */
+        String requestRole = "user";
+
     }
 }

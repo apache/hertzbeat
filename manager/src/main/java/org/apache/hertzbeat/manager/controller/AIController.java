@@ -4,39 +4,38 @@ import com.alibaba.fastjson.JSON;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.manager.pojo.dto.AIResponse;
-import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
+
 import org.apache.hertzbeat.manager.service.AIService;
+import org.apache.hertzbeat.manager.service.impl.AIServiceFactoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
-
-import javax.annotation.Resource;
-
-import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_NOT_EXIST_CODE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import reactor.core.publisher.Flux;
+import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 
 /**
  * AI Management API
  */
 @Tag(name = "AI Manage API")
 @RestController
-@RequestMapping(value = "/api/ai", produces = {APPLICATION_JSON_VALUE})
-@Slf4j
+@RequestMapping(value = "/api/ai")
 public class AIController {
 
-    @Resource(name = "chatGptServiceImpl")
-    private AIService aiService;
+    @Autowired
+    private AIServiceFactoryImpl aiServiceFactory;
 
 
-    @GetMapping(path = "/test")
-    @Operation(summary = "Obtain monitoring information based on monitoring ID", description = "Obtain monitoring information based on monitoring ID")
-    public ResponseEntity<String> getMonitor(
-            @Parameter(description = "Monitoring task ID", example = "6565463543") @RequestParam("param") String param) {
+    /**
+     * request AI
+     * @param param
+     * @param type
+     * @return
+     */
+    @GetMapping(path = "/get", produces = {TEXT_EVENT_STREAM_VALUE})
+    public Flux<ServerSentEvent<String>> requestAI(@RequestParam("param") String param,
+                                                     @RequestParam(value = "type",required = false) String type) {
+        AIService aiServiceImplBean = aiServiceFactory.getAIServiceImplBean(type);
 
-        AIResponse aiResponse = aiService.aiResponse(param);
-        return  ResponseEntity.ok(JSON.toJSONString(aiResponse));
+        return aiServiceImplBean.requestAI(param);
     }
 }
