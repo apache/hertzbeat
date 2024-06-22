@@ -166,7 +166,7 @@
             nzShowSearch
             nzMode="multiple"
             nzAllowClear
-            nzPlaceHolder="Select Tags"
+            [nzPlaceHolder]="'alert.notice.rule.tag.placeholder' | i18n"
             required
             name="tags"
             id="tags"
@@ -184,7 +184,7 @@
             nzShowSearch
             nzMode="multiple"
             nzAllowClear
-            nzPlaceHolder="Select Priorities"
+            [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n"
             required
             name="priorities"
             id="priorities"
