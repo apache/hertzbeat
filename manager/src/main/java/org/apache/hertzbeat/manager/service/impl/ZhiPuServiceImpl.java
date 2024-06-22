@@ -65,8 +65,8 @@ public class ZhiPuServiceImpl implements AIService {
                 .model(MODEL)
                 //sse
                 .stream(Boolean.TRUE)
-                .maxTokens(1024)
-                .temperature(0.95)
+                .maxTokens(AIConstants.ZhiPuConstants.maxTokens)
+                .temperature(AIConstants.ZhiPuConstants.temperature)
                 .messages(List.of(new AIMessage(AIConstants.ZhiPuConstants.requestRole, param)))
                 .build();
 
