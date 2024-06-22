@@ -85,7 +85,6 @@ public class ZhiPuServiceImpl implements AIService {
             if (Objects.nonNull(zhiPuAIResponse)) {
                 ZhiPuAIResponse.Choice choice = zhiPuAIResponse.getChoices().get(0);
                 String content = choice.getDelta().getContent();
-                // 返回封装好的ServerSentEvent
                 return ServerSentEvent.<String>builder()
                         .data(content)
                         .build();
