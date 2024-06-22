@@ -31,12 +31,12 @@ public class AIController {
     /**
      * request AI
      * @param param
-     * @param type
+     * @param currentlyDisabledType Currently disabled, later released
      * @return
      */
     @GetMapping(path = "/get", produces = {TEXT_EVENT_STREAM_VALUE})
     public Flux<ServerSentEvent<String>> requestAI(@RequestParam("param") String param,
-                                                     @RequestParam(value = "type",required = false) String type) {
+                                                     @RequestParam(value = "type",required = false) String currentlyDisabledType) {
         AIService aiServiceImplBean = aiServiceFactory.getAIServiceImplBean(type);
 
         return aiServiceImplBean.requestAI(param);
