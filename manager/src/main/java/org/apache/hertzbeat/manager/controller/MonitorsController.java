@@ -47,6 +47,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
 /**
  * Monitor and manage batch API
  * 监控管理批量API
@@ -62,6 +63,7 @@ public class MonitorsController {
 
     @Autowired
     private MonitorService monitorService;
+
     @GetMapping
     @Operation(summary = "Obtain a list of monitoring information based on query filter items",
             description = "Obtain a list of monitoring information based on query filter items")
@@ -150,6 +152,7 @@ public class MonitorsController {
         Message<List<Monitor>> message = Message.success(monitors);
         return ResponseEntity.ok(message);
     }
+
 
     @DeleteMapping
     @Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",
