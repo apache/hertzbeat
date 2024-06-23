@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AIConstants;
 import org.apache.hertzbeat.manager.pojo.dto.AIMessage;
 import org.apache.hertzbeat.manager.pojo.dto.ZhiPuAIResponse;
-import org.apache.hertzbeat.manager.pojo.dto.zhiPuRequestParamDTO;
+import org.apache.hertzbeat.manager.pojo.dto.ZhiPuRequestParamDTO;
 import org.apache.hertzbeat.manager.service.AIService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -61,7 +61,7 @@ public class ZhiPuServiceImpl implements AIService {
     @Override
     public Flux<ServerSentEvent<String>> requestAI(String param) {
         checkParam(param, MODEL, API_KEY);
-        zhiPuRequestParamDTO chatGptRequestParamDTO = zhiPuRequestParamDTO.builder()
+        ZhiPuRequestParamDTO zhiPuRequestParamDTO = ZhiPuRequestParamDTO.builder()
                 .model(MODEL)
                 //sse
                 .stream(Boolean.TRUE)
@@ -71,7 +71,7 @@ public class ZhiPuServiceImpl implements AIService {
                 .build();
 
         return webClient.post()
-                .body(BodyInserters.fromValue(chatGptRequestParamDTO))
+                .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
                 .retrieve()
                 .bodyToFlux(String.class)
                 .filter(aiResponse -> !"[DONE]".equals(aiResponse))

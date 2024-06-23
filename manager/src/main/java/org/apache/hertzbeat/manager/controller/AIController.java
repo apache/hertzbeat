@@ -1,10 +1,6 @@
 package org.apache.hertzbeat.manager.controller;
 
-import com.alibaba.fastjson.JSON;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.apache.hertzbeat.manager.service.AIService;
 import org.apache.hertzbeat.manager.service.impl.AIServiceFactoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -9,13 +9,13 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 /**
- * chatGpt Request param
+ * zhiPu Request param
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class zhiPuRequestParamDTO {
+public class ZhiPuRequestParamDTO {
 
 
     /**

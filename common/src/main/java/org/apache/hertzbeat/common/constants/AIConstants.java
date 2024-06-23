@@ -1,6 +1,6 @@
 package org.apache.hertzbeat.common.constants;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+
 
 /**
  * AI constants
@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public interface AIConstants {
 
     /**
-     * chatgpt constants
+     * zhiPu constants
      */
     interface ZhiPuConstants {
 

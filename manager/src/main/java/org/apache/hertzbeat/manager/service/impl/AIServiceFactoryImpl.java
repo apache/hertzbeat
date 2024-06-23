@@ -2,10 +2,8 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import org.apache.hertzbeat.manager.service.AIService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-
 import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.List;
