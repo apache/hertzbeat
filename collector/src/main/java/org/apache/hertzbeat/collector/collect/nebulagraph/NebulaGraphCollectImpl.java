@@ -47,7 +47,6 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
-
 /**
  *  NebulaGraph collect
  */
@@ -66,7 +65,6 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
     private static final String GRAPH_API = "/stats";
 
     private static final String STORAGE_API = "/rocksdb_stats";
-
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {

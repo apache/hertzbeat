@@ -1,13 +1,13 @@
 ---
 id: iotdb-init  
-title: 依赖时序数据库服务IoTDB安装初始化  
-sidebar_label: 使用IoTDB存储指标数据(可选)
+title: 依赖时序数据库服务IoTDB安装初始化(可选)  
+sidebar_label: 指标数据存储IoTDB
 ---
 Apache HertzBeat (incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
 
 > 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
 
-Apache IoTDB是一体化收集、存储、管理与分析物联网时序数据的软件系统，我们使用其存储分析采集到的监控指标历史数据。支持V0.12 - V0.13版本，推荐使用V0.13.*版本。
+Apache IoTDB是一体化收集、存储、管理与分析物联网时序数据的软件系统，我们使用其存储分析采集到的监控指标历史数据。支持V1.*版本，废弃V0.*版本的支持。
 
 **注意⚠️ 时序数据库安装配置为可选项，但强烈建议生产环境配置，以提供更完善的历史图表功能，高性能和稳定性**
 
@@ -60,9 +60,7 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-      # V_0_13 || V_1_0
-      version: V_1_0
-      # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
+      # use default queryTimeoutInMs = -1
       query-timeout-in-ms: -1
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       expire-time: '7776000000'
@@ -83,8 +81,6 @@ warehouse:
       node-urls: ['127.0.0.1:6667','127.0.0.2:6667','127.0.0.3:6667'']
       username: root
       password: root
-      # V_0_13 || V_1_0
-      version: V_1_0
       # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
       query-timeout-in-ms: -1
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
@@ -94,16 +90,16 @@ warehouse:
 参数说明：
 
 
-| 参数名称            | 参数说明                                                         |
-| ------------------- | ---------------------------------------------------------------- |
-| enabled             | 是否启用                                                         |
-| host                | IoTDB数据库地址                                                  |
-| rpc-port            | IoTDB数据库端口                                                  |
-| node-urls           | IoTDB集群地址                                                    |
-| username            | IoTDB数据库账户                                                  |
-| password            | IoTDB数据库密码                                                  |
-| version             | IoTDB数据库版本，V_0_13 、 V_1_0                                 |
-| query-timeout-in-ms | 查询超时时间                                                     |
+| 参数名称            | 参数说明                                      |
+| ------------------- |-------------------------------------------|
+| enabled             | 是否启用                                      |
+| host                | IoTDB数据库地址                                |
+| rpc-port            | IoTDB数据库端口                                |
+| node-urls           | IoTDB集群地址                                 |
+| username            | IoTDB数据库账户                                |
+| password            | IoTDB数据库密码                                |
+| version             | IoTDB数据库版本，已废弃，仅支持V1.*               |
+| query-timeout-in-ms | 查询超时时间                                    |
 | expire-time         | 数据存储时间，默认'7776000000'（90天,单位为毫秒,-1代表永不过期） |
 
 > 如果集群配置`node-urls`和单机配置同时设置，以集群`node-urls`配置稳准

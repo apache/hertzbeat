@@ -54,7 +54,6 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
-
 /**
  * nginx collect
  */
@@ -74,11 +73,6 @@ public class NginxCollectImpl extends AbstractCollect {
     private static final String REGEX_SERVER = "(\\w+): (\\d+)";
     private static final String REGEX_SPLIT = "\\r?\\n";
     private static final String REGEX_LINE_SPLIT = "\\s+";
-
-
-    public NginxCollectImpl() {
-        
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {

@@ -17,8 +17,13 @@
 
 package org.apache.hertzbeat.common.util;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import static org.apache.hertzbeat.common.util.AesUtil.aesDecode;
+import static org.apache.hertzbeat.common.util.AesUtil.aesEncode;
+import static org.apache.hertzbeat.common.util.AesUtil.isCiphertext;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -26,39 +31,63 @@ import org.junit.jupiter.api.Test;
  */
 class AesUtilTest {
 
-    @BeforeEach
-    void setUp() {
-    }
+    private static final String ALGORITHM_STR = "AES/CBC/PKCS5Padding";
 
-    @AfterEach
-    void tearDown() {
-    }
+    private static final String AES = "AES";
 
-    @Test
-    void setDefaultSecretKey() {
-    }
+    private static final String VALID_KEY = "1234567890123456";
 
-    @Test
-    void aesEncode() {
-    }
-
-    @Test
-    void aesDecode() {
-    }
-
-    @Test
-    void isCiphertext() {
-    }
+    private static final String ENCODE_RULES = "defaultsecretkey";
 
     @Test
     void testAesEncode() {
+        String originalText = "This is a secret message";
+        String encryptedText = aesEncode(originalText, VALID_KEY);
+        assertNotEquals(originalText, encryptedText);
+
+        String decryptedText = aesDecode(encryptedText, VALID_KEY);
+        assertEquals(originalText, decryptedText);
     }
 
     @Test
     void testAesDecode() {
+        // Test with invalid key
+        String originalText = "This is a secret message";
+        String encryptedText = aesEncode(originalText, VALID_KEY);
+        String decryptedText = aesDecode(encryptedText, "invalidkey123456");
+        assertNotEquals(originalText, decryptedText);
+
+        // Test with default key
+        originalText = "This is a secret message";
+        encryptedText = aesEncode(originalText, VALID_KEY);
+        decryptedText = aesDecode(encryptedText, "invalidkey123456");
+        if (!decryptedText.equals(originalText)) {
+            decryptedText = aesDecode(encryptedText, ENCODE_RULES);
+        }
+        assertNotEquals(originalText, decryptedText);
     }
 
     @Test
     void testIsCiphertext() {
+
+        // Test with valid key
+        String originalText = "This is a secret message";
+        String encryptedText = aesEncode(originalText, VALID_KEY);
+        assertTrue(isCiphertext(encryptedText, VALID_KEY));
+
+        // Test with plain text, normal text is not ciphertext
+        String plainText = "This is not encrypted";
+        assertFalse(isCiphertext(plainText, VALID_KEY));
+
+        // Test with invalid base64 text
+        String invalidBase64Text = "InvalidBase64";
+        assertFalse(isCiphertext(invalidBase64Text, VALID_KEY));
+
+        // Test with invalid key
+        originalText = "This is a secret message";
+        encryptedText = aesEncode(originalText, VALID_KEY);
+        String invalidKey = "6543210987654321";
+        assertFalse(isCiphertext(encryptedText, invalidKey));
     }
+
 }

@@ -1,13 +1,13 @@
 ---
 id: iotdb-init  
 title: Use Time Series Database IoTDB to Store Metrics Data (Optional)  
-sidebar_label: Use IoTDB Store Metrics
+sidebar_label: Metrics Store IoTDB
 ---
 Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
 
 > It is recommended to use VictoriaMetrics as metrics storage.
 
-Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring metrics collected. Support V0.13+ version and V1.0.+ version.
+Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring metrics collected. Support V1.0.+ version.
 
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**
 
@@ -58,8 +58,6 @@ warehouse:
       rpc-port: 6667
       username: root
       password: root
-      # config.org.apache.hertzbeat.warehouse.IotDbVersion: V_0_13 || V_1_0
-      version: V_1_0
       query-timeout-in-ms: -1
       # default '7776000000'（90days,unit:ms,-1:no-expire）
       expire-time: '7776000000'
@@ -81,8 +79,6 @@ warehouse:
       node-urls: ['127.0.0.1:6667','127.0.0.2:6667','127.0.0.3:6667']
       username: root
       password: root
-      # V_0_13 || V_1_0
-      version: V_1_0
       # if iotdb version >= 0.13 use default queryTimeoutInMs = -1; else use default queryTimeoutInMs = 0
       query-timeout-in-ms: -1
       # Data storage time: default '7776000000' (90 days, in milliseconds, -1 means never expire)
@@ -93,14 +89,14 @@ Configuration parameters:
 
 
 | Parameter Name      | Description                                                                               |
-| ------------------- | ----------------------------------------------------------------------------------------- |
+| ------------------- |-------------------------------------------------------------------------------------------|
 | enabled             | Whether to enable                                                                         |
 | host                | IoTDB database address                                                                    |
 | rpc-port            | IoTDB database port                                                                       |
 | node-urls           | IoTDB cluster addresses                                                                   |
 | username            | IoTDB database account                                                                    |
 | password            | IoTDB database password                                                                   |
-| version             | IoTDB database version, V_0_13 or V_1_0                                                   |
+| version             | deprecated                                                                                |
 | query-timeout-in-ms | Query timeout                                                                             |
 | expire-time         | Data storage time, default '7776000000' (90 days, in milliseconds, -1 means never expire) |
 

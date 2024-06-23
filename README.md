@@ -14,7 +14,8 @@
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/apache/hertzbeat/general)
+[![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
+[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
@@ -160,13 +161,13 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.apach
 
 Detailed steps refer to [CONTRIBUTING](CONTRIBUTING.md)        
 
-##### 4：Install All(hertzbeat+mysql+tsdb) via Docker-compose  
+##### 4：Install All(hertzbeat+postgresql+tsdb) via Docker-compose  
 
-Install the mysql/postgresql database, iotdb/tdengine/victoria-metrics database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
+Install the postgresql/mysql database, victoria-metrics/iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](script/docker-compose).
 
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
 
-##### 5. Install All(hertzbeat+collector+mysql+tsdb) via kubernetes helm charts
+##### 5. Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
 
 Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 
@@ -440,6 +441,20 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Yanshuming1"><img src="https://avatars.githubusercontent.com/u/118667222?v=4?s=100" width="100px;" alt="xiaoming student"/><br /><sub><b>xiaoming student</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Yanshuming1" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lwjxy"><img src="https://avatars.githubusercontent.com/u/52726400?v=4?s=100" width="100px;" alt="lwjxy"/><br /><sub><b>lwjxy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lwjxy" title="Code">💻</a></td>
     </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://thespica.github.io/"><img src="https://avatars.githubusercontent.com/u/119573640?v=4?s=100" width="100px;" alt="John"/><br /><sub><b>John</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/boatrainlsz"><img src="https://avatars.githubusercontent.com/u/18243785?v=4?s=100" width="100px;" alt="boatrainlsz"/><br /><sub><b>boatrainlsz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=boatrainlsz" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.yitianyigexiangfa.com/"><img src="https://avatars.githubusercontent.com/u/3973419?v=4?s=100" width="100px;" alt="Bill Lau"/><br /><sub><b>Bill Lau</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=JavaProgrammerLB" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lw-yang"><img src="https://avatars.githubusercontent.com/u/23456873?v=4?s=100" width="100px;" alt="lwyang"/><br /><sub><b>lwyang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lw-yang" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xfl12345"><img src="https://avatars.githubusercontent.com/u/17960863?v=4?s=100" width="100px;" alt="xfl12345"/><br /><sub><b>xfl12345</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xfl12345" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yykaue"><img src="https://avatars.githubusercontent.com/u/22905143?v=4?s=100" width="100px;" alt="Limbo"/><br /><sub><b>Limbo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yykaue" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/irenhongyan"><img src="https://avatars.githubusercontent.com/u/53438321?v=4?s=100" width="100px;" alt="哈哈哈哈哈哈哈哈哈"/><br /><sub><b>哈哈哈哈哈哈哈哈哈</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=irenhongyan" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ileonli"><img src="https://avatars.githubusercontent.com/u/45332412?v=4?s=100" width="100px;" alt="Leon Li"/><br /><sub><b>Leon Li</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ileonli" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://fnil.net/"><img src="https://avatars.githubusercontent.com/u/14142?v=4?s=100" width="100px;" alt="dennis zhuang"/><br /><sub><b>dennis zhuang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=killme2008" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kerwin612"><img src="https://avatars.githubusercontent.com/u/3371163?v=4?s=100" width="100px;" alt="Kerwin Bryant"/><br /><sub><b>Kerwin Bryant</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=kerwin612" title="Code">💻</a></td>
+    </tr>
   </tbody>
 </table>
 
@@ -458,7 +473,7 @@ Thanks to these wonderful people, welcome to join us:
 
 WeChat Group : Add friend `tan-cloud` and invite to the group.
 
-WeChat Public : Search `Apache HertzBeat` or `usthecom`.
+WeChat Public : Search ID `usthecom`.
 
 [QQ Group](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : Group num `630061200`
 

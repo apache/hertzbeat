@@ -64,9 +64,6 @@ public class PushCollectImpl extends AbstractCollect {
     // This makes it difficult to avoid re-collecting data after a restart. The default is 30 seconds
     private static final Integer firstCollectInterval = 30000;
 
-    public PushCollectImpl() {
-    }
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
     }
