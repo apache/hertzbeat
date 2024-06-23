@@ -47,12 +47,12 @@ spec:
         imagePullPolicy: {{ .Values.database.image.pullPolicy }}
         livenessProbe:
           tcpSocket:
-            port: 3306
+            port: 5432
           initialDelaySeconds: 300
           periodSeconds: 10
         readinessProbe:
           tcpSocket:
-            port: 3306
+            port: 5432
           initialDelaySeconds: 1
           periodSeconds: 10
         resources:
@@ -62,7 +62,7 @@ spec:
               name: "{{ include "hertzbeat.database" . }}"
         volumeMounts:
         - name: data
-          mountPath: /var/lib/mysql
+          mountPath: /var/lib/postgresql/data
           subPath: ""
         - mountPath: /docker-entrypoint-initdb.d/schema.sql
           subPath: schema.sql

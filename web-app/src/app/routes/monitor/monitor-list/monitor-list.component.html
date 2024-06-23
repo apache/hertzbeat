@@ -47,25 +47,29 @@
     <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
     {{ 'monitors.new-monitor' | i18n }}
   </button>
-
-  <button nz-button nzType="primary" (click)="onEnableManageMonitors()" class="mobile-hide">
-    <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-    {{ 'monitors.enable' | i18n }}
-  </button>
-  <button nz-button nzType="primary" nzDanger (click)="onCancelManageMonitors()" class="mobile-hide">
-    <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-    {{ 'monitors.cancel' | i18n }}
-  </button>
-  <button nz-button nzType="primary" nzDanger (click)="onDeleteMonitors()">
-    <i nz-icon nzType="delete" nzTheme="outline"></i>
-    {{ 'monitors.delete-monitor' | i18n }}
-  </button>
   <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
-    {{ 'common.button.operation.more' | i18n }}
-    <span nz-icon nzType="down"></span>
+    <span nz-icon nzType="ellipsis"></span>
   </button>
   <nz-dropdown-menu #more_menu="nzDropdownMenu">
     <ul nz-menu>
+      <li nz-menu-item>
+        <button nz-button nzType="primary" (click)="onEnableManageMonitors()" class="mobile-hide">
+          <i nz-icon nzType="play-circle" nzTheme="outline"></i>
+          {{ 'monitors.enable' | i18n }}
+        </button>
+      </li>
+      <li nz-menu-item>
+        <button nz-button nzType="primary" nzDanger (click)="onCancelManageMonitors()" class="mobile-hide">
+          <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
+          {{ 'monitors.cancel' | i18n }}
+        </button>
+      </li>
+      <li nz-menu-item>
+        <button nz-button nzType="primary" nzDanger (click)="onDeleteMonitors()">
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+          {{ 'monitors.delete-monitor' | i18n }}
+        </button>
+      </li>
       <li nz-menu-item>
         <button nz-button nzType="primary" (click)="onExportMonitors()">
           <i nz-icon nzType="export" nzTheme="outline"></i>
@@ -113,9 +117,9 @@
     [(ngModel)]="filterStatus"
   >
     <nz-option [nzLabel]="'monitor.status.all' | i18n" nzValue="9"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.available' | i18n" nzValue="1"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.unavailable' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.unmonitored' | i18n" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.up' | i18n" nzValue="1"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.down' | i18n" nzValue="2"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.paused' | i18n" nzValue="0"></nz-option>
   </nz-select>
 </div>
 
@@ -132,18 +136,18 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1240px', y: '100%' }"
+  [nzScroll]="{ x: '1240px' }"
 >
   <thead>
     <tr>
       <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-      <th nzAlign="center" nzWidth="17%" nzColumnKey="name" [nzSortFn]="true">{{ 'monitor.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="20%" nzColumnKey="name" [nzSortFn]="true">{{ 'monitor.name' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%" nzColumnKey="status" [nzSortFn]="true">{{ 'monitor.status' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'monitor.host' | i18n }}</th>
       <th nzAlign="center" nzWidth="10%">{{ 'monitor.app' | i18n }}</th>
-      <th nzAlign="center" nzWidth="16%">{{ 'tag' | i18n }}</th>
+      <th nzAlign="center" nzWidth="21%">{{ 'tag' | i18n }}</th>
       <th nzAlign="center" nzWidth="14%" nzColumnKey="gmtUpdate" [nzSortFn]="true">{{ 'common.edit-time' | i18n }}</th>
-      <th nzAlign="center" nzWidth="18%">{{ 'common.edit' | i18n }}</th>
+      <th nzAlign="center" nzWidth="10%">{{ 'common.edit' | i18n }}</th>
     </tr>
   </thead>
   <tbody>
@@ -158,15 +162,15 @@
       <td nzAlign="center">
         <nz-tag *ngIf="data.status == 0" [nzColor]="'#b2b2b2'">
           <i nz-icon nzType="meh" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.unmonitored' | i18n }}</span>
+          <span>{{ 'monitor.status.paused' | i18n }}</span>
         </nz-tag>
-        <nz-tag *ngIf="data.status == 1" [nzColor]="'#09b919'">
+        <nz-tag *ngIf="data.status == 1" [nzColor]="'#498765'">
           <i nz-icon nzType="smile" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.available' | i18n }}</span>
+          <span>{{ 'monitor.status.up' | i18n }}</span>
         </nz-tag>
         <nz-tag *ngIf="data.status == 2" [nzColor]="'#fd4357'">
           <i nz-icon nzType="frown" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.unavailable' | i18n }}</span>
+          <span>{{ 'monitor.status.down' | i18n }}</span>
         </nz-tag>
       </td>
       <td nzAlign="center">
@@ -200,50 +204,64 @@
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
-        <button
-          nz-button
-          nzType="primary"
-          [routerLink]="['/monitors/' + data.id]"
-          nzDanger
-          nz-tooltip
-          [nzTooltipTitle]="'monitors.detail' | i18n"
-        >
+        <button nz-button nzType="primary" [routerLink]="['/monitors/' + data.id]" nz-tooltip [nzTooltipTitle]="'monitors.detail' | i18n">
           <i nz-icon nzType="area-chart" nzTheme="outline"></i>
         </button>
-        <button nz-button nzType="primary" (click)="onEditOneMonitor(data.id)" nz-tooltip [nzTooltipTitle]="'monitors.edit-monitor' | i18n">
-          <i nz-icon nzType="edit" nzTheme="outline"></i>
+        <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+          <span nz-icon nzType="ellipsis"></span>
         </button>
-        <button
-          *ngIf="data.status == 0"
-          nz-button
-          nzType="primary"
-          (click)="onEnableManageOneMonitor(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'monitors.enable' | i18n"
-        >
-          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          *ngIf="data.status != 0"
-          nz-button
-          nzDanger
-          nzType="primary"
-          (click)="onCancelManageOneMonitor(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'monitors.cancel' | i18n"
-        >
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          nz-button
-          nzDanger
-          nzType="primary"
-          (click)="onDeleteOneMonitor(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'monitors.delete-monitor' | i18n"
-        >
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
+        <nz-dropdown-menu #more_menu="nzDropdownMenu">
+          <ul nz-menu>
+            <li nz-menu-item>
+              <button
+                nz-button
+                nzType="primary"
+                (click)="onEditOneMonitor(data.id)"
+                nz-tooltip
+                [nzTooltipTitle]="'monitors.edit-monitor' | i18n"
+              >
+                <i nz-icon nzType="edit" nzTheme="outline"></i>
+              </button>
+            </li>
+            <li nz-menu-item>
+              <button
+                *ngIf="data.status == 0"
+                nz-button
+                nzType="primary"
+                (click)="onEnableManageOneMonitor(data.id)"
+                nz-tooltip
+                [nzTooltipTitle]="'monitors.enable' | i18n"
+              >
+                <i nz-icon nzType="play-circle" nzTheme="outline"></i>
+              </button>
+            </li>
+            <li nz-menu-item>
+              <button
+                *ngIf="data.status != 0"
+                nz-button
+                nzDanger
+                nzType="primary"
+                (click)="onCancelManageOneMonitor(data.id)"
+                nz-tooltip
+                [nzTooltipTitle]="'monitors.cancel' | i18n"
+              >
+                <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
+              </button>
+            </li>
+            <li nz-menu-item>
+              <button
+                nz-button
+                nzType="primary"
+                nzDanger
+                (click)="onDeleteOneMonitor(data.id)"
+                nz-tooltip
+                [nzTooltipTitle]="'monitors.delete-monitor' | i18n"
+              >
+                <i nz-icon nzType="delete" nzTheme="outline"></i>
+              </button>
+            </li>
+          </ul>
+        </nz-dropdown-menu>
       </td>
     </tr>
   </tbody>

@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.manager.dao.TagDao;
@@ -36,6 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
+ * Tag service implementation.
  */
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -54,6 +56,7 @@ public class TagServiceImpl implements TagService {
     public void modifyTag(Tag tag) {
         Optional<Tag> tagOptional = tagDao.findById(tag.getId());
         if (tagOptional.isPresent()) {
+            tag.setTagValue(StringUtils.isEmpty(tag.getTagValue()) ? null : tag.getTagValue());
             tagDao.save(tag);
         } else {
             throw new IllegalArgumentException("The tag is not existed");

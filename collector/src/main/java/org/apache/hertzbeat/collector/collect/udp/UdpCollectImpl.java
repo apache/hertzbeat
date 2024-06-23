@@ -42,9 +42,6 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 public class UdpCollectImpl extends AbstractCollect {
     
     private static final byte[] HELLO = "hello".getBytes(StandardCharsets.UTF_8);
-    
-    public UdpCollectImpl() {
-    }
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {

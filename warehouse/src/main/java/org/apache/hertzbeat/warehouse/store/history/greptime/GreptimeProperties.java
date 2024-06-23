@@ -25,7 +25,9 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  */
 @ConfigurationProperties(prefix = "warehouse.store.greptime")
 public record GreptimeProperties(@DefaultValue("false") boolean enabled,
-                                 @DefaultValue("127.0.0.1:4001") String endpoint,
-                                 String username,
-                                 String password) {
+	@DefaultValue("127.0.0.1:4001") String grpcEndpoints,
+	@DefaultValue("jdbc:mysql://127.0.0.1:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true") String url,
+	@DefaultValue("com.mysql.cj.jdbc.Driver") String driverClassName, String username, String password,
+	// Database TTL, default is 30 days.
+	@DefaultValue("30d") String expireTime) {
 }
