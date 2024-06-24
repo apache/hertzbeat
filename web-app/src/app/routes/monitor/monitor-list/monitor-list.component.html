@@ -89,25 +89,21 @@
   <button style="margin-right: 25px; float: right" class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
     {{ 'common.search' | i18n }}
   </button>
-  <input
-    style="margin-right: 5px; float: right; width: 180px; border-radius: 9px; text-align: center"
+  <app-multi-func-input
+    groupStyle="margin-right: 5px; float: right; width: 180px; border-radius: 9px;"
+    inputStyle="text-align: center"
     class="mobile-hide"
-    nz-input
-    type="text"
     [placeholder]="'monitors.search.placeholder' | i18n"
-    nzSize="default"
-    (keyup.enter)="onFilterSearchMonitors()"
-    [(ngModel)]="filterContent"
+    [(value)]="filterContent"
+    (valueChange)="onFilterSearchMonitors()"
   />
-  <input
-    style="margin-right: 5px; float: right; width: 90px; border-radius: 9px; text-align: center"
+  <app-multi-func-input
+    groupStyle="margin-right: 10px; float: right; width: 90px; border-radius: 9px;"
+    inputStyle="text-align: center"
     class="mobile-hide"
-    nz-input
-    type="text"
     [placeholder]="'monitors.search.tag' | i18n"
-    nzSize="default"
-    (keyup.enter)="onFilterSearchMonitors()"
-    [(ngModel)]="tag"
+    [(value)]="tag"
+    (valueChange)="onFilterSearchMonitors()"
   />
   <nz-select
     style="margin-right: 10px; float: right"
