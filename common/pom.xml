@@ -116,5 +116,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.beetstra.jutf7/jutf7 -->
+        <dependency>
+            <groupId>com.beetstra.jutf7</groupId>
+            <artifactId>jutf7</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 </project>

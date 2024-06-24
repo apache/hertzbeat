@@ -48,8 +48,8 @@ export class AlertCenterComponent implements OnInit {
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
   // 搜索过滤相关属性
-  filterStatus: number | undefined;
-  filterPriority: number | undefined;
+  filterStatus: number = 9;
+  filterPriority: number = 9;
   filterContent: string | undefined;
 
   ngOnInit(): void {

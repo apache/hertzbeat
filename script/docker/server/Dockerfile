@@ -34,8 +34,10 @@ ADD apache-hertzbeat-${VERSION}-incubating-bin.tar.gz /opt/
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
+RUN mv /opt/apache-hertzbeat-${VERSION}-incubating-bin /opt/hertzbeat
+
 EXPOSE 1157 1158 22
 
-WORKDIR /opt/apache-hertzbeat-${VERSION}-incubating-bin/
+WORKDIR /opt/hertzbeat/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]

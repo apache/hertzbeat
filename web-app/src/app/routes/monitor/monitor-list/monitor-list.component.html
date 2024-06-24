@@ -89,37 +89,34 @@
   <button style="margin-right: 25px; float: right" class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
     {{ 'common.search' | i18n }}
   </button>
-  <input
-    style="margin-right: 5px; float: right; width: 180px; border-radius: 9px; text-align: center"
+  <app-multi-func-input
+    groupStyle="margin-right: 5px; float: right; width: 180px; border-radius: 9px;"
+    inputStyle="text-align: center"
     class="mobile-hide"
-    nz-input
-    type="text"
     [placeholder]="'monitors.search.placeholder' | i18n"
-    nzSize="default"
-    (keyup.enter)="onFilterSearchMonitors()"
-    [(ngModel)]="filterContent"
+    [(value)]="filterContent"
+    (valueChange)="onFilterSearchMonitors()"
   />
-  <input
-    style="margin-right: 5px; float: right; width: 90px; border-radius: 9px; text-align: center"
+  <app-multi-func-input
+    groupStyle="margin-right: 10px; float: right; width: 90px; border-radius: 9px;"
+    inputStyle="text-align: center"
     class="mobile-hide"
-    nz-input
-    type="text"
     [placeholder]="'monitors.search.tag' | i18n"
-    nzSize="default"
-    (keyup.enter)="onFilterSearchMonitors()"
-    [(ngModel)]="tag"
+    [(value)]="tag"
+    (valueChange)="onFilterSearchMonitors()"
   />
   <nz-select
     style="margin-right: 10px; float: right"
     class="mobile-hide"
     nzAllowClear
     [nzPlaceHolder]="'monitor.status' | i18n"
+    (ngModelChange)="onFilterSearchMonitors()"
     [(ngModel)]="filterStatus"
   >
-    <nz-option [nzLabel]="'monitor.status.all' | i18n" nzValue="9"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.up' | i18n" nzValue="1"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.down' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.paused' | i18n" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.all' | i18n" [nzValue]="9"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.up' | i18n" [nzValue]="1"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.down' | i18n" [nzValue]="2"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.paused' | i18n" [nzValue]="0"></nz-option>
   </nz-select>
 </div>
 
@@ -136,7 +133,7 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1240px', y: '100%' }"
+  [nzScroll]="{ x: '1240px' }"
 >
   <thead>
     <tr>

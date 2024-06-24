@@ -64,7 +64,7 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1240px', y: '100%' }"
+  [nzScroll]="{ x: '1240px' }"
 >
   <thead>
     <tr>
@@ -170,7 +170,7 @@
             nzShowSearch
             nzMode="multiple"
             nzAllowClear
-            nzPlaceHolder="Select Tags"
+            [nzPlaceHolder]="'alert.notice.rule.tag.placeholder' | i18n"
             required
             name="tags"
             id="tags"
@@ -188,7 +188,7 @@
             nzShowSearch
             nzMode="multiple"
             nzAllowClear
-            nzPlaceHolder="Select Priorities"
+            [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n"
             required
             name="priorities"
             id="priorities"
