@@ -43,6 +43,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
 
 /**
+ * Abstract alert notify handler implementation.
  */
 @Slf4j
 abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
@@ -128,5 +129,3 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
 }
-
-

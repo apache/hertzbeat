@@ -190,19 +190,14 @@ licenses.
 The following components are provided under the 0BSD License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://npmjs.com/package/@antv/adjust/node_modules/tslib/v/1.14.1 1.14.1 0BSD
-    https://npmjs.com/package/@delon/chart/node_modules/echarts/node_modules/tslib/v/2.3.0 2.3.0 0BSD
-    https://npmjs.com/package/@delon/chart/node_modules/zrender/node_modules/tslib/v/2.3.0 2.3.0 0BSD
-    https://npmjs.com/package/echarts/node_modules/tslib/v/2.3.0 2.3.0 0BSD
     https://npmjs.com/package/tslib/v/2.6.2 2.6.2 0BSD
-    https://npmjs.com/package/zrender/node_modules/tslib/v/2.3.0 2.3.0 0BSD
 
 ========================================================================
 Apache-2.0 licenses
 ========================================================================
 The following components are provided under the Apache-2.0 License. See project link for details.
 The text of each license is the standard Apache 2.0 license.
-    https://npmjs.com/package/@delon/chart/node_modules/echarts/v/5.5.0 5.5.0 Apache-2.0
+
     https://npmjs.com/package/adler-32/v/1.3.1 1.3.1 Apache-2.0
     https://npmjs.com/package/cfb/v/1.2.2 1.2.2 Apache-2.0
     https://npmjs.com/package/codepage/v/1.15.0 1.15.0 Apache-2.0
@@ -222,7 +217,7 @@ BSD-2-Clause licenses
 The following components are provided under the BSD-2-Clause License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://npmjs.com/package/parse5/node_modules/entities/v/4.5.0 4.5.0 BSD-2-Clause
+    https://npmjs.com/package/entities/v/4.5.0 4.5.0 BSD-2-Clause
     https://npmjs.com/package/uri-js/v/4.4.1 4.4.1 BSD-2-Clause
 
 ========================================================================
@@ -231,23 +226,18 @@ BSD-3-Clause licenses
 The following components are provided under the BSD-3-Clause License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
-    https://npmjs.com/package/@delon/chart/node_modules/zrender/v/5.5.0 5.5.0 BSD-3-Clause
     https://npmjs.com/package/d3-array/v/1.2.4 1.2.4 BSD-3-Clause
     https://npmjs.com/package/d3-collection/v/1.0.7 1.0.7 BSD-3-Clause
     https://npmjs.com/package/d3-composite-projections/v/1.4.0 1.4.0 BSD-3-Clause
-    https://npmjs.com/package/d3-composite-projections/node_modules/d3-array/v/2.12.1 2.12.1 BSD-3-Clause
-    https://npmjs.com/package/d3-composite-projections/node_modules/d3-geo/v/2.0.2 2.0.2 BSD-3-Clause
     https://npmjs.com/package/d3-dsv/v/1.2.0 1.2.0 BSD-3-Clause
     https://npmjs.com/package/d3-ease/v/1.0.7 1.0.7 BSD-3-Clause
     https://npmjs.com/package/d3-geo/v/1.6.4 1.6.4 BSD-3-Clause
     https://npmjs.com/package/d3-geo-projection/v/2.1.2 2.1.2 BSD-3-Clause
-    https://npmjs.com/package/d3-geo-projection/node_modules/d3-geo/v/1.12.1 1.12.1 BSD-3-Clause
     https://npmjs.com/package/d3-hexjson/v/1.1.1 1.1.1 BSD-3-Clause
     https://npmjs.com/package/d3-hierarchy/v/1.1.9 1.1.9 BSD-3-Clause
     https://npmjs.com/package/d3-path/v/2.0.0 2.0.0 BSD-3-Clause
     https://npmjs.com/package/d3-sankey/v/0.9.1 0.9.1 BSD-3-Clause
     https://npmjs.com/package/d3-shape/v/1.3.7 1.3.7 BSD-3-Clause
-    https://npmjs.com/package/d3-shape/node_modules/d3-path/v/1.0.9 1.0.9 BSD-3-Clause
     https://npmjs.com/package/d3-timer/v/1.0.10 1.0.10 BSD-3-Clause
     https://npmjs.com/package/d3-voronoi/v/1.1.4 1.1.4 BSD-3-Clause
     https://npmjs.com/package/rw/v/1.3.3 1.3.3 BSD-3-Clause
@@ -266,7 +256,6 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://npmjs.com/package/@antv/g-svg/v/0.5.7 0.5.7 ISC
     https://npmjs.com/package/@antv/matrix-util/v/3.1.0-beta.3 3.1.0-beta.3 ISC
     https://npmjs.com/package/@antv/path-util/v/2.0.15 2.0.15 ISC
-    https://npmjs.com/package/@antv/path-util/node_modules/@antv/matrix-util/v/3.0.4 3.0.4 ISC
     https://npmjs.com/package/@antv/util/v/2.0.17 2.0.17 ISC
     https://npmjs.com/package/d3-color/v/3.1.0 3.1.0 ISC
     https://npmjs.com/package/d3-interpolate/v/3.0.1 3.0.1 ISC
@@ -312,7 +301,6 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://npmjs.com/package/@delon/form/v/15.2.1 15.2.1 MIT
     https://npmjs.com/package/@delon/mock/v/15.2.1 15.2.1 MIT
     https://npmjs.com/package/@delon/theme/v/15.2.1 15.2.1 MIT
-    https://npmjs.com/package/@delon/theme/node_modules/ng-zorro-antd/v/15.1.1 15.1.1 MIT
     https://npmjs.com/package/@delon/util/v/15.2.1 15.2.1 MIT
     https://npmjs.com/package/@github/hotkey/v/2.3.1 2.3.1 MIT
     https://npmjs.com/package/@types/d3-timer/v/2.0.3 2.0.3 MIT
@@ -337,17 +325,13 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://npmjs.com/package/iconv-lite/v/0.4.24 0.4.24 MIT
     https://npmjs.com/package/immediate/v/3.0.6 3.0.6 MIT
     https://npmjs.com/package/isutf8/v/4.0.0 4.0.0 MIT
+    https://npmjs.com/package/isarray/v/1.0.0 MIT
     https://npmjs.com/package/jquery/v/3.7.1 3.7.1 MIT
     https://npmjs.com/package/json-schema-traverse/v/1.0.0 1.0.0 MIT
-    https://npmjs.com/package/jszip/node_modules/isarray/v/1.0.0 1.0.0 MIT
-    https://npmjs.com/package/jszip/node_modules/readable-stream/v/2.3.8 2.3.8 MIT
-    https://npmjs.com/package/jszip/node_modules/safe-buffer/v/5.1.2 5.1.2 MIT
-    https://npmjs.com/package/jszip/node_modules/string_decoder/v/1.1.1 1.1.1 MIT
     https://npmjs.com/package/lie/v/3.3.0 3.3.0 MIT
     https://npmjs.com/package/loadjs/v/4.2.0 4.2.0 MIT
     https://npmjs.com/package/lodash/v/4.17.21 4.17.21 MIT
     https://npmjs.com/package/mockjs/v/1.1.0 1.1.0 MIT
-    https://npmjs.com/package/mockjs/node_modules/commander/v/12.0.0 12.0.0 MIT
     https://npmjs.com/package/monaco-editor/v/0.36.1 0.36.1 MIT
     https://npmjs.com/package/ng-zorro-antd/v/15.1.0 15.1.0 MIT
     https://npmjs.com/package/ngx-color-picker/v/12.0.1 12.0.1 MIT
@@ -359,17 +343,19 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://npmjs.com/package/path2d-polyfill/v/2.0.1 2.0.1 MIT
     https://npmjs.com/package/plyr/v/3.7.8 3.7.8 MIT
     https://npmjs.com/package/point-at-length/v/1.1.0 1.1.0 MIT
-    https://npmjs.com/package/point-at-length/node_modules/isarray/v/0.0.1 0.0.1 MIT
     https://npmjs.com/package/process-nextick-args/v/2.0.1 2.0.1 MIT
     https://npmjs.com/package/punycode/v/2.3.1 2.3.1 MIT
     https://npmjs.com/package/rangetouch/v/2.0.1 2.0.1 MIT
     https://npmjs.com/package/regenerator-runtime/v/0.14.1 0.14.1 MIT
     https://npmjs.com/package/regression/v/2.0.1 2.0.1 MIT
     https://npmjs.com/package/require-from-string/v/2.0.2 2.0.2 MIT
+    https://npmjs.com/package/readable-stream/v/2.3.8 2.3.8 MIT
     https://npmjs.com/package/safer-buffer/v/2.1.2 2.1.2 MIT
     https://npmjs.com/package/screenfull/v/6.0.2 6.0.2 MIT
     https://npmjs.com/package/setimmediate/v/1.0.5 1.0.5 MIT
     https://npmjs.com/package/slick-carousel/v/1.8.1 1.8.1 MIT
+    https://npmjs.com/package/safe-buffer/v/5.1.2 5.1.2 MIT
+    https://npmjs.com/package/string_decoder/v/1.1.1 1.1.1 MIT
     https://npmjs.com/package/url-polyfill/v/1.1.12 1.1.12 MIT
     https://npmjs.com/package/util-deprecate/v/1.0.2 1.0.2 MIT
     https://npmjs.com/package/zone.js/v/0.11.8 0.11.8 MIT

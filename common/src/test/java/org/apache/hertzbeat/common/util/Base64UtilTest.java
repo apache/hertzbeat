@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.common.util;
 
+import static org.apache.hertzbeat.common.util.Base64Util.isBase64;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -25,6 +28,23 @@ import org.junit.jupiter.api.Test;
 class Base64UtilTest {
 
     @Test
-    void isBase64() {
+    void testIsBase64() {
+
+        String validBase64String = "VGhpcyBpcyBhIHRlc3Qgc3RyaW5n";
+        assertTrue(isBase64(validBase64String));
+
+        String invalidBase64String = "This is not a valid Base64 string!";
+        assertFalse(isBase64(invalidBase64String));
+
+        String emptyString = "";
+        assertFalse(isBase64(emptyString));
+
+        assertFalse(isBase64(null));
+
+        String whitespaceString = " ";
+        assertFalse(isBase64(whitespaceString));
+
+        String paddedBase64String = "VGhpcyBpcyBhIHRlc3Qgc3RyaW5n===";
+        assertFalse(isBase64(paddedBase64String));
     }
 }

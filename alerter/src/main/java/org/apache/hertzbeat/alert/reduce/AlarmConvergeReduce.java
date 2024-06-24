@@ -127,7 +127,7 @@ public class AlarmConvergeReduce {
                 }
             }
             if (match) {
-                long evalInterval = alertConverge.getEvalInterval() * 1000;
+                long evalInterval = alertConverge.getEvalInterval() * 1000L;
                 long now = System.currentTimeMillis();
                 if (evalInterval <= 0) {
                     return true;
