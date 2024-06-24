@@ -122,5 +122,9 @@
   "sidebar.docs.category.llm": {
     "message": "Ai大模型监控",
     "description": "The label for category llm in sidebar docs"
+  },
+  "sidebar.docs.category.aiConfig": {
+    "message": "Ai大模型配置",
+    "description": "The label for category aiConfig in sidebar docs"
   }
 }
