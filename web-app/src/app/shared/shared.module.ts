@@ -10,8 +10,8 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 
 import { HelpMassageShowComponent } from './components/help-massage-show/help-massage-show.component';
 import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
-import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
 import { MetricsFieldInputComponent } from './components/metrics-field-input/metrics-field-input.component';
+import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
 import { ElapsedTimePipe } from './pipe/elapsed-time.pipe';
 import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
@@ -19,7 +19,12 @@ import { SHARED_DELON_MODULES } from './shared-delon.module';
 import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
 
 const ThirdModules: Array<Type<void>> = [];
-const COMPONENTS: Array<Type<void>> = [KeyValueInputComponent, MultiFuncInputComponent, HelpMassageShowComponent, MetricsFieldInputComponent];
+const COMPONENTS: Array<Type<void>> = [
+  KeyValueInputComponent,
+  MultiFuncInputComponent,
+  HelpMassageShowComponent,
+  MetricsFieldInputComponent
+];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
 @NgModule({

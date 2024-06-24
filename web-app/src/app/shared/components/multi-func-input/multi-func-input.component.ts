@@ -26,7 +26,6 @@ import { NzSizeLDSType } from 'ng-zorro-antd/core/types';
   styleUrls: ['./multi-func-input.component.less']
 })
 export class MultiFuncInputComponent implements OnInit {
-
   constructor() {}
 
   @Input() value!: any;
@@ -49,5 +48,4 @@ export class MultiFuncInputComponent implements OnInit {
       this.valueChange.emit(this.inputValue);
     }
   }
-
 }
