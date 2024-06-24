@@ -65,24 +65,26 @@
     style="margin-right: 10px; float: right"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-status' | i18n"
+    (ngModelChange)="loadAlertsTable()"
     [(ngModel)]="filterStatus"
   >
-    <nz-option [nzLabel]="'alert.status.all' | i18n" nzValue="9"></nz-option>
-    <nz-option [nzLabel]="'alert.status.0' | i18n" nzValue="0"></nz-option>
-    <nz-option [nzLabel]="'alert.status.2' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'alert.status.3' | i18n" nzValue="3"></nz-option>
+    <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="9"></nz-option>
+    <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="0"></nz-option>
+    <nz-option [nzLabel]="'alert.status.2' | i18n" [nzValue]="2"></nz-option>
+    <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="3"></nz-option>
   </nz-select>
   <nz-select
     class="mobile-hide"
     style="margin-right: 10px; float: right"
     nzAllowClear
     [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
+    (ngModelChange)="loadAlertsTable()"
     [(ngModel)]="filterPriority"
   >
-    <nz-option [nzLabel]="'alert.priority.all' | i18n" nzValue="9"></nz-option>
-    <nz-option [nzLabel]="'alert.priority.2' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'alert.priority.1' | i18n" nzValue="1"></nz-option>
-    <nz-option [nzLabel]="'alert.priority.0' | i18n" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'alert.priority.all' | i18n" [nzValue]="9"></nz-option>
+    <nz-option [nzLabel]="'alert.priority.2' | i18n" [nzValue]="2"></nz-option>
+    <nz-option [nzLabel]="'alert.priority.1' | i18n" [nzValue]="1"></nz-option>
+    <nz-option [nzLabel]="'alert.priority.0' | i18n" [nzValue]="0"></nz-option>
   </nz-select>
 </div>
 
