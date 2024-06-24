@@ -114,12 +114,13 @@
     class="mobile-hide"
     nzAllowClear
     [nzPlaceHolder]="'monitor.status' | i18n"
+    (ngModelChange)="onFilterSearchMonitors()"
     [(ngModel)]="filterStatus"
   >
-    <nz-option [nzLabel]="'monitor.status.all' | i18n" nzValue="9"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.up' | i18n" nzValue="1"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.down' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.paused' | i18n" nzValue="0"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.all' | i18n" [nzValue]="9"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.up' | i18n" [nzValue]="1"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.down' | i18n" [nzValue]="2"></nz-option>
+    <nz-option [nzLabel]="'monitor.status.paused' | i18n" [nzValue]="0"></nz-option>
   </nz-select>
 </div>
 
