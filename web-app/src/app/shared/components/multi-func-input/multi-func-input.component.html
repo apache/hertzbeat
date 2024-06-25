@@ -20,16 +20,21 @@
 <nz-input-group [nzSuffix]="inputClearTpl" [style]="groupStyle">
   <input
     nz-input
-    [(ngModel)]="inputValue"
-    [placeholder]="placeholder"
-    [type]="type"
+    [id]="id"
+    [type]="passwordVisible ? 'text' : type"
+    [name]="name"
     [style]="inputStyle"
+    [required]="required"
+    [placeholder]="placeholder"
     [nzSize]="size"
+    [(ngModel)]="inputValue"
     (ngModelChange)="onChange()"
   />
 </nz-input-group>
 <ng-template #inputClearTpl>
   @if (allowClear && inputValue) {
-  <span nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="inputValue = null; onChange()"></span>
+  <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="inputValue = null; onChange()"></i>
+  } @if (type === 'password') {
+  <i nz-icon [nzType]="passwordVisible ? 'eye-invisible' : 'eye'" (click)="passwordVisible = !passwordVisible"></i>
   }
 </ng-template>

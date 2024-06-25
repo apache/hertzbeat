@@ -66,7 +66,6 @@ export class MonitorEditComponent implements OnInit {
   collector: string = '';
   profileForm: FormGroup = new FormGroup({});
   detected: boolean = false;
-  passwordVisible: boolean = false;
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
 
@@ -75,7 +74,6 @@ export class MonitorEditComponent implements OnInit {
       .pipe(
         switchMap((paramMap: ParamMap) => {
           this.isSpinning = true;
-          this.passwordVisible = false;
           let id = paramMap.get('monitorId');
           this.monitor.id = Number(id);
           // 查询监控信息

@@ -28,7 +28,10 @@ import { NzSizeLDSType } from 'ng-zorro-antd/core/types';
 export class MultiFuncInputComponent implements OnInit {
   constructor() {}
 
+  @Input() id!: string;
   @Input() value!: any;
+  @Input() name!: string;
+  @Input() required!: boolean;
   @Input() groupStyle!: string;
   @Input() inputStyle!: string;
   @Input() placeholder!: string;
@@ -38,6 +41,7 @@ export class MultiFuncInputComponent implements OnInit {
   @Output() readonly valueChange = new EventEmitter<string>();
 
   inputValue: any | undefined;
+  passwordVisible: boolean = false;
 
   ngOnInit(): void {
     this.inputValue = this.value;

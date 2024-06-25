@@ -89,21 +89,15 @@
             >{{ paramDefine.name }}
           </nz-form-label>
           <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <nz-input-group [nzSuffix]="suffixTemplate" style="width: 100%">
-              <input
-                [type]="passwordVisible ? 'text' : 'password'"
-                nz-input
-                placeholder="input password"
-                [required]="paramDefine.required"
-                [(ngModel)]="params[i].paramValue"
-                [id]="paramDefine.field"
-                [name]="paramDefine.field"
-                [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-              />
-            </nz-input-group>
-            <ng-template #suffixTemplate>
-              <i nz-icon [nzType]="passwordVisible ? 'eye-invisible' : 'eye'" (click)="passwordVisible = !passwordVisible"></i>
-            </ng-template>
+            <app-multi-func-input
+              [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
+              [(value)]="params[i].paramValue"
+              [required]="paramDefine.required"
+              [name]="paramDefine.field"
+              [id]="paramDefine.field"
+              groupStyle="width: 100%"
+              type="password"
+            />
           </nz-form-control>
 
           <nz-form-label *ngIf="paramDefine.type === 'number'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
@@ -238,21 +232,15 @@
                 >{{ paramDefine.name }}
               </nz-form-label>
               <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-                <nz-input-group [nzSuffix]="suffixTemplate" style="width: 100%">
-                  <input
-                    [type]="passwordVisible ? 'text' : 'password'"
-                    nz-input
-                    placeholder="input password"
-                    [required]="paramDefine.required"
-                    [(ngModel)]="advancedParams[i].paramValue"
-                    [id]="paramDefine.field"
-                    [name]="paramDefine.field"
-                    [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-                  />
-                </nz-input-group>
-                <ng-template #suffixTemplate>
-                  <i nz-icon [nzType]="passwordVisible ? 'eye-invisible' : 'eye'" (click)="passwordVisible = !passwordVisible"></i>
-                </ng-template>
+                <app-multi-func-input
+                  [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
+                  [(value)]="advancedParams[i].paramValue"
+                  [required]="paramDefine.required"
+                  [name]="paramDefine.field"
+                  [id]="paramDefine.field"
+                  groupStyle="width: 100%"
+                  type="password"
+                />
               </nz-form-control>
 
               <nz-form-label
