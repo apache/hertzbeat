@@ -50,15 +50,13 @@
   <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()" class="mobile-hide">
     {{ 'common.search' | i18n }}
   </button>
-  <input
-    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center"
-    nz-input
-    type="text"
-    [placeholder]="'alert.center.search' | i18n"
-    nzSize="default"
-    (keyup.enter)="loadAlertsTable()"
-    [(ngModel)]="filterContent"
+  <app-multi-func-input
+    groupStyle="margin-right: 5px; float: right; width: 200px; border-radius: 9px;"
+    inputStyle="text-align: center"
     class="mobile-hide"
+    [placeholder]="'alert.center.search' | i18n"
+    [(value)]="filterContent"
+    (valueChange)="loadAlertsTable()"
   />
   <nz-select
     class="mobile-hide"
