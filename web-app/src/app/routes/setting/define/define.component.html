@@ -63,10 +63,15 @@
             >
               <i nz-icon nzType="eye" nzTheme="outline"></i>
             </button>
-            <button nz-button nzSize="small" routerLink="/setting/define" [queryParams]="{ app: app.value }">
-              <span style="margin-left: 6px">
-                {{ app.label }}
-              </span>
+            <button
+              nz-button
+              nzSize="small"
+              routerLink="/setting/define"
+              [queryParams]="{ app: app.value }"
+              class="label"
+              [title]="app.label"
+            >
+              {{ app.label }}
             </button>
           </li>
         </ul>
