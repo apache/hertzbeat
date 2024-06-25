@@ -443,7 +443,8 @@ Thanks !
 ![](/img/docs/community/account-8.png)
 ![](/img/docs/community/account-9.png)
 
-回到Apache页面，提示GitHub启用多重身份认证，在GitHub页面启用多重身份认证
+回到Apache页面，提示GitHub启用多重身份认证，在GitHub页面启用双重身份认证
+> GitHub双重身份认证介绍，[点击跳转官方文档](https://docs.github.com/zh/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication)
 
 ![](/img/docs/community/account-10.png)
 
