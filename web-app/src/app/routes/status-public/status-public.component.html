@@ -18,7 +18,7 @@
 -->
 
 <nz-spin [nzSpinning]="loading" [nzTip]="'Loading...'" nzSize="large">
-  <div class="status-header" [style]="'border-radius: 6px;margin-top: 10px;background:' + (statusOrg.color || '#e9f3d3')">
+  <div class="status-header" [style]="'border-radius: 8px;margin-top: 10px;background:' + (statusOrg.color || '#e9f3d3')">
     <header-i18n showLangText="false" class="langs"></header-i18n>
     <div>
       <a [href]="statusOrg.home" target="_blank">
@@ -100,7 +100,7 @@
           <div
             *ngFor="let historyItem of component.history"
             class="history_block"
-            [style]="'border-radius: 3px;background:' + calculateHistoryBlockRgb(historyItem)"
+            [style]="'border-radius: 8px;background:' + calculateHistoryBlockRgb(historyItem)"
             nz-popover
             [nzPopoverContent]="contentTemplate"
             nzPopoverPlacement="bottom"
@@ -170,7 +170,7 @@
         <nz-collapse-panel *ngFor="let incident of incidentStatus" [nzHeader]="incidentHeader" nzShowArrow="false">
           <div
             *ngFor="let content of incident.contents"
-            style="border: 1px dotted green; border-radius: 3px; margin-bottom: 4px; background: #f8f6f3"
+            style="border: 1px dotted green; border-radius: 8px; margin-bottom: 4px; background: #f8f6f3"
           >
             <nz-list nzSize="small" nzSplit="false">
               <nz-list-item style="font-size: medium">
@@ -195,7 +195,7 @@
           </div>
           <ng-template #incidentHeader>
             <div
-              style="width: 100%; border: 1px solid gray; border-radius: 3px"
+              style="width: 100%; border: 1px solid gray; border-radius: 8px"
               [ngStyle]="{ borderColor: getStatusBorderColor(incident.state) }"
             >
               <div style="margin: 10px; display: flex; justify-content: space-between">
