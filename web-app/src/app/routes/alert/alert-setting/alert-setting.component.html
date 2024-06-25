@@ -62,7 +62,7 @@
     {{ 'common.search' | i18n }}
   </button>
   <input
-    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center; margin-right: 0"
+    style="margin-right: 5px; float: right; width: 200px; text-align: center; margin-right: 0"
     nz-input
     type="text"
     [placeholder]="'alert.setting.search' | i18n"
@@ -559,7 +559,7 @@
 >
   <div *nzModalContent class="-inner-content">
     <input
-      style="margin-left: 5px; width: 50%; border-radius: 9px; text-align: center"
+      style="margin-left: 5px; width: 50%; text-align: center"
       nz-input
       type="text"
       [placeholder]="'tag.search' | i18n"
@@ -567,7 +567,7 @@
       (keyup.enter)="loadTagsTable()"
       [(ngModel)]="tagSearch"
     />
-    <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px; border-radius: 9px">
+    <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px">
       <i nz-icon nzType="setting" nzTheme="outline"></i>
       {{ 'tag.setting' | i18n }}
     </button>
