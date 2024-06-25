@@ -85,3 +85,12 @@ scheduler:
   server:
     enabled: true
     port: 1158
+
+#AI config
+aiConfig:
+  #AI Type:zhiPu = 0
+  type: 0
+  #Model name：glm-4
+  model: glm-4
+  #api key
+  api-key:
