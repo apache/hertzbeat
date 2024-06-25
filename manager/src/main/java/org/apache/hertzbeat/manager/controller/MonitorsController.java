@@ -152,6 +152,7 @@ public class MonitorsController {
         return ResponseEntity.ok(message);
     }
 
+
     @DeleteMapping
     @Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",
             description = "Delete monitoring items in batches according to the monitoring ID list")

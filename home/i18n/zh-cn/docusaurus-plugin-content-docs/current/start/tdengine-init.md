@@ -1,7 +1,7 @@
 ---
 id: tdengine-init  
-title: 依赖时序数据库服务TDengine安装初始化        
-sidebar_label: 使用TDengine存储指标数据(可选)    
+title: 依赖时序数据库服务TDengine安装初始化(可选)
+sidebar_label: 指标数据存储TDengine
 ---
 
 Apache HertzBeat (incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)

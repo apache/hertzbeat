@@ -121,6 +121,11 @@ public class NoticeReceiver {
             example = "779294123", accessMode = READ_WRITE)
     private String tgUserId;
 
+    @Schema(title = "DingTalk,FeiShu,WeWork user id: The notification method is valid for DingTalk,FeiShu,WeWork Bot",
+            description = "DingTalk,FeiShu,WeWork user id: The notification method is valid for DingTalk,FeiShu,WeWork Bot",
+            example = "779294123", accessMode = READ_WRITE)
+    private String userId;
+
     @Schema(title = "URL address: The notification method is valid for Slack",
             description = "URL address: The notification method is valid for Slack",
             example = "https://hooks.slack.com/services/XXXX/XXXX/XXXX", accessMode = READ_WRITE)
