@@ -96,9 +96,6 @@ public class HttpCollectImpl extends AbstractCollect {
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
 
-    public HttpCollectImpl() {
-    }
-
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         if (metrics == null || metrics.getHttp() == null) {
@@ -136,7 +133,7 @@ public class HttpCollectImpl extends AbstractCollect {
             // Option 1: Parse using InputStream, but this requires significant code changes;
             // Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            if (StringUtils.hasText(resp)) {
+            if (!StringUtils.hasText(resp)) {
                 log.info("http response entity is empty, status: {}.", statusCode);
             }
             Long responseTime = System.currentTimeMillis() - startTime;

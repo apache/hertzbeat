@@ -141,15 +141,18 @@ warehouse:
       password: taosdata
     greptime:
       enabled: false
-      endpoint: localhost:4001
+      grpc-endpoints: localhost:4001
+      url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: greptime
+      password: greptime
+      expire-time: 30d
     iot-db:
       enabled: false
       host: 127.0.0.1
       rpc-port: 6667
       username: root
       password: root
-      # config.org.apache.hertzbeat.warehouse.IotDbVersion: V_0_13 || V_1_0
-      version: V_1_0
       query-timeout-in-ms: -1
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
       expire-time: '7776000000'

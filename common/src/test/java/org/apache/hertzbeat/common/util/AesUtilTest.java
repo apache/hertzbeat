@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.util;
 
-import org.junit.jupiter.api.Test;
 import static org.apache.hertzbeat.common.util.AesUtil.aesDecode;
 import static org.apache.hertzbeat.common.util.AesUtil.aesEncode;
 import static org.apache.hertzbeat.common.util.AesUtil.isCiphertext;
@@ -25,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link AesUtil}
