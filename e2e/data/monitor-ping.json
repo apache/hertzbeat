@@ -12,12 +12,12 @@
       {
         "field": "host",
         "type": 1,
-        "value": "127.0.0.1"
+        "paramValue": "127.0.0.1"
       },
       {
         "field": "timeout",
         "type": 0,
-        "value": 6000
+        "paramValue": 6000
       }
     ]
 }
