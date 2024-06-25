@@ -23,6 +23,7 @@ import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
+import org.apache.hertzbeat.common.constants.AiTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.ZhiPuAiResponse;
 import org.apache.hertzbeat.manager.pojo.dto.ZhiPuRequestParamDTO;
@@ -66,8 +67,8 @@ public class ZhiPuServiceImpl implements AiService {
     }
 
     @Override
-    public String getType() {
-        return "0";
+    public AiTypeEnum getType() {
+        return AiTypeEnum.zhiPu;
     }
 
     @Override
