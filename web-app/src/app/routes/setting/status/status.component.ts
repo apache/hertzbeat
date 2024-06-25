@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import {Component, Inject, OnInit, ViewChild} from '@angular/core';
-import {FormGroup, NgForm} from '@angular/forms';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { FormGroup, NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -316,7 +316,7 @@ export class StatusComponent implements OnInit {
       Object.values(this.componentForm.controls).forEach(control => {
         if (control.invalid) {
           control.markAsDirty();
-          control.updateValueAndValidity({onlySelf: true});
+          control.updateValueAndValidity({ onlySelf: true });
         }
       });
       return;
@@ -379,7 +379,7 @@ export class StatusComponent implements OnInit {
       Object.values(this.incidentForm.controls).forEach(control => {
         if (control.invalid) {
           control.markAsDirty();
-          control.updateValueAndValidity({onlySelf: true});
+          control.updateValueAndValidity({ onlySelf: true });
         }
       });
       return;

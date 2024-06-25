@@ -364,10 +364,10 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="currentStatusComponent.method == 0">
-        <nz-form-label [nzSpan]="7" nzFor="tag"  nzRequired="true" [nzTooltipTitle]="'status.component.tag.tip' | i18n">{{
+        <nz-form-label [nzSpan]="7" nzFor="tag" nzRequired="true" [nzTooltipTitle]="'status.component.tag.tip' | i18n">{{
           'status.component.tag' | i18n
         }}</nz-form-label>
-        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" >
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             [(ngModel)]="matchTag"
             (nzOpenChange)="loadTagsOption()"
