@@ -374,6 +374,7 @@ export class StatusComponent implements OnInit {
       });
       return;
     }
+    // incident message content
     if (this.currentStatusIncident.contents == undefined) {
       this.currentStatusIncident.contents = [];
     }
