@@ -90,7 +90,7 @@
     {{ 'common.search' | i18n }}
   </button>
   <app-multi-func-input
-    groupStyle="margin-right: 5px; float: right; width: 180px; border-radius: 9px;"
+    groupStyle="margin-right: 5px; float: right; width: 180px;"
     inputStyle="text-align: center"
     class="mobile-hide"
     [placeholder]="'monitors.search.placeholder' | i18n"
@@ -98,7 +98,7 @@
     (valueChange)="onFilterSearchMonitors()"
   />
   <app-multi-func-input
-    groupStyle="margin-right: 10px; float: right; width: 90px; border-radius: 9px;"
+    groupStyle="margin-right: 10px; float: right; width: 90px;"
     inputStyle="text-align: center"
     class="mobile-hide"
     [placeholder]="'monitors.search.tag' | i18n"
@@ -306,7 +306,7 @@
 >
   <div *nzModalContent class="-inner-content">
     <div style="text-align: center">
-      <nz-input-group nzSize="large" nzSearch="true" style="width: 97%; border-radius: 12px" [nzPrefix]="suffixIconSearch">
+      <nz-input-group nzSize="large" nzSearch="true" style="width: 97%" [nzPrefix]="suffixIconSearch">
         <input
           nz-input
           type="text"
