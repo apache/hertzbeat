@@ -15,30 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
-
-
-import org.apache.hertzbeat.common.constants.AiTypeEnum;
-import org.springframework.http.codec.ServerSentEvent;
-import reactor.core.publisher.Flux;
-
+package org.apache.hertzbeat.common.constants;
 
 /**
- * AI Service
+ * Ai type Enum
  */
-public interface AiService {
+public enum AiTypeEnum {
 
     /**
-     * get AI type
-     * @return     type
+     * 智普
      */
-    AiTypeEnum getType();
+    zhiPu;
+
 
     /**
-     * AI response
-     * @param text  text
-     * @return      AI response
+     * get type
      */
-    Flux<ServerSentEvent<String>> requestAi(String text);
+    public static AiTypeEnum getTypeByName(String type) {
+        for (AiTypeEnum aiTypeEnum : values()) {
+            if (aiTypeEnum.name().equals(type)) {
+                return aiTypeEnum;
+            }
+
+        }
+        return null;
+    }
 
 }
