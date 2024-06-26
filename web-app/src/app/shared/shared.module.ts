@@ -12,6 +12,7 @@ import { HelpMassageShowComponent } from './components/help-massage-show/help-ma
 import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
 import { MetricsFieldInputComponent } from './components/metrics-field-input/metrics-field-input.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
+import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { ElapsedTimePipe } from './pipe/elapsed-time.pipe';
 import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
@@ -23,7 +24,8 @@ const COMPONENTS: Array<Type<void>> = [
   KeyValueInputComponent,
   MultiFuncInputComponent,
   HelpMassageShowComponent,
-  MetricsFieldInputComponent
+  MetricsFieldInputComponent,
+  ToolbarComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
