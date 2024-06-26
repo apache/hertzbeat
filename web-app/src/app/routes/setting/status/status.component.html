@@ -140,23 +140,26 @@
 </nz-spin>
 
 <nz-divider></nz-divider>
+
 <nz-tabset nzSize="large" [nzTabBarGutter]="8">
   <nz-tab [nzTitle]="'status.component' | i18n" (nzClick)="loadComponentInfo()">
-    <div style="margin-bottom: 20px">
-      <button nz-button nzType="primary" nz-tooltip (click)="syncComponent()" [nzTooltipTitle]="'common.refresh' | i18n">
-        <i nz-icon nzType="sync" nzTheme="outline"></i>
-      </button>
-      <button nz-button nzType="primary" (click)="onNewStatusComponent()">
-        <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-        {{ 'status.component.new' | i18n }}
-      </button>
-      <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
-        <a routerLink="/status" target="_blank">
-          <i nz-icon nzType="link" nzTheme="outline"></i>
-          {{ statusOrg.name + ' ' + ('menu.advanced.status' | i18n) }}
-        </a>
-      </button>
-    </div>
+    <app-toolbar>
+      <ng-template #left>
+        <button nz-button nzType="primary" nz-tooltip (click)="syncComponent()" [nzTooltipTitle]="'common.refresh' | i18n">
+          <i nz-icon nzType="sync" nzTheme="outline"></i>
+        </button>
+        <button nz-button nzType="primary" (click)="onNewStatusComponent()">
+          <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+          {{ 'status.component.new' | i18n }}
+        </button>
+        <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
+          <a routerLink="/status" target="_blank">
+            <i nz-icon nzType="link" nzTheme="outline"></i>
+            {{ statusOrg.name + ' ' + ('menu.advanced.status' | i18n) }}
+          </a>
+        </button>
+      </ng-template>
+    </app-toolbar>
     <nz-table #fixedTable [nzData]="statusComponents" nzFrontPagination="false" [nzLoading]="componentLoading" [nzScroll]="{ x: '1240px' }">
       <thead>
         <tr>
@@ -224,21 +227,23 @@
     </nz-table>
   </nz-tab>
   <nz-tab [nzTitle]="'status.incident' | i18n" (nzClick)="loadIncidenceInfo()">
-    <div style="margin-bottom: 20px">
-      <button nz-button nzType="primary" nz-tooltip (click)="syncIncidence()" [nzTooltipTitle]="'common.refresh' | i18n">
-        <i nz-icon nzType="sync" nzTheme="outline"></i>
-      </button>
-      <button nz-button nzType="primary" (click)="onNewStatusIncident()">
-        <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-        {{ 'status.incident.new' | i18n }}
-      </button>
-      <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
-        <a routerLink="/status" target="_blank">
-          <i nz-icon nzType="link" nzTheme="outline"></i>
-          {{ statusOrg.name + ' ' + ('menu.advanced.status' | i18n) }}
-        </a>
-      </button>
-    </div>
+    <app-toolbar>
+      <ng-template #left>
+        <button nz-button nzType="primary" nz-tooltip (click)="syncIncidence()" [nzTooltipTitle]="'common.refresh' | i18n">
+          <i nz-icon nzType="sync" nzTheme="outline"></i>
+        </button>
+        <button nz-button nzType="primary" (click)="onNewStatusIncident()">
+          <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+          {{ 'status.incident.new' | i18n }}
+        </button>
+        <button *ngIf="statusOrg?.id != undefined && statusOrg?.name != undefined" nz-button nzType="primary">
+          <a routerLink="/status" target="_blank">
+            <i nz-icon nzType="link" nzTheme="outline"></i>
+            {{ statusOrg.name + ' ' + ('menu.advanced.status' | i18n) }}
+          </a>
+        </button>
+      </ng-template>
+    </app-toolbar>
     <nz-table
       #incidentTable
       [nzData]="statusIncidences"
@@ -320,7 +325,7 @@
   [nzOkLoading]="currentComponentLoading"
 >
   <div *nzModalContent class="-inner-content">
-    <form nz-form #tagForm="ngForm">
+    <form nz-form #componentForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="component-name" nzRequired="true">{{ 'status.component.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
@@ -364,7 +369,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="currentStatusComponent.method == 0">
-        <nz-form-label [nzSpan]="7" nzFor="tag" [nzTooltipTitle]="'status.component.tag.tip' | i18n">{{
+        <nz-form-label [nzSpan]="7" nzFor="tag" nzRequired="true" [nzTooltipTitle]="'status.component.tag.tip' | i18n">{{
           'status.component.tag' | i18n
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
