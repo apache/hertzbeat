@@ -320,7 +320,7 @@
   [nzOkLoading]="currentComponentLoading"
 >
   <div *nzModalContent class="-inner-content">
-    <form nz-form #tagForm="ngForm">
+    <form nz-form #componentForm="ngForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="component-name" nzRequired="true">{{ 'status.component.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
@@ -364,7 +364,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="currentStatusComponent.method == 0">
-        <nz-form-label [nzSpan]="7" nzFor="tag" [nzTooltipTitle]="'status.component.tag.tip' | i18n">{{
+        <nz-form-label [nzSpan]="7" nzFor="tag" nzRequired="true" [nzTooltipTitle]="'status.component.tag.tip' | i18n">{{
           'status.component.tag' | i18n
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">

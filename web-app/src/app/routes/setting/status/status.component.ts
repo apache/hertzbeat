@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { FormGroup, NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -48,6 +48,8 @@ export class StatusComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  @ViewChild('incidentForm') incidentForm!: NgForm;
+  @ViewChild('componentForm') componentForm!: NgForm;
   statusOrg: StatusPageOrg = new StatusPageOrg();
   statusComponents!: StatusPageComponent[];
   statusIncidences!: StatusPageIncident[];
@@ -310,6 +312,15 @@ export class StatusComponent implements OnInit {
   }
 
   onComponentModalOk() {
+    if (this.componentForm.invalid) {
+      Object.values(this.componentForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     if (this.matchTag != undefined && this.matchTag.trim() != '') {
       let tmp: string[] = this.matchTag.split(':');
       let tagItem = new TagItem();
@@ -362,6 +373,15 @@ export class StatusComponent implements OnInit {
   onIncidentModalOk() {
     if (this.statusOrg.id == undefined) {
       this.notifySvc.warning(this.i18nSvc.fanyi('status.component.notify.need-org'), '');
+      return;
+    }
+    if (this.incidentForm.invalid) {
+      Object.values(this.incidentForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
       return;
     }
     // incident message content
