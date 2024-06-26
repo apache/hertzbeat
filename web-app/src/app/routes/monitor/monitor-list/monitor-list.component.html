@@ -309,7 +309,7 @@
 >
   <div *nzModalContent class="-inner-content">
     <div style="text-align: center">
-      <nz-input-group nzSize="large" nzSearch="true" style="width: 97%" [nzPrefix]="suffixIconSearch">
+      <nz-input-group nzSize="large" nzSearch="true" style="width: 97%" nzPrefixIcon="search">
         <input
           nz-input
           type="text"
@@ -319,13 +319,10 @@
           [(ngModel)]="appSearchContent"
         />
       </nz-input-group>
-      <ng-template #suffixIconSearch>
-        <span nz-icon nzType="search"></span>
-      </ng-template>
     </div>
-    <div style="min-height: 100px; margin-top: 20px">
-      <nz-list nzSplit="false" style="max-height: 400px; overflow-y: scroll">
-        <nz-spin [nzSpinning]="appSearchLoading">
+    <div style="margin-top: 20px">
+      <nz-spin [nzSpinning]="appSearchLoading">
+        <nz-list nzSplit="false" style="min-height: 100px; max-height: 400px; overflow-y: auto">
           <nz-list-item
             *ngFor="let appItem of appSearchResult"
             nzNoFlex="true"
@@ -343,8 +340,8 @@
             </button>
             <span style="right: 10px; position: absolute"><i nz-icon nzType="arrow-right" nzTheme="outline"></i></span>
           </nz-list-item>
-        </nz-spin>
-      </nz-list>
+        </nz-list>
+      </nz-spin>
     </div>
   </div>
 </nz-modal>
