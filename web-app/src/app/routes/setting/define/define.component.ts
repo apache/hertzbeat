@@ -46,6 +46,7 @@ export class DefineComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  menuLoading: boolean = false;
   appMenusArr: any[][] = [];
   appLabel: Record<string, string> = {};
   loading = false;
@@ -69,11 +70,13 @@ export class DefineComponent implements OnInit {
   }
 
   loadMenus() {
+    this.menuLoading = true;
     const getHierarchy$ = this.appDefineSvc
       .getAppHierarchy(this.i18nSvc.defaultLang)
       .pipe(
         finalize(() => {
           getHierarchy$.unsubscribe();
+          this.menuLoading = false;
         })
       )
       .subscribe(
