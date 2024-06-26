@@ -17,14 +17,14 @@
  * under the License.
  */
 
-import {Component, ContentChild, TemplateRef, AfterContentInit, Input} from '@angular/core';
+import { Component, ContentChild, TemplateRef, AfterContentInit, Input } from '@angular/core';
 
 @Component({
   selector: 'app-toolbar',
   templateUrl: './toolbar.component.html',
   styleUrls: ['./toolbar.component.less']
 })
-export class ToolbarComponent implements AfterContentInit {
+export class ToolbarComponent {
   @ContentChild('left', { static: true }) leftTemplateRef: TemplateRef<any> | undefined;
   @ContentChild('right', { static: true }) rightTemplateRef: TemplateRef<any> | undefined;
   @ContentChild('center', { static: true }) centerTemplateRef: TemplateRef<any> | undefined;
@@ -38,7 +38,4 @@ export class ToolbarComponent implements AfterContentInit {
   @Input() rightStyle: string = '';
   @Input() centerClass: string = '';
   @Input() centerStyle: string = '';
-
-  ngAfterContentInit(): void {
-  }
 }
