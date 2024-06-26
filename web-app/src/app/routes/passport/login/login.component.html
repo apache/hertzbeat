@@ -17,7 +17,7 @@
   ~ under the License.
 -->
 
-<div style="background-color: snow; padding: 20px; border-radius: 8px; box-shadow: 7px 5px #b421cc">
+<div class="br-8" style="background-color: snow; padding: 20px; box-shadow: 7px 5px #b421cc">
   <form nz-form [formGroup]="form" (ngSubmit)="submit()" role="form">
     <nz-tabset [nzAnimated]="false" class="tabs" (nzSelectChange)="switch($event)">
       <nz-tab [nzTitle]="'app.login.tab-login-credentials' | i18n">
@@ -70,7 +70,7 @@
       <!--      <nz-tab [nzTitle]="'app.login.explore.cloud' | i18n">-->
       <!--        <div style="margin-top: 20%; margin-bottom: 20%; text-align: center">-->
       <!--          <a href="https://console.tancloud.cn/" target="_blank">-->
-      <!--            <div class="hoverClass" style="border-radius: 4px; background-color: #3f51b5; padding: 6px; color: white">-->
+      <!--            <div class="hoverClass br-4" style="background-color: #3f51b5; padding: 6px; color: white">-->
       <!--              {{ 'app.login.explore.cloud.detail' | i18n }}-->
       <!--              <span nz-icon nzType="global" nzTheme="outline"></span>-->
       <!--            </div>-->
