@@ -44,7 +44,7 @@
   </button>
   <input
     class="mobile-hide"
-    style="margin-right: 5px; float: right; width: 300px; border-radius: 9px; text-align: center"
+    style="margin-right: 5px; float: right; width: 300px; text-align: center"
     nz-input
     type="text"
     [placeholder]="'tag.search' | i18n"
@@ -85,7 +85,7 @@
       <td nzAlign="center" nzLeft [nzChecked]="checkedTagIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
       <td nzAlign="center">
         <a routerLink="/monitors" [queryParams]="{ tag: formatTagName(data) }">
-          <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger; border-radius: 3px" class="hoverClass">
+          <nz-tag [nzColor]="data.color" style="font-weight: bold; font-size: larger" class="hoverClass">
             {{ formatTagName(data) }}
           </nz-tag>
         </a>
@@ -141,7 +141,8 @@
             cpOutputFormat="hex"
             [style.background]="tag.color"
             required
-            style="border-radius: 5px; width: 100%"
+            style="width: 100%"
+            class="br-4"
             name="color"
             id="color"
           />

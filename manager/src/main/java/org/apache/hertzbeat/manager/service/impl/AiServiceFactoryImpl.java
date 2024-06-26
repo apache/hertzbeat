@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import org.apache.hertzbeat.common.constants.AiTypeEnum;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,7 +38,7 @@ public class AiServiceFactoryImpl {
     @Autowired
     private List<AiService> aiService;
 
-    private Map<String, AiService> aiServiceFactoryMap = new HashMap<>();
+    private Map<AiTypeEnum, AiService> aiServiceFactoryMap = new HashMap<>();
 
     @PostConstruct
     public void init() {
@@ -47,7 +48,9 @@ public class AiServiceFactoryImpl {
 
     public AiService getAiServiceImplBean(String type) {
         Assert.notNull(type, "type is null");
-        AiService aiServiceImpl = aiServiceFactoryMap.get(type);
+        AiTypeEnum typeByName = AiTypeEnum.getTypeByName(type);
+        Assert.notNull(typeByName, "The current type is not supported");
+        AiService aiServiceImpl = aiServiceFactoryMap.get(typeByName);
         Assert.notNull(aiServiceImpl, "No bean for current type found");
         return aiServiceImpl;
     }
