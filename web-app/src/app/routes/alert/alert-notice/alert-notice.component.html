@@ -23,20 +23,24 @@
   [icon_name]="'notification'"
   [module_name]="'menu.alert.dispatch'"
 ></app-help-massage-show>
+
 <nz-divider></nz-divider>
+
 <nz-tabset nzSize="large">
   <nz-tab [nzTitle]="'alert.notice.receiver' | i18n">
-    <div style="margin-bottom: 20px">
-      <button (click)="syncReceiver()" nz-button nzType="primary">
-        <i nz-icon nzTheme="outline" nzType="sync"></i>
-        {{ 'common.refresh' | i18n }}
-      </button>
+    <app-toolbar>
+      <ng-template #left>
+        <button (click)="syncReceiver()" nz-button nzType="primary">
+          <i nz-icon nzTheme="outline" nzType="sync"></i>
+          {{ 'common.refresh' | i18n }}
+        </button>
 
-      <button (click)="onNewNoticeReceiver()" nz-button nzType="primary">
-        <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
-        {{ 'alert.notice.receiver.new' | i18n }}
-      </button>
-    </div>
+        <button (click)="onNewNoticeReceiver()" nz-button nzType="primary">
+          <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
+          {{ 'alert.notice.receiver.new' | i18n }}
+        </button>
+      </ng-template>
+    </app-toolbar>
     <nz-table #fixedTable [nzData]="receivers" [nzLoading]="receiverTableLoading" [nzScroll]="{ x: '1240px' }" nzFrontPagination="false">
       <thead>
         <tr>
@@ -153,17 +157,19 @@
     </nz-table>
   </nz-tab>
   <nz-tab [nzTitle]="'alert.notice.rule' | i18n">
-    <div style="margin-bottom: 20px">
-      <button (click)="syncRule()" nz-button nzType="primary">
-        <i nz-icon nzTheme="outline" nzType="sync"></i>
-        {{ 'common.refresh' | i18n }}
-      </button>
+    <app-toolbar>
+      <ng-template #left>
+        <button (click)="syncRule()" nz-button nzType="primary">
+          <i nz-icon nzTheme="outline" nzType="sync"></i>
+          {{ 'common.refresh' | i18n }}
+        </button>
 
-      <button (click)="onNewNoticeRule()" nz-button nzType="primary">
-        <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
-        {{ 'alert.notice.rule.new' | i18n }}
-      </button>
-    </div>
+        <button (click)="onNewNoticeRule()" nz-button nzType="primary">
+          <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
+          {{ 'alert.notice.rule.new' | i18n }}
+        </button>
+      </ng-template>
+    </app-toolbar>
 
     <nz-table #ruleFixedTable [nzData]="rules" [nzLoading]="ruleTableLoading" [nzScroll]="{ x: '1240px' }" nzFrontPagination="false">
       <thead>
@@ -224,16 +230,18 @@
     </nz-table>
   </nz-tab>
   <nz-tab [nzTitle]="'alert.notice.template' | i18n">
-    <div style="margin-bottom: 20px">
-      <button (click)="syncTemplate()" nz-button nzType="primary">
-        <i nz-icon nzTheme="outline" nzType="sync"></i>
-        {{ 'common.refresh' | i18n }}
-      </button>
-      <button (click)="onNewNoticeTemplate()" nz-button nzType="primary">
-        <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
-        {{ 'alert.notice.template.new' | i18n }}
-      </button>
-    </div>
+    <app-toolbar>
+      <ng-template #left>
+        <button (click)="syncTemplate()" nz-button nzType="primary">
+          <i nz-icon nzTheme="outline" nzType="sync"></i>
+          {{ 'common.refresh' | i18n }}
+        </button>
+        <button (click)="onNewNoticeTemplate()" nz-button nzType="primary">
+          <i nz-icon nzTheme="outline" nzType="appstore-add"></i>
+          {{ 'alert.notice.template.new' | i18n }}
+        </button>
+      </ng-template>
+    </app-toolbar>
     <nz-table
       #templateFixedTable
       [nzData]="templates"
