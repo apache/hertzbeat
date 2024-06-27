@@ -100,17 +100,9 @@
           {{ 'app-' + currentApp + '.yml' }}
           <i nz-icon nzType="more" nzTheme="outline"></i>
         </button>
-        <button *ngIf="code != originalCode" nz-button nzType="primary" [nzLoading]="saveLoading" (click)="onSaveAndApply()">
+        <button *ngIf="!loading && code != originalCode" nz-button nzType="primary" [nzLoading]="saveLoading" (click)="onSaveAndApply()">
           <i nz-icon nzType="save" nzTheme="outline"></i>
           {{ 'define.save-apply' | i18n }}
-        </button>
-        <button *ngIf="false" nz-button nzType="primary" (click)="onDeleteDefineYml()">
-          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-          {{ 'define.enable' | i18n : { app: currentApp } }}
-        </button>
-        <button *ngIf="false" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-          {{ 'define.disable' | i18n : { app: currentApp } }}
         </button>
         <button *ngIf="currentApp != null" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
           <i nz-icon nzType="delete" nzTheme="outline"></i>
