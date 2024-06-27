@@ -73,6 +73,10 @@ public class AliAiResponse {
          */
         @JsonProperty("finish_reason")
         private String finishReason;
+
+        /**
+         * response message
+         */
         private AiMessage message;
     }
 
