@@ -115,11 +115,11 @@ export class DefineComponent implements OnInit {
   }
 
   filterMenus(value: string) {
-    if (!value)  return;
+    if (!value) return;
     const lowerCaseValue = value.toLowerCase();
-    this.appMenusArrByFilter = this.appMenusArr.filter(([_, children]) =>
-        children.some((child: any) => child.label.toLowerCase().includes(lowerCaseValue))
-      ).map(([key, children]) => [key, children.filter((child: any) => child.label.toLowerCase().includes(lowerCaseValue))]);
+    this.appMenusArrByFilter = this.appMenusArr
+      .filter(([_, children]) => children.some((child: any) => child.label.toLowerCase().includes(lowerCaseValue)))
+      .map(([key, children]) => [key, children.filter((child: any) => child.label.toLowerCase().includes(lowerCaseValue))]);
   }
 
   loadAppDefineContent(app: any) {
