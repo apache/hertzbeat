@@ -24,19 +24,24 @@ import java.time.ZoneOffset;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
 import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.apache.hertzbeat.common.entity.manager.StatusPageIncident;
 import org.apache.hertzbeat.common.entity.manager.StatusPageOrg;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.component.status.CalculateStatus;
 import org.apache.hertzbeat.manager.dao.StatusPageComponentDao;
 import org.apache.hertzbeat.manager.dao.StatusPageHistoryDao;
+import org.apache.hertzbeat.manager.dao.StatusPageIncidentComponentBindDao;
 import org.apache.hertzbeat.manager.dao.StatusPageIncidentDao;
 import org.apache.hertzbeat.manager.dao.StatusPageOrgDao;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -44,25 +49,30 @@ import org.springframework.stereotype.Service;
  * status page service implement.
  */
 @Service
+@RequiredArgsConstructor
 public class StatusPageServiceImpl implements StatusPageService {
-    
+
     private static final int HISTORY_SPAN_DAYS = 29;
-    
+
     @Autowired
     private StatusPageOrgDao statusPageOrgDao;
-    
+
     @Autowired
     private StatusPageComponentDao statusPageComponentDao;
 
     @Autowired
     private StatusPageHistoryDao statusPageHistoryDao;
-    
+
     @Autowired
     private StatusPageIncidentDao statusPageIncidentDao;
-    
+
     @Autowired
     private CalculateStatus calculateStatus;
-    
+
+    private final StatusPageIncidentComponentBindDao statusPageIncidentComponentBindDao;
+
+    private final MessageSource messageSource;
+
     @Override
     public StatusPageOrg queryStatusPageOrg() {
         return statusPageOrgDao.findAll().stream().findFirst().orElse(null);
@@ -96,6 +106,10 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     @Override
     public void deleteStatusPageComponent(long id) {
+        long count = statusPageIncidentComponentBindDao.countByComponentId(id);
+        if (count != 0) {
+            throw new CommonException(messageSource.getMessage("status.page.component.delete", null, LocaleContextHolder.getLocale()));
+        }
         statusPageComponentDao.deleteById(id);
     }
 
@@ -134,7 +148,7 @@ public class StatusPageServiceImpl implements StatusPageService {
             for (int index = 0; index < HISTORY_SPAN_DAYS; index++) {
                 long startTimestamp = startTime.toInstant(zoneOffset).toEpochMilli();
                 long endTimestamp = endTime.toInstant(zoneOffset).toEpochMilli();
-                List<StatusPageHistory> thisDayHistory = historyList.stream().filter(item -> 
+                List<StatusPageHistory> thisDayHistory = historyList.stream().filter(item ->
                                 item.getTimestamp() >= startTimestamp && item.getTimestamp() <= endTimestamp)
                         .collect(Collectors.toList());
                 if (thisDayHistory.isEmpty()) {
@@ -157,7 +171,7 @@ public class StatusPageServiceImpl implements StatusPageService {
         }
         return componentStatusList;
     }
-    
+
     private StatusPageHistory combineOneDayStatusPageHistory(List<StatusPageHistory> statusPageHistories, StatusPageComponent component, long nowTimestamp) {
         if (statusPageHistories.isEmpty()) {
             return StatusPageHistory.builder().timestamp(nowTimestamp)
