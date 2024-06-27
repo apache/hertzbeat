@@ -28,65 +28,41 @@
 
 <nz-layout style="height: 100vh; overflow: hidden">
   <nz-sider nzTheme="light" style="height: 100%; overflow: hidden" [nzTrigger]="null">
-    <nz-spin [nzSpinning]="menuLoading" style="height: 100%">
-      <div style="display: flex; flex-direction: column; gap: 8px; margin: 8px 8px -4px 8px">
-        <nz-input-group nzSearch="true" nzPrefixIcon="search">
-          <input
-            nz-input
-            type="text"
-            nzSize="default"
-            [placeholder]="'common.search' | i18n"
-            (ngModelChange)="filterMenus($event)"
-            [(ngModel)]="search"
-          />
-        </nz-input-group>
-      </div>
-      <nz-divider></nz-divider>
-      <ul style="flex: 1; overflow: hidden; overflow-y: auto" nz-menu nzMode="inline" nzInlineCollapsed="false">
-        <li *ngFor="let menuItem of !!search ? appMenusArrByFilter : appMenusArr" nz-submenu [nzTitle]="menuItem[1].label">
-          <ul>
-            <li nz-menu-item *ngFor="let app of menuItem[1].child" [nzSelected]="app.selected" style="padding-left: 24px">
-              <button
-                *ngIf="app.hide == true || app.hide == undefined"
-                nz-button
-                nzSize="small"
-                nz-tooltip
-                [nz-tooltip]="'define.hide-true.tip' | i18n"
-                nz-popconfirm
-                [nzPopconfirmTitle]="'define.hide-true.confirm' | i18n"
-                (nzOnConfirm)="updateAppTemplateConfig(app.value, !app.hide)"
-                nzPopconfirmPlacement="bottom"
-              >
-                <i nz-icon nzType="eye-invisible" nzTheme="outline"></i>
-              </button>
-              <button
-                *ngIf="app.hide == false"
-                nz-button
-                nzSize="small"
-                nz-tooltip
-                [nz-tooltip]="'define.hide-false.tip' | i18n"
-                nz-popconfirm
-                [nzPopconfirmTitle]="'define.hide-false.confirm' | i18n"
-                (nzOnConfirm)="updateAppTemplateConfig(app.value, !app.hide)"
-                nzPopconfirmPlacement="bottom"
-              >
-                <i nz-icon nzType="eye" nzTheme="outline"></i>
-              </button>
-              <button
-                nz-button
-                nzSize="small"
-                routerLink="/setting/define"
-                [queryParams]="{ app: app.value }"
-                class="label"
-                [title]="app.label"
-              >
-                {{ app.label }}
-              </button>
-            </li>
-          </ul>
-        </li>
-      </ul>
-    </nz-spin>
+    <app-monitor-select-menu
+      [loading]="menuLoading"
+      [data]="appMenusArr"
+      [selected]="currentApp"
+      (selectedChanged)="onMenuSelectedChanged($event)"
+    >
+      <ng-template let-app="item" #prefix>
+        <button
+          *ngIf="app.hide == true || app.hide == undefined"
+          nz-button
+          nzSize="small"
+          nz-tooltip
+          [nz-tooltip]="'define.hide-true.tip' | i18n"
+          nz-popconfirm
+          [nzPopconfirmTitle]="'define.hide-true.confirm' | i18n"
+          (nzOnConfirm)="updateAppTemplateConfig(app.value, !app.hide)"
+          nzPopconfirmPlacement="bottom"
+        >
+          <i nz-icon nzType="eye-invisible" nzTheme="outline"></i>
+        </button>
+        <button
+          *ngIf="app.hide == false"
+          nz-button
+          nzSize="small"
+          nz-tooltip
+          [nz-tooltip]="'define.hide-false.tip' | i18n"
+          nz-popconfirm
+          [nzPopconfirmTitle]="'define.hide-false.confirm' | i18n"
+          (nzOnConfirm)="updateAppTemplateConfig(app.value, !app.hide)"
+          nzPopconfirmPlacement="bottom"
+        >
+          <i nz-icon nzType="eye" nzTheme="outline"></i>
+        </button>
+      </ng-template>
+    </app-monitor-select-menu>
   </nz-sider>
   <nz-content style="display: flex; flex-direction: column">
     <app-toolbar wrapperStyle="margin: 8px 8px 4px 8px">

@@ -13,11 +13,13 @@ import { KeyValueInputComponent } from './components/key-value-input/key-value-i
 import { MetricsFieldInputComponent } from './components/metrics-field-input/metrics-field-input.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
+import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { ElapsedTimePipe } from './pipe/elapsed-time.pipe';
 import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
 import { SHARED_DELON_MODULES } from './shared-delon.module';
 import { SHARED_ZORRO_MODULES } from './shared-zorro.module';
+import {NzDividerComponent} from "ng-zorro-antd/divider";
 
 const ThirdModules: Array<Type<void>> = [];
 const COMPONENTS: Array<Type<void>> = [
@@ -25,7 +27,8 @@ const COMPONENTS: Array<Type<void>> = [
   MultiFuncInputComponent,
   HelpMassageShowComponent,
   MetricsFieldInputComponent,
-  ToolbarComponent
+  ToolbarComponent,
+  MonitorSelectMenuComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
@@ -42,7 +45,8 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     ...SHARED_ZORRO_MODULES,
     ...ThirdModules,
     NzBreadCrumbModule,
-    NzTagModule
+    NzTagModule,
+    NzDividerComponent
   ],
   declarations: [...COMPONENTS, ...DIRECTIVES, HelpMassageShowComponent],
   exports: [
