@@ -18,7 +18,7 @@
  */
 
 import { Component, Inject, OnInit } from '@angular/core';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap } from '@angular/router';
 import { I18NService, StartupService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzConfigService } from 'ng-zorro-antd/core/config';
@@ -48,11 +48,13 @@ export class DefineComponent implements OnInit {
 
   menuLoading: boolean = false;
   appMenusArr: any[][] = [];
+  appMenusArrByFilter: any[][] = [];
   appLabel: Record<string, string> = {};
   loading = false;
   code: string = '';
   originalCode: string = '';
   dark: boolean = true;
+  search!: string;
   currentApp: any = null;
   saveLoading = false;
   deleteLoading = false;
@@ -71,6 +73,7 @@ export class DefineComponent implements OnInit {
 
   loadMenus() {
     this.menuLoading = true;
+    this.appMenusArrByFilter = [];
     const getHierarchy$ = this.appDefineSvc
       .getAppHierarchy(this.i18nSvc.defaultLang)
       .pipe(
@@ -109,6 +112,14 @@ export class DefineComponent implements OnInit {
           console.warn(error.msg);
         }
       );
+  }
+
+  filterMenus(value: string) {
+    if (!value)  return;
+    const lowerCaseValue = value.toLowerCase();
+    this.appMenusArrByFilter = this.appMenusArr.filter(([_, children]) =>
+        children.some((child: any) => child.label.toLowerCase().includes(lowerCaseValue))
+      ).map(([key, children]) => [key, children.filter((child: any) => child.label.toLowerCase().includes(lowerCaseValue))]);
   }
 
   loadAppDefineContent(app: any) {
@@ -184,6 +195,7 @@ export class DefineComponent implements OnInit {
     this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;
     this.originalCode = this.i18nSvc.fanyi('define.new.code');
   }
+
   saveAndApply() {
     this.saveLoading = true;
     const saveDefine$ = this.appDefineSvc
