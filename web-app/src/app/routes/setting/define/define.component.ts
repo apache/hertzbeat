@@ -85,7 +85,7 @@ export class DefineComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            let appMenus: Record<string, any[]> = {};
+            let appMenus: Record<string, {label: string, child: any[]}> = {};
             message.data.forEach((app: any) => {
               if (app.value == 'prometheus') {
                 return;
@@ -94,9 +94,9 @@ export class DefineComponent implements OnInit {
               this.appLabel[app.value] = app.label;
               let menus = appMenus[app.category];
               if (menus == undefined) {
-                menus = [app];
+                menus = {label: this.renderCategoryName(app.category), child: [app]};
               } else {
-                menus.push(app);
+                menus.child.push(app);
               }
               appMenus[app.category] = menus;
             });

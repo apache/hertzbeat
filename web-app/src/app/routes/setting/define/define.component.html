@@ -40,16 +40,12 @@
             [(ngModel)]="search"
           />
         </nz-input-group>
-        <button *ngIf="currentApp != null" nzGhost nz-button nzType="primary" (click)="onNewMonitorDefine()">
-          <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-          {{ 'define.new' | i18n }}
-        </button>
       </div>
       <nz-divider></nz-divider>
       <ul style="flex: 1; overflow: hidden; overflow-y: auto" nz-menu nzMode="inline" nzInlineCollapsed="false">
-        <li *ngFor="let menuItem of !!search ? appMenusArrByFilter : appMenusArr" nz-submenu [nzTitle]="renderCategoryName(menuItem[0])">
+        <li *ngFor="let menuItem of !!search ? appMenusArrByFilter : appMenusArr" nz-submenu [nzTitle]="menuItem[1].label">
           <ul>
-            <li nz-menu-item *ngFor="let app of menuItem[1]" [nzSelected]="app.selected" style="padding-left: 24px">
+            <li nz-menu-item *ngFor="let app of menuItem[1].child" [nzSelected]="app.selected" style="padding-left: 24px">
               <button
                 *ngIf="app.hide == true || app.hide == undefined"
                 nz-button
@@ -95,6 +91,10 @@
   <nz-content style="display: flex; flex-direction: column">
     <app-toolbar wrapperStyle="margin: 8px 8px 4px 8px">
       <ng-template #left>
+        <button *ngIf="currentApp != null" nzGhost nz-button nzType="primary" (click)="onNewMonitorDefine()">
+          <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+          {{ 'define.new' | i18n }}
+        </button>
         <button nzGhost *ngIf="currentApp != null" nz-button nzType="primary" routerLink="/monitors" [queryParams]="{ app: currentApp }">
           <i nz-icon nzType="file-text" nzTheme="outline"></i>
           {{ 'app-' + currentApp + '.yml' }}
