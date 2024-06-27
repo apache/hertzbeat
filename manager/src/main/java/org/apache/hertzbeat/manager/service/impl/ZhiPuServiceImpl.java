@@ -31,7 +31,6 @@ import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -72,7 +71,7 @@ public class ZhiPuServiceImpl implements AiService {
     }
 
     @Override
-    public Flux<ServerSentEvent<String>> requestAi(String text) {
+    public Flux<String> requestAi(String text) {
         checkParam(text, model, apiKey);
         ZhiPuRequestParamDTO zhiPuRequestParamDTO = ZhiPuRequestParamDTO.builder()
                 .model(model)
@@ -88,25 +87,24 @@ public class ZhiPuServiceImpl implements AiService {
                 .retrieve()
                 .bodyToFlux(String.class)
                 .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                .map(this::convertToResponse);
+                .map(this::convertToResponse)
+                .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+
 
     }
 
-    private ServerSentEvent<String> convertToResponse(String aiRes) {
+    private String convertToResponse(String aiRes) {
         try {
             ZhiPuAiResponse zhiPuAiResponse = JSON.parseObject(aiRes, ZhiPuAiResponse.class);
             if (Objects.nonNull(zhiPuAiResponse)) {
                 ZhiPuAiResponse.Choice choice = zhiPuAiResponse.getChoices().get(0);
-                String content = choice.getDelta().getContent();
-                return ServerSentEvent.<String>builder()
-                        .data(content)
-                        .build();
+                return choice.getDelta().getContent();
             }
         } catch (Exception e) {
             log.info("convertToResponse Exception:{}", e.toString());
         }
 
-        return ServerSentEvent.<String>builder().build();
+        return "";
     }
 
 

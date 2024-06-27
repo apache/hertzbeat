@@ -51,6 +51,7 @@ public interface AiConstants {
         double TEMPERATURE = 0.95;
 
     }
+
     /**
      * alibaba Ai constants
      */
@@ -78,7 +79,6 @@ public interface AiConstants {
          * You are advised to adjust top_p or temperature parameters based on application scenarios, but do not adjust the two parameters at the same time
          */
         float TEMPERATURE = 0.9f;
-
 
 
     }

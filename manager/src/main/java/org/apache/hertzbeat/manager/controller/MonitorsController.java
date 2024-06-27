@@ -31,7 +31,6 @@ import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.manager.service.AiService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -49,8 +48,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Resource;
-
 /**
  * Monitor and manage batch API
  */
@@ -65,9 +62,6 @@ public class MonitorsController {
 
     @Autowired
     private MonitorService monitorService;
-
-    @Resource(name = "AlibabaAiServiceImpl")
-    private AiService aiService;
 
     @GetMapping
     @Operation(summary = "Obtain a list of monitoring information based on query filter items",
@@ -165,8 +159,11 @@ public class MonitorsController {
     public ResponseEntity<Message<Void>> deleteMonitors(
             @Parameter(description = "Monitoring ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
-        aiService.requestAi("你是谁啊");
-        return null;
+        if (ids != null && !ids.isEmpty()) {
+            monitorService.cancelManageMonitors(new HashSet<>(ids));
+        }
+        Message<Void> message = Message.success();
+        return ResponseEntity.ok(message);
     }
 
     @DeleteMapping("manage")
