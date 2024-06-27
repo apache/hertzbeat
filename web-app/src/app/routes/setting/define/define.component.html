@@ -29,7 +29,7 @@
 <nz-layout style="height: 100vh; overflow: hidden">
   <nz-sider nzTheme="light" style="height: 100%; overflow: hidden" [nzTrigger]="null">
     <nz-spin [nzSpinning]="menuLoading" style="height: 100%">
-      <div style="display: flex; flex-direction: column; gap: 8px; margin: 8px 8px 0px 8px">
+      <div style="display: flex; flex-direction: column; gap: 8px; margin: 8px 8px -4px 8px">
         <nz-input-group nzSearch="true" nzPrefixIcon="search">
           <input
             nz-input
@@ -93,43 +93,45 @@
     </nz-spin>
   </nz-sider>
   <nz-content style="display: flex; flex-direction: column">
-    <div style="margin: 8px 8px 4px 8px">
-      <button nzGhost *ngIf="currentApp != null" nz-button nzType="primary" routerLink="/monitors" [queryParams]="{ app: currentApp }">
-        <i nz-icon nzType="file-text" nzTheme="outline"></i>
-        {{ 'app-' + currentApp + '.yml' }}
-        <i nz-icon nzType="more" nzTheme="outline"></i>
-      </button>
-      <button *ngIf="code != originalCode" nz-button nzType="primary" [nzLoading]="saveLoading" (click)="onSaveAndApply()">
-        <i nz-icon nzType="save" nzTheme="outline"></i>
-        {{ 'define.save-apply' | i18n }}
-      </button>
-      <button *ngIf="false" nz-button nzType="primary" (click)="onDeleteDefineYml()">
-        <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-        {{ 'define.enable' | i18n : { app: currentApp } }}
-      </button>
-      <button *ngIf="false" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
-        <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        {{ 'define.disable' | i18n : { app: currentApp } }}
-      </button>
-      <button *ngIf="currentApp != null" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
-        <i nz-icon nzType="delete" nzTheme="outline"></i>
-        {{ 'define.delete' | i18n : { app: currentApp } }}
-      </button>
-
-      <nz-switch
-        style="margin-right: 25px; float: right"
-        [ngModel]="dark"
-        (ngModelChange)="onDarkModeChange($event)"
-        [nzUnCheckedChildren]="unchecked"
-        [nzCheckedChildren]="checked"
-      ></nz-switch>
-      <ng-template #unchecked>
-        <span nz-icon nzType="bulb"></span>
+    <app-toolbar wrapperStyle="margin: 8px 8px 4px 8px">
+      <ng-template #left>
+        <button nzGhost *ngIf="currentApp != null" nz-button nzType="primary" routerLink="/monitors" [queryParams]="{ app: currentApp }">
+          <i nz-icon nzType="file-text" nzTheme="outline"></i>
+          {{ 'app-' + currentApp + '.yml' }}
+          <i nz-icon nzType="more" nzTheme="outline"></i>
+        </button>
+        <button *ngIf="code != originalCode" nz-button nzType="primary" [nzLoading]="saveLoading" (click)="onSaveAndApply()">
+          <i nz-icon nzType="save" nzTheme="outline"></i>
+          {{ 'define.save-apply' | i18n }}
+        </button>
+        <button *ngIf="false" nz-button nzType="primary" (click)="onDeleteDefineYml()">
+          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+          {{ 'define.enable' | i18n : { app: currentApp } }}
+        </button>
+        <button *ngIf="false" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
+          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+          {{ 'define.disable' | i18n : { app: currentApp } }}
+        </button>
+        <button *ngIf="currentApp != null" nz-button nzDanger nzType="primary" (click)="onDeleteDefineYml()">
+          <i nz-icon nzType="delete" nzTheme="outline"></i>
+          {{ 'define.delete' | i18n : { app: currentApp } }}
+        </button>
       </ng-template>
-      <ng-template #checked>
-        <span nz-icon nzType="poweroff"></span>
+      <ng-template #right>
+        <nz-switch
+          [ngModel]="dark"
+          (ngModelChange)="onDarkModeChange($event)"
+          [nzUnCheckedChildren]="unchecked"
+          [nzCheckedChildren]="checked"
+        ></nz-switch>
+        <ng-template #unchecked>
+          <span nz-icon nzType="bulb"></span>
+        </ng-template>
+        <ng-template #checked>
+          <span nz-icon nzType="poweroff"></span>
+        </ng-template>
       </ng-template>
-    </div>
+    </app-toolbar>
     <div style="flex: 1; margin: 4px 8px 4px 4px">
       <nz-code-editor
         class="editor"
