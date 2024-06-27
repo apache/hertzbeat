@@ -24,7 +24,7 @@
         nz-input
         type="text"
         nzSize="default"
-        [placeholder]="'common.search' | i18n"
+        [placeholder]="searchPlaceholder || ('common.search' | i18n)"
         (ngModelChange)="filter($event)"
         [(ngModel)]="search"
       />

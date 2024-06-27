@@ -31,6 +31,7 @@ export class MonitorSelectMenuComponent {
   @Input() loading!: boolean;
   @Input() selected!: string;
   @Input() listStyle!: string;
+  @Input() searchPlaceholder!: string;
   @Output() readonly selectedChanged = new EventEmitter<string>();
 
   search: string = '';
@@ -41,7 +42,10 @@ export class MonitorSelectMenuComponent {
     const lowerCaseValue = value.toLowerCase();
     this.dataByFilter = this.data
       .filter(([_, item]) => item.child.some((child: any) => child.label.toLowerCase().includes(lowerCaseValue)))
-      .map(([key, item]) => [key, {...item, child: item.child.filter((child: any) => child.label.toLowerCase().includes(lowerCaseValue))}]);
+      .map(([key, item]) => [
+        key,
+        { ...item, child: item.child.filter((child: any) => child.label.toLowerCase().includes(lowerCaseValue)) }
+      ]);
   }
 
   onSelectedChanged(selected: string) {

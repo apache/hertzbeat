@@ -310,6 +310,7 @@
   <div *nzModalContent class="-inner-content">
     <app-monitor-select-menu
       listStyle="border-right: 0px; overflow-y: hidden"
+      [searchPlaceholder]="'monitors.center.search.placeholder' | i18n"
       [loading]="appSearchLoading"
       [data]="appSearchOrigin"
       (selectedChanged)="gotoMonitorAddDetail($event)"

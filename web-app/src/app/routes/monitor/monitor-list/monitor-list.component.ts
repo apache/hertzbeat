@@ -504,7 +504,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       .subscribe(
         message => {
           if (message.code === 0) {
-            let appMenus: Record<string, {label: string, child: any[]}> = {};
+            let appMenus: Record<string, any> = {};
             message.data.forEach((app: any) => {
               let menus = appMenus[app.category];
               app.categoryLabel = this.i18nSvc.fanyi(`monitor.category.${app.category}`);
@@ -512,7 +512,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
                 app.categoryLabel = this.i18nSvc.fanyi('monitor.category.custom');
               }
               if (menus == undefined) {
-                menus = {label: app.categoryLabel, child: [app]};
+                menus = { label: app.categoryLabel, child: [app] };
               } else {
                 menus.child.push(app);
               }

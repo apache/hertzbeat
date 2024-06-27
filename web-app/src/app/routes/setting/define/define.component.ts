@@ -18,7 +18,7 @@
  */
 
 import { Component, Inject, OnInit } from '@angular/core';
-import {ActivatedRoute, ParamMap, Router} from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService, StartupService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzConfigService } from 'ng-zorro-antd/core/config';
@@ -85,7 +85,7 @@ export class DefineComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            let appMenus: Record<string, {label: string, child: any[]}> = {};
+            let appMenus: Record<string, any> = {};
             message.data.forEach((app: any) => {
               if (app.value == 'prometheus') {
                 return;
@@ -93,7 +93,7 @@ export class DefineComponent implements OnInit {
               this.appLabel[app.value] = app.label;
               let menus = appMenus[app.category];
               if (menus == undefined) {
-                menus = {label: this.renderCategoryName(app.category), child: [app]};
+                menus = { label: this.renderCategoryName(app.category), child: [app] };
               } else {
                 menus.child.push(app);
               }
