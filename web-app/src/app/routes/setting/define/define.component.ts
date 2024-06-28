@@ -18,7 +18,7 @@
  */
 
 import { Component, Inject, OnInit } from '@angular/core';
-import { ActivatedRoute, ParamMap } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService, StartupService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzConfigService } from 'ng-zorro-antd/core/config';
@@ -43,6 +43,7 @@ export class DefineComponent implements OnInit {
     private modal: NzModalService,
     private startUpSvc: StartupService,
     private route: ActivatedRoute,
+    private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
@@ -54,7 +55,6 @@ export class DefineComponent implements OnInit {
   code: string = '';
   originalCode: string = '';
   dark: boolean = true;
-  search!: string;
   currentApp: any = null;
   saveLoading = false;
   deleteLoading = false;
@@ -85,18 +85,17 @@ export class DefineComponent implements OnInit {
       .subscribe(
         message => {
           if (message.code === 0) {
-            let appMenus: Record<string, any[]> = {};
+            let appMenus: Record<string, any> = {};
             message.data.forEach((app: any) => {
               if (app.value == 'prometheus') {
                 return;
               }
-              app.selected = this.currentApp != null && this.currentApp === app.value;
               this.appLabel[app.value] = app.label;
               let menus = appMenus[app.category];
               if (menus == undefined) {
-                menus = [app];
+                menus = { label: this.renderCategoryName(app.category), child: [app] };
               } else {
-                menus.push(app);
+                menus.child.push(app);
               }
               appMenus[app.category] = menus;
             });
@@ -114,12 +113,8 @@ export class DefineComponent implements OnInit {
       );
   }
 
-  filterMenus(value: string) {
-    if (!value) return;
-    const lowerCaseValue = value.toLowerCase();
-    this.appMenusArrByFilter = this.appMenusArr
-      .filter(([_, children]) => children.some((child: any) => child.label.toLowerCase().includes(lowerCaseValue)))
-      .map(([key, children]) => [key, children.filter((child: any) => child.label.toLowerCase().includes(lowerCaseValue))]);
+  onMenuSelectedChanged(selected: string) {
+    this.router.navigateByUrl(`/setting/define?app=${selected}`);
   }
 
   loadAppDefineContent(app: any) {
