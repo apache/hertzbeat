@@ -24,16 +24,23 @@
         <nz-alert *ngIf="error" [nzType]="'error'" [nzMessage]="error" [nzShowIcon]="true" class="mb-lg"></nz-alert>
         <nz-form-item>
           <nz-form-control [nzErrorTip]="'app.login.message-need-identifier' | i18n">
-            <nz-input-group nzSize="large" nzPrefixIcon="user">
-              <input nz-input formControlName="userName" [placeholder]="'app.login.message-need-identifier' | i18n" />
-            </nz-input-group>
+            <app-multi-func-input
+              size="large"
+              prefixIcon="user"
+              formControlName="userName"
+              [placeholder]="'app.login.message-need-identifier' | i18n"
+            />
           </nz-form-control>
         </nz-form-item>
         <nz-form-item>
           <nz-form-control [nzErrorTip]="'app.login.message-need-credential' | i18n">
-            <nz-input-group nzSize="large" nzPrefixIcon="lock">
-              <input nz-input type="password" formControlName="password" [placeholder]="'app.login.message-need-credential' | i18n" />
-            </nz-input-group>
+            <app-multi-func-input
+              size="large"
+              type="password"
+              prefixIcon="lock"
+              formControlName="password"
+              [placeholder]="'app.login.message-need-credential' | i18n"
+            />
           </nz-form-control>
         </nz-form-item>
         <nz-alert
