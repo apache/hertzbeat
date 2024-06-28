@@ -33,7 +33,7 @@ import { NzSizeLDSType } from 'ng-zorro-antd/core/types';
     }
   ]
 })
-export class MultiFuncInputComponent implements OnInit, ControlValueAccessor  {
+export class MultiFuncInputComponent implements OnInit, ControlValueAccessor {
   constructor() {}
 
   @ContentChild('prefix', { static: true }) prefix: TemplateRef<any> | undefined;

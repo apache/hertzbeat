@@ -52,11 +52,13 @@
     <ng-template [ngTemplateOutlet]="suffix"></ng-template>
   </ng-container>
   <ng-template #noSuffixContent>
-    @if (type === 'password') {
-      <i nz-icon [nzType]="passwordVisible ? 'eye-invisible' : 'eye'" (click)="passwordVisible = !passwordVisible"></i>
-    }
-    @if (allowClear && inputValue) {
-      <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="inputValue = null; onChange()"></i>
+    @if (type === 'password') {<i
+      nz-icon
+      [nzType]="passwordVisible ? 'eye-invisible' : 'eye'"
+      (click)="passwordVisible = !passwordVisible"
+    ></i>
+    } @if (allowClear && inputValue) {
+    <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="inputValue = null; onChange()"></i>
     }
   </ng-template>
 </ng-template>
