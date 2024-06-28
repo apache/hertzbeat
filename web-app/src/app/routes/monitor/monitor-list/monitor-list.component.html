@@ -32,93 +32,96 @@
 ></app-help-massage-show>
 <nz-divider></nz-divider>
 
-<div style="margin-bottom: 20px">
-  <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-    <i nz-icon nzType="sync" nzTheme="outline"></i>
-  </button>
-  <button *ngIf="app != undefined" nz-button nzType="primary">
-    <a routerLink="/monitors/new" [queryParams]="{ app: app }">
-      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'monitors.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
-    </a>
-  </button>
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
+    <button *ngIf="app != undefined" nz-button nzType="primary">
+      <a routerLink="/monitors/new" [queryParams]="{ app: app }">
+        <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+        {{ 'monitors.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
+      </a>
+    </button>
 
-  <button *ngIf="app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
-    <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-    {{ 'monitors.new-monitor' | i18n }}
-  </button>
-  <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
-    <span nz-icon nzType="ellipsis"></span>
-  </button>
-  <nz-dropdown-menu #more_menu="nzDropdownMenu">
-    <ul nz-menu>
-      <li nz-menu-item>
-        <button nz-button nzType="primary" (click)="onEnableManageMonitors()" class="mobile-hide">
-          <i nz-icon nzType="play-circle" nzTheme="outline"></i>
-          {{ 'monitors.enable' | i18n }}
-        </button>
-      </li>
-      <li nz-menu-item>
-        <button nz-button nzType="primary" nzDanger (click)="onCancelManageMonitors()" class="mobile-hide">
-          <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
-          {{ 'monitors.cancel' | i18n }}
-        </button>
-      </li>
-      <li nz-menu-item>
-        <button nz-button nzType="primary" nzDanger (click)="onDeleteMonitors()">
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-          {{ 'monitors.delete-monitor' | i18n }}
-        </button>
-      </li>
-      <li nz-menu-item>
-        <button nz-button nzType="primary" (click)="onExportMonitors()">
-          <i nz-icon nzType="export" nzTheme="outline"></i>
-          {{ 'monitors.export' | i18n }}
-        </button>
-      </li>
-      <li nz-menu-item>
-        <nz-upload nzAction="/monitors/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportMonitors($event)">
-          <button nz-button nzType="primary">
-            <i nz-icon nzType="import" nzTheme="outline"></i>
-            {{ 'monitors.import' | i18n }}
+    <button *ngIf="app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'monitors.new-monitor' | i18n }}
+    </button>
+    <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+      <span nz-icon nzType="ellipsis"></span>
+    </button>
+    <nz-dropdown-menu #more_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item>
+          <button nz-button nzType="primary" (click)="onEnableManageMonitors()" class="mobile-hide">
+            <i nz-icon nzType="play-circle" nzTheme="outline"></i>
+            {{ 'monitors.enable' | i18n }}
           </button>
-        </nz-upload>
-      </li>
-    </ul>
-  </nz-dropdown-menu>
-  <button style="margin-right: 25px; float: right" class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
-    {{ 'common.search' | i18n }}
-  </button>
-  <app-multi-func-input
-    groupStyle="margin-right: 5px; float: right; width: 180px; border-radius: 9px;"
-    inputStyle="text-align: center"
-    class="mobile-hide"
-    [placeholder]="'monitors.search.placeholder' | i18n"
-    [(value)]="filterContent"
-    (valueChange)="onFilterSearchMonitors()"
-  />
-  <app-multi-func-input
-    groupStyle="margin-right: 10px; float: right; width: 90px; border-radius: 9px;"
-    inputStyle="text-align: center"
-    class="mobile-hide"
-    [placeholder]="'monitors.search.tag' | i18n"
-    [(value)]="tag"
-    (valueChange)="onFilterSearchMonitors()"
-  />
-  <nz-select
-    style="margin-right: 10px; float: right"
-    class="mobile-hide"
-    nzAllowClear
-    [nzPlaceHolder]="'monitor.status' | i18n"
-    (ngModelChange)="onFilterSearchMonitors()"
-    [(ngModel)]="filterStatus"
-  >
-    <nz-option [nzLabel]="'monitor.status.all' | i18n" [nzValue]="9"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.up' | i18n" [nzValue]="1"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.down' | i18n" [nzValue]="2"></nz-option>
-    <nz-option [nzLabel]="'monitor.status.paused' | i18n" [nzValue]="0"></nz-option>
-  </nz-select>
-</div>
+        </li>
+        <li nz-menu-item>
+          <button nz-button nzType="primary" nzDanger (click)="onCancelManageMonitors()" class="mobile-hide">
+            <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
+            {{ 'monitors.cancel' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button nzType="primary" nzDanger (click)="onDeleteMonitors()">
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+            {{ 'monitors.delete-monitor' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <button nz-button nzType="primary" (click)="onExportMonitors()">
+            <i nz-icon nzType="export" nzTheme="outline"></i>
+            {{ 'monitors.export' | i18n }}
+          </button>
+        </li>
+        <li nz-menu-item>
+          <nz-upload nzAction="/monitors/import" [nzLimit]="1" [nzShowUploadList]="false" (nzChange)="onImportMonitors($event)">
+            <button nz-button nzType="primary">
+              <i nz-icon nzType="import" nzTheme="outline"></i>
+              {{ 'monitors.import' | i18n }}
+            </button>
+          </nz-upload>
+        </li>
+      </ul>
+    </nz-dropdown-menu>
+  </ng-template>
+  <ng-template #right>
+    <nz-select
+      class="mobile-hide"
+      nzAllowClear
+      [nzPlaceHolder]="'monitor.status' | i18n"
+      (ngModelChange)="onFilterSearchMonitors()"
+      [(ngModel)]="filterStatus"
+    >
+      <nz-option [nzLabel]="'monitor.status.all' | i18n" [nzValue]="9"></nz-option>
+      <nz-option [nzLabel]="'monitor.status.up' | i18n" [nzValue]="1"></nz-option>
+      <nz-option [nzLabel]="'monitor.status.down' | i18n" [nzValue]="2"></nz-option>
+      <nz-option [nzLabel]="'monitor.status.paused' | i18n" [nzValue]="0"></nz-option>
+    </nz-select>
+    <app-multi-func-input
+      groupStyle="width: 90px;"
+      inputStyle="text-align: center"
+      class="mobile-hide"
+      [placeholder]="'monitors.search.tag' | i18n"
+      [(value)]="tag"
+      (valueChange)="onFilterSearchMonitors()"
+    />
+    <app-multi-func-input
+      groupStyle="width: 180px;"
+      inputStyle="text-align: center"
+      class="mobile-hide"
+      [placeholder]="'monitors.search.placeholder' | i18n"
+      [(value)]="filterContent"
+      (valueChange)="onFilterSearchMonitors()"
+    />
+    <button class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
+      {{ 'common.search' | i18n }}
+    </button>
+  </ng-template>
+</app-toolbar>
 
 <nz-table
   #fixedTable
@@ -306,7 +309,7 @@
 >
   <div *nzModalContent class="-inner-content">
     <div style="text-align: center">
-      <nz-input-group nzSize="large" nzSearch="true" style="width: 97%; border-radius: 12px" [nzPrefix]="suffixIconSearch">
+      <nz-input-group nzSize="large" nzSearch="true" style="width: 97%" nzPrefixIcon="search">
         <input
           nz-input
           type="text"
@@ -316,13 +319,10 @@
           [(ngModel)]="appSearchContent"
         />
       </nz-input-group>
-      <ng-template #suffixIconSearch>
-        <span nz-icon nzType="search"></span>
-      </ng-template>
     </div>
-    <div style="min-height: 100px; margin-top: 20px">
-      <nz-list nzSplit="false" style="max-height: 400px; overflow-y: scroll">
-        <nz-spin [nzSpinning]="appSearchLoading">
+    <div style="margin-top: 20px">
+      <nz-spin [nzSpinning]="appSearchLoading">
+        <nz-list nzSplit="false" style="min-height: 100px; max-height: 400px; overflow-y: auto">
           <nz-list-item
             *ngFor="let appItem of appSearchResult"
             nzNoFlex="true"
@@ -340,8 +340,8 @@
             </button>
             <span style="right: 10px; position: absolute"><i nz-icon nzType="arrow-right" nzTheme="outline"></i></span>
           </nz-list-item>
-        </nz-spin>
-      </nz-list>
+        </nz-list>
+      </nz-spin>
     </div>
   </div>
 </nz-modal>
