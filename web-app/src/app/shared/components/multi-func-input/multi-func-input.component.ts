@@ -17,17 +17,29 @@
  * under the License.
  */
 
-import { Component, OnInit, EventEmitter, Input, Output } from '@angular/core';
+import { Component, OnInit, EventEmitter, Input, Output, ContentChild, TemplateRef, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { NzSizeLDSType } from 'ng-zorro-antd/core/types';
 
 @Component({
   selector: 'app-multi-func-input',
   templateUrl: './multi-func-input.component.html',
-  styleUrls: ['./multi-func-input.component.less']
+  styleUrls: ['./multi-func-input.component.less'],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => MultiFuncInputComponent),
+      multi: true
+    }
+  ]
 })
-export class MultiFuncInputComponent implements OnInit {
+export class MultiFuncInputComponent implements OnInit, ControlValueAccessor {
   constructor() {}
 
+  @ContentChild('prefix', { static: true }) prefix: TemplateRef<any> | undefined;
+  @ContentChild('suffix', { static: true }) suffix: TemplateRef<any> | undefined;
+  @Input() prefixIcon!: string;
+  @Input() suffixIcon!: string;
   @Input() id!: string;
   @Input() value!: any;
   @Input() name!: string;
@@ -40,8 +52,12 @@ export class MultiFuncInputComponent implements OnInit {
   @Input() size: NzSizeLDSType = 'default';
   @Output() readonly valueChange = new EventEmitter<string>();
 
+  disabled: boolean = false;
   inputValue: any | undefined;
   passwordVisible: boolean = false;
+
+  _onChange = (_: any) => {};
+  _onTouched = () => {};
 
   ngOnInit(): void {
     this.inputValue = this.value;
@@ -50,6 +66,25 @@ export class MultiFuncInputComponent implements OnInit {
   onChange() {
     if (this.inputValue !== this.value) {
       this.valueChange.emit(this.inputValue);
+      this._onChange(this.inputValue);
     }
+  }
+
+  writeValue(obj: any): void {
+    if (obj !== this.inputValue) {
+      this.inputValue = obj;
+    }
+  }
+
+  registerOnChange(fn: any): void {
+    this._onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this._onTouched = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
   }
 }
