@@ -141,7 +141,12 @@ warehouse:
       password: taosdata
     greptime:
       enabled: false
-      endpoint: localhost:4001
+      grpc-endpoints: localhost:4001
+      url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: greptime
+      password: greptime
+      expire-time: 30d
     iot-db:
       enabled: false
       host: 127.0.0.1
@@ -195,8 +200,11 @@ scheduler:
     enabled: true
     port: 1158
 
-grafana:
-  enabled: false
-  url: http://127.0.0.1:3000
-  username: admin
-  password: admin
+#AI config
+aiConfig:
+  #AI Type:zhiPu = 0
+  type: 0
+  #Model name：glm-4
+  model: glm-4
+  #api key
+  api-key:

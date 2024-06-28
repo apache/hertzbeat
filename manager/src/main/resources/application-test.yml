@@ -86,8 +86,11 @@ scheduler:
     enabled: true
     port: 1158
 
-grafana:
-  enabled: false
-  url: http://127.0.0.1:3000
-  username: admin
-  password: admin
+#AI config
+aiConfig:
+  #AI Type:zhiPu = 0
+  type: 0
+  #Model name：glm-4
+  model: glm-4
+  #api key
+  api-key:

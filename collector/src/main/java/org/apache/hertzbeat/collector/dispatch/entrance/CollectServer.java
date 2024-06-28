@@ -38,7 +38,6 @@ import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
-import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
@@ -63,11 +62,11 @@ public class CollectServer implements CommandLineRunner {
 
     private final TimerDispatch timerDispatch;
 
+    private final CollectorInfoProperties infoProperties;
+    
     private RemotingClient remotingClient;
 
     private ScheduledExecutorService scheduledExecutor;
-
-    private Info info;
 
     public CollectServer(final CollectJobService collectJobService,
                          final TimerDispatch timerDispatch,
@@ -85,15 +84,15 @@ public class CollectServer implements CommandLineRunner {
         this.collectJobService = collectJobService;
         this.timerDispatch = timerDispatch;
         this.collectJobService.setCollectServer(this);
-        this.init(properties, threadPool, infoProperties);
+        this.infoProperties = infoProperties;
+        this.init(properties, threadPool);
     }
 
-    private void init(final DispatchProperties properties, final CommonThreadPool threadPool, final CollectorInfoProperties infoProperties) {
+    private void init(final DispatchProperties properties, final CommonThreadPool threadPool) {
         NettyClientConfig nettyClientConfig = new NettyClientConfig();
         DispatchProperties.EntranceProperties.NettyProperties nettyProperties = properties.getEntrance().getNetty();
         nettyClientConfig.setServerHost(nettyProperties.getManagerHost());
         nettyClientConfig.setServerPort(nettyProperties.getManagerPort());
-        this.initInfo(infoProperties);
         this.remotingClient = new NettyRemotingClient(nettyClientConfig, new CollectNettyEventListener(), threadPool);
 
         this.remotingClient.registerProcessor(ClusterMsg.MessageType.HEARTBEAT, new HeartbeatProcessor());
@@ -135,9 +134,9 @@ public class CollectServer implements CommandLineRunner {
             String mode = CollectServer.this.collectJobService.getCollectorMode();
             CollectorInfo collectorInfo = CollectorInfo.builder()
                     .name(identity)
-                    .ip(info.ip)
+                    .ip(infoProperties.getIp())
                     .mode(mode)
-                    .version(info.version)
+                    .version(infoProperties.getVersion())
                     // todo more info
                     .build();
             timerDispatch.goOnline();
@@ -179,25 +178,6 @@ public class CollectServer implements CommandLineRunner {
         @Override
         public void onChannelIdle(Channel channel) {
             log.info("handle idle event triggered. collector is going offline.");
-        }
-    }
-
-    private void initInfo(final CollectorInfoProperties infoProperties) {
-        info = new Info();
-        info.setVersion(infoProperties.getVersion());
-        info.setIp(IpDomainUtil.getIpFromEnvOrDefault(infoProperties.getIp(), IpDomainUtil.getLocalhostIp()));
-    }
-
-    private static class Info {
-        private String version;
-        private String ip;
-
-        public void setVersion(String version) {
-            this.version = version;
-        }
-
-        public void setIp(String ip) {
-            this.ip = ip;
         }
     }
 }
