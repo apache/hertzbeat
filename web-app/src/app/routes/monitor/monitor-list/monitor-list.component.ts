@@ -70,9 +70,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   filterStatus: number = 9;
   // app type search filter
   appSwitchModalVisible = false;
-  appSearchContent = '';
   appSearchOrigin: any[] = [];
-  appSearchResult: any[] = [];
   appSearchLoading = false;
   intervalId: any;
 
@@ -141,10 +139,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   sync() {
     this.loadMonitorTable();
-  }
-
-  clearCurrentTag() {
-    this.router.navigateByUrl(`/monitors`);
   }
 
   getAppIconName(app: string | undefined): string {
@@ -510,17 +504,24 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.appSearchOrigin = [];
-            this.appSearchResult = [];
+            let appMenus: Record<string, any> = {};
             message.data.forEach((app: any) => {
+              let menus = appMenus[app.category];
               app.categoryLabel = this.i18nSvc.fanyi(`monitor.category.${app.category}`);
               if (app.categoryLabel == `monitor.category.${app.category}`) {
                 app.categoryLabel = this.i18nSvc.fanyi('monitor.category.custom');
               }
-              this.appSearchOrigin.push(app);
+              if (menus == undefined) {
+                menus = { label: app.categoryLabel, child: [app] };
+              } else {
+                menus.child.push(app);
+              }
+              appMenus[app.category] = menus;
             });
-            this.appSearchOrigin = this.appSearchOrigin.sort((a, b) => a.category?.localeCompare(b.category));
-            this.appSearchResult = this.appSearchOrigin;
+            this.appSearchOrigin = Object.entries(appMenus);
+            this.appSearchOrigin.sort((a, b) => {
+              return b[1].length - a[1].length;
+            });
           } else {
             console.warn(message.msg);
           }
@@ -537,20 +538,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   gotoMonitorAddDetail(app: string) {
     this.router.navigateByUrl(`/monitors/new?app=${app}`);
-  }
-
-  searchSwitchApp() {
-    if (this.appSearchContent === '' || this.appSearchContent == null) {
-      this.appSearchResult = this.appSearchOrigin;
-    } else {
-      this.appSearchResult = this.appSearchOrigin.filter(
-        app =>
-          app.label.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
-          app.categoryLabel.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
-          app.value.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
-          app.category.toLowerCase().includes(this.appSearchContent.toLowerCase())
-      );
-    }
   }
 
   // end: app type search filter
