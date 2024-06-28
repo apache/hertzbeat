@@ -17,7 +17,12 @@
   ~ under the License.
 -->
 
-<nz-input-group [nzSuffix]="inputClearTpl" [style]="groupStyle">
+<nz-input-group
+  [nzSearch]="type === 'search'"
+  [nzPrefixIcon]="type === 'search' ? 'search' : null"
+  [nzSuffix]="inputClearTpl"
+  [style]="groupStyle"
+>
   <input
     nz-input
     [id]="id"
