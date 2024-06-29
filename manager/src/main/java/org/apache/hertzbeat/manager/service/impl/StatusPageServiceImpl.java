@@ -108,7 +108,7 @@ public class StatusPageServiceImpl implements StatusPageService {
     public void deleteStatusPageComponent(long id) {
         long count = statusPageIncidentComponentBindDao.countByComponentId(id);
         if (count != 0) {
-            throw new CommonException(messageSource.getMessage("status.page.component.delete", null, LocaleContextHolder.getLocale()));
+            throw new CommonException("The component is associated with an event and cannot be deleted. Please delete the event and try again!");
         }
         statusPageComponentDao.deleteById(id);
     }
