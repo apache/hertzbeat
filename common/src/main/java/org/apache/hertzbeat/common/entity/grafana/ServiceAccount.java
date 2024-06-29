@@ -31,7 +31,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * Grafana service account entity
- * Grafana 服务账号实体
  */
 @Entity
 @Table(name = "grafana_service_account")
@@ -39,24 +38,24 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Grafana service account entity | Grafana 服务账号实体")
+@Schema(description = "Grafana service account entity")
 public class ServiceAccount {
     @Id
-    @Schema(description = "Service account id | 服务账号id")
+    @Schema(description = "Service account id")
     private Long id;
-    @Schema(description = "Service account name | 服务账号名称")
+    @Schema(description = "Service account name")
     private String name;
-    @Schema(description = "Service account role | 服务账号角色")
+    @Schema(description = "Service account role")
     private String role;
-    @Schema(description = "Service account is disabled | 服务账号是否禁用")
+    @Schema(description = "Service account is disabled")
     private Boolean isDisabled;
-    @Schema(description = "Service account tokens | 服务账号tokens")
+    @Schema(description = "Service account tokens")
     private Integer tokens;
-    @Schema(description = "Service account avatar url | 服务账号头像url")
+    @Schema(description = "Service account avatar url")
     private String avatarUrl;
-    @Schema(description = "Service account login | 服务账号登录名")
+    @Schema(description = "Service account login")
     private String login;
-    @Schema(description = "Service account orgId | 服务账号组织Id")
+    @Schema(description = "Service account orgId")
     private Integer orgId;
 
 }

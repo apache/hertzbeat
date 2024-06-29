@@ -214,6 +214,11 @@ export class MonitorService {
   public getWarehouseStorageServerStatus(): Observable<Message<any>> {
     return this.http.get<Message<any>>(warehouse_storage_status_uri);
   }
+
+  public getGrafana(monitorId: number): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${grafana_uri}?monitorId=${monitorId}`);
+  }
+
   public getGrafanaDashboardUrl(monitorId: number): Observable<Message<any>> {
     return this.http.get<Message<any>>(`${grafana_dashboard_uri}/url?monitorId=${monitorId}`);
   }

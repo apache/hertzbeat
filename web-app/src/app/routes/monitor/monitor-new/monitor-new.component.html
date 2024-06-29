@@ -421,7 +421,7 @@
         </nz-form-control>
       </nz-form-item>
       <nz-divider *ngIf="monitor.app === 'prometheus'"></nz-divider>
-      <!-- 是否启用grafana -->
+      <!-- grafana is enabled -->
       <nz-form-item *ngIf="monitor.app === 'prometheus'">
         <nz-form-label nzSpan="7" nzFor="grafana" [nzTooltipTitle]="'monitor.grafana.enabled.tip' | i18n">
           {{ 'monitor.grafana.enabled.label' | i18n }}
@@ -430,7 +430,7 @@
           <nz-switch [(ngModel)]="monitor.grafana.enabled" name="grafana" id="grafana"></nz-switch>
         </nz-form-control>
       </nz-form-item>
-      <!-- 上传grafana模板json文件 -->
+      <!-- upload grafana dashboard json -->
       <nz-form-item *ngIf="monitor.grafana.enabled && monitor.app === 'prometheus'">
         <nz-form-label nzSpan="7" nzFor="grafanaJson" [nzTooltipTitle]="'monitor.grafana.upload.tip' | i18n">
           {{ 'monitor.grafana.upload.label' | i18n }}

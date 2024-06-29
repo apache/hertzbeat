@@ -17,16 +17,23 @@
 
 package org.apache.hertzbeat.grafana.service;
 
+import static org.apache.hertzbeat.grafana.common.CommonConstants.AUTHORIZATION;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.BEARER;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DASHBOARD;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.OVERWRITE;
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;
 import com.dtflys.forest.http.ForestResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.grafana.Dashboard;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.grafana.dao.DashboardDao;
-import org.apache.hertzbeat.common.entity.grafana.Dashboard;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 
 /**
  * Dashboard Service
@@ -34,30 +41,31 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class DashboardService {
+
     @Autowired
     private ServiceAccountService serviceAccountService;
+
     @Autowired
     private DashboardDao dashboardDao;
+
     @Autowired
     private GrafanaConfiguration grafanaConfiguration;
 
-    private static final String CREATE_DASHBOARD_API = "/api/dashboards/db";
-
-    private static final String DELETE_DASHBOARD_API = "/api/dashboards/uid/%s";
 
     /**
      * create dashboard
      * @return dashboard info
      */
-    public ForestResponse<?> createDashboard(String dashboardJson, Long monitorId) {
+    public ForestResponse<?> createDashboard(String dashboardJson, Long monitorId){
         String token = serviceAccountService.getToken();
         String url = grafanaConfiguration.getUrl();
         ForestRequest<?> request = Forest.post(url + CREATE_DASHBOARD_API);
         ForestResponse<?> forestResponse = request
                 .contentTypeJson()
-                .addHeader("Authorization", "Bearer "+ token)
-                .addBody("dashboard", dashboardJson)
-                .addBody("overwrite", true).successWhen(((req, res) -> res.noException() && res.statusOk()))
+                .addHeader(AUTHORIZATION, BEARER + token)
+                .addBody(DASHBOARD,  JsonUtil.fromJson(dashboardJson, Object.class))
+                .addBody(OVERWRITE, true)
+                .successWhen(((req, res) -> res.noException() && res.statusOk()))
                 .onSuccess((ex, req, res) -> {
                     Dashboard dashboard = JsonUtil.fromJson(res.getContent(), Dashboard.class);
                     if (dashboard != null) {
@@ -68,6 +76,7 @@ public class DashboardService {
                 })
                 .onError((ex, req, res) -> {
                     log.error("create dashboard error", ex);
+                    throw new RuntimeException("create dashboard error");
                 }).executeAsResponse();
         return forestResponse;
     }
@@ -80,13 +89,14 @@ public class DashboardService {
         ForestRequest<?> request = Forest.delete(url + String.format(DELETE_DASHBOARD_API, dashboard.getUid()));
         ForestResponse<?> forestResponse = request
                 .contentTypeJson()
-                .addHeader("Authorization", "Bearer "+ token)
+                .addHeader(AUTHORIZATION, BEARER + token)
                 .successWhen(((req, res) -> res.noException() && res.statusOk()))
                 .onSuccess((ex, req, res) -> {
                     log.info("delete dashboard success");
                 })
                 .onError((ex, req, res) -> {
                     log.error("delete dashboard error", ex);
+                    throw new RuntimeException("delete dashboard error");
                 }).executeAsResponse();
         return forestResponse;
     }

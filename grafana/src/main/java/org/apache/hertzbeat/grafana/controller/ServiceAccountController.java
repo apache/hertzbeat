@@ -17,7 +17,8 @@
 
 package org.apache.hertzbeat.grafana.controller;
 
-
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import com.dtflys.forest.http.ForestResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,9 +32,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-
 /**
  * Service Account API
  */
@@ -41,6 +39,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RestController
 @RequestMapping(path = "/api/grafana/service-account", produces = {APPLICATION_JSON_VALUE})
 public class ServiceAccountController {
+
     @Autowired
     private ServiceAccountService serviceAccountService;
 
@@ -48,7 +47,7 @@ public class ServiceAccountController {
      * create service admin account
      */
     @PostMapping(path = "/account")
-    @Operation(summary = "Create service account | 创建服务账号", description = "Create service account | 创建服务账号")
+    @Operation(summary = "Create service account", description = "Create service account")
     public ResponseEntity<Message<?>> createServiceAccount() {
         ForestResponse<?> response = serviceAccountService.createServiceAccount();
         if (response.isError()) {
@@ -87,7 +86,7 @@ public class ServiceAccountController {
      * get service account tokens
      */
     @GetMapping(path = "/tokens")
-    @Operation(summary = "Get service account token | 获取服务账号token", description = "Get service account token | 获取服务账号token")
+    @Operation(summary = "Get service account token", description = "Get service account token")
     public ResponseEntity<Message<?>> getToken() {
         ForestResponse<?> response = serviceAccountService.getTokens();
         if (response.isError()) {

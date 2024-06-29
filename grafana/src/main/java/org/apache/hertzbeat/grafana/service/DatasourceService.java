@@ -17,18 +17,28 @@
 
 package org.apache.hertzbeat.grafana.service;
 
+import static org.apache.hertzbeat.grafana.common.CommonConstants.ACCESS;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.APPLICATION_JSON;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.BASIC_AUTH;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.CONTENT_TYPE;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DATASOURCE_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_ACCESS;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_NAME;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_TYPE;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DATASOURCE_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.NAME;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.TYPE;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.URL;
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;
 import com.dtflys.forest.http.ForestResponse;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
-import org.apache.hertzbeat.grafana.dao.ServiceAccountDao;
-import org.apache.hertzbeat.grafana.dao.ServiceTokenDao;
 import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.PostConstruct;
 
 /**
  * Datasource Service
@@ -36,26 +46,21 @@ import jakarta.annotation.PostConstruct;
 @Service
 @Slf4j
 public class DatasourceService {
-    private static final String DATASOURCE_NAME = "hertzbeat-victoria-metrics";
-    private static final String DATASOURCE_TYPE = "prometheus";
-    private static final String DATASOURCE_ACCESS = "proxy";
-    private static final String CREATE_DATASOURCE_API = "http://%s:%s@%s/api/datasources";
-    private static final String DELETE_DATASOURCE_API = "http://%s:%s@%s/api/datasources/name/%s";
     private String grafanaUrl;
+
     private String grafanaUsername;
+
     private String grafanaPassword;
+
     private String victoriaMetricsUrl;
 
-
-
     private final GrafanaConfiguration grafanaConfiguration;
+
     private final VictoriaMetricsProperties warehouseProperties;
 
     @Autowired
     public DatasourceService(
             GrafanaConfiguration grafanaConfiguration,
-            ServiceAccountDao serviceAccountDao,
-            ServiceTokenDao serviceTokenDao,
             VictoriaMetricsProperties warehouseProperties
 
     ) {
@@ -75,12 +80,12 @@ public class DatasourceService {
         String post = String.format(CREATE_DATASOURCE_API, grafanaUsername, grafanaPassword, grafanaUrl);
         ForestRequest<?> request = Forest.post(post);
         ForestResponse<?> forestResponse = request
-                .addHeader("Content-type", "application/json")
-                .addBody("name", DATASOURCE_NAME)
-                .addBody("type", DATASOURCE_TYPE)
-                .addBody("access", DATASOURCE_ACCESS)
-                .addBody("url", victoriaMetricsUrl)
-                .addBody("basicAuth", false)
+                .addHeader(CONTENT_TYPE, APPLICATION_JSON)
+                .addBody(NAME, DATASOURCE_NAME)
+                .addBody(TYPE, DATASOURCE_TYPE)
+                .addBody(ACCESS, DATASOURCE_ACCESS)
+                .addBody(URL, victoriaMetricsUrl)
+                .addBody(BASIC_AUTH, false)
                 .successWhen(((req, res) -> res.noException() && res.statusOk()))
                 .onSuccess((ex, req, res) -> {
                     log.info("create datasource success");
@@ -88,6 +93,7 @@ public class DatasourceService {
                 })
                 .onError((ex, req, res) -> {
                     log.error("create datasource error: {}", res.getContent());
+                    throw new RuntimeException("create datasource error");
                 }).executeAsResponse();
         return forestResponse;
     }
@@ -96,7 +102,7 @@ public class DatasourceService {
         String post = String.format(DELETE_DATASOURCE_API, grafanaUsername, grafanaPassword, grafanaUrl, DATASOURCE_NAME);
         ForestRequest<?> request = Forest.delete(post);
         ForestResponse<?> forestResponse = request
-                .addQuery("name", DATASOURCE_NAME)
+                .addQuery(NAME, DATASOURCE_NAME)
                 .successWhen(((req, res) -> res.noException() && res.statusOk()))
                 .onSuccess((ex, req, res) -> {
                     log.info("delete datasource success");
@@ -104,6 +110,7 @@ public class DatasourceService {
                 })
                 .onError((ex, req, res) -> {
                     log.error("delete datasource error: {}", res.getContent());
+                    throw new RuntimeException("delete datasource error");
                 }).executeAsResponse();
         return forestResponse;
     }

@@ -30,7 +30,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * Grafana service token entity
- * Grafana 服务token实体
  */
 @Entity
 @Table(name = "grafana_service_token")
@@ -38,14 +37,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Grafana service token entity | Grafana 服务token实体")
+@Schema(description = "Grafana service token entity")
 public class ServiceToken {
     @Id
-    @Schema(description = "Service token id | 服务token id")
+    @Schema(description = "Service token id")
     private Long id;
-    @Schema(description = "Service token name | 服务token 名称")
+    @Schema(description = "Service token name")
     private String name;
-    @Schema(description = "Service token key | 服务token key")
+    @Schema(description = "Service token key")
     @Column(name = "`key`")
     private String key;
 }

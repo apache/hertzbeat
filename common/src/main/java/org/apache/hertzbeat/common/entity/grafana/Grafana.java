@@ -18,20 +18,27 @@
 package org.apache.hertzbeat.common.entity.grafana;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.io.Serializable;
+import lombok.Data;
 
 /**
  * Grafana config
- * Grafana 配置
  */
 @Data
-@Schema(description = "Grafana config | Grafana 配置")
+@Schema(description = "Grafana config")
+@Entity
+@Table(name = "hzb_grafana")
 public class Grafana implements Serializable {
-    private static final long serialVersionUID = 1L;
-    @Schema(title = "is enabled | 是否启用")
+    @Id
+    @Schema(title = "monitorId")
+    private Long monitorId;
+    @Schema(title = "is enabled")
     private boolean enabled;
-    @Schema(title = "template | 模板")
+    @Schema(title = "template")
+    @Transient
     private String template;
 }

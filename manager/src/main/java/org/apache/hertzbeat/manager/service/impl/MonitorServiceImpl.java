@@ -51,6 +51,7 @@ import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.apache.hertzbeat.grafana.service.DashboardService;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
@@ -127,6 +128,9 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Autowired
     private WarehouseService warehouseService;
+
+    @Autowired
+    private DashboardService dashboardService;
 
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
 
@@ -562,6 +566,10 @@ public class MonitorServiceImpl implements MonitorService {
             }
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
+            // create grafana dashboard
+            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && monitor.getGrafana().isEnabled()) {
+                dashboardService.createDashboard(monitor.getGrafana().getTemplate(), monitorId);
+            }
             monitorDao.save(monitor);
             if (params != null) {
                 paramDao.saveAll(params);

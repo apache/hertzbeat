@@ -21,15 +21,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.io.Serializable;
+
+
+
 
 /**
  * Grafana dashboard entity
- * Grafana 仪表盘实体
  */
 @Entity
 @Table(name = "grafana_dashboard")
@@ -37,23 +39,21 @@ import java.io.Serializable;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Grafana dashboard entity | Grafana 仪表盘实体")
+@Schema(description = "Grafana dashboard entity")
 public class Dashboard implements Serializable {
-    @Id
-    @Schema(description = "Dashboard id | 仪表盘id")
-    private Long id;
-    @Schema(description = "Dashboard folderUid | 仪表盘文件夹id")
+    @Schema(description = "Dashboard folderUid")
     private String folderUid;
-    @Schema(description = "Dashboard slug | 仪表盘slug")
+    @Schema(description = "Dashboard slug")
     private String slug;
-    @Schema(description = "Dashboard status | 仪表盘状态")
+    @Schema(description = "Dashboard status")
     private String status;
-    @Schema(description = "Dashboard uid | 仪表盘uid")
+    @Schema(description = "Dashboard uid")
     private String uid;
-    @Schema(description = "Dashboard url | 仪表盘url")
+    @Schema(description = "Dashboard url")
     private String url;
-    @Schema(description = "Dashboard version | 仪表盘版本")
+    @Schema(description = "Dashboard version")
     private Long version;
-    @Schema(description = "Monitor id | 监控任务id")
+    @Id
+    @Schema(description = "Monitor id")
     private Long monitorId;
 }
