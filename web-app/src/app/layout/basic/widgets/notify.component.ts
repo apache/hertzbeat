@@ -16,40 +16,34 @@ import { AlertService } from '../../../service/alert.service';
         <i nz-icon nzType="bell" ngClass="alain-default__nav-item-icon"></i>
       </nz-badge>
     </ng-template>
-    @if (data!.length <= 0) {
+    @if (data!.length <= 0) {<ng-template [ngTemplateOutlet]="badgeTpl" />} @else {<div
+      nz-dropdown
+      (nzVisibleChange)="onPopoverVisibleChange($event)"
+      nzTrigger="click"
+      nzPlacement="bottomRight"
+      nzOverlayClassName="header-dropdown notice-icon"
+      [nzDropdownMenu]="noticeMenu"
+    >
       <ng-template [ngTemplateOutlet]="badgeTpl" />
-    } @else {
-      <div
-        nz-dropdown
-        (nzVisibleChange)="onPopoverVisibleChange($event)"
-        nzTrigger="click"
-        nzPlacement="bottomRight"
-        nzOverlayClassName="header-dropdown notice-icon"
-        [nzDropdownMenu]="noticeMenu"
-      >
-        <ng-template [ngTemplateOutlet]="badgeTpl" />
-      </div>
-      <nz-dropdown-menu #noticeMenu="nzDropdownMenu">
-        @if (data[0].title) {
-          <div class="ant-modal-title" style="line-height: 44px; text-align: center;">{{ data[0].title }}</div>
-        }
-        <nz-spin [nzSpinning]="loading" [nzDelay]="0">
-          @if (data[0].list && data[0].list.length > 0) {
-            <ng-template [ngTemplateOutlet]="listTpl" />
-          } @else {
-            <div class="notice-icon__notfound">
-              @if (data[0].emptyImage) {
-                <img class="notice-icon__notfound-img" [attr.src]="data[0].emptyImage" alt="not found" />
-              }
-              <p>
-                <ng-container *nzStringTemplateOutlet="data[0].emptyText">
-                  {{ data[0].emptyText }}
-                </ng-container>
-              </p>
-            </div>
+    </div>
+    <nz-dropdown-menu #noticeMenu="nzDropdownMenu">
+      @if (data[0].title) {<div class="ant-modal-title" style="line-height: 44px; text-align: center;">{{ data[0].title }}</div>
+      }
+      <nz-spin [nzSpinning]="loading" [nzDelay]="0">
+        @if (data[0].list && data[0].list.length > 0) {<ng-template [ngTemplateOutlet]="listTpl" />} @else {<div
+          class="notice-icon__notfound"
+        >
+          @if (data[0].emptyImage) {<img class="notice-icon__notfound-img" [attr.src]="data[0].emptyImage" alt="not found" />
           }
-        </nz-spin>
-      </nz-dropdown-menu>
+          <p>
+            <ng-container *nzStringTemplateOutlet="data[0].emptyText">
+              {{ data[0].emptyText }}
+            </ng-container>
+          </p>
+        </div>
+        }
+      </nz-spin>
+    </nz-dropdown-menu>
     }
     <ng-template #listTpl>
       <nz-list [nzDataSource]="data[0].list" [nzRenderItem]="item">
@@ -60,22 +54,18 @@ import { AlertService } from '../../../service/alert.service';
                 <ng-container *nzStringTemplateOutlet="item.title; context: { $implicit: item }">
                   {{ item.title }}
                 </ng-container>
-                @if (item.extra) {
-                  <div class="notice-icon__item-extra">
-                    <nz-tag [nzColor]="item.color">{{ item.extra }}</nz-tag>
-                  </div>
+                @if (item.extra) {<div class="notice-icon__item-extra">
+                  <nz-tag [nzColor]="item.color">{{ item.extra }}</nz-tag>
+                </div>
                 }
               </ng-template>
               <ng-template #nzDescription>
-                @if (item.description) {
-                  <div class="notice-icon__item-desc">
-                    <ng-container *nzStringTemplateOutlet="item.description; context: { $implicit: item }">
-                      {{ item.description }}
-                    </ng-container>
-                  </div>
-                }
-                @if (item.datetime) {
-                  <div class="notice-icon__item-time">{{ item.datetime }}</div>
+                @if (item.description) {<div class="notice-icon__item-desc">
+                  <ng-container *nzStringTemplateOutlet="item.description; context: { $implicit: item }">
+                    {{ item.description }}
+                  </ng-container>
+                </div>
+                } @if (item.datetime) {<div class="notice-icon__item-time">{{ item.datetime }}</div>
                 }
               </ng-template>
             </nz-list-item-meta>
