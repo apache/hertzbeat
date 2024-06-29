@@ -222,7 +222,7 @@ items:
       ]
 - name: listTags
   request:
-    api: /api/tag
+    api: /api/tag?pageIndex=0&pageSize=8&type=1
     header:
       Authorization: Bearer {{.login.data.token}}
 - name: updateTag
