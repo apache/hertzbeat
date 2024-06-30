@@ -25,7 +25,13 @@ public enum AiTypeEnum {
     /**
      * 智普
      */
-    zhiPu;
+    zhiPu,
+
+    /**
+     * sparkDesk
+     * 科大讯飞
+     */
+    sparkDesk;
 
 
     /**

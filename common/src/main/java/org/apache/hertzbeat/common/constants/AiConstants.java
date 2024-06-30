@@ -77,7 +77,7 @@ public interface AiConstants {
          * the more random and creative the output will be. The smaller the value, the more stable or certain the output will be
          * You are advised to adjust top_p or temperature parameters based on application scenarios, but do not adjust the two parameters at the same time
          */
-        float TEMPERATURE = 0.9f;
+        float TEMPERATURE = 0.95f;
 
     }
 
