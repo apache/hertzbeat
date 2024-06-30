@@ -206,6 +206,6 @@ aiConfig:
   # AI Type:zhiPu、alibabaAi
   type:
   # Model name：glm-4、qwen-turbo
-  model:
+  model: glm-4
   # api key
   api-key:
