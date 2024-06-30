@@ -40,8 +40,6 @@ import org.apache.hertzbeat.manager.dao.StatusPageOrgDao;
 import org.apache.hertzbeat.manager.pojo.dto.ComponentStatus;
 import org.apache.hertzbeat.manager.service.StatusPageService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -71,7 +69,6 @@ public class StatusPageServiceImpl implements StatusPageService {
 
     private final StatusPageIncidentComponentBindDao statusPageIncidentComponentBindDao;
 
-    private final MessageSource messageSource;
 
     @Override
     public StatusPageOrg queryStatusPageOrg() {
