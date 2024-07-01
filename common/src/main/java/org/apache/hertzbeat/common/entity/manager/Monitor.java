@@ -42,7 +42,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.grafana.Grafana;
+import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.support.valid.HostValid;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
@@ -174,5 +174,5 @@ public class Monitor {
      */
     @Schema(title = "grafana dashboard")
     @Transient
-    private Grafana grafana;
+    private GrafanaDashboard grafanaDashboard;
 }

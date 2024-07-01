@@ -27,7 +27,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
-import { Grafana } from '../../../pojo/Grafana';
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -50,7 +50,6 @@ export class MonitorNewComponent implements OnInit {
   advancedParamDefines!: ParamDefine[];
   advancedParams!: Param[];
   monitor!: Monitor;
-  grafana!: Grafana;
   collectors!: Collector[];
   collector: string = '';
   detected: boolean = false;
@@ -72,7 +71,7 @@ export class MonitorNewComponent implements OnInit {
   ) {
     this.monitor = new Monitor();
     this.monitor.tags = [];
-    this.monitor.grafana = new Grafana();
+    this.monitor.grafanaDashboard = new GrafanaDashboard();
   }
 
   ngOnInit(): void {
@@ -236,7 +235,6 @@ export class MonitorNewComponent implements OnInit {
       detected: this.detected,
       collector: this.collector,
       monitor: this.monitor,
-      grafana: this.monitor.grafana,
       params: this.params.concat(this.advancedParams)
     };
     if (this.detected) {
@@ -408,7 +406,7 @@ export class MonitorNewComponent implements OnInit {
       const fileReader = new FileReader();
       fileReader.readAsText(event.file.originFileObj, 'UTF-8');
       fileReader.onload = () => {
-        this.monitor.grafana.template = fileReader.result as string;
+        this.monitor.grafanaDashboard.template = fileReader.result as string;
       };
       fileReader.onerror = error => {
         console.log(error);

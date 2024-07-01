@@ -17,20 +17,20 @@
 
 package org.apache.hertzbeat.grafana.dao;
 
-import org.apache.hertzbeat.common.entity.grafana.Dashboard;
+import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * Dashboard Dao
  */
-public interface DashboardDao extends JpaRepository<Dashboard, Long>, JpaSpecificationExecutor<Dashboard> {
+public interface DashboardDao extends JpaRepository<GrafanaDashboard, Long>, JpaSpecificationExecutor<GrafanaDashboard> {
     /**
      * find by monitor id
      * @param monitorId monitor id
      * @return dashboard
      */
-    Dashboard findByMonitorId(Long monitorId);
+    GrafanaDashboard findByMonitorId(Long monitorId);
 
     /**
      * delete by monitor id

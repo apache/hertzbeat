@@ -222,6 +222,10 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
+            // create grafana dashboard
+            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && monitor.getGrafanaDashboard().isEnabled()) {
+                dashboardService.createDashboard(monitor.getGrafanaDashboard().getTemplate(), monitorId);
+            }
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -566,9 +570,17 @@ public class MonitorServiceImpl implements MonitorService {
             }
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
-            // create grafana dashboard
-            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && monitor.getGrafana().isEnabled()) {
-                dashboardService.createDashboard(monitor.getGrafana().getTemplate(), monitorId);
+            // create or open grafana dashboard
+            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && monitor.getGrafanaDashboard().isEnabled()) {
+                if (dashboardService.getDashboardByMonitorId(monitorId) == null) {
+                    dashboardService.createDashboard(monitor.getGrafanaDashboard().getTemplate(), monitorId);
+                } else {
+                    dashboardService.openGrafanaDashboard(monitorId);
+                }
+            }
+            // close grafana dashboard
+            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && !monitor.getGrafanaDashboard().isEnabled()) {
+                dashboardService.closeGrafanaDashboard(monitorId);
             }
             monitorDao.save(monitor);
             if (params != null) {
@@ -627,13 +639,13 @@ public class MonitorServiceImpl implements MonitorService {
         if (monitorOptional.isPresent()) {
             Monitor monitor = monitorOptional.get();
             MonitorDto monitorDto = new MonitorDto();
-            monitorDto.setMonitor(monitor);
             List<Param> params = paramDao.findParamsByMonitorId(id);
             monitorDto.setParams(params);
             if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())) {
                 List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
                 List<String> metrics = metricsDataList.stream().map(CollectRep.MetricsData::getMetrics).collect(Collectors.toList());
                 monitorDto.setMetrics(metrics);
+                monitor.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
             } else {
                 Job job = appService.getAppDefine(monitor.getApp());
                 List<String> metrics = job.getMetrics().stream()
@@ -641,6 +653,7 @@ public class MonitorServiceImpl implements MonitorService {
                         .map(Metrics::getName).collect(Collectors.toList());
                 monitorDto.setMetrics(metrics);   
             }
+            monitorDto.setMonitor(monitor);
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
             return monitorDto;

@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
  * Grafana service token entity
  */
 @Entity
-@Table(name = "grafana_service_token")
+@Table(name = "hzb_grafana_service_token")
 @Data
 @Builder
 @AllArgsConstructor

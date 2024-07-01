@@ -33,6 +33,6 @@ public interface ServiceAccountDao extends JpaRepository<ServiceAccount, Long>, 
 
     @Transactional
     @Modifying
-    @Query(value = "truncate table grafana_service_account", nativeQuery = true)
+    @Query(value = "truncate table hzb_grafana_service_account", nativeQuery = true)
     void truncate();
 }

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Grafana } from './Grafana';
+import { GrafanaDashboard } from './GrafanaDashboard';
 import { Tag } from './Tag';
 
 export class Monitor {
@@ -34,5 +34,5 @@ export class Monitor {
   gmtCreate!: number;
   gmtUpdate!: number;
   tags!: Tag[];
-  grafana!: Grafana;
+  grafanaDashboard!: GrafanaDashboard;
 }

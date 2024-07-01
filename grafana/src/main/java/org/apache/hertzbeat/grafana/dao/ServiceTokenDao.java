@@ -32,6 +32,6 @@ public interface ServiceTokenDao extends JpaRepository<ServiceToken, Long>, JpaS
 
     @Transactional
     @Modifying
-    @Query(value = "truncate table grafana_service_token", nativeQuery = true)
+    @Query(value = "truncate table hzb_grafana_service_token", nativeQuery = true)
     void truncate();
 }

@@ -28,7 +28,7 @@ import { throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
-import { Grafana } from '../../../pojo/Grafana';
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -64,6 +64,7 @@ export class MonitorEditComponent implements OnInit {
   advancedParams!: Param[];
   paramValueMap = new Map<String, Param>();
   monitor = new Monitor();
+  grafanaDashboard!: GrafanaDashboard;
   collectors!: Collector[];
   collector: string = '';
   profileForm: FormGroup = new FormGroup({});
@@ -86,9 +87,6 @@ export class MonitorEditComponent implements OnInit {
         switchMap((message: Message<any>) => {
           if (message.code === 0) {
             this.monitor = message.data.monitor;
-            if (this.monitor.grafana == undefined) {
-              this.monitor.grafana = new Grafana();
-            }
             this.collector = message.data.collector == null ? '' : message.data.collector;
             this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
             if (message.data.params != null) {
@@ -278,7 +276,6 @@ export class MonitorEditComponent implements OnInit {
       detected: this.detected,
       monitor: this.monitor,
       collector: this.collector,
-      grafana: this.monitor.grafana,
       params: this.params.concat(this.advancedParams)
     };
     if (this.detected) {
@@ -442,7 +439,7 @@ export class MonitorEditComponent implements OnInit {
       const fileReader = new FileReader();
       fileReader.readAsText(event.file.originFileObj, 'UTF-8');
       fileReader.onload = () => {
-        this.monitor.grafana.template = fileReader.result as string;
+        this.grafanaDashboard.template = fileReader.result as string;
       };
       fileReader.onerror = error => {
         console.log(error);

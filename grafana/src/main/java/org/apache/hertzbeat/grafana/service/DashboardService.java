@@ -22,17 +22,20 @@ import static org.apache.hertzbeat.grafana.common.CommonConstants.BEARER;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DASHBOARD_API;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.DASHBOARD;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.KIOSK;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.OVERWRITE;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.REFRESH;
 import com.dtflys.forest.Forest;
 import com.dtflys.forest.http.ForestRequest;
 import com.dtflys.forest.http.ForestResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.grafana.Dashboard;
+import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.grafana.dao.DashboardDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -56,6 +59,7 @@ public class DashboardService {
      * create dashboard
      * @return dashboard info
      */
+    @Transactional(rollbackFor = Exception.class)
     public ForestResponse<?> createDashboard(String dashboardJson, Long monitorId){
         String token = serviceAccountService.getToken();
         String url = grafanaConfiguration.getUrl();
@@ -67,10 +71,12 @@ public class DashboardService {
                 .addBody(OVERWRITE, true)
                 .successWhen(((req, res) -> res.noException() && res.statusOk()))
                 .onSuccess((ex, req, res) -> {
-                    Dashboard dashboard = JsonUtil.fromJson(res.getContent(), Dashboard.class);
-                    if (dashboard != null) {
-                        dashboard.setMonitorId(monitorId);
-                        dashboardDao.save(dashboard);
+                    GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(res.getContent(), GrafanaDashboard.class);
+                    if (grafanaDashboard != null) {
+                        grafanaDashboard.setEnabled(true);
+                        grafanaDashboard.setUrl(grafanaConfiguration.getUrl() + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH);
+                        grafanaDashboard.setMonitorId(monitorId);
+                        dashboardDao.save(grafanaDashboard);
                         log.info("create dashboard success, token: {}", res.getContent());
                     }
                 })
@@ -81,17 +87,18 @@ public class DashboardService {
         return forestResponse;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public ForestResponse<?> deleteDashboard(Long monitorId) {
-        Dashboard dashboard = dashboardDao.findByMonitorId(monitorId);
-        dashboardDao.deleteByMonitorId(monitorId);
+        GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
         String token = serviceAccountService.getToken();
         String url = grafanaConfiguration.getUrl();
-        ForestRequest<?> request = Forest.delete(url + String.format(DELETE_DASHBOARD_API, dashboard.getUid()));
+        ForestRequest<?> request = Forest.delete(url + String.format(DELETE_DASHBOARD_API, grafanaDashboard.getUid()));
         ForestResponse<?> forestResponse = request
                 .contentTypeJson()
                 .addHeader(AUTHORIZATION, BEARER + token)
                 .successWhen(((req, res) -> res.noException() && res.statusOk()))
                 .onSuccess((ex, req, res) -> {
+                    dashboardDao.deleteByMonitorId(monitorId);
                     log.info("delete dashboard success");
                 })
                 .onError((ex, req, res) -> {
@@ -101,8 +108,24 @@ public class DashboardService {
         return forestResponse;
     }
 
-    public Dashboard getDashboardByMonitorId(Long monitorId) {
+    public GrafanaDashboard getDashboardByMonitorId(Long monitorId) {
         return dashboardDao.findByMonitorId(monitorId);
+    }
+
+    public void closeGrafanaDashboard(Long monitorId) {
+        GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
+        if (grafanaDashboard != null) {
+            grafanaDashboard.setEnabled(false);
+            dashboardDao.save(grafanaDashboard);
+        }
+    }
+
+    public void openGrafanaDashboard(Long monitorId) {
+        GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
+        if (grafanaDashboard != null) {
+            grafanaDashboard.setEnabled(true);
+            dashboardDao.save(grafanaDashboard);
+        }
     }
 
 }

@@ -33,7 +33,7 @@ import lombok.NoArgsConstructor;
  * Grafana service account entity
  */
 @Entity
-@Table(name = "grafana_service_account")
+@Table(name = "hzb_grafana_service_account")
 @Data
 @Builder
 @AllArgsConstructor

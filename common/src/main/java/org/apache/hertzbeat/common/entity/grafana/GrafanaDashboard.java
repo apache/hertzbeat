@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -34,13 +35,13 @@ import lombok.NoArgsConstructor;
  * Grafana dashboard entity
  */
 @Entity
-@Table(name = "grafana_dashboard")
+@Table(name = "hzb_grafana_dashboard")
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "Grafana dashboard entity")
-public class Dashboard implements Serializable {
+public class GrafanaDashboard implements Serializable {
     @Schema(description = "Dashboard folderUid")
     private String folderUid;
     @Schema(description = "Dashboard slug")
@@ -56,4 +57,9 @@ public class Dashboard implements Serializable {
     @Id
     @Schema(description = "Monitor id")
     private Long monitorId;
+    @Schema(description = "is enabled")
+    private boolean enabled;
+    @Schema(description = "template")
+    @Transient
+    private String template;
 }

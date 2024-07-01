@@ -16,9 +16,11 @@
  */
 
 // Grafana pojo
-export class Grafana {
-  // 是否启用
+export class GrafanaDashboard {
+  // is enabled
   enabled: boolean = false;
-  // grafana 模板json
+  // grafana template json
   template!: string;
+  // dashboard url
+  url!: string;
 }

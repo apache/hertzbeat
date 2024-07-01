@@ -18,18 +18,18 @@
 package org.apache.hertzbeat.grafana.controller;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.KIOSK;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.REFRESH;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import com.dtflys.forest.http.ForestResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.grafana.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,12 +58,11 @@ public class DashboardController {
 
     @Operation(summary = "Create dashboard", description = "Create dashboard")
     @PostMapping
-    public ResponseEntity<Message<?>> createDashboardByFile(String dashboardJson, Long monitorId) {
+    public ResponseEntity<Message<?>> createDashboard(String dashboardJson, Long monitorId) {
         try {
             ForestResponse<?> response = dashboardService.createDashboard(dashboardJson, monitorId);
             if (!response.isError()) {
                 return ResponseEntity.ok(Message.success("create dashboard success"));
-
             }
         } catch (Exception e) {
             log.error("create dashboard error", e);
@@ -78,24 +77,27 @@ public class DashboardController {
     @Operation(summary = "Get dashboard by monitor id", description = "Get dashboard by monitor id")
     @GetMapping
     public ResponseEntity<Message<?>> getDashboardByMonitorId(@RequestParam Long monitorId) {
-        return ResponseEntity.ok(Message.success(dashboardService.getDashboardByMonitorId(monitorId)));
+        GrafanaDashboard grafanaDashboard;
+        try {
+            grafanaDashboard = dashboardService.getDashboardByMonitorId(monitorId);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "get dashboard fail"));
+        }
+        return ResponseEntity.ok(Message.success(grafanaDashboard));
     }
 
     /**
-     * get dashboard by monitor id
+     * delete dashboard by monitor id
      */
-    @Operation(summary = "Get dashboardUrl by monitor id", description = "Get dashboardUrl by monitor id")
-    @GetMapping("/url")
-    public ResponseEntity<Message<?>> getDashboardUrlByMonitorId(@RequestParam Long monitorId) {
-        String suffix;
+    @Operation(summary = "Delete dashboard by monitor id", description = "Delete dashboard by monitor id")
+    @DeleteMapping
+    public ResponseEntity<Message<?>> deleteDashboardByMonitorId(@RequestParam Long monitorId) {
         try {
-            suffix = dashboardService.getDashboardByMonitorId(monitorId).getUrl();
-        } catch (NullPointerException e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "dashboard not exist"));
+            dashboardService.deleteDashboard(monitorId);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "delete dashboard fail"));
         }
-        String url = grafanaConfiguration.getUrl() + suffix + KIOSK + REFRESH;
-        return ResponseEntity.ok(Message.success(url));
+        return ResponseEntity.ok(Message.success("delete dashboard success"));
     }
-
 
 }

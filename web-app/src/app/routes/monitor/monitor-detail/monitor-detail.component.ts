@@ -30,6 +30,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import {GrafanaDashboard} from "../../../pojo/GrafanaDashboard";
 
 @Component({
   selector: 'app-monitor-detail',
@@ -59,11 +60,10 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   interval$!: any;
   whichTabIndex = 0;
   showBasic = true;
-  grafanaUrl!: string;
-  isGrafanaUrlAvailable: boolean = false; // 默认为false，表示未获取到URL
 
   ngOnInit(): void {
     this.loadRealTimeMetric();
+    this.getGrafana();
     this.countDownTime = this.deadline;
     this.interval$ = setInterval(this.countDown.bind(this), 1000);
   }
@@ -152,7 +152,6 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
                 this.port = Number(param.paramValue);
               }
             });
-            this.getGrafanaUrl();
             this.metrics = [];
             this.cdr.detectChanges();
             this.metrics = message.data.metrics;
@@ -205,20 +204,17 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
   }
 
-  getGrafanaUrl() {
-    this.monitorSvc.getGrafanaDashboardUrl(this.monitor.id).subscribe(
+  getGrafana() {
+    this.monitorSvc.getGrafanaDashboard(this.monitorId).subscribe(
       message => {
         if (message.code === 0 && message.msg != null) {
-          this.grafanaUrl = message.msg;
-          this.isGrafanaUrlAvailable = true; // 成功获取到URL，设置为true
+          this.monitor.grafanaDashboard = message.data;
         } else {
           console.warn(message.msg);
-          this.isGrafanaUrlAvailable = false; // 获取失败，设置为false
         }
       },
       error => {
         console.error(error.msg);
-        this.isGrafanaUrlAvailable = false; // 出现错误，设置为false
       }
     );
   }
