@@ -51,4 +51,35 @@ public interface AiConstants {
         double TEMPERATURE = 0.95;
 
     }
+
+    /**
+     * alibaba Ai constants
+     */
+    interface AliAiConstants {
+
+        /**
+         * alibabaAi request url
+         */
+        String URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation";
+
+        /**
+         * request role param
+         */
+        String REQUEST_ROLE = "user";
+
+        /**
+         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 1024
+         */
+        Integer MAX_TOKENS = 1024;
+
+        /**
+         * The sampling temperature, which controls the randomness of the output, must be positive
+         * The value ranges from 0.0 to 1.0, and cannot be equal to 0. The default value is 0.95. The larger the value,
+         * the more random and creative the output will be. The smaller the value, the more stable or certain the output will be
+         * You are advised to adjust top_p or temperature parameters based on application scenarios, but do not adjust the two parameters at the same time
+         */
+        float TEMPERATURE = 0.9f;
+
+
+    }
 }

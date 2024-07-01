@@ -200,11 +200,12 @@ scheduler:
     enabled: true
     port: 1158
 
-#AI config
+# AI config
+# See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
 aiConfig:
-  #AI Type:zhiPu = 0
-  type: 0
-  #Model name：glm-4
-  model: glm-4
-  #api key
+  # AI Type:zhiPu、alibabaAi
+  type:
+  # Model name：glm-4、qwen-turbo
+  model:
+  # api key
   api-key:
