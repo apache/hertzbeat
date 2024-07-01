@@ -84,8 +84,16 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
+   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib`  : (可选,不需要可删除)根据自己下载的mysql/oracle等数据库连接驱动jar复制到宿主机相应目录并挂载到ext-lib目录 
+   mysql:https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
+   oracle:https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar
+   - `还有一种自定义数据源连接驱动不需要挂载的方式`(可选)这种方式是把自己需要的数据源驱动直接放到容器内部
+   -  `docker cp $(pwd)/mysql-connector-java-8.0.18.jar hertzbeat:/opt/hertzbeat/ext-lib` 使用docker cp 命令先把自己下载好的数据源驱动cp到容器内部
+   -  `docker restart hertzbeat` 重启成功后就要可以正常使用了
+   -  `docker commit  -a "operator" -m "在容器内部/ext-lib文件夹下新增了自定义的数据源驱动" hertzbeat hertzbeat:版本号自己定义`(可选) 如果想自己做一个自定义镜像可以使用此命令 ,-a 当前操作人 -m 对自己重做的容器进行描述
 
-   - 注意⚠️ 挂载文件时，前面参数为你自定义本地文件地址，后面参数为docker容器内文件地址(固定)  
+
+   - 注意⚠️ 挂载文件时，前面参数为你自定义本地文件地址，后面参数为docker容器内文件地址(固定)
 
    - `--name hertzbeat` : 命名容器名称 hertzbeat 
 

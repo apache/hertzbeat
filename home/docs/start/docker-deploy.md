@@ -66,6 +66,13 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (optional, if you don't have a need, just delete it) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional, if you don't have a need, just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file.    
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional, if you don't have a need, just delete it) Mount account configuration file modified in the previous step into the container. Delete this command parameters if no needs.  
+   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib`  : (optional, if you don't have a need, just delete it)Copy the driver jar to the corresponding directory of the host and mount it to the ext-lib directory according to the database connection such as mysql/oracle that you have downloaded
+     mysql:https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
+    oracle:https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar
+   - `There is also a way to customize the data source connection driver without mounting`(optional)This approach is to put the data source drivers you need directly inside the container
+   -  `docker cp $(pwd)/mysql-connector-java-8.0.18.jar hertzbeat:/opt/hertzbeat/ext-lib` Use the docker cp command to first download the data source driver cp into the container
+   -  `docker restart hertzbeat` After the restart is successful, it can be used normally
+   -  `docker commit  -a "operator" -m "New custom data source drivers in the /ext-lib folder inside the container" hertzbeat hertzbeat:version`(optional, if you don't have a need, just delete it) If you want to create a custom image by yourself, run this command. -a The current operator -m describes the container that you have recreated
    - `--name hertzbeat` : Naming container name hertzbeat 
    - `apache/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat` instead if you pull `quay.io` docker image.**     
 
