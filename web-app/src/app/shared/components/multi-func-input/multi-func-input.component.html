@@ -17,24 +17,48 @@
   ~ under the License.
 -->
 
-<nz-input-group [nzSuffix]="inputClearTpl" [style]="groupStyle">
+<nz-input-group
+  [nzSearch]="type === 'search'"
+  [nzPrefixIcon]="prefixIcon || (type === 'search' ? 'search' : undefined)"
+  [nzSuffixIcon]="suffixIcon"
+  [nzPrefix]="prefixTpl"
+  [nzSuffix]="suffixTpl"
+  [nzSize]="size"
+  [style]="groupStyle"
+>
   <input
     nz-input
-    [id]="id"
+    [id]="id || ''"
     [type]="passwordVisible ? 'text' : type"
-    [name]="name"
-    [style]="inputStyle"
-    [required]="required"
-    [placeholder]="placeholder"
-    [nzSize]="size"
+    [name]="name || ''"
+    [style]="inputStyle || ''"
+    [required]="required || false"
+    [disabled]="disabled || false"
+    [placeholder]="placeholder || ''"
     [(ngModel)]="inputValue"
     (ngModelChange)="onChange()"
   />
 </nz-input-group>
-<ng-template #inputClearTpl>
-  @if (allowClear && inputValue) {
-  <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="inputValue = null; onChange()"></i>
-  } @if (type === 'password') {
-  <i nz-icon [nzType]="passwordVisible ? 'eye-invisible' : 'eye'" (click)="passwordVisible = !passwordVisible"></i>
-  }
+
+<ng-template #prefixTpl>
+  <ng-container *ngIf="prefix; else noPrefixContent">
+    <ng-template [ngTemplateOutlet]="prefix"></ng-template>
+  </ng-container>
+  <ng-template #noPrefixContent></ng-template>
+</ng-template>
+
+<ng-template #suffixTpl>
+  <ng-container *ngIf="suffix; else noSuffixContent">
+    <ng-template [ngTemplateOutlet]="suffix"></ng-template>
+  </ng-container>
+  <ng-template #noSuffixContent>
+    @if (type === 'password') {<i
+      nz-icon
+      [nzType]="passwordVisible ? 'eye-invisible' : 'eye'"
+      (click)="passwordVisible = !passwordVisible"
+    ></i>
+    } @if (allowClear && inputValue) {
+    <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="inputValue = null; onChange()"></i>
+    }
+  </ng-template>
 </ng-template>

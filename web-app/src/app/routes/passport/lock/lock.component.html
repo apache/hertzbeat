@@ -25,9 +25,7 @@
     <form nz-form [formGroup]="f" (ngSubmit)="submit()" role="form" class="mt-md">
       <nz-form-item>
         <nz-form-control [nzErrorTip]="'validation.password.required' | i18n">
-          <nz-input-group nzSuffixIcon="lock">
-            <input type="text" nz-input formControlName="password" [placeholder]="'app.lock.placeholder' | i18n" />
-          </nz-input-group>
+          <app-multi-func-input prefixIcon="lock" formControlName="password" [placeholder]="'app.lock.placeholder' | i18n" />
         </nz-form-control>
       </nz-form-item>
       <nz-row nzAlign="middle">

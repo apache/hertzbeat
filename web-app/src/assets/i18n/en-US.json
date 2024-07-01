@@ -77,6 +77,7 @@
     "collector.status.offline": "Offline",
     "category": {
       "": "Category",
+      "server": "Server Monitor",
       "service": "Service",
       "db": "Database",
       "os": "OS",

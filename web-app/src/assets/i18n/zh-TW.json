@@ -77,6 +77,7 @@
     "collector.status.offline": "離線",
     "category": {
       "": "監控類別",
+      "server": "服務器監控",
       "service": "應用服務",
       "db": "數據庫",
       "os": "操作系統",

@@ -15,35 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.manager.dao;
+
+import org.apache.hertzbeat.common.entity.manager.StatusPageIncidentComponentBind;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * Ai type Enum
+ * StatusPageComponent DAO interface.
  */
-public enum AiTypeEnum {
+public interface StatusPageIncidentComponentBindDao extends JpaRepository<StatusPageIncidentComponentBind, Long>, JpaSpecificationExecutor<StatusPageIncidentComponentBind> {
 
     /**
-     * 智普
+     *  count by component id
+     * @param componentId component id
+     * @return count
      */
-    zhiPu,
-
-    /**
-     * alibabaAi
-     */
-    alibabaAi;
-
-
-    /**
-     * get type
-     */
-    public static AiTypeEnum getTypeByName(String type) {
-        for (AiTypeEnum aiTypeEnum : values()) {
-            if (aiTypeEnum.name().equals(type)) {
-                return aiTypeEnum;
-            }
-
-        }
-        return null;
-    }
-
+    long countByComponentId(long componentId);
 }
