@@ -141,7 +141,12 @@ warehouse:
       password: taosdata
     greptime:
       enabled: false
-      endpoint: localhost:4001
+      grpc-endpoints: localhost:4001
+      url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      username: greptime
+      password: greptime
+      expire-time: 30d
     iot-db:
       enabled: false
       host: 127.0.0.1
@@ -194,3 +199,13 @@ scheduler:
   server:
     enabled: true
     port: 1158
+
+# AI config
+# See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
+aiConfig:
+  # AI Type:zhiPu、alibabaAi
+  type:
+  # Model name：glm-4、qwen-turbo
+  model:
+  # api key
+  api-key:

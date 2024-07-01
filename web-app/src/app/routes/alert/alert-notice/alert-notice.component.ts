@@ -300,10 +300,10 @@ export class AlertNoticeComponent implements OnInit {
         }
         break;
       case 6:
-        if (this.receiver?.wechatId) {
-          index = this.receiver.wechatId.indexOf('hook');
+        if (this.receiver?.accessToken) {
+          index = this.receiver.accessToken.indexOf('hook');
           if (index > 0) {
-            this.receiver.wechatId = this.receiver.wechatId.substring(index + 5);
+            this.receiver.accessToken = this.receiver.accessToken.substring(index + 5);
           }
         }
         break;
@@ -354,13 +354,17 @@ export class AlertNoticeComponent implements OnInit {
 
   onManageReceiverModalOk() {
     if (this.receiverForm?.invalid) {
+      let isWaring = false;
       Object.values(this.receiverForm.controls).forEach(control => {
-        if (control.invalid) {
+        if (control.invalid && !(Object.keys(control?.errors || {}).length === 0)) {
+          isWaring = true;
           control.markAsDirty();
           control.updateValueAndValidity({ onlySelf: true });
         }
       });
-      return;
+      if (isWaring) {
+        return;
+      }
     }
     this.isManageReceiverModalOkLoading = true;
     if (this.isManageReceiverModalAdd) {

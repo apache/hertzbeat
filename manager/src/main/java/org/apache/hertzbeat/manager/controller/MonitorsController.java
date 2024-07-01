@@ -152,6 +152,7 @@ public class MonitorsController {
         return ResponseEntity.ok(message);
     }
 
+
     @DeleteMapping
     @Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",
             description = "Delete monitoring items in batches according to the monitoring ID list")
@@ -159,7 +160,7 @@ public class MonitorsController {
             @Parameter(description = "Monitoring ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
-            monitorService.deleteMonitors(new HashSet<>(ids));
+            monitorService.cancelManageMonitors(new HashSet<>(ids));
         }
         Message<Void> message = Message.success();
         return ResponseEntity.ok(message);
@@ -172,7 +173,7 @@ public class MonitorsController {
             @Parameter(description = "Monitoring ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
-            monitorService.cancelManageMonitors(new HashSet<>(ids));
+            monitorService.deleteMonitors(new HashSet<>(ids));
         }
         Message<Void> message = Message.success();
         return ResponseEntity.ok(message);

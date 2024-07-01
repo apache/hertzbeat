@@ -55,7 +55,7 @@ public final class CollectUtil {
     private static final String CRYING_PLACEHOLDER_REX = "\\^o\\^";
     private static final String CRYING_PLACEHOLDER_REGEX = "(\\^o\\^)(\\w|-|$|\\.)+(\\^o\\^)";
     private static final Pattern CRYING_PLACEHOLDER_REGEX_PATTERN = Pattern.compile(CRYING_PLACEHOLDER_REGEX);
-    private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b");
+    private static final List<String> UNIT_SYMBOLS = Arrays.asList("%", "G", "g", "M", "m", "K", "k", "B", "b", "Ki", "Mi", "Gi");
 
     /**
      * private constructor, not allow to create instance.
@@ -104,7 +104,7 @@ public final class CollectUtil {
             log.debug(e.getMessage());
         }
 
-        if (!str.matches(DOUBLE_AND_UNIT_CHECK_REGEX)){
+        if (!str.matches(DOUBLE_AND_UNIT_CHECK_REGEX)) {
             return doubleAndUnit;
         }
         // extract unit from str value, eg: 23.43GB, 33KB, 44.22G

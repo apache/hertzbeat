@@ -146,18 +146,15 @@ items:
       Authorization: Bearer {{.login.data.token}}
 - name: cancelHTTPMonitor
   request:
-    api: /api/monitors/manage
+    api: /api/monitors/manage?ids={{(index .listHTTPMonitor.data.content 0).id | int64}}
     query:
-      ids: "{{(index .listHTTPMonitor.data.content 0).id}}"
       type: JSON
     method: DELETE
     header:
       Authorization: Bearer {{.login.data.token}}
 - name: deleteHTTPMonitor
   request:
-    api: /api/monitors
-    query:
-      ids: "{{(index .listHTTPMonitor.data.content 0).id}}"
+    api: /api/monitors?ids={{(index .listHTTPMonitor.data.content 0).id | int64}}
     method: DELETE
     header:
       Authorization: Bearer {{.login.data.token}}
@@ -168,9 +165,7 @@ items:
       Authorization: Bearer {{.login.data.token}}
 - name: deleteAlertDefine
   request:
-    api: /api/alert/defines
-    query:
-      ids: "{{(index .listAlertDefine.data.content 0).id}}"
+    api: /api/alert/defines?ids={{(index .listAlertDefines.data.content 0).id | int64}}
     method: DELETE
     header:
       Authorization: Bearer {{.login.data.token}}
@@ -239,7 +234,7 @@ items:
       Content-type: application/json
     body: |
       {
-        "id": {{(index .listTags.data.content 0).id}},
+        "id": {{(index .listTags.data.content 0).id | int64}},
         "name": "{{randAlpha 3}}",
         "value": "{{randAlpha 3}}",
         "color": "#ff4081",
@@ -252,9 +247,7 @@ items:
       code: "0"
 - name: deleteTag
   request:
-    api: /api/tag
-    query:
-      ids: "{{(index .listTags.data.content 0).id}}"
+    api: /api/tag?ids={{(index .listTags.data.content 0).id | int64}}
     method: DELETE
     header:
       Authorization: Bearer {{.login.data.token}}
