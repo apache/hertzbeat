@@ -25,7 +25,12 @@ public enum AiTypeEnum {
     /**
      * 智普
      */
-    zhiPu;
+    zhiPu,
+
+    /**
+     * alibabaAi
+     */
+    alibabaAi;
 
 
     /**

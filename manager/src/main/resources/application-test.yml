@@ -88,9 +88,9 @@ scheduler:
 
 #AI config
 aiConfig:
-  #AI Type:zhiPu = 0
-  type: 0
+  #AI Type:zhiPu
+  type: zhiPu
   #Model name：glm-4
   model: glm-4
   #api key
-  api-key:
+  api-key: xxx
