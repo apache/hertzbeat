@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import java.util.HashSet;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.TagMonitorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,11 +33,19 @@ public interface TagMonitorBindDao extends JpaRepository<TagMonitorBind, Long>, 
      * @param monitorId monitorId
      */
     void deleteTagMonitorBindsByMonitorId(Long monitorId);
-    
+
     /**
      * delete tags bind by monitor id
      * @param monitorIds monitor list
      */
     void deleteTagMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
-    
+
+
+    /**
+     * count tags bind relation by tag id
+     * @param tagIds list of tagId
+     * @return count
+     */
+    long countByTagIdIn(HashSet<Long> tagIds);
+
 }
