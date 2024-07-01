@@ -32,6 +32,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzUploadModule } from 'ng-zorro-antd/upload';
 import { NgxEchartsModule } from 'ngx-echarts';
 
+import { SafePipe } from '../SafePipe';
 import { MonitorDataChartComponent } from './monitor-data-chart/monitor-data-chart.component';
 import { MonitorDataTableComponent } from './monitor-data-table/monitor-data-table.component';
 import { MonitorDetailComponent } from './monitor-detail/monitor-detail.component';
@@ -64,6 +65,7 @@ const COMPONENTS: Array<Type<void>> = [
     NzCollapseModule,
     ClipboardModule,
     NzUploadModule,
+    SafePipe,
     NzListModule
   ],
   declarations: COMPONENTS

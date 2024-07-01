@@ -110,6 +110,12 @@
       "down": "宕机",
       "unreachable": "不可达",
       "paused": "暂停"
+    },
+    "grafana": {
+      "enabled.tip": "是否启用Grafana",
+      "enabled.label": "启用Grafana",
+      "upload.tip": "上传Grafana的JSON文件",
+      "upload.label": "上传Grafana模板"
     }
   },
   "alert": {

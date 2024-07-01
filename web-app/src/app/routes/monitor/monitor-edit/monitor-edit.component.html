@@ -411,6 +411,39 @@
           </nz-textarea-count>
         </nz-form-control>
       </nz-form-item>
+      <nz-divider *ngIf="monitor.app === 'prometheus'"></nz-divider>
+      <!-- grafana is enabled -->
+      <nz-form-item *ngIf="monitor.app === 'prometheus'">
+        <nz-form-label nzSpan="7" nzFor="grafana" [nzTooltipTitle]="'monitor.grafana.enabled.tip' | i18n">
+          {{ 'monitor.grafana.enabled.label' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-switch [(ngModel)]="monitor.grafanaDashboard.enabled" name="grafana" id="grafana"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+
+      <!-- upload grafana dashboard json -->
+      <nz-form-item *ngIf="monitor.grafanaDashboard != undefined && monitor.grafanaDashboard.enabled && monitor.app === 'prometheus'">
+        <nz-form-label nzSpan="7" nzFor="grafanaJson" [nzTooltipTitle]="'monitor.grafana.upload.tip' | i18n">
+          {{ 'monitor.grafana.upload.label' | i18n }}
+        </nz-form-label>
+        <nz-form-control nzSpan="8">
+          <nz-upload
+            nzName="file"
+            nzListType="text"
+            [nzShowUploadList]="false"
+            [nzMultiple]="false"
+            [nzLimit]="1"
+            [nzCustomRequest]="handleTemplateInput"
+            (nzChange)="handleTemplateInput($event)"
+          >
+            <button nz-button>
+              <i nz-icon nzType="upload"></i>
+              {{ 'monitor.grafana.upload.label' | i18n }}
+            </button>
+          </nz-upload>
+        </nz-form-control>
+      </nz-form-item>
 
       <div nz-row>
         <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 7 }" style="text-align: center">

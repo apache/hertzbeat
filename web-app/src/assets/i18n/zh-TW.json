@@ -110,7 +110,13 @@
       "down": "宕機",
       "unreachable": "不可達",
       "paused": "暫停"
-    }
+    },
+    "grafana": {
+      "enabled.tip": "是否啓用Grafana監控",
+      "enabled.label": "啓用Grafana監控",
+      "upload.tip": "上傳Grafana模板文件",
+      "upload.label": "上傳Grafana模板",
+     }
   },
   "alert": {
     "": "告警",

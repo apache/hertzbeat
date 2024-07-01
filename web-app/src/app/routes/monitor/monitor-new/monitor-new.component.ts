@@ -27,6 +27,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -70,6 +71,7 @@ export class MonitorNewComponent implements OnInit {
   ) {
     this.monitor = new Monitor();
     this.monitor.tags = [];
+    this.monitor.grafanaDashboard = new GrafanaDashboard();
   }
 
   ngOnInit(): void {
@@ -397,4 +399,18 @@ export class MonitorNewComponent implements OnInit {
     return rangeArray[index];
   }
   // end tag model
+
+  //start grafana
+  handleTemplateInput(event: any): any {
+    if (event.file && event.file.originFileObj) {
+      const fileReader = new FileReader();
+      fileReader.readAsText(event.file.originFileObj, 'UTF-8');
+      fileReader.onload = () => {
+        this.monitor.grafanaDashboard.template = fileReader.result as string;
+      };
+      fileReader.onerror = error => {
+        console.log(error);
+      };
+    }
+  }
 }

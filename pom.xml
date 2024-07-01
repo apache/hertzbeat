@@ -87,6 +87,7 @@
         <module>remoting</module>
         <module>push</module>
         <module>plugin</module>
+        <module>grafana</module>
     </modules>
 
     <properties>
@@ -183,6 +184,12 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-plugin</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <!-- grafana -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-grafana</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <!-- spring -->

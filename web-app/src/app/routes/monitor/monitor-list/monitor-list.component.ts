@@ -291,6 +291,10 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
+    // delete grafana dashboard
+    for (let monitorId of monitors) {
+      this.deleteGrafanaDashboard(monitorId);
+    }
   }
 
   updatePageIndex(delSize: number) {
@@ -541,6 +545,21 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   // end: app type search filter
+
+  deleteGrafanaDashboard(monitorId: number) {
+    this.monitorSvc.deleteGrafanaDashboard(monitorId).subscribe(
+      message => {
+        if (message.code === 0) {
+          console.log('delete grafana dashboard success');
+        } else {
+          console.warn(message.msg);
+        }
+      },
+      error => {
+        console.error(error.msg);
+      }
+    );
+  }
 
   protected readonly sliceTagName = formatTagName;
 }

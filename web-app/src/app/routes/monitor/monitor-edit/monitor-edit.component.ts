@@ -23,10 +23,12 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzUploadFile } from 'ng-zorro-antd/upload';
 import { throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -62,6 +64,7 @@ export class MonitorEditComponent implements OnInit {
   advancedParams!: Param[];
   paramValueMap = new Map<String, Param>();
   monitor = new Monitor();
+  grafanaDashboard!: GrafanaDashboard;
   collectors!: Collector[];
   collector: string = '';
   profileForm: FormGroup = new FormGroup({});
@@ -429,4 +432,18 @@ export class MonitorEditComponent implements OnInit {
     }
   }
   // end tag model
+
+  //start grafana
+  handleTemplateInput(event: any): any {
+    if (event.file && event.file.originFileObj) {
+      const fileReader = new FileReader();
+      fileReader.readAsText(event.file.originFileObj, 'UTF-8');
+      fileReader.onload = () => {
+        this.grafanaDashboard.template = fileReader.result as string;
+      };
+      fileReader.onerror = error => {
+        console.log(error);
+      };
+    }
+  }
 }
