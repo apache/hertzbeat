@@ -558,7 +558,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       error => {
         console.error(error.msg);
       }
-    )
+    );
   }
 
   protected readonly sliceTagName = formatTagName;

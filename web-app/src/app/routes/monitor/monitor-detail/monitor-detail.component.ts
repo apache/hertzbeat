@@ -30,7 +30,6 @@ import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
-import {GrafanaDashboard} from "../../../pojo/GrafanaDashboard";
 
 @Component({
   selector: 'app-monitor-detail',
