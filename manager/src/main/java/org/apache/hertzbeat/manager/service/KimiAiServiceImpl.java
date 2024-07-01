@@ -57,7 +57,6 @@ public class KimiAiServiceImpl implements AiService {
         checkParam(text, apiKey);
         KimiAiRequestParamDTO zhiPuRequestParamDTO = KimiAiRequestParamDTO.builder()
                 .model(model)
-                //sse
                 .stream(Boolean.TRUE)
                 .maxTokens(AiConstants.KimiAiConstants.MAX_TOKENS)
                 .temperature(AiConstants.KimiAiConstants.TEMPERATURE)
