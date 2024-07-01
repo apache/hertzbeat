@@ -76,7 +76,7 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteTags(HashSet<Long> ids) {
         if (tagMonitorBindDao.countByTagIdIn(ids) != 0) {
-            throw  new CommonException("The tag is in use and cannot be deleted.");
+            throw new CommonException("The tag is in use and cannot be deleted.");
         }
         tagDao.deleteTagsByIdIn(ids);
     }
