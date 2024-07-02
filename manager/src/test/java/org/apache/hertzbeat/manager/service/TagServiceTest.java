@@ -26,11 +26,14 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.TagDao;
+import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.apache.hertzbeat.manager.service.impl.TagServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +55,9 @@ class TagServiceTest {
 
     @Mock
     private TagDao tagDao;
+
+    @Mock
+    private TagMonitorBindDao tagMonitorBindDao;
 
     @Test
     void addTags() {
@@ -80,6 +86,13 @@ class TagServiceTest {
     @Test
     void deleteTags() {
         doNothing().when(tagDao).deleteTagsByIdIn(anySet());
+        when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(0L);
         assertDoesNotThrow(() -> tagService.deleteTags(new HashSet<>(1)));
+    }
+
+    @Test
+    void deleteUsingTags() {
+        when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(1L);
+        assertThrows(CommonException.class,() -> tagService.deleteTags(new HashSet<>(1)));
     }
 }
