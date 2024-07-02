@@ -173,7 +173,7 @@ public class MonitorsController {
             @Parameter(description = "Monitoring ID List", example = "6565463543") @RequestParam(required = false) List<Long> ids
     ) {
         if (ids != null && !ids.isEmpty()) {
-            monitorService.cancelManageMonitors(new HashSet<>(ids));
+            monitorService.deleteMonitors(new HashSet<>(ids));
         }
         Message<Void> message = Message.success();
         return ResponseEntity.ok(message);

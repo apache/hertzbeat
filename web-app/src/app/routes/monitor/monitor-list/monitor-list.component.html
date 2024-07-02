@@ -17,19 +17,19 @@
   ~ under the License.
 -->
 
-<app-help-massage-show
+<app-help-message-show
   *ngIf="app != undefined"
-  [help_massage_content]="'monitor.app.' + app + '.help' | i18n"
+  [help_message_content]="'monitor.app.' + app + '.help' | i18n"
   [guild_link]="'monitor.app.' + app + '.helpLink' | i18n"
   [icon_name]="getAppIconName(app)"
-></app-help-massage-show>
-<app-help-massage-show
+></app-help-message-show>
+<app-help-message-show
   *ngIf="app == undefined"
-  [help_massage_content]="'monitors.center.help' | i18n"
+  [help_message_content]="'monitors.center.help' | i18n"
   [guild_link]="'monitors.center.help.link' | i18n"
   [module_name]="'menu.monitor.center'"
   [icon_name]="'laptop'"
-></app-help-massage-show>
+></app-help-message-show>
 <nz-divider></nz-divider>
 
 <app-toolbar>
@@ -308,40 +308,17 @@
   [nzOkLoading]="appSearchLoading"
 >
   <div *nzModalContent class="-inner-content">
-    <div style="text-align: center">
-      <nz-input-group nzSize="large" nzSearch="true" style="width: 97%" nzPrefixIcon="search">
-        <input
-          nz-input
-          type="text"
-          [placeholder]="'monitors.center.search.placeholder' | i18n"
-          nzSize="default"
-          (keyup.enter)="searchSwitchApp()"
-          [(ngModel)]="appSearchContent"
-        />
-      </nz-input-group>
-    </div>
-    <div style="margin-top: 20px">
-      <nz-spin [nzSpinning]="appSearchLoading">
-        <nz-list nzSplit="false" style="min-height: 100px; max-height: 400px; overflow-y: auto">
-          <nz-list-item
-            *ngFor="let appItem of appSearchResult"
-            nzNoFlex="true"
-            class="switch-app"
-            routerLink="/monitors/new"
-            (keyup.enter)="gotoMonitorAddDetail(appItem.value)"
-            [queryParams]="{ app: appItem.value }"
-          >
-            <button nz-button nzType="default" style="margin-left: 24px">
-              <i nz-icon [nzType]="getAppIconName(appItem.value)" nzTheme="outline"></i>
-              {{ appItem.categoryLabel }}
-            </button>
-            <button nz-button nzType="default" style="left: 40%; position: absolute">
-              {{ appItem.label }}
-            </button>
-            <span style="right: 10px; position: absolute"><i nz-icon nzType="arrow-right" nzTheme="outline"></i></span>
-          </nz-list-item>
-        </nz-list>
-      </nz-spin>
-    </div>
+    <app-monitor-select-menu
+      listStyle="border-right: 0px; overflow-y: hidden"
+      [searchPlaceholder]="'monitors.center.search.placeholder' | i18n"
+      [loading]="appSearchLoading"
+      [data]="appSearchOrigin"
+      (selectedChanged)="gotoMonitorAddDetail($event)"
+    >
+      <ng-template let-app="item" #prefix>
+        <i nz-icon [nzType]="getAppIconName(app.value)" nzTheme="outline"></i>
+      </ng-template>
+      <ng-template #suffix><i nz-icon nzType="right"></i></ng-template>
+    </app-monitor-select-menu>
   </div>
 </nz-modal>

@@ -1,0 +1,47 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<nz-spin [nzSpinning]="loading" style="height: 100%">
+  <div style="margin: 8px 8px -4px 8px">
+    <app-multi-func-input
+      type="search"
+      [placeholder]="searchPlaceholder || ('common.search' | i18n)"
+      [(value)]="search"
+      (valueChange)="filter($event)"
+    />
+  </div>
+  <nz-divider></nz-divider>
+  <ul [style]="'flex: 1; overflow: hidden; overflow-y: auto;' + listStyle" nz-menu nzMode="inline" nzInlineCollapsed="false">
+    <li *ngFor="let menuItem of !!search ? dataByFilter : data" nz-submenu [nzTitle]="menuItem[1].label" [nzOpen]="!!search">
+      <ul>
+        <li class="item" nz-menu-item *ngFor="let app of menuItem[1].child" [nzSelected]="app.value === selected">
+          <ng-container *ngIf="prefixTemplateRef; else noPrefixContent">
+            <ng-template [ngTemplateOutlet]="prefixTemplateRef" [ngTemplateOutletContext]="{ item: app }"></ng-template>
+          </ng-container>
+          <ng-template #noPrefixContent></ng-template>
+          <span class="label" [title]="app.label" (click)="onSelectedChanged(app.value)">{{ app.label }}</span>
+          <ng-container *ngIf="suffixTemplateRef; else noSuffixContent">
+            <ng-template [ngTemplateOutlet]="suffixTemplateRef" [ngTemplateOutletContext]="{ item: app }"></ng-template>
+          </ng-container>
+          <ng-template #noSuffixContent></ng-template>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nz-spin>
