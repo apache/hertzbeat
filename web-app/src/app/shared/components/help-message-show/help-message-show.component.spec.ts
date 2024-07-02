@@ -19,18 +19,18 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { HelpMassageShowComponent } from './help-massage-show.component';
+import { HelpMessageShowComponent } from './help-message-show.component';
 
-describe('HelpMassageShowComponent', () => {
-  let component: HelpMassageShowComponent;
-  let fixture: ComponentFixture<HelpMassageShowComponent>;
+describe('HelpMessageShowComponent', () => {
+  let component: HelpMessageShowComponent;
+  let fixture: ComponentFixture<HelpMessageShowComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [HelpMassageShowComponent]
+      declarations: [HelpMessageShowComponent]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(HelpMassageShowComponent);
+    fixture = TestBed.createComponent(HelpMessageShowComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
