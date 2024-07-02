@@ -29,13 +29,13 @@ import { Monitor } from '../../../pojo/Monitor';
 import { MonitorService } from '../../../service/monitor.service';
 
 @Component({
-  selector: 'app-help-massage-show',
-  templateUrl: './help-massage-show.component.html',
-  styleUrls: ['./help-massage-show.component.less']
+  selector: 'app-help-message-show',
+  templateUrl: './help-message-show.component.html',
+  styleUrls: ['./help-message-show.component.less']
 })
-export class HelpMassageShowComponent implements OnInit {
+export class HelpMessageShowComponent implements OnInit {
   @Input()
-  help_massage_content: string = 'content';
+  help_message_content: string = 'content';
   @Input()
   guild_link: string = 'content';
   @Input()
@@ -52,7 +52,7 @@ export class HelpMassageShowComponent implements OnInit {
     localStorage.setItem('collapse_status', JSON.stringify(this.isCollapsed));
     this.targetHeight = localStorage.getItem('collapse_status') === 'true' ? 28.8 : 140;
     localStorage.setItem('collapse_height', JSON.stringify(this.targetHeight));
-    this.rd2.setStyle(this.collapsed_content.nativeElement, 'height', `${this.targetHeight}px`);
+    this.rd2.setStyle(this.collapsed_content.nativeElement, 'max-height', `${this.targetHeight}px`);
     this.collapse_expand = this.isCollapsed ? 'expand' : 'collapse';
     localStorage.setItem('collapse_button', JSON.stringify(this.collapse_expand));
   }
@@ -68,7 +68,7 @@ export class HelpMassageShowComponent implements OnInit {
 
   ngOnInit(): void {
     this.isCollapsed = localStorage.getItem('collapse_status') === 'true';
-    this.el.nativeElement.querySelector('.help_massage_div').style.height = `${localStorage.getItem('collapse_height')}px`;
+    this.el.nativeElement.querySelector('.help_message_div').style['max-height'] = `${localStorage.getItem('collapse_height')}px`;
     this.collapse_expand = this.isCollapsed ? 'expand' : 'collapse';
     this.route.queryParamMap.subscribe(paramMap => {
       let appStr = paramMap.get('app');
