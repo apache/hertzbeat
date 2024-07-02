@@ -46,7 +46,7 @@ public class SparkDeskAiServiceImpl implements AiService {
         StringBuilder sb = new StringBuilder();
         String bearer = sb.append("Bearer ").append(apiKey).append(":").append(apiSecret).toString();
         this.webClient = WebClient.builder()
-                .baseUrl(AiConstants.SparkDeskConstants.URL)
+                .baseUrl(AiConstants.SparkDeskConstants.SPARK_ULTRA_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, bearer)
                 .exchangeStrategies(ExchangeStrategies.builder()
@@ -72,16 +72,19 @@ public class SparkDeskAiServiceImpl implements AiService {
                     .messages(List.of(new AiMessage(AiConstants.SparkDeskConstants.REQUEST_ROLE, text)))
                     .build();
 
-            return webClient.post()
+             webClient.post()
                     .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
                     .retrieve()
                     .bodyToFlux(String.class)
                     .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                    .map(this::convertToResponse);
+                    .map(this::convertToResponse)
+                    .doOnNext(System.out::println)
+                    .subscribe();
         } catch (Exception e) {
            log.info("SparkDeskAiServiceImpl.requestAi exception:{}",e.toString());
            throw e;
         }
+        return null;
 
     }
 
