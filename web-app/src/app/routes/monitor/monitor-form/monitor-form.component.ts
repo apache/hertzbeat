@@ -53,9 +53,9 @@ export class MonitorFormComponent implements OnInit {
   @Input() paramDefines!: ParamDefine[];
   @Input() advancedParamDefines!: ParamDefine[];
 
-  @Output() readonly submit = new EventEmitter<any>();
-  @Output() readonly cancel = new EventEmitter<any>();
-  @Output() readonly detect = new EventEmitter<any>();
+  @Output() readonly formSubmit = new EventEmitter<any>();
+  @Output() readonly formCancel = new EventEmitter<any>();
+  @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
 
   constructor() {
@@ -65,15 +65,65 @@ export class MonitorFormComponent implements OnInit {
   }
 
   onDetect(formGroup: FormGroup) {
-    this.detect.emit(formGroup);
+    if (formGroup.invalid) {
+      Object.values(formGroup.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
+    this.monitor.host = this.monitor.host.trim();
+    this.monitor.name = this.monitor.name.trim();
+    // todo 暂时单独设置host属性值
+    this.params.forEach(param => {
+      if (param.field === 'host') {
+        param.paramValue = this.monitor.host;
+      }
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
+      }
+    });
+    this.advancedParams.forEach(param => {
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
+      }
+    });
+    this.formDetect.emit({monitor: this.monitor, params: this.params, advancedParams: this.advancedParams});
   }
 
   onSubmit(formGroup: FormGroup) {
-    this.submit.emit(formGroup);
+    if (formGroup.invalid) {
+      Object.values(formGroup.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
+    this.monitor.host = this.monitor.host.trim();
+    this.monitor.name = this.monitor.name.trim();
+    // todo 暂时单独设置host属性值
+    this.params.forEach(param => {
+      if (param.field === 'host') {
+        param.paramValue = this.monitor.host;
+      }
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
+      }
+    });
+    this.advancedParams.forEach(param => {
+      if (param.paramValue != null && typeof param.paramValue == 'string') {
+        param.paramValue = (param.paramValue as string).trim();
+      }
+    });
+    this.formSubmit.emit({monitor: this.monitor, params: this.params, advancedParams: this.advancedParams});
   }
 
   onCancel() {
-    this.cancel.emit();
+    this.formCancel.emit();
   }
 
   onHostChange(host: string) {

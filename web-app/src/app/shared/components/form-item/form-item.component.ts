@@ -17,10 +17,11 @@
  * under the License.
  */
 
-import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {TagItem} from "../../../pojo/NoticeRule";
-import {TagService} from "../../../service/tag.service";
-import {Tag} from "../../../pojo/Tag";
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+import { TagItem } from '../../../pojo/NoticeRule';
+import { Tag } from '../../../pojo/Tag';
+import { TagService } from '../../../service/tag.service';
 
 @Component({
   selector: 'app-form-item',
@@ -28,9 +29,7 @@ import {Tag} from "../../../pojo/Tag";
   styleUrls: ['./form-item.component.less']
 })
 export class FormItemComponent {
-  constructor(
-    private tagSvc: TagService,) {
-  }
+  constructor(private tagSvc: TagService,) {}
   @Input() item!: any;
   @Input() value!: any;
   @Input() extra: any = {};
@@ -66,12 +65,12 @@ export class FormItemComponent {
     );
   }
 
-  onChange(value:any) {
+  onChange(value: any) {
     this.valueChange.emit(value);
   }
 
   onRemoveTag(tag: TagItem) {
-    if (this.value != undefined ) {
+    if (this.value != undefined) {
       this.onChange(this.value.filter((item: TagItem) => item !== tag));
     }
   }
@@ -97,7 +96,7 @@ export class FormItemComponent {
     this.isManageModalOkLoading = true;
     let value = this.value == undefined ? [] : this.value;
     this.checkedTags.forEach(item => {
-      if (this.value.find((tag: { id: number; }) => tag.id == item.id) == undefined) {
+      if (this.value.find((tag: { id: number }) => tag.id == item.id) == undefined) {
         value.push(item);
       }
     });

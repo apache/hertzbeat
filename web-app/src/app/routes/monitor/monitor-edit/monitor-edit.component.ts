@@ -199,21 +199,6 @@ export class MonitorEditComponent implements OnInit {
     });
   }
 
-  onParamBooleanChanged(booleanValue: boolean, field: string) {
-    // 对SSL的端口联动处理, 不开启SSL默认80端口，开启SSL默认443
-    if (field === 'ssl') {
-      this.params.forEach(param => {
-        if (param.field === 'port') {
-          if (booleanValue) {
-            param.paramValue = '443';
-          } else {
-            param.paramValue = '80';
-          }
-        }
-      });
-    }
-  }
-
   onDependChanged(dependValue: string, dependField: string) {
     this.paramDefines.forEach((paramDefine, index) => {
       if (paramDefine.depend) {
@@ -239,37 +224,12 @@ export class MonitorEditComponent implements OnInit {
     });
   }
 
-  onSubmit(formGroup: FormGroup) {
-    if (formGroup.invalid) {
-      Object.values(formGroup.controls).forEach(control => {
-        if (control.invalid) {
-          control.markAsDirty();
-          control.updateValueAndValidity({ onlySelf: true });
-        }
-      });
-      return;
-    }
-    this.monitor.host = this.monitor.host.trim();
-    this.monitor.name = this.monitor.name.trim();
-    // todo 暂时单独设置host属性值
-    this.params.forEach(param => {
-      if (param.field === 'host') {
-        param.paramValue = this.monitor.host;
-      }
-      if (param.paramValue != null && typeof param.paramValue == 'string') {
-        param.paramValue = (param.paramValue as string).trim();
-      }
-    });
-    this.advancedParams.forEach(param => {
-      if (param.paramValue != null && typeof param.paramValue == 'string') {
-        param.paramValue = (param.paramValue as string).trim();
-      }
-    });
+  onSubmit(info: any) {
     let addMonitor = {
       detected: this.detected,
-      monitor: this.monitor,
+      monitor: info.monitor,
       collector: this.collector,
-      params: this.params.concat(this.advancedParams)
+      params: info.params.concat(info.advancedParams)
     };
     if (this.detected) {
       this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
@@ -282,7 +242,7 @@ export class MonitorEditComponent implements OnInit {
         this.isSpinning = false;
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('monitors.edit.success'), '');
-          this.router.navigateByUrl(`/monitors?app=${this.monitor.app}`);
+          this.router.navigateByUrl(`/monitors?app=${info.monitor.app}`);
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('monitors.edit.failed'), message.msg);
         }
@@ -294,37 +254,12 @@ export class MonitorEditComponent implements OnInit {
     );
   }
 
-  onDetect(formGroup: FormGroup) {
-    if (formGroup.invalid) {
-      Object.values(formGroup.controls).forEach(control => {
-        if (control.invalid) {
-          control.markAsDirty();
-          control.updateValueAndValidity({ onlySelf: true });
-        }
-      });
-      return;
-    }
-    this.monitor.host = this.monitor.host.trim();
-    this.monitor.name = this.monitor.name.trim();
-    // todo 暂时单独设置host属性值
-    this.params.forEach(param => {
-      if (param.field === 'host') {
-        param.paramValue = this.monitor.host;
-      }
-      if (param.paramValue != null && typeof param.paramValue == 'string') {
-        param.paramValue = (param.paramValue as string).trim();
-      }
-    });
-    this.advancedParams.forEach(param => {
-      if (param.paramValue != null && typeof param.paramValue == 'string') {
-        param.paramValue = (param.paramValue as string).trim();
-      }
-    });
+  onDetect(info: any) {
     let detectMonitor = {
       detected: this.detected,
-      monitor: this.monitor,
+      monitor: info.monitor,
       collector: this.collector,
-      params: this.params.concat(this.advancedParams)
+      params: info.params.concat(info.advancedParams)
     };
     this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
     this.isSpinning = true;
