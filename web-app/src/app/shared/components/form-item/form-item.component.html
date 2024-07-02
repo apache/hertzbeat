@@ -1,0 +1,287 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<nz-form-item *ngIf="item.type === 'text' || item.type === 'array'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field">{{ item.name }} </nz-form-label>
+  <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+    <input
+      nz-input
+      [(ngModel)]="value"
+      (ngModelChange)="onChange($event)"
+      [required]="item.required"
+      [name]="item.field"
+      [type]="item.type"
+      [id]="item.field"
+      [placeholder]="item.placeholder ? item.placeholder : ''"
+    />
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'textarea'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field">{{ item.name }} </nz-form-label>
+  <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+    <textarea
+      nz-input
+      [(ngModel)]="value"
+      (ngModelChange)="onChange($event)"
+      [required]="item.required"
+      [name]="item.field"
+      [id]="item.field"
+      [placeholder]="item.placeholder ? item.placeholder : ''"
+      rows="8"
+    ></textarea>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'password'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field">{{ item.name }} </nz-form-label>
+  <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+    <app-multi-func-input
+      [placeholder]="item.placeholder ? item.placeholder : ''"
+      [(value)]="value"
+      (valueChange)="onChange($event)"
+      [required]="item.required"
+      [name]="item.field"
+      [id]="item.field"
+      groupStyle="width: 100%"
+      type="password"
+    />
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'number'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field">{{ item.name }} </nz-form-label>
+  <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+    <nz-input-number
+      [(ngModel)]="value"
+      (ngModelChange)="onChange($event)"
+      [required]="item.required"
+      [nzMin]="-1000"
+      [nzMax]="65535"
+      [nzStep]="1"
+      [nzPlaceHolder]="item.placeholder ? item.placeholder : ''"
+      [name]="item.field"
+      [id]="item.field"
+    ></nz-input-number>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'boolean'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field">{{ item.name }} </nz-form-label>
+  <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+    <nz-switch
+      [(ngModel)]="value"
+      (ngModelChange)="onChange($event)"
+      [required]="item.required"
+      [name]="item.field"
+      [id]="item.field"
+    ></nz-switch>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'radio'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field">{{ item.name }} </nz-form-label>
+  <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+    <nz-radio-group
+      [(ngModel)]="value"
+      (ngModelChange)="onChange($event)"
+      [required]="item.required"
+      nzButtonStyle="solid"
+      [name]="item.field"
+      [id]="item.field"
+    >
+      <label nz-radio-button [nzValue]="optionItem.value" *ngFor="let optionItem of item.options">
+        {{ optionItem.label }}
+      </label>
+    </nz-radio-group>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'key-value'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field">{{ item.name }} </nz-form-label>
+  <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+    <app-key-value-input
+      [(value)]="value"
+      (valueChange)="onChange($event)"
+      [id]="item.field"
+      keyAlias="Header Name"
+      valueAlias="Header Value"
+    ></app-key-value-input>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'metrics-field'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field">{{ item.name }} </nz-form-label>
+  <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+    <app-metrics-field-input
+      [(value)]="value"
+      (valueChange)="onChange($event)"
+      [id]="item.field"
+      [FieldAlias]="'Field'"
+      [UnitAlias]="'Unit'"
+      [TypeAlias]="'Type'"
+    ></app-metrics-field-input>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'collectors-selection'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field" [nzTooltipTitle]="item.tooltip"
+    >{{ item.name }}
+  </nz-form-label>
+  <nz-form-control nzSpan="8">
+    <nz-select
+      [(ngModel)]="value"
+      (ngModelChange)="onChange($event)"
+      [nzDropdownMatchSelectWidth]="false"
+      name="collector"
+      id="collector"
+      [nzCustomTemplate]="collectorTemplate"
+    >
+      <nz-option
+        nzCustomContent
+        [nzValue]="''"
+        [nzLabel]="('monitor.collector.system.default' | i18n) + '-' + ('collector.mode.public' | i18n)"
+      >
+        <nz-tag nzColor="processing">{{ 'monitor.collector.system.default' | i18n }}</nz-tag>
+        <nz-tag nzColor="success">{{ 'collector.mode.public' | i18n }}</nz-tag>
+      </nz-option>
+      <nz-option nzCustomContent *ngFor="let item of extra.collectors" [nzValue]="item.name" [nzLabel]="item.name">
+        <nz-tag [nzColor]="item.status == 0 ? 'processing' : 'error'">{{
+          item.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
+        }}</nz-tag>
+        <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 8px"></span>
+        <nz-tag nzColor="processing">{{ item.name }}</nz-tag>
+        <nz-tag nzColor="processing">{{ item.ip }}</nz-tag>
+        <nz-tag [nzColor]="item.mode == 'private' ? 'warning' : 'success'">
+          {{ item.mode == 'private' ? ('collector.mode.private' | i18n) : ('collector.mode.public' | i18n) }}
+        </nz-tag>
+      </nz-option>
+    </nz-select>
+    <ng-template #collectorTemplate let-selected>
+      <nz-tag nzColor="processing">{{ selected.nzLabel }}</nz-tag>
+    </ng-template>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'intervals'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field" [nzTooltipTitle]="item.tooltip"
+    >{{ item.name }}
+  </nz-form-label>
+  <nz-form-control nzSpan="8">
+    <nz-input-number
+      [(ngModel)]="value"
+      (ngModelChange)="onChange($event)"
+      [nzMin]="extra.interval_type === 'push' ? 1 : 30"
+      [nzMax]="604800"
+      [nzStep]="extra.interval_type === 'push' ? 1 : 60"
+      name="intervals"
+      id="intervals"
+    >
+    </nz-input-number>
+    <nz-tag style="margin-left: 6px">{{ 'common.time.unit.second' | i18n }}</nz-tag>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'tags-selection'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field" [nzTooltipTitle]="item.tooltip"
+    >{{ item.name }}
+  </nz-form-label>
+  <nz-form-control nzSpan="8">
+    <nz-tag
+      *ngFor="let tag of value; let i = index"
+      [nzMode]="tag.type === 1 ? 'closeable' : 'default'"
+      (nzOnClose)="onRemoveTag(tag)"
+      [nzColor]="tag.color"
+      style="margin-top: 4px"
+    >
+      {{ sliceTagName(tag) }}
+    </nz-tag>
+    <a (click)="onShowTagsModal()">
+      <nz-tag style="margin-top: 4px">
+        <i nz-icon nzType="plus"></i>
+        {{ 'tag.new' | i18n }}
+      </nz-tag>
+    </a>
+  </nz-form-control>
+</nz-form-item>
+
+<nz-form-item *ngIf="item.type === 'textarea-limit'">
+  <nz-form-label nzSpan="7" [nzRequired]="item.required" [nzFor]="item.field" [nzTooltipTitle]="item.tooltip"
+    >{{ item.name }}
+  </nz-form-label>
+  <nz-form-control [nzSpan]="8">
+    <nz-textarea-count [nzMaxCharacterCount]="extra.textarea_limit || 100">
+      <textarea
+        [(ngModel)]="value"
+        (ngModelChange)="onChange($event)"
+        rows="3"
+        nz-input
+        [name]="item.field"
+        [id]="item.field"
+        [placeholder]="item.placeholder ? item.placeholder : ''"
+      ></textarea>
+    </nz-textarea-count>
+  </nz-form-control>
+</nz-form-item>
+
+<!-- 选择TAG弹出框 -->
+<nz-modal
+  [(nzVisible)]="isManageModalVisible"
+  [nzTitle]="'tag.bind' | i18n"
+  (nzOnCancel)="onManageModalCancel()"
+  (nzOnOk)="onManageModalOk()"
+  nzMaskClosable="false"
+  nzWidth="30%"
+  [nzOkLoading]="isManageModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <input
+      style="margin-left: 5px; width: 50%; text-align: center"
+      nz-input
+      type="text"
+      [placeholder]="'tag.search' | i18n"
+      nzSize="default"
+      (keyup.enter)="loadTagsTable()"
+      [(ngModel)]="tagSearch"
+    />
+    <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px">
+      <i nz-icon nzType="setting" nzTheme="outline"></i>
+      {{ 'tag.setting' | i18n }}
+    </button>
+    <nz-table #smallTable nzSize="small" [nzData]="tags" [nzPageSize]="8" [nzLoading]="tagTableLoading">
+      <thead>
+        <tr>
+          <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="tagCheckedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+          <th nzAlign="left">{{ 'tag' | i18n }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let data of smallTable.data">
+          <td nzAlign="center" nzLeft [nzChecked]="checkedTags.has(data)" (nzCheckedChange)="onItemChecked(data, $event)"></td>
+          <td nzAlign="left">
+            <nz-tag *ngIf="data.tagValue == undefined || data.tagValue.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
+            <nz-tag *ngIf="data.tagValue != undefined && data.tagValue.trim() != ''" [nzColor]="data.color">
+              {{ data.name + ':' + data.tagValue }}
+            </nz-tag>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </div>
+</nz-modal>

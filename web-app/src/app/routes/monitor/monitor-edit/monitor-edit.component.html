@@ -28,389 +28,96 @@
 <nz-spin [nzSpinning]="isSpinning" [nzTip]="spinningTip" nzSize="large">
   <div class="-inner-content">
     <form nz-form #editForm="ngForm">
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="host" nzRequired="true" [nzTooltipTitle]="'monitor.host.tip' | i18n">
-          {{ hostName ? hostName : ('monitor.host' | i18n) }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="monitor.host" nz-input name="host" type="text" id="host" required [placeholder]="'monitor.host.tip' | i18n" />
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true" [nzTooltipTitle]="'monitor.name.tip' | i18n">
-          {{ 'monitor.name' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="monitor.name" nz-input required name="name" type="text" id="name" [placeholder]="'monitor.name.tip' | i18n" />
-        </nz-form-control>
-      </nz-form-item>
+      <app-form-item
+        [item]="{
+          field: 'host',
+          type: 'text',
+          name: hostName ? hostName : ('monitor.host' | i18n),
+          required: true,
+          placeholder: 'monitor.host.tip' | i18n
+        }"
+        [(value)]="monitor.host"
+      />
+
+      <app-form-item
+        [item]="{ field: 'name', type: 'text', name: 'monitor.name' | i18n, required: true, placeholder: 'monitor.name.tip' | i18n }"
+        [(value)]="monitor.host"
+      />
 
       <ng-container *ngFor="let paramDefine of paramDefines; let i = index">
-        <nz-form-item *ngIf="params[i].display">
-          <nz-form-label
-            *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
-            nzSpan="7"
-            [nzRequired]="paramDefine.required"
-            [nzFor]="paramDefine.field"
-            >{{ paramDefine.name }}
-          </nz-form-label>
-          <nz-form-control
-            *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
-            nzSpan="8"
-            [nzErrorTip]="'validation.required' | i18n"
-          >
-            <input
-              nz-input
-              [(ngModel)]="params[i].paramValue"
-              [required]="paramDefine.required"
-              [name]="paramDefine.field"
-              [type]="paramDefine.type"
-              [id]="paramDefine.field"
-              [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-            />
-          </nz-form-control>
-
-          <nz-form-label *ngIf="paramDefine.type === 'textarea'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
-            >{{ paramDefine.name }}
-          </nz-form-label>
-          <nz-form-control *ngIf="paramDefine.type === 'textarea'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <textarea
-              nz-input
-              [(ngModel)]="params[i].paramValue"
-              [required]="paramDefine.required"
-              [name]="paramDefine.field"
-              [id]="paramDefine.field"
-              [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-              rows="8"
-            ></textarea>
-          </nz-form-control>
-
-          <nz-form-label *ngIf="paramDefine.type === 'password'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
-            >{{ paramDefine.name }}
-          </nz-form-label>
-          <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <app-multi-func-input
-              [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-              [(value)]="params[i].paramValue"
-              [required]="paramDefine.required"
-              [name]="paramDefine.field"
-              [id]="paramDefine.field"
-              groupStyle="width: 100%"
-              type="password"
-            />
-          </nz-form-control>
-
-          <nz-form-label *ngIf="paramDefine.type === 'number'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
-            >{{ paramDefine.name }}
-          </nz-form-label>
-          <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <nz-input-number
-              [(ngModel)]="params[i].paramValue"
-              [required]="paramDefine.required"
-              [nzMin]="-1000"
-              [nzMax]="65535"
-              [nzStep]="1"
-              [nzPlaceHolder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-              [name]="paramDefine.field"
-              [id]="paramDefine.field"
-            ></nz-input-number>
-          </nz-form-control>
-
-          <nz-form-label *ngIf="paramDefine.type === 'boolean'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
-            >{{ paramDefine.name }}
-          </nz-form-label>
-          <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <nz-switch
-              [(ngModel)]="params[i].paramValue"
-              (ngModelChange)="onParamBooleanChanged($event, paramDefine.field)"
-              [required]="paramDefine.required"
-              [name]="paramDefine.field"
-              [id]="paramDefine.field"
-            ></nz-switch>
-          </nz-form-control>
-
-          <nz-form-label *ngIf="paramDefine.type === 'radio'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
-            >{{ paramDefine.name }}
-          </nz-form-label>
-          <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <nz-radio-group
-              [(ngModel)]="params[i].paramValue"
-              [required]="paramDefine.required"
-              nzButtonStyle="solid"
-              (ngModelChange)="onDependChanged($event, paramDefine.field)"
-              [name]="paramDefine.field"
-              [id]="paramDefine.field"
-            >
-              <label nz-radio-button [nzValue]="optionItem.value" *ngFor="let optionItem of paramDefine.options">
-                {{ optionItem.label }}
-              </label>
-            </nz-radio-group>
-          </nz-form-control>
-
-          <nz-form-label *ngIf="paramDefine.type === 'key-value'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
-            >{{ paramDefine.name }}
-          </nz-form-label>
-          <nz-form-control *ngIf="paramDefine.type === 'key-value'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <app-key-value-input
-              [(value)]="params[i].paramValue"
-              [id]="paramDefine.field"
-              keyAlias="Header Name"
-              valueAlias="Header Value"
-            ></app-key-value-input>
-          </nz-form-control>
-
-          <nz-form-label
-            *ngIf="paramDefine.type === 'metrics-field'"
-            nzSpan="7"
-            [nzRequired]="paramDefine.required"
-            [nzFor]="paramDefine.field"
-            >{{ paramDefine.name }}
-          </nz-form-label>
-          <nz-form-control *ngIf="paramDefine.type === 'metrics-field'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-            <app-metrics-field-input
-              [(value)]="params[i].paramValue"
-              [id]="paramDefine.field"
-              [FieldAlias]="'Field'"
-              [UnitAlias]="'Unit'"
-              [TypeAlias]="'Type'"
-            ></app-metrics-field-input>
-          </nz-form-control>
-        </nz-form-item>
+        <app-form-item
+          *ngIf="params[i].display && paramDefine.field !== 'host'"
+          [item]="paramDefine"
+          [(value)]="params[i].paramValue"
+          (valueChange)="
+            paramDefine.type === 'boolean'
+              ? onParamBooleanChanged($event, paramDefine.field)
+              : paramDefine.type === 'radio'
+              ? onDependChanged($event, paramDefine.field)
+              : null
+          "
+        />
       </ng-container>
 
-      <nz-collapse [nzGhost]="true" style="margin-bottom: 16px">
+      <nz-collapse [nzGhost]="true" style="background: ghostwhite; margin-bottom: 24px">
+        <ng-template #extraColHeader>
+          <button style="margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitors.advanced.tip' | i18n">
+            <span>{{ 'monitors.advanced' | i18n }}</span>
+            <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+          </button>
+        </ng-template>
         <nz-collapse-panel [nzHeader]="extraColHeader" [nzShowArrow]="false">
           <ng-container *ngFor="let paramDefine of advancedParamDefines; let i = index">
-            <nz-form-item *ngIf="advancedParams[i].display">
-              <nz-form-label
-                *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
-                nzSpan="7"
-                [nzRequired]="paramDefine.required"
-                [nzFor]="paramDefine.field"
-                >{{ paramDefine.name }}
-              </nz-form-label>
-              <nz-form-control
-                *ngIf="paramDefine.field !== 'host' && (paramDefine.type === 'text' || paramDefine.type === 'array')"
-                nzSpan="8"
-                [nzErrorTip]="'validation.required' | i18n"
-              >
-                <input
-                  nz-input
-                  [(ngModel)]="advancedParams[i].paramValue"
-                  [required]="paramDefine.required"
-                  [name]="paramDefine.field"
-                  [type]="paramDefine.type"
-                  [id]="paramDefine.field"
-                  [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-                />
-              </nz-form-control>
-
-              <nz-form-label
-                *ngIf="paramDefine.type === 'textarea'"
-                nzSpan="7"
-                [nzRequired]="paramDefine.required"
-                [nzFor]="paramDefine.field"
-                >{{ paramDefine.name }}
-              </nz-form-label>
-              <nz-form-control *ngIf="paramDefine.type === 'textarea'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-                <textarea
-                  nz-input
-                  [(ngModel)]="advancedParams[i].paramValue"
-                  [required]="paramDefine.required"
-                  [name]="paramDefine.field"
-                  [id]="paramDefine.field"
-                  [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-                  rows="8"
-                ></textarea>
-              </nz-form-control>
-
-              <nz-form-label
-                *ngIf="paramDefine.type === 'password'"
-                nzSpan="7"
-                [nzRequired]="paramDefine.required"
-                [nzFor]="paramDefine.field"
-                >{{ paramDefine.name }}
-              </nz-form-label>
-              <nz-form-control *ngIf="paramDefine.type === 'password'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-                <app-multi-func-input
-                  [placeholder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-                  [(value)]="advancedParams[i].paramValue"
-                  [required]="paramDefine.required"
-                  [name]="paramDefine.field"
-                  [id]="paramDefine.field"
-                  groupStyle="width: 100%"
-                  type="password"
-                />
-              </nz-form-control>
-
-              <nz-form-label
-                *ngIf="paramDefine.type === 'number'"
-                nzSpan="7"
-                [nzRequired]="paramDefine.required"
-                [nzFor]="paramDefine.field"
-                >{{ paramDefine.name }}
-              </nz-form-label>
-              <nz-form-control *ngIf="paramDefine.type === 'number'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-                <nz-input-number
-                  [(ngModel)]="advancedParams[i].paramValue"
-                  [required]="paramDefine.required"
-                  [nzMin]="-1000"
-                  [nzMax]="65535"
-                  [nzStep]="1"
-                  [nzPlaceHolder]="paramDefine.placeholder ? paramDefine.placeholder : ''"
-                  [name]="paramDefine.field"
-                  [id]="paramDefine.field"
-                ></nz-input-number>
-              </nz-form-control>
-
-              <nz-form-label
-                *ngIf="paramDefine.type === 'boolean'"
-                nzSpan="7"
-                [nzRequired]="paramDefine.required"
-                [nzFor]="paramDefine.field"
-                >{{ paramDefine.name }}
-              </nz-form-label>
-              <nz-form-control *ngIf="paramDefine.type === 'boolean'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-                <nz-switch
-                  [(ngModel)]="advancedParams[i].paramValue"
-                  [required]="paramDefine.required"
-                  [name]="paramDefine.field"
-                  [id]="paramDefine.field"
-                ></nz-switch>
-              </nz-form-control>
-
-              <nz-form-label *ngIf="paramDefine.type === 'radio'" nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field"
-                >{{ paramDefine.name }}
-              </nz-form-label>
-              <nz-form-control *ngIf="paramDefine.type === 'radio'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-                <nz-radio-group
-                  [(ngModel)]="advancedParams[i].paramValue"
-                  [required]="paramDefine.required"
-                  nzButtonStyle="solid"
-                  [name]="paramDefine.field"
-                  [id]="paramDefine.field"
-                >
-                  <label nz-radio-button [nzValue]="optionItem.value" *ngFor="let optionItem of paramDefine.options">
-                    {{ optionItem.label }}
-                  </label>
-                </nz-radio-group>
-              </nz-form-control>
-
-              <nz-form-label
-                *ngIf="paramDefine.type === 'key-value'"
-                nzSpan="7"
-                [nzRequired]="paramDefine.required"
-                [nzFor]="paramDefine.field"
-                >{{ paramDefine.name }}
-              </nz-form-label>
-              <nz-form-control *ngIf="paramDefine.type === 'key-value'" nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
-                <app-key-value-input
-                  [(value)]="advancedParams[i].paramValue"
-                  [id]="paramDefine.field"
-                  keyAlias="Header Name"
-                  valueAlias="Header Value"
-                ></app-key-value-input>
-              </nz-form-control>
-            </nz-form-item>
+            <app-form-item
+              *ngIf="advancedParams[i].display && paramDefine.field !== 'host'"
+              [item]="paramDefine"
+              [(value)]="advancedParams[i].paramValue"
+            />
           </ng-container>
         </nz-collapse-panel>
       </nz-collapse>
-      <ng-template #extraColHeader>
-        <button style="top: -10px; margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitors.advanced.tip' | i18n">
-          <span>{{ 'monitors.advanced' | i18n }}</span>
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        </button>
-      </ng-template>
 
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="collector" [nzTooltipTitle]="'monitor.collector.tip' | i18n">
-          {{ 'monitor.collector' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-select
-            [(ngModel)]="collector"
-            [nzDropdownMatchSelectWidth]="false"
-            name="collector"
-            id="collector"
-            [nzCustomTemplate]="collectorTemplate"
-          >
-            <nz-option
-              nzCustomContent
-              [nzValue]="''"
-              [nzLabel]="('monitor.collector.system.default' | i18n) + '-' + ('collector.mode.public' | i18n)"
-            >
-              <nz-tag nzColor="processing">{{ 'monitor.collector.system.default' | i18n }}</nz-tag>
-              <nz-tag nzColor="success">{{ 'collector.mode.public' | i18n }}</nz-tag>
-            </nz-option>
-            <nz-option nzCustomContent *ngFor="let item of collectors" [nzValue]="item.name" [nzLabel]="item.name">
-              <nz-tag [nzColor]="item.status == 0 ? 'processing' : 'error'">{{
-                item.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
-              }}</nz-tag>
-              <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 8px"></span>
-              <nz-tag nzColor="processing">{{ item.name }}</nz-tag>
-              <nz-tag nzColor="processing">{{ item.ip }}</nz-tag>
-              <nz-tag [nzColor]="item.mode == 'private' ? 'warning' : 'success'">
-                {{ item.mode == 'private' ? ('collector.mode.private' | i18n) : ('collector.mode.public' | i18n) }}
-              </nz-tag>
-            </nz-option>
-          </nz-select>
-          <ng-template #collectorTemplate let-selected>
-            <nz-tag nzColor="processing">{{ selected.nzLabel }}</nz-tag>
-          </ng-template>
-        </nz-form-control>
-      </nz-form-item>
+      <app-form-item
+        [item]="{
+          field: 'collector',
+          type: 'collectors-selection',
+          name: 'monitor.collector' | i18n,
+          tooltip: 'monitor.collector.tip' | i18n
+        }"
+        [extra]="{collectors}"
+        [(value)]="collector"
+      />
 
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="intervals" [nzTooltipTitle]="'monitor.intervals.tip' | i18n">
-          {{ 'monitor.intervals' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-input-number
-            [(ngModel)]="monitor.intervals"
-            [nzMin]="monitor.app === 'push' ? 1 : 30"
-            [nzMax]="604800"
-            [nzStep]="monitor.app === 'push' ? 1 : 60"
-            name="intervals"
-            id="intervals"
-          >
-          </nz-input-number>
-          <nz-tag style="margin-left: 6px">{{ 'common.time.unit.second' | i18n }}</nz-tag>
-        </nz-form-control>
-      </nz-form-item>
+      <app-form-item
+        [item]="{
+          field: 'intervals',
+          type: 'intervals',
+          name: 'monitor.intervals' | i18n,
+          tooltip: 'monitor.intervals.tip' | i18n
+        }"
+        [extra]="{ interval_type: monitor.app }"
+        [(value)]="monitor.intervals"
+      />
 
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="tags" [nzTooltipTitle]="'tag.bind.tip' | i18n">
-          {{ 'tag.bind' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-tag
-            *ngFor="let tag of monitor.tags; let i = index"
-            [nzMode]="tag.type === 1 ? 'closeable' : 'default'"
-            (nzOnClose)="onRemoveTag(tag)"
-            [nzColor]="tag.color"
-            style="margin-top: 4px"
-          >
-            {{ sliceTagName(tag) }}
-          </nz-tag>
-          <a (click)="onShowTagsModal()">
-            <nz-tag style="margin-top: 4px">
-              <i nz-icon nzType="plus"></i>
-              {{ 'tag.new' | i18n }}
-            </nz-tag>
-          </a>
-        </nz-form-control>
-      </nz-form-item>
+      <app-form-item
+        [item]="{
+          field: 'tags',
+          type: 'tags-selection',
+          name: 'tag.bind' | i18n,
+          tooltip: 'tag.bind.tip' | i18n
+        }"
+        [(value)]="monitor.tags"
+      />
 
-      <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="description" [nzTooltipTitle]="'monitor.description.tip' | i18n">
-          {{ 'monitor.description' | i18n }}
-        </nz-form-label>
-        <nz-form-control [nzSpan]="8">
-          <nz-textarea-count [nzMaxCharacterCount]="100">
-            <textarea [(ngModel)]="monitor.description" rows="3" nz-input name="description" id="description"></textarea>
-          </nz-textarea-count>
-        </nz-form-control>
-      </nz-form-item>
+      <app-form-item
+        [item]="{
+          field: 'description',
+          type: 'textarea-limit',
+          name: 'monitor.description' | i18n,
+          tooltip: 'monitor.description.tip' | i18n
+        }"
+        [(value)]="monitor.description"
+      />
 
       <div nz-row>
         <div nz-col [nzXs]="{ span: 24 }" [nzLg]="{ span: 8, offset: 7 }" style="text-align: center">
@@ -431,49 +138,3 @@
     </form>
   </div>
 </nz-spin>
-
-<!-- 选择TAG弹出框 -->
-<nz-modal
-  [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="'tag.bind' | i18n"
-  (nzOnCancel)="onManageModalCancel()"
-  (nzOnOk)="onManageModalOk()"
-  nzMaskClosable="false"
-  nzWidth="30%"
-  [nzOkLoading]="isManageModalOkLoading"
->
-  <div *nzModalContent class="-inner-content">
-    <input
-      style="margin-left: 5px; width: 50%; text-align: center"
-      nz-input
-      type="text"
-      [placeholder]="'tag.search' | i18n"
-      nzSize="default"
-      (keyup.enter)="loadTagsTable()"
-      [(ngModel)]="tagSearch"
-    />
-    <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px">
-      <i nz-icon nzType="setting" nzTheme="outline"></i>
-      {{ 'tag.setting' | i18n }}
-    </button>
-    <nz-table #smallTable nzSize="small" [nzData]="tags" [nzPageSize]="8" [nzLoading]="tagTableLoading">
-      <thead>
-        <tr>
-          <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="tagCheckedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-          <th nzAlign="left">{{ 'tag' | i18n }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let data of smallTable.data">
-          <td nzAlign="center" nzLeft [nzChecked]="checkedTags.has(data)" (nzCheckedChange)="onItemChecked(data, $event)"></td>
-          <td nzAlign="left">
-            <nz-tag *ngIf="data.tagValue == undefined || data.tagValue.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
-            <nz-tag *ngIf="data.tagValue != undefined && data.tagValue.trim() != ''" [nzColor]="data.color">
-              {{ data.name + ':' + data.tagValue }}
-            </nz-tag>
-          </td>
-        </tr>
-      </tbody>
-    </nz-table>
-  </div>
-</nz-modal>

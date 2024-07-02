@@ -17,12 +17,11 @@
  * under the License.
  */
 
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
-import { List } from 'echarts';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
@@ -31,11 +30,9 @@ import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
-import { Tag } from '../../../pojo/Tag';
 import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { TagService } from '../../../service/tag.service';
 
 @Component({
   selector: 'app-monitor-add',
@@ -61,12 +58,9 @@ export class MonitorNewComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private notifySvc: NzNotificationService,
-    private cdr: ChangeDetectorRef,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private titleSvc: TitleService,
-    private tagSvc: TagService,
-    private collectorSvc: CollectorService,
-    private formBuilder: FormBuilder
+    private collectorSvc: CollectorService
   ) {
     this.monitor = new Monitor();
     this.monitor.tags = [];
@@ -313,88 +307,4 @@ export class MonitorNewComponent implements OnInit {
     app = app ? app : '';
     this.router.navigateByUrl(`/monitors?app=${app}`);
   }
-
-  onRemoveTag(tag: Tag) {
-    if (this.monitor != undefined && this.monitor.tags != undefined) {
-      this.monitor.tags = this.monitor.tags.filter(item => item !== tag);
-    }
-  }
-
-  sliceTagName(tag: Tag): string {
-    if (tag.tagValue != undefined && tag.tagValue.trim() != '') {
-      return `${tag.name}:${tag.tagValue}`;
-    } else {
-      return tag.name;
-    }
-  }
-
-  // start Tag model
-  isManageModalVisible = false;
-  isManageModalOkLoading = false;
-  tagCheckedAll: boolean = false;
-  tagTableLoading = false;
-  tagSearch!: string;
-  tags!: Tag[];
-  checkedTags = new Set<Tag>();
-  loadTagsTable() {
-    this.tagTableLoading = true;
-    let tagsReq$ = this.tagSvc.loadTags(this.tagSearch, 1, 0, 1000).subscribe(
-      message => {
-        this.tagTableLoading = false;
-        this.tagCheckedAll = false;
-        this.checkedTags.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.tags = page.content;
-        } else {
-          console.warn(message.msg);
-        }
-        tagsReq$.unsubscribe();
-      },
-      error => {
-        this.tagTableLoading = false;
-        tagsReq$.unsubscribe();
-      }
-    );
-  }
-  onShowTagsModal() {
-    this.isManageModalVisible = true;
-    this.loadTagsTable();
-  }
-  onManageModalCancel() {
-    this.isManageModalVisible = false;
-  }
-  onManageModalOk() {
-    this.isManageModalOkLoading = true;
-    this.checkedTags.forEach(item => {
-      if (this.monitor.tags.find(tag => tag.id == item.id) == undefined) {
-        this.monitor.tags.push(item);
-      }
-    });
-    this.isManageModalOkLoading = false;
-    this.isManageModalVisible = false;
-  }
-  onAllChecked(checked: boolean) {
-    if (checked) {
-      this.tags.forEach(tag => this.checkedTags.add(tag));
-    } else {
-      this.checkedTags.clear();
-    }
-  }
-  onItemChecked(tag: Tag, checked: boolean) {
-    if (checked) {
-      this.checkedTags.add(tag);
-    } else {
-      this.checkedTags.delete(tag);
-    }
-  }
-
-  getNumber(rangeString: string, index: number): number | undefined {
-    if (rangeString == undefined || rangeString == '' || rangeString.length <= index) {
-      return undefined;
-    }
-    const rangeArray = JSON.parse(rangeString);
-    return rangeArray[index];
-  }
-  // end tag model
 }
