@@ -90,7 +90,7 @@ public interface AiConstants {
         /**
          * SparkDesk Ai URL
          */
-        String URL = "https://spark-api-open.xf-yun.com/v1/chat/completions";
+        String SPARK_ULTRA_URL = "https://spark-api-open.xf-yun.com/v1/chat/completions";
 
         /**
          * request role param
