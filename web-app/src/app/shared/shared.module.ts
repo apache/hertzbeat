@@ -8,6 +8,8 @@ import { AlainThemeModule } from '@delon/theme';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { NzDividerComponent } from 'ng-zorro-antd/divider';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzRadioComponent, NzRadioGroupComponent } from 'ng-zorro-antd/radio';
+import { NzSwitchComponent } from 'ng-zorro-antd/switch';
 
 import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
 import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
@@ -15,6 +17,7 @@ import { MetricsFieldInputComponent } from './components/metrics-field-input/met
 import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
+import { FormItemComponent } from './components/form-item/form-item.component';
 import { ElapsedTimePipe } from './pipe/elapsed-time.pipe';
 import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
@@ -28,6 +31,7 @@ const COMPONENTS: Array<Type<void>> = [
   HelpMessageShowComponent,
   MetricsFieldInputComponent,
   ToolbarComponent,
+  FormItemComponent,
   MonitorSelectMenuComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
@@ -46,7 +50,10 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     ...ThirdModules,
     NzBreadCrumbModule,
     NzTagModule,
-    NzDividerComponent
+    NzDividerComponent,
+    NzRadioGroupComponent,
+    NzRadioComponent,
+    NzSwitchComponent
   ],
   declarations: [...COMPONENTS, ...DIRECTIVES, HelpMessageShowComponent],
   exports: [
