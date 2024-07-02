@@ -46,9 +46,9 @@ public class KimiAiServiceImpl implements AiService {
 
     @Value("${aiConfig.model:moonshot-v1-8k}")
     private String model;
+
     @Value("${aiConfig.api-key}")
     private String apiKey;
-
 
     private WebClient webClient;
 
