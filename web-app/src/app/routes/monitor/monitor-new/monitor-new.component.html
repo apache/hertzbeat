@@ -17,12 +17,12 @@
   ~ under the License.
 -->
 
-<app-help-massage-show
-  [help_massage_content]="'monitor.app.' + monitor.app + '.help' | i18n"
+<app-help-message-show
+  [help_message_content]="'monitor.app.' + monitor.app + '.help' | i18n"
   [module_name]="('monitors.new' | i18n) + ' ' + ('monitor.app.' + monitor.app | i18n) + ' ' + ('monitor' | i18n)"
   [guild_link]="'monitor.app.' + monitor.app + '.helpLink' | i18n"
   [icon_name]="'plus-circle'"
-></app-help-massage-show>
+></app-help-message-show>
 <nz-divider></nz-divider>
 
 <nz-spin [nzSpinning]="isSpinning" [nzTip]="spinningTip" nzSize="large">
