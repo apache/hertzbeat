@@ -10,81 +10,66 @@
   },
   "params": [
     {
-      "display": true,
       "field": "host",
       "type": 1,
       "paramValue": "127.0.0.1"
     },
     {
-      "display": true,
       "field": "port",
       "type": 0,
       "paramValue": 80
     },
     {
-      "display": true,
       "field": "httpMethod",
       "type": 1,
       "paramValue": "GET"
     },
     {
-      "display": true,
       "field": "uri",
       "type": 1
     },
     {
-      "display": true,
       "field": "ssl",
       "type": 1,
       "paramValue": false
     },
     {
-      "display": true,
       "field": "headers",
       "type": 3
     },
     {
-      "display": true,
       "field": "params",
       "type": 3
     },
     {
-      "display": true,
       "field": "timeout",
       "type": 0
     },
     {
-      "display": true,
       "field": "contentType",
       "type": 1
     },
     {
-      "display": false,
       "field": "payload",
       "type": 1
     },
     {
-      "display": true,
       "field": "authType",
       "type": 1
     },
     {
-      "display": true,
       "field": "username",
       "type": 1
     },
     {
-      "display": true,
       "field": "password",
       "type": 1
     },
     {
-      "display": true,
       "field": "keyword",
       "type": 1
     },
     {
-      "display": true,
       "field": "successCode",
       "type": 4,
       "paramValue": "200, 201"

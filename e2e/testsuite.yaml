@@ -222,7 +222,7 @@ items:
       ]
 - name: listTags
   request:
-    api: /api/tag
+    api: /api/tag?pageIndex=0&pageSize=8&type=1
     header:
       Authorization: Bearer {{.login.data.token}}
 - name: updateTag
@@ -236,7 +236,7 @@ items:
       {
         "id": {{(index .listTags.data.content 0).id | int64}},
         "name": "{{randAlpha 3}}",
-        "value": "{{randAlpha 3}}",
+        "tagValue": "{{randAlpha 3}}",
         "color": "#ff4081",
         "type": 1,
         "creator": "admin",
