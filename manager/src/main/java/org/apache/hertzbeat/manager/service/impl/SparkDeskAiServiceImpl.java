@@ -36,15 +36,19 @@ public class SparkDeskAiServiceImpl implements AiService {
 
     @Value("${aiConfig.api-key}")
     private String apiKey;
+    @Value("${aiConfig.api-secret}")
+    private String apiSecret;
 
     private WebClient webClient;
 
     @PostConstruct
     private void init() {
+        StringBuilder sb = new StringBuilder();
+        String bearer = sb.append("Bearer ").append(apiKey).append(":").append(apiSecret).toString();
         this.webClient = WebClient.builder()
                 .baseUrl(AiConstants.SparkDeskConstants.URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey+":"+ "YjFkN2ZlYWY0OWVmODE1MDE0OGYwZmIz")
+                .defaultHeader(HttpHeaders.AUTHORIZATION, bearer)
                 .exchangeStrategies(ExchangeStrategies.builder()
                         .codecs(item -> item.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                         .build())
@@ -56,8 +60,7 @@ public class SparkDeskAiServiceImpl implements AiService {
     }
 
     @Override
-    public Flux<ServerSentEvent<String>> requestAi(String text) {
-        System.out.println("???");
+    public Flux<String> requestAi(String text) {
         try {
             checkParam(text, apiKey);
             SparkDeskRequestParamDTO zhiPuRequestParamDTO = SparkDeskRequestParamDTO.builder()
@@ -69,37 +72,31 @@ public class SparkDeskAiServiceImpl implements AiService {
                     .messages(List.of(new AiMessage(AiConstants.SparkDeskConstants.REQUEST_ROLE, text)))
                     .build();
 
-            System.out.println(JSON.toJSONString(zhiPuRequestParamDTO));
-            webClient.post()
+            return webClient.post()
                     .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
                     .retrieve()
                     .bodyToFlux(String.class)
                     .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                    .map(this::convertToResponse)
-                    .doOnNext(System.out::println)
-                    .subscribe();
+                    .map(this::convertToResponse);
         } catch (Exception e) {
-            System.out.println(e.toString());
+           log.info("SparkDeskAiServiceImpl.requestAi exception:{}",e.toString());
+           throw e;
         }
 
-        return null;
     }
 
-    private ServerSentEvent<String> convertToResponse(String aiRes) {
+    private String convertToResponse(String aiRes) {
         try {
             ZhiPuAiResponse zhiPuAiResponse = JSON.parseObject(aiRes, ZhiPuAiResponse.class);
             if (Objects.nonNull(zhiPuAiResponse)) {
                 ZhiPuAiResponse.Choice choice = zhiPuAiResponse.getChoices().get(0);
-                String content = choice.getDelta().getContent();
-                return ServerSentEvent.<String>builder()
-                        .data(content)
-                        .build();
+                return choice.getDelta().getContent();
             }
         } catch (Exception e) {
             log.info("convertToResponse Exception:{}", e.toString());
         }
 
-        return ServerSentEvent.<String>builder().build();
+        return "";
     }
 
 
