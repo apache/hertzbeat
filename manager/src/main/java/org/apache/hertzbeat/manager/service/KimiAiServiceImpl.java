@@ -62,7 +62,6 @@ public class KimiAiServiceImpl implements AiService {
                         .codecs(item -> item.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                         .build())
                 .build();
-        System.out.println(model);
     }
 
     @Override
