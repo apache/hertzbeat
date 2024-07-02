@@ -25,6 +25,13 @@ keywords: [人工智能 AI]
 | model | glm-4-0520、glm-4 、glm-4-air、glm-4-airx、 glm-4-flash | 无  |
 | api-key  | xxxxx.xxxxxx                                        | https://open.bigmodel.cn/login?redirect=%2Fusercenter%2Fapikeys  |
 
+#### 阿里巴巴AI
+
+| 参数名称         | 示例                                                 | 链接 |
+|--------------|----------------------------------------------------|----|
+| type | alibabaAi（必须和示例完全相同）                                   | 无  |
+| model |  qwen-turbo、qwen-plus、qwen-max、qwen-max-0428、qwen-max-0403、qwen-max-0107、qwen-max-longcontext | https://help.aliyun.com/zh/dashscope/developer-reference/model-introduction?spm=a2c4g.11186623.0.0.4e0246c1RQFKMH   |
+| api-key  | xxxxxxxxxxx                                        | https://help.aliyun.com/zh/dashscope/developer-reference/activate-dashscope-and-create-an-api-key?spm=a2c4g.11186623.0.i10 |
 
 
 

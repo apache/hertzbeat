@@ -19,18 +19,20 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { HelpMassageShowComponent } from './help-massage-show.component';
+import { MonitorSelectMenuComponent } from './monitor-select-menu.component';
 
-describe('HelpMassageShowComponent', () => {
-  let component: HelpMassageShowComponent;
-  let fixture: ComponentFixture<HelpMassageShowComponent>;
+describe('MonitorSelectMenuComponent', () => {
+  let component: MonitorSelectMenuComponent;
+  let fixture: ComponentFixture<MonitorSelectMenuComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [HelpMassageShowComponent]
+      declarations: [MonitorSelectMenuComponent]
     }).compileComponents();
+  });
 
-    fixture = TestBed.createComponent(HelpMassageShowComponent);
+  beforeEach(() => {
+    fixture = TestBed.createComponent(MonitorSelectMenuComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -31,7 +31,12 @@ public enum AiTypeEnum {
      * sparkDesk
      * 科大讯飞
      */
-    sparkDesk;
+    sparkDesk,
+
+    /**
+     * alibabaAi
+     */
+    alibabaAi;
 
 
     /**

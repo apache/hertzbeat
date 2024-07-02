@@ -17,34 +17,19 @@
 
 package org.apache.hertzbeat.manager.dao;
 
-import java.util.Set;
-import org.apache.hertzbeat.common.entity.manager.TagMonitorBind;
+import org.apache.hertzbeat.common.entity.manager.StatusPageIncidentComponentBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * TagMonitorBindDao repository
+ * StatusPageComponent DAO interface.
  */
-public interface TagMonitorBindDao extends JpaRepository<TagMonitorBind, Long>, JpaSpecificationExecutor<TagMonitorBind> {
+public interface StatusPageIncidentComponentBindDao extends JpaRepository<StatusPageIncidentComponentBind, Long>, JpaSpecificationExecutor<StatusPageIncidentComponentBind> {
 
     /**
-     * delete tags bind by monitor id
-     * @param monitorId monitorId
-     */
-    void deleteTagMonitorBindsByMonitorId(Long monitorId);
-
-    /**
-     * delete tags bind by monitor id
-     * @param monitorIds monitor list
-     */
-    void deleteTagMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
-
-
-    /**
-     * count tags bind relation by tag id
-     * @param tagIds list of tagId
+     *  count by component id
+     * @param componentId component id
      * @return count
      */
-    long countByTagIdIn(Set<Long> tagIds);
-
+    long countByComponentId(long componentId);
 }
