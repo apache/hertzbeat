@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.service;
 
 
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
-import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 
@@ -39,6 +38,6 @@ public interface AiService {
      * @param text  text
      * @return      AI response
      */
-    Flux<ServerSentEvent<String>> requestAi(String text);
+    Flux<String> requestAi(String text);
 
 }

@@ -206,11 +206,11 @@ grafana:
   username: admin
   password: admin
 
-#AI config
+# AI config
 aiConfig:
-  #AI Type:zhiPu = 0
-  type: 0
-  #Model name：glm-4
-  model: glm-4
-  #api key
+  # AI Type:zhiPu、alibabaAi
+  type:
+  # Model name：glm-4、qwen-turbo
+  model:
+  # api key
   api-key:
