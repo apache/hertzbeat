@@ -34,12 +34,18 @@ export class MonitorDataTableComponent {
   }
   set monitorId(monitorId: number) {
     this._monitorId = monitorId;
-    // 需将monitorId作为输入参数的最后一个  这样在执行loadData时其它入参才有值
-    this.loadData();
+    if (this._monitorId && this.metrics) {
+      // 需将monitorId作为输入参数的最后一个  这样在执行loadData时其它入参才有值
+      this.loadData();
+    }
   }
   private _monitorId!: number;
   @Input()
   app!: string;
+  @Input()
+  port!: number | undefined;
+  @Input()
+  monitor!: any;
   @Input()
   metrics!: string;
 
