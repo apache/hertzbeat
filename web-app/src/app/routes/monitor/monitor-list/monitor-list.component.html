@@ -17,19 +17,19 @@
   ~ under the License.
 -->
 
-<app-help-massage-show
+<app-help-message-show
   *ngIf="app != undefined"
-  [help_massage_content]="'monitor.app.' + app + '.help' | i18n"
+  [help_message_content]="'monitor.app.' + app + '.help' | i18n"
   [guild_link]="'monitor.app.' + app + '.helpLink' | i18n"
   [icon_name]="getAppIconName(app)"
-></app-help-massage-show>
-<app-help-massage-show
+></app-help-message-show>
+<app-help-message-show
   *ngIf="app == undefined"
-  [help_massage_content]="'monitors.center.help' | i18n"
+  [help_message_content]="'monitors.center.help' | i18n"
   [guild_link]="'monitors.center.help.link' | i18n"
   [module_name]="'menu.monitor.center'"
   [icon_name]="'laptop'"
-></app-help-massage-show>
+></app-help-message-show>
 <nz-divider></nz-divider>
 
 <app-toolbar>
