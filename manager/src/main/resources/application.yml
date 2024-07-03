@@ -203,12 +203,12 @@ scheduler:
 # AI config
 # See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
 aiConfig:
-  # AI Type:zhiPu、alibabaAi
+  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk
   type:
-  # Model name：glm-4、qwen-turbo
+  # Model name：glm-4、qwen-turboo、moonshot-v1-8k、generalv3.5
   model:
   # api key
   api-key:
-  #At present, only iFLYTEK large model needs to be filled in
+  #At present, only IFLYTEK large model needs to be filled in
   #目前只有科大讯飞大模型需要填写
   api-secret:
