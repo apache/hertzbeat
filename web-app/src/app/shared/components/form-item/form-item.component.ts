@@ -29,7 +29,7 @@ import { TagService } from '../../../service/tag.service';
   styleUrls: ['./form-item.component.less']
 })
 export class FormItemComponent {
-  constructor(private tagSvc: TagService,) {}
+  constructor(private tagSvc: TagService) {}
   @Input() item!: any;
   @Input() value!: any;
   @Input() extra: any = {};
