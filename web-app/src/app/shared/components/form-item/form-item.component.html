@@ -242,6 +242,7 @@
 
 <!-- 选择TAG弹出框 -->
 <nz-modal
+  *ngIf="item.type === 'tags-selection'"
   [(nzVisible)]="isManageModalVisible"
   [nzTitle]="'tag.bind' | i18n"
   (nzOnCancel)="onManageModalCancel()"

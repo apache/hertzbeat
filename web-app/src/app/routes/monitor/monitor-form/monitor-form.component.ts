@@ -17,23 +17,12 @@
  * under the License.
  */
 
-import {Component, EventEmitter, Inject, Input, OnInit, Output} from '@angular/core';
+import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
-import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
-import { NzNotificationService } from 'ng-zorro-antd/notification';
-import { switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
-import { Message } from '../../../pojo/Message';
-import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { ParamDefine } from '../../../pojo/ParamDefine';
-import { AppDefineService } from '../../../service/app-define.service';
-import { CollectorService } from '../../../service/collector.service';
-import { MonitorService } from '../../../service/monitor.service';
-import {finalize} from "rxjs";
 
 @Component({
   selector: 'app-monitor-form',
@@ -41,7 +30,6 @@ import {finalize} from "rxjs";
   styles: []
 })
 export class MonitorFormComponent implements OnInit {
-
   @Input() monitor!: any;
   @Input() loading!: boolean;
   @Input() loadingTip!: string;
@@ -58,11 +46,9 @@ export class MonitorFormComponent implements OnInit {
   @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
 
-  constructor() {
-  }
+  constructor() {}
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void {}
 
   onDetect(formGroup: FormGroup) {
     if (formGroup.invalid) {
@@ -90,7 +76,7 @@ export class MonitorFormComponent implements OnInit {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formDetect.emit({monitor: this.monitor, params: this.params, advancedParams: this.advancedParams});
+    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
   }
 
   onSubmit(formGroup: FormGroup) {
@@ -119,7 +105,7 @@ export class MonitorFormComponent implements OnInit {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formSubmit.emit({monitor: this.monitor, params: this.params, advancedParams: this.advancedParams});
+    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
   }
 
   onCancel() {
