@@ -34,7 +34,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input
-            [(ngModel)]="statusOrg.name"
+            [(ngModel)]="statusOrgForEdit.name"
             nz-input
             name="name"
             type="text"
@@ -50,7 +50,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input
-            [(ngModel)]="statusOrg.description"
+            [(ngModel)]="statusOrgForEdit.description"
             nz-input
             required
             name="desc"
@@ -66,7 +66,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input
-            [(ngModel)]="statusOrg.home"
+            [(ngModel)]="statusOrgForEdit.home"
             nz-input
             required
             name="home"
@@ -82,7 +82,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input
-            [(ngModel)]="statusOrg.logo"
+            [(ngModel)]="statusOrgForEdit.logo"
             nz-input
             required
             name="logo"
@@ -98,7 +98,7 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="8" [nzErrorTip]="'validation.required' | i18n">
           <input
-            [(ngModel)]="statusOrg.feedback"
+            [(ngModel)]="statusOrgForEdit.feedback"
             nz-input
             required
             name="feedback"
@@ -114,17 +114,17 @@
         </nz-form-label>
         <nz-form-control [nzSpan]="8">
           <input
-            [(colorPicker)]="statusOrg.color"
+            [(colorPicker)]="statusOrgForEdit.color"
             cpFallbackColor="#e9f3d3"
             cpOutputFormat="hex"
-            [style.background]="statusOrg.color"
+            [style.background]="statusOrgForEdit.color"
             style="width: 100%"
             nz-input
             required
             name="color"
             type="text"
             id="color"
-            [placeholder]="statusOrg.color == undefined ? ('status.org.color.tip' | i18n) : ''"
+            [placeholder]="statusOrgForEdit.color == undefined ? ('status.org.color.tip' | i18n) : ''"
           />
         </nz-form-control>
       </nz-form-item>
