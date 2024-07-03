@@ -33,5 +33,13 @@ keywords: [AI]
 | model | qwen-turbo、qwen-plus、qwen-max、qwen-max-0428、qwen-max-0403、qwen-max-0107、qwen-max-longcontext |  https://help.aliyun.com/zh/dashscope/developer-reference/model-introduction?spm=a2c4g.11186623.0.0.4e0246c1RQFKMH                                  |
 | api-key  | xxxxxxxxxxx                                                                                  |https://help.aliyun.com/zh/dashscope/developer-reference/activate-dashscope-and-create-an-api-key?spm=a2c4g.11186623.0.i10|
 
+#### Kimi AI
+
+| Name of the parameter          | Example                                      | Link                                                          |
+|--------------|----------------------------------------------|---------------------------------------------------------------|
+| type | kimiAi (must be exactly the same as example) |                                                               |
+| model | moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k              |                                    |
+| api-key  | xxxxxxxxxxx                                  |https://platform.moonshot.cn/console/api-keys|
+
 
 
