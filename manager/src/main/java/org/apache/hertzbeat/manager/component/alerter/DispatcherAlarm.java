@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.component.alerter;
 import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
@@ -99,8 +100,8 @@ public class DispatcherAlarm implements InitializingBean {
         return noticeConfigService.getOneTemplateById(id);
     }
 
-    private List<NoticeRule> matchNoticeRulesByAlert(Alert alert) {
-        return noticeConfigService.getReceiverFilterRule(alert);
+    private Optional<List<NoticeRule>> matchNoticeRulesByAlert(Alert alert) {
+        return Optional.ofNullable(noticeConfigService.getReceiverFilterRule(alert));
     }
 
     private class DispatchTask implements Runnable {
@@ -131,29 +132,21 @@ public class DispatcherAlarm implements InitializingBean {
         }
 
         private void sendNotify(Alert alert) {
-            List<NoticeRule> noticeRules = matchNoticeRulesByAlert(alert);
-            // todo Send notification here temporarily single thread
-            if (noticeRules != null) {
-                for (NoticeRule rule : noticeRules) {
-                    try {
-                        if (rule.getTemplateId() == null) {
-                            List<Long> receiverIdList = rule.getReceiverId();
-                            for (Long receiverId : receiverIdList) {
-                                sendNoticeMsg(getOneReceiverById(receiverId),
-                                        null, alert);
-                            }
-                        } else {
-                            List<Long> receiverIdList = rule.getReceiverId();
-                            for (Long receiverId : receiverIdList) {
-                                sendNoticeMsg(getOneReceiverById(receiverId),
-                                    getOneTemplateById(rule.getTemplateId()), alert);
-                            }
-                        }
-                    } catch (AlertNoticeException e) {
-                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
-                    }
-                }
-            }
+            matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> {
+                noticeRules.forEach(rule -> {
+                    workerPool.executeNotify(() -> {
+                        rule.getReceiverId().stream().filter(receiverId -> rule.getTemplateId() != null)
+                                .forEach(receiverId -> {
+                                    try {
+                                        sendNoticeMsg(getOneReceiverById(receiverId),
+                                                getOneTemplateById(rule.getTemplateId()), alert);
+                                    } catch (AlertNoticeException e) {
+                                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                                    }
+                                });
+                    });
+                });
+            });
         }
     }
 
