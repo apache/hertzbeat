@@ -1,18 +1,19 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import com.alibaba.fastjson.JSON;
+import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import javax.annotation.PostConstruct;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.SparkDeskRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.ZhiPuAiResponse;
-import org.apache.hertzbeat.manager.pojo.dto.ZhiPuRequestParamDTO;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -20,9 +21,6 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
-import javax.annotation.PostConstruct;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * sparkDesk AI
@@ -54,6 +52,7 @@ public class SparkDeskAiServiceImpl implements AiService {
                         .build())
                 .build();
     }
+
     @Override
     public AiTypeEnum getType() {
         return AiTypeEnum.sparkDesk;
@@ -61,6 +60,7 @@ public class SparkDeskAiServiceImpl implements AiService {
 
     @Override
     public Flux<String> requestAi(String text) {
+
         try {
             checkParam(text, apiKey);
             SparkDeskRequestParamDTO zhiPuRequestParamDTO = SparkDeskRequestParamDTO.builder()
@@ -72,19 +72,16 @@ public class SparkDeskAiServiceImpl implements AiService {
                     .messages(List.of(new AiMessage(AiConstants.SparkDeskConstants.REQUEST_ROLE, text)))
                     .build();
 
-             webClient.post()
+            return webClient.post()
                     .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
                     .retrieve()
                     .bodyToFlux(String.class)
                     .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                    .map(this::convertToResponse)
-                    .doOnNext(System.out::println)
-                    .subscribe();
+                    .map(this::convertToResponse);
         } catch (Exception e) {
-           log.info("SparkDeskAiServiceImpl.requestAi exception:{}",e.toString());
-           throw e;
+            log.info("SparkDeskAiServiceImpl.requestAi exception:{}", e.toString());
+            throw e;
         }
-        return null;
 
     }
 
