@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, EventEmitter, Inject, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 import { Collector } from '../../../pojo/Collector';
@@ -29,7 +29,7 @@ import { ParamDefine } from '../../../pojo/ParamDefine';
   templateUrl: './monitor-form.component.html',
   styles: []
 })
-export class MonitorFormComponent implements OnInit {
+export class MonitorFormComponent {
   @Input() monitor!: any;
   @Input() loading!: boolean;
   @Input() loadingTip!: string;
@@ -47,8 +47,6 @@ export class MonitorFormComponent implements OnInit {
   @Output() readonly hostChange = new EventEmitter<string>();
 
   constructor() {}
-
-  ngOnInit(): void {}
 
   onDetect(formGroup: FormGroup) {
     if (formGroup.invalid) {
