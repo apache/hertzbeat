@@ -203,9 +203,9 @@ scheduler:
 # AI config
 # See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
 aiConfig:
-  # AI Type:zhiPu、alibabaAi
+  # AI Type:zhiPu、alibabaAi、kimiAi
   type:
-  # Model name：glm-4、qwen-turbo
-  model:
+  # Model name：glm-4、qwen-turbo、moonshot-v1-8k
+  model: glm-4
   # api key
   api-key:

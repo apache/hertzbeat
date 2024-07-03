@@ -305,13 +305,14 @@
   (nzOnCancel)="onAppSwitchModalCancel()"
   nzClosable="false"
   nzWidth="30%"
+  nzWrapClassName="monitor-select-menu-modal"
   [nzOkText]="null"
   [nzCancelText]="null"
   [nzOkLoading]="appSearchLoading"
 >
   <div *nzModalContent class="-inner-content">
     <app-monitor-select-menu
-      listStyle="border-right: 0px; overflow-y: hidden"
+      listStyle="border-right: 0px"
       [searchPlaceholder]="'monitors.center.search.placeholder' | i18n"
       [loading]="appSearchLoading"
       [data]="appSearchOrigin"
