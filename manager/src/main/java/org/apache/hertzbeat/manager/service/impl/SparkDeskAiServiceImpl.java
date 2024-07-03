@@ -99,7 +99,6 @@ public class SparkDeskAiServiceImpl implements AiService {
             log.info("SparkDeskAiServiceImpl.requestAi exception:{}", e.toString());
             throw e;
         }
-
     }
 
     private String convertToResponse(String aiRes) {
