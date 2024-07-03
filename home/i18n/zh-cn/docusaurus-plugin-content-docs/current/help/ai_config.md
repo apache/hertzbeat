@@ -33,5 +33,11 @@ keywords: [人工智能 AI]
 | model |  qwen-turbo、qwen-plus、qwen-max、qwen-max-0428、qwen-max-0403、qwen-max-0107、qwen-max-longcontext | https://help.aliyun.com/zh/dashscope/developer-reference/model-introduction?spm=a2c4g.11186623.0.0.4e0246c1RQFKMH   |
 | api-key  | xxxxxxxxxxx                                        | https://help.aliyun.com/zh/dashscope/developer-reference/activate-dashscope-and-create-an-api-key?spm=a2c4g.11186623.0.i10 |
 
+#### 月之暗面AI
 
+| 参数名称         | 示例                                                 | 链接                                            |
+|--------------|----------------------------------------------------|-----------------------------------------------|
+| type | kimiAi（必须和示例完全相同）                                   | 无                                             |
+| model | moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k | 无                                             |
+| api-key  | xxxxxxxxxxx                                        | https://platform.moonshot.cn/console/api-keys |
 
