@@ -37,6 +37,12 @@
           "link": "/monitors"
         },
         {
+          "text": "Monitor-bulletin",
+          "i18n": "menu.monitor.center",
+          "icon": "anticon-laptop",
+          "link": "/bulletin"
+        },
+        {
           "text": "Define",
           "i18n": "menu.advanced.define",
           "icon": "anticon-code",
