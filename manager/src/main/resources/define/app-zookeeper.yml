@@ -242,3 +242,119 @@ metrics:
       port: ^_^port^_^
       timeout: ^_^timeout^_^
       cmd: mntr
+  - name: envi
+    priority: 1
+    fields:
+      - field: zk_version
+        type: 1
+        i18n:
+          zh-CN: ZooKeeper版本
+          en-US: ZooKeeper Version
+      - field: hostname
+        type: 1
+        i18n:
+          zh-CN: 主机名
+          en-US: Host Name
+      - field: java_version
+        type: 1
+        i18n:
+          zh-CN: Java版本
+          en-US: Java Version
+      - field: java_vendor
+        type: 1
+        i18n:
+          zh-CN: Java供应商
+          en-US: Java Vendor
+      - field: java_home
+        type: 1
+        i18n:
+          zh-CN: Java主目录
+          en-US: Java Home
+      - field: java_class_path
+        type: 1
+        i18n:
+          zh-CN: Java类路径
+          en-US: Java Class Path
+      - field: java_library_path
+        type: 1
+        i18n:
+          zh-CN: Java库路径
+          en-US: Java Library Path
+      - field: java_io_tmpdir
+        type: 1
+        i18n:
+          zh-CN: Java临时目录
+          en-US: Java IO Temp Directory
+      - field: java_compiler
+        type: 1
+        i18n:
+          zh-CN: Java编译器
+          en-US: Java Compiler
+      - field: os_name
+        type: 1
+        i18n:
+          zh-CN: 操作系统名称
+          en-US: OS Name
+      - field: os_arch
+        type: 1
+        i18n:
+          zh-CN: 操作系统架构
+          en-US: OS Architecture
+      - field: os_version
+        type: 1
+        i18n:
+          zh-CN: 操作系统版本
+          en-US: OS Version
+      - field: user_name
+        type: 1
+        i18n:
+          zh-CN: 用户名
+          en-US: User Name
+      - field: user_home
+        type: 1
+        i18n:
+          zh-CN: 用户主目录
+          en-US: User Home
+      - field: user_dir
+        type: 1
+        i18n:
+          zh-CN: 用户当前目录
+          en-US: User Directory
+    aliasFields:
+      - zookeeper.version
+      - host.name
+      - java.version
+      - java.vendor
+      - user.dir
+      - java.home
+      - java.class.path
+      - java.library.path
+      - java.io.tmpdir
+      - java.compiler
+      - os.name
+      - os.arch
+      - os.version
+      - user.name
+      - user.home
+    calculates:
+      - zk_version=zookeeper.version
+      - hostname=host.name
+      - java_version=java.version
+      - java_vendor=java.vendor
+      - user_dir=user.dir
+      - java_home=java.home
+      - java_class_path=java.class.path
+      - java_library_path=java.library.path
+      - java_io_tmpdir=java.io.tmpdir
+      - java_compiler=java.compiler
+      - os_name=os.name
+      - os_arch=os.arch
+      - os_version=os.version
+      - user_name=user.name
+      - user_home=user.home
+    protocol: telnet
+    telnet:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      timeout: ^_^timeout^_^
+      cmd: envi
