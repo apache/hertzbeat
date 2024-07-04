@@ -265,6 +265,7 @@
   "alert.notice.receiver.people.placeholder": "选择接收对象",
   "alert.notice.receiver.people.name": "接收对象名称",
   "alert.notice.receiver.type": "通知方式",
+  "alert.notice.receiver.type.placeholder": "选择通知方式",
   "alert.notice.receiver.setting": "配置",
   "alert.notice.receiver.next": "下一步请配置您的[告警通知策略]！",
   "alert.notice.type.sms": "短信",
