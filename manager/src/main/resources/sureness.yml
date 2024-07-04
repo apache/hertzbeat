@@ -69,6 +69,7 @@ excludedResource:
   - /api/apps/hierarchy===get
   - /api/push/**===*
   - /api/status/page/public/**===*
+  - /api/bulletin/**===*
   # web ui resource
   - /===get
   - /dashboard/**===get

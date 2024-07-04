@@ -86,18 +86,6 @@ public class AlertDefinesController {
                         criteriaBuilder.like(
                                 criteriaBuilder.lower(root.get("metric")),
                                 "%" + search.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("field")),
-                                "%" + search.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("expr")),
-                                "%" + search.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("template")),
-                                "%" + search.toLowerCase() + "%"
                         )
                 );
                 andList.add(predicate);
