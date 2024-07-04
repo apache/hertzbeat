@@ -80,7 +80,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   refreshWordCloudContent(): void {
     this.wordCloudDataLoading = true;
-    let tagsInit$ = this.tagSvc.loadTags(undefined, 1, 0, 10000)
+    let tagsInit$ = this.tagSvc
+      .loadTags(undefined, 1, 0, 10000)
       .pipe(finalize(() => (this.wordCloudDataLoading = false)))
       .subscribe(
         message => {
@@ -567,7 +568,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   refreshAlertContentList(): void {
     this.alertContentLoading = true;
-    let alertsInit$ = this.alertSvc.loadAlerts(undefined, undefined, undefined, 0, 10)
+    let alertsInit$ = this.alertSvc
+      .loadAlerts(undefined, undefined, undefined, 0, 10)
       .pipe(finalize(() => (this.alertContentLoading = false)))
       .subscribe(
         message => {
@@ -589,7 +591,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   refreshCollectorContentList(): void {
     this.collectorsLoading = true;
-    let collectorInit$ = this.collectorSvc.getCollectors()
+    let collectorInit$ = this.collectorSvc
+      .getCollectors()
       .pipe(finalize(() => (this.collectorsLoading = false)))
       .subscribe(
         message => {
