@@ -15,40 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
 
+package org.apache.hertzbeat.common.entity.manager.bulletin;
+
+import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 import java.util.List;
-import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
+import lombok.Data;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.TagItem;
 
-/**
- * Bulletin Service
- */
-public interface BulletinService {
+@Data
+public class BulletinDto {
 
     /**
-     * validate Bulletin
+     * Monitor type eg: jvm, tomcat
      */
-    void validate(Bulletin bulletin, Boolean isModify) throws IllegalArgumentException;
+    private String app;
 
     /**
-     * List Bulletin
+     * Monitor metrics
      */
-    List<Bulletin> listBulletin();
+    private List<String> metrics;
 
     /**
-     * Save Bulletin
+     * Monitor tags eg: host:name
      */
-    void saveBulletin(Bulletin bulletin);
-
-    /**
-     * Dynamic conditional query
-     * @param specification Query conditions
-     * @param pageRequest Paging parameters
-     * @return The query results
-     */
-    Page<Bulletin> getBulletins(Specification<Bulletin> specification, PageRequest pageRequest);
+    private List<TagItem> tags;
 
 }

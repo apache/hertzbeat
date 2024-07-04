@@ -23,7 +23,7 @@ package org.apache.hertzbeat.manager.service.impl;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.manager.dao.BulletinDao;
-import org.apache.hertzbeat.manager.pojo.dto.Bulletin;
+import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.manager.service.BulletinService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

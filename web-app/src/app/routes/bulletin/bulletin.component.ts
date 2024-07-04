@@ -39,6 +39,8 @@ import { AlertDefineService } from '../../service/alert-define.service';
 import { AppDefineService } from '../../service/app-define.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
+import {BulletinDefine} from "../../pojo/BulletinDefine";
+import {BulletinDefineService} from "../../service/bulletin-define.service";
 
 const AVAILABILITY = 'availability';
 
@@ -54,6 +56,7 @@ export class BulletinComponent implements OnInit {
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
+    private bulletinDefineSvc: BulletinDefineService,
     private tagSvc: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
@@ -61,7 +64,7 @@ export class BulletinComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
-  defines!: AlertDefine[];
+  defines!: BulletinDefine[];
   tableLoading: boolean = true;
   checkedDefineIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
@@ -73,7 +76,7 @@ export class BulletinComponent implements OnInit {
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
   ];
   ngOnInit(): void {
-    this.loadAlertDefineTable();
+    this.loadBulletinDefineTable();
     // 查询监控层级
     const getHierarchy$ = this.appDefineSvc
       .getAppHierarchy(this.i18nSvc.defaultLang)
@@ -107,12 +110,12 @@ export class BulletinComponent implements OnInit {
   }
 
   sync() {
-    this.loadAlertDefineTable();
+    this.loadBulletinDefineTable();
   }
 
-  loadAlertDefineTable() {
+  loadBulletinDefineTable() {
     this.tableLoading = true;
-    let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
+    let bulletinDefineInit$ = this.bulletinDefineSvc.getBulletinDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;
@@ -125,32 +128,33 @@ export class BulletinComponent implements OnInit {
         } else {
           console.warn(message.msg);
         }
-        alertDefineInit$.unsubscribe();
+        bulletinDefineInit$.unsubscribe();
       },
       error => {
         this.tableLoading = false;
-        alertDefineInit$.unsubscribe();
+        bulletinDefineInit$.unsubscribe();
       }
     );
   }
 
   onNewBulletinDefine() {
-    this.define = new AlertDefine();
+    this.define = new BulletinDefine();
     this.define.tags = [];
+    this.define.metrics = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
   }
 
-  onEditOneAlertDefine(alertDefineId: number) {
+  onEditOneBulletinDefine(alertDefineId: number) {
     if (alertDefineId == null) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
       return;
     }
-    this.editAlertDefine(alertDefineId);
+    this.editBulletinDefine(alertDefineId);
   }
 
-  onEditAlertDefine() {
+  onEditBulletinDefine() {
     // 编辑时只能选中一个
     if (this.checkedDefineIds == null || this.checkedDefineIds.size === 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
@@ -162,13 +166,13 @@ export class BulletinComponent implements OnInit {
     }
     let alertDefineId = 0;
     this.checkedDefineIds.forEach(item => (alertDefineId = item));
-    this.editAlertDefine(alertDefineId);
+    this.editBulletinDefine(alertDefineId);
   }
 
-  updateAlertDefine(alertDefine: AlertDefine) {
+  updateBulletinDefine(alertDefine: AlertDefine) {
     this.tableLoading = true;
-    const updateDefine$ = this.alertDefineSvc
-      .editAlertDefine(alertDefine)
+    const updateDefine$ = this.bulletinDefineSvc
+      .editBulletinDefine(alertDefine)
       .pipe(
         finalize(() => {
           updateDefine$.unsubscribe();
@@ -182,7 +186,7 @@ export class BulletinComponent implements OnInit {
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
           }
-          this.loadAlertDefineTable();
+          this.loadBulletinDefineTable();
           this.tableLoading = false;
         },
         error => {
@@ -192,13 +196,13 @@ export class BulletinComponent implements OnInit {
       );
   }
 
-  editAlertDefine(alertDefineId: number) {
+  editBulletinDefine(alertDefineId: number) {
     this.isManageModalAdd = false;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
     // 查询告警定义信息
-    const getDefine$ = this.alertDefineSvc
-      .getAlertDefine(alertDefineId)
+    const getDefine$ = this.bulletinDefineSvc
+      .getBulletinDefine(alertDefineId)
       .pipe(
         finalize(() => {
           getDefine$.unsubscribe();
@@ -228,7 +232,7 @@ export class BulletinComponent implements OnInit {
       );
   }
 
-  onDeleteAlertDefines() {
+  onDeleteBulletinDefines() {
     if (this.checkedDefineIds == null || this.checkedDefineIds.size === 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
@@ -240,11 +244,11 @@ export class BulletinComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.deleteAlertDefines(this.checkedDefineIds)
+      nzOnOk: () => this.deleteBulletinDefines(this.checkedDefineIds)
     });
   }
 
-  onDeleteOneAlertDefine(alertDefineId: number) {
+  onDeleteOneBulletinDefine(alertDefineId: number) {
     let defineIds = new Set<number>();
     defineIds.add(alertDefineId);
     this.modal.confirm({
@@ -254,23 +258,23 @@ export class BulletinComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.deleteAlertDefines(defineIds)
+      nzOnOk: () => this.deleteBulletinDefines(defineIds)
     });
   }
 
-  deleteAlertDefines(defineIds: Set<number>) {
+  deleteBulletinDefines(defineIds: Set<number>) {
     if (defineIds == null || defineIds.size == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
     this.tableLoading = true;
-    const deleteDefines$ = this.alertDefineSvc.deleteAlertDefines(defineIds).subscribe(
+    const deleteDefines$ = this.bulletinDefineSvc.deleteBulletinDefines(defineIds).subscribe(
       message => {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
           this.updatePageIndex(defineIds.size);
-          this.loadAlertDefineTable();
+          this.loadBulletinDefineTable();
         } else {
           this.tableLoading = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
@@ -289,75 +293,6 @@ export class BulletinComponent implements OnInit {
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
-  onExportDefines() {
-    if (this.checkedDefineIds == null || this.checkedDefineIds.size == 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
-      return;
-    }
-    this.isSwitchExportTypeModalVisible = true;
-  }
-
-  exportDefines(type: string) {
-    if (this.checkedDefineIds == null || this.checkedDefineIds.size == 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-export'), '');
-      return;
-    }
-    switch (type) {
-      case 'JSON':
-        this.exportJsonButtonLoading = true;
-        break;
-      case 'EXCEL':
-        this.exportExcelButtonLoading = true;
-        break;
-      case 'YAML':
-        this.exportYamlButtonLoading = true;
-        break;
-    }
-    const exportDefines$ = this.alertDefineSvc
-      .exportAlertDefines(this.checkedDefineIds, type)
-      .pipe(
-        finalize(() => {
-          this.exportYamlButtonLoading = false;
-          this.exportExcelButtonLoading = false;
-          this.exportJsonButtonLoading = false;
-          exportDefines$.unsubscribe();
-        })
-      )
-      .subscribe(
-        response => {
-          const message = response.body!;
-          if (message.type == 'application/json') {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), '');
-          } else {
-            const blob = new Blob([message], { type: response.headers.get('Content-Type')! });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.download = response.headers.get('Content-Disposition')!.split(';')[1].split('filename=')[1];
-            a.href = url;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            this.isSwitchExportTypeModalVisible = false;
-          }
-        },
-        error => {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.export-fail'), error.msg);
-        }
-      );
-  }
-
-  onImportDefines(info: NzUploadChangeParam): void {
-    if (info.file.response) {
-      this.tableLoading = true;
-      const message = info.file.response;
-      if (message.code === 0) {
-        this.notifySvc.success(this.i18nSvc.fanyi('common.notify.import-success'), '');
-        this.loadAlertDefineTable();
-      } else {
-        this.tableLoading = false;
-        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.import-fail'), message.msg);
-      }
-    }
-  }
 
   // begin: 列表多选分页逻辑
   checkedAll: boolean = false;
@@ -384,7 +319,7 @@ export class BulletinComponent implements OnInit {
     const { pageSize, pageIndex, sort, filter } = params;
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
-    this.loadAlertDefineTable();
+    this.loadBulletinDefineTable();
   }
   // end: 列表多选逻辑
 
@@ -392,7 +327,7 @@ export class BulletinComponent implements OnInit {
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
-  define: AlertDefine = new AlertDefine();
+  define: BulletinDefine = new BulletinDefine();
   cascadeValues: string[] = [];
   currentMetrics: any[] = [];
   alertRules: any[] = [{}];
@@ -428,7 +363,7 @@ export class BulletinComponent implements OnInit {
     });
   }
 
-  switchAlertRuleShow() {
+  switchBulletinRuleShow() {
     if (this.isExpr) {
       let expr = this.calculateAlertRuleExpr();
       if (expr != '') {
@@ -437,15 +372,15 @@ export class BulletinComponent implements OnInit {
     }
   }
 
-  onAddNewAlertRule() {
+  onAddNewBulletinRule() {
     this.alertRules.push({});
   }
 
-  onRemoveAlertRule(index: number) {
+  onRemoveBulletinRule(index: number) {
     this.alertRules.splice(index, 1);
   }
 
-  calculateAlertRuleExpr() {
+  calculateBulletinRuleExpr() {
     let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined);
     let index = 0;
     let expr = '';
@@ -471,7 +406,7 @@ export class BulletinComponent implements OnInit {
     return expr;
   }
 
-  renderAlertRuleExpr(expr: string) {
+  renderBulletinRuleExpr(expr: string) {
     if (expr == undefined || expr == '') {
       return;
     }
@@ -545,19 +480,19 @@ export class BulletinComponent implements OnInit {
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.define.app = this.cascadeValues[0];
-    this.define.metric = this.cascadeValues[1];
-    if (this.cascadeValues.length == 3) {
-      this.define.field = this.cascadeValues[2];
-      if (!this.isExpr) {
-        let expr = this.calculateAlertRuleExpr();
-        if (expr != '') {
-          this.define.expr = expr;
-        }
-      }
-    } else {
-      this.define.expr = '';
-      this.define.field = '';
-    }
+    // this.define.metric = this.cascadeValues[1];
+    // if (this.cascadeValues.length == 3) {
+    //   this.define.field = this.cascadeValues[2];
+    //   if (!this.isExpr) {
+    //     let expr = this.calculateAlertRuleExpr();
+    //     if (expr != '') {
+    //       this.define.expr = expr;
+    //     }
+    //   }
+    // } else {
+    //   this.define.expr = '';
+    //   this.define.field = '';
+    // }
     if (this.isManageModalAdd) {
       const modalOk$ = this.alertDefineSvc
         .newAlertDefine(this.define)
@@ -596,7 +531,7 @@ export class BulletinComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-              this.loadAlertDefineTable();
+              this.loadBulletinDefineTable();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }

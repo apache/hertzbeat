@@ -17,16 +17,12 @@
  * under the License.
  */
 
-export class Bulletin {
-  id!: number;
-  name!: string;
+import {Monitor} from "./Monitor";
+
+export class BulletinDefine {
+
   app!: string;
-  host!: string;
-  // Monitoring status 0: Paused, 1: Up, 2: Down
-  status!: number;
+  tags!: string[];
   metrics!: string[];
-  creator!: string;
-  modifier!: string;
-  gmtCreate!: number;
-  gmtUpdate!: number;
+
 }

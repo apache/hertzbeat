@@ -183,7 +183,7 @@
 <!-- 新增或修改告警定义弹出框 -->
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="isManageModalAdd ? ('alert.setting.new' | i18n) : ('alert.setting.edit' | i18n)"
+  [nzTitle]="isManageModalAdd ? '新增看板' : '编辑看板'"
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
@@ -230,7 +230,7 @@
           <div *ngIf="cascadeValues.length != 2 && isExpr" style="margin-top: 5px">
             <nz-textarea-count [nzMaxCharacterCount]="100">
               <textarea
-                [(ngModel)]="define.expr"
+                [(ngModel)]="define.metrics"
                 required
                 rows="3"
                 nz-input
@@ -433,27 +433,11 @@
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="priority" [nzTooltipTitle]="'alert.setting.priority.tip' | i18n">
           {{ 'alert.priority' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-select
-            [(ngModel)]="define.priority"
-            [nzPlaceHolder]="'alert.notice.rule.priority.placeholder' | i18n"
-            name="priority"
-            id="priority"
-          >
-            <nz-option [nzValue]="0" [nzLabel]="'alert.priority.0' | i18n"></nz-option>
-            <nz-option [nzValue]="1" [nzLabel]="'alert.priority.1' | i18n"></nz-option>
-            <nz-option [nzValue]="2" [nzLabel]="'alert.priority.2' | i18n"></nz-option>
-          </nz-select>
-        </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="duration" [nzTooltipTitle]="'alert.setting.times.tip' | i18n">
           {{ 'alert.setting.times' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-input-number [(ngModel)]="define.times" [nzMin]="1" [nzMax]="999" [nzStep]="1" required name="duration" id="duration">
-          </nz-input-number>
-        </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="template" nzRequired="true" [nzTooltipTitle]="'alert.setting.template.label' | i18n">
@@ -462,7 +446,7 @@
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-textarea-count [nzMaxCharacterCount]="200">
             <textarea
-              [(ngModel)]="define.template"
+              [(ngModel)]="define.metrics"
               rows="3"
               nz-input
               required
@@ -503,51 +487,16 @@
         <nz-form-label nzSpan="7" nzFor="tags" [nzTooltipTitle]="'tag.bind.tip' | i18n">
           {{ 'tag.bind' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-tag
-            *ngFor="let tag of define.tags; let i = index"
-            [nzMode]="'closeable'"
-            (nzOnClose)="onRemoveTag(tag)"
-            style="margin-top: 4px"
-          >
-            {{ sliceTagName(tag) }}
-          </nz-tag>
-          <a (click)="onShowTagsModal()">
-            <nz-tag style="margin-top: 4px">
-              <i nz-icon nzType="plus"></i>
-              {{ 'tag.new' | i18n }}
-            </nz-tag>
-          </a>
-        </nz-form-control>
-      </nz-form-item>
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="preset" [nzTooltipTitle]="'alert.setting.default.tip' | i18n">
-          {{ 'alert.setting.default' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="12">
-          <nz-switch [(ngModel)]="define.preset" name="preset" id="preset"></nz-switch>
-        </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="recoverNotice" [nzTooltipTitle]="'alert.setting.recover-notice.tip' | i18n">
           {{ 'alert.setting.recover-notice' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="12">
-          <nz-switch
-            [(ngModel)]="define.recoverNotice"
-            [ngModelOptions]="{ standalone: true }"
-            name="recoverNotice"
-            id="recoverNotice"
-          ></nz-switch>
-        </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzRequired="true" nzFor="enable" [nzTooltipTitle]="'alert.setting.enable.tip' | i18n">
           {{ 'alert.setting.enable' | i18n }}
         </nz-form-label>
-        <nz-form-control nzSpan="12">
-          <nz-switch [(ngModel)]="define.enable" [ngModelOptions]="{ standalone: true }" name="enable" id="enable"></nz-switch>
-        </nz-form-control>
       </nz-form-item>
     </form>
   </div>
