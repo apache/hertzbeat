@@ -6,12 +6,18 @@ import { DelonACLModule } from '@delon/acl';
 import { DelonFormModule } from '@delon/form';
 import { AlainThemeModule } from '@delon/theme';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
+import { NzDividerComponent } from 'ng-zorro-antd/divider';
+import { NzRadioComponent, NzRadioGroupComponent } from 'ng-zorro-antd/radio';
+import { NzSwitchComponent } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 
-import { HelpMassageShowComponent } from './components/help-massage-show/help-massage-show.component';
+import { FormItemComponent } from './components/form-item/form-item.component';
+import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
 import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
 import { MetricsFieldInputComponent } from './components/metrics-field-input/metrics-field-input.component';
+import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
+import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { ElapsedTimePipe } from './pipe/elapsed-time.pipe';
 import { I18nElsePipe } from './pipe/i18n-else.pipe';
 import { TimezonePipe } from './pipe/timezone.pipe';
@@ -22,8 +28,11 @@ const ThirdModules: Array<Type<void>> = [];
 const COMPONENTS: Array<Type<void>> = [
   KeyValueInputComponent,
   MultiFuncInputComponent,
-  HelpMassageShowComponent,
-  MetricsFieldInputComponent
+  HelpMessageShowComponent,
+  MetricsFieldInputComponent,
+  ToolbarComponent,
+  FormItemComponent,
+  MonitorSelectMenuComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
 
@@ -40,9 +49,13 @@ const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePi
     ...SHARED_ZORRO_MODULES,
     ...ThirdModules,
     NzBreadCrumbModule,
-    NzTagModule
+    NzTagModule,
+    NzDividerComponent,
+    NzRadioGroupComponent,
+    NzRadioComponent,
+    NzSwitchComponent
   ],
-  declarations: [...COMPONENTS, ...DIRECTIVES, HelpMassageShowComponent],
+  declarations: [...COMPONENTS, ...DIRECTIVES, HelpMessageShowComponent],
   exports: [
     CommonModule,
     FormsModule,

@@ -23,6 +23,10 @@
     "message": "SSH协议",
     "description": "The label for category ssh in sidebar docs"
   },
+  "sidebar.docs.category.telnet": {
+    "message": "TELNET协议",
+    "description": "The label for category telnet in sidebar docs"
+  },
   "sidebar.docs.category.help": {
     "message": "帮助文档",
     "description": "The label for category help in sidebar docs"
@@ -122,5 +126,9 @@
   "sidebar.docs.category.llm": {
     "message": "Ai大模型监控",
     "description": "The label for category llm in sidebar docs"
+  },
+  "sidebar.docs.category.aiConfig": {
+    "message": "Ai大模型配置",
+    "description": "The label for category aiConfig in sidebar docs"
   }
 }

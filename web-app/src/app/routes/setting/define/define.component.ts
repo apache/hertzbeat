@@ -43,10 +43,13 @@ export class DefineComponent implements OnInit {
     private modal: NzModalService,
     private startUpSvc: StartupService,
     private route: ActivatedRoute,
+    private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  menuLoading: boolean = false;
   appMenusArr: any[][] = [];
+  appMenusArrByFilter: any[][] = [];
   appLabel: Record<string, string> = {};
   loading = false;
   code: string = '';
@@ -69,28 +72,30 @@ export class DefineComponent implements OnInit {
   }
 
   loadMenus() {
+    this.menuLoading = true;
+    this.appMenusArrByFilter = [];
     const getHierarchy$ = this.appDefineSvc
       .getAppHierarchy(this.i18nSvc.defaultLang)
       .pipe(
         finalize(() => {
           getHierarchy$.unsubscribe();
+          this.menuLoading = false;
         })
       )
       .subscribe(
         message => {
           if (message.code === 0) {
-            let appMenus: Record<string, any[]> = {};
+            let appMenus: Record<string, any> = {};
             message.data.forEach((app: any) => {
               if (app.value == 'prometheus') {
                 return;
               }
-              app.selected = this.currentApp != null && this.currentApp === app.value;
               this.appLabel[app.value] = app.label;
               let menus = appMenus[app.category];
               if (menus == undefined) {
-                menus = [app];
+                menus = { label: this.renderCategoryName(app.category), child: [app] };
               } else {
-                menus.push(app);
+                menus.child.push(app);
               }
               appMenus[app.category] = menus;
             });
@@ -106,6 +111,10 @@ export class DefineComponent implements OnInit {
           console.warn(error.msg);
         }
       );
+  }
+
+  onMenuSelectedChanged(selected: string) {
+    this.router.navigateByUrl(`/setting/define?app=${selected}`);
   }
 
   loadAppDefineContent(app: any) {
@@ -181,6 +190,7 @@ export class DefineComponent implements OnInit {
     this.code = `${this.i18nSvc.fanyi('define.new.code')}\n\n\n\n\n`;
     this.originalCode = this.i18nSvc.fanyi('define.new.code');
   }
+
   saveAndApply() {
     this.saveLoading = true;
     const saveDefine$ = this.appDefineSvc
