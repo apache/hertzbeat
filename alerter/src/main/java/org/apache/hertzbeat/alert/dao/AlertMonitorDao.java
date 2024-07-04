@@ -36,6 +36,13 @@ public interface AlertMonitorDao extends JpaRepository<Monitor, Long>, JpaSpecif
      * @return Monitor the list
      */
     List<Monitor> findMonitorsByStatus(Byte status);
+
+    /**
+     * Query monitors By monitorIds
+     * @param monitorIds monitorId list
+     * @return Monitor the list
+     */
+    List<Monitor> findMonitorsByIdIn(List<Long> monitorIds);
     
     /**
      * find monitor bind tags by monitorId
