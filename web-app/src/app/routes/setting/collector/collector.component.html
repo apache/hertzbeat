@@ -140,39 +140,41 @@
         {{ (data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}
       </td>
       <td nzAlign="center">
-        <button
-          *ngIf="data.collector.status == 1"
-          [disabled]="data.collector.name == 'main-default-collector'"
-          nz-button
-          nzType="primary"
-          (click)="onGoOnlineOneCollector(data.collector.name)"
-          nz-tooltip
-          [nzTooltipTitle]="'collector.online' | i18n"
-        >
-          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          *ngIf="data.collector.status == 0"
-          [disabled]="data.collector.name == 'main-default-collector'"
-          nz-button
-          nzType="primary"
-          (click)="onGoOfflineOneCollector(data.collector.name)"
-          nz-tooltip
-          [nzTooltipTitle]="'collector.offline' | i18n"
-        >
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          [disabled]="data.collector.name == 'main-default-collector'"
-          nz-button
-          nzType="primary"
-          nzDanger
-          (click)="onDeleteOneCollector(data.collector.name)"
-          nz-tooltip
-          [nzTooltipTitle]="'collector.delete' | i18n"
-        >
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
+        <div class="actions">
+          <button
+            *ngIf="data.collector.status == 1"
+            [disabled]="data.collector.name == 'main-default-collector'"
+            nz-button
+            nzType="primary"
+            (click)="onGoOnlineOneCollector(data.collector.name)"
+            nz-tooltip
+            [nzTooltipTitle]="'collector.online' | i18n"
+          >
+            <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+          </button>
+          <button
+            *ngIf="data.collector.status == 0"
+            [disabled]="data.collector.name == 'main-default-collector'"
+            nz-button
+            nzType="primary"
+            (click)="onGoOfflineOneCollector(data.collector.name)"
+            nz-tooltip
+            [nzTooltipTitle]="'collector.offline' | i18n"
+          >
+            <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+          </button>
+          <button
+            [disabled]="data.collector.name == 'main-default-collector'"
+            nz-button
+            nzType="primary"
+            nzDanger
+            (click)="onDeleteOneCollector(data.collector.name)"
+            nz-tooltip
+            [nzTooltipTitle]="'collector.delete' | i18n"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
       </td>
     </tr>
   </tbody>
