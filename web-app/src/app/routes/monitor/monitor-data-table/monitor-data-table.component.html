@@ -19,10 +19,11 @@
 
 <nz-card
   nzHoverable
-  style="height: 100%; display: flex; flex-direction: column"
+  [style]="{ height: height || '100%', display: 'flex', flexDirection: 'column' }"
   [nzBordered]="true"
-  [nzBodyStyle]="{ overflow: 'auto' }"
+  [nzBodyStyle]="{ overflow: !monitor ? 'hidden' : 'auto' }"
   [nzTitle]="card_title"
+  [nzLoading]="loading"
   [nzExtra]="!monitor ? metrics_card_extra : monitor_card_extra"
 >
   <div *ngIf="!!monitor">
@@ -113,6 +114,7 @@
     [nzFrontPagination]="false"
     [nzShowPagination]="false"
     [nzData]="valueRows"
+    [nzScroll]="{ y: scrollY }"
     #smallTable
   >
     <thead>
@@ -139,6 +141,7 @@
     [nzFrontPagination]="false"
     [nzShowPagination]="false"
     [nzData]="valueRows"
+    [nzScroll]="{ y: scrollY }"
   >
     <thead>
       <tr>
