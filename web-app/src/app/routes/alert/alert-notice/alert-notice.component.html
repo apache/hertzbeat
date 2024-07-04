@@ -526,7 +526,14 @@
       <nz-form-item>
         <nz-form-label nzFor="type" nzRequired="true" nzSpan="7">{{ 'alert.notice.receiver.type' | i18n }} </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="12">
-          <nz-select [(ngModel)]="receiver.type" [nzOptionOverflowSize]="10" id="type" name="type" [nzPlaceHolder]="'alert.notice.receiver.type.placeholder' | i18n" required>
+          <nz-select
+            [(ngModel)]="receiver.type"
+            [nzOptionOverflowSize]="10"
+            id="type"
+            name="type"
+            [nzPlaceHolder]="'alert.notice.receiver.type.placeholder' | i18n"
+            required
+          >
             <nz-option [nzLabel]="'alert.notice.type.sms' | i18n" [nzValue]="0"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.email' | i18n" [nzValue]="1"></nz-option>
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
@@ -797,7 +804,14 @@
       <nz-form-item>
         <nz-form-label nzFor="type" nzRequired="true" nzSpan="4">{{ 'alert.notice.receiver.type' | i18n }} </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" nzSpan="18">
-          <nz-select [(ngModel)]="template.type" [nzOptionOverflowSize]="10" id="type1" name="type" [nzPlaceHolder]="'alert.notice.receiver.type.placeholder' | i18n" required>
+          <nz-select
+            [(ngModel)]="template.type"
+            [nzOptionOverflowSize]="10"
+            id="type1"
+            name="type"
+            [nzPlaceHolder]="'alert.notice.receiver.type.placeholder' | i18n"
+            required
+          >
             <nz-option [nzLabel]="'alert.notice.type.sms' | i18n" [nzValue]="0"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.email' | i18n" [nzValue]="1"></nz-option>
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
