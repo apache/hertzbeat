@@ -265,6 +265,7 @@
   "alert.notice.receiver.people.placeholder": "Select a receiver",
   "alert.notice.receiver.people.name": "Receiver Name",
   "alert.notice.receiver.type": "Notice Type",
+  "alert.notice.receiver.type.placeholder": "Select a notice type",
   "alert.notice.receiver.setting": "Setting",
   "alert.notice.receiver.next": "Please config your [Alert Notice Policy] next step！",
   "alert.notice.type.sms": "SMS",
