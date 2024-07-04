@@ -507,9 +507,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
             let appMenus: Record<string, any> = {};
             message.data.forEach((app: any) => {
               let menus = appMenus[app.category];
-              app.categoryLabel = this.i18nSvc.fanyi(`monitor.category.${app.category}`);
-              if (app.categoryLabel == `monitor.category.${app.category}`) {
-                app.categoryLabel = this.i18nSvc.fanyi('monitor.category.custom');
+              app.categoryLabel = this.i18nSvc.fanyi(`menu.monitor.${app.category}`);
+              if (app.categoryLabel == `menu.monitor.${app.category}`) {
+                app.categoryLabel = app.category.toUpperCase();
               }
               if (menus == undefined) {
                 menus = { label: app.categoryLabel, child: [app] };

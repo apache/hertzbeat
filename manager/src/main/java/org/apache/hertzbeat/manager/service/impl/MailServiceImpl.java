@@ -95,12 +95,6 @@ public class MailServiceImpl implements MailService {
         model.put("consoleUrl", alerterProperties.getConsoleUrl());
         model.put("nameContent", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
-        if (noticeTemplate == null) {
-            noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType((byte) 1);
-        }
-        if (noticeTemplate == null) {
-            throw new NullPointerException("email does not have mapping default notice template");
-        }
         StringTemplateLoader stringLoader = new StringTemplateLoader();
         String templateName = "mailTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
