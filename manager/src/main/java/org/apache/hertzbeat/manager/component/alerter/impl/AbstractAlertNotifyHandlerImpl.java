@@ -107,13 +107,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("content", alert.getContent());
         model.put("tagsLabel", bundle.getString("alerter.notify.tags"));
         model.put("tags", alert.getTags());
-        if (noticeTemplate == null) {
-            noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType(type());
-        }
-        if (noticeTemplate == null) {
-            log.error("alert does not have mapping default notice template. type: {}.", type());
-            throw new NullPointerException(type() + " does not have mapping default notice template");
-        }
         // Single instance reuse cache considers mulitple-threading issues
         String templateName = "freeMakerTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
