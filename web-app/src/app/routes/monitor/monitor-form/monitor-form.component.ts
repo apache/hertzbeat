@@ -27,7 +27,7 @@ import { ParamDefine } from '../../../pojo/ParamDefine';
 @Component({
   selector: 'app-monitor-form',
   templateUrl: './monitor-form.component.html',
-  styles: []
+  styleUrls: ['./monitor-form.component.less']
 })
 export class MonitorFormComponent {
   @Input() monitor!: any;
