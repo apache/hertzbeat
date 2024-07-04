@@ -118,19 +118,27 @@
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertSilence(data)" name="enable"></nz-switch>
       </td>
       <td nzAlign="center">
-        <button nz-button nzType="primary" (click)="onEditAlertSilence(data.id)" nz-tooltip [nzTooltipTitle]="'alert.silence.edit' | i18n">
-          <i nz-icon nzType="edit" nzTheme="outline"></i>
-        </button>
-        <button
-          nz-button
-          nzDanger
-          nzType="primary"
-          (click)="onDeleteOneAlertSilence(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.silence.delete' | i18n"
-        >
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
+        <div class="actions">
+          <button
+            nz-button
+            nzType="primary"
+            (click)="onEditAlertSilence(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.silence.edit' | i18n"
+          >
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+          </button>
+          <button
+            nz-button
+            nzDanger
+            nzType="primary"
+            (click)="onDeleteOneAlertSilence(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.silence.delete' | i18n"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
       </td>
     </tr>
   </tbody>
