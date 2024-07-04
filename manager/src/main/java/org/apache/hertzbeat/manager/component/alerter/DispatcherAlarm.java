@@ -86,7 +86,15 @@ public class DispatcherAlarm implements InitializingBean {
         }
         byte type = receiver.getType();
         if (alertNotifyHandlerMap.containsKey(type)) {
-            alertNotifyHandlerMap.get(type).send(receiver, noticeTemplate, alert);
+            AlertNotifyHandler alertNotifyHandler = alertNotifyHandlerMap.get(type);
+            if (noticeTemplate == null) {
+                noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType(alertNotifyHandler.type());
+            }
+            if (noticeTemplate == null) {
+                log.error("alert does not have mapping default notice template. type: {}.", alertNotifyHandler.type());
+                throw new NullPointerException(alertNotifyHandler.type() + " does not have mapping default notice template");
+            }
+            alertNotifyHandler.send(receiver, noticeTemplate, alert);
             return true;
         }
         return false;
@@ -97,6 +105,9 @@ public class DispatcherAlarm implements InitializingBean {
     }
 
     private NoticeTemplate getOneTemplateById(Long id) {
+        if (id == null) {
+            return null;
+        }
         return noticeConfigService.getOneTemplateById(id);
     }
 
@@ -135,7 +146,7 @@ public class DispatcherAlarm implements InitializingBean {
             matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> {
                 noticeRules.forEach(rule -> {
                     workerPool.executeNotify(() -> {
-                        rule.getReceiverId().stream().filter(receiverId -> rule.getTemplateId() != null)
+                        rule.getReceiverId()
                                 .forEach(receiverId -> {
                                     try {
                                         sendNoticeMsg(getOneReceiverById(receiverId),
