@@ -63,18 +63,12 @@
     </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
-    <input
-      style="width: 200px; text-align: center"
-      nz-input
-      type="text"
+    <app-multi-func-input
+      groupStyle="width: 250px;"
       [placeholder]="'alert.setting.search' | i18n"
-      nzSize="default"
-      (keyup.enter)="loadAlertDefineTable()"
-      [(ngModel)]="search"
+      [(value)]="search"
+      (valueChange)="loadAlertDefineTable()"
     />
-    <button nz-button nzType="primary" (click)="loadAlertDefineTable()">
-      {{ 'common.search' | i18n }}
-    </button>
   </ng-template>
 </app-toolbar>
 
