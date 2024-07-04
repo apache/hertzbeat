@@ -18,8 +18,8 @@
  */
 
 import { Component, Input, OnInit } from '@angular/core';
-import { finalize } from 'rxjs/operators';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { finalize } from 'rxjs/operators';
 
 import { MonitorService } from '../../../service/monitor.service';
 
@@ -69,28 +69,29 @@ export class MonitorDataTableComponent implements OnInit {
   loadData() {
     this.loading = true;
     // 读取实时指标数据
-    let metricData$ = this.monitorSvc.getMonitorMetricsData(this.monitorId, this.metrics)
-      .pipe(finalize(() => this.loading = false))
+    let metricData$ = this.monitorSvc
+      .getMonitorMetricsData(this.monitorId, this.metrics)
+      .pipe(finalize(() => (this.loading = false)))
       .subscribe(
-      message => {
-        metricData$.unsubscribe();
-        if (message.code === 0 && message.data) {
-          this.time = message.data.time;
-          this.fields = message.data.fields;
-          this.valueRows = message.data.valueRows;
-          if (this.valueRows.length == 1) {
-            this.isTable = false;
-            this.rowValues = this.valueRows[0].values;
+        message => {
+          metricData$.unsubscribe();
+          if (message.code === 0 && message.data) {
+            this.time = message.data.time;
+            this.fields = message.data.fields;
+            this.valueRows = message.data.valueRows;
+            if (this.valueRows.length == 1) {
+              this.isTable = false;
+              this.rowValues = this.valueRows[0].values;
+            }
+          } else if (message.code !== 0) {
+            this.notifySvc.warning(`${this.metrics}:${message.msg}`, '');
+            console.info(`${this.metrics}:${message.msg}`);
           }
-        } else if (message.code !== 0) {
-          this.notifySvc.warning(`${this.metrics}:${message.msg}`, '');
-          console.info(`${this.metrics}:${message.msg}`);
+        },
+        error => {
+          console.error(error.msg);
+          metricData$.unsubscribe();
         }
-      },
-      error => {
-        console.error(error.msg);
-        metricData$.unsubscribe();
-      }
-    );
+      );
   }
 }
