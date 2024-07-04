@@ -30,7 +30,12 @@ public enum AiTypeEnum {
     /**
      * alibabaAi
      */
-    alibabaAi;
+    alibabaAi,
+
+    /**
+     * Moonshot AI
+     */
+    kimiAi;
 
 
     /**

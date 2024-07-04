@@ -109,25 +109,27 @@
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
-        <button
-          nz-button
-          nzType="primary"
-          (click)="onEditAlertConverge(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.converge.edit' | i18n"
-        >
-          <i nz-icon nzType="edit" nzTheme="outline"></i>
-        </button>
-        <button
-          nz-button
-          nzDanger
-          nzType="primary"
-          (click)="onDeleteOneAlertConverge(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.converge.delete' | i18n"
-        >
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
+        <div class="actions">
+          <button
+            nz-button
+            nzType="primary"
+            (click)="onEditAlertConverge(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.converge.edit' | i18n"
+          >
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+          </button>
+          <button
+            nz-button
+            nzDanger
+            nzType="primary"
+            (click)="onDeleteOneAlertConverge(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.converge.delete' | i18n"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
       </td>
     </tr>
   </tbody>
