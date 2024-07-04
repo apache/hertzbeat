@@ -209,7 +209,7 @@
           ></nz-cascader>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length != 2">
         <nz-form-label [nzSpan]="7" nzFor="rule" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
@@ -229,7 +229,7 @@
               {{ 'alert.setting.rule.switch-expr.1' | i18n }}
             </label>
           </nz-radio-group>
-          <div *ngIf="cascadeValues.length != 2 && isExpr" style="margin-top: 5px">
+          <div *ngIf="isExpr" style="margin-top: 5px">
             <nz-textarea-count [nzMaxCharacterCount]="100">
               <textarea
                 [(ngModel)]="define.expr"
@@ -270,7 +270,7 @@
               </nz-collapse-panel>
             </nz-collapse>
           </div>
-          <div *ngIf="cascadeValues.length != 2 && !isExpr" style="margin-top: 5px">
+          <div *ngIf="!isExpr" style="margin-top: 5px">
             <div id="rule">
               <div style="width: 100%; margin-bottom: 2px" nz-row *ngFor="let alertRule of alertRules; let i = index">
                 <nz-select
