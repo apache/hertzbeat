@@ -384,6 +384,7 @@
   "monitors.import": "Import Monitor",
   "monitors.search.placeholder": "Search Monitor",
   "monitors.search.tag": "Tag Filter",
+  "monitors.search.app": "Type Filter",
   "monitors.total": "Total",
   "monitors.advanced": "Advanced",
   "monitors.advanced.tip": "Advanced Setting Params",
