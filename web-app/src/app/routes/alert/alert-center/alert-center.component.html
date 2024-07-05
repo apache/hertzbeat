@@ -75,16 +75,12 @@
       <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="3"></nz-option>
     </nz-select>
     <app-multi-func-input
-      groupStyle="width: 200px;"
-      inputStyle="text-align: center"
+      groupStyle="width: 250px;"
       class="mobile-hide"
       [placeholder]="'alert.center.search' | i18n"
       [(value)]="filterContent"
       (valueChange)="loadAlertsTable()"
     />
-    <button nz-button nzType="primary" (click)="loadAlertsTable()" class="mobile-hide">
-      {{ 'common.search' | i18n }}
-    </button>
   </ng-template>
 </app-toolbar>
 

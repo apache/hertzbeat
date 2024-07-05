@@ -42,19 +42,13 @@
     </button>
   </ng-template>
   <ng-template #right>
-    <input
+    <app-multi-func-input
       class="mobile-hide"
-      style="width: 300px; text-align: center"
-      nz-input
-      type="text"
+      groupStyle="width: 250px;"
       [placeholder]="'tag.search' | i18n"
-      nzSize="default"
-      (keyup.enter)="loadTagsTable()"
-      [(ngModel)]="search"
+      [(value)]="search"
+      (valueChange)="loadTagsTable()"
     />
-    <button nz-button nzType="primary" (click)="loadTagsTable()" class="mobile-hide">
-      {{ 'common.search' | i18n }}
-    </button>
   </ng-template>
 </app-toolbar>
 
