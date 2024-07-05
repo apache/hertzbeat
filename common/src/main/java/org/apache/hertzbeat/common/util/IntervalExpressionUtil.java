@@ -49,7 +49,7 @@ public final class IntervalExpressionUtil {
      * @return true-yes false-no
      */
     public static boolean validNumberIntervalExpress(Double numberValue, String expression) {
-        if (expression == null || "".equals(expression)) {
+        if (expression == null || expression.isEmpty()) {
             return true;
         }
         if (numberValue == null) {
@@ -64,12 +64,12 @@ public final class IntervalExpressionUtil {
                 }
                 Double[] doubleValues = new Double[2];
                 if (NEGATIVE.equals(values[0])) {
-                    doubleValues[0] = Double.MIN_VALUE;
+                    doubleValues[0] = Double.NEGATIVE_INFINITY;
                 } else {
                     doubleValues[0] = Double.parseDouble(values[0]);
                 }
                 if (POSITIVE.equals(values[1])) {
-                    doubleValues[1] = Double.MAX_VALUE;
+                    doubleValues[1] = Double.POSITIVE_INFINITY;
                 } else {
                     doubleValues[1] = Double.parseDouble(values[1]);
                 }
