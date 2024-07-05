@@ -64,7 +64,7 @@ public class TelnetCollectImpl extends AbstractCollect {
             if (telnetClient.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
                 List<String> aliasFields = metrics.getAliasFields();
-                Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd());
+                Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), app);
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
                 if (resultMap.size() < aliasFields.size()) {
                     log.error("telnet response data not enough: {}", resultMap);
@@ -115,7 +115,7 @@ public class TelnetCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_TELNET;
     }
 
-    private static Map<String, String> execCmdAndParseResult(TelnetClient telnetClient, String cmd) throws IOException {
+    private static Map<String, String> execCmdAndParseResult(TelnetClient telnetClient, String cmd, String app) throws IOException {
         if (cmd == null || cmd.trim().length() == 0) {
             return new HashMap<>(16);
         }
@@ -124,6 +124,11 @@ public class TelnetCollectImpl extends AbstractCollect {
         outputStream.flush();
         String result = new String(telnetClient.getInputStream().readAllBytes());
         String[] lines = result.split("\n");
+        if (CollectorConstants.ZOOKEEPER_APP.equals(app) && CollectorConstants.ZOOKEEPER_ENVI_HEAD.equals(lines[0])) {
+            lines = Arrays.stream(lines)
+                    .skip(1)
+                    .toArray(String[]::new);
+        }
         boolean contains = lines[0].contains("=");
         return Arrays.stream(lines)
                 .map(item -> {
