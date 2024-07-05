@@ -20,7 +20,7 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, MenuService } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalButtonOptions } from 'ng-zorro-antd/modal/modal-types';
@@ -33,7 +33,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { formatTagName } from '../../../shared/utils/common-util';
+import { formatTagName, findDeepestSelected } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-list',
@@ -50,9 +50,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     private messageSvc: NzMessageService,
     private storageSvc: MemoryStorageService,
     private appDefineSvc: AppDefineService,
+    private menuService: MenuService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  isDefaultListMenu!: boolean;
   app!: string | undefined;
   tag!: string | undefined;
   pageIndex: number = 1;
@@ -70,6 +72,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   filterStatus: number = 9;
   // app type search filter
   appSwitchModalVisible = false;
+  appSwitchModalVisibleType = 0;
   appSearchOrigin: any[] = [];
   appSearchLoading = false;
   intervalId: any;
@@ -79,6 +82,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.menuService.change.subscribe(menus => {
+      this.isDefaultListMenu = (findDeepestSelected(menus)).link === '/monitors';
+    });
     this.route.queryParamMap.subscribe(paramMap => {
       let appStr = paramMap.get('app');
       let tagStr = paramMap.get('tag');
@@ -108,6 +114,14 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     if (this.intervalId) {
       clearInterval(this.intervalId);
     }
+  }
+
+  onAppChanged(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ...this.route.snapshot.queryParams, app: this.app },
+      queryParamsHandling: 'merge'
+    });
   }
 
   onTagChanged(): void {
@@ -498,6 +512,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   // begin: app type search filter
 
+  onSearchAppClicked() {
+    this.appSwitchModalVisibleType = 1;
+    this.onAppSwitchModalOpen();
+  }
+
   onAppSwitchModalOpen() {
     this.appSwitchModalVisible = true;
     this.appSearchLoading = true;
@@ -542,10 +561,17 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   onAppSwitchModalCancel() {
     this.appSwitchModalVisible = false;
+    this.appSwitchModalVisibleType = 0;
   }
 
   gotoMonitorAddDetail(app: string) {
-    this.router.navigateByUrl(`/monitors/new?app=${app}`);
+    if (this.appSwitchModalVisibleType === 1) {
+      this.app = app;
+      this.onAppChanged();
+      this.onAppSwitchModalCancel();
+    } else {
+      this.router.navigateByUrl(`/monitors/new?app=${app}`);
+    }
   }
 
   // end: app type search filter
