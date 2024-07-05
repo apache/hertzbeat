@@ -33,6 +33,7 @@
     [name]="name || ''"
     [style]="inputStyle || ''"
     [required]="required || false"
+    [readonly]="readonly || false"
     [disabled]="disabled || false"
     [placeholder]="placeholder || ''"
     [(ngModel)]="value"
@@ -58,7 +59,7 @@
       (click)="passwordVisible = !passwordVisible"
     ></i>
     } @if (allowClear && value) {
-    <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="value = null; onChange(null)"></i>
+    <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="onClear($event)"></i>
     }
   </ng-template>
 </ng-template>
