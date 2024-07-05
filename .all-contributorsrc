@@ -1934,6 +1934,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ShineDevelopment",
+      "name": "daixianglong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59306780?v=4",
+      "profile": "https://github.com/ShineDevelopment",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
