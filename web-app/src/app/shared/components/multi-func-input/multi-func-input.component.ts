@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, OnInit, EventEmitter, Input, Output, ContentChild, TemplateRef, forwardRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ContentChild, TemplateRef, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { NzSizeLDSType } from 'ng-zorro-antd/core/types';
 
@@ -33,7 +33,7 @@ import { NzSizeLDSType } from 'ng-zorro-antd/core/types';
     }
   ]
 })
-export class MultiFuncInputComponent implements OnInit, ControlValueAccessor {
+export class MultiFuncInputComponent implements ControlValueAccessor {
   constructor() {}
 
   @ContentChild('prefix', { static: true }) prefix: TemplateRef<any> | undefined;
@@ -53,27 +53,18 @@ export class MultiFuncInputComponent implements OnInit, ControlValueAccessor {
   @Output() readonly valueChange = new EventEmitter<string>();
 
   disabled: boolean = false;
-  inputValue: any | undefined;
   passwordVisible: boolean = false;
 
   _onChange = (_: any) => {};
   _onTouched = () => {};
 
-  ngOnInit(): void {
-    this.inputValue = this.value;
+  onChange(inputValue: any) {
+    this.valueChange.emit(inputValue);
+    this._onChange(inputValue);
   }
 
-  onChange() {
-    if (this.inputValue !== this.value) {
-      this.valueChange.emit(this.inputValue);
-      this._onChange(this.inputValue);
-    }
-  }
-
-  writeValue(obj: any): void {
-    if (obj !== this.inputValue) {
-      this.inputValue = obj;
-    }
+  writeValue(value: any): void {
+    this.value = value;
   }
 
   registerOnChange(fn: any): void {
