@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import java.util.List;
@@ -27,6 +27,7 @@ import org.apache.hertzbeat.common.constants.AiTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.KimiAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.KimiAiResponse;
+import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
