@@ -52,7 +52,7 @@ public class NginxProtocol {
     private String url;
 
     /**
-     * Whether http uses link encryption ssl/tls, i.e. http or https
+     * Whether nginx uses link encryption ssl/tls, i.e. http or https
      */
     private String ssl = "false";
 
