@@ -61,7 +61,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-
 /**
  * Calculate alarms based on the alarm definition rules and collected data
  */
