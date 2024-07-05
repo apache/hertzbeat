@@ -83,7 +83,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.menuService.change.subscribe(menus => {
-      this.isDefaultListMenu = (findDeepestSelected(menus)).link === '/monitors';
+      this.isDefaultListMenu = findDeepestSelected(menus).link === '/monitors';
     });
     this.route.queryParamMap.subscribe(paramMap => {
       let appStr = paramMap.get('app');
