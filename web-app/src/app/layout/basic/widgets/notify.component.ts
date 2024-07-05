@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit }
 import { Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
-import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzModalService } from 'ng-zorro-antd/modal';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { AlertService } from '../../../service/alert.service';
@@ -75,18 +75,18 @@ import { AlertService } from '../../../service/alert.service';
                 }
               </ng-template>
             </nz-list-item-meta>
-            @if (item.status != 3) {
-              <ul nz-list-item-actions>
-                <button
-                  nz-button
-                  nzType="primary"
-                  (click)="onMarkReadOneAlert(item.id)"
-                  nz-tooltip
-                  [nzTooltipTitle]="'alert.center.deal' | i18n"
-                >
-                  <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-                </button>
-              </ul>
+            @if (item.status !== 3) {
+            <ul nz-list-item-actions>
+              <button
+                nz-button
+                nzType="primary"
+                (click)="onMarkReadOneAlert(item.id)"
+                nz-tooltip
+                [nzTooltipTitle]="'alert.center.deal' | i18n"
+              >
+                <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+              </button>
+            </ul>
             }
           </nz-list-item>
         </ng-template>
