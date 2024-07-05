@@ -1,3 +1,10 @@
+---
+id: redis_cluster
+title: Monitoring Redis Cluster
+sidebar_label: Redis Cluster Monitor
+keywords: [ open source monitoring tool, open source Redis Cluster monitoring tool, monitoring Redis Cluster metrics ]
+---
+
 ### Pre-monitoring operations
 
 1. create a empty folder and add two files.
@@ -146,11 +153,11 @@
 
    Add a redis monitor center, fill require parameters.
 
-   ![](img/docs/help/redis-cluster-add.png)
+   ![](/img/docs/help/redis-cluster-add.png)
 
    final effect.
 
-   ![](img/docs/help/redis-cluster-view.png)
+   ![](/img/docs/help/redis-cluster-view.png)
 
    ### Configuration Parameters
 

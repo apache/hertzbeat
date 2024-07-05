@@ -1,3 +1,10 @@
+---
+id: redis_cluster  
+title: 监控：Redis Cluster 数据库监控      
+sidebar_label: Redis Cluster数据库   
+keywords: [开源监控系统, 开源数据库监控, RedisCluster数据库监控]
+---
+
 ### Pre-monitoring operations
 
 1. 创建一个空目录, 然后在目录下添加以下两个文件.
@@ -146,11 +153,11 @@
 
    添加监控节点时填入所需要的参数.
 
-   ![](img/docs/help/redis-cluster-add.png)
+   ![](/img/docs/help/redis-cluster-add.png)
 
    最终的效果.
 
-   ![](img/docs/help/redis-cluster-view.png)
+   ![](/img/docs/help/redis-cluster-view.png)
 
    ### Configuration Parameters
 
