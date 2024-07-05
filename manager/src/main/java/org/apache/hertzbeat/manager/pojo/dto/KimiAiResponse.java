@@ -24,7 +24,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * ZhiPuAiResponse
+ * Kimi AiResponse
  */
 @Data
 @AllArgsConstructor

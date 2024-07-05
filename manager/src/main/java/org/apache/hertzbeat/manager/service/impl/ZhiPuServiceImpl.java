@@ -40,7 +40,7 @@ import reactor.core.publisher.Flux;
 
 
 /**
- * 智普AI
+ * ZhiPu AI
  */
 @Service("ZhiPuServiceImpl")
 @Slf4j
