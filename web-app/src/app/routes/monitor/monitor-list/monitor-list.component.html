@@ -30,6 +30,7 @@
   [module_name]="'menu.monitor.center'"
   [icon_name]="'laptop'"
 ></app-help-message-show>
+
 <nz-divider></nz-divider>
 
 <app-toolbar>
@@ -102,24 +103,19 @@
       <nz-option [nzLabel]="'monitor.status.paused' | i18n" [nzValue]="0"></nz-option>
     </nz-select>
     <app-multi-func-input
-      groupStyle="width: 90px;"
-      inputStyle="text-align: center"
+      groupStyle="width: 120px;"
       class="mobile-hide"
       [placeholder]="'monitors.search.tag' | i18n"
       [(value)]="tag"
-      (valueChange)="onFilterSearchMonitors()"
+      (valueChange)="onTagChanged()"
     />
     <app-multi-func-input
       groupStyle="width: 180px;"
-      inputStyle="text-align: center"
       class="mobile-hide"
       [placeholder]="'monitors.search.placeholder' | i18n"
       [(value)]="filterContent"
       (valueChange)="onFilterSearchMonitors()"
     />
-    <button class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
-      {{ 'common.search' | i18n }}
-    </button>
   </ng-template>
 </app-toolbar>
 

@@ -35,8 +35,8 @@
     [required]="required || false"
     [disabled]="disabled || false"
     [placeholder]="placeholder || ''"
-    [(ngModel)]="inputValue"
-    (ngModelChange)="onChange()"
+    [(ngModel)]="value"
+    (ngModelChange)="onChange($event)"
   />
 </nz-input-group>
 
@@ -57,8 +57,8 @@
       [nzType]="passwordVisible ? 'eye-invisible' : 'eye'"
       (click)="passwordVisible = !passwordVisible"
     ></i>
-    } @if (allowClear && inputValue) {
-    <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="inputValue = null; onChange()"></i>
+    } @if (allowClear && value) {
+    <i nz-icon class="ant-input-clear-icon" nzTheme="fill" nzType="close-circle" (click)="value = null; onChange(null)"></i>
     }
   </ng-template>
 </ng-template>
