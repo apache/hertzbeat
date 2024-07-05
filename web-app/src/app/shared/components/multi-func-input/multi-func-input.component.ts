@@ -44,6 +44,7 @@ export class MultiFuncInputComponent implements ControlValueAccessor {
   @Input() value!: any;
   @Input() name!: string;
   @Input() required!: boolean;
+  @Input() readonly!: boolean;
   @Input() groupStyle!: string;
   @Input() inputStyle!: string;
   @Input() placeholder!: string;
@@ -61,6 +62,11 @@ export class MultiFuncInputComponent implements ControlValueAccessor {
   onChange(inputValue: any) {
     this.valueChange.emit(inputValue);
     this._onChange(inputValue);
+  }
+
+  onClear(event: any) {
+    event.stopPropagation();
+    this.onChange((this.value = null));
   }
 
   writeValue(value: any): void {
