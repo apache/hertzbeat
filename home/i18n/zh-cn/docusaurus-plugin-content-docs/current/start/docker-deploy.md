@@ -19,7 +19,7 @@ sidebar_label: Docker方式部署
 
 2. 拉取HertzBeat Docker镜像   
    镜像版本TAG可查看 [dockerhub 官方镜像仓库](https://hub.docker.com/r/apache/hertzbeat/tags)     
-   或者使用 [quay.io 镜像仓库](https://quay.io/repository/apache/hertzbeat)
+   或者使用 [quay.io 镜像仓库](https://quay.io/repository/tancloud/hertzbeat)
 
    ```shell
    $ docker pull apache/hertzbeat   
@@ -52,8 +52,7 @@ sidebar_label: Docker方式部署
    下载源 [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)       
    - 若需使用邮件发送告警，需替换 `application.yml` 里面的邮件服务器参数
    - **推荐**若需使用外置Mysql数据库替换内置H2数据库，需替换`application.yml`里面的`spring.datasource`参数 具体步骤参见 [H2数据库切换为MYSQL](mysql-change)）       
-   - **推荐**若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.td-engine`参数 具体步骤参见 [使用TDengine存储指标数据](tdengine-init)   
-   - **推荐**若需使用时序数据库IotDB来存储指标数据库，需替换`application.yml`里面的`warehouse.storeiot-db`参数 具体步骤参见 [使用IotDB存储指标数据](iotdb-init)    
+   - **推荐**若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.victoria-metrics`参数 具体步骤参见 [使用victoria-metrics存储指标数据](victoria-metrics-init)
 
 5. 挂载并配置HertzBeat用户配置文件，自定义用户密码(可选)         
    HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
@@ -85,8 +84,16 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
    - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (可选，不需要可删除)挂载日志文件到本地主机，保证日志不会因为容器的创建删除而丢失，方便查看
    - `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (可选,不需要可删除)挂载上上一步修改的本地配置文件到容器中，即使用本地配置文件覆盖容器配置文件。我们需要修改此配置文件的MYSQL，TDengine配置信息来连接外部服务。
    - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (可选,不需要可删除)挂载上一步修改的账户配置文件到容器中，若无修改账户需求可删除此命令参数。  
+   - `-v $(pwd)/ext-lib:/opt/hertzbeat/ext-lib`  : (可选,不需要可删除)根据自己下载的mysql/oracle等数据库连接驱动jar复制到宿主机相应目录并挂载到ext-lib目录 
+   mysql:https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
+   oracle:https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar
+   - `还有一种自定义数据源连接驱动不需要挂载的方式`(可选)这种方式是把自己需要的数据源驱动直接放到容器内部
+   -  `docker cp $(pwd)/mysql-connector-java-8.0.18.jar hertzbeat:/opt/hertzbeat/ext-lib` 使用docker cp 命令先把自己下载好的数据源驱动cp到容器内部
+   -  `docker restart hertzbeat` 重启成功后就要可以正常使用了
+   -  `docker commit  -a "operator" -m "在容器内部/ext-lib文件夹下新增了自定义的数据源驱动" hertzbeat hertzbeat:版本号自己定义`(可选) 如果想自己做一个自定义镜像可以使用此命令 ,-a 当前操作人 -m 对自己重做的容器进行描述
 
-   - 注意⚠️ 挂载文件时，前面参数为你自定义本地文件地址，后面参数为docker容器内文件地址(固定)  
+
+   - 注意⚠️ 挂载文件时，前面参数为你自定义本地文件地址，后面参数为docker容器内文件地址(固定)
 
    - `--name hertzbeat` : 命名容器名称 hertzbeat 
 
@@ -141,23 +148,14 @@ $ docker run -d \
 > 二：HertzBeat的配置文件 `application.yml` 里面的依赖服务IP账户密码等配置是否正确  
 > 三：若都无问题可以 `docker logs hertzbeat` 查看容器日志是否有明显错误，提issue或交流群或社区反馈
 
-3. **日志报错TDengine连接或插入SQL失败**  
-> 一：排查配置的数据库账户密码是否正确，数据库是否创建   
-> 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter    
-
-4. **监控历史图表长时间都一直无数据**  
-> 一：Tdengine或IoTDB是否配置，未配置则无历史图表数据  
-> 二：Tdengine的数据库`hertzbeat`是否创建
-> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 IotDB或Tdengine IP账户密码等配置是否正确  
-
-5. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖时序数据库]
+3. 监控页面历史图表不显示，弹出 [无法提供历史图表数据，请配置依赖时序数据库]
 > 如弹窗所示，历史图表展示的前提是需要安装配置hertzbeat的依赖服务 -
-> 安装初始化此数据库参考 [TDengine安装初始化](tdengine-init) 或 [IoTDB安装初始化](iotdb-init)  
+> 安装初始化此时序数据库
 
-6. 安装配置了时序数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
-> 请检查配置参数是否正确
-> iot-db 或td-engine enable 是否设置为true
-> 注意⚠️若hertzbeat和IotDB，TDengine都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
+4. 安装配置了时序数据库，但页面依旧显示弹出 [无法提供历史图表数据，请配置依赖时序数据库]
+> 请检查配置的时许数据库参数是否正确
+> 时序数据库对应的 enable 是否设置为true
+> 注意⚠️若hertzbeat和外置数据库都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
 > 可根据logs目录下启动日志排查
 
 

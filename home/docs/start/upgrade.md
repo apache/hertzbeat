@@ -6,7 +6,7 @@ sidebar_label: Version Upgrade Guide
 
 **HertzBeat Release Version List**
 
-- [Download Page](/docs/download)
+- [Download Page](https://hertzbeat.apache.org/docs/download)
 - [Github Release](https://github.com/apache/hertzbeat/releases)
 - [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
 

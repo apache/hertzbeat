@@ -81,6 +81,15 @@ class CollectUtilTest {
         assertNull(res4.getValue());
         assertNull(res4.getUnit());
 
+        CollectUtil.DoubleAndUnit res5 = CollectUtil.extractDoubleAndUnitFromStr("200Ki");
+        assertEquals(200, res5.getValue());
+        assertEquals("Ki", res5.getUnit());
+        CollectUtil.DoubleAndUnit res6 = CollectUtil.extractDoubleAndUnitFromStr("200Mi");
+        assertEquals(200, res6.getValue());
+        assertEquals("Mi", res6.getUnit());
+        CollectUtil.DoubleAndUnit res7 = CollectUtil.extractDoubleAndUnitFromStr("200Gi");
+        assertEquals(200, res7.getValue());
+        assertEquals("Gi", res7.getUnit());
     }
 
 

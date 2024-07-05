@@ -1,0 +1,20 @@
+.wrapper {
+  display: flex;
+  margin-bottom: 20px;
+  justify-content: space-between;
+
+  .container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .container:first-child {
+    gap: 0px;
+    justify-content: flex-start;
+  }
+
+  .container:last-child {
+    justify-content: flex-end;
+  }
+}

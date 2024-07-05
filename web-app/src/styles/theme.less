@@ -3,7 +3,7 @@
 // - `dark` Import the official dark less style file
 // - `compact` Import the official compact less style file
 @import '@delon/theme/theme-default.less';
-@import "node_modules/ng-zorro-antd/code-editor/style/entry.less";
+@import "ng-zorro-antd/code-editor/style/entry.less";
 
 // ==========The following is the custom theme variable area==========
 // The theme parameters can be generated at https://ng-alain.github.io/ng-alain/
@@ -24,8 +24,27 @@
     background-color: #ff4081;
 }
 
-.ant-btn {
-    border-radius: 4px;
+.br-4,
+.ant-btn,
+.ant-tag,
+.ant-card,
+.ant-picker,
+.ant-collapse,
+.ant-select-selector,
+.ant-pagination-item,
+.ant-pagination-item-link,
+.ant-input, .ant-input-number, .ant-input-affix-wrapper {
+    border-radius: 4px!important;
+}
+.ant-radio-button-wrapper:first-child {
+    border-radius: 4px 0 0 4px!important;
+}
+.ant-radio-button-wrapper:last-child {
+    border-radius: 0 4px 4px 0!important;
+}
+
+.br-8, .ant-modal-header, .ant-modal-content {
+  border-radius: 8px;
 }
 
 .ant-radio-group-solid .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
@@ -49,14 +68,6 @@
 .ant-btn-dangerous.ant-btn-primary {
   background: #ff4081;
   border-color: #ff4081;
-}
-
-.ant-modal-content {
-  border-radius: 8px;
-}
-
-.ant-modal-header {
-  border-radius: 8px;
 }
 
 .ant-modal-footer {
@@ -93,4 +104,10 @@
 
 .content_bg_color {
   background-color: white;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

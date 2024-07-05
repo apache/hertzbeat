@@ -429,7 +429,6 @@ export class AlertSettingComponent implements OnInit {
   }
 
   switchAlertRuleShow() {
-    this.isExpr = !this.isExpr;
     if (this.isExpr) {
       let expr = this.calculateAlertRuleExpr();
       if (expr != '') {
@@ -609,83 +608,7 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
-  onRemoveTag(tag: TagItem) {
-    if (this.define != undefined && this.define.tags != undefined) {
-      this.define.tags = this.define.tags.filter(item => item !== tag);
-    }
-  }
-
-  sliceTagName(tag: TagItem): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
-    } else {
-      return tag.name;
-    }
-  }
-
   // end 新增修改告警定义model
-
-  // start Tag model
-  isTagManageModalVisible = false;
-  isTagManageModalOkLoading = false;
-  tagCheckedAll: boolean = false;
-  tagTableLoading = false;
-  tagSearch!: string;
-  tags!: Tag[];
-  checkedTags = new Set<Tag>();
-  loadTagsTable() {
-    this.tagTableLoading = true;
-    let tagsReq$ = this.tagSvc.loadTags(this.tagSearch, 1, 0, 1000).subscribe(
-      message => {
-        this.tagTableLoading = false;
-        this.tagCheckedAll = false;
-        this.checkedTags.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.tags = page.content;
-        } else {
-          console.warn(message.msg);
-        }
-        tagsReq$.unsubscribe();
-      },
-      error => {
-        this.tagTableLoading = false;
-        tagsReq$.unsubscribe();
-      }
-    );
-  }
-  onShowTagsModal() {
-    this.isTagManageModalVisible = true;
-    this.loadTagsTable();
-  }
-  onTagManageModalCancel() {
-    this.isTagManageModalVisible = false;
-  }
-  onTagManageModalOk() {
-    this.isTagManageModalOkLoading = true;
-    this.checkedTags.forEach(item => {
-      if (this.define.tags.find(tag => tag.name == item.name && tag.value == item.tagValue) == undefined) {
-        this.define.tags.push({ name: item.name, value: item.tagValue });
-      }
-    });
-    this.isTagManageModalOkLoading = false;
-    this.isTagManageModalVisible = false;
-  }
-  onTagAllChecked(checked: boolean) {
-    if (checked) {
-      this.tags.forEach(tag => this.checkedTags.add(tag));
-    } else {
-      this.checkedTags.clear();
-    }
-  }
-  onTagItemChecked(tag: Tag, checked: boolean) {
-    if (checked) {
-      this.checkedTags.add(tag);
-    } else {
-      this.checkedTags.delete(tag);
-    }
-  }
-  // end tag model
 
   // start 告警定义与监控关联model
   isConnectModalVisible = false;

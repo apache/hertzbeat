@@ -78,6 +78,8 @@ services:
     volumes:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
+      - ./ext-lib:/opt/hertzbeat/ext-lib
+      - ./logs:/opt/hertzbeat/logs
     ports:
       - "1157:1157"
       - "1158:1158"

@@ -79,6 +79,14 @@ app: hertzbeat
 name:
   zh-CN: HertzBeat监控系统
   en-US: HertzBeat Monitor
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Hertzbeat 监控系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控系统</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor through general performance metric. You could click the "<i>New HertzBeat Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對Hertzbeat監控系統的通用名額進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat
+  en-US: https://hertzbeat.apache.org/docs/help/hertzbeat
 # Input params define for monitoring(render web ui by the definition)
 # 监控所需输入参数定义(根据定义渲染页面UI)
 params:

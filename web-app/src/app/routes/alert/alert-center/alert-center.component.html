@@ -17,74 +17,72 @@
   ~ under the License.
 -->
 
-<app-help-massage-show
-  [help_massage_content]="'alert.help.center' | i18n"
+<app-help-message-show
+  [help_message_content]="'alert.help.center' | i18n"
   [guild_link]="'alert.help.center.link' | i18n"
   [module_name]="'menu.alert.center'"
   [icon_name]="'alert'"
-></app-help-massage-show>
+></app-help-message-show>
+
 <nz-divider></nz-divider>
 
-<div style="margin-bottom: 20px">
-  <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
-    <i nz-icon nzType="sync" nzTheme="outline"></i>
-  </button>
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
 
-  <button nz-button nzType="primary" (click)="onMarkReadAlerts()">
-    <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-    {{ 'alert.center.deal' | i18n }}
-  </button>
-  <button nz-button nzType="primary" nzDanger (click)="onMarkUnReadAlerts()" class="mobile-hide">
-    <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-    {{ 'alert.center.no-deal' | i18n }}
-  </button>
-  <button nz-button nzType="primary" nzDanger (click)="onDeleteAlerts()" class="mobile-hide">
-    <i nz-icon nzType="delete" nzTheme="outline"></i>
-    {{ 'alert.center.delete' | i18n }}
-  </button>
-  <button nz-button nzType="primary" nzDanger (click)="onClearAllAlerts()">
-    <i nz-icon nzType="clear" nzTheme="outline"></i>
-    {{ 'alert.center.clear' | i18n }}
-  </button>
-
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadAlertsTable()" class="mobile-hide">
-    {{ 'common.search' | i18n }}
-  </button>
-  <input
-    style="margin-right: 5px; float: right; width: 200px; border-radius: 9px; text-align: center"
-    nz-input
-    type="text"
-    [placeholder]="'alert.center.search' | i18n"
-    nzSize="default"
-    (keyup.enter)="loadAlertsTable()"
-    [(ngModel)]="filterContent"
-    class="mobile-hide"
-  />
-  <nz-select
-    class="mobile-hide"
-    style="margin-right: 10px; float: right"
-    nzAllowClear
-    [nzPlaceHolder]="'alert.center.filter-status' | i18n"
-    [(ngModel)]="filterStatus"
-  >
-    <nz-option [nzLabel]="'alert.status.all' | i18n" nzValue="9"></nz-option>
-    <nz-option [nzLabel]="'alert.status.0' | i18n" nzValue="0"></nz-option>
-    <nz-option [nzLabel]="'alert.status.2' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'alert.status.3' | i18n" nzValue="3"></nz-option>
-  </nz-select>
-  <nz-select
-    class="mobile-hide"
-    style="margin-right: 10px; float: right"
-    nzAllowClear
-    [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
-    [(ngModel)]="filterPriority"
-  >
-    <nz-option [nzLabel]="'alert.priority.all' | i18n" nzValue="9"></nz-option>
-    <nz-option [nzLabel]="'alert.priority.2' | i18n" nzValue="2"></nz-option>
-    <nz-option [nzLabel]="'alert.priority.1' | i18n" nzValue="1"></nz-option>
-    <nz-option [nzLabel]="'alert.priority.0' | i18n" nzValue="0"></nz-option>
-  </nz-select>
-</div>
+    <button nz-button nzType="primary" (click)="onMarkReadAlerts()">
+      <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+      {{ 'alert.center.deal' | i18n }}
+    </button>
+    <button nz-button nzType="primary" nzDanger (click)="onMarkUnReadAlerts()" class="mobile-hide">
+      <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+      {{ 'alert.center.no-deal' | i18n }}
+    </button>
+    <button nz-button nzType="primary" nzDanger (click)="onDeleteAlerts()" class="mobile-hide">
+      <i nz-icon nzType="delete" nzTheme="outline"></i>
+      {{ 'alert.center.delete' | i18n }}
+    </button>
+    <button nz-button nzType="primary" nzDanger (click)="onClearAllAlerts()">
+      <i nz-icon nzType="clear" nzTheme="outline"></i>
+      {{ 'alert.center.clear' | i18n }}
+    </button>
+  </ng-template>
+  <ng-template #right>
+    <nz-select
+      class="mobile-hide"
+      nzAllowClear
+      [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
+      (ngModelChange)="loadAlertsTable()"
+      [(ngModel)]="filterPriority"
+    >
+      <nz-option [nzLabel]="'alert.priority.all' | i18n" [nzValue]="9"></nz-option>
+      <nz-option [nzLabel]="'alert.priority.2' | i18n" [nzValue]="2"></nz-option>
+      <nz-option [nzLabel]="'alert.priority.1' | i18n" [nzValue]="1"></nz-option>
+      <nz-option [nzLabel]="'alert.priority.0' | i18n" [nzValue]="0"></nz-option>
+    </nz-select>
+    <nz-select
+      class="mobile-hide"
+      nzAllowClear
+      [nzPlaceHolder]="'alert.center.filter-status' | i18n"
+      (ngModelChange)="loadAlertsTable()"
+      [(ngModel)]="filterStatus"
+    >
+      <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="9"></nz-option>
+      <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="0"></nz-option>
+      <nz-option [nzLabel]="'alert.status.2' | i18n" [nzValue]="2"></nz-option>
+      <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="3"></nz-option>
+    </nz-select>
+    <app-multi-func-input
+      groupStyle="width: 250px;"
+      class="mobile-hide"
+      [placeholder]="'alert.center.search' | i18n"
+      [(value)]="filterContent"
+      (valueChange)="loadAlertsTable()"
+    />
+  </ng-template>
+</app-toolbar>
 
 <nz-table
   #fixedTable
@@ -99,7 +97,7 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1240px', y: '100%' }"
+  [nzScroll]="{ x: '1240px' }"
 >
   <thead>
     <tr>
@@ -172,37 +170,39 @@
         </nz-tag>
       </td>
       <td nzAlign="center">
-        <button
-          *ngIf="data.status != 3"
-          nz-button
-          nzType="primary"
-          (click)="onMarkReadOneAlert(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.deal' | i18n"
-        >
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          *ngIf="data.status == 3"
-          nz-button
-          nzType="primary"
-          nzDanger
-          (click)="onMarkUnReadOneAlert(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.no-deal' | i18n"
-        >
-          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          nz-button
-          nzType="primary"
-          nzDanger
-          (click)="onDeleteOneAlert(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.delete' | i18n"
-        >
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
+        <div class="actions">
+          <button
+            *ngIf="data.status != 3"
+            nz-button
+            nzType="primary"
+            (click)="onMarkReadOneAlert(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.center.deal' | i18n"
+          >
+            <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+          </button>
+          <button
+            *ngIf="data.status == 3"
+            nz-button
+            nzType="primary"
+            nzDanger
+            (click)="onMarkUnReadOneAlert(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.center.no-deal' | i18n"
+          >
+            <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+          </button>
+          <button
+            nz-button
+            nzType="primary"
+            nzDanger
+            (click)="onDeleteOneAlert(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.center.delete' | i18n"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
       </td>
     </tr>
   </tbody>
