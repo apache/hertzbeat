@@ -41,18 +41,12 @@
     </button>
   </ng-template>
   <ng-template #right>
-    <input
-      style="width: 200px; text-align: center"
-      nz-input
-      type="text"
+    <app-multi-func-input
+      groupStyle="width: 250px;"
       [placeholder]="'alert.converge.name' | i18n"
-      nzSize="default"
-      (keyup.enter)="loadAlertConvergeTable()"
-      [(ngModel)]="search"
+      [(value)]="search"
+      (valueChange)="loadAlertConvergeTable()"
     />
-    <button nz-button nzType="primary" (click)="loadAlertConvergeTable()">
-      {{ 'common.search' | i18n }}
-    </button>
   </ng-template>
 </app-toolbar>
 
