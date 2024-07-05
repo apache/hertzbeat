@@ -456,6 +456,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShineDevelopment"><img src="https://avatars.githubusercontent.com/u/59306780?v=4?s=100" width="100px;" alt="daixianglong"/><br /><sub><b>daixianglong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ShineDevelopment" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/mchgood"><img src="https://avatars.githubusercontent.com/u/38482005?v=4?s=100" width="100px;" alt="mchgood"/><br /><sub><b>mchgood</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=mchgood" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/pwallk"><img src="https://avatars.githubusercontent.com/u/69385076?v=4?s=100" width="100px;" alt="kangli"/><br /><sub><b>kangli</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pwallk" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/cdphantom"><img src="https://avatars.githubusercontent.com/u/12674795?v=4?s=100" width="100px;" alt="cdphantom"/><br /><sub><b>cdphantom</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=cdphantom" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
