@@ -205,7 +205,7 @@
   <nz-form-control nzSpan="8">
     <nz-tag
       *ngFor="let tag of value; let i = index"
-      [nzMode]="tag.type === 1 ? 'closeable' : 'default'"
+      [nzMode]="extra.tag_mode || (tag.type === 1 ? 'closeable' : 'default')"
       (nzOnClose)="onRemoveTag(tag)"
       [nzColor]="tag.color"
       style="margin-top: 4px"
@@ -252,19 +252,17 @@
   [nzOkLoading]="isManageModalOkLoading"
 >
   <div *nzModalContent class="-inner-content">
-    <input
-      style="margin-left: 5px; width: 50%; text-align: center"
-      nz-input
-      type="text"
-      [placeholder]="'tag.search' | i18n"
-      nzSize="default"
-      (keyup.enter)="loadTagsTable()"
-      [(ngModel)]="tagSearch"
-    />
-    <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px">
-      <i nz-icon nzType="setting" nzTheme="outline"></i>
-      {{ 'tag.setting' | i18n }}
-    </button>
+    <app-toolbar>
+      <ng-template #left>
+        <app-multi-func-input type="search" [placeholder]="'tag.search' | i18n" [(value)]="tagSearch" (valueChange)="loadTagsTable()" />
+      </ng-template>
+      <ng-template #right>
+        <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px">
+          <i nz-icon nzType="setting" nzTheme="outline"></i>
+          {{ 'tag.setting' | i18n }}
+        </button>
+      </ng-template>
+    </app-toolbar>
     <nz-table #smallTable nzSize="small" [nzData]="tags" [nzPageSize]="8" [nzLoading]="tagTableLoading">
       <thead>
         <tr>
