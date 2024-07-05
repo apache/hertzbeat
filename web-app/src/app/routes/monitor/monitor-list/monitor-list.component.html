@@ -38,16 +38,15 @@
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
+    <button *ngIf="isDefaultListMenu || app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'monitors.new-monitor' | i18n }}
+    </button>
     <button *ngIf="app != undefined" nz-button nzType="primary">
       <a routerLink="/monitors/new" [queryParams]="{ app: app }">
         <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
         {{ 'monitors.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
       </a>
-    </button>
-
-    <button *ngIf="app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
-      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'monitors.new-monitor' | i18n }}
     </button>
     <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
       <span nz-icon nzType="ellipsis"></span>
@@ -102,6 +101,16 @@
       <nz-option [nzLabel]="'monitor.status.down' | i18n" [nzValue]="2"></nz-option>
       <nz-option [nzLabel]="'monitor.status.paused' | i18n" [nzValue]="0"></nz-option>
     </nz-select>
+    <app-multi-func-input
+      *ngIf="isDefaultListMenu"
+      groupStyle="width: 120px;"
+      class="mobile-hide"
+      [readonly]="true"
+      [placeholder]="'monitors.search.app' | i18n"
+      [(value)]="app"
+      (click)="onSearchAppClicked()"
+      (valueChange)="onAppChanged()"
+    />
     <app-multi-func-input
       groupStyle="width: 120px;"
       class="mobile-hide"
@@ -309,7 +318,7 @@
   <div *nzModalContent class="-inner-content">
     <app-monitor-select-menu
       listStyle="border-right: 0px"
-      [searchPlaceholder]="'monitors.center.search.placeholder' | i18n"
+      [searchPlaceholder]="(appSwitchModalVisibleType === 1 ? 'monitors.search.app' : 'monitors.center.search.placeholder') | i18n"
       [loading]="appSearchLoading"
       [data]="appSearchOrigin"
       (selectedChanged)="gotoMonitorAddDetail($event)"
@@ -317,7 +326,7 @@
       <ng-template let-app="item" #prefix>
         <i nz-icon [nzType]="getAppIconName(app.value)" nzTheme="outline"></i>
       </ng-template>
-      <ng-template #suffix><i nz-icon nzType="right"></i></ng-template>
+      <ng-template #suffix>@if (appSwitchModalVisibleType !== 1) {<i nz-icon nzType="right"></i>}</ng-template>
     </app-monitor-select-menu>
   </div>
 </nz-modal>
