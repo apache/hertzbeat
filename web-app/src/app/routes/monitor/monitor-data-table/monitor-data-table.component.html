@@ -23,7 +23,7 @@
   [nzBordered]="true"
   [nzBodyStyle]="{ overflow: !monitor ? 'hidden' : 'auto' }"
   [nzTitle]="card_title"
-  [nzLoading]="loading"
+  [nzLoading]="!app || loading"
   [nzExtra]="!monitor ? metrics_card_extra : monitor_card_extra"
 >
   <div *ngIf="!!monitor">
