@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit }
 import { Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
-import { NzI18nService } from 'ng-zorro-antd/i18n';
-import { NzMessageService } from 'ng-zorro-antd/message';
+import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { finalize } from 'rxjs/operators';
 
 import { AlertService } from '../../../service/alert.service';
@@ -19,6 +19,7 @@ import { AlertService } from '../../../service/alert.service';
     @if (data!.length <= 0) {<ng-template [ngTemplateOutlet]="badgeTpl" />} @else {<div
       nz-dropdown
       (nzVisibleChange)="onPopoverVisibleChange($event)"
+      [(nzVisible)]="popoverVisible"
       nzTrigger="click"
       nzPlacement="bottomRight"
       nzOverlayClassName="header-dropdown notice-icon"
@@ -43,6 +44,11 @@ import { AlertService } from '../../../service/alert.service';
         </div>
         }
       </nz-spin>
+      <div style="display: flex; align-items: center; border-top: 1px solid #f0f0f0;">
+        <div class="notice-icon__clear" style="flex: 1; border-top: none;" (click)="onClearAllAlerts()">{{ data[0].clearText }}</div>
+        <nz-divider nzType="vertical"></nz-divider>
+        <div class="notice-icon__clear" style="flex: 1; border-top: none;" (click)="gotoAlertCenter()">{{ data[0].enterText }}</div>
+      </div>
     </nz-dropdown-menu>
     }
     <ng-template #listTpl>
@@ -69,10 +75,22 @@ import { AlertService } from '../../../service/alert.service';
                 }
               </ng-template>
             </nz-list-item-meta>
+            @if (item.status != 3) {
+              <ul nz-list-item-actions>
+                <button
+                  nz-button
+                  nzType="primary"
+                  (click)="onMarkReadOneAlert(item.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'alert.center.deal' | i18n"
+                >
+                  <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+                </button>
+              </ul>
+            }
           </nz-list-item>
         </ng-template>
       </nz-list>
-      <div class="notice-icon__clear" (click)="gotoAlertCenter()">{{ data[0].clearText }}</div>
     </ng-template>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -84,18 +102,20 @@ export class HeaderNotifyComponent implements OnInit {
       list: [],
       emptyText: this.i18nSvc.fanyi('dashboard.alerts.no'),
       emptyImage: '/assets/img/empty-full.svg',
-      clearText: this.i18nSvc.fanyi('dashboard.alerts.enter')
+      enterText: this.i18nSvc.fanyi('dashboard.alerts.enter'),
+      clearText: this.i18nSvc.fanyi('alert.center.clear')
     }
   ];
   count = 0;
   loading = false;
+  popoverVisible = false;
 
   constructor(
-    private msg: NzMessageService,
-    private nzI18n: NzI18nService,
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
+    private notifySvc: NzNotificationService,
     private alertSvc: AlertService,
+    private modal: NzModalService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -148,6 +168,7 @@ export class HeaderNotifyComponent implements OnInit {
                 title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
                 datetime: new Date(alert.lastAlarmTime).toLocaleString(),
                 color: 'blue',
+                status: alert.status,
                 type: this.i18nSvc.fanyi('dashboard.alerts.title-no')
               };
               list.push(item);
@@ -165,7 +186,62 @@ export class HeaderNotifyComponent implements OnInit {
       );
   }
 
+  updateAlertsStatus(alertIds: Set<number>, status: number) {
+    const markAlertsStatus$ = this.alertSvc.applyAlertsStatus(alertIds, status).subscribe(
+      message => {
+        markAlertsStatus$.unsubscribe();
+        if (message.code === 0) {
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.mark-success'), '');
+          this.loadData();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.mark-fail'), message.msg);
+        }
+      },
+      error => {
+        markAlertsStatus$.unsubscribe();
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.mark-fail'), error.msg);
+      }
+    );
+  }
+
+  onMarkReadOneAlert(alertId: number) {
+    let alerts = new Set<number>();
+    alerts.add(alertId);
+    this.updateAlertsStatus(alerts, 3);
+  }
+
+  clearAllAlerts() {
+    const deleteAlerts$ = this.alertSvc.clearAlerts().subscribe(
+      message => {
+        deleteAlerts$.unsubscribe();
+        if (message.code === 0) {
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.clear-success'), '');
+          this.loadData();
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.clear-fail'), message.msg);
+        }
+      },
+      error => {
+        deleteAlerts$.unsubscribe();
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.clear-fail'), error.msg);
+      }
+    );
+  }
+
+  onClearAllAlerts() {
+    this.modal.confirm({
+      nzTitle: this.i18nSvc.fanyi('alert.center.confirm.clear-all'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
+      nzOkDanger: true,
+      nzOkType: 'primary',
+      nzClosable: false,
+      nzOnOk: () => this.clearAllAlerts()
+    });
+  }
+
   gotoAlertCenter(): void {
+    this.popoverVisible = false;
     this.router.navigateByUrl(`/alert/center`);
   }
 }
