@@ -95,7 +95,6 @@ spring:
     host: smtp.qq.com
     username: tancloud@qq.com
     # Attention this is not email account password, this requires an email authorization code
-    # 请注意此非邮箱账户密码 此需填写邮箱授权码
     password: your-password
     # Mailbox smtp server port, eg: qq-mailbox is 465, qq-exmail is 587
     port: 465
@@ -119,14 +118,12 @@ common:
 warehouse:
   store:
     # store history metrics data, enable only one below
-    # 存储历史数据方式, 下方只能 enabled 启用一种方式
     jpa:
       enabled: true
       # The maximum retention time for history records, after which records will be deleted
       expire-time: 1h
       # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
       # (please set this configuration reasonably as history records can affect performance when it is large)
-      # 历史数据的最大保留条数，超过此数量时，将会删除一半于此配量的数据（由于历史数据较大时会影响性能，请合理设置此配置）
       max-history-record-num: 6000
     victoria-metrics:
       enabled: false
@@ -165,7 +162,6 @@ warehouse:
       replication: 1
 
     # store real-time metrics data, enable only one below
-    # 存储实时数据方式, 下方只能 enabled 启用一种方式
     memory:
       enabled: true
       init-size: 16
@@ -210,5 +206,4 @@ aiConfig:
   # api key
   api-key:
   #At present, only IFLYTEK large model needs to be filled in
-  #目前只有科大讯飞大模型需要填写
   api-secret:
