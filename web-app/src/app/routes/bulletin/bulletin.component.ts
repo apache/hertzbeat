@@ -31,16 +31,16 @@ import { finalize, map } from 'rxjs/operators';
 
 import { AlertDefine } from '../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../pojo/AlertDefineBind';
+import { BulletinDefine } from '../../pojo/BulletinDefine';
 import { Message } from '../../pojo/Message';
 import { Monitor } from '../../pojo/Monitor';
 import { TagItem } from '../../pojo/NoticeRule';
 import { Tag } from '../../pojo/Tag';
 import { AlertDefineService } from '../../service/alert-define.service';
 import { AppDefineService } from '../../service/app-define.service';
+import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
-import {BulletinDefine} from "../../pojo/BulletinDefine";
-import {BulletinDefineService} from "../../service/bulletin-define.service";
 
 const AVAILABILITY = 'availability';
 
@@ -169,10 +169,10 @@ export class BulletinComponent implements OnInit {
     this.editBulletinDefine(alertDefineId);
   }
 
-  updateBulletinDefine(alertDefine: AlertDefine) {
+  updateBulletinDefine(bulletinDefine: BulletinDefine) {
     this.tableLoading = true;
     const updateDefine$ = this.bulletinDefineSvc
-      .editBulletinDefine(alertDefine)
+      .editBulletinDefine(bulletinDefine)
       .pipe(
         finalize(() => {
           updateDefine$.unsubscribe();
@@ -196,13 +196,13 @@ export class BulletinComponent implements OnInit {
       );
   }
 
-  editBulletinDefine(alertDefineId: number) {
+  editBulletinDefine(bulletinDefineId: number) {
     this.isManageModalAdd = false;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
     // 查询告警定义信息
     const getDefine$ = this.bulletinDefineSvc
-      .getBulletinDefine(alertDefineId)
+      .getBulletinDefine(bulletinDefineId)
       .pipe(
         finalize(() => {
           getDefine$.unsubscribe();
@@ -212,16 +212,10 @@ export class BulletinComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.define = message.data;
-            if (this.define.field) {
-              this.cascadeValues = [this.define.app, this.define.metric, this.define.field];
-            } else {
-              this.cascadeValues = [this.define.app, this.define.metric];
-            }
             if (this.define.tags == undefined) {
               this.define.tags = [];
             }
             this.cascadeOnChange(this.cascadeValues);
-            this.renderAlertRuleExpr(this.define.expr);
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
           }
@@ -248,9 +242,9 @@ export class BulletinComponent implements OnInit {
     });
   }
 
-  onDeleteOneBulletinDefine(alertDefineId: number) {
+  onDeleteOneBulletinDefine(bulletinDefineId: number) {
     let defineIds = new Set<number>();
-    defineIds.add(alertDefineId);
+    defineIds.add(bulletinDefineId);
     this.modal.confirm({
       nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
       nzOkText: this.i18nSvc.fanyi('common.button.ok'),
@@ -292,7 +286,6 @@ export class BulletinComponent implements OnInit {
     const lastPage = Math.max(1, Math.ceil((this.total - delSize) / this.pageSize));
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
-
 
   // begin: 列表多选分页逻辑
   checkedAll: boolean = false;
@@ -363,108 +356,6 @@ export class BulletinComponent implements OnInit {
     });
   }
 
-  switchBulletinRuleShow() {
-    if (this.isExpr) {
-      let expr = this.calculateAlertRuleExpr();
-      if (expr != '') {
-        this.define.expr = expr;
-      }
-    }
-  }
-
-  onAddNewBulletinRule() {
-    this.alertRules.push({});
-  }
-
-  onRemoveBulletinRule(index: number) {
-    this.alertRules.splice(index, 1);
-  }
-
-  calculateBulletinRuleExpr() {
-    let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined);
-    let index = 0;
-    let expr = '';
-    rules.forEach(rule => {
-      let ruleStr = '';
-      if (rule.operator == 'exists' || rule.operator == '!exists') {
-        ruleStr = `${rule.operator}(${rule.metric.value})`;
-      } else {
-        if (rule.metric.type === 0 || rule.metric.type === 3) {
-          ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
-        } else if (rule.metric.type === 1) {
-          ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;
-        }
-      }
-      if (ruleStr != '') {
-        expr = expr + ruleStr;
-      }
-      if (index != rules.length - 1) {
-        expr = `${expr} && `;
-      }
-      index++;
-    });
-    return expr;
-  }
-
-  renderBulletinRuleExpr(expr: string) {
-    if (expr == undefined || expr == '') {
-      return;
-    }
-    if (expr.indexOf('||') > 0 || expr.indexOf(' + ') > 0 || expr.indexOf(' - ') > 0) {
-      this.isExpr = true;
-      return;
-    }
-    this.alertRules = [];
-    try {
-      let exprArr: string[] = expr.split('&&');
-      for (let index in exprArr) {
-        let exprStr = exprArr[index].trim();
-        const twoParamExpressionArr = ['equals', '!equals', 'contains', '!contains', 'matches', '!matches'];
-        const oneParamExpressionArr = ['exists', '!exists'];
-        let findIndexInTowParamExpression = twoParamExpressionArr.findIndex(value => exprStr.startsWith(value));
-        let findIndexInOneParamExpression = oneParamExpressionArr.findIndex(value => exprStr.startsWith(value));
-        if (findIndexInTowParamExpression >= 0) {
-          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
-          let tmpArr = tmp.split(',');
-          if (tmpArr.length == 2) {
-            let metric = this.currentMetrics.find(item => item.value == tmpArr[0].trim());
-            let value = tmpArr[1].substring(1, tmpArr[1].length - 1);
-            let rule = { metric: metric, operator: twoParamExpressionArr[findIndexInTowParamExpression], value: value };
-            this.alertRules.push(rule);
-          }
-        } else if (findIndexInOneParamExpression >= 0) {
-          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
-          if (tmp != '' && tmp != null) {
-            let metric = this.currentMetrics.find(item => item.value == tmp.trim());
-            let rule = { metric: metric, operator: oneParamExpressionArr[findIndexInOneParamExpression] };
-            this.alertRules.push(rule);
-          }
-        } else {
-          let values = exprStr.trim().split(' ');
-          if (values.length == 3 && values[2].trim() != '' && !Number.isNaN(parseFloat(values[2].trim()))) {
-            let metric = this.currentMetrics.find(item => item.value == values[0].trim());
-            let rule = { metric: metric, operator: values[1].trim(), value: values[2].trim() };
-            this.alertRules.push(rule);
-          }
-        }
-      }
-      if (this.alertRules.length != exprArr.length) {
-        this.alertRules = [{}];
-        this.isExpr = true;
-        return;
-      }
-    } catch (e) {
-      console.error(e);
-      this.isExpr = true;
-      this.alertRules = [{}];
-      return;
-    }
-    if (this.alertRules.length == 0) {
-      this.alertRules = [{}];
-      this.isExpr = true;
-    }
-  }
-
   onManageModalCancel() {
     this.isExpr = false;
     this.isManageModalVisible = false;
@@ -494,8 +385,8 @@ export class BulletinComponent implements OnInit {
     //   this.define.field = '';
     // }
     if (this.isManageModalAdd) {
-      const modalOk$ = this.alertDefineSvc
-        .newAlertDefine(this.define)
+      const modalOk$ = this.bulletinDefineSvc
+        .newBulletinDefine(this.define)
         .pipe(
           finalize(() => {
             modalOk$.unsubscribe();
@@ -507,7 +398,7 @@ export class BulletinComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-              this.loadAlertDefineTable();
+              this.loadBulletinDefineTable();
               this.resetManageModalData();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
@@ -518,8 +409,8 @@ export class BulletinComponent implements OnInit {
           }
         );
     } else {
-      const modalOk$ = this.alertDefineSvc
-        .editAlertDefine(this.define)
+      const modalOk$ = this.bulletinDefineSvc
+        .editBulletinDefine(this.define)
         .pipe(
           finalize(() => {
             modalOk$.unsubscribe();
@@ -540,20 +431,6 @@ export class BulletinComponent implements OnInit {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), error.msg);
           }
         );
-    }
-  }
-
-  onRemoveTag(tag: TagItem) {
-    if (this.define != undefined && this.define.tags != undefined) {
-      this.define.tags = this.define.tags.filter(item => item !== tag);
-    }
-  }
-
-  sliceTagName(tag: TagItem): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
-    } else {
-      return tag.name;
     }
   }
 
@@ -686,7 +563,7 @@ export class BulletinComponent implements OnInit {
           if (message.code === 0) {
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
             this.isConnectModalVisible = false;
-            this.loadAlertDefineTable();
+            this.loadBulletinDefineTable();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
           }
@@ -725,29 +602,4 @@ export class BulletinComponent implements OnInit {
     });
   }
   // end 告警定义与监控关联model
-  //查询告警阈值
-  onFilterSearchAlertDefinesByName() {
-    this.tableLoading = true;
-    let filter$ = this.alertDefineSvc.getAlertDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
-      message => {
-        filter$.unsubscribe();
-        this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedDefineIds.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.defines = page.content;
-          this.pageIndex = page.number + 1;
-          this.total = page.totalElements;
-        } else {
-          console.warn(message.msg);
-        }
-      },
-      error => {
-        this.tableLoading = false;
-        filter$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
-  }
 }
