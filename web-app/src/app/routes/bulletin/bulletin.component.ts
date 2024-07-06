@@ -68,9 +68,6 @@ export class BulletinComponent implements OnInit {
   tableLoading: boolean = true;
   checkedDefineIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
-  exportJsonButtonLoading = false;
-  exportYamlButtonLoading = false;
-  exportExcelButtonLoading = false;
   appHierarchies!: any[];
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
