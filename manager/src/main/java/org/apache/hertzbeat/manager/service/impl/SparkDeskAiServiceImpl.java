@@ -17,20 +17,19 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
-import org.apache.hertzbeat.manager.pojo.dto.SparkDeskRequestParamDTO;
-import org.apache.hertzbeat.manager.pojo.dto.SparkDeskResponse;
+import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
+import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -76,11 +75,11 @@ public class SparkDeskAiServiceImpl implements AiService {
     }
 
     @Override
-    public Flux<String> requestAi(String text) {
+    public Flux<ServerSentEvent<String>> requestAi(String text) {
 
         try {
             checkParam(text, apiKey);
-            SparkDeskRequestParamDTO zhiPuRequestParamDTO = SparkDeskRequestParamDTO.builder()
+            OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
                     .model(model)
                     //sse
                     .stream(Boolean.TRUE)
@@ -94,27 +93,12 @@ public class SparkDeskAiServiceImpl implements AiService {
                     .retrieve()
                     .bodyToFlux(String.class)
                     .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                    .map(this::convertToResponse);
+                    .map(OpenAiResponse::convertToResponse);
         } catch (Exception e) {
             log.info("SparkDeskAiServiceImpl.requestAi exception:{}", e.toString());
             throw e;
         }
     }
-
-    private String convertToResponse(String aiRes) {
-        try {
-            SparkDeskResponse sparkDeskResponse = JSON.parseObject(aiRes, SparkDeskResponse.class);
-            if (Objects.nonNull(sparkDeskResponse)) {
-                SparkDeskResponse.Choice choice = sparkDeskResponse.getChoices().get(0);
-                return choice.getDelta().getContent();
-            }
-        } catch (Exception e) {
-            log.info("convertToResponse Exception:{}", e.toString());
-        }
-
-        return "";
-    }
-
 
     private void checkParam(String param, String apiKey) {
         Assert.notNull(param, "text is null");

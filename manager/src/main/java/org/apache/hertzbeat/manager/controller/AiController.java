@@ -23,6 +23,7 @@ import org.apache.hertzbeat.manager.service.AiService;
 import org.apache.hertzbeat.manager.service.impl.AiServiceFactoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,7 +45,7 @@ public class AiController {
     @Autowired
     private AiServiceFactoryImpl aiServiceFactory;
 
-    @Value("${aiConfig.type:0}")
+    @Value("${aiConfig.type:zhiPu}")
     private String type;
 
     /**
@@ -54,8 +55,8 @@ public class AiController {
      * @return                      AI response
      */
     @GetMapping(path = "/get", produces = {TEXT_EVENT_STREAM_VALUE})
-    public Flux<String> requestAi(@RequestParam("text") String text,
-                                                     @RequestParam(value = "type", required = false) String currentlyDisabledType) {
+    public Flux<ServerSentEvent<String>> requestAi(@RequestParam("text") String text,
+                                                   @RequestParam(value = "type", required = false) String currentlyDisabledType) {
         AiService aiServiceImplBean = aiServiceFactory.getAiServiceImplBean(type);
 
         return aiServiceImplBean.requestAi(text);
