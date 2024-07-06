@@ -96,9 +96,9 @@ public class OpenAiResponse {
 
     public static ServerSentEvent<String> convertToResponse(String aiRes) {
         try {
-            OpenAiResponse zhiPuAiResponse = JSON.parseObject(aiRes, OpenAiResponse.class);
-            if (Objects.nonNull(zhiPuAiResponse)) {
-                OpenAiResponse.Choice choice = zhiPuAiResponse.getChoices().get(0);
+            OpenAiResponse openAiResponse = JSON.parseObject(aiRes, OpenAiResponse.class);
+            if (Objects.nonNull(openAiResponse)) {
+                OpenAiResponse.Choice choice = openAiResponse.getChoices().get(0);
                 String content = choice.getDelta().getContent();
                 return ServerSentEvent.<String>builder()
                         .data(content)
