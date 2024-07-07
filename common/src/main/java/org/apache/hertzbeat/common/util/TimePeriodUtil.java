@@ -20,7 +20,6 @@ package org.apache.hertzbeat.common.util;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.TemporalAmount;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**
