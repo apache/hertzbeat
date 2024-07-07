@@ -105,6 +105,6 @@ public class PluginController {
     @Operation(summary = "Update enable status", description = "Delete plugins based on ID")
     public ResponseEntity<Message<Void>> updatePluginStatus(@RequestBody PluginMetadata plugin) {
         pluginService.updateStatus(plugin);
-        return ResponseEntity.ok(Message.success("Delete success"));
+        return ResponseEntity.ok(Message.success("Update success"));
     }
 }

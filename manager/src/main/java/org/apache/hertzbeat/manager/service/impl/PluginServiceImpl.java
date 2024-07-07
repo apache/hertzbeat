@@ -65,6 +65,18 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class PluginServiceImpl implements PluginService {
 
+    private final PluginMetadataDao metadataDao;
+
+    private final PluginItemDao itemDao;
+
+    public static Map<Class<?>, PluginType> PLUGIN_TYPE_MAPPING = new HashMap<>();
+
+    /**
+     * plugin status
+     */
+    private static final Map<String, Boolean> PLUGIN_ENABLE_STATUS = new ConcurrentHashMap<>();
+
+
     private URLClassLoader pluginClassLoader;
 
     @Override
@@ -102,21 +114,18 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
-    public static Map<Class<?>, PluginType> PLUGIN_TYPE_MAPPING = new HashMap<>();
 
     static {
         PLUGIN_TYPE_MAPPING.put(Plugin.class, PluginType.POST_ALERT);
     }
 
-    private final PluginMetadataDao metadataDao;
 
-    private final PluginItemDao itemDao;
     /**
-     * plugin status
+     * verify the type of the jar package
+     *
+     * @param jarFile jar file
+     * @return return the full path of the Plugin interface implementation class
      */
-    private static final Map<String, Boolean> PLUGIN_ENABLE_STATUS = new ConcurrentHashMap<>();
-
-    @Override
     public List<PluginItem> validateJarFile(File jarFile) {
         List<PluginItem> pluginItems = new ArrayList<>();
         try {
@@ -223,9 +232,11 @@ public class PluginServiceImpl implements PluginService {
         PLUGIN_ENABLE_STATUS.putAll(statusMap);
     }
 
+    /**
+     * load jar to classloader
+     */
     @PostConstruct
-    @Override
-    public void loadJarToClassLoader() {
+    private void loadJarToClassLoader() {
         try {
             if (pluginClassLoader != null) {
                 pluginClassLoader.close();

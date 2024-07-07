@@ -17,12 +17,9 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import java.io.File;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
-import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -32,21 +29,6 @@ import org.springframework.data.jpa.domain.Specification;
  * plugin service
  */
 public interface PluginService {
-
-    /**
-     * load jar to classloader
-     */
-    void loadJarToClassLoader();
-
-
-    /**
-     * verify the type of the jar package
-     *
-     * @param jarFile jar file
-     * @return return the full path of the Plugin interface implementation class
-     */
-    List<PluginItem> validateJarFile(File jarFile);
-
 
     /**
      * save plugin

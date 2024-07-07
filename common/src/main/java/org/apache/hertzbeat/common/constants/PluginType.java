@@ -15,29 +15,15 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.dto;
-
-
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
+package org.apache.hertzbeat.common.constants;
 
 /**
- * data transfer class for uploading plugins
+ * plugin type
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class PluginUpload {
+public enum PluginType {
 
-    @NotNull
-    private MultipartFile jarFile;
-
-    @NotNull(message = "Plugin name is required")
-    private String name;
-
-    @NotNull(message = "Enable status is required")
-    private Boolean enableStatus;
+    /**
+     * do something after alter
+     */
+    POST_ALERT
 }
