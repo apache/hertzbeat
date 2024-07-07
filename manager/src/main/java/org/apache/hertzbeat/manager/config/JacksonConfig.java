@@ -15,38 +15,31 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.util;
+package org.apache.hertzbeat.manager.config;
 
-import java.time.Duration;
-import java.time.Period;
-import java.time.temporal.TemporalAmount;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
- * time util
+ * jackson config
  */
 @Slf4j
-public final class TimePeriodUtil {
+@Configuration
+public class JacksonConfig {
+    @Bean
+    public ObjectMapper objectMapper() {
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+        simpleDateFormat.setTimeZone(TimeZone.getDefault());
 
-    private TimePeriodUtil() {
-    }
-
-    /**
-     * parse tokenTime to TemporalAmount
-     * @param tokenTime eg: "1m", "5M", "3D", "30m", "2h", "1Y", "3W"
-     * @return TemporalAmount
-     */
-    public static TemporalAmount parseTokenTime(String tokenTime) {
-
-        if (tokenTime == null || tokenTime.length() < 2) {
-            log.error("tokenTime is invalid");
-            return null;
-        }
-
-        if (Character.isUpperCase(tokenTime.charAt(tokenTime.length() - 1))) {
-            return Period.parse("P" + tokenTime);
-        } else {
-            return Duration.parse("PT" + tokenTime);
-        }
+        return new ObjectMapper()
+                .registerModule(javaTimeModule)
+                .setTimeZone(TimeZone.getDefault())
+                .setDateFormat(simpleDateFormat);
     }
 }
