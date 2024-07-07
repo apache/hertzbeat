@@ -43,7 +43,7 @@ import reactor.core.publisher.Flux;
  * Kimi Ai
  */
 @Service("KimiAiServiceImpl")
-@ConditionalOnProperty(prefix = "ai",name = "api-key", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
 @Slf4j
 public class KimiAiServiceImpl implements AiService {
 

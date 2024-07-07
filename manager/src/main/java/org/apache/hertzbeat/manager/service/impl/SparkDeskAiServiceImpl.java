@@ -44,7 +44,7 @@ import reactor.core.publisher.Flux;
  * sparkDesk AI
  */
 @Service("SparkDeskAiServiceImpl")
-@ConditionalOnProperty(prefix = "ai",name = {"api-key", "api-secret"}, matchIfMissing = false)
+@ConditionalOnProperty(prefix = "ai", name = {"api-key", "api-secret"}, matchIfMissing = false)
 @Slf4j
 public class SparkDeskAiServiceImpl implements AiService {
 

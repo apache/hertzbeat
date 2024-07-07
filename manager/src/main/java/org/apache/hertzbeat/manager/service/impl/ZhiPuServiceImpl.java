@@ -44,7 +44,7 @@ import reactor.core.publisher.Flux;
  * ZhiPu AI
  */
 @Service("ZhiPuServiceImpl")
-@ConditionalOnProperty(prefix = "ai",name = "api-key", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
 @Slf4j
 public class ZhiPuServiceImpl implements AiService {
     @Value("${ai.model:glm-4}")

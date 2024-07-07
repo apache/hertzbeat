@@ -44,7 +44,7 @@ import reactor.core.publisher.Flux;
  * alibaba Ai
  */
 @Service("AlibabaAiServiceImpl")
-@ConditionalOnProperty(prefix = "ai",name = "api-key", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
 @Slf4j
 public class AlibabaAiServiceImpl implements AiService {
 
