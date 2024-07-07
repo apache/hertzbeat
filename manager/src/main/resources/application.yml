@@ -186,7 +186,7 @@ alerter:
   telegram-webhook-url: https://api.telegram.org/bot%s/sendMessage
   # discord
   discord-webhook-url: https://discord.com/api/v9/channels/%s/messages
-  # server
+  # serverChan
   server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
   gotify-webhook-url: http://127.0.0.1/message?token=%s
