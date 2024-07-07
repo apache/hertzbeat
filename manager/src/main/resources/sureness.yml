@@ -113,7 +113,7 @@ account:
     role: [guest]
   - appId: lili
     # credential = MD5(password + salt)
-    # plain password: hertzbeat
+    # plain password: hertzBeat
     # attention: digest authentication does not support salted encrypted password accounts
     credential: 94C6B34E7A199A9F9D4E1F208093B489
     salt: 123
