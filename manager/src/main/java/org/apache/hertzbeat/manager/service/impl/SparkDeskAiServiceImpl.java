@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import java.util.List;
@@ -25,8 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
-import org.apache.hertzbeat.manager.pojo.dto.KimiAiRequestParamDTO;
-import org.apache.hertzbeat.manager.pojo.dto.KimiAiResponse;
+import org.apache.hertzbeat.manager.pojo.dto.SparkDeskRequestParamDTO;
+import org.apache.hertzbeat.manager.pojo.dto.SparkDeskResponse;
+import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -37,27 +38,32 @@ import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
-/**
- * Kimi Ai
- */
-@Service("KimiAiServiceImpl")
-@Slf4j
-public class KimiAiServiceImpl implements AiService {
 
-    @Value("${aiConfig.model:moonshot-v1-8k}")
+/**
+ * sparkDesk AI
+ */
+@Service("SparkDeskAiServiceImpl")
+@Slf4j
+public class SparkDeskAiServiceImpl implements AiService {
+
+    @Value("${aiConfig.model:generalv3.5}")
     private String model;
 
     @Value("${aiConfig.api-key}")
     private String apiKey;
+    @Value("${aiConfig.api-secret}")
+    private String apiSecret;
 
     private WebClient webClient;
 
     @PostConstruct
     private void init() {
+        StringBuilder sb = new StringBuilder();
+        String bearer = sb.append("Bearer ").append(apiKey).append(":").append(apiSecret).toString();
         this.webClient = WebClient.builder()
-                .baseUrl(AiConstants.KimiAiConstants.URL)
+                .baseUrl(AiConstants.SparkDeskConstants.SPARK_ULTRA_URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, bearer)
                 .exchangeStrategies(ExchangeStrategies.builder()
                         .codecs(item -> item.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                         .build())
@@ -66,44 +72,49 @@ public class KimiAiServiceImpl implements AiService {
 
     @Override
     public AiTypeEnum getType() {
-        return AiTypeEnum.kimiAi;
+        return AiTypeEnum.sparkDesk;
     }
 
     @Override
     public Flux<String> requestAi(String text) {
 
-        checkParam(text, apiKey);
-        KimiAiRequestParamDTO zhiPuRequestParamDTO = KimiAiRequestParamDTO.builder()
-                .model(model)
-                .stream(Boolean.TRUE)
-                .maxTokens(AiConstants.KimiAiConstants.MAX_TOKENS)
-                .temperature(AiConstants.KimiAiConstants.TEMPERATURE)
-                .messages(List.of(new AiMessage(AiConstants.KimiAiConstants.REQUEST_ROLE, text)))
-                .build();
+        try {
+            checkParam(text, apiKey);
+            SparkDeskRequestParamDTO zhiPuRequestParamDTO = SparkDeskRequestParamDTO.builder()
+                    .model(model)
+                    //sse
+                    .stream(Boolean.TRUE)
+                    .maxTokens(AiConstants.SparkDeskConstants.MAX_TOKENS)
+                    .temperature(AiConstants.SparkDeskConstants.TEMPERATURE)
+                    .messages(List.of(new AiMessage(AiConstants.SparkDeskConstants.REQUEST_ROLE, text)))
+                    .build();
 
-
-        return webClient.post()
-                .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
-                .retrieve()
-                .bodyToFlux(String.class)
-                .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                .map(this::convertToResponse)
-                .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
-
+            return webClient.post()
+                    .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
+                    .retrieve()
+                    .bodyToFlux(String.class)
+                    .filter(aiResponse -> !"[DONE]".equals(aiResponse))
+                    .map(this::convertToResponse);
+        } catch (Exception e) {
+            log.info("SparkDeskAiServiceImpl.requestAi exception:{}", e.toString());
+            throw e;
+        }
     }
 
     private String convertToResponse(String aiRes) {
         try {
-            KimiAiResponse kimiAiResponse = JSON.parseObject(aiRes, KimiAiResponse.class);
-            if (Objects.nonNull(kimiAiResponse)) {
-                KimiAiResponse.Choice choice = kimiAiResponse.getChoices().get(0);
+            SparkDeskResponse sparkDeskResponse = JSON.parseObject(aiRes, SparkDeskResponse.class);
+            if (Objects.nonNull(sparkDeskResponse)) {
+                SparkDeskResponse.Choice choice = sparkDeskResponse.getChoices().get(0);
                 return choice.getDelta().getContent();
             }
         } catch (Exception e) {
             log.info("convertToResponse Exception:{}", e.toString());
         }
+
         return "";
     }
+
 
     private void checkParam(String param, String apiKey) {
         Assert.notNull(param, "text is null");

@@ -37,6 +37,8 @@ export class NoticeReceiver {
   corpId!: string;
   agentId!: number;
   appSecret!: string;
+  partyId!: string;
+  tagId!: string;
   smnAk!: string;
   smnSk!: string;
   smnProjectId!: string;
