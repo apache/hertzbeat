@@ -48,9 +48,9 @@ public class SparkDeskAiServiceImpl implements AiService {
     @Value("${aiConfig.model:generalv3.5}")
     private String model;
 
-    @Value("${aiConfig.api-key}")
+    @Value("${aiConfig.api-key:default}")
     private String apiKey;
-    @Value("${aiConfig.api-secret}")
+    @Value("${aiConfig.api-secret:default}")
     private String apiSecret;
 
     private WebClient webClient;

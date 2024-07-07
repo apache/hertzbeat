@@ -49,7 +49,7 @@ public class AlibabaAiServiceImpl implements AiService {
 
     @Value("${aiConfig.model:qwen-turbo}")
     private String model;
-    @Value("${aiConfig.api-key}")
+    @Value("${aiConfig.api-key:default}")
     private String apiKey;
 
 

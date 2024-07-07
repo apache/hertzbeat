@@ -47,7 +47,7 @@ import reactor.core.publisher.Flux;
 public class ZhiPuServiceImpl implements AiService {
     @Value("${aiConfig.model:glm-4}")
     private String model;
-    @Value("${aiConfig.api-key}")
+    @Value("${aiConfig.api-key:default}")
     private String apiKey;
 
     private WebClient webClient;
