@@ -45,7 +45,7 @@ public class AiController {
     @Autowired
     private AiServiceFactoryImpl aiServiceFactory;
 
-    @Value("${aiConfig.type:zhiPu}")
+    @Value("${ai.type:zhiPu}")
     private String type;
 
     /**

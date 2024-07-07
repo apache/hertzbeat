@@ -27,6 +27,7 @@ import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -41,13 +42,14 @@ import reactor.core.publisher.Flux;
  * Kimi Ai
  */
 @Service("KimiAiServiceImpl")
+@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
 @Slf4j
 public class KimiAiServiceImpl implements AiService {
 
-    @Value("${aiConfig.model:moonshot-v1-8k}")
+    @Value("${ai.model:moonshot-v1-8k}")
     private String model;
 
-    @Value("${aiConfig.api-key:default}")
+    @Value("${ai.api-key}")
     private String apiKey;
 
     private WebClient webClient;
@@ -101,6 +103,6 @@ public class KimiAiServiceImpl implements AiService {
 
     private void checkParam(String param, String apiKey) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(apiKey, "aiConfig.api-key is null");
+        Assert.notNull(apiKey, "ai.api-key is null");
     }
 }
