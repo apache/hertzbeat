@@ -73,6 +73,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         connectionCommonCache = new ConnectionCommonCache<>();
     }
 
+    @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException{
         Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
         RedisProtocol redisProtocol = metrics.getRedis();

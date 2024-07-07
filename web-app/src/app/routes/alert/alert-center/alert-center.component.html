@@ -75,16 +75,12 @@
       <nz-option [nzLabel]="'alert.status.3' | i18n" [nzValue]="3"></nz-option>
     </nz-select>
     <app-multi-func-input
-      groupStyle="width: 200px;"
-      inputStyle="text-align: center"
+      groupStyle="width: 250px;"
       class="mobile-hide"
       [placeholder]="'alert.center.search' | i18n"
       [(value)]="filterContent"
       (valueChange)="loadAlertsTable()"
     />
-    <button nz-button nzType="primary" (click)="loadAlertsTable()" class="mobile-hide">
-      {{ 'common.search' | i18n }}
-    </button>
   </ng-template>
 </app-toolbar>
 
@@ -174,37 +170,39 @@
         </nz-tag>
       </td>
       <td nzAlign="center">
-        <button
-          *ngIf="data.status != 3"
-          nz-button
-          nzType="primary"
-          (click)="onMarkReadOneAlert(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.deal' | i18n"
-        >
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          *ngIf="data.status == 3"
-          nz-button
-          nzType="primary"
-          nzDanger
-          (click)="onMarkUnReadOneAlert(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.no-deal' | i18n"
-        >
-          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          nz-button
-          nzType="primary"
-          nzDanger
-          (click)="onDeleteOneAlert(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.center.delete' | i18n"
-        >
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
+        <div class="actions">
+          <button
+            *ngIf="data.status != 3"
+            nz-button
+            nzType="primary"
+            (click)="onMarkReadOneAlert(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.center.deal' | i18n"
+          >
+            <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+          </button>
+          <button
+            *ngIf="data.status == 3"
+            nz-button
+            nzType="primary"
+            nzDanger
+            (click)="onMarkUnReadOneAlert(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.center.no-deal' | i18n"
+          >
+            <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+          </button>
+          <button
+            nz-button
+            nzType="primary"
+            nzDanger
+            (click)="onDeleteOneAlert(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.center.delete' | i18n"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
       </td>
     </tr>
   </tbody>

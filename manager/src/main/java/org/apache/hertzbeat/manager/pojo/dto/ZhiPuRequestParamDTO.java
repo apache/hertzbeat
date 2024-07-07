@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 
 
 /**
- * zhiPu Request param
+ * ZhiPu Request param
  */
 @Data
 @AllArgsConstructor

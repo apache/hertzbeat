@@ -39,11 +39,13 @@ const HEADER_COMPONENTS = [
 ];
 
 import { LayoutPassportComponent } from './passport/passport.component';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
-import { NzListComponent, NzListItemComponent, NzListItemMetaComponent } from 'ng-zorro-antd/list';
+import { NzListComponent, NzListItemActionComponent, NzListItemComponent, NzListItemMetaComponent } from 'ng-zorro-antd/list';
 import { NzStringTemplateOutletDirective } from 'ng-zorro-antd/core/outlet';
+import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 const PASSPORT = [LayoutPassportComponent];
 
 @NgModule({
@@ -65,13 +67,16 @@ const PASSPORT = [LayoutPassportComponent];
     NzBadgeModule,
     NzAvatarModule,
     NzIconModule,
+    NzButtonModule,
     NzModalModule,
     NzTagModule,
     NzDividerModule,
     NzListComponent,
     NzListItemComponent,
     NzListItemMetaComponent,
-    NzStringTemplateOutletDirective
+    NzStringTemplateOutletDirective,
+    NzListItemActionComponent,
+    NzTooltipDirective
   ],
   declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT],
   exports: [...COMPONENTS, ...PASSPORT]
