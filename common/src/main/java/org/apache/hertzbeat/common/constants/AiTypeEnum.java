@@ -28,9 +28,20 @@ public enum AiTypeEnum {
     zhiPu,
 
     /**
+     * sparkDesk
+     * 科大讯飞
+     */
+    sparkDesk,
+
+    /**
      * alibabaAi
      */
-    alibabaAi;
+    alibabaAi,
+
+    /**
+     * Moonshot AI
+     */
+    kimiAi;
 
 
     /**

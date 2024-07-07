@@ -42,7 +42,7 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     /**
      * send weChat app message url
@@ -66,6 +66,10 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
         String corpId = receiver.getCorpId();
         Integer agentId = receiver.getAgentId();
         String appSecret = receiver.getAppSecret();
+        String userId = receiver.getUserId();
+        String partyId = receiver.getPartyId();
+        String tagId = receiver.getTagId();
+
 
         try {
             ResponseEntity<WeChatAppReq> entityResponse = restTemplate.getForEntity(String.format(SECRET_URL, corpId, appSecret), WeChatAppReq.class);
@@ -73,12 +77,30 @@ public class WeWorkAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
                 String accessToken = entityResponse.getBody().getAccessToken();
                 WeChatAppDTO.MarkdownDTO markdown = new WeChatAppDTO.MarkdownDTO();
                 markdown.setContent(renderContent(noticeTemplate, alert));
-                WeChatAppDTO weChatAppDTO = WeChatAppDTO.builder()
-                        .toUser(DEFAULT_ALL)
+                WeChatAppDTO.WeChatAppDTOBuilder weChatAppDTOBuilder = WeChatAppDTO.builder()
                         .msgType(WeChatAppDTO.MARKDOWN)
                         .markdown(markdown)
-                        .agentId(agentId)
-                        .build();
+                        .agentId(agentId);
+                boolean hasUserId = receiver.getUserId() != null;
+                boolean hasPartyId = receiver.getPartyId() != null;
+                boolean hasTagId = receiver.getTagId() != null;
+
+                if (hasUserId) {
+                    weChatAppDTOBuilder.toUser(userId);
+                }
+                if (hasPartyId) {
+                    weChatAppDTOBuilder.toParty(partyId);
+                }
+                if (hasTagId) {
+                    weChatAppDTOBuilder.toTag(tagId);
+                }
+
+                if (!hasUserId && !hasPartyId && !hasTagId) {
+                    weChatAppDTOBuilder.toUser(DEFAULT_ALL);
+                }
+
+                WeChatAppDTO weChatAppDTO = weChatAppDTOBuilder.build();
+
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 HttpEntity<WeChatAppDTO> weChatAppEntity = new HttpEntity<>(weChatAppDTO, headers);

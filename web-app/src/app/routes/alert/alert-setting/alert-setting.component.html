@@ -17,12 +17,12 @@
   ~ under the License.
 -->
 
-<app-help-massage-show
-  [help_massage_content]="'alert.help.setting' | i18n"
+<app-help-message-show
+  [help_message_content]="'alert.help.setting' | i18n"
   [guild_link]="'alert.help.center.setting' | i18n"
   [module_name]="'menu.alert.setting'"
   [icon_name]="'calculator'"
-></app-help-massage-show>
+></app-help-message-show>
 
 <nz-divider></nz-divider>
 
@@ -63,18 +63,12 @@
     </nz-dropdown-menu>
   </ng-template>
   <ng-template #right>
-    <input
-      style="width: 200px; text-align: center"
-      nz-input
-      type="text"
+    <app-multi-func-input
+      groupStyle="width: 250px;"
       [placeholder]="'alert.setting.search' | i18n"
-      nzSize="default"
-      (keyup.enter)="loadAlertDefineTable()"
-      [(ngModel)]="search"
+      [(value)]="search"
+      (valueChange)="loadAlertDefineTable()"
     />
-    <button nz-button nzType="primary" (click)="loadAlertDefineTable()">
-      {{ 'common.search' | i18n }}
-    </button>
   </ng-template>
 </app-toolbar>
 
@@ -144,35 +138,37 @@
         <nz-switch [(ngModel)]="data.enable" (ngModelChange)="updateAlertDefine(data)" name="enable"></nz-switch>
       </td>
       <td nzAlign="center">
-        <button
-          nz-button
-          nzType="primary"
-          (click)="onOpenConnectModal(data.id, data.app)"
-          nz-tooltip
-          [disabled]="data.preset"
-          [nzTooltipTitle]="'alert.setting.connect' | i18n"
-        >
-          <i nz-icon nzType="link" nzTheme="outline"></i>
-        </button>
-        <button
-          nz-button
-          nzType="primary"
-          (click)="onEditOneAlertDefine(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.setting.edit' | i18n"
-        >
-          <i nz-icon nzType="edit" nzTheme="outline"></i>
-        </button>
-        <button
-          nz-button
-          nzDanger
-          nzType="primary"
-          (click)="onDeleteOneAlertDefine(data.id)"
-          nz-tooltip
-          [nzTooltipTitle]="'alert.setting.delete' | i18n"
-        >
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
+        <div class="actions">
+          <button
+            nz-button
+            nzType="primary"
+            (click)="onOpenConnectModal(data.id, data.app)"
+            nz-tooltip
+            [disabled]="data.preset"
+            [nzTooltipTitle]="'alert.setting.connect' | i18n"
+          >
+            <i nz-icon nzType="link" nzTheme="outline"></i>
+          </button>
+          <button
+            nz-button
+            nzType="primary"
+            (click)="onEditOneAlertDefine(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.setting.edit' | i18n"
+          >
+            <i nz-icon nzType="edit" nzTheme="outline"></i>
+          </button>
+          <button
+            nz-button
+            nzDanger
+            nzType="primary"
+            (click)="onDeleteOneAlertDefine(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'alert.setting.delete' | i18n"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
       </td>
     </tr>
   </tbody>
@@ -207,7 +203,7 @@
           ></nz-cascader>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length != 2">
         <nz-form-label [nzSpan]="7" nzFor="rule" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
@@ -227,7 +223,7 @@
               {{ 'alert.setting.rule.switch-expr.1' | i18n }}
             </label>
           </nz-radio-group>
-          <div *ngIf="cascadeValues.length != 2 && isExpr" style="margin-top: 5px">
+          <div *ngIf="isExpr" style="margin-top: 5px">
             <nz-textarea-count [nzMaxCharacterCount]="100">
               <textarea
                 [(ngModel)]="define.expr"
@@ -268,7 +264,7 @@
               </nz-collapse-panel>
             </nz-collapse>
           </div>
-          <div *ngIf="cascadeValues.length != 2 && !isExpr" style="margin-top: 5px">
+          <div *ngIf="!isExpr" style="margin-top: 5px">
             <div id="rule">
               <div style="width: 100%; margin-bottom: 2px" nz-row *ngFor="let alertRule of alertRules; let i = index">
                 <nz-select
@@ -499,27 +495,16 @@
           </nz-collapse>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="tags" [nzTooltipTitle]="'tag.bind.tip' | i18n">
-          {{ 'tag.bind' | i18n }}
-        </nz-form-label>
-        <nz-form-control nzSpan="8">
-          <nz-tag
-            *ngFor="let tag of define.tags; let i = index"
-            [nzMode]="'closeable'"
-            (nzOnClose)="onRemoveTag(tag)"
-            style="margin-top: 4px"
-          >
-            {{ sliceTagName(tag) }}
-          </nz-tag>
-          <a (click)="onShowTagsModal()">
-            <nz-tag style="margin-top: 4px">
-              <i nz-icon nzType="plus"></i>
-              {{ 'tag.new' | i18n }}
-            </nz-tag>
-          </a>
-        </nz-form-control>
-      </nz-form-item>
+      <app-form-item
+        [item]="{
+          field: 'tags',
+          type: 'tags-selection',
+          name: 'tag.bind' | i18n,
+          tooltip: 'tag.bind.tip' | i18n
+        }"
+        [extra]="{ tag_mode: 'closeable' }"
+        [(value)]="define.tags"
+      />
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="preset" [nzTooltipTitle]="'alert.setting.default.tip' | i18n">
           {{ 'alert.setting.default' | i18n }}
@@ -550,52 +535,6 @@
         </nz-form-control>
       </nz-form-item>
     </form>
-  </div>
-</nz-modal>
-
-<!-- 选择TAG弹出框 -->
-<nz-modal
-  [(nzVisible)]="isTagManageModalVisible"
-  [nzTitle]="'tag.bind' | i18n"
-  (nzOnCancel)="onTagManageModalCancel()"
-  (nzOnOk)="onTagManageModalOk()"
-  nzMaskClosable="false"
-  nzWidth="30%"
-  [nzOkLoading]="isTagManageModalOkLoading"
->
-  <div *nzModalContent class="-inner-content">
-    <input
-      style="margin-left: 5px; width: 50%; text-align: center"
-      nz-input
-      type="text"
-      [placeholder]="'tag.search' | i18n"
-      nzSize="default"
-      (keyup.enter)="loadTagsTable()"
-      [(ngModel)]="tagSearch"
-    />
-    <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px">
-      <i nz-icon nzType="setting" nzTheme="outline"></i>
-      {{ 'tag.setting' | i18n }}
-    </button>
-    <nz-table #smallTable nzSize="small" [nzData]="tags" [nzPageSize]="8" [nzLoading]="tagTableLoading">
-      <thead>
-        <tr>
-          <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="tagCheckedAll" (nzCheckedChange)="onTagAllChecked($event)"></th>
-          <th nzAlign="left">{{ 'tag' | i18n }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let data of smallTable.data">
-          <td nzAlign="center" nzLeft [nzChecked]="checkedTags.has(data)" (nzCheckedChange)="onTagItemChecked(data, $event)"></td>
-          <td nzAlign="left">
-            <nz-tag *ngIf="data.tagValue == undefined || data.tagValue.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
-            <nz-tag *ngIf="data.tagValue != undefined && data.tagValue.trim() != ''" [nzColor]="data.color">
-              {{ data.name + ':' + data.tagValue }}
-            </nz-tag>
-          </td>
-        </tr>
-      </tbody>
-    </nz-table>
   </div>
 </nz-modal>
 

@@ -17,19 +17,20 @@
   ~ under the License.
 -->
 
-<app-help-massage-show
+<app-help-message-show
   *ngIf="app != undefined"
-  [help_massage_content]="'monitor.app.' + app + '.help' | i18n"
+  [help_message_content]="'monitor.app.' + app + '.help' | i18n"
   [guild_link]="'monitor.app.' + app + '.helpLink' | i18n"
   [icon_name]="getAppIconName(app)"
-></app-help-massage-show>
-<app-help-massage-show
+></app-help-message-show>
+<app-help-message-show
   *ngIf="app == undefined"
-  [help_massage_content]="'monitors.center.help' | i18n"
+  [help_message_content]="'monitors.center.help' | i18n"
   [guild_link]="'monitors.center.help.link' | i18n"
   [module_name]="'menu.monitor.center'"
   [icon_name]="'laptop'"
-></app-help-massage-show>
+></app-help-message-show>
+
 <nz-divider></nz-divider>
 
 <app-toolbar>
@@ -37,16 +38,15 @@
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
+    <button *ngIf="isDefaultListMenu || app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'monitors.new-monitor' | i18n }}
+    </button>
     <button *ngIf="app != undefined" nz-button nzType="primary">
       <a routerLink="/monitors/new" [queryParams]="{ app: app }">
         <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
         {{ 'monitors.new' | i18n }} {{ 'monitor.app.' + app | i18n }}
       </a>
-    </button>
-
-    <button *ngIf="app == undefined" nz-button nzType="primary" (click)="onAppSwitchModalOpen()">
-      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      {{ 'monitors.new-monitor' | i18n }}
     </button>
     <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
       <span nz-icon nzType="ellipsis"></span>
@@ -102,24 +102,29 @@
       <nz-option [nzLabel]="'monitor.status.paused' | i18n" [nzValue]="0"></nz-option>
     </nz-select>
     <app-multi-func-input
-      groupStyle="width: 90px;"
-      inputStyle="text-align: center"
+      *ngIf="isDefaultListMenu"
+      groupStyle="width: 120px;"
+      class="mobile-hide"
+      [readonly]="true"
+      [placeholder]="'monitors.search.app' | i18n"
+      [(value)]="app"
+      (click)="onSearchAppClicked()"
+      (valueChange)="onAppChanged()"
+    />
+    <app-multi-func-input
+      groupStyle="width: 120px;"
       class="mobile-hide"
       [placeholder]="'monitors.search.tag' | i18n"
       [(value)]="tag"
-      (valueChange)="onFilterSearchMonitors()"
+      (valueChange)="onTagChanged()"
     />
     <app-multi-func-input
       groupStyle="width: 180px;"
-      inputStyle="text-align: center"
       class="mobile-hide"
       [placeholder]="'monitors.search.placeholder' | i18n"
       [(value)]="filterContent"
       (valueChange)="onFilterSearchMonitors()"
     />
-    <button class="mobile-hide" nz-button nzType="primary" (click)="onFilterSearchMonitors()">
-      {{ 'common.search' | i18n }}
-    </button>
   </ng-template>
 </app-toolbar>
 
@@ -204,64 +209,66 @@
       </td>
       <td nzAlign="center">{{ (data.gmtUpdate ? data.gmtUpdate : data.gmtCreate) | date : 'YYYY-MM-dd HH:mm:ss' }}</td>
       <td nzAlign="center">
-        <button nz-button nzType="primary" [routerLink]="['/monitors/' + data.id]" nz-tooltip [nzTooltipTitle]="'monitors.detail' | i18n">
-          <i nz-icon nzType="area-chart" nzTheme="outline"></i>
-        </button>
-        <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
-          <span nz-icon nzType="ellipsis"></span>
-        </button>
-        <nz-dropdown-menu #more_menu="nzDropdownMenu">
-          <ul nz-menu>
-            <li nz-menu-item>
-              <button
-                nz-button
-                nzType="primary"
-                (click)="onEditOneMonitor(data.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'monitors.edit-monitor' | i18n"
-              >
-                <i nz-icon nzType="edit" nzTheme="outline"></i>
-              </button>
-            </li>
-            <li nz-menu-item>
-              <button
-                *ngIf="data.status == 0"
-                nz-button
-                nzType="primary"
-                (click)="onEnableManageOneMonitor(data.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'monitors.enable' | i18n"
-              >
-                <i nz-icon nzType="play-circle" nzTheme="outline"></i>
-              </button>
-            </li>
-            <li nz-menu-item>
-              <button
-                *ngIf="data.status != 0"
-                nz-button
-                nzDanger
-                nzType="primary"
-                (click)="onCancelManageOneMonitor(data.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'monitors.cancel' | i18n"
-              >
-                <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
-              </button>
-            </li>
-            <li nz-menu-item>
-              <button
-                nz-button
-                nzType="primary"
-                nzDanger
-                (click)="onDeleteOneMonitor(data.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'monitors.delete-monitor' | i18n"
-              >
-                <i nz-icon nzType="delete" nzTheme="outline"></i>
-              </button>
-            </li>
-          </ul>
-        </nz-dropdown-menu>
+        <div class="actions">
+          <button nz-button nzType="primary" [routerLink]="['/monitors/' + data.id]" nz-tooltip [nzTooltipTitle]="'monitors.detail' | i18n">
+            <i nz-icon nzType="area-chart" nzTheme="outline"></i>
+          </button>
+          <button nz-button nz-dropdown [nzDropdownMenu]="more_menu">
+            <span nz-icon nzType="ellipsis"></span>
+          </button>
+          <nz-dropdown-menu #more_menu="nzDropdownMenu">
+            <ul nz-menu>
+              <li nz-menu-item>
+                <button
+                  nz-button
+                  nzType="primary"
+                  (click)="onEditOneMonitor(data.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'monitors.edit-monitor' | i18n"
+                >
+                  <i nz-icon nzType="edit" nzTheme="outline"></i>
+                </button>
+              </li>
+              <li nz-menu-item>
+                <button
+                  *ngIf="data.status == 0"
+                  nz-button
+                  nzType="primary"
+                  (click)="onEnableManageOneMonitor(data.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'monitors.enable' | i18n"
+                >
+                  <i nz-icon nzType="play-circle" nzTheme="outline"></i>
+                </button>
+              </li>
+              <li nz-menu-item>
+                <button
+                  *ngIf="data.status != 0"
+                  nz-button
+                  nzDanger
+                  nzType="primary"
+                  (click)="onCancelManageOneMonitor(data.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'monitors.cancel' | i18n"
+                >
+                  <i nz-icon nzType="pause-circle" nzTheme="outline"></i>
+                </button>
+              </li>
+              <li nz-menu-item>
+                <button
+                  nz-button
+                  nzType="primary"
+                  nzDanger
+                  (click)="onDeleteOneMonitor(data.id)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'monitors.delete-monitor' | i18n"
+                >
+                  <i nz-icon nzType="delete" nzTheme="outline"></i>
+                </button>
+              </li>
+            </ul>
+          </nz-dropdown-menu>
+        </div>
       </td>
     </tr>
   </tbody>
@@ -303,14 +310,15 @@
   (nzOnCancel)="onAppSwitchModalCancel()"
   nzClosable="false"
   nzWidth="30%"
+  nzWrapClassName="monitor-select-menu-modal"
   [nzOkText]="null"
   [nzCancelText]="null"
   [nzOkLoading]="appSearchLoading"
 >
   <div *nzModalContent class="-inner-content">
     <app-monitor-select-menu
-      listStyle="border-right: 0px; overflow-y: hidden"
-      [searchPlaceholder]="'monitors.center.search.placeholder' | i18n"
+      listStyle="border-right: 0px"
+      [searchPlaceholder]="(appSwitchModalVisibleType === 1 ? 'monitors.search.app' : 'monitors.center.search.placeholder') | i18n"
       [loading]="appSearchLoading"
       [data]="appSearchOrigin"
       (selectedChanged)="gotoMonitorAddDetail($event)"
@@ -318,7 +326,7 @@
       <ng-template let-app="item" #prefix>
         <i nz-icon [nzType]="getAppIconName(app.value)" nzTheme="outline"></i>
       </ng-template>
-      <ng-template #suffix><i nz-icon nzType="right"></i></ng-template>
+      <ng-template #suffix>@if (appSwitchModalVisibleType !== 1) {<i nz-icon nzType="right"></i>}</ng-template>
     </app-monitor-select-menu>
   </div>
 </nz-modal>

@@ -94,3 +94,5 @@ aiConfig:
   model: glm-4
   #api key
   api-key: xxx
+  #At present, only IFLYTEK large model needs to be filled in
+  api-secret: xxx

@@ -8,10 +8,10 @@ p {
 // :host 表示选择当前的组件##
 // ::ng-deep 可以忽略中间className的嵌套层级关系。直接找到你要修改的className##
 :host ::ng-deep {
-  .ant-card-head {
-    padding: 0 4px 0 4px;
-  }
   .ant-card-head-title {
     padding: 16px 0 4px 0;
+  }
+  .ant-table-body {
+    overflow-y: auto!important;
   }
 }
