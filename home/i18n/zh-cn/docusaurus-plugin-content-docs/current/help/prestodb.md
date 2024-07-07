@@ -2,7 +2,7 @@
 id: presto
 title: 监控：PrestoDB Atlas 数据库
 sidebar_label: PrestoDB Atlas 数据库
-keywords: [ 开源监控系统, 开源数据库监控, PrestoDB Atlas 数据库监控 ]
+keywords: [ PrestoDB Atlas 监控 ]
 ---
 > 对PrestoDB Atlas 的通用性能指标进行采集监控。
 

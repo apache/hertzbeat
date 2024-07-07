@@ -2,7 +2,7 @@
 id: presto
 title: Monitoring PrestoDB Atlas Database
 sidebar_label: PrestoDB Atlas Database
-keywords: [open-source monitoring system, open-source database monitoring, PrestoDB Atlas database monitoring]
+keywords: [ PrestoDB Atlas  monitoring]
 ---
 > Collect and monitor general performance metrics of PrestoDB Atlas databases.
 
