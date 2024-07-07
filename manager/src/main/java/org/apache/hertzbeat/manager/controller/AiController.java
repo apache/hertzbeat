@@ -49,7 +49,7 @@ public class AiController {
     /**
      * Types of artificial intelligence
      */
-    @Value("${aiConfig.type:zhiPu}")
+    @Value("${ai.type:zhiPu}")
     private String type;
 
     /**
