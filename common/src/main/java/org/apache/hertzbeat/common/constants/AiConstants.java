@@ -38,9 +38,9 @@ public interface AiConstants {
         String REQUEST_ROLE = "user";
 
         /**
-         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 1024
+         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 3072
          */
-        Integer MAX_TOKENS = 1024;
+        Integer MAX_TOKENS = 3072;
 
         /**
          * The sampling temperature, which controls the randomness of the output, must be positive
@@ -48,7 +48,7 @@ public interface AiConstants {
          * the more random and creative the output will be. The smaller the value, the more stable or certain the output will be
          * You are advised to adjust top_p or temperature parameters based on application scenarios, but do not adjust the two parameters at the same time
          */
-        double TEMPERATURE = 0.95;
+        float TEMPERATURE = 0.7f;
 
     }
 
@@ -68,9 +68,9 @@ public interface AiConstants {
         String REQUEST_ROLE = "user";
 
         /**
-         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 1024
+         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 3072
          */
-        Integer MAX_TOKENS = 1024;
+        Integer MAX_TOKENS = 3072;
 
         /**
          * The sampling temperature, which controls the randomness of the output, must be positive
@@ -78,7 +78,7 @@ public interface AiConstants {
          * the more random and creative the output will be. The smaller the value, the more stable or certain the output will be
          * You are advised to adjust top_p or temperature parameters based on application scenarios, but do not adjust the two parameters at the same time
          */
-        float TEMPERATURE = 0.9f;
+        float TEMPERATURE = 0.7f;
 
 
     }
@@ -99,9 +99,9 @@ public interface AiConstants {
         String REQUEST_ROLE = "user";
 
         /**
-         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 1024
+         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 3072
          */
-        Integer MAX_TOKENS = 1024;
+        Integer MAX_TOKENS = 3072;
 
         /**
          * The sampling temperature, which controls the randomness of the output, must be positive
@@ -109,7 +109,7 @@ public interface AiConstants {
          * the more random and creative the output will be. The smaller the value, the more stable or certain the output will be
          * You are advised to adjust top_p or temperature parameters based on application scenarios, but do not adjust the two parameters at the same time
          */
-        float TEMPERATURE = 0.9f;
+        float TEMPERATURE = 0.7f;
 
 
     }
@@ -129,9 +129,9 @@ public interface AiConstants {
         String REQUEST_ROLE = "user";
 
         /**
-         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 1024
+         * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 3072
          */
-        Integer MAX_TOKENS = 1024;
+        Integer MAX_TOKENS = 3072;
 
         /**
          * The sampling temperature, which controls the randomness of the output, must be positive
@@ -139,7 +139,7 @@ public interface AiConstants {
          * the more random and creative the output will be. The smaller the value, the more stable or certain the output will be
          * You are advised to adjust top_p or temperature parameters based on application scenarios, but do not adjust the two parameters at the same time
          */
-        float TEMPERATURE = 0.95f;
+        float TEMPERATURE = 0.7f;
 
     }
 

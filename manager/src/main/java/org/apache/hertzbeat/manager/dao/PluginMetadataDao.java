@@ -15,30 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.dao;
 
-
-import org.apache.hertzbeat.common.constants.AiTypeEnum;
-import org.springframework.http.codec.ServerSentEvent;
-import reactor.core.publisher.Flux;
-
+import java.util.List;
+import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * AI Service
+ * plugin metadata repository
  */
-public interface AiService {
+public interface PluginMetadataDao extends JpaRepository<PluginMetadata, Long>, JpaSpecificationExecutor<PluginMetadata> {
 
     /**
-     * get AI type
-     * @return     type
+     * count by name
+     *
+     * @param name name
+     * @return count
      */
-    AiTypeEnum getType();
+    int countPluginMetadataByName(String name);
+
 
     /**
-     * AI response
-     * @param text  text
-     * @return      AI response
+     * find enabled plugins
+     * @return plugins
      */
-    Flux<ServerSentEvent<String>> requestAi(String text);
-
+    List<PluginMetadata> findPluginMetadataByEnableStatusTrue();
 }

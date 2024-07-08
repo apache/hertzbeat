@@ -28,8 +28,10 @@ import org.apache.hertzbeat.manager.pojo.dto.AliAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.AliAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -43,12 +45,13 @@ import reactor.core.publisher.Flux;
  * alibaba Ai
  */
 @Service("AlibabaAiServiceImpl")
+@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
 @Slf4j
 public class AlibabaAiServiceImpl implements AiService {
 
-    @Value("${aiConfig.model:qwen-turbo}")
+    @Value("${ai.model:qwen-turbo}")
     private String model;
-    @Value("${aiConfig.api-key}")
+    @Value("${ai.api-key}")
     private String apiKey;
 
 
@@ -74,45 +77,53 @@ public class AlibabaAiServiceImpl implements AiService {
     }
 
     @Override
-    public Flux<String> requestAi(String text) {
+    public Flux<ServerSentEvent<String>> requestAi(String text) {
         checkParam(text, apiKey);
+        try {
+            AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
+                    .model(model)
+                    .input(AliAiRequestParamDTO.Input.builder()
+                            .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
+                            .build())
+                    .parameters(AliAiRequestParamDTO.Parameters.builder()
+                            .maxTokens(AiConstants.AliAiConstants.MAX_TOKENS)
+                            .temperature(AiConstants.AliAiConstants.TEMPERATURE)
+                            .enableSearch(true)
+                            .resultFormat("message")
+                            .incrementalOutput(true)
+                            .build())
+                    .build();
 
-        AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
-                .model(model)
-                .input(AliAiRequestParamDTO.Input.builder()
-                        .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
-                        .build())
-                .parameters(AliAiRequestParamDTO.Parameters.builder()
-                        .maxTokens(AiConstants.AliAiConstants.MAX_TOKENS)
-                        .temperature(AiConstants.AliAiConstants.TEMPERATURE)
-                        .enableSearch(true)
-                        .resultFormat("message")
-                        .incrementalOutput(true)
-                        .build())
-                .build();
 
-
-        return webClient.post()
-                .body(BodyInserters.fromValue(aliAiRequestParamDTO))
-                .retrieve()
-                .bodyToFlux(AliAiResponse.class)
-                .map(aliAiResponse -> {
-                    if (Objects.nonNull(aliAiResponse)) {
-                        List<AliAiResponse.Choice> choices = aliAiResponse.getOutput().getChoices();
-                        if (CollectionUtils.isEmpty(choices)) {
-                            return "";
+            return webClient.post()
+                    .body(BodyInserters.fromValue(aliAiRequestParamDTO))
+                    .retrieve()
+                    .bodyToFlux(AliAiResponse.class)
+                    .map(aliAiResponse -> {
+                        if (Objects.nonNull(aliAiResponse)) {
+                            List<AliAiResponse.Choice> choices = aliAiResponse.getOutput().getChoices();
+                            if (CollectionUtils.isEmpty(choices)) {
+                                return ServerSentEvent.<String>builder().build();
+                            }
+                            String content = choices.get(0).getMessage().getContent();
+                            return ServerSentEvent.<String>builder()
+                                    .data(content)
+                                    .build();
                         }
-                        return choices.get(0).getMessage().getContent();
-                    }
-                    return "";
-                })
-                .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+                        return ServerSentEvent.<String>builder().build();
+                    })
+                    .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+
+        } catch (Exception e) {
+            log.info("KimiAiServiceImpl.requestAi exception:{}", e.toString());
+            throw e;
+        }
 
     }
 
 
     private void checkParam(String param, String apiKey) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(apiKey, "aiConfig.api-key is null");
+        Assert.notNull(apiKey, "ai.api-key is null");
     }
 }

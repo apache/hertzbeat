@@ -18,11 +18,14 @@
 package org.apache.hertzbeat.manager.controller;
 
 import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.apache.hertzbeat.manager.service.impl.AiServiceFactoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,7 +47,10 @@ public class AiController {
     @Autowired
     private AiServiceFactoryImpl aiServiceFactory;
 
-    @Value("${aiConfig.type:0}")
+    /**
+     * Types of artificial intelligence
+     */
+    @Value("${ai.type:zhiPu}")
     private String type;
 
     /**
@@ -54,8 +60,11 @@ public class AiController {
      * @return                      AI response
      */
     @GetMapping(path = "/get", produces = {TEXT_EVENT_STREAM_VALUE})
-    public Flux<String> requestAi(@RequestParam("text") String text,
-                                                     @RequestParam(value = "type", required = false) String currentlyDisabledType) {
+    @Operation(summary = "Artificial intelligence questions and Answers",
+            description = "Artificial intelligence questions and Answers")
+    public Flux<ServerSentEvent<String>> requestAi(@Parameter(description = "Request text", example = "Who are you") @RequestParam("text") String text,
+                                  @Parameter(description = "Types of artificial intelligence", example = "zhiPu") @RequestParam(value = "type", required = false) String currentlyDisabledType)  {
+
         AiService aiServiceImplBean = aiServiceFactory.getAiServiceImplBean(type);
 
         return aiServiceImplBean.requestAi(text);

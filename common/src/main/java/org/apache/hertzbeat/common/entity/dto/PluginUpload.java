@@ -15,30 +15,29 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.common.entity.dto;
 
 
-import org.apache.hertzbeat.common.constants.AiTypeEnum;
-import org.springframework.http.codec.ServerSentEvent;
-import reactor.core.publisher.Flux;
-
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
- * AI Service
+ * data transfer class for uploading plugins
  */
-public interface AiService {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class PluginUpload {
 
-    /**
-     * get AI type
-     * @return     type
-     */
-    AiTypeEnum getType();
+    @NotNull
+    private MultipartFile jarFile;
 
-    /**
-     * AI response
-     * @param text  text
-     * @return      AI response
-     */
-    Flux<ServerSentEvent<String>> requestAi(String text);
+    @NotNull(message = "Plugin name is required")
+    private String name;
 
+    @NotNull(message = "Enable status is required")
+    private Boolean enableStatus;
 }

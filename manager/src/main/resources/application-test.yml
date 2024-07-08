@@ -87,7 +87,7 @@ scheduler:
     port: 1158
 
 #AI config
-aiConfig:
+ai:
   #AI Type:zhiPu
   type: zhiPu
   #Model name：glm-4

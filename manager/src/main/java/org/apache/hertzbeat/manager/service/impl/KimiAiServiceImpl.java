@@ -17,20 +17,20 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
-import org.apache.hertzbeat.manager.pojo.dto.KimiAiRequestParamDTO;
-import org.apache.hertzbeat.manager.pojo.dto.KimiAiResponse;
+import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
+import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -42,13 +42,14 @@ import reactor.core.publisher.Flux;
  * Kimi Ai
  */
 @Service("KimiAiServiceImpl")
+@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
 @Slf4j
 public class KimiAiServiceImpl implements AiService {
 
-    @Value("${aiConfig.model:moonshot-v1-8k}")
+    @Value("${ai.model:moonshot-v1-8k}")
     private String model;
 
-    @Value("${aiConfig.api-key}")
+    @Value("${ai.api-key}")
     private String apiKey;
 
     private WebClient webClient;
@@ -71,43 +72,37 @@ public class KimiAiServiceImpl implements AiService {
     }
 
     @Override
-    public Flux<String> requestAi(String text) {
-
-        checkParam(text, apiKey);
-        KimiAiRequestParamDTO zhiPuRequestParamDTO = KimiAiRequestParamDTO.builder()
-                .model(model)
-                .stream(Boolean.TRUE)
-                .maxTokens(AiConstants.KimiAiConstants.MAX_TOKENS)
-                .temperature(AiConstants.KimiAiConstants.TEMPERATURE)
-                .messages(List.of(new AiMessage(AiConstants.KimiAiConstants.REQUEST_ROLE, text)))
-                .build();
-
-
-        return webClient.post()
-                .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
-                .retrieve()
-                .bodyToFlux(String.class)
-                .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                .map(this::convertToResponse)
-                .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
-
-    }
-
-    private String convertToResponse(String aiRes) {
+    public Flux<ServerSentEvent<String>> requestAi(String text) {
         try {
-            KimiAiResponse kimiAiResponse = JSON.parseObject(aiRes, KimiAiResponse.class);
-            if (Objects.nonNull(kimiAiResponse)) {
-                KimiAiResponse.Choice choice = kimiAiResponse.getChoices().get(0);
-                return choice.getDelta().getContent();
-            }
+            checkParam(text, apiKey);
+            OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
+                    .model(model)
+                    .stream(Boolean.TRUE)
+                    .maxTokens(AiConstants.KimiAiConstants.MAX_TOKENS)
+                    .temperature(AiConstants.KimiAiConstants.TEMPERATURE)
+                    .messages(List.of(new AiMessage(AiConstants.KimiAiConstants.REQUEST_ROLE, text)))
+                    .build();
+
+
+            return webClient.post()
+                    .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
+                    .retrieve()
+                    .bodyToFlux(String.class)
+                    .filter(aiResponse -> !"[DONE]".equals(aiResponse))
+                    .map(OpenAiResponse::convertToResponse)
+                    .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+
+
         } catch (Exception e) {
-            log.info("convertToResponse Exception:{}", e.toString());
+            log.info("KimiAiServiceImpl.requestAi exception:{}", e.toString());
+            throw e;
         }
-        return "";
+
+
     }
 
     private void checkParam(String param, String apiKey) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(apiKey, "aiConfig.api-key is null");
+        Assert.notNull(apiKey, "ai.api-key is null");
     }
 }
