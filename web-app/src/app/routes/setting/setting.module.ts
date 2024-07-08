@@ -31,10 +31,12 @@ import { NzListModule } from 'ng-zorro-antd/list';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzUploadComponent } from 'ng-zorro-antd/upload';
 import { ColorPickerModule } from 'ngx-color-picker';
 
 import { CollectorComponent } from './collector/collector.component';
 import { DefineComponent } from './define/define.component';
+import { SettingPluginsComponent } from './plugins/plugin.component';
 import { SettingRoutingModule } from './setting-routing.module';
 import { MessageServerComponent } from './settings/message-server/message-server.component';
 import { ObjectStoreComponent } from './settings/object-store/object-store.component';
@@ -51,7 +53,8 @@ const COMPONENTS: Array<Type<void>> = [
   SystemConfigComponent,
   ObjectStoreComponent,
   CollectorComponent,
-  StatusComponent
+  StatusComponent,
+  SettingPluginsComponent
 ];
 
 @NgModule({
@@ -70,7 +73,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzCodeEditorModule,
     ClipboardModule,
     NzBadgeModule,
-    NzRadioModule
+    NzRadioModule,
+    NzUploadComponent
   ],
   declarations: COMPONENTS
 })

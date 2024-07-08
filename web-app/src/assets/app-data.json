@@ -199,6 +199,12 @@
           "i18n": "menu.advanced.tags",
           "icon": "anticon-tags",
           "link": "/setting/tags"
+        },
+        {
+          "text": "plugins",
+          "i18n": "menu.advanced.plugins",
+          "icon": "anticon-usb",
+          "link": "/setting/plugins"
         }
       ]
     },
