@@ -239,8 +239,63 @@ metrics:
         i18n:
           zh-CN: 任务ID
           en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
       - field: version
-        type: 0
+        type: 1
         i18n:
           zh-CN: 版本
           en-US: Version
