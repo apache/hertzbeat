@@ -31,6 +31,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -76,39 +77,47 @@ public class AlibabaAiServiceImpl implements AiService {
     }
 
     @Override
-    public Flux<String> requestAi(String text) {
+    public Flux<ServerSentEvent<String>> requestAi(String text) {
         checkParam(text, apiKey);
+        try {
+            AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
+                    .model(model)
+                    .input(AliAiRequestParamDTO.Input.builder()
+                            .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
+                            .build())
+                    .parameters(AliAiRequestParamDTO.Parameters.builder()
+                            .maxTokens(AiConstants.AliAiConstants.MAX_TOKENS)
+                            .temperature(AiConstants.AliAiConstants.TEMPERATURE)
+                            .enableSearch(true)
+                            .resultFormat("message")
+                            .incrementalOutput(true)
+                            .build())
+                    .build();
 
-        AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
-                .model(model)
-                .input(AliAiRequestParamDTO.Input.builder()
-                        .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
-                        .build())
-                .parameters(AliAiRequestParamDTO.Parameters.builder()
-                        .maxTokens(AiConstants.AliAiConstants.MAX_TOKENS)
-                        .temperature(AiConstants.AliAiConstants.TEMPERATURE)
-                        .enableSearch(true)
-                        .resultFormat("message")
-                        .incrementalOutput(true)
-                        .build())
-                .build();
 
-
-        return webClient.post()
-                .body(BodyInserters.fromValue(aliAiRequestParamDTO))
-                .retrieve()
-                .bodyToFlux(AliAiResponse.class)
-                .map(aliAiResponse -> {
-                    if (Objects.nonNull(aliAiResponse)) {
-                        List<AliAiResponse.Choice> choices = aliAiResponse.getOutput().getChoices();
-                        if (CollectionUtils.isEmpty(choices)) {
-                            return "";
+            return webClient.post()
+                    .body(BodyInserters.fromValue(aliAiRequestParamDTO))
+                    .retrieve()
+                    .bodyToFlux(AliAiResponse.class)
+                    .map(aliAiResponse -> {
+                        if (Objects.nonNull(aliAiResponse)) {
+                            List<AliAiResponse.Choice> choices = aliAiResponse.getOutput().getChoices();
+                            if (CollectionUtils.isEmpty(choices)) {
+                                return ServerSentEvent.<String>builder().build();
+                            }
+                            String content = choices.get(0).getMessage().getContent();
+                            return ServerSentEvent.<String>builder()
+                                    .data(content)
+                                    .build();
                         }
-                        return choices.get(0).getMessage().getContent();
-                    }
-                    return "";
-                })
-                .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+                        return ServerSentEvent.<String>builder().build();
+                    })
+                    .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+
+        } catch (Exception e) {
+            log.info("KimiAiServiceImpl.requestAi exception:{}", e.toString());
+            throw e;
+        }
 
     }
 
