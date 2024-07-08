@@ -115,7 +115,7 @@
       "enabled.tip": "is enabled, the monitoring data will be displayed in Grafana",
       "enabled.label": "Enable Grafana",
       "upload.tip": "Upload Grafana template file, support .json file",
-      "upload.label": "Upload Grafana Template",
+      "upload.label": "Upload Grafana Template"
      }
   },
   "alert": {
