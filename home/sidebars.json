@@ -245,6 +245,7 @@
             "help/clickhouse",
             "help/elasticsearch",
             "help/influxdb",
+            "help/presto",
             "help/hugegraph"
           ]
         },
