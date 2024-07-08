@@ -17,19 +17,75 @@
 
 package org.apache.hertzbeat.common.util;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mockStatic;
 
 /**
  * Test case for {@link ResourceBundleUtil}
  */
+@ExtendWith(MockitoExtension.class)
 class ResourceBundleUtilTest {
+
+    private static final String BUNDLE_NAME = "TestBundle";
 
     @BeforeEach
     void setUp() {
+        Locale.setDefault(Locale.US);
     }
 
     @Test
-    void getBundle() {
+    void testGetBundleWithValidBundleName() {
+        try (MockedStatic<ResourceBundle> mockedResourceBundle = mockStatic(ResourceBundle.class)) {
+            ResourceBundle mockBundle = Mockito.mock(ResourceBundle.class);
+
+            mockedResourceBundle.when(
+                    () -> ResourceBundle.getBundle(
+                        Mockito.eq(BUNDLE_NAME),
+                        Mockito.any(ResourceBundle.Control.class)
+                    )
+            ).thenReturn(mockBundle);
+
+            ResourceBundle bundle = ResourceBundleUtil.getBundle(BUNDLE_NAME);
+
+            assertNotNull(bundle);
+            assertEquals(mockBundle, bundle);
+        }
     }
+
+    @Test
+    void testGetBundleByInvalidBundleName() {
+        try (MockedStatic<ResourceBundle> mockedResourceBundle = mockStatic(ResourceBundle.class)) {
+            mockedResourceBundle.when(
+                    () -> ResourceBundle.getBundle(
+                        Mockito.eq(BUNDLE_NAME),
+                        Mockito.any(ResourceBundle.Control.class)
+                    )
+            ).thenThrow(new MissingResourceException("Missing bundle", "ResourceBundle", BUNDLE_NAME));
+
+            ResourceBundle mockDefaultBundle = Mockito.mock(ResourceBundle.class);
+
+            mockedResourceBundle.when(() -> ResourceBundle.getBundle(
+                    Mockito.eq(BUNDLE_NAME),
+                    Mockito.eq(Locale.US),
+                    Mockito.any(ResourceBundle.Control.class))
+            ).thenReturn(mockDefaultBundle);
+
+            ResourceBundle bundle = ResourceBundleUtil.getBundle(BUNDLE_NAME);
+
+            assertNotNull(bundle);
+            assertEquals(mockDefaultBundle, bundle);
+        }
+    }
+
 }
