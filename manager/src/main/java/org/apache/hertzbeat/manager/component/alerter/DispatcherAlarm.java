@@ -21,7 +21,6 @@ import com.google.common.collect.Maps;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.ServiceLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -30,6 +29,7 @@ import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.service.NoticeConfigService;
+import org.apache.hertzbeat.manager.service.PluginService;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.IgnoreException;
 import org.apache.hertzbeat.plugin.Plugin;
@@ -42,6 +42,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 public class DispatcherAlarm implements InitializingBean {
+
     private static final int DISPATCH_THREADS = 3;
 
     private final AlerterWorkerPool workerPool;
@@ -49,16 +50,18 @@ public class DispatcherAlarm implements InitializingBean {
     private final NoticeConfigService noticeConfigService;
     private final AlertStoreHandler alertStoreHandler;
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
+    private final PluginService pluginService;
 
     public DispatcherAlarm(AlerterWorkerPool workerPool,
-                           CommonDataQueue dataQueue,
-                           NoticeConfigService noticeConfigService,
-                           AlertStoreHandler alertStoreHandler,
-                           List<AlertNotifyHandler> alertNotifyHandlerList) {
+        CommonDataQueue dataQueue,
+        NoticeConfigService noticeConfigService,
+        AlertStoreHandler alertStoreHandler,
+        List<AlertNotifyHandler> alertNotifyHandlerList, PluginService pluginService) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.noticeConfigService = noticeConfigService;
         this.alertStoreHandler = alertStoreHandler;
+        this.pluginService = pluginService;
         alertNotifyHandlerMap = Maps.newHashMapWithExpectedSize(alertNotifyHandlerList.size());
         alertNotifyHandlerList.forEach(r -> alertNotifyHandlerMap.put(r.type(), r));
     }
@@ -127,11 +130,8 @@ public class DispatcherAlarm implements InitializingBean {
                         alertStoreHandler.store(alert);
                         // Notice distribution
                         sendNotify(alert);
-                        // Execute the plugin
-                        ServiceLoader<Plugin> loader = ServiceLoader.load(Plugin.class, Plugin.class.getClassLoader());
-                        for (Plugin plugin : loader) {
-                            plugin.alert(alert);
-                        }
+                        // Execute the plugin if enable
+                        pluginService.pluginExecute(Plugin.class, plugin -> plugin.alert(alert));
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {
@@ -147,14 +147,14 @@ public class DispatcherAlarm implements InitializingBean {
                 noticeRules.forEach(rule -> {
                     workerPool.executeNotify(() -> {
                         rule.getReceiverId()
-                                .forEach(receiverId -> {
-                                    try {
-                                        sendNoticeMsg(getOneReceiverById(receiverId),
-                                                getOneTemplateById(rule.getTemplateId()), alert);
-                                    } catch (AlertNoticeException e) {
-                                        log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
-                                    }
-                                });
+                            .forEach(receiverId -> {
+                                try {
+                                    sendNoticeMsg(getOneReceiverById(receiverId),
+                                        getOneTemplateById(rule.getTemplateId()), alert);
+                                } catch (AlertNoticeException e) {
+                                    log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                                }
+                            });
                     });
                 });
             });
