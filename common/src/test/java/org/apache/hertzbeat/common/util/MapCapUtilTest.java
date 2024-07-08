@@ -17,36 +17,28 @@
 
 package org.apache.hertzbeat.common.util;
 
-import java.time.Duration;
-import java.time.Period;
-import java.time.temporal.TemporalAmount;
-import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * time util
+ * Test for {@link MapCapUtil}
  */
-@Slf4j
-public final class TimePeriodUtil {
+class MapCapUtilTest {
 
-    private TimePeriodUtil() {
-    }
+	@Test
+	public void testCalInitMap() {
+		int size = 0;
+		int expectedCapacity = (int) Math.ceil(size / 0.75);
+		int actualCapacity = MapCapUtil.calInitMap(size);
 
-    /**
-     * parse tokenTime to TemporalAmount
-     * @param tokenTime eg: "1m", "5M", "3D", "30m", "2h", "1Y", "3W"
-     * @return TemporalAmount
-     */
-    public static TemporalAmount parseTokenTime(String tokenTime) {
+		assertEquals(expectedCapacity, actualCapacity);
 
-        if (tokenTime == null || tokenTime.length() < 2) {
-            log.error("tokenTime is invalid");
-            return null;
-        }
+		size = 10;
+		expectedCapacity = (int) Math.ceil(size / 0.75);
+		actualCapacity = MapCapUtil.calInitMap(size);
 
-        if (Character.isUpperCase(tokenTime.charAt(tokenTime.length() - 1))) {
-            return Period.parse("P" + tokenTime);
-        } else {
-            return Duration.parse("PT" + tokenTime);
-        }
-    }
+		assertEquals(expectedCapacity, actualCapacity);
+	}
+
 }
