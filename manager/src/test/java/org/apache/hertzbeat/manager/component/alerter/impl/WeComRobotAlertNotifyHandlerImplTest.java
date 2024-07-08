@@ -30,13 +30,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.util.StringUtils;
 
 /**
- * Test case for {@link WeWorkRobotAlertNotifyHandlerImpl}
+ * Test case for {@link WeComRobotAlertNotifyHandlerImpl}
  */
 @Slf4j
-class WeWorkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
+class WeComRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
 
     @Resource
-    private WeWorkRobotAlertNotifyHandlerImpl weWorkRobotAlertNotifyHandler;
+    private WeComRobotAlertNotifyHandlerImpl weWorkRobotAlertNotifyHandler;
 
     @Test
     void send() {

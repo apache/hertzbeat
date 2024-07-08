@@ -1652,7 +1652,8 @@
       "profile": "https://github.com/gjjjj0101",
       "contributions": [
         "code",
-        "design"
+        "design",
+        "test"
       ]
     },
     {
@@ -1851,7 +1852,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/119573640?v=4",
       "profile": "https://thespica.github.io/",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -1931,6 +1933,52 @@
       "name": "Kerwin Bryant",
       "avatar_url": "https://avatars.githubusercontent.com/u/3371163?v=4",
       "profile": "https://github.com/kerwin612",
+      "contributions": [
+        "code",
+        "design"
+      ]
+    },
+    {
+      "login": "ShineDevelopment",
+      "name": "daixianglong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59306780?v=4",
+      "profile": "https://github.com/ShineDevelopment",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mchgood",
+      "name": "mchgood",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38482005?v=4",
+      "profile": "https://github.com/mchgood",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "pwallk",
+      "name": "kangli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/69385076?v=4",
+      "profile": "https://github.com/pwallk",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "cdphantom",
+      "name": "cdphantom",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12674795?v=4",
+      "profile": "https://github.com/cdphantom",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "asd108908382",
+      "name": "jiawei.guo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77717999?v=4",
+      "profile": "https://github.com/asd108908382",
       "contributions": [
         "code"
       ]

@@ -95,5 +95,4 @@ aiConfig:
   #api key
   api-key: xxx
   #At present, only IFLYTEK large model needs to be filled in
-  #目前只有科大讯飞大模型需要填写
   api-secret: xxx
