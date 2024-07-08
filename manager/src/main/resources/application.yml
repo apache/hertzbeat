@@ -186,7 +186,7 @@ alerter:
   telegram-webhook-url: https://api.telegram.org/bot%s/sendMessage
   # discord
   discord-webhook-url: https://discord.com/api/v9/channels/%s/messages
-  # server酱
+  # serverChan
   server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
   gotify-webhook-url: http://127.0.0.1/message?token=%s
@@ -202,8 +202,8 @@ grafana:
   username: admin
   password: admin
 
-# AI config
-aiConfig:
+# See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
+ai:
   # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk
   type:
   # Model name：glm-4、qwen-turboo、moonshot-v1-8k、generalv3.5

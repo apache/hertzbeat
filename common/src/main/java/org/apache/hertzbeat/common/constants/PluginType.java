@@ -15,30 +15,15 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
-
-
-import org.apache.hertzbeat.common.constants.AiTypeEnum;
-import org.springframework.http.codec.ServerSentEvent;
-import reactor.core.publisher.Flux;
-
+package org.apache.hertzbeat.common.constants;
 
 /**
- * AI Service
+ * plugin type
  */
-public interface AiService {
+public enum PluginType {
 
     /**
-     * get AI type
-     * @return     type
+     * do something after alter
      */
-    AiTypeEnum getType();
-
-    /**
-     * AI response
-     * @param text  text
-     * @return      AI response
-     */
-    Flux<ServerSentEvent<String>> requestAi(String text);
-
+    POST_ALERT
 }
