@@ -25,7 +25,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * zhiPu Request param
+ * Kimi Request param
  */
 
 @Data

@@ -75,7 +75,7 @@
             </nz-tag>
             <nz-tag *ngIf="data.type == 4" nzColor="orange">
               <i nz-icon nzTheme="outline" nzType="notification"></i>
-              <span>{{ 'alert.notice.type.wework' | i18n }}</span>
+              <span>{{ 'alert.notice.type.WeCom-robot' | i18n }}</span>
             </nz-tag>
             <nz-tag *ngIf="data.type == 5" nzColor="orange">
               <i nz-icon nzTheme="outline" nzType="notification"></i>
@@ -99,7 +99,7 @@
             </nz-tag>
             <nz-tag *ngIf="data.type == 10" nzColor="orange">
               <i nz-icon nzTheme="outline" nzType="notification"></i>
-              <span>{{ 'alert.notice.type.weChatApp' | i18n }}</span>
+              <span>{{ 'alert.notice.type.WeComApp' | i18n }}</span>
             </nz-tag>
             <nz-tag *ngIf="data.type == 11" nzColor="orange">
               <i nz-icon nzTheme="outline" nzType="notification"></i>
@@ -282,7 +282,7 @@
                 <span>{{ 'alert.notice.type.wechat' | i18n }}</span>
               </nz-tag>
               <nz-tag *ngIf="data.type == 4" nzColor="orange">
-                <span>{{ 'alert.notice.type.wework' | i18n }}</span>
+                <span>{{ 'alert.notice.type.WeCom-robot' | i18n }}</span>
               </nz-tag>
               <nz-tag *ngIf="data.type == 5" nzColor="orange">
                 <span>{{ 'alert.notice.type.ding' | i18n }}</span>
@@ -300,7 +300,7 @@
                 <span>{{ 'alert.notice.type.discord' | i18n }}</span>
               </nz-tag>
               <nz-tag *ngIf="data.type == 10" nzColor="orange">
-                <span>{{ 'alert.notice.type.weChatApp' | i18n }}</span>
+                <span>{{ 'alert.notice.type.WeComApp' | i18n }}</span>
               </nz-tag>
               <nz-tag *ngIf="data.type == 11" nzColor="orange">
                 <span>{{ 'alert.notice.type.smn' | i18n }}</span>
@@ -539,11 +539,11 @@
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.discord' | i18n" [nzValue]="9"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.slack' | i18n" [nzValue]="8"></nz-option>
-            <nz-option [nzLabel]="'alert.notice.type.wework' | i18n" [nzValue]="4"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.WeCom-robot' | i18n" [nzValue]="4"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.ding' | i18n" [nzValue]="5"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.fei-shu' | i18n" [nzValue]="6"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.telegram-bot' | i18n" [nzValue]="7"></nz-option>
-            <nz-option [nzLabel]="'alert.notice.type.weChatApp' | i18n" [nzValue]="10"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.WeComApp' | i18n" [nzValue]="10"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.smn' | i18n" [nzValue]="11"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.serverchan' | i18n" [nzValue]="12"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
@@ -578,7 +578,7 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 4">
         <nz-form-label [nzSpan]="7" nzFor="wechatId" [nzRequired]="receiver.type === 4">{{
-          'alert.notice.type.wework-key' | i18n
+          'alert.notice.type.WeCom-robot-key' | i18n
         }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input
@@ -693,7 +693,7 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 10">
         <nz-form-label [nzRequired]="receiver.type === 10" [nzSpan]="7" nzFor="corpId">
-          {{ 'alert.notice.type.weChatApp-corpId' | i18n }}
+          {{ 'alert.notice.type.WeComApp-corpId' | i18n }}
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.corpId" [required]="receiver.type === 10" name="corpId" nz-input type="text" />
@@ -701,7 +701,7 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 10">
         <nz-form-label [nzRequired]="receiver.type === 10" [nzSpan]="7" nzFor="agentId">
-          {{ 'alert.notice.type.weChatApp-agentId' | i18n }}
+          {{ 'alert.notice.type.WeComApp-agentId' | i18n }}
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.agentId" [required]="receiver.type === 10" name="agentId" nz-input type="text" />
@@ -709,12 +709,39 @@
       </nz-form-item>
       <nz-form-item *ngIf="receiver.type === 10">
         <nz-form-label [nzRequired]="receiver.type === 10" [nzSpan]="7" nzFor="appSecret">
-          {{ 'alert.notice.type.weChatApp-appSecret' | i18n }}
+          {{ 'alert.notice.type.WeComApp-appSecret' | i18n }}
         </nz-form-label>
         <nz-form-control [nzErrorTip]="'validation.required' | i18n" [nzSpan]="12">
           <input [(ngModel)]="receiver.appSecret" [required]="receiver.type === 10" name="appSecret" nz-input type="text" />
         </nz-form-control>
       </nz-form-item>
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="userId">
+          {{ 'alert.notice.type.WeComApp-userId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <input [(ngModel)]="receiver.userId" name="userId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="partyId">
+          {{ 'alert.notice.type.WeComApp-partyId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <input [(ngModel)]="receiver.partyId" name="partyId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="receiver.type === 10">
+        <nz-form-label [nzSpan]="7" nzFor="tagId">
+          {{ 'alert.notice.type.WeComApp-tagId' | i18n }}
+        </nz-form-label>
+        <nz-form-control [nzSpan]="12">
+          <input [(ngModel)]="receiver.tagId" name="tagId" nz-input type="text" />
+        </nz-form-control>
+      </nz-form-item>
+
       <nz-form-item *ngIf="receiver.type === 11">
         <nz-form-label [nzRequired]="receiver.type === 11" [nzSpan]="7" nzFor="smnAk">
           {{ 'alert.notice.type.smn-ak' | i18n }}
@@ -817,11 +844,11 @@
             <nz-option [nzValue]="2" nzLabel="WebHook"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.discord' | i18n" [nzValue]="9"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.slack' | i18n" [nzValue]="8"></nz-option>
-            <nz-option [nzLabel]="'alert.notice.type.wework' | i18n" [nzValue]="4"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.WeCom-robot' | i18n" [nzValue]="4"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.ding' | i18n" [nzValue]="5"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.fei-shu' | i18n" [nzValue]="6"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.telegram' | i18n" [nzValue]="7"></nz-option>
-            <nz-option [nzLabel]="'alert.notice.type.weChatApp' | i18n" [nzValue]="10"></nz-option>
+            <nz-option [nzLabel]="'alert.notice.type.WeComApp' | i18n" [nzValue]="10"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.smn' | i18n" [nzValue]="11"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.serverchan' | i18n" [nzValue]="12"></nz-option>
             <nz-option [nzLabel]="'alert.notice.type.gotify' | i18n" [nzValue]="13"></nz-option>
