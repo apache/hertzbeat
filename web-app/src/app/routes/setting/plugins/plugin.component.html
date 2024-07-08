@@ -26,7 +26,7 @@
 
 <nz-divider></nz-divider>
 
-<app-toolbar >
+<app-toolbar>
   <ng-template #left>
     <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
@@ -135,7 +135,7 @@
           <nz-upload nzAccept=".jar" nzAction="" nzListType="text" [(nzFileList)]="fileList" [nzBeforeUpload]="beforeUpload">
             <button nz-button>
               <i nz-icon nzType="upload"></i>
-              {{'common.file.select'|i18n}}
+              {{ 'common.file.select' | i18n }}
             </button>
           </nz-upload>
         </nz-form-control>
