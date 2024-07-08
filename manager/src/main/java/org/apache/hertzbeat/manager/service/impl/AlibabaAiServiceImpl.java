@@ -28,7 +28,6 @@ import org.apache.hertzbeat.manager.pojo.dto.AliAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.AliAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -45,13 +44,12 @@ import reactor.core.publisher.Flux;
  * alibaba Ai
  */
 @Service("AlibabaAiServiceImpl")
-@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
 @Slf4j
 public class AlibabaAiServiceImpl implements AiService {
 
-    @Value("${ai.model:qwen-turbo}")
+    @Value("${aiConfig.model:qwen-turbo}")
     private String model;
-    @Value("${ai.api-key}")
+    @Value("${aiConfig.api-key}")
     private String apiKey;
 
 
@@ -124,6 +122,6 @@ public class AlibabaAiServiceImpl implements AiService {
 
     private void checkParam(String param, String apiKey) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(apiKey, "ai.api-key is null");
+        Assert.notNull(apiKey, "aiConfig.api-key is null");
     }
 }

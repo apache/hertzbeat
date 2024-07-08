@@ -27,7 +27,6 @@ import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
@@ -43,16 +42,15 @@ import reactor.core.publisher.Flux;
  * sparkDesk AI
  */
 @Service("SparkDeskAiServiceImpl")
-@ConditionalOnProperty(prefix = "ai",name = {"api-key", "api-secret"}, matchIfMissing = false)
 @Slf4j
 public class SparkDeskAiServiceImpl implements AiService {
 
-    @Value("${ai.model:generalv3.5}")
+    @Value("${aiConfig.model:generalv3.5}")
     private String model;
 
-    @Value("${ai.api-key:default}")
+    @Value("${aiConfig.api-key:default}")
     private String apiKey;
-    @Value("${ai.api-secret}")
+    @Value("${aiConfig.api-secret}")
     private String apiSecret;
 
     private WebClient webClient;
@@ -104,6 +102,6 @@ public class SparkDeskAiServiceImpl implements AiService {
 
     private void checkParam(String param, String apiKey) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(apiKey, "ai.api-key is null");
+        Assert.notNull(apiKey, "aiConfig.api-key is null");
     }
 }
