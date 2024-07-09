@@ -58,11 +58,7 @@
         />
       </ng-container>
 
-      <nz-collapse
-        *ngIf="advancedParamDefines && advancedParamDefines.length > 0"
-        [nzGhost]="true"
-        style="background: ghostwhite; margin-bottom: 24px"
-      >
+      <nz-collapse *ngIf="hasAdvancedParams" [nzGhost]="true" style="background: ghostwhite; margin-bottom: 24px">
         <ng-template #extraColHeader>
           <button style="margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitors.advanced.tip' | i18n">
             <span>{{ 'monitors.advanced' | i18n }}</span>

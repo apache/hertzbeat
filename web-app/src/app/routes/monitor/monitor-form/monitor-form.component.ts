@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 import { Collector } from '../../../pojo/Collector';
@@ -29,7 +29,7 @@ import { ParamDefine } from '../../../pojo/ParamDefine';
   templateUrl: './monitor-form.component.html',
   styleUrls: ['./monitor-form.component.less']
 })
-export class MonitorFormComponent {
+export class MonitorFormComponent implements OnChanges {
   @Input() monitor!: any;
   @Input() loading!: boolean;
   @Input() loadingTip!: string;
@@ -46,7 +46,20 @@ export class MonitorFormComponent {
   @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
 
+  hasAdvancedParams: boolean = false;
+
   constructor() {}
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
+      for (const advancedParam of changes.advancedParams.currentValue) {
+        if (advancedParam.display !== false) {
+          this.hasAdvancedParams = true;
+          break;
+        }
+      }
+    }
+  }
 
   onDetect(formGroup: FormGroup) {
     if (formGroup.invalid) {
