@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 import { Collector } from '../../../pojo/Collector';
@@ -29,7 +29,7 @@ import { ParamDefine } from '../../../pojo/ParamDefine';
   templateUrl: './monitor-form.component.html',
   styleUrls: ['./monitor-form.component.less']
 })
-export class MonitorFormComponent {
+export class MonitorFormComponent implements OnChanges {
   @Input() monitor!: any;
   @Input() loading!: boolean;
   @Input() loadingTip!: string;
@@ -40,6 +40,7 @@ export class MonitorFormComponent {
   @Input() advancedParams!: Param[];
   @Input() paramDefines!: ParamDefine[];
   @Input() advancedParamDefines!: ParamDefine[];
+  @Input() paramValueMap!: Map<String, Param>;
 
   @Output() readonly formSubmit = new EventEmitter<any>();
   @Output() readonly formCancel = new EventEmitter<any>();
@@ -47,6 +48,18 @@ export class MonitorFormComponent {
   @Output() readonly hostChange = new EventEmitter<string>();
 
   constructor() {}
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.paramDefines && changes.paramDefines.currentValue !== changes.paramDefines.previousValue) {
+      changes.paramDefines.currentValue.forEach((paramDefine: any) => {
+        if (paramDefine.type == 'radio') {
+          this.onDependChanged(this.paramValueMap?.get(paramDefine.field)?.paramValue, paramDefine.field);
+        } else if (paramDefine.type == 'boolean') {
+          this.onParamBooleanChanged(this.paramValueMap?.get(paramDefine.field)?.paramValue, paramDefine.field);
+        }
+      });
+    }
+  }
 
   onDetect(formGroup: FormGroup) {
     if (formGroup.invalid) {
@@ -87,8 +100,8 @@ export class MonitorFormComponent {
       });
       return;
     }
-    this.monitor.host = this.monitor.host.trim();
-    this.monitor.name = this.monitor.name.trim();
+    this.monitor.host = this.monitor.host?.trim();
+    this.monitor.name = this.monitor.name?.trim();
     // todo 暂时单独设置host属性值
     this.params.forEach(param => {
       if (param.field === 'host') {
