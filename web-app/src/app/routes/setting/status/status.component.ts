@@ -51,6 +51,7 @@ export class StatusComponent implements OnInit {
   @ViewChild('incidentForm') incidentForm!: NgForm;
   @ViewChild('componentForm') componentForm!: NgForm;
   statusOrg: StatusPageOrg = new StatusPageOrg();
+  statusOrgForEdit: StatusPageOrg = new StatusPageOrg();
   statusComponents!: StatusPageComponent[];
   statusIncidences!: StatusPageIncident[];
   loading: boolean = false;
@@ -82,25 +83,6 @@ export class StatusComponent implements OnInit {
 
   syncIncidence() {
     this.loadIncidenceInfo();
-  }
-
-  loadOrgInfo() {
-    this.orgLoading = true;
-    let orgLoad$ = this.statusPageService.getStatusPageOrg().subscribe(
-      message => {
-        if (message.code === 0) {
-          this.statusOrg = message.data;
-        } else {
-          console.log(message.msg);
-        }
-        this.orgLoading = false;
-        orgLoad$.unsubscribe();
-      },
-      error => {
-        this.orgLoading = false;
-        orgLoad$.unsubscribe();
-      }
-    );
   }
 
   loadComponentInfo() {
@@ -153,6 +135,7 @@ export class StatusComponent implements OnInit {
             this.statusOrg = new StatusPageOrg();
             console.log(message.msg);
           }
+          this.statusOrgForEdit = { ...this.statusOrg };
           return this.statusPageService.getStatusPageComponents();
         })
       )
@@ -179,7 +162,7 @@ export class StatusComponent implements OnInit {
       });
       return;
     }
-    let saveStatus$ = this.statusPageService.saveStatusPageOrg(this.statusOrg).subscribe(
+    let saveStatus$ = this.statusPageService.saveStatusPageOrg(this.statusOrgForEdit).subscribe(
       (message: Message<StatusPageOrg>) => {
         if (message.code === 0) {
           this.statusOrg = message.data;
@@ -236,7 +219,7 @@ export class StatusComponent implements OnInit {
 
   onEditOneComponent(data: StatusPageComponent) {
     this.isComponentModalAdd = false;
-    this.currentStatusComponent = data;
+    this.currentStatusComponent = { ...data };
     if (this.currentStatusComponent.tag != undefined) {
       this.matchTag = this.sliceTagName(this.currentStatusComponent.tag);
       this.tagsOption.push({

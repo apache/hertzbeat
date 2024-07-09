@@ -87,10 +87,12 @@ scheduler:
     port: 1158
 
 #AI config
-aiConfig:
+ai:
   #AI Type:zhiPu
   type: zhiPu
   #Model name：glm-4
   model: glm-4
   #api key
   api-key: xxx
+  #At present, only IFLYTEK large model needs to be filled in
+  api-secret: xxx

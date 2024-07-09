@@ -26,14 +26,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
+import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -58,6 +61,9 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
+
+    @Autowired
+    private AlertMonitorDao alertMonitorDao;
 
     private final Map<String, AlertDefineImExportService> alertDefineImExportServiceMap = new HashMap<>();
 
@@ -147,7 +153,24 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId) {
-        return alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertDefineId);
+        List<AlertDefineMonitorBind> defineMonitorBinds = alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertDefineId);
+        if (defineMonitorBinds == null || defineMonitorBinds.isEmpty()) {
+            return defineMonitorBinds;
+        }
+        List<Long> needLoadMonitorIds = defineMonitorBinds.stream()
+                .filter(bind -> bind.getMonitor() == null)
+                .map(AlertDefineMonitorBind::getMonitorId).toList();
+        if (needLoadMonitorIds.isEmpty()) {
+            return defineMonitorBinds;
+        }
+        Map<Long, Monitor> monitorMap = alertMonitorDao.findAllById(needLoadMonitorIds)
+                .stream().collect(Collectors.toMap(Monitor::getId, Function.identity()));
+        for (AlertDefineMonitorBind bind : defineMonitorBinds) {
+            if (bind.getMonitor() == null) {
+                bind.setMonitor(monitorMap.get(bind.getMonitorId()));
+            }
+        }
+        return defineMonitorBinds;
     }
 
     @Override

@@ -24,16 +24,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 /**
- * zhiPu Request param
+ * openAi Request param
  */
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ZhiPuRequestParamDTO {
-
+public class OpenAiRequestParamDTO {
 
     /**
      * ai version
@@ -51,7 +50,7 @@ public class ZhiPuRequestParamDTO {
      * The larger the value, the more random and creative the output will be. The smaller the value, the more stable or certain the output will be
      * You are advised to adjust top_p or temperature parameters based on application scenarios, but do not adjust the two parameters at the same time
      */
-    private double temperature;
+    private float temperature;
 
     /**
      * The model outputs the maximum tokens, with a maximum output of 8192 and a default value of 1024
@@ -63,6 +62,7 @@ public class ZhiPuRequestParamDTO {
      * stream response
      */
     private Boolean stream = Boolean.FALSE;
+
 
 }
 

@@ -49,4 +49,8 @@ public interface CollectorConstants {
      * MongoDB Atlas model
      */
     String MONGO_DB_ATLAS_MODEL = "mongodb-atlas";
+
+    String ZOOKEEPER_APP = "zookeeper";
+
+    String ZOOKEEPER_ENVI_HEAD = "Environment:";
 }

@@ -35,7 +35,7 @@
     <span nz-icon nzType="pie-chart"></span>
     <span>{{ 'monitors.detail' | i18n }}</span>
   </nz-breadcrumb-item>
-  <nz-breadcrumb-item>
+  <nz-breadcrumb-item *ngIf="!!app">
     <a routerLink="/setting/define" [queryParams]="{ app: app }">
       <nz-tag style="font-size: 14px; margin-left: 4px" nzColor="#3f51b5" class="hoverClass">
         <span>{{ 'monitor.app.' + app | i18n }}</span>
@@ -43,6 +43,7 @@
     </a>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
+
 <nz-divider></nz-divider>
 
 <nz-layout>
@@ -54,9 +55,10 @@
             <i nz-icon nzType="pic-right"></i>
             {{ 'monitors.detail.realtime' | i18n }}
           </ng-template>
-          <div class="cards">
+          <div class="cards lists">
             <app-monitor-data-table
               class="card"
+              [height]="'400px'"
               [monitor]="monitor"
               [port]="port"
               [monitorId]="monitorId"
@@ -64,6 +66,7 @@
             ></app-monitor-data-table>
             <app-monitor-data-table
               class="card"
+              [height]="'400px'"
               *ngFor="let metric of metrics; let i = index"
               [metrics]="metric"
               [monitorId]="monitorId"
