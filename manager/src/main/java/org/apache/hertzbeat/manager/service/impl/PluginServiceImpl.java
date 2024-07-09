@@ -82,6 +82,12 @@ public class PluginServiceImpl implements PluginService {
     @Override
     public void deletePlugins(Set<Long> ids) {
         List<PluginMetadata> plugins = metadataDao.findAllById(ids);
+        // disable the plugins that need to be removed
+        for (PluginMetadata plugin : plugins) {
+            plugin.setEnableStatus(false);
+            updateStatus(plugin);
+        }
+        loadJarToClassLoader();
         for (PluginMetadata plugin : plugins) {
             try {
                 // delete jar file
@@ -240,6 +246,7 @@ public class PluginServiceImpl implements PluginService {
         try {
             if (pluginClassLoader != null) {
                 pluginClassLoader.close();
+                System.gc();
             }
             List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
             List<URL> urls = new ArrayList<>();
