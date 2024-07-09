@@ -20,11 +20,13 @@ package org.apache.hertzbeat.manager.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import jakarta.annotation.Resource;
+import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.TimeZoneUtil;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.apache.hertzbeat.manager.pojo.dto.SystemSecret;
@@ -46,9 +48,7 @@ import org.springframework.util.StringUtils;
 @Component
 @Order(value = Ordered.HIGHEST_PRECEDENCE + 2)
 public class CommonCommandLineRunner implements CommandLineRunner {
-    
-    private static final Integer LANG_REGION_LENGTH = 2;
-    
+
     private static final String DEFAULT_JWT_SECRET = "CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R " 
             + "LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9 "
             + "8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5 "
@@ -80,17 +80,12 @@ public class CommonCommandLineRunner implements CommandLineRunner {
         // for system config
         SystemConfig systemConfig = systemGeneralConfigService.getConfig();
         if (systemConfig != null) {
-            if (systemConfig.getTimeZoneId() != null) {
-                TimeZone.setDefault(TimeZone.getTimeZone(systemConfig.getTimeZoneId()));
-            }
-            if (systemConfig.getLocale() != null) {
-                String[] arr = systemConfig.getLocale().split(CommonConstants.LOCALE_SEPARATOR);
-                if (arr.length == LANG_REGION_LENGTH) {
-                    String language = arr[0];
-                    String country = arr[1];
-                    Locale.setDefault(new Locale(language, country));   
-                }
-            }
+            TimeZoneUtil.setTimeZoneAndLocale(systemConfig.getTimeZoneId(), systemConfig.getLocale());
+
+            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+            simpleDateFormat.setTimeZone(TimeZone.getDefault());
+            objectMapper.setTimeZone(TimeZone.getDefault())
+                    .setDateFormat(simpleDateFormat);
         } else {
             // init system config data
             systemConfig = SystemConfig.builder().timeZoneId(TimeZone.getDefault().getID())

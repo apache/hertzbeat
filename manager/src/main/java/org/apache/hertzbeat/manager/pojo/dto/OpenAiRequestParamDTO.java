@@ -25,14 +25,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * zhiPu Request param
+ * openAi Request param
  */
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class KimiAiRequestParamDTO {
+public class OpenAiRequestParamDTO {
 
     /**
      * ai version

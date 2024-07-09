@@ -41,3 +41,20 @@ keywords: [AI]
 | model | moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k              |                                    |
 | api-key  | xxxxxxxxxxx                                  |https://platform.moonshot.cn/console/api-keys|
 
+#### sparkDesk AI
+QuickStart: https://www.xfyun.cn/doc/platform/quickguide.html
+
+| Name of the parameter          | Example                                         | Link                                                          |
+|--------------|-------------------------------------------------|---------------------------------------------------------------|
+| type | sparkDesk (must be exactly the same as example) |                                                               |
+| model | general、generalv2、generalv3、generalv3.5、4.0Ultra        |                                    |
+| api-key  | xxxxxxxxxxx                                     |https://console.xfyun.cn/services/cbm|
+| api-secret  | xxxxxxxxxxx                                     |https://console.xfyun.cn/services/cbm|
+
+| sparkDesk version | model      |
+|-------------------|-----------------------------------------------|
+| Spark4.0 Ultra    | 4.0Ultra | 
+| Spark Max         |generalv3.5      |    
+| Spark Pro         | generalv3                                 |
+| Spark V2.0        |generalv2                                | 
+| Spark Lite(free)  |general                                 | 

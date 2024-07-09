@@ -951,7 +951,8 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;"
                     alt="Gao Jian"/><br/><sub><b>Gao Jian</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a> <a
-                    href="#design-gjjjj0101" title="Design">🎨</a></td>
+                    href="#design-gjjjj0101" title="Design">🎨</a> <a
+                    href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Tests">⚠️</a></td>
                 </tr>
                 <tr>
                   <td align="center" valign="top" width="14.28%"><a href="https://jangto.tistory.com/"><img
@@ -1047,7 +1048,8 @@ export default function () {
                   <td align="center" valign="top" width="14.28%"><a href="https://thespica.github.io/"><img
                     src="https://avatars.githubusercontent.com/u/119573640?v=4?s=100" width="100px;"
                     alt="John"/><br/><sub><b>John</b></sub></a><br/><a
-                    href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a></td>
+                    href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a> <a
+                    href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Documentation">📖</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/boatrainlsz"><img
                     src="https://avatars.githubusercontent.com/u/18243785?v=4?s=100" width="100px;"
                     alt="boatrainlsz"/><br/><sub><b>boatrainlsz</b></sub></a><br/><a
@@ -1086,7 +1088,28 @@ export default function () {
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/kerwin612"><img
                     src="https://avatars.githubusercontent.com/u/3371163?v=4?s=100" width="100px;" alt="Kerwin Bryant"/><br/><sub><b>Kerwin
                     Bryant</b></sub></a><br/><a href="https://github.com/apache/hertzbeat/commits?author=kerwin612"
-                                                title="Code">💻</a></td>
+                                                title="Code">💻</a> <a href="#design-kerwin612" title="Design">🎨</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShineDevelopment"><img
+                    src="https://avatars.githubusercontent.com/u/59306780?v=4?s=100" width="100px;" alt="daixianglong"/><br/><sub><b>daixianglong</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=ShineDevelopment"
+                    title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/mchgood"><img
+                    src="https://avatars.githubusercontent.com/u/38482005?v=4?s=100" width="100px;" alt="mchgood"/><br/><sub><b>mchgood</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=mchgood" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/pwallk"><img
+                    src="https://avatars.githubusercontent.com/u/69385076?v=4?s=100" width="100px;"
+                    alt="kangli"/><br/><sub><b>kangli</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=pwallk" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/cdphantom"><img
+                    src="https://avatars.githubusercontent.com/u/12674795?v=4?s=100" width="100px;"
+                    alt="cdphantom"/><br/><sub><b>cdphantom</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=cdphantom" title="Code">💻</a></td>
+                </tr>
+                <tr>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/asd108908382"><img
+                    src="https://avatars.githubusercontent.com/u/77717999?v=4?s=100" width="100px;"
+                    alt="jiawei.guo"/><br/><sub><b>jiawei.guo</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=asd108908382" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>
