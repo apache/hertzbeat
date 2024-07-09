@@ -21,10 +21,10 @@ import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.hertzbeat.manager.pojo.dto.AiProperties;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.apache.hertzbeat.manager.service.impl.AiServiceFactoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,11 +47,8 @@ public class AiController {
     @Autowired
     private AiServiceFactoryImpl aiServiceFactory;
 
-    /**
-     * Types of artificial intelligence
-     */
-    @Value("${ai.type:zhiPu}")
-    private String type;
+    @Autowired
+    private AiProperties aiProperties;
 
     /**
      * request AI
@@ -65,7 +62,7 @@ public class AiController {
     public Flux<ServerSentEvent<String>> requestAi(@Parameter(description = "Request text", example = "Who are you") @RequestParam("text") String text,
                                   @Parameter(description = "Types of artificial intelligence", example = "zhiPu") @RequestParam(value = "type", required = false) String currentlyDisabledType)  {
 
-        AiService aiServiceImplBean = aiServiceFactory.getAiServiceImplBean(type);
+        AiService aiServiceImplBean = aiServiceFactory.getAiServiceImplBean(aiProperties.getType());
 
         return aiServiceImplBean.requestAi(text);
     }
