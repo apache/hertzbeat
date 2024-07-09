@@ -89,7 +89,7 @@ public class MonitorServiceImpl implements MonitorService {
     private static final Long MONITOR_ID_TMP = 1000000000L;
 
     public static final String HTTP = "http://";
-    
+
     public static final String HTTPS = "https://";
     public static final String BLANK = "";
     public static final String PATTERN_HTTP = "(?i)http://";
@@ -178,51 +178,21 @@ public class MonitorServiceImpl implements MonitorService {
     public void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
-        // Init Set Default Tags: monitorId monitorName app
-        List<Tag> tags = monitor.getTags();
-        if (tags == null) {
-            tags = new LinkedList<>();
-            monitor.setTags(tags);
-        }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type((byte) 0).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type((byte) 0).build());
-        // Construct the collection task Job entity     
         Job appDefine = appService.getAppDefine(monitor.getApp());
-        if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-            appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-        }
-        appDefine.setMonitorId(monitorId);
-        appDefine.setInterval(monitor.getIntervals());
-        appDefine.setCyclic(true);
-        appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param -> {
             param.setMonitorId(monitorId);
             return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
-        appDefine.setConfigmap(configmaps);
-
-        long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
-                collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-
+        editMonitorTag(monitor, monitorId);
+        createJobDependMetricInterval(appDefine, monitor, monitorId, configmaps, collector);
+        tryDetect(monitor, params, collector);
         try {
-            detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {}
-
-        try {
-            if (collector != null) {
-                CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
-                        .collector(collector)
-                        .monitorId(monitorId)
-                        .build();
-                collectorMonitorBindDao.save(collectorMonitorBind);
-            }
-            monitor.setId(monitorId);
-            monitor.setJobId(jobId);
+            saveMonitor(monitor, monitorId, collector);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
             log.error("Error while adding monitor: {}", e.getMessage(), e);
-            collectJobScheduling.cancelAsyncCollectJob(jobId);
+            cancelJob(monitor);
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -230,13 +200,6 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params) {
         long monitorId = SnowFlakeIdGenerator.generateId();
-        List<Tag> tags = monitor.getTags();
-        if (tags == null) {
-            tags = new LinkedList<>();
-            monitor.setTags(tags);
-        }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type((byte) 0).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type((byte) 0).build());
         Job appDefine = appService.getAppDefine(monitor.getApp());
         // set user optional metrics
         List<Metrics> metricsDefine = appDefine.getMetrics();
@@ -249,32 +212,22 @@ public class MonitorServiceImpl implements MonitorService {
 
         List<Metrics> realMetrics = metricsDefine.stream().filter(m -> metrics.contains(m.getName())).collect(Collectors.toList());
         appDefine.setMetrics(realMetrics);
-        appDefine.setMonitorId(monitorId);
-        appDefine.setInterval(monitor.getIntervals());
-        appDefine.setCyclic(true);
-        appDefine.setTimestamp(System.currentTimeMillis());
+
         List<Configmap> configmaps = params.stream().map(param -> {
             param.setMonitorId(monitorId);
             return new Configmap(param.getField(), param.getParamValue(), param.getType());
         }).collect(Collectors.toList());
-        appDefine.setConfigmap(configmaps);
-        // Send the collection task to get the job ID
-        long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, null);
-
-        try {
-            detectMonitor(monitor, params, null);
-        } catch (Exception ignored) {}
-
+        editMonitorTag(monitor, monitorId);
+        createJobDependMetricInterval(appDefine, monitor, monitorId, configmaps, null);
+        tryDetect(monitor, params, null);
         // Brush the library after the download is successful
         try {
-            monitor.setId(monitorId);
-            monitor.setJobId(jobId);
+            saveMonitor(monitor, monitorId, null);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            // Repository brushing abnormally cancels the previously delivered task
-            collectJobScheduling.cancelAsyncCollectJob(jobId);
+            log.error("Error while adding monitor: {}", e.getMessage(), e);
+            cancelJob(monitor);
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -513,63 +466,25 @@ public class MonitorServiceImpl implements MonitorService {
             // The type of monitoring cannot be modified
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
-        // Auto Update Default Tags: monitorName
-        List<Tag> tags = monitor.getTags();
-        if (tags == null) {
-            tags = new LinkedList<>();
-            monitor.setTags(tags);
-        }
-        for (Tag tag : tags) {
-            if (CommonConstants.TAG_MONITOR_NAME.equals(tag.getName())) {
-                tag.setTagValue(monitor.getName());
-            }
-        }
+        editMonitorTag(monitor, monitorId);
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             Job appDefine = appService.getAppDefine(monitor.getApp());
-            if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-            }
-            appDefine.setId(preMonitor.getJobId());
-            appDefine.setMonitorId(monitorId);
-            appDefine.setInterval(monitor.getIntervals());
-            appDefine.setCyclic(true);
-            appDefine.setTimestamp(System.currentTimeMillis());
-            if (params != null) {
-                List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
-                appDefine.setConfigmap(configmaps);
-            }
-            long newJobId;
-            if (collector == null) {
-                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
-            } else {
-                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
-            }
-            monitor.setJobId(newJobId);
+            List<Configmap> configmaps = params.stream().map(param ->
+                    new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
+            createJobDependMetricInterval(appDefine, monitor, monitorId, configmaps, collector);
+            tryDetect(monitor, params, collector);
         }
-        try {
-            detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {}
         // After the update is successfully released, refresh the database
         try {
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitorId);
-            if (collector != null) {
-                CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
-                        .collector(collector).monitorId(monitorId)
-                        .build();
-                collectorMonitorBindDao.save(collectorMonitorBind);
-            }
-            // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
-            monitor.setGmtUpdate(LocalDateTime.now());
+            saveMonitor(monitor, monitorId, collector);
             monitorDao.save(monitor);
-            if (params != null) {
-                paramDao.saveAll(params);
-            }
+            paramDao.saveAll(params);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
-            collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            cancelJob(monitor);
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
@@ -587,7 +502,7 @@ public class MonitorServiceImpl implements MonitorService {
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorId(id);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(id);
-            collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            cancelJob(monitor);
             applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
         }
     }
@@ -606,7 +521,7 @@ public class MonitorServiceImpl implements MonitorService {
                 // delete tag 删除监控对应的标签
                 tagService.deleteMonitorSystemTags(monitor);
                 collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitor.getId());
-                collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+                cancelJob(monitor);
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
             }
         }
@@ -631,7 +546,7 @@ public class MonitorServiceImpl implements MonitorService {
                 List<String> metrics = job.getMetrics().stream()
                         .filter(Metrics::isVisible)
                         .map(Metrics::getName).collect(Collectors.toList());
-                monitorDto.setMetrics(metrics);   
+                monitorDto.setMetrics(metrics);
             }
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
@@ -657,7 +572,7 @@ public class MonitorServiceImpl implements MonitorService {
                 .collect(Collectors.toList());
         if (!managedMonitors.isEmpty()) {
             for (Monitor monitor : managedMonitors) {
-                collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+                cancelJob(monitor);
             }
             monitorDao.saveAll(managedMonitors);
         }
@@ -670,43 +585,40 @@ public class MonitorServiceImpl implements MonitorService {
                 .stream().filter(monitor ->
                         monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
-                .collect(Collectors.toList());
+                .toList();
         if (!unManagedMonitors.isEmpty()) {
             for (Monitor monitor : unManagedMonitors) {
                 // Construct the collection task Job entity
                 Job appDefine = appService.getAppDefine(monitor.getApp());
-                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-                }
-                appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
-                appDefine.setCyclic(true);
-                appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param ->
                         new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                        .collect(Collectors.toList());
+                        .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
                         configmaps.add(configmap);
                     }
                 });
-                appDefine.setConfigmap(configmaps);
-                // Issue collection tasks
                 Optional<CollectorMonitorBind> bindOptional =
                         collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
                 String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElseGet(() -> null);
-                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-                monitor.setJobId(newJobId);
+                createJobDependMetricInterval(appDefine, monitor, monitor.getId(), configmaps, collector);
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
                 try {
                     detectMonitor(monitor, params, collector);
-                } catch (Exception ignored) {}
+                } catch (Exception ignored) {
+                }
+                try {
+                    monitorDao.save(monitor);
+                } catch (Exception e) {
+                    log.error("Error while enable monitor: {}", e.getMessage(), e);
+                    cancelJob(monitor);
+                    throw new MonitorDatabaseException(e.getMessage());
+                }
             }
-            monitorDao.saveAll(unManagedMonitors);
         }
     }
 
@@ -755,7 +667,7 @@ public class MonitorServiceImpl implements MonitorService {
                 // deep copy original monitor to achieve persist in JPA
                 Monitor newMonitor = JsonUtil.fromJson(JsonUtil.toJson(monitor), Monitor.class);
                 if (newMonitor != null) {
-                    copyMonitor(newMonitor, params);   
+                    copyMonitor(newMonitor, params);
                 }
             }, () -> log.warn("can not find the monitor for id ：{}", id));
         });
@@ -776,18 +688,11 @@ public class MonitorServiceImpl implements MonitorService {
         for (Monitor monitor : monitors) {
             try {
                 Job appDefine = job.clone();
-                if (monitor == null || appDefine == null || monitor.getId() == null || monitor.getJobId() == null) {
+                if (monitor == null || appDefine == null || monitor.getId() == null || monitor.getJobIds() == null) {
                     log.error("update monitor job error when template modify, define | id | jobId is null. continue");
                     continue;
                 }
-                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-                }
-                appDefine.setId(monitor.getJobId());
-                appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
-                appDefine.setCyclic(true);
-                appDefine.setTimestamp(System.currentTimeMillis());
+                String collector = monitorIdCollectorMap.get(monitor.getId());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
                         param.getParamValue(), param.getType())).collect(Collectors.toList());
@@ -800,15 +705,14 @@ public class MonitorServiceImpl implements MonitorService {
                         configmaps.add(configmap);
                     }
                 });
-                appDefine.setConfigmap(configmaps);
-                // if is pinned collector
-                String collector = monitorIdCollectorMap.get(monitor.getId());
-                // Delivering a collection task
-                long newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
-                monitor.setJobId(newJobId);
-                monitorDao.save(monitor);   
+                createJobDependMetricInterval(appDefine, monitor, monitor.getId(), configmaps, collector);
+                tryDetect(monitor, params, collector);
+                monitorDao.save(monitor);
             } catch (Exception e) {
                 log.error("update monitor job error when template modify: {}.continue", e.getMessage(), e);
+                if (monitor != null){
+                    cancelJob(monitor);
+                }
             }
         }
     }
@@ -845,5 +749,85 @@ public class MonitorServiceImpl implements MonitorService {
         return tags.stream()
                 .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
                 .collect(Collectors.toList());
+    }
+
+    private void editMonitorTag(Monitor monitor, Long monitorId) {
+        // Init Set Default Tags: monitorId monitorName app
+        List<Tag> tags = monitor.getTags();
+        if (CollectionUtils.isEmpty(tags)) {
+            tags = new LinkedList<>();
+            tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type((byte) 0).build());
+            tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type((byte) 0).build());
+        } else {
+            for (Tag tag : tags) {
+                if (CommonConstants.TAG_MONITOR_NAME.equals(tag.getName())) {
+                    tag.setTagValue(monitor.getName());
+                }
+            }
+        }
+        monitor.setTags(tags);
+    }
+
+    private void createJobDependMetricInterval(Job appDefine, Monitor monitor, Long monitorId, List<Configmap> configmaps, String collector) {
+        // Construct the collection task Job entity
+        // Group the collection metrics by its interval
+        Map<Long, List<Metrics>> metricsIntervalMap = new HashMap<>();
+        long defaultInterval = monitor.getIntervals();
+        if (!CollectionUtils.isEmpty(appDefine.getMetrics())) {
+            for (Metrics metrics : appDefine.getMetrics()) {
+                long metricsInterval = metrics.getInterval();
+                if (metricsInterval > 0) {
+                    metricsIntervalMap.computeIfAbsent(metricsInterval, k -> new LinkedList<>()).add(metrics);
+                } else {
+                    metricsIntervalMap.computeIfAbsent(defaultInterval, k -> new LinkedList<>()).add(metrics);
+                }
+            }
+        }
+        // Add PROMETHEUS_APP_PREFIX
+        if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+            appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+        }
+        // Construct multiple Job entities to collect metrics from different interval groups
+        // Define common attributes
+        appDefine.setMonitorId(monitorId);
+        appDefine.setCyclic(true);
+        appDefine.setConfigmap(configmaps);
+        // Define private attributes
+        monitor.setJobIds(new LinkedList<>());
+        for (Map.Entry<Long, List<Metrics>> entry : metricsIntervalMap.entrySet()) {
+            appDefine.setInterval(entry.getKey());
+            appDefine.setMetrics(entry.getValue());
+            appDefine.setTimestamp(System.currentTimeMillis());
+            long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
+                    collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+            monitor.getJobIds().add(jobId);
+        }
+    }
+
+    private void saveMonitor(Monitor monitor, Long monitorId, String collector) {
+        if (collector != null) {
+            CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
+                    .collector(collector)
+                    .monitorId(monitorId)
+                    .build();
+            collectorMonitorBindDao.save(collectorMonitorBind);
+        }
+        // force update gmtUpdate time
+        monitor.setGmtUpdate(LocalDateTime.now());
+        monitor.setId(monitorId);
+    }
+
+    private void tryDetect(Monitor monitor, List<Param> params, String collector) {
+        try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
+    }
+
+    private void cancelJob(Monitor monitor) {
+        if (!CollectionUtils.isEmpty(monitor.getJobIds())) {
+            for (Long jobId : monitor.getJobIds()) {
+                collectJobScheduling.cancelAsyncCollectJob(jobId);
+            }
+        }
     }
 }

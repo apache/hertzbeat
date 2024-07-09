@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,6 +27,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -40,6 +43,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -89,7 +93,7 @@ public class SchedulerInit implements CommandLineRunner {
                 .build();
         collectorScheduling.collectorGoOnline(CommonConstants.MAIN_COLLECTOR_NODE, collectorInfo);
         // init jobs
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(List.of((byte) 0));
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdsNotNull(List.of((byte) 0));
         List<CollectorMonitorBind> monitorBinds = collectorMonitorBindDao.findAll();
         Map<Long, String> monitorIdCollectorMap = monitorBinds.stream().collect(
                 Collectors.toMap(CollectorMonitorBind::getMonitorId, CollectorMonitorBind::getCollector));
@@ -97,14 +101,6 @@ public class SchedulerInit implements CommandLineRunner {
             try {
                 // build collect job entity
                 Job appDefine = appService.getAppDefine(monitor.getApp());
-                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-                }
-                appDefine.setId(monitor.getJobId());
-                appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
-                appDefine.setCyclic(true);
-                appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getParamValue(),
@@ -119,12 +115,46 @@ public class SchedulerInit implements CommandLineRunner {
                         configmaps.add(configmap);
                     }
                 });
+                // Construct the collection task Job entity
+                // Group the collection metrics by its interval
+                Map<Long, List<Metrics>> metricsIntervalMap = new HashMap<>();
+                long defaultInterval = monitor.getIntervals();
+                if (!CollectionUtils.isEmpty(appDefine.getMetrics())) {
+                    for (Metrics metrics : appDefine.getMetrics()) {
+                        long metricsInterval = metrics.getInterval();
+                        if (metricsInterval > 0) {
+                            metricsIntervalMap.computeIfAbsent(metricsInterval, k -> new LinkedList<>()).add(metrics);
+                        } else {
+                            metricsIntervalMap.computeIfAbsent(defaultInterval, k -> new LinkedList<>()).add(metrics);
+                        }
+                    }
+                }
+                // Add PROMETHEUS_APP_PREFIX
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+                }
+                // Construct multiple Job entities to collect metrics from different interval groups
+                // Define common attributes
+                appDefine.setMonitorId(monitor.getId());
+                appDefine.setCyclic(true);
                 appDefine.setConfigmap(configmaps);
-                String collector = monitorIdCollectorMap.get(monitor.getId());
-                long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-                monitor.setJobId(jobId);
+                // Define private attributes
+                monitor.setJobIds(new LinkedList<>());
+                for (Map.Entry<Long, List<Metrics>> entry : metricsIntervalMap.entrySet()) {
+                    appDefine.setInterval(entry.getKey());
+                    appDefine.setMetrics(entry.getValue());
+                    appDefine.setTimestamp(System.currentTimeMillis());
+                    String collector = monitorIdCollectorMap.get(monitor.getId());
+                    long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+                    monitor.getJobIds().add(jobId);
+                }
                 monitorDao.save(monitor);
             } catch (Exception e) {
+                if (!CollectionUtils.isEmpty(monitor.getJobIds())) {
+                    for (Long jobId : monitor.getJobIds()) {
+                        collectJobScheduling.cancelAsyncCollectJob(jobId);
+                    }
+                }
                 log.error("init monitor job: {} error,continue next monitor", monitor, e);
             }
         }

@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.scheduler;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +36,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -53,6 +55,7 @@ import org.apache.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -141,13 +144,6 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             try {
                 // build collect job entity
                 Job appDefine = appService.getAppDefine(monitor.getApp());
-                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-                }
-                appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
-                appDefine.setCyclic(true);
-                appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getParamValue(),
@@ -161,11 +157,45 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                         configmaps.add(configmap);
                     }
                 });
+                // Construct the collection task Job entity
+                // Group the collection metrics by its interval
+                Map<Long, List<Metrics>> metricsIntervalMap = new HashMap<>();
+                long defaultInterval = monitor.getIntervals();
+                if (!CollectionUtils.isEmpty(appDefine.getMetrics())) {
+                    for (Metrics metrics : appDefine.getMetrics()) {
+                        long metricsInterval = metrics.getInterval();
+                        if (metricsInterval > 0) {
+                            metricsIntervalMap.computeIfAbsent(metricsInterval, k -> new LinkedList<>()).add(metrics);
+                        } else {
+                            metricsIntervalMap.computeIfAbsent(defaultInterval, k -> new LinkedList<>()).add(metrics);
+                        }
+                    }
+                }
+                // Add PROMETHEUS_APP_PREFIX
+                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+                }
+                // Construct multiple Job entities to collect metrics from different interval groups
+                // Define common attributes
+                appDefine.setMonitorId(monitor.getId());
+                appDefine.setCyclic(true);
                 appDefine.setConfigmap(configmaps);
-                long jobId = addAsyncCollectJob(appDefine, identity);
-                monitor.setJobId(jobId);
+                // Define private attributes
+                monitor.setJobIds(new LinkedList<>());
+                for (Map.Entry<Long, List<Metrics>> entry : metricsIntervalMap.entrySet()) {
+                    appDefine.setInterval(entry.getKey());
+                    appDefine.setMetrics(entry.getValue());
+                    appDefine.setTimestamp(System.currentTimeMillis());
+                    long jobId = addAsyncCollectJob(appDefine, identity);
+                    monitor.getJobIds().add(jobId);
+                }
                 monitorDao.save(monitor);
             } catch (Exception e) {
+                if (!CollectionUtils.isEmpty(monitor.getJobIds())) {
+                    for (Long jobId : monitor.getJobIds()) {
+                        cancelAsyncCollectJob(jobId);
+                    }
+                }
                 log.error("insert pinned monitor job: {} in collector: {} error,continue next monitor", monitor, identity, e);
             }
         }
