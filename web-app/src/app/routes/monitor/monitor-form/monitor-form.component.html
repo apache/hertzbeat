@@ -45,7 +45,7 @@
 
       <ng-container *ngFor="let paramDefine of paramDefines; let i = index">
         <app-form-item
-          *ngIf="params[i].display && paramDefine.field !== 'host'"
+          *ngIf="params[i].display !== false && paramDefine.field !== 'host'"
           [item]="paramDefine"
           [(value)]="params[i].paramValue"
           (valueChange)="
