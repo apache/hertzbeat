@@ -49,7 +49,7 @@ class MonitorDaoTest extends AbstractSpringIntegrationTest {
     void setUp() {
         Monitor monitor = Monitor.builder()
                 .id(1L)
-                .jobId(2L)
+                .jobIds(List.of(2L))
                 .app("jvm")
                 .name("jvm_test")
                 .host("192.34.5.43")
@@ -92,7 +92,7 @@ class MonitorDaoTest extends AbstractSpringIntegrationTest {
     @Test
     void findMonitorsByStatusNotInAndAndJobIdNotNull() {
         List<Byte> bytes = Arrays.asList((byte) 2, (byte) 3);
-        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdNotNull(bytes);
+        List<Monitor> monitors = monitorDao.findMonitorsByStatusNotInAndAndJobIdsNotNull(bytes);
         assertNotNull(monitors);
         assertEquals(1, monitors.size());
     }

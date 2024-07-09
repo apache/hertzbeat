@@ -53,11 +53,11 @@ class MonitorControllerTest {
     @InjectMocks
     private MonitorController monitorController;
 
-    public MonitorDto DataTest(){
+    public MonitorDto dataTest(){
         Monitor monitor = new Monitor();
         monitor.setApp("website");
         monitor.setId(87584674384L);
-        monitor.setJobId(43243543543L);
+        monitor.setJobIds(List.of(43243543543L));
         monitor.setName("Api-TanCloud.cn");
         monitor.setName("TanCloud");
         monitor.setHost("192.167.25.11");
@@ -87,7 +87,7 @@ class MonitorControllerTest {
     @Test
     void addNewMonitor() throws Exception {
 
-        MonitorDto monitorDto = DataTest();
+        MonitorDto monitorDto = dataTest();
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(JsonUtil.toJson(monitorDto)))
@@ -99,7 +99,7 @@ class MonitorControllerTest {
 
     @Test
     void modifyMonitor() throws Exception {
-        MonitorDto monitorDto = DataTest();
+        MonitorDto monitorDto = dataTest();
 
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/monitor")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -113,7 +113,7 @@ class MonitorControllerTest {
     void getMonitor() throws Exception {
         Monitor monitor = new Monitor();
         monitor.setId(87584674384L);
-        monitor.setJobId(43243543543L);
+        monitor.setJobIds(List.of(43243543543L));
         monitor.setName("Api-TanCloud.cn");
         monitor.setName("TanCloud");
         monitor.setHost("192.167.25.11");
@@ -140,7 +140,7 @@ class MonitorControllerTest {
 
         Monitor monitor = new Monitor();
         monitor.setId(87584674384L);
-        monitor.setJobId(43243543543L);
+        monitor.setJobIds(List.of(43243543543L));
         monitor.setName("Api-TanCloud.cn");
         monitor.setName("TanCloud");
         monitor.setHost("192.167.25.11");
@@ -161,7 +161,7 @@ class MonitorControllerTest {
 
     @Test
     void detectMonitor() throws Exception {
-        MonitorDto monitorDto = DataTest();
+        MonitorDto monitorDto = dataTest();
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/detect")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -174,7 +174,7 @@ class MonitorControllerTest {
 
     @Test
     void addNewMonitorOptionalMetrics() throws Exception {
-        MonitorDto monitorDto = DataTest();
+        MonitorDto monitorDto = dataTest();
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/optional")
                         .contentType(MediaType.APPLICATION_JSON)

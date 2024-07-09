@@ -192,7 +192,6 @@ class MonitorServiceTest {
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
         when(monitorDao.save(monitor)).thenReturn(monitor);
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.saveAll(params)).thenReturn(params);
@@ -208,7 +207,6 @@ class MonitorServiceTest {
                 .build();
         Job job = new Job();
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-        when(collectJobScheduling.addAsyncCollectJob(job, null)).thenReturn(1L);
         List<Param> params = Collections.singletonList(new Param());
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
         assertThrows(MonitorDatabaseException.class, () -> monitorService.addMonitor(monitor, params, null));
@@ -583,7 +581,7 @@ class MonitorServiceTest {
         params.add(param);
         dto.setParams(params);
         long monitorId = 1L;
-        Monitor monitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
+        Monitor monitor = Monitor.builder().jobIds(List.of(1L)).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
         dto.setMonitor(monitor);
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
         try {
@@ -603,7 +601,7 @@ class MonitorServiceTest {
             assertEquals("Can not modify monitor's app type", e.getMessage());
         }
         reset();
-        Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
+        Monitor existOkMonitor = Monitor.builder().jobIds(List.of(1L)).intervals(1).app("app").name("memory").host("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existOkMonitor));
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
 
@@ -613,7 +611,7 @@ class MonitorServiceTest {
     @Test
     void deleteMonitor() {
         long id = 1L;
-        Monitor existOkMonitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+        Monitor existOkMonitor = Monitor.builder().jobIds(List.of(1L)).intervals(1).app("app").name("memory").host("host").id(id).build();
         when(monitorDao.findById(id)).thenReturn(Optional.of(existOkMonitor));
         doNothing().when(alertDefineBindDao).deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
         doNothing().when(tagMonitorBindDao).deleteTagMonitorBindsByMonitorId(id);
@@ -628,7 +626,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobIds(List.of(1L)).intervals(1).app("app").name("memory").host("host").id(id).build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -638,7 +636,7 @@ class MonitorServiceTest {
     @Test
     void getMonitorDto() {
         long id = 1L;
-        Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+        Monitor monitor = Monitor.builder().jobIds(List.of(1L)).intervals(1).app("app").name("memory").host("host").id(id).build();
         when(monitorDao.findById(id)).thenReturn(Optional.of(monitor));
         List<Param> params = Collections.singletonList(new Param());
         when(paramDao.findParamsByMonitorId(id)).thenReturn(params);
@@ -665,7 +663,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobIds(List.of(id)).intervals(1).app("app").name("memory").host("host").id(id).build();
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -680,7 +678,7 @@ class MonitorServiceTest {
 
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
-            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            Monitor monitor = Monitor.builder().jobIds(List.of(id)).intervals(1).app("app").name("memory").host("host").id(id).build();
             monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             monitors.add(monitor);
         }
