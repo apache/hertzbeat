@@ -137,6 +137,21 @@
   <div *nzModalContent class="-inner-content">
     <form nz-form #defineForm="ngForm">
       <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'dropdown.label' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            required
+            name="dropdown"
+            id="dropdown"
+            [nzPlaceHolder]="'dropdown.place-holder' | i18n"
+          >
+            <nz-option nzValue="option1" nzLabel="选项一"></nz-option>
+            <nz-option nzValue="option2" nzLabel="选项二"></nz-option>
+            <nz-option nzValue="option3" nzLabel="选项三"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="target" nzRequired="true">{{ 'alert.setting.target' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-cascader
