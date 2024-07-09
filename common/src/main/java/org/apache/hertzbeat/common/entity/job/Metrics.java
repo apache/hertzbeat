@@ -89,6 +89,11 @@ public class Metrics {
      */
     private Byte priority;
     /**
+     * Custom collection interval.
+     * If not set, the collection interval set in the front-end page will be used by default
+     */
+    private long interval;
+    /**
      * Is it visible true or false
      * if false, web ui will not see this metrics.
      */
