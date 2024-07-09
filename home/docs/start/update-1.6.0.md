@@ -1,3 +1,9 @@
+---
+id: 1.6.0-update  
+title: How to update to 1.6.0     
+sidebar_label: Update to 1.6.0 guide
+---
+
 # HertzBeat 1.6.0 Upgrade Guide
 
 **Note: This guide is applicable for upgrading from 1.5.0 to 1.6.0 to version 1.6.0.**

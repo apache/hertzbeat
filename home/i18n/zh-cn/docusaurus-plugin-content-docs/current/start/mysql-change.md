@@ -39,7 +39,7 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 
 ### 添加 MYSQL jdbc 驱动 jar
 
-- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
 - 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
 
 ### 修改hertzbeat的配置文件application.yml切换数据源   
