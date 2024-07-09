@@ -20,22 +20,12 @@ package org.apache.hertzbeat.common.entity.manager;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.ConstraintMode;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.ForeignKey;
-import jakarta.persistence.Id;
-import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.LinkedList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -73,10 +63,12 @@ public class Monitor {
     private Long id;
 
     /**
-     * Job ID
+     * List of job ID
      */
-    @Schema(title = "Collect task ID", example = "43243543543", accessMode = READ_ONLY)
-    private Long jobId;
+    @ElementCollection
+    @CollectionTable(name = "hzb_job_monitor_bind", joinColumns = @JoinColumn(name = "monitor_id"))
+    @Column(name = "job_id")
+    private List<Long> jobIds;
 
     /**
      * Monitor Name
