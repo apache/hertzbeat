@@ -29,12 +29,10 @@ import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
 import { zip } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
-import { AlertDefine } from '../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../pojo/AlertDefineBind';
 import { BulletinDefine } from '../../pojo/BulletinDefine';
 import { Message } from '../../pojo/Message';
 import { Monitor } from '../../pojo/Monitor';
-import { TagItem } from '../../pojo/NoticeRule';
 import { Tag } from '../../pojo/Tag';
 import { AlertDefineService } from '../../service/alert-define.service';
 import { AppDefineService } from '../../service/app-define.service';
@@ -68,7 +66,10 @@ export class BulletinComponent implements OnInit {
   tableLoading: boolean = true;
   checkedDefineIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
+  isAppListLoading = false;
   appHierarchies!: any[];
+  appMap =  new Map<string, string>();
+  appEntries: { value: any; key: string }[] = [];
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
   ];
@@ -212,7 +213,6 @@ export class BulletinComponent implements OnInit {
             if (this.define.tags == undefined) {
               this.define.tags = [];
             }
-            this.cascadeOnChange(this.cascadeValues);
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
           }
@@ -319,7 +319,7 @@ export class BulletinComponent implements OnInit {
   isManageModalAdd = true;
   define: BulletinDefine = new BulletinDefine();
   cascadeValues: string[] = [];
-  currentMetrics: any[] = [];
+  currentMetrics: TransferItem[] = [];
   alertRules: any[] = [{}];
   isExpr = false;
   caseInsensitiveFilter: NzCascaderFilter = (i, p) => {
@@ -328,30 +328,7 @@ export class BulletinComponent implements OnInit {
       return !!label && label.toLowerCase().indexOf(i.toLowerCase()) !== -1;
     });
   };
-  cascadeOnChange(values: string[]): void {
-    if (values == null || values.length != 3) {
-      return;
-    }
-    this.appHierarchies.forEach(hierarchy => {
-      if (hierarchy.value == values[0]) {
-        hierarchy.children.forEach((metrics: { value: string; children: any[] }) => {
-          if (metrics.value == values[1]) {
-            this.currentMetrics = [];
-            if (metrics.children) {
-              metrics.children.forEach(item => {
-                this.currentMetrics.push(item);
-              });
-              this.currentMetrics.push({
-                value: 'system_value_row_count',
-                type: 0,
-                label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
-              });
-            }
-          }
-        });
-      }
-    });
-  }
+
 
   onManageModalCancel() {
     this.isExpr = false;
@@ -599,4 +576,53 @@ export class BulletinComponent implements OnInit {
     });
   }
   // end 告警定义与监控关联model
+
+  // SearchAppDefines
+  onSearchAppDefines(): void {
+    this.appDefineSvc.getAppDefines(this.i18nSvc.defaultLang).pipe().subscribe(
+      message => {
+        if (message.code === 0) {
+          this.appMap = message.data;
+          this.appEntries = Object.entries(this.appMap).map(([key, value]) => ({ key, value }));
+          if (this.appEntries != null) {
+            this.isAppListLoading = true;
+          }
+        } else {
+          console.warn(message.msg);
+        }
+      },
+      error => {
+        console.warn(error.msg);
+      }
+    )
+  }
+
+  onAppChange(appKey: string): void {
+    if (appKey) {
+      this.onSearchMetricsByApp(appKey);
+    } else {
+      this.currentMetrics = [];
+    }
+  }
+
+  onSearchMetricsByApp(app: string): void {
+    this.monitorSvc.getMonitorByApp(app).pipe().subscribe(
+      message => {
+        if (message.code === 0) {
+          if (message.data != null && message.data.length > 0) {
+          this.currentMetrics = message.data.map((metric: any) => ({
+            key: metric,
+            title: metric,
+            description: metric,
+            direction: 'left'
+          }));}
+        } else {
+          console.warn(message.msg);
+        }
+      },
+      error => {
+        console.warn(error.msg);
+      }
+    )
+  }
 }

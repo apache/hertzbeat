@@ -79,4 +79,5 @@ export class BulletinDefineService {
     console.log("deleteBulletinDefine");
   }
 
+
 }

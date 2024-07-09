@@ -250,6 +250,20 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     }
 
     @Override
+    public Map<String, String> getI18nApps(String lang) {
+        Map<String, String> i18nMap = new HashMap<>(128);
+        for (var job : appDefines.values()) {
+            var name = job.getName();
+            var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
+            if (i18nName != null) {
+                i18nMap.put(job.getApp(), i18nName);
+            }
+        }
+        return i18nMap;
+    }
+
+
+    @Override
     public List<Hierarchy> getAllAppHierarchy(String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
         for (var job : appDefines.values()) {
