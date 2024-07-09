@@ -17,21 +17,27 @@
  * under the License.
  */
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-@Component({
-  selector: 'app-form-item',
-  templateUrl: './form-item.component.html',
-  styleUrls: ['./form-item.component.less']
-})
-export class FormItemComponent {
-  constructor() {}
-  @Input() item!: any;
-  @Input() value!: any;
-  @Input() extra: any = {};
-  @Output() readonly valueChange = new EventEmitter<any>();
+import { TagsSelectComponent } from './tags-select.component';
 
-  onChange(value: any) {
-    this.valueChange.emit(value);
-  }
-}
+describe('TagsSelectComponent', () => {
+  let component: TagsSelectComponent;
+  let fixture: ComponentFixture<TagsSelectComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [TagsSelectComponent]
+    }).compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(TagsSelectComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
