@@ -41,3 +41,20 @@ keywords: [人工智能 AI]
 | model | moonshot-v1-8k、moonshot-v1-32k、moonshot-v1-128k | 无                                             |
 | api-key  | xxxxxxxxxxx                                        | https://platform.moonshot.cn/console/api-keys |
 
+#### 科大讯飞AI
+快速入门：https://www.xfyun.cn/doc/platform/quickguide.html
+
+| 参数名称           | 示例                                         | 链接                                                            |
+|--------------|-------------------------------------------------|---------------------------------------------------------------|
+| type | sparkDesk (must be exactly the same as example) |                                                               |
+| model | general、generalv2、generalv3、generalv3.5、4.0Ultra        |                                    |
+| api-key  | xxxxxxxxxxx                                     |https://console.xfyun.cn/services/cbm|
+| api-secret  | xxxxxxxxxxx                                     |https://console.xfyun.cn/services/cbm|
+
+| 模型版本            | 模型类型(application.yml的model参数) |
+|-----------------|-------------------------------|
+| Spark4.0 Ultra  | 4.0Ultra                      | 
+| Spark Max       | generalv3.5                   |    
+| Spark Pro       | generalv3                     |
+| Spark V2.0      | generalv2                     | 
+| Spark Lite(免费版) | general                       | 

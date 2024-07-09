@@ -45,7 +45,7 @@
 
       <ng-container *ngFor="let paramDefine of paramDefines; let i = index">
         <app-form-item
-          *ngIf="params[i].display && paramDefine.field !== 'host'"
+          *ngIf="params[i].display !== false && paramDefine.field !== 'host'"
           [item]="paramDefine"
           [(value)]="params[i].paramValue"
           (valueChange)="
@@ -58,11 +58,7 @@
         />
       </ng-container>
 
-      <nz-collapse
-        *ngIf="advancedParamDefines && advancedParamDefines.length > 0"
-        [nzGhost]="true"
-        style="background: ghostwhite; margin-bottom: 24px"
-      >
+      <nz-collapse *ngIf="hasAdvancedParams" [nzGhost]="true" style="background: ghostwhite; margin-bottom: 24px">
         <ng-template #extraColHeader>
           <button style="margin-left: 40%" nz-button nzType="dashed" nz-tooltip [nzTooltipTitle]="'monitors.advanced.tip' | i18n">
             <span>{{ 'monitors.advanced' | i18n }}</span>
