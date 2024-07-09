@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.text.SimpleDateFormat;
@@ -38,6 +39,7 @@ public class JacksonConfig {
         simpleDateFormat.setTimeZone(TimeZone.getDefault());
 
         return new ObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .registerModule(javaTimeModule)
                 .setTimeZone(TimeZone.getDefault())
                 .setDateFormat(simpleDateFormat);
