@@ -47,9 +47,19 @@ export class MonitorFormComponent implements OnChanges {
   @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
 
+  hasAdvancedParams: boolean = false;
+
   constructor() {}
 
   ngOnChanges(changes: SimpleChanges) {
+    if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
+      for (const advancedParam of changes.advancedParams.currentValue) {
+        if (advancedParam.display !== false) {
+          this.hasAdvancedParams = true;
+          break;
+        }
+      }
+    }
     if (changes.paramDefines && changes.paramDefines.currentValue !== changes.paramDefines.previousValue) {
       changes.paramDefines.currentValue.forEach((paramDefine: any) => {
         if (paramDefine.type == 'radio') {
