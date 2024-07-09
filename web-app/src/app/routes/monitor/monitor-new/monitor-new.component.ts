@@ -83,10 +83,10 @@ export class MonitorNewComponent implements OnInit {
       .pipe(
         switchMap((message: Message<ParamDefine[]>) => {
           if (message.code === 0) {
-            this.params = [];
-            this.advancedParams = [];
-            this.paramDefines = [];
-            this.advancedParamDefines = [];
+            let params: Param[] = [];
+            let advancedParams: Param[] = [];
+            let paramDefines: ParamDefine[] = [];
+            let advancedParamDefines: ParamDefine[] = [];
             message.data.forEach(define => {
               let param = new Param();
               param.field = define.field;
@@ -113,11 +113,11 @@ export class MonitorNewComponent implements OnInit {
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
               if (define.hide) {
-                this.advancedParams.push(param);
-                this.advancedParamDefines.push(define);
+                advancedParams.push(param);
+                advancedParamDefines.push(define);
               } else {
-                this.params.push(param);
-                this.paramDefines.push(define);
+                params.push(param);
+                paramDefines.push(define);
               }
               if (
                 define.field == 'host' &&
@@ -127,6 +127,10 @@ export class MonitorNewComponent implements OnInit {
                 this.hostName = define.name;
               }
             });
+            this.params = [...params];
+            this.advancedParams = [...advancedParams];
+            this.paramDefines = [...paramDefines];
+            this.advancedParamDefines = [...advancedParamDefines];
           } else {
             console.warn(message.msg);
           }
