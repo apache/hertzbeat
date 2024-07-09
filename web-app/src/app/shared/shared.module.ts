@@ -17,6 +17,7 @@ import { KeyValueInputComponent } from './components/key-value-input/key-value-i
 import { MetricsFieldInputComponent } from './components/metrics-field-input/metrics-field-input.component';
 import { MonitorSelectMenuComponent } from './components/monitor-select-menu/monitor-select-menu.component';
 import { MultiFuncInputComponent } from './components/multi-func-input/multi-func-input.component';
+import { TagsSelectComponent } from './components/tags-select/tags-select.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { ElapsedTimePipe } from './pipe/elapsed-time.pipe';
 import { I18nElsePipe } from './pipe/i18n-else.pipe';
@@ -28,6 +29,7 @@ const ThirdModules: Array<Type<void>> = [];
 const COMPONENTS: Array<Type<void>> = [
   KeyValueInputComponent,
   MultiFuncInputComponent,
+  TagsSelectComponent,
   HelpMessageShowComponent,
   MetricsFieldInputComponent,
   ToolbarComponent,

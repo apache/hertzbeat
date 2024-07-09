@@ -203,21 +203,7 @@
     >{{ item.name }}
   </nz-form-label>
   <nz-form-control nzSpan="8">
-    <nz-tag
-      *ngFor="let tag of value; let i = index"
-      [nzMode]="extra.tag_mode || (tag.type === 1 ? 'closeable' : 'default')"
-      (nzOnClose)="onRemoveTag(tag)"
-      [nzColor]="tag.color"
-      style="margin-top: 4px"
-    >
-      {{ sliceTagName(tag) }}
-    </nz-tag>
-    <a (click)="onShowTagsModal()">
-      <nz-tag style="margin-top: 4px">
-        <i nz-icon nzType="plus"></i>
-        {{ 'tag.new' | i18n }}
-      </nz-tag>
-    </a>
+    <app-tags-select [mode]="extra.tag_mode" [(value)]="value" (valueChange)="onChange($event)" />
   </nz-form-control>
 </nz-form-item>
 
@@ -239,48 +225,3 @@
     </nz-textarea-count>
   </nz-form-control>
 </nz-form-item>
-
-<!-- 选择TAG弹出框 -->
-<nz-modal
-  *ngIf="item.type === 'tags-selection'"
-  [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="'tag.bind' | i18n"
-  (nzOnCancel)="onManageModalCancel()"
-  (nzOnOk)="onManageModalOk()"
-  nzMaskClosable="false"
-  nzWidth="30%"
-  [nzOkLoading]="isManageModalOkLoading"
->
-  <div *nzModalContent class="-inner-content">
-    <app-toolbar>
-      <ng-template #left>
-        <app-multi-func-input type="search" [placeholder]="'tag.search' | i18n" [(value)]="tagSearch" (valueChange)="loadTagsTable()" />
-      </ng-template>
-      <ng-template #right>
-        <button nz-button nzType="primary" routerLink="/setting/tags" style="margin-left: 5px">
-          <i nz-icon nzType="setting" nzTheme="outline"></i>
-          {{ 'tag.setting' | i18n }}
-        </button>
-      </ng-template>
-    </app-toolbar>
-    <nz-table #smallTable nzSize="small" [nzData]="tags" [nzPageSize]="8" [nzLoading]="tagTableLoading">
-      <thead>
-        <tr>
-          <th nzAlign="center" nzLeft nzWidth="4%" [(nzChecked)]="tagCheckedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-          <th nzAlign="left">{{ 'tag' | i18n }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let data of smallTable.data">
-          <td nzAlign="center" nzLeft [nzChecked]="checkedTags.has(data)" (nzCheckedChange)="onItemChecked(data, $event)"></td>
-          <td nzAlign="left">
-            <nz-tag *ngIf="data.tagValue == undefined || data.tagValue.trim() == ''" [nzColor]="data.color">{{ data.name }}</nz-tag>
-            <nz-tag *ngIf="data.tagValue != undefined && data.tagValue.trim() != ''" [nzColor]="data.color">
-              {{ data.name + ':' + data.tagValue }}
-            </nz-tag>
-          </td>
-        </tr>
-      </tbody>
-    </nz-table>
-  </div>
-</nz-modal>
