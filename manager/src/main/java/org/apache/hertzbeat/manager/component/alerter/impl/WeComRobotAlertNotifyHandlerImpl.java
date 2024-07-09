@@ -45,7 +45,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-final class WeWorkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {

@@ -88,6 +88,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     /**
      * Check that the mongodb connection information in metrics is complete
      */
+    @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException{
         Assert.isTrue(metrics != null && metrics.getMongodb() != null, "Mongodb collect must has mongodb params");
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
