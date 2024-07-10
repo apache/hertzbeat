@@ -37,7 +37,6 @@ import { Monitor } from '../../../pojo/Monitor';
 import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { TagService } from '../../../service/tag.service';
 
 const AVAILABILITY = 'availability';
 
@@ -53,10 +52,9 @@ export class AlertSettingComponent implements OnInit {
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
-    private tagSvc: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
-  @ViewChild('defineForm') defineForm!: NgForm;
+  @ViewChild('defineForm', { static: false }) defineForm: NgForm | undefined;
   search!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -528,9 +526,8 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalOk() {
-    let { form } = this.defineForm || {};
-    if (form && form.invalid) {
-      Object.values(form.controls).forEach(control => {
+    if (this.defineForm?.invalid) {
+      Object.values(this.defineForm.controls).forEach(control => {
         if (control.invalid) {
           control.markAsDirty();
           control.updateValueAndValidity({ onlySelf: true });
