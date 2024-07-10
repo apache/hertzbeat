@@ -21,7 +21,7 @@ import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.apache.hertzbeat.manager.pojo.dto.AiProperties;
+import org.apache.hertzbeat.common.config.AiProperties;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.apache.hertzbeat.manager.service.impl.AiServiceFactoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
