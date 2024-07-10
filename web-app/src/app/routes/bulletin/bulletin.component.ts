@@ -68,7 +68,7 @@ export class BulletinComponent implements OnInit {
   isSwitchExportTypeModalVisible = false;
   isAppListLoading = false;
   treeNodes!: NzTreeNodeOptions[];
-  hierarchies: TransferItem[] = [];
+  hierarchies: NzTreeNodeOptions[] = [];
   appMap = new Map<string, string>();
   appEntries: Array<{ value: any; key: string }> = [];
   checkedNodeList: NzTreeNode[] = [];
@@ -290,44 +290,18 @@ export class BulletinComponent implements OnInit {
   isManageModalOkLoading = false;
   isManageModalAdd = true;
   define: BulletinDefine = new BulletinDefine();
-  cascadeValues: string[] = [];
-  alertRules: any[] = [{}];
-  isExpr = false;
-  caseInsensitiveFilter: NzCascaderFilter = (i, p) => {
-    return p.some(o => {
-      const label = o.label;
-      return !!label && label.toLowerCase().indexOf(i.toLowerCase()) !== -1;
-    });
-  };
+
 
   onManageModalCancel() {
-    this.isExpr = false;
     this.isManageModalVisible = false;
   }
 
   resetManageModalData() {
-    this.cascadeValues = [];
-    this.alertRules = [{}];
-    this.isExpr = false;
     this.isManageModalVisible = false;
   }
 
   onManageModalOk() {
     this.isManageModalOkLoading = true;
-    this.define.app = this.cascadeValues[0];
-    // this.define.metric = this.cascadeValues[1];
-    // if (this.cascadeValues.length == 3) {
-    //   this.define.field = this.cascadeValues[2];
-    //   if (!this.isExpr) {
-    //     let expr = this.calculateAlertRuleExpr();
-    //     if (expr != '') {
-    //       this.define.expr = expr;
-    //     }
-    //   }
-    // } else {
-    //   this.define.expr = '';
-    //   this.define.field = '';
-    // }
     if (this.isManageModalAdd) {
       const modalOk$ = this.bulletinDefineSvc
         .newBulletinDefine(this.define)
@@ -561,7 +535,8 @@ export class BulletinComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.hierarchies = this.transformToTransferItems(message.data);
-            this.treeNodes = this.transformToTreeData(message.data);
+            // this.treeNodes = this.transformToTreeData(message.data);
+            this.treeNodes = this.generateTree(this.hierarchies);
           } else {
             console.warn(message.msg);
           }
@@ -573,27 +548,35 @@ export class BulletinComponent implements OnInit {
   }
 
   // 转换为 TransferItem
-  transformToTransferItems(data: any[]): TransferItem[] {
-    const result: TransferItem[] = [];
-    const traverse = (nodes: any[], parentKey: string | null = null) => {
+  transformToTransferItems(data: any[]): NzTreeNodeOptions[] {
+    const result: NzTreeNodeOptions[] = [];
+    let currentId = 1;
+
+    const traverse = (nodes: any[], parentKey: string | null = null, parentId: number | null = null) => {
       nodes.forEach(node => {
-        if (node.isLeaf) {
-          const key = parentKey ? `${parentKey}-${node.value}` : node.value;
-          result.push({
-            key,
-            title: node.label,
-            direction: 'left',
-            checked: false,
-            isLeaf: node.isLeaf,
-            hide: node.hide
-          });
-        }
+        const key = parentKey ? `${parentKey}-${node.value}` : node.value;
+        const isRootNode = parentId === null;
+        const item: NzTreeNodeOptions = {
+          id: currentId++,
+          key,
+          title: node.label,
+          isLeaf: node.isLeaf,
+          parentId,
+          disabled: isRootNode
+        };
+        result.push(item);
+
         if (node.children) {
-          traverse(node.children, parentKey ? `${parentKey}-${node.value}` : node.value);
+          traverse(node.children, key, item.id);
         }
       });
     };
-    traverse(data);
+
+    if (data[0] && data[0].children) {
+      data = data[0].children;
+      traverse(data);
+    }
+
     return result;
   }
 
@@ -614,18 +597,43 @@ export class BulletinComponent implements OnInit {
     return rootNode.children ? rootNode.children.map(transformNode) : [];
   }
 
+  private generateTree(arr: NzTreeNodeOptions[]): NzTreeNodeOptions[] {
+    const tree: NzTreeNodeOptions[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mappedArr: any = {};
+    let arrElem: NzTreeNodeOptions;
+    let mappedElem: NzTreeNodeOptions;
+
+    for (let i = 0, len = arr.length; i < len; i++) {
+      arrElem = arr[i];
+      mappedArr[arrElem.id] = { ...arrElem };
+      mappedArr[arrElem.id].children = [];
+    }
+
+    for (const id in mappedArr) {
+      if (mappedArr.hasOwnProperty(id)) {
+        mappedElem = mappedArr[id];
+        if (mappedElem.parentId) {
+          mappedArr[mappedElem.parentId].children.push(mappedElem);
+        } else {
+          tree.push(mappedElem);
+        }
+      }
+    }
+    return tree;
+  }
 
 
-  // 树节点勾选事件
-  treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: TransferItem) => void): void {
+
+  treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     this.checkBoxChange(event.node!, onItemSelect);
   }
 
-  // 勾选改变事件
-  checkBoxChange(node: NzTreeNode, onItemSelect: (item: TransferItem) => void): void {
+  checkBoxChange(node: NzTreeNode, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     if (node.isDisabled) {
       return;
     }
+
     if (node.isChecked) {
       this.checkedNodeList.push(node);
     } else {
@@ -634,25 +642,16 @@ export class BulletinComponent implements OnInit {
         this.checkedNodeList.splice(idx, 1);
       }
     }
-    const item = this.treeNodes.find(w => w.key === node.key);
-    if (item) {
-      item.checked = node.isChecked;
-      onItemSelect(item);
-    }
+    const item = this.hierarchies.find(w => w.id === node.origin.id);
+    onItemSelect(item!);
   }
 
-  // 穿梭框改变事件
   transferChange(ret: TransferChange): void {
     const isDisabled = ret.to === 'right';
     this.checkedNodeList.forEach(node => {
       node.isDisabled = isDisabled;
       node.isChecked = isDisabled;
-    });
-    this.treeNodes = this.treeNodes.map(item => {
-      if (ret.list.some(i => i.key === item.key)) {
-        item.direction = ret.to;
-      }
-      return item;
+      this.define.metrics.push(node.key)
     });
   }
 }

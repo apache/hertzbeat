@@ -57,8 +57,7 @@ public class BulletinController {
      */
     @PostMapping
     public ResponseEntity<Message<Void>> addNewBulletin(@Valid @RequestBody BulletinDto bulletinDto) {
-
-//        bulletinService.validate(bulletin, false);
+//        bulletinService.validate(bulletinDto., false);
 //        bulletinService.saveBulletin(bulletin);
         return ResponseEntity.ok(Message.success("Add success"));
     }
