@@ -161,6 +161,18 @@ public class AppController {
         return ResponseEntity.ok(Message.success(appHierarchies));
     }
 
+    @GetMapping(path = "/hierarchy/{app}")
+    @Operation(summary = "Query all monitor metrics level, output in a hierarchical structure", description = "Query all monitor metrics level, output in a hierarchical structure")
+    public ResponseEntity<Message<List<Hierarchy>>> queryAppsHierarchyByApp(
+            @Parameter(description = "en: language type",
+                    example = "zh-CN")
+            @RequestParam(name = "lang", required = false) String lang,
+            @Parameter(description = "en: Monitoring type name", example = "api") @PathVariable("app") final String app) {
+        lang = getLang(lang);
+        List<Hierarchy> appHierarchies = appService.getAppHierarchy(app, lang);
+        return ResponseEntity.ok(Message.success(appHierarchies));
+    }
+
     @GetMapping(path = "/defines")
     @Operation(summary = "Query all monitor types", description = "Query all monitor types")
     public ResponseEntity<Message<Map<String, String>>> getAllAppDefines(

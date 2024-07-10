@@ -97,6 +97,15 @@ public interface AppService {
     List<Hierarchy> getAllAppHierarchy(String lang);
 
     /**
+     * Get the monitoring hierarchy based on the monitoring type
+     *
+     * @param app monitoring type
+     * @param lang language
+     * @return hierarchy information
+     */
+    List<Hierarchy> getAppHierarchy(String app, String lang);
+
+    /**
      * Get all app define
      *
      * @return defines

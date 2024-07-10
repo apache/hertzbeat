@@ -24,29 +24,31 @@ import {NzUploadModule} from "ng-zorro-antd/upload";
 import {NzCascaderModule} from "ng-zorro-antd/cascader";
 import {NzTransferModule} from "ng-zorro-antd/transfer";
 import {NzSwitchComponent} from "ng-zorro-antd/switch";
+import {NzTreeComponent} from "ng-zorro-antd/tree";
 
 const COMPONENTS: Array<Type<void>> = [DashboardComponent, UserLoginComponent, UserLockComponent, StatusPublicComponent, BulletinComponent];
 
 @NgModule({
-  imports: [
-    SharedModule,
-    RouteRoutingModule,
-    NgxEchartsModule,
-    NzTagModule,
-    NzTimelineModule,
-    SlickCarouselModule,
-    TagCloudComponent,
-    NzDividerModule,
-    LayoutModule,
-    NzCollapseModule,
-    NzListModule,
-    CommonModule,
-    NzRadioModule,
-    NzUploadModule,
-    NzCascaderModule,
-    NzTransferModule,
-    NzSwitchComponent
-  ],
+    imports: [
+        SharedModule,
+        RouteRoutingModule,
+        NgxEchartsModule,
+        NzTagModule,
+        NzTimelineModule,
+        SlickCarouselModule,
+        TagCloudComponent,
+        NzDividerModule,
+        LayoutModule,
+        NzCollapseModule,
+        NzListModule,
+        CommonModule,
+        NzRadioModule,
+        NzUploadModule,
+        NzCascaderModule,
+        NzTransferModule,
+        NzSwitchComponent,
+        NzTreeComponent
+    ],
   declarations: COMPONENTS
 })
 export class RoutesModule {}

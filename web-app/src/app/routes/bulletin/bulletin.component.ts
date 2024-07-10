@@ -25,7 +25,7 @@ import { ModalButtonOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
-import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
+import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
 import { zip } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
@@ -67,44 +67,16 @@ export class BulletinComponent implements OnInit {
   checkedDefineIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
   isAppListLoading = false;
-  appHierarchies!: any[];
-  appMap =  new Map<string, string>();
-  appEntries: { value: any; key: string }[] = [];
+  treeNodes!: NzTreeNodeOptions[];
+  hierarchies: TransferItem[] = [];
+  appMap = new Map<string, string>();
+  appEntries: Array<{ value: any; key: string }> = [];
+  checkedNodeList: NzTreeNode[] = [];
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
   ];
   ngOnInit(): void {
     this.loadBulletinDefineTable();
-    // 查询监控层级
-    const getHierarchy$ = this.appDefineSvc
-      .getAppHierarchy(this.i18nSvc.defaultLang)
-      .pipe(
-        finalize(() => {
-          getHierarchy$.unsubscribe();
-        })
-      )
-      .subscribe(
-        message => {
-          if (message.code === 0) {
-            this.appHierarchies = message.data;
-            this.appHierarchies.forEach(item => {
-              if (item.children == undefined) {
-                item.children = [];
-              }
-              item.children.unshift({
-                value: AVAILABILITY,
-                label: this.i18nSvc.fanyi('monitor.availability'),
-                isLeaf: true
-              });
-            });
-          } else {
-            console.warn(message.msg);
-          }
-        },
-        error => {
-          console.warn(error.msg);
-        }
-      );
   }
 
   sync() {
@@ -319,7 +291,6 @@ export class BulletinComponent implements OnInit {
   isManageModalAdd = true;
   define: BulletinDefine = new BulletinDefine();
   cascadeValues: string[] = [];
-  currentMetrics: TransferItem[] = [];
   alertRules: any[] = [{}];
   isExpr = false;
   caseInsensitiveFilter: NzCascaderFilter = (i, p) => {
@@ -328,7 +299,6 @@ export class BulletinComponent implements OnInit {
       return !!label && label.toLowerCase().indexOf(i.toLowerCase()) !== -1;
     });
   };
-
 
   onManageModalCancel() {
     this.isExpr = false;
@@ -548,81 +518,141 @@ export class BulletinComponent implements OnInit {
         }
       );
   }
-  change(ret: TransferChange): void {
-    const listKeys = ret.list.map(l => l.key);
-    const hasOwnKey = (e: TransferItem): boolean => e.hasOwnProperty('key');
-    this.transferData = this.transferData.map(e => {
-      if (listKeys.includes(e.key) && hasOwnKey(e)) {
-        if (ret.to === 'left') {
-          delete e.hide;
-        } else if (ret.to === 'right') {
-          e.hide = false;
-        }
-      }
-      return e;
-    });
-  }
-  filterMetrics(currentMetrics: any[], cascadeValues: any): any[] {
-    if (cascadeValues.length !== 3) {
-      return currentMetrics;
-    }
-    // sort the cascadeValues[2] to first
-    return currentMetrics.sort((a, b) => {
-      if (a.value !== cascadeValues[2]) {
-        return 1;
-      } else {
-        return -1;
-      }
-    });
-  }
-  // end 告警定义与监控关联model
-
-  // SearchAppDefines
+  // 获取应用定义
   onSearchAppDefines(): void {
-    this.appDefineSvc.getAppDefines(this.i18nSvc.defaultLang).pipe().subscribe(
-      message => {
-        if (message.code === 0) {
-          this.appMap = message.data;
-          this.appEntries = Object.entries(this.appMap).map(([key, value]) => ({ key, value }));
-          if (this.appEntries != null) {
-            this.isAppListLoading = true;
+    this.appDefineSvc
+      .getAppDefines(this.i18nSvc.defaultLang)
+      .pipe()
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.appMap = message.data;
+            this.appEntries = Object.entries(this.appMap).map(([key, value]) => ({ key, value }));
+            if (this.appEntries != null) {
+              this.isAppListLoading = true;
+            }
+          } else {
+            console.warn(message.msg);
           }
-        } else {
-          console.warn(message.msg);
+        },
+        error => {
+          console.warn(error.msg);
         }
-      },
-      error => {
-        console.warn(error.msg);
-      }
-    )
+      );
   }
 
+  // 应用改变事件
   onAppChange(appKey: string): void {
     if (appKey) {
-      this.onSearchMetricsByApp(appKey);
+      this.onSearchTreeNodes(appKey);
     } else {
-      this.currentMetrics = [];
+      this.hierarchies = [];
+      this.treeNodes = [];
     }
   }
 
-  onSearchMetricsByApp(app: string): void {
-    this.monitorSvc.getMonitorByApp(app).pipe().subscribe(
-      message => {
-        if (message.code === 0) {
-          if (message.data != null && message.data.length > 0) {
-          this.currentMetrics = message.data.map((metric: any) => ({
-            key: metric,
-            title: metric,
-            description: metric,
-            direction: 'left'
-          }));}
-        } else {
-          console.warn(message.msg);
+
+  // 获取树节点
+  onSearchTreeNodes(app: string): void {
+    this.appDefineSvc
+      .getAppHierarchyByName(this.i18nSvc.defaultLang, app)
+      .pipe()
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.hierarchies = this.transformToTransferItems(message.data);
+            this.treeNodes = this.transformToTreeData(message.data);
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          console.warn(error.msg);
         }
-      },
-      error => {
-        console.warn(error.msg);
+      );
+  }
+
+  // 转换为 TransferItem
+  transformToTransferItems(data: any[]): TransferItem[] {
+    const result: TransferItem[] = [];
+    const traverse = (nodes: any[], parentKey: string | null = null) => {
+      nodes.forEach(node => {
+        if (node.isLeaf) {
+          const key = parentKey ? `${parentKey}-${node.value}` : node.value;
+          result.push({
+            key,
+            title: node.label,
+            direction: 'left',
+            checked: false,
+            isLeaf: node.isLeaf,
+            hide: node.hide
+          });
+        }
+        if (node.children) {
+          traverse(node.children, parentKey ? `${parentKey}-${node.value}` : node.value);
+        }
+      });
+    };
+    traverse(data);
+    return result;
+  }
+
+
+
+  transformToTreeData(data: any[]): NzTreeNodeOptions[] {
+    const transformNode = (node: any): NzTreeNodeOptions => {
+      return {
+        title: node.label,
+        key: node.value,
+        isLeaf: node.isLeaf,
+        children: node.children ? node.children.map(transformNode) : []
+      };
+    };
+
+    // 假设最外层节点只有一个
+    const rootNode = data[0];
+    return rootNode.children ? rootNode.children.map(transformNode) : [];
+  }
+
+
+
+  // 树节点勾选事件
+  treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: TransferItem) => void): void {
+    this.checkBoxChange(event.node!, onItemSelect);
+  }
+
+  // 勾选改变事件
+  checkBoxChange(node: NzTreeNode, onItemSelect: (item: TransferItem) => void): void {
+    if (node.isDisabled) {
+      return;
+    }
+    if (node.isChecked) {
+      this.checkedNodeList.push(node);
+    } else {
+      const idx = this.checkedNodeList.indexOf(node);
+      if (idx !== -1) {
+        this.checkedNodeList.splice(idx, 1);
       }
-    )
+    }
+    const item = this.treeNodes.find(w => w.key === node.key);
+    if (item) {
+      item.checked = node.isChecked;
+      onItemSelect(item);
+    }
+  }
+
+  // 穿梭框改变事件
+  transferChange(ret: TransferChange): void {
+    const isDisabled = ret.to === 'right';
+    this.checkedNodeList.forEach(node => {
+      node.isDisabled = isDisabled;
+      node.isChecked = isDisabled;
+    });
+    this.treeNodes = this.treeNodes.map(item => {
+      if (ret.list.some(i => i.key === item.key)) {
+        item.direction = ret.to;
+      }
+      return item;
+    });
   }
 }
