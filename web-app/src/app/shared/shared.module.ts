@@ -11,7 +11,7 @@ import { NzRadioComponent, NzRadioGroupComponent } from 'ng-zorro-antd/radio';
 import { NzSwitchComponent } from 'ng-zorro-antd/switch';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 
-import { FormItemComponent } from './components/form-item/form-item.component';
+import { FormFieldComponent } from './components/form-field/form-field.component';
 import { HelpMessageShowComponent } from './components/help-message-show/help-message-show.component';
 import { KeyValueInputComponent } from './components/key-value-input/key-value-input.component';
 import { MetricsFieldInputComponent } from './components/metrics-field-input/metrics-field-input.component';
@@ -33,7 +33,7 @@ const COMPONENTS: Array<Type<void>> = [
   HelpMessageShowComponent,
   MetricsFieldInputComponent,
   ToolbarComponent,
-  FormItemComponent,
+  FormFieldComponent,
   MonitorSelectMenuComponent
 ];
 const DIRECTIVES: Array<Type<void>> = [TimezonePipe, I18nElsePipe, ElapsedTimePipe];
