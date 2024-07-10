@@ -17,9 +17,10 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN, SettingsService } from '@delon/theme';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -40,11 +41,11 @@ export class AlertConvergeComponent implements OnInit {
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
     private alertConvergeService: AlertConvergeService,
-    private settingsSvc: SettingsService,
     private tagService: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  @ViewChild('ruleForm', { static: false }) ruleForm: NgForm | undefined;
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -211,15 +212,6 @@ export class AlertConvergeComponent implements OnInit {
   tagsOption: any[] = [];
   matchTags: string[] = [];
   convergeDates!: Date[];
-  dayCheckOptions = [
-    { label: this.i18nSvc.fanyi('common.week.7'), value: 7, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.1'), value: 1, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.2'), value: 2, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.3'), value: 3, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.4'), value: 4, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.5'), value: 5, checked: true },
-    { label: this.i18nSvc.fanyi('common.week.6'), value: 6, checked: true }
-  ];
 
   onNewAlertConverge() {
     this.converge = new AlertConverge();
@@ -283,6 +275,15 @@ export class AlertConvergeComponent implements OnInit {
       );
   }
   onManageModalOk() {
+    if (this.ruleForm?.invalid) {
+      Object.values(this.ruleForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.converge.tags = [];
     this.matchTags.forEach(tag => {
       let tmp: string[] = tag.split(':');

@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzCascaderFilter } from 'ng-zorro-antd/cascader';
@@ -33,12 +34,9 @@ import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
-import { TagItem } from '../../../pojo/NoticeRule';
-import { Tag } from '../../../pojo/Tag';
 import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { TagService } from '../../../service/tag.service';
 
 const AVAILABILITY = 'availability';
 
@@ -54,9 +52,9 @@ export class AlertSettingComponent implements OnInit {
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
-    private tagSvc: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
+  @ViewChild('defineForm', { static: false }) defineForm: NgForm | undefined;
   search!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -147,21 +145,6 @@ export class AlertSettingComponent implements OnInit {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
       return;
     }
-    this.editAlertDefine(alertDefineId);
-  }
-
-  onEditAlertDefine() {
-    // 编辑时只能选中一个
-    if (this.checkedDefineIds == null || this.checkedDefineIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
-      return;
-    }
-    if (this.checkedDefineIds.size > 1) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.one-select-edit'), '');
-      return;
-    }
-    let alertDefineId = 0;
-    this.checkedDefineIds.forEach(item => (alertDefineId = item));
     this.editAlertDefine(alertDefineId);
   }
 
@@ -543,6 +526,15 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalOk() {
+    if (this.defineForm?.invalid) {
+      Object.values(this.defineForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.isManageModalOkLoading = true;
     this.define.app = this.cascadeValues[0];
     this.define.metric = this.cascadeValues[1];
@@ -607,7 +599,6 @@ export class AlertSettingComponent implements OnInit {
         );
     }
   }
-
   // end 新增修改告警定义model
 
   // start 告警定义与监控关联model
@@ -714,29 +705,4 @@ export class AlertSettingComponent implements OnInit {
     });
   }
   // end 告警定义与监控关联model
-  //查询告警阈值
-  onFilterSearchAlertDefinesByName() {
-    this.tableLoading = true;
-    let filter$ = this.alertDefineSvc.getAlertDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
-      message => {
-        filter$.unsubscribe();
-        this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedDefineIds.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.defines = page.content;
-          this.pageIndex = page.number + 1;
-          this.total = page.totalElements;
-        } else {
-          console.warn(message.msg);
-        }
-      },
-      error => {
-        this.tableLoading = false;
-        filter$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
-  }
 }
