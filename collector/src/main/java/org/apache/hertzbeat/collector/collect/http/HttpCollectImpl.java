@@ -204,9 +204,9 @@ public class HttpCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : metrics.getAliasFields()) {
-            if (metrics.getPriority() == 0) {
+            if ("summary".equalsIgnoreCase(metrics.getName())) {
                 addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
-            }else if (metrics.getPriority() == 1) {
+            }else if ("header".equalsIgnoreCase(metrics.getName())) {
                 addColumnFromHeader(valueRowBuilder, alias, response);
             }
         }
