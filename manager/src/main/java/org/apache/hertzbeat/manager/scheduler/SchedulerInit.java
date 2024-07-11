@@ -102,7 +102,7 @@ public class SchedulerInit implements CommandLineRunner {
                 }
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
+                appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());

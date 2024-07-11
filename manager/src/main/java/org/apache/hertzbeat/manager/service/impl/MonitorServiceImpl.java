@@ -192,7 +192,7 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
         }
         appDefine.setMonitorId(monitorId);
-        appDefine.setInterval(monitor.getIntervals());
+        appDefine.setDefaultInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param -> {
@@ -250,7 +250,7 @@ public class MonitorServiceImpl implements MonitorService {
         List<Metrics> realMetrics = metricsDefine.stream().filter(m -> metrics.contains(m.getName())).collect(Collectors.toList());
         appDefine.setMetrics(realMetrics);
         appDefine.setMonitorId(monitorId);
-        appDefine.setInterval(monitor.getIntervals());
+        appDefine.setDefaultInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
         List<Configmap> configmaps = params.stream().map(param -> {
@@ -532,7 +532,7 @@ public class MonitorServiceImpl implements MonitorService {
             }
             appDefine.setId(preMonitor.getJobId());
             appDefine.setMonitorId(monitorId);
-            appDefine.setInterval(monitor.getIntervals());
+            appDefine.setDefaultInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
             if (params != null) {
@@ -679,7 +679,7 @@ public class MonitorServiceImpl implements MonitorService {
                     appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
                 }
                 appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
+                appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
@@ -785,7 +785,7 @@ public class MonitorServiceImpl implements MonitorService {
                 }
                 appDefine.setId(monitor.getJobId());
                 appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
+                appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
