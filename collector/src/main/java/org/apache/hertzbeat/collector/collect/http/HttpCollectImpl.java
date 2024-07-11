@@ -206,7 +206,7 @@ public class HttpCollectImpl extends AbstractCollect {
         for (String alias : metrics.getAliasFields()) {
             if ("summary".equalsIgnoreCase(metrics.getName())) {
                 addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
-            }else if ("header".equalsIgnoreCase(metrics.getName())) {
+            } else if ("header".equalsIgnoreCase(metrics.getName())) {
                 addColumnFromHeader(valueRowBuilder, alias, response);
             }
         }
