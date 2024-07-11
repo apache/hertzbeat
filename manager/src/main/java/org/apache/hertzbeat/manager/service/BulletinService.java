@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service;
 
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
+import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -42,6 +43,11 @@ public interface BulletinService {
      * Save Bulletin
      */
     void saveBulletin(Bulletin bulletin);
+
+    /**
+     * Add Bulletin
+     */
+    boolean addBulletin(BulletinDto bulletinDto);
 
     /**
      * Dynamic conditional query

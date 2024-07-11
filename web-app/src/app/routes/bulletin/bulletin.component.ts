@@ -67,11 +67,13 @@ export class BulletinComponent implements OnInit {
   checkedDefineIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
   isAppListLoading = false;
+  isMonitorListLoading = false;
   treeNodes!: NzTreeNodeOptions[];
   hierarchies: NzTreeNodeOptions[] = [];
   appMap = new Map<string, string>();
   appEntries: Array<{ value: any; key: string }> = [];
   checkedNodeList: NzTreeNode[] = [];
+  monitors: Monitor[] = [];
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
   ];
@@ -109,8 +111,8 @@ export class BulletinComponent implements OnInit {
 
   onNewBulletinDefine() {
     this.define = new BulletinDefine();
-    this.define.tags = [];
     this.define.metrics = [];
+    this.define.monitorIds = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -182,8 +184,8 @@ export class BulletinComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.define = message.data;
-            if (this.define.tags == undefined) {
-              this.define.tags = [];
+            if (this.define.monitorIds == undefined) {
+              this.define.monitorIds = [];
             }
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.monitor-fail'), message.msg);
@@ -291,7 +293,6 @@ export class BulletinComponent implements OnInit {
   isManageModalAdd = true;
   define: BulletinDefine = new BulletinDefine();
 
-
   onManageModalCancel() {
     this.isManageModalVisible = false;
   }
@@ -392,11 +393,6 @@ export class BulletinComponent implements OnInit {
   }
   onTagManageModalOk() {
     this.isTagManageModalOkLoading = true;
-    this.checkedTags.forEach(item => {
-      if (this.define.tags.find(tag => tag.name == item.name && tag.value == item.tagValue) == undefined) {
-        this.define.tags.push({ name: item.name, value: item.tagValue });
-      }
-    });
     this.isTagManageModalOkLoading = false;
     this.isTagManageModalVisible = false;
   }
@@ -492,7 +488,6 @@ export class BulletinComponent implements OnInit {
         }
       );
   }
-  // 获取应用定义
   onSearchAppDefines(): void {
     this.appDefineSvc
       .getAppDefines(this.i18nSvc.defaultLang)
@@ -515,7 +510,28 @@ export class BulletinComponent implements OnInit {
       );
   }
 
-  // 应用改变事件
+  onSearchMonitorsByApp(app: string): void {
+    this.monitorSvc
+      .getMonitorsByApp(app)
+      .pipe()
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.monitors = message.data;
+            if (this.monitors != null) {
+              this.isMonitorListLoading = true;
+            }
+            console.log(this.monitors);
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          console.warn(error.msg);
+        }
+      );
+  }
+
   onAppChange(appKey: string): void {
     if (appKey) {
       this.onSearchTreeNodes(appKey);
@@ -525,8 +541,6 @@ export class BulletinComponent implements OnInit {
     }
   }
 
-
-  // 获取树节点
   onSearchTreeNodes(app: string): void {
     this.appDefineSvc
       .getAppHierarchyByName(this.i18nSvc.defaultLang, app)
@@ -535,7 +549,6 @@ export class BulletinComponent implements OnInit {
         message => {
           if (message.code === 0) {
             this.hierarchies = this.transformToTransferItems(message.data);
-            // this.treeNodes = this.transformToTreeData(message.data);
             this.treeNodes = this.generateTree(this.hierarchies);
           } else {
             console.warn(message.msg);
@@ -547,7 +560,6 @@ export class BulletinComponent implements OnInit {
       );
   }
 
-  // 转换为 TransferItem
   transformToTransferItems(data: any[]): NzTreeNodeOptions[] {
     const result: NzTreeNodeOptions[] = [];
     let currentId = 1;
@@ -580,26 +592,8 @@ export class BulletinComponent implements OnInit {
     return result;
   }
 
-
-
-  transformToTreeData(data: any[]): NzTreeNodeOptions[] {
-    const transformNode = (node: any): NzTreeNodeOptions => {
-      return {
-        title: node.label,
-        key: node.value,
-        isLeaf: node.isLeaf,
-        children: node.children ? node.children.map(transformNode) : []
-      };
-    };
-
-    // 假设最外层节点只有一个
-    const rootNode = data[0];
-    return rootNode.children ? rootNode.children.map(transformNode) : [];
-  }
-
   private generateTree(arr: NzTreeNodeOptions[]): NzTreeNodeOptions[] {
     const tree: NzTreeNodeOptions[] = [];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const mappedArr: any = {};
     let arrElem: NzTreeNodeOptions;
     let mappedElem: NzTreeNodeOptions;
@@ -622,8 +616,6 @@ export class BulletinComponent implements OnInit {
     }
     return tree;
   }
-
-
 
   treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     this.checkBoxChange(event.node!, onItemSelect);
@@ -651,7 +643,7 @@ export class BulletinComponent implements OnInit {
     this.checkedNodeList.forEach(node => {
       node.isDisabled = isDisabled;
       node.isChecked = isDisabled;
-      this.define.metrics.push(node.key)
+      this.define.metrics.push(node.key);
     });
   }
 }

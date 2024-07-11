@@ -156,11 +156,29 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'dropdown.label' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            nzAllowClear
+            nzShowSearch
+            name="monitors"
+            [(ngModel)]="define.monitorIds"
+            (nzOnSearch)="onSearchMonitorsByApp(define.app)"
+            nzMode="multiple"
+          >
+            <ng-container *ngFor="let monitor of monitors">
+              <nz-option *ngIf="isMonitorListLoading" [nzValue]="monitor.id" [nzLabel]="monitor.name"></nz-option>
+            </ng-container>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'dropdown.label' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-transfer
             [nzDataSource]="hierarchies"
             [nzShowSelectAll]="false"
             [nzRenderList]="[leftRenderList, null]"
-            (nzChange)="transferChange($event)">
+            (nzChange)="transferChange($event)"
+          >
             <ng-template #leftRenderList let-items let-onItemSelect="onItemSelect">
               <nz-tree
                 [nzData]="treeNodes"

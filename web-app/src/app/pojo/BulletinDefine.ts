@@ -17,13 +17,11 @@
  * under the License.
  */
 
-import {Monitor} from "./Monitor";
-import {TagItem} from "./NoticeRule";
 
 export class BulletinDefine {
   id!: number;
+  monitorIds!: number[];
   app!: string;
-  tags!: TagItem[];
   metrics!: string[];
 
 }

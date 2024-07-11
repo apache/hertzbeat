@@ -18,6 +18,7 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
@@ -57,9 +58,11 @@ public class BulletinController {
      */
     @PostMapping
     public ResponseEntity<Message<Void>> addNewBulletin(@Valid @RequestBody BulletinDto bulletinDto) {
-//        bulletinService.validate(bulletinDto., false);
-//        bulletinService.saveBulletin(bulletin);
-        return ResponseEntity.ok(Message.success("Add success"));
+        if (bulletinService.addBulletin(bulletinDto)) {
+            return ResponseEntity.ok(Message.success("Add success"));
+        }else {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed"));
+        }
     }
 
 

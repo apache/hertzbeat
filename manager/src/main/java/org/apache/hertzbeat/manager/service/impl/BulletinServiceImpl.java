@@ -20,8 +20,11 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
+import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.manager.dao.BulletinDao;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.manager.service.BulletinService;
@@ -72,6 +75,27 @@ public class BulletinServiceImpl implements BulletinService {
     @Override
     public void saveBulletin(Bulletin bulletin) {
         bulletinDao.save(bulletin);
+    }
+
+    /**
+     * Add Bulletin
+     */
+    @Override
+    public boolean addBulletin(BulletinDto bulletinDto) {
+        try {
+            List<Bulletin> bulletins = new ArrayList<>();
+            for (Long monitorId : bulletinDto.getMonitorIds()) {
+                Bulletin bulletin = new Bulletin();
+                bulletin.setId(SnowFlakeIdGenerator.generateId());
+                bulletin.setMetrics(bulletinDto.getMetrics());
+                bulletin.setMonitorId(monitorId);
+                bulletins.add(bulletin);
+            }
+            bulletinDao.saveAll(bulletins);
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

@@ -40,8 +40,8 @@ public class BulletinDto {
     private List<String> metrics;
 
     /**
-     * Monitor tags eg: host:name
+     * Monitor ids
      */
-    private List<TagItem> tags;
+    private List<Long> monitorIds;
 
 }
