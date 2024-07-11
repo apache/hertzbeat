@@ -18,9 +18,10 @@ sidebar_label: 自定义插件
     ![plugin-1.png](/img/docs/help/plugin-1.png)
 2. 在`org.apache.hertzbeat.plugin.impl`目录下, 新建一个接口实现类，如`org.apache.hertzbeat.plugin.impl.DemoPluginImpl`,在实现类中接收`Alert`类作为参数，实现`alert`方法，逻辑由用户自定义，这里我们简单打印一下对象。
     ![plugin-2.png](/img/docs/help/plugin-2.png)
-3. 打包`hertzbeat-plugin`模块。
+3. 在 `META-INF/services/org.apache.hertzbeat.plugin.Plugin` 文件中增加接口实现类的全限定名，每个实现类全限定名单独成行。
+4. 打包`hertzbeat-plugin`模块。
     ![plugin-3.png](/img/docs/help/plugin-3.png)
-4. 将打包后的`jar`包，通过 `插件管理`-`上传插件`功能上传到`HertzBeat` 中并启用该插件即可实现自定义告警后处理策略。
+5. 将打包后的`jar`包，通过 `插件管理`-`上传插件`功能上传到`HertzBeat` 中并启用该插件即可实现自定义告警后处理策略。
     ![plugin-5.jpg](/img/docs/help/plugin-5.jpg)
 
 ### 使用建议
