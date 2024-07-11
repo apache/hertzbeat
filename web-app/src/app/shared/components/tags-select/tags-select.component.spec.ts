@@ -19,20 +19,20 @@
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FormItemComponent } from './form-item.component';
+import { TagsSelectComponent } from './tags-select.component';
 
-describe('FormItemComponent', () => {
-  let component: FormItemComponent;
-  let fixture: ComponentFixture<FormItemComponent>;
+describe('TagsSelectComponent', () => {
+  let component: TagsSelectComponent;
+  let fixture: ComponentFixture<TagsSelectComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [FormItemComponent]
+      declarations: [TagsSelectComponent]
     }).compileComponents();
   });
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FormItemComponent);
+    fixture = TestBed.createComponent(TagsSelectComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
