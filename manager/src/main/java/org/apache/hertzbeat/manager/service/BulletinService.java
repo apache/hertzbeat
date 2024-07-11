@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.service;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
+import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -55,6 +56,6 @@ public interface BulletinService {
      * @param pageRequest Paging parameters
      * @return The query results
      */
-    Page<Bulletin> getBulletins(Specification<Bulletin> specification, PageRequest pageRequest);
+    Page<BulletinVo> getBulletins(Specification<Bulletin> specification, PageRequest pageRequest);
 
 }

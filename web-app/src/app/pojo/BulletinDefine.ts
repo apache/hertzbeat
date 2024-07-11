@@ -18,10 +18,12 @@
  */
 
 
+import {TagItem} from "./NoticeRule";
+
 export class BulletinDefine {
   id!: number;
   monitorIds!: number[];
   app!: string;
   metrics!: string[];
-
+  tags!: TagItem[];
 }

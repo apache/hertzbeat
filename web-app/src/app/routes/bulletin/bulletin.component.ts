@@ -74,9 +74,14 @@ export class BulletinComponent implements OnInit {
   appEntries: Array<{ value: any; key: string }> = [];
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
-  switchExportTypeModalFooter: ModalButtonOptions[] = [
-    { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
+  defines1 = [
+    {
+      id: 1,
+      app: 'App1',
+      metrics: ['Metric1', 'Metric2']
+    }
   ];
+
   ngOnInit(): void {
     this.loadBulletinDefineTable();
   }
@@ -521,7 +526,6 @@ export class BulletinComponent implements OnInit {
             if (this.monitors != null) {
               this.isMonitorListLoading = true;
             }
-            console.log(this.monitors);
           } else {
             console.warn(message.msg);
           }
@@ -532,9 +536,10 @@ export class BulletinComponent implements OnInit {
       );
   }
 
-  onAppChange(appKey: string): void {
-    if (appKey) {
-      this.onSearchTreeNodes(appKey);
+  onAppChange(app: string): void {
+    if (app) {
+      this.onSearchMonitorsByApp(app);
+      this.onSearchTreeNodes(app);
     } else {
       this.hierarchies = [];
       this.treeNodes = [];

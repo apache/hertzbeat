@@ -21,16 +21,22 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
+import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.manager.dao.BulletinDao;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
+import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.service.BulletinService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +50,7 @@ public class BulletinServiceImpl implements BulletinService {
 
     @Autowired
     private BulletinDao bulletinDao;
+
 
     /**
      * validate Bulletin
@@ -83,14 +90,14 @@ public class BulletinServiceImpl implements BulletinService {
     @Override
     public boolean addBulletin(BulletinDto bulletinDto) {
         try {
-            List<Bulletin> bulletins = new ArrayList<>();
-            for (Long monitorId : bulletinDto.getMonitorIds()) {
+            List<Bulletin> bulletins = bulletinDto.getMonitorIds().stream().map(monitorId -> {
                 Bulletin bulletin = new Bulletin();
                 bulletin.setId(SnowFlakeIdGenerator.generateId());
                 bulletin.setMetrics(bulletinDto.getMetrics());
                 bulletin.setMonitorId(monitorId);
-                bulletins.add(bulletin);
-            }
+                bulletin.setApp(bulletinDto.getApp());
+                return bulletin;
+            }).collect(Collectors.toList());
             bulletinDao.saveAll(bulletins);
             return true;
         } catch (Exception e) {
@@ -106,7 +113,27 @@ public class BulletinServiceImpl implements BulletinService {
      * @return The query results
      */
     @Override
-    public Page<Bulletin> getBulletins(Specification<Bulletin> specification, PageRequest pageRequest) {
-       return bulletinDao.findAll(specification, pageRequest);
+    public Page<BulletinVo> getBulletins(Specification<Bulletin> specification, PageRequest pageRequest) {
+        List<BulletinVo> voList = new ArrayList<>();
+        Page<Bulletin> bulletinPage = Page.empty(pageRequest);
+
+        try {
+            bulletinPage = bulletinDao.findAll(specification, pageRequest);
+            voList = bulletinPage.stream().map(bulletin -> {
+                BulletinVo vo = new BulletinVo();
+                vo.setId(bulletin.getId());
+                vo.setTags(bulletin.getTags());
+                vo.setMetrics(bulletin.getMetrics());
+                vo.setMonitorId(bulletin.getMonitorId());
+                vo.setApp(bulletin.getApp());
+                return vo;
+            }).collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Failed to query bulletin: {}", e.getLocalizedMessage(), e);
+        }
+        long total = bulletinPage.getTotalElements();
+        return new PageImpl<>(voList, pageRequest, total);
     }
+
+
 }

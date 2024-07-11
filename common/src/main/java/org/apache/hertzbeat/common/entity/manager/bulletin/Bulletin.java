@@ -64,6 +64,9 @@ public class Bulletin {
     @Column(name = "monitor_id")
     private Long monitorId;
 
+    @Schema(description = "Monitor Type eg: jvm, tomcat", example = "jvm", accessMode = READ_WRITE)
+    private String app;
+
     @Schema(description = "Monitor Metrics", example = "[\"cpu\", \"memory\"]")
     @Convert(converter = JsonStringListAttributeConverter.class)
     private List<String> metrics;

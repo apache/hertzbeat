@@ -28,6 +28,7 @@ import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
+import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.apache.hertzbeat.manager.service.BulletinService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -70,7 +71,7 @@ public class BulletinController {
      * page query bulletin
      */
     @GetMapping
-    public ResponseEntity<Message<Page<Bulletin>>> pageQueryBulletin(
+    public ResponseEntity<Message<Page<BulletinVo>>> pageQueryBulletin(
             @Parameter(description = "Bulletin Definition ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
             @Parameter(description = "Search-Target Expr Template", example = "x") @RequestParam(required = false) String search,
             @Parameter(description = "Sort field, default id", example = "id") @RequestParam(defaultValue = "id") String sort,
@@ -118,7 +119,8 @@ public class BulletinController {
          };
          Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
          PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-         Page<Bulletin> bulletinsPage = bulletinService.getBulletins(specification, pageRequest);
+         Page<BulletinVo> bulletinsPage = bulletinService.getBulletins(specification, pageRequest);
+
          return ResponseEntity.ok(Message.success(bulletinsPage));
     }
 

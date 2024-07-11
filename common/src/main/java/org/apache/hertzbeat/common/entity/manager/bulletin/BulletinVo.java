@@ -17,5 +17,44 @@
 
 package org.apache.hertzbeat.common.entity.manager.bulletin;
 
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.manager.TagItem;
+
+/**
+ * Bulletin Vo
+ */
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class BulletinVo {
+
+    /**
+     * Bulletin ID
+     */
+    private Long id;
+
+    /**
+     * Bulletin metrics
+     */
+    private List<String> metrics;
+
+    /**
+     * Bulletin tags
+     */
+    private List<TagItem> tags;
+
+    /**
+     * Bulletin monitor ID
+     */
+    private Long monitorId;
+
+    /**
+     * Bulletin monitor name
+     */
+    private String app;
+
 }
