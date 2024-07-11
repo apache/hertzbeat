@@ -57,10 +57,10 @@
 </app-toolbar>
 
 <nz-tabset nzType="card">
-  <nz-tab *ngFor="let d of defines1" [nzTitle]="d.app">
+  <nz-tab *ngFor="let d of this.tabDefines" [nzTitle]="d.app">
     <nz-table
       #fixedTable
-      [nzData]="defines"
+      [nzData]="listOfData"
       [nzPageIndex]="pageIndex"
       [nzPageSize]="pageSize"
       [nzTotal]="total"
@@ -76,9 +76,8 @@
       <thead>
         <tr>
           <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-          <th nzAlign="center" nzWidth="16%">目标Host</th>
-          <ng-container *ngFor="let metric of d.metrics">
-            <th nzAlign="center">{{ metric }}</th>
+          <ng-container *ngFor="let column of listOfColumns">
+            <th>{{ column.title }}</th>
           </ng-container>
           <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
         </tr>
@@ -86,6 +85,10 @@
       <tbody>
         <tr *ngFor="let data of fixedTable.data">
           <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+          <ng-container *ngFor="let column of listOfColumns">
+            <td>{{ data[column.key] }}</td>
+          </ng-container>
+          <td nzAlign="center" nzLeft></td>
           <td nzAlign="center">
             <button
               nz-button

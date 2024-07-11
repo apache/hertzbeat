@@ -116,7 +116,6 @@ public class BulletinServiceImpl implements BulletinService {
     public Page<BulletinVo> getBulletins(Specification<Bulletin> specification, PageRequest pageRequest) {
         List<BulletinVo> voList = new ArrayList<>();
         Page<Bulletin> bulletinPage = Page.empty(pageRequest);
-
         try {
             bulletinPage = bulletinDao.findAll(specification, pageRequest);
             voList = bulletinPage.stream().map(bulletin -> {

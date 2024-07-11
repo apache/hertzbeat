@@ -97,18 +97,6 @@ public class BulletinController {
                          criteriaBuilder.like(
                                  criteriaBuilder.lower(root.get("metric")),
                                  "%" + search.toLowerCase() + "%"
-                         ),
-                         criteriaBuilder.like(
-                                 criteriaBuilder.lower(root.get("field")),
-                                 "%" + search.toLowerCase() + "%"
-                         ),
-                         criteriaBuilder.like(
-                                 criteriaBuilder.lower(root.get("expr")),
-                                 "%" + search.toLowerCase() + "%"
-                         ),
-                         criteriaBuilder.like(
-                                 criteriaBuilder.lower(root.get("template")),
-                                 "%" + search.toLowerCase() + "%"
                          )
                  );
                  andList.add(predicate);
@@ -120,7 +108,6 @@ public class BulletinController {
          Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
          PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
          Page<BulletinVo> bulletinsPage = bulletinService.getBulletins(specification, pageRequest);
-
          return ResponseEntity.ok(Message.success(bulletinsPage));
     }
 

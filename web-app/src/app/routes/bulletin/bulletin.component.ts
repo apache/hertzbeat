@@ -40,7 +40,6 @@ import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
 
-const AVAILABILITY = 'availability';
 
 @Component({
   selector: 'app-bulletin',
@@ -63,6 +62,7 @@ export class BulletinComponent implements OnInit {
   pageSize: number = 8;
   total: number = 0;
   defines!: BulletinDefine[];
+  tabDefines!: BulletinDefine[];
   tableLoading: boolean = true;
   checkedDefineIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
@@ -74,20 +74,23 @@ export class BulletinComponent implements OnInit {
   appEntries: Array<{ value: any; key: string }> = [];
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
-  defines1 = [
-    {
-      id: 1,
-      app: 'App1',
-      metrics: ['Metric1', 'Metric2']
-    }
-  ];
+  loading: boolean = false;
+  listOfData: any[] = [];
+  listOfColumns: { key: string, title: string }[] = [];
+  metrics: string[] = [];
+
+
 
   ngOnInit(): void {
     this.loadBulletinDefineTable();
+    this.tabDefines = this.defines;
+    this.loadData(399136249983232, "basic");
+
   }
 
   sync() {
     this.loadBulletinDefineTable();
+    this.tabDefines = this.defines;
   }
 
   loadBulletinDefineTable() {
@@ -650,5 +653,39 @@ export class BulletinComponent implements OnInit {
       node.isChecked = isDisabled;
       this.define.metrics.push(node.key);
     });
+  }
+
+  loadData(monitorId: number, metric: string) {
+    this.loading = true;
+    let metricData$ = this.monitorSvc
+      .getMonitorMetricsData(monitorId, metric)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe(
+        message => {
+          metricData$.unsubscribe();
+          if (message.code === 0 && message.data) {
+            const { id, app, metrics, fields, valueRows } = message.data;
+            this.listOfColumns = fields.map((field: { name: string; unit: any; }) => ({
+              key: field.name,
+              title: field.name.toUpperCase() + (field.unit ? ` (${field.unit})` : '')
+            }));
+            this.listOfData = valueRows.map((row: { labels: any; values: any[]; }) => {
+              const rowData: any = { ...row.labels };
+              row.values.forEach((value, index) => {
+                rowData[fields[index].name] = value.origin;
+              });
+              return rowData;
+            });
+
+          } else if (message.code !== 0) {
+            this.notifySvc.warning(`${metric}:${message.msg}`, '');
+            console.info(`${metric}:${message.msg}`);
+          }
+        },
+        error => {
+          console.error(error.msg);
+          metricData$.unsubscribe();
+        }
+      );
   }
 }
