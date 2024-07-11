@@ -113,7 +113,9 @@ class PluginServiceTest {
         Set<Long> ids = new HashSet<>(Collections.singletonList(1L));
 
         when(metadataDao.findAllById(ids)).thenReturn(Collections.singletonList(plugin));
-        doNothing().when(metadataDao).deleteById(anyLong());
+        when(metadataDao.findById(anyLong())).thenReturn(Optional.of(plugin));
+        when(metadataDao.save(plugin)).thenReturn(plugin);
+        doNothing().when(metadataDao).deleteById(1L);
 
         pluginService.deletePlugins(ids);
         verify(metadataDao, times(1)).deleteById(1L);
