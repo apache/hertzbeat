@@ -54,14 +54,12 @@ public class AiController {
     /**
      * request AI
      * @param text                  request text
-     * @param currentlyDisabledType Currently disabled, later released
      * @return                      AI response
      */
     @GetMapping(path = "/get", produces = {TEXT_EVENT_STREAM_VALUE})
     @Operation(summary = "Artificial intelligence questions and Answers",
             description = "Artificial intelligence questions and Answers")
-    public Flux<ServerSentEvent<String>> requestAi(@Parameter(description = "Request text", example = "Who are you") @RequestParam("text") String text,
-                                  @Parameter(description = "Types of artificial intelligence", example = "zhiPu") @RequestParam(value = "type", required = false) String currentlyDisabledType)  {
+    public Flux<ServerSentEvent<String>> requestAi(@Parameter(description = "Request text", example = "Who are you") @RequestParam("text") String text)  {
 
         Assert.notNull(aiServiceFactory, "please check that your type value is consistent with the documentation on the website");
         AiService aiServiceImplBean = aiServiceFactory.getAiServiceImplBean(aiProperties.getType());
