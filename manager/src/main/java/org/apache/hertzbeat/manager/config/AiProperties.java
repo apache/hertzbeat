@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.config;
+package org.apache.hertzbeat.manager.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
