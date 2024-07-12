@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 import java.util.List;
+import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
@@ -39,6 +40,12 @@ public interface BulletinService {
      * List Bulletin
      */
     List<Bulletin> listBulletin();
+
+    /**
+     * Get Bulletin by id
+     */
+    Optional<Bulletin> getBulletinById(Long id);
+
 
     /**
      * Save Bulletin

@@ -20,7 +20,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
-import { NzCascaderFilter } from 'ng-zorro-antd/cascader';
 import { ModalButtonOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -39,7 +38,6 @@ import { AppDefineService } from '../../service/app-define.service';
 import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
-
 
 @Component({
   selector: 'app-bulletin',
@@ -76,16 +74,17 @@ export class BulletinComponent implements OnInit {
   monitors: Monitor[] = [];
   loading: boolean = false;
   listOfData: any[] = [];
-  listOfColumns: { key: string, title: string }[] = [];
+  listOfColumns: Array<{ key: string; title: string }> = [];
   metrics: string[] = [];
 
-
-
+  id: any;
+  app: any;
+  metric: any;
+  fields: any;
+  valueRows: any;
   ngOnInit(): void {
     this.loadBulletinDefineTable();
     this.tabDefines = this.defines;
-    this.loadData(399136249983232, "basic");
-
   }
 
   sync() {
@@ -665,18 +664,30 @@ export class BulletinComponent implements OnInit {
           metricData$.unsubscribe();
           if (message.code === 0 && message.data) {
             const { id, app, metrics, fields, valueRows } = message.data;
-            this.listOfColumns = fields.map((field: { name: string; unit: any; }) => ({
-              key: field.name,
-              title: field.name.toUpperCase() + (field.unit ? ` (${field.unit})` : '')
-            }));
-            this.listOfData = valueRows.map((row: { labels: any; values: any[]; }) => {
-              const rowData: any = { ...row.labels };
-              row.values.forEach((value, index) => {
-                rowData[fields[index].name] = value.origin;
-              });
-              return rowData;
-            });
+            this.id = id;
+            this.app = app;
+            this.metric = metrics;
+            this.fields = fields;
+            this.valueRows = valueRows;
 
+            this.listOfColumns.push(
+              fields.map((field: { name: string; unit: any }) => ({
+                key: field.name,
+                title: field.name.toUpperCase() + (field.unit ? ` (${field.unit})` : '')
+              }))
+            );
+
+            this.listOfData.push(
+              valueRows.map((row: { labels: any; values: any[] }) => {
+                const rowData: any = { ...row.labels };
+                row.values.forEach((value, index) => {
+                  rowData[fields[index].name] = value.origin;
+                });
+                return rowData;
+              })
+            );
+
+            console.info(this.listOfData);
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${metric}:${message.msg}`, '');
             console.info(`${metric}:${message.msg}`);

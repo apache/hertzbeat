@@ -23,6 +23,7 @@ package org.apache.hertzbeat.manager.service.impl;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
@@ -134,5 +135,13 @@ public class BulletinServiceImpl implements BulletinService {
         return new PageImpl<>(voList, pageRequest, total);
     }
 
-
+    /**
+     * Get Bulletin by id
+     *
+     * @param id
+     */
+    @Override
+    public Optional<Bulletin> getBulletinById(Long id) {
+        return bulletinDao.findById(id);
+    }
 }
