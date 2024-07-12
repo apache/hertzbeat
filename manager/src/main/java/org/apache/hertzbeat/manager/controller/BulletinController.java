@@ -19,6 +19,7 @@
 package org.apache.hertzbeat.manager.controller;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Field;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -43,7 +45,6 @@ import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.manager.service.BulletinService;
-import org.apache.hertzbeat.warehouse.store.history.HistoryDataReader;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -59,12 +60,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Bulletin Controller
  */
-@Controller
-@RequestMapping("/api/bulletin")
+@Slf4j
+@RestController
+@RequestMapping(value = "/api/bulletin", produces = {APPLICATION_JSON_VALUE})
 public class BulletinController {
 
     @Autowired
@@ -145,7 +148,7 @@ public class BulletinController {
         Bulletin bulletin = bulletinOptional.get();
         List<String> metrics = bulletin.getMetrics().stream().map(metric ->  metric.split("-")[0]).distinct().toList();
         List<CollectRep.MetricsData> metricsDataList = metrics.stream().map(metric -> realTimeDataReader.getCurrentMetricsData(bulletin.getMonitorId(), metric)).toList();
-        List<MetricsData> dataList = new LinkedList<>();
+        List<MetricsData> dataList = new ArrayList<>();
         for (CollectRep.MetricsData storageData : metricsDataList) {
             MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
             dataBuilder.id(storageData.getId()).app(storageData.getApp()).metrics(storageData.getMetrics())

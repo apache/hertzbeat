@@ -79,5 +79,9 @@ export class BulletinDefineService {
     console.log("deleteBulletinDefine");
   }
 
+  public getMonitorMetricsData(bulletinId: number): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${bulletin_define_uri}/metrics/${bulletinId}`);
+  }
+
 
 }

@@ -75,6 +75,7 @@ export class BulletinComponent implements OnInit {
   loading: boolean = false;
   listOfData: any[] = [];
   listOfColumns: Array<{ key: string; title: string }> = [];
+  responseData: any[] = [];
   metrics: string[] = [];
 
   id: any;
@@ -85,6 +86,7 @@ export class BulletinComponent implements OnInit {
   ngOnInit(): void {
     this.loadBulletinDefineTable();
     this.tabDefines = this.defines;
+    this.loadData(402372614668544);
   }
 
   sync() {
@@ -654,43 +656,45 @@ export class BulletinComponent implements OnInit {
     });
   }
 
-  loadData(monitorId: number, metric: string) {
+  loadData(bulletinId: number) {
     this.loading = true;
-    let metricData$ = this.monitorSvc
-      .getMonitorMetricsData(monitorId, metric)
+    let metricData$ = this.bulletinDefineSvc
+      .getMonitorMetricsData(bulletinId)
       .pipe(finalize(() => (this.loading = false)))
       .subscribe(
         message => {
           metricData$.unsubscribe();
           if (message.code === 0 && message.data) {
-            const { id, app, metrics, fields, valueRows } = message.data;
-            this.id = id;
-            this.app = app;
-            this.metric = metrics;
-            this.fields = fields;
-            this.valueRows = valueRows;
+            this.responseData = message.data;
+            this.responseData.forEach((item: any) => {
+              const { id, app, metrics, fields, valueRows } = message.data;
+              this.id = id;
+              this.app = app;
+              this.metric = metrics;
+              this.fields = fields;
+              this.valueRows = valueRows;
 
-            this.listOfColumns.push(
-              fields.map((field: { name: string; unit: any }) => ({
-                key: field.name,
-                title: field.name.toUpperCase() + (field.unit ? ` (${field.unit})` : '')
-              }))
-            );
+              this.listOfColumns.push(
+                fields.map((field: { name: string; unit: any }) => ({
+                  key: field.name,
+                  title: field.name.toUpperCase() + (field.unit ? ` (${field.unit})` : '')
+                }))
+              );
 
-            this.listOfData.push(
-              valueRows.map((row: { labels: any; values: any[] }) => {
-                const rowData: any = { ...row.labels };
-                row.values.forEach((value, index) => {
-                  rowData[fields[index].name] = value.origin;
-                });
-                return rowData;
-              })
-            );
+              this.listOfData.push(
+                valueRows.map((row: { labels: any; values: any[] }) => {
+                  const rowData: any = { ...row.labels };
+                  row.values.forEach((value, index) => {
+                    rowData[fields[index].name] = value.origin;
+                  });
+                  return rowData;
+                })
+              );
+            });
 
-            console.info(this.listOfData);
           } else if (message.code !== 0) {
-            this.notifySvc.warning(`${metric}:${message.msg}`, '');
-            console.info(`${metric}:${message.msg}`);
+            this.notifySvc.warning(`${message.msg}`, '');
+            console.info(`${message.msg}`);
           }
         },
         error => {
