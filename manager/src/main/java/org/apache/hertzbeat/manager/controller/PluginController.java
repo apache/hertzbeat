@@ -92,7 +92,7 @@ public class PluginController {
 
     @DeleteMapping()
     @Operation(summary = "Delete plugins based on ID", description = "Delete plugins based on ID")
-    public ResponseEntity<Message<Void>> deleteTags(
+    public ResponseEntity<Message<Void>> deletePlugins(
         @Parameter(description = "Plugin IDs ", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
             pluginService.deletePlugins(new HashSet<>(ids));
