@@ -28,6 +28,7 @@ import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -42,8 +43,10 @@ import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.dto.ValueRow;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
+import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.Pair;
 import org.apache.hertzbeat.manager.service.BulletinService;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -185,5 +188,64 @@ public class BulletinController {
         return ResponseEntity.ok(Message.success(dataList));
         }
 
+    @GetMapping("/metrics")
+    @Operation(summary = "Query All Bulletin Real Time Metrics Data", description = "Query All Bulletin real-time metrics data of monitoring indicators")
+    public ResponseEntity<Message<List<BulletinMetricsData>>> getAllMetricsData() {
+        boolean available = realTimeDataReader.isServerAvailable();
+        if (!available) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "real time store not available"));
+        }
+        List<Bulletin> bulletinList = bulletinService.listBulletin();
+        List<BulletinMetricsData> dataList = new ArrayList<>();
+        for (Bulletin bulletin : bulletinList) {
+            List<String> metricList = bulletin.getMetrics();
+            Map<String, CollectRep.MetricsData> metricsDataMap = metricList.stream()
+                    .collect(Collectors.toMap(
+                            metric -> metric,
+                            metric -> metric.split("-")[0],
+                            (existing, replacement) -> existing
+                    ))
+                    .values().stream()
+                    .distinct()
+                    .collect(Collectors.toMap(
+                            metric -> metric,
+                            metric -> realTimeDataReader.getCurrentMetricsData(bulletin.getMonitorId(), metric)
+                    ));
+
+
+
+            for (Map.Entry<String, CollectRep.MetricsData> entry : metricsDataMap.entrySet()) {
+                CollectRep.MetricsData storageData = entry.getValue();
+
+                BulletinMetricsData.BulletinMetricsDataBuilder dataBuilder = BulletinMetricsData.builder();
+                dataBuilder.app(storageData.getApp());
+
+                BulletinMetricsData.Content.ContentBuilder contentBuilder = BulletinMetricsData.Content.builder();
+                BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder();
+
+                contentBuilder.id(storageData.getId());
+
+                List<BulletinMetricsData.Metric> metrics = storageData.getFieldsList().stream()
+                        .map(tmpField -> metricBuilder
+                                .type(entry.getKey().split("-")[0])
+                                .name(tmpField.getName())
+                                .unit(tmpField.getUnit())
+                                .build())
+                        .collect(Collectors.toList());
+
+                for (CollectRep.ValueRow valueRow : storageData.getValuesList()) {
+                    for (int i = 0; i < metrics.size(); i++) {
+                        BulletinMetricsData.Metric metric = metrics.get(i);
+                        String origin = valueRow.getColumns(i);
+                        metric.setValue(origin);
+                    }
+                }
+                contentBuilder.metrics(metrics);
+                BulletinMetricsData bulletinMetricsData = dataBuilder.content(contentBuilder.build()).build();
+                dataList.add(bulletinMetricsData);
+            }
+    }
+        return ResponseEntity.ok(Message.success(dataList));
+    }
 
 }
