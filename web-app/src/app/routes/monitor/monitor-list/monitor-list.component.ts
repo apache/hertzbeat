@@ -20,7 +20,7 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { ALAIN_I18N_TOKEN, MenuService } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { ModalButtonOptions } from 'ng-zorro-antd/modal/modal-types';
@@ -33,7 +33,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MemoryStorageService } from '../../../service/memory-storage.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { formatTagName } from '../../../shared/utils/common-util';
+import { formatTagName, findDeepestSelected } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-list',
@@ -50,9 +50,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     private messageSvc: NzMessageService,
     private storageSvc: MemoryStorageService,
     private appDefineSvc: AppDefineService,
+    private menuService: MenuService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  isDefaultListMenu!: boolean;
   app!: string | undefined;
   tag!: string | undefined;
   pageIndex: number = 1;
@@ -70,9 +72,8 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   filterStatus: number = 9;
   // app type search filter
   appSwitchModalVisible = false;
-  appSearchContent = '';
+  appSwitchModalVisibleType = 0;
   appSearchOrigin: any[] = [];
-  appSearchResult: any[] = [];
   appSearchLoading = false;
   intervalId: any;
 
@@ -81,6 +82,9 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.menuService.change.subscribe(menus => {
+      this.isDefaultListMenu = findDeepestSelected(menus).link === '/monitors';
+    });
     this.route.queryParamMap.subscribe(paramMap => {
       let appStr = paramMap.get('app');
       let tagStr = paramMap.get('tag');
@@ -112,6 +116,22 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     }
   }
 
+  onAppChanged(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ...this.route.snapshot.queryParams, app: this.app },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  onTagChanged(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { ...this.route.snapshot.queryParams, tag: this.tag },
+      queryParamsHandling: 'merge'
+    });
+  }
+
   onFilterSearchMonitors() {
     this.tableLoading = true;
     let filter$ = this.monitorSvc
@@ -141,10 +161,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   sync() {
     this.loadMonitorTable();
-  }
-
-  clearCurrentTag() {
-    this.router.navigateByUrl(`/monitors`);
   }
 
   getAppIconName(app: string | undefined): string {
@@ -496,6 +512,11 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   // begin: app type search filter
 
+  onSearchAppClicked() {
+    this.appSwitchModalVisibleType = 1;
+    this.onAppSwitchModalOpen();
+  }
+
   onAppSwitchModalOpen() {
     this.appSwitchModalVisible = true;
     this.appSearchLoading = true;
@@ -510,17 +531,24 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       .subscribe(
         message => {
           if (message.code === 0) {
-            this.appSearchOrigin = [];
-            this.appSearchResult = [];
+            let appMenus: Record<string, any> = {};
             message.data.forEach((app: any) => {
-              app.categoryLabel = this.i18nSvc.fanyi(`monitor.category.${app.category}`);
-              if (app.categoryLabel == `monitor.category.${app.category}`) {
-                app.categoryLabel = this.i18nSvc.fanyi('monitor.category.custom');
+              let menus = appMenus[app.category];
+              app.categoryLabel = this.i18nSvc.fanyi(`menu.monitor.${app.category}`);
+              if (app.categoryLabel == `menu.monitor.${app.category}`) {
+                app.categoryLabel = app.category.toUpperCase();
               }
-              this.appSearchOrigin.push(app);
+              if (menus == undefined) {
+                menus = { label: app.categoryLabel, child: [app] };
+              } else {
+                menus.child.push(app);
+              }
+              appMenus[app.category] = menus;
             });
-            this.appSearchOrigin = this.appSearchOrigin.sort((a, b) => a.category?.localeCompare(b.category));
-            this.appSearchResult = this.appSearchOrigin;
+            this.appSearchOrigin = Object.entries(appMenus);
+            this.appSearchOrigin.sort((a, b) => {
+              return b[1].length - a[1].length;
+            });
           } else {
             console.warn(message.msg);
           }
@@ -533,23 +561,16 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   onAppSwitchModalCancel() {
     this.appSwitchModalVisible = false;
+    this.appSwitchModalVisibleType = 0;
   }
 
   gotoMonitorAddDetail(app: string) {
-    this.router.navigateByUrl(`/monitors/new?app=${app}`);
-  }
-
-  searchSwitchApp() {
-    if (this.appSearchContent === '' || this.appSearchContent == null) {
-      this.appSearchResult = this.appSearchOrigin;
+    if (this.appSwitchModalVisibleType === 1) {
+      this.app = app;
+      this.onAppChanged();
+      this.onAppSwitchModalCancel();
     } else {
-      this.appSearchResult = this.appSearchOrigin.filter(
-        app =>
-          app.label.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
-          app.categoryLabel.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
-          app.value.toLowerCase().includes(this.appSearchContent.toLowerCase()) ||
-          app.category.toLowerCase().includes(this.appSearchContent.toLowerCase())
-      );
+      this.router.navigateByUrl(`/monitors/new?app=${app}`);
     }
   }
 

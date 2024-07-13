@@ -4,7 +4,6 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { GlobalFooterModule } from '@delon/abc/global-footer';
-import { NoticeIconModule } from '@delon/abc/notice-icon';
 import { AlainThemeModule } from '@delon/theme';
 import { LayoutDefaultModule } from '@delon/theme/layout-default';
 import { SettingDrawerModule } from '@delon/theme/setting-drawer';
@@ -40,9 +39,13 @@ const HEADER_COMPONENTS = [
 ];
 
 import { LayoutPassportComponent } from './passport/passport.component';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
+import { NzListComponent, NzListItemActionComponent, NzListItemComponent, NzListItemMetaComponent } from 'ng-zorro-antd/list';
+import { NzStringTemplateOutletDirective } from 'ng-zorro-antd/core/outlet';
+import { NzTooltipDirective } from 'ng-zorro-antd/tooltip';
 const PASSPORT = [LayoutPassportComponent];
 
 @NgModule({
@@ -54,7 +57,6 @@ const PASSPORT = [LayoutPassportComponent];
     ThemeBtnModule,
     SettingDrawerModule,
     LayoutDefaultModule,
-    NoticeIconModule,
     GlobalFooterModule,
     NzDropDownModule,
     NzInputModule,
@@ -65,9 +67,16 @@ const PASSPORT = [LayoutPassportComponent];
     NzBadgeModule,
     NzAvatarModule,
     NzIconModule,
+    NzButtonModule,
     NzModalModule,
     NzTagModule,
-    NzDividerModule
+    NzDividerModule,
+    NzListComponent,
+    NzListItemComponent,
+    NzListItemMetaComponent,
+    NzStringTemplateOutletDirective,
+    NzListItemActionComponent,
+    NzTooltipDirective
   ],
   declarations: [...COMPONENTS, ...HEADER_COMPONENTS, ...PASSPORT],
   exports: [...COMPONENTS, ...PASSPORT]

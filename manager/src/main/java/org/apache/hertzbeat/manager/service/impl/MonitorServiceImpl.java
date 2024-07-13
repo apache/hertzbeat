@@ -146,6 +146,17 @@ public class MonitorServiceImpl implements MonitorService {
         if (sdParam.isPresent()) {
             collectOneTimeSdData(monitor, collector, sdParam.get());
         } else {
+            collectRep = collectJobScheduling.collectSyncJobData(appDefine);
+        }
+        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
+        // If the detection result fails, a detection exception is thrown
+        if (collectRep == null || collectRep.isEmpty()) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
+            throw new MonitorDetectException("Collect Timeout No Response");
+        }
+        if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
+            throw new MonitorDetectException(collectRep.get(0).getMsg());
             detectMonitorDirectly(monitor, params, collector);
         }
     }
@@ -169,6 +180,30 @@ public class MonitorServiceImpl implements MonitorService {
             return;
         }
 
+        long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
+                collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+
+        try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
+
+        try {
+            if (collector != null) {
+                CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
+                        .collector(collector)
+                        .monitorId(monitorId)
+                        .build();
+                collectorMonitorBindDao.save(collectorMonitorBind);
+            }
+            monitor.setId(monitorId);
+            monitor.setJobId(jobId);
+            monitorDao.save(monitor);
+            paramDao.saveAll(params);
+        } catch (Exception e) {
+            log.error("Error while adding monitor: {}", e.getMessage(), e);
+            collectJobScheduling.cancelAsyncCollectJob(jobId);
+            throw new MonitorDatabaseException(e.getMessage());
+        }
         addAndSaveMonitorJob(monitor, params, collector, null, null);
     }
 
@@ -205,11 +240,15 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setConfigmap(configmaps);
         // Send the collection task to get the job ID
         long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, null);
+
+        try {
+            detectMonitor(monitor, params, null);
+        } catch (Exception ignored) {}
+
         // Brush the library after the download is successful
         try {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -489,6 +528,9 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setJobId(newJobId);
         }
+        try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
         // After the update is successfully released, refresh the database
         try {
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitorId);
@@ -498,7 +540,6 @@ public class MonitorServiceImpl implements MonitorService {
                         .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
-            monitor.setStatus(preMonitor.getStatus());
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
@@ -637,11 +678,13 @@ public class MonitorServiceImpl implements MonitorService {
                 // Issue collection tasks
                 Optional<CollectorMonitorBind> bindOptional =
                         collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
-                long newJobId = bindOptional.map(bind ->
-                                collectJobScheduling.addAsyncCollectJob(appDefine, bind.getCollector()))
-                        .orElseGet(() -> collectJobScheduling.addAsyncCollectJob(appDefine, null));
+                String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElseGet(() -> null);
+                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
+                try {
+                    detectMonitor(monitor, params, collector);
+                } catch (Exception ignored) {}
             }
             monitorDao.saveAll(unManagedMonitors);
         }

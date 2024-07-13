@@ -34,19 +34,16 @@
   <nz-breadcrumb-item>
     <span nz-icon nzType="pie-chart"></span>
     <span>{{ 'monitors.detail' | i18n }}</span>
+  </nz-breadcrumb-item>
+  <nz-breadcrumb-item *ngIf="!!app">
     <a routerLink="/setting/define" [queryParams]="{ app: app }">
-      <nz-tag style="font-size: 14px; border-radius: 4px; margin-left: 4px" nzColor="#3f51b5" class="hoverClass">
+      <nz-tag style="font-size: 14px; margin-left: 4px" nzColor="#3f51b5" class="hoverClass">
         <span>{{ 'monitor.app.' + app | i18n }}</span>
       </nz-tag>
     </a>
-    <a [href]="'https://hertzbeat.apache.org/docs/help/' + app" target="_blank" style="float: right; margin-right: 5%" class="mobile-hide">
-      <button nz-button nzType="primary">
-        <span>{{ 'common.button.help' | i18n }} </span>
-        <span nz-icon nzType="question-circle"></span>
-      </button>
-    </a>
   </nz-breadcrumb-item>
 </nz-breadcrumb>
+
 <nz-divider></nz-divider>
 
 <nz-layout>
@@ -55,100 +52,21 @@
       <nz-tabset nzType="card" [nzTabBarExtraContent]="tab_extra_template">
         <nz-tab [nzTitle]="titleTemplate" (nzClick)="loadRealTimeMetric()">
           <ng-template #titleTemplate>
-            <i nz-icon nzType="pic-right" style="margin-left: 10px"></i>
+            <i nz-icon nzType="pic-right"></i>
             {{ 'monitors.detail.realtime' | i18n }}
           </ng-template>
-          <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
-            <div style="width: 50%; height: 400px; margin-bottom: 6px">
-              <nz-card
-                style="height: 100%; margin-left: 10px; overflow: scroll"
-                [nzBordered]="true"
-                [nzTitle]="monitor_basic_card_title"
-                [nzExtra]="monitor_basic_card_extra"
-              >
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"><p style="text-align: right">ID</p></div>
-                  <div nz-col nzSpan="16"
-                    ><p style="text-align: left">{{ monitorId }}</p></div
-                  >
-                </div>
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"
-                    ><p style="text-align: right">{{ 'monitors.detail.name' | i18n }}</p></div
-                  >
-                  <div nz-col nzSpan="16"
-                    ><p style="text-align: left">{{ monitor.name }}</p></div
-                  >
-                </div>
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"><p style="text-align: right">HOST</p></div>
-                  <div nz-col nzSpan="16"
-                    ><p style="text-align: left">{{ monitor.host }}</p></div
-                  >
-                </div>
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"
-                    ><p style="text-align: right">{{ 'monitors.detail.port' | i18n }}</p></div
-                  >
-                  <div nz-col nzSpan="16"
-                    ><p style="text-align: left">{{ port }}</p></div
-                  >
-                </div>
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"
-                    ><p style="text-align: right">{{ 'monitors.detail.description' | i18n }}</p></div
-                  >
-                  <div nz-col nzSpan="16"
-                    ><p style="text-align: left">{{ monitor.description }}</p></div
-                  >
-                </div>
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"
-                    ><p style="text-align: right">{{ 'monitors.detail.status' | i18n }}</p></div
-                  >
-                  <div nz-col nzSpan="16">
-                    <nz-tag *ngIf="monitor.status == 0" nzColor="default">
-                      <i nz-icon nzType="meh" nzTheme="outline"></i>
-                      <span>{{ 'monitor.status.paused' | i18n }}</span>
-                    </nz-tag>
-                    <nz-tag *ngIf="monitor.status == 1" nzColor="success">
-                      <i nz-icon nzType="smile" nzTheme="outline"></i>
-                      <span>{{ 'monitor.status.up' | i18n }}</span>
-                    </nz-tag>
-                    <nz-tag *ngIf="monitor.status == 2" nzColor="error">
-                      <i nz-icon nzType="frown" nzTheme="outline"></i>
-                      <span>{{ 'monitor.status.down' | i18n }}</span>
-                    </nz-tag>
-                  </div>
-                </div>
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"
-                    ><p style="text-align: right">{{ 'monitor.intervals' | i18n }}</p></div
-                  >
-                  <div nz-col nzSpan="16"
-                    ><p style="text-align: left">{{ monitor.intervals }}s</p></div
-                  >
-                </div>
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"
-                    ><p style="text-align: right">{{ 'common.new-time' | i18n }}</p></div
-                  >
-                  <div nz-col nzSpan="16"
-                    ><p style="text-align: left">{{ monitor.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
-                  >
-                </div>
-                <div nz-row nzGutter="16">
-                  <div nz-col nzSpan="8"
-                    ><p style="text-align: right">{{ 'common.edit-time' | i18n }}</p></div
-                  >
-                  <div nz-col nzSpan="16"
-                    ><p style="text-align: left">{{ monitor.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
-                  >
-                </div>
-              </nz-card>
-            </div>
+          <div class="cards lists">
             <app-monitor-data-table
-              style="width: 50%; height: 400px; margin-bottom: 6px"
+              class="card"
+              [height]="'400px'"
+              [monitor]="monitor"
+              [port]="port"
+              [monitorId]="monitorId"
+              [app]="app"
+            ></app-monitor-data-table>
+            <app-monitor-data-table
+              class="card"
+              [height]="'400px'"
               *ngFor="let metric of metrics; let i = index"
               [metrics]="metric"
               [monitorId]="monitorId"
@@ -158,12 +76,12 @@
         </nz-tab>
         <nz-tab [nzTitle]="title2Template" (nzClick)="loadMetricChart()">
           <ng-template #title2Template>
-            <i nz-icon nzType="line-chart" style="margin-left: 10px"></i>
+            <i nz-icon nzType="line-chart"></i>
             {{ 'monitors.detail.history' | i18n }}
           </ng-template>
-          <div style="display: flex; justify-content: flex-start; flex-wrap: wrap">
+          <div class="cards">
             <app-monitor-data-chart
-              style="width: 50%; height: 500px; margin-bottom: 6px"
+              class="card"
               *ngFor="let item of chartMetrics; let i = index"
               [app]="app"
               [metrics]="item.metrics"
@@ -178,14 +96,6 @@
   </nz-content>
 </nz-layout>
 
-<ng-template #monitor_basic_card_title>
-  <p style="font-size: small; text-align: left; margin-bottom: 3px">{{ 'monitors.detail.basic' | i18n }}</p>
-</ng-template>
-
-<ng-template #monitor_basic_card_extra>
-  <a nz-icon nzType="edit" nzTheme="outline" [routerLink]="['/monitors/' + monitorId + '/edit']"></a>
-</ng-template>
-
 <ng-template #tab_extra_template>
   <nz-button-group class="mobile-hide">
     <button nz-button nz-dropdown [nzDropdownMenu]="time_menu" nzPlacement="bottomLeft">
@@ -193,7 +103,7 @@
       <span *ngIf="deadline <= 0"> {{ 'monitors.detail.close-refresh' | i18n }} </span>
     </button>
     <button
-      style="margin-left: 2px"
+      style="margin-left: 4px"
       nz-button
       nzType="primary"
       (click)="refreshMetrics()"
@@ -202,6 +112,11 @@
     >
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
+    <a [href]="'https://hertzbeat.apache.org/docs/help/' + app" target="_blank">
+      <button style="margin-left: 4px" nz-button nzType="primary" nz-tooltip [nzTooltipTitle]="'common.button.help' | i18n">
+        <i nz-icon nzType="question-circle" nzTheme="outline"></i>
+      </button>
+    </a>
   </nz-button-group>
   <nz-dropdown-menu #time_menu="nzDropdownMenu">
     <ul nz-menu>
