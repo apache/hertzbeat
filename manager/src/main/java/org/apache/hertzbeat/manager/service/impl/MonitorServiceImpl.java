@@ -146,17 +146,6 @@ public class MonitorServiceImpl implements MonitorService {
         if (sdParam.isPresent()) {
             collectOneTimeSdData(monitor, collector, sdParam.get());
         } else {
-            collectRep = collectJobScheduling.collectSyncJobData(appDefine);
-        }
-        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
-        // If the detection result fails, a detection exception is thrown
-        if (collectRep == null || collectRep.isEmpty()) {
-            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
-            throw new MonitorDetectException("Collect Timeout No Response");
-        }
-        if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
-            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
-            throw new MonitorDetectException(collectRep.get(0).getMsg());
             detectMonitorDirectly(monitor, params, collector);
         }
     }
@@ -180,30 +169,6 @@ public class MonitorServiceImpl implements MonitorService {
             return;
         }
 
-        long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
-                collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-
-        try {
-            detectMonitor(monitor, params, collector);
-        } catch (Exception ignored) {}
-
-        try {
-            if (collector != null) {
-                CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
-                        .collector(collector)
-                        .monitorId(monitorId)
-                        .build();
-                collectorMonitorBindDao.save(collectorMonitorBind);
-            }
-            monitor.setId(monitorId);
-            monitor.setJobId(jobId);
-            monitorDao.save(monitor);
-            paramDao.saveAll(params);
-        } catch (Exception e) {
-            log.error("Error while adding monitor: {}", e.getMessage(), e);
-            collectJobScheduling.cancelAsyncCollectJob(jobId);
-            throw new MonitorDatabaseException(e.getMessage());
-        }
         addAndSaveMonitorJob(monitor, params, collector, null, null);
     }
 
@@ -859,11 +824,15 @@ public class MonitorServiceImpl implements MonitorService {
         } else {
             collectRep = collectJobScheduling.collectSyncJobData(sdJob);
         }
+        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
+
         // If the detection result fails, a detection exception is thrown
         if (collectRep == null || collectRep.isEmpty()) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException("Collect Timeout No Response");
         }
         if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
 
@@ -935,11 +904,15 @@ public class MonitorServiceImpl implements MonitorService {
         } else {
             collectRep = collectJobScheduling.collectSyncJobData(appDefine);
         }
+        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
+
         // If the detection result fails, a detection exception is thrown
         if (collectRep == null || collectRep.isEmpty()) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException("Collect Timeout No Response");
         }
         if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
     }
@@ -975,6 +948,10 @@ public class MonitorServiceImpl implements MonitorService {
 
         long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
                 collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+
+        try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
 
         try {
             if (collector != null) {
