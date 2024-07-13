@@ -23,8 +23,6 @@ spring:
     static-path-pattern: /**
   jackson:
     default-property-inclusion: ALWAYS
-    deserialization:
-      fail-on-unknown-properties: false
   web:
     resources:
       static-locations:
