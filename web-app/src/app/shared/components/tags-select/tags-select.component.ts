@@ -17,23 +17,31 @@
  * under the License.
  */
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { TagItem } from '../../../pojo/NoticeRule';
 import { Tag } from '../../../pojo/Tag';
 import { TagService } from '../../../service/tag.service';
 
 @Component({
-  selector: 'app-form-item',
-  templateUrl: './form-item.component.html',
-  styleUrls: ['./form-item.component.less']
+  selector: 'app-tags-select',
+  templateUrl: './tags-select.component.html',
+  styleUrls: ['./tags-select.component.less'],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => TagsSelectComponent),
+      multi: true
+    }
+  ]
 })
-export class FormItemComponent {
+export class TagsSelectComponent implements ControlValueAccessor {
   constructor(private tagSvc: TagService) {}
-  @Input() item!: any;
+
   @Input() value!: any;
-  @Input() extra: any = {};
-  @Output() readonly valueChange = new EventEmitter<any>();
+  @Input() mode!: 'default' | 'closeable' | 'checkable';
+  @Output() readonly valueChange = new EventEmitter<string>();
 
   isManageModalVisible = false;
   isManageModalOkLoading = false;
@@ -42,6 +50,26 @@ export class FormItemComponent {
   tagCheckedAll: boolean = false;
   tagSearch!: string;
   tags!: Tag[];
+
+  _onChange = (_: any) => {};
+  _onTouched = () => {};
+
+  onChange(inputValue: any) {
+    this.valueChange.emit(inputValue);
+    this._onChange(inputValue);
+  }
+
+  writeValue(value: any): void {
+    this.value = value;
+  }
+
+  registerOnChange(fn: any): void {
+    this._onChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+    this._onTouched = fn;
+  }
 
   loadTagsTable() {
     this.tagTableLoading = true;
@@ -63,10 +91,6 @@ export class FormItemComponent {
         tagsReq$.unsubscribe();
       }
     );
-  }
-
-  onChange(value: any) {
-    this.valueChange.emit(value);
   }
 
   onRemoveTag(tag: TagItem) {

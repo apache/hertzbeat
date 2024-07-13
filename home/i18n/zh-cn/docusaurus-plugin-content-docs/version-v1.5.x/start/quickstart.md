@@ -38,12 +38,12 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 #### 方式二：通过安装包安装    
 
-1. 下载您系统环境对应的安装包`hertzbeat-xx.tar.gz` [GITHUB Release](https://github.com/apache/hertzbeat/releases)
+1. 下载您系统环境对应的安装包`hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
 2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
 3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 5. 部署采集器集群(可选)
-   - 下载您系统环境对应采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [GITHUB Release](https://github.com/apache/hertzbeat/releases)
+   - 下载您系统环境对应采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:

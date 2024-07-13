@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -36,12 +37,11 @@ export class MessageServerComponent implements OnInit {
   constructor(
     public msg: NzMessageService,
     private notifySvc: NzNotificationService,
-    private cdr: ChangeDetectorRef,
     private noticeSenderSvc: GeneralConfigService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
-  senders!: EmailNoticeSender[];
+  @ViewChild('senderForm', { static: false }) senderForm: NgForm | undefined;
   senderServerLoading: boolean = true;
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
@@ -84,6 +84,15 @@ export class MessageServerComponent implements OnInit {
   }
 
   onSaveEmailServer() {
+    if (this.senderForm?.invalid) {
+      Object.values(this.senderForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     const modalOk$ = this.noticeSenderSvc
       .saveGeneralConfig(this.emailSender, 'email')
       .pipe(

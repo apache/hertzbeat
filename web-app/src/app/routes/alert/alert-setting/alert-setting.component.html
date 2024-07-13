@@ -495,16 +495,20 @@
           </nz-collapse>
         </nz-form-control>
       </nz-form-item>
-      <app-form-item
-        [item]="{
-          field: 'tags',
-          type: 'tags-selection',
-          name: 'tag.bind' | i18n,
-          tooltip: 'tag.bind.tip' | i18n
-        }"
-        [extra]="{ tag_mode: 'closeable' }"
-        [(value)]="define.tags"
-      />
+      <nz-form-item>
+        <nz-form-label nzSpan="7" [nzFor]="'tags'" [nzTooltipTitle]="'tag.bind.tip' | i18n">{{ 'tag.bind' | i18n }} </nz-form-label>
+        <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
+          <app-form-field
+            [item]="{
+              field: 'tags',
+              type: 'tags-selection'
+            }"
+            [extra]="{ tag_mode: 'closeable' }"
+            [name]="'tags'"
+            [(ngModel)]="define.tags"
+          />
+        </nz-form-control>
+      </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="preset" [nzTooltipTitle]="'alert.setting.default.tip' | i18n">
           {{ 'alert.setting.default' | i18n }}
