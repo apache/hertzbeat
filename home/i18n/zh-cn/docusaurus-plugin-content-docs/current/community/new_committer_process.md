@@ -368,6 +368,8 @@ hi, i accept. Thanks for invitaion.
 
 邮件发送到`secretary@apache.org`，抄送到`private@hertzbeat.apache.org`。
 
+注意⚠️此邮件内容需要附加上之前的 committer 邀请邮件信息, 建议在之前的往来邮件点击回复然后修改标题和收件人等。
+
 **发送模板**
 
 主题：`Accept to become a Hertzbeat(incubating) committer`

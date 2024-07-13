@@ -51,7 +51,7 @@ export const features = [
           values={{
             github: (
               <a href={'https://github.com/apache/hertzbeat'}>
-                Github Repo
+                Github
               </a>
             ),
             br: <br />,

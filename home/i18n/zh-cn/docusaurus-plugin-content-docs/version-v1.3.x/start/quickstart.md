@@ -67,7 +67,7 @@ $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
 
 #### 方式二：通过安装包安装    
 
-1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [GITHUB Release](https://github.com/apache/hertzbeat/releases)
+1. 下载您系统环境对应的安装包 [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [Download](https://hertzbeat.apache.org/docs/download)
 2. 需要已安装java环境, `jdk11`
 3. [可选]配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`
 4. 部署启动 `$ ./startup.sh `
