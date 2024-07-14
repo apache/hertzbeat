@@ -73,6 +73,16 @@ public interface CommonConstants {
     byte MONITOR_DOWN_CODE = 0x02;
 
     /**
+     * Monitor bind type, 0: monitor that auto-created by sd
+     */
+    byte MONITOR_BIND_TYPE_SD_SUB_MONITOR = 0x00;
+
+    /**
+     * Monitor bind type, 1: the main monitor of sd
+     */
+    byte MONITOR_BIND_TYPE_SD_MAIN_MONITOR = 0x01;
+
+    /**
      * Alarm status: 0 - normal alarm (to be processed)
      */
     byte ALERT_STATUS_CODE_PENDING = 0x00;
@@ -201,6 +211,16 @@ public interface CommonConstants {
      * Inside the tag: monitorName Task name
      */
     String TAG_MONITOR_NAME = "monitorName";
+
+    /**
+     * Inside the tag: indicate that this monitor is auto-created by main monitor
+     */
+    String TAG_AUTO_CREATED = "autoCreated";
+
+    /**
+     * Inside the tag: indicate that this monitor is a main monitor which provides service discovery
+     */
+    String TAG_SD_MAIN_MONITOR = "sdMainMonitor";
 
     /**
      * Inside the tag: monitorHost Task host
@@ -380,4 +400,14 @@ public interface CommonConstants {
      * status page incident state resolved
      */
     byte STATUS_PAGE_INCIDENT_STATE_RESOLVED = 3;
+
+    /**
+     * host column for service discovery
+     */
+    int SD_HOST_COLUMN = 0;
+
+    /**
+     * port column for service discovery
+     */
+    int SD_PORT_COLUMN = 1;
 }

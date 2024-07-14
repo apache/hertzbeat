@@ -43,12 +43,14 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
 
     public InMemoryCommonDataQueue() {
         alertDataQueue = new LinkedBlockingQueue<>();
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToPersistentStorageQueue = new LinkedBlockingQueue<>();
         metricsDataToRealTimeStorageQueue = new LinkedBlockingQueue<>();
+        serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
     }
 
     public Map<String, Integer> getQueueSizeMetricsInfo() {
@@ -86,10 +88,20 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     }
 
     @Override
+    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
+        return serviceDiscoveryDataQueue.poll(2, TimeUnit.SECONDS);
+    }
+
+    @Override
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
         metricsDataToAlertQueue.offer(metricsData);
         metricsDataToPersistentStorageQueue.offer(metricsData);
         metricsDataToRealTimeStorageQueue.offer(metricsData);
+    }
+
+    @Override
+    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+        serviceDiscoveryDataQueue.offer(metricsData);
     }
 
     @Override
@@ -98,5 +110,6 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
         metricsDataToAlertQueue.clear();
         metricsDataToPersistentStorageQueue.clear();
         metricsDataToRealTimeStorageQueue.clear();
+        serviceDiscoveryDataQueue.clear();
     }
 }

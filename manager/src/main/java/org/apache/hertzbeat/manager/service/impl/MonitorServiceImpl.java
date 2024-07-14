@@ -18,8 +18,7 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -45,19 +44,22 @@ import org.apache.hertzbeat.common.entity.job.protocol.CommonRequestProtocol;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
@@ -112,6 +114,9 @@ public class MonitorServiceImpl implements MonitorService {
     private MonitorDao monitorDao;
 
     @Autowired
+    private MonitorBindDao monitorBindDao;
+
+    @Autowired
     private ParamDao paramDao;
 
     @Autowired
@@ -141,7 +146,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(readOnly = true)
     public void detectMonitor(Monitor monitor, List<Param> params, String collector) throws MonitorDetectException {
-        final Optional<Param> sdParam = getSdParam(params);
+        final Optional<Param> sdParam = SdMonitorOperator.getSdParam(params);
 
         if (sdParam.isPresent()) {
             collectOneTimeSdData(monitor, collector, sdParam.get());
@@ -153,23 +158,13 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
-        final Optional<Param> sdParam = getSdParam(params);
+        final Optional<Param> sdParam = SdMonitorOperator.getSdParam(params);
         if (sdParam.isPresent()) {
-            // collect sd data through one-time job
-            List<CollectRep.MetricsData> sdDataList = collectOneTimeSdData(monitor, collector, sdParam.get());
-            List<Param> paramsWithoutSd = removeSdParam(params);
-            final CollectRep.MetricsData sdData = sdDataList.get(0);
-            final List<CollectRep.ValueRow> sdValueList = sdData.getValuesList();
-
-            // batch create task
-            for (CollectRep.ValueRow valueRow : sdValueList) {
-                addAndSaveMonitorJob(monitor.clone(), paramsWithoutSd, collector, valueRow.getColumns(0), valueRow.getColumns(1));
-            }
-
+            addAndSaveMonitorJob(monitor.clone(), params, collector, SdMonitorParam.builder().sdParam(sdParam.get()).build());
             return;
         }
 
-        addAndSaveMonitorJob(monitor, params, collector, null, null);
+        addAndSaveMonitorJob(monitor, params, collector, null);
     }
 
     @Override
@@ -180,9 +175,20 @@ public class MonitorServiceImpl implements MonitorService {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type((byte) 0).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type((byte) 0).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
         Job appDefine = appService.getAppDefine(monitor.getApp());
+        final Optional<Param> sdParam = SdMonitorOperator.getSdParam(params);
+        if (sdParam.isPresent()) {
+            final SdMonitorParam sdMonitorParam = SdMonitorParam.builder().sdParam(sdParam.get()).build();
+            final MonitorBind monitorBind = SdMonitorOperator.buildSdMainMonitorBind(sdMonitorParam, monitorId);
+            if (Objects.nonNull(monitorBind)) {
+                monitorBindDao.saveAndFlush(monitorBind);
+            }
+            appDefine = SdMonitorOperator.constructSdJobAndTag(sdMonitorParam, tags, appDefine);
+        }
+
+
         // set user optional metrics
         List<Metrics> metricsDefine = appDefine.getMetrics();
         Set<String> metricsDefineNamesSet = metricsDefine.stream()
@@ -447,6 +453,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void modifyMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
+        final Optional<Param> sdParam = SdMonitorOperator.getSdParam(params);
         long monitorId = monitor.getId();
         // Check to determine whether the monitor corresponding to the monitor id exists
         Optional<Monitor> queryOption = monitorDao.findById(monitorId);
@@ -472,6 +479,32 @@ public class MonitorServiceImpl implements MonitorService {
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             Job appDefine = appService.getAppDefine(monitor.getApp());
+            if (sdParam.isPresent()) {
+                // not allow to modify a sub monitor to main monitor
+                tags.stream()
+                        .filter(tag -> org.apache.commons.lang3.StringUtils.equals(tag.getName(), CommonConstants.TAG_AUTO_CREATED))
+                        .findFirst()
+                        .ifPresent(tag -> {
+                            final MonitorBind isSubMonitorBefore = monitorBindDao.findMonitorBindByBizIdAndMonitorIdAndType(Long.valueOf(tag.getTagValue()),
+                                    monitorId, CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR);
+                            if (Objects.nonNull(isSubMonitorBefore)) {
+                                throw new UnsupportedOperationException("Can not change a auto-created monitor to sd! ");
+                            }
+                        });
+
+                // create main monitor bind
+                final List<MonitorBind> mainMonitorBind = monitorBindDao.findMonitorBindByBizIdAndType(monitorId, CommonConstants.MONITOR_BIND_TYPE_SD_MAIN_MONITOR);
+                if (CollectionUtils.isEmpty(mainMonitorBind)) {
+                    monitorBindDao.saveAndFlush(Objects.requireNonNull(
+                            SdMonitorOperator.buildSdMainMonitorBind(
+                                    SdMonitorParam.builder().sdParam(sdParam.get()).build(), monitorId
+                            )));
+                }
+
+                appDefine = SdMonitorOperator.constructSdJob(appDefine, sdParam.get());
+                monitor.setTags(SdMonitorOperator.addMainMonitorTag(tags, sdParam.get()));
+            }
+
             if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
                 appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
             }
@@ -480,11 +513,9 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
-            if (params != null) {
-                List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
-                appDefine.setConfigmap(configmaps);
-            }
+            List<Configmap> configmaps = params.stream().map(param ->
+                    new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
+            appDefine.setConfigmap(configmaps);
             long newJobId;
             if (collector == null) {
                 newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
@@ -493,9 +524,11 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setJobId(newJobId);
         }
+
         try {
             detectMonitor(monitor, params, collector);
         } catch (Exception ignored) {}
+
         // After the update is successfully released, refresh the database
         try {
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitorId);
@@ -508,9 +541,13 @@ public class MonitorServiceImpl implements MonitorService {
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
-            if (params != null) {
-                paramDao.saveAll(params);
+
+            // delete all sub monitor if sd param is removed
+            final List<MonitorBind> subMonitorBindList = monitorBindDao.findMonitorBindByBizIdAndType(monitorId, CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR);
+            if (!CollectionUtils.isEmpty(subMonitorBindList) && sdParam.isEmpty()) {
+                deleteMonitors(subMonitorBindList.stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet()));
             }
+            paramDao.saveAllAndFlush(params);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
@@ -522,24 +559,21 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMonitor(long id) throws RuntimeException {
-        Optional<Monitor> monitorOptional = monitorDao.findById(id);
-        if (monitorOptional.isPresent()) {
-            Monitor monitor = monitorOptional.get();
-            monitorDao.deleteById(id);
-            // delete tag 删除监控对应的标签
-            tagService.deleteMonitorSystemTags(monitor);
-            paramDao.deleteParamsByMonitorId(id);
-            tagMonitorBindDao.deleteTagMonitorBindsByMonitorId(id);
-            alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
-            collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(id);
-            collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
-            applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
-        }
+        deleteMonitors(Sets.newHashSet(id));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMonitors(Set<Long> ids) throws RuntimeException {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+
+        final List<MonitorBind> allSubMonitorBind = monitorBindDao.findAllByBizIdInAndType(ids, CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR);
+        if (!CollectionUtils.isEmpty(allSubMonitorBind)) {
+            ids.addAll(allSubMonitorBind.stream().map(MonitorBind::getMonitorId).collect(Collectors.toSet()));
+        }
+
         List<Monitor> monitors = monitorDao.findMonitorsByIdIn(ids);
         if (!monitors.isEmpty()) {
             monitorDao.deleteAll(monitors);
@@ -548,8 +582,8 @@ public class MonitorServiceImpl implements MonitorService {
             tagMonitorBindDao.deleteTagMonitorBindsByMonitorIdIn(monitorIds);
             alertDefineBindDao.deleteAlertDefineMonitorBindsByMonitorIdIn(monitorIds);
             for (Monitor monitor : monitors) {
-                // delete tag 删除监控对应的标签
                 tagService.deleteMonitorSystemTags(monitor);
+                monitorBindDao.deleteByMonitorId(monitor.getId());
                 collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitor.getId());
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
@@ -593,6 +627,17 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void cancelManageMonitors(HashSet<Long> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+
+        final Set<Long> subMonitorIds = monitorBindDao.findAllByBizIdInAndType(ids, CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR).stream()
+                .map(MonitorBind::getMonitorId)
+                .collect(Collectors.toSet());
+        if (!CollectionUtils.isEmpty(subMonitorIds)) {
+            ids.addAll(subMonitorIds);
+        }
+
         // Update monitoring status Delete corresponding monitoring periodic task
         // The jobId is not deleted, and the jobId is reused again after the management is started.
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
@@ -616,43 +661,59 @@ public class MonitorServiceImpl implements MonitorService {
                         monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
                 .collect(Collectors.toList());
-        if (!unManagedMonitors.isEmpty()) {
-            for (Monitor monitor : unManagedMonitors) {
-                // Construct the collection task Job entity
-                Job appDefine = appService.getAppDefine(monitor.getApp());
-                if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                    appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-                }
-                appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
-                appDefine.setCyclic(true);
-                appDefine.setTimestamp(System.currentTimeMillis());
-                List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
-                List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
-                List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                        .collect(Collectors.toList());
-                paramDefaultValue.forEach(defaultVar -> {
-                    if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                        Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
-                        configmaps.add(configmap);
-                    }
-                });
-                appDefine.setConfigmap(configmaps);
-                // Issue collection tasks
-                Optional<CollectorMonitorBind> bindOptional =
-                        collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
-                String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElseGet(() -> null);
-                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
-                monitor.setJobId(newJobId);
-                applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
-                try {
-                    detectMonitor(monitor, params, collector);
-                } catch (Exception ignored) {}
-            }
-            monitorDao.saveAll(unManagedMonitors);
+        if (unManagedMonitors.isEmpty()) {
+            return;
         }
+
+        for (Monitor monitor : unManagedMonitors) {
+            // Construct the collection task Job entity
+            List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
+            final Optional<Param> sdParam = SdMonitorOperator.getSdParam(params);
+            Job appDefine = appService.getAppDefine(monitor.getApp());
+            if (sdParam.isPresent()) {
+                final List<MonitorBind> mainMonitorBind = monitorBindDao.findMonitorBindByBizIdAndType(monitor.getId(), CommonConstants.MONITOR_BIND_TYPE_SD_MAIN_MONITOR);
+                if (CollectionUtils.isEmpty(mainMonitorBind)) {
+                    monitorBindDao.saveAndFlush(Objects.requireNonNull(
+                            SdMonitorOperator.buildSdMainMonitorBind(
+                                    SdMonitorParam.builder().sdParam(sdParam.get()).build(), monitor.getId()
+                            )));
+                }
+
+                appDefine = SdMonitorOperator.constructSdJob(appDefine, sdParam.get());
+            }
+
+            if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+                appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+            }
+            appDefine.setMonitorId(monitor.getId());
+            appDefine.setInterval(monitor.getIntervals());
+            appDefine.setCyclic(true);
+            appDefine.setTimestamp(System.currentTimeMillis());
+            List<Configmap> configmaps = params.stream().map(param ->
+                    new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
+            List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
+                    .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                    .collect(Collectors.toList());
+            paramDefaultValue.forEach(defaultVar -> {
+                if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
+                    Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), CommonConstants.TYPE_STRING);
+                    configmaps.add(configmap);
+                }
+            });
+            appDefine.setConfigmap(configmaps);
+
+            // Issue collection tasks
+            Optional<CollectorMonitorBind> bindOptional =
+                    collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
+            String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElse(null);
+            long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+            monitor.setJobId(newJobId);
+            applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
+            try {
+                detectMonitor(monitor, params, collector);
+            } catch (Exception ignored) {}
+        }
+        monitorDao.saveAll(unManagedMonitors);
     }
 
     @Override
@@ -792,19 +853,6 @@ public class MonitorServiceImpl implements MonitorService {
                 .collect(Collectors.toList());
     }
 
-    private Optional<Param> getSdParam(List<Param> params) {
-        return params.stream()
-                .filter(param -> StringUtils.hasText(param.getField()) && StringUtils.hasText(param.getParamValue()))
-                .filter(param -> Objects.nonNull(ServiceDiscoveryProtocol.Type.getType(param.getField())))
-                .findFirst();
-    }
-
-    private List<Param> removeSdParam(List<Param> params) {
-        return params.stream()
-                .filter(param -> Objects.isNull(ServiceDiscoveryProtocol.Type.getType(param.getField())))
-                .collect(Collectors.toList());
-    }
-
     private List<CollectRep.MetricsData> collectOneTimeSdData(Monitor monitor, String collector, Param sdParam) {
         Long monitorId = monitor.getId();
         if (monitorId == null || monitorId == 0) {
@@ -817,7 +865,7 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setMonitorId(monitorId);
         appDefine.setCyclic(false);
         appDefine.setTimestamp(System.currentTimeMillis());
-        final Job sdJob = constructSdJob(appDefine, sdParam);
+        final Job sdJob = SdMonitorOperator.constructSdJob(appDefine, sdParam);
         List<CollectRep.MetricsData> collectRep;
         if (collector != null) {
             collectRep = collectJobScheduling.collectSyncJobData(sdJob, collector);
@@ -837,46 +885,6 @@ public class MonitorServiceImpl implements MonitorService {
         }
 
         return collectRep;
-    }
-
-    private Job constructSdJob(Job appDefine, Param sdParam) {
-        final Job sdJob = appDefine.clone();
-        List<Metrics> metricsList = Lists.newArrayList();
-        Map<String, String> i18n = Maps.newHashMap();
-        i18n.put("zh-CN", "监控目标");
-        i18n.put("en-US", "Monitor Target");
-        List<Metrics.Field> fields = Lists.newArrayList();
-        fields.add(Metrics.Field.builder()
-                        .field("host")
-                        .type(CommonConstants.TYPE_STRING)
-                        .i18n(constructSdFieldI18n("主机", "host"))
-                        .build());
-        fields.add(Metrics.Field.builder()
-                        .field("port")
-                        .type(CommonConstants.TYPE_STRING)
-                        .i18n(constructSdFieldI18n("端口", "port"))
-                        .build());
-        metricsList.add(Metrics.builder()
-                .name("target")
-                .fields(fields)
-                .i18n(i18n)
-                .protocol(DispatchConstants.PROTOCOL_HTTP_SD_V1)
-                .sdProtocol(ServiceDiscoveryProtocol.builder()
-                        .sdSource(sdParam.getParamValue())
-                        .type(ServiceDiscoveryProtocol.Type.getType(sdParam.getField()))
-                        .build())
-                .build());
-
-        sdJob.setMetrics(metricsList);
-        sdJob.setConfigmap(Lists.newArrayList(new Configmap(sdParam.getField(), sdParam.getParamValue(), sdParam.getType())));
-        return sdJob;
-    }
-
-    private Map<String, String> constructSdFieldI18n(String zh, String en) {
-        Map<String, String> i18n = Maps.newHashMap();
-        i18n.put("zh-CN", zh);
-        i18n.put("en-US", en);
-        return i18n;
     }
 
     private void detectMonitorDirectly(Monitor monitor, List<Param> params, String collector) {
@@ -917,8 +925,8 @@ public class MonitorServiceImpl implements MonitorService {
         }
     }
 
-    private void addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector,
-                                      String detectedHost, String detectedPort) {
+    @Override
+    public long addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector, SdMonitorParam sdMonitorParam) {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         // Init Set Default Tags: monitorId monitorName app
@@ -927,10 +935,17 @@ public class MonitorServiceImpl implements MonitorService {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
-        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(String.valueOf(monitor.getName())).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
+        MonitorBind monitorBind = null;
+
         // Construct the collection task Job entity
         Job appDefine = appService.getAppDefine(monitor.getApp());
+        if (Objects.nonNull(sdMonitorParam)) {
+            monitorBind = Objects.isNull(sdMonitorParam.getSdParam())
+                    ? SdMonitorOperator.buildSdSubMonitorBind(sdMonitorParam, monitorId, tags)
+                    : SdMonitorOperator.buildSdMainMonitorBind(sdMonitorParam, monitorId);
+
+            appDefine = SdMonitorOperator.constructSdJobAndTag(sdMonitorParam, tags, appDefine);
+        }
         if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
             appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
         }
@@ -938,7 +953,9 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setInterval(monitor.getIntervals());
         appDefine.setCyclic(true);
         appDefine.setTimestamp(System.currentTimeMillis());
-        resetMetricsCommonField(monitor, appDefine, detectedHost, detectedPort);
+        resetMetricsCommonField(monitor, appDefine, sdMonitorParam);
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_ID).tagValue(String.valueOf(monitorId)).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
+        tags.add(Tag.builder().name(CommonConstants.TAG_MONITOR_NAME).tagValue(monitor.getName()).type(CommonConstants.TAG_TYPE_AUTO_GENERATE).build());
 
         List<Configmap> configmaps = params.stream().map(param -> {
             param.setMonitorId(monitorId);
@@ -964,17 +981,23 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
             monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
-            monitorDao.save(monitor);
-            paramDao.saveAll(params);
+            monitorDao.saveAndFlush(monitor);
+            if (Objects.nonNull(monitorBind)) {
+                monitorBindDao.saveAndFlush(monitorBind);
+            }
+            paramDao.saveAllAndFlush(params);
         } catch (Exception e) {
             log.error("Error while adding monitor: {}", e.getMessage(), e);
             collectJobScheduling.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
+
+        return monitorId;
     }
 
-    private void resetMetricsCommonField(Monitor monitor, Job appDefine, String detectedHost, String detectedPort) {
-        if (org.apache.commons.lang3.StringUtils.isAnyBlank(detectedHost, detectedPort)) {
+    private void resetMetricsCommonField(Monitor monitor, Job appDefine, SdMonitorParam sdMonitorParam) {
+        if (Objects.isNull(sdMonitorParam)
+                || org.apache.commons.lang3.StringUtils.isAnyBlank(sdMonitorParam.getDetectedHost(), sdMonitorParam.getDetectedPort())) {
             return;
         }
 
@@ -988,8 +1011,8 @@ public class MonitorServiceImpl implements MonitorService {
                         try {
                             obj = field.get(metric);
                             if (obj instanceof CommonRequestProtocol protocol) {
-                                protocol.setHost(detectedHost);
-                                protocol.setPort(detectedPort);
+                                protocol.setHost(sdMonitorParam.getDetectedHost());
+                                protocol.setPort(sdMonitorParam.getDetectedPort());
                             }
                         } catch (IllegalAccessException exception) {
                             log.warn("Not such field {}", field.getName());
@@ -997,11 +1020,13 @@ public class MonitorServiceImpl implements MonitorService {
                     });
         }
 
-        monitor.setHost(detectedHost);
+        monitor.setHost(sdMonitorParam.getDetectedHost());
         monitor.getTags().add(Tag.builder()
                 .name(CommonConstants.TAG_MONITOR_HOST)
-                .tagValue(String.valueOf(detectedHost))
+                .tagValue(String.valueOf(sdMonitorParam.getDetectedHost()))
                 .type(CommonConstants.TAG_TYPE_AUTO_GENERATE)
                 .build());
+        monitor.setName(monitor.getApp().toUpperCase() + CommonConstants.LOCALE_SEPARATOR + sdMonitorParam.getDetectedHost()
+                + CommonConstants.LOCALE_SEPARATOR + SnowFlakeIdGenerator.generateId());
     }
 }

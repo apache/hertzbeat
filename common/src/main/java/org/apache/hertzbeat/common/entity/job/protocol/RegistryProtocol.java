@@ -17,19 +17,27 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
- * Discovery Client Connect Config
+ * Registry protocol
  */
 @Data
 @Builder
 @AllArgsConstructor
-public class ConnectConfig {
+@NoArgsConstructor
+public class RegistryProtocol implements CommonRequestProtocol {
     private String host;
-    private int port;
+    private String port;
+    private String discoveryClientTypeName;
+
+    public boolean isInvalid() {
+        return StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
+    }
 }

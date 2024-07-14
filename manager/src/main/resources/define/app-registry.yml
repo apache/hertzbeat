@@ -16,16 +16,16 @@
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
 category: service
 # The monitoring type eg: linux windows tomcat mysql aws...
-app: httpsd
+app: registry
 # The monitoring i18n name
 name:
-  zh-CN: HTTP SD监控
-  en-US: HTTP SD MONITORS
+  zh-CN: 注册中心监控
+  en-US: REGISTRY MONITORS
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 对 HTTP SD 的相关指标进行监测。
-  en-US: HertzBeat monitors related indicators of HTTP SD.
-  zh-TW: HertzBeat對HTTP SD相關名額進行監測。
+  zh-CN: HertzBeat对注册中心的相关指标进行监测。
+  en-US: HertzBeat monitors related indicators of REGISTRY.
+  zh-TW: HertzBeat對注冊中心相關名額進行監測。
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -89,8 +89,8 @@ metrics:
         i18n:
           zh-CN: 响应时间
           en-US: Response Time
-    protocol: httpsd
-    httpsd:
+    protocol: registry
+    registry:
       host: ^_^host^_^
       port: ^_^port^_^
       discoveryClientTypeName: ^_^discoveryClientTypeName^_^
@@ -127,8 +127,8 @@ metrics:
         i18n:
           zh-CN: 服务健康状态
           en-US: Health Status
-    protocol: httpsd
-    httpsd:
+    protocol: registry
+    registry:
       host: ^_^host^_^
       port: ^_^port^_^
       discoveryClientTypeName: ^_^discoveryClientTypeName^_^

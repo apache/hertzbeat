@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.sd.http;
+package org.apache.hertzbeat.collector.collect.sd;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Lists;
@@ -111,6 +111,6 @@ public class HttpSdCollectImpl extends AbstractCollect {
 
     @Override
     public String supportProtocol() {
-        return DispatchConstants.PROTOCOL_HTTP_SD_V1;
+        return DispatchConstants.PROTOCOL_HTTP_SD;
     }
 }

@@ -117,6 +117,10 @@ public class CommonProperties {
          */
         private String metricsDataTopic;
         /**
+         * service discovery data topic
+         */
+        private String serviceDiscoveryDataTopic;
+        /**
          * alerts data topic
          */
         private String alertsDataTopic;
@@ -143,6 +147,14 @@ public class CommonProperties {
 
         public void setAlertsDataTopic(String alertsDataTopic) {
             this.alertsDataTopic = alertsDataTopic;
+        }
+
+        public String getServiceDiscoveryDataTopic() {
+            return serviceDiscoveryDataTopic;
+        }
+
+        public void setServiceDiscoveryDataTopic(String serviceDiscoveryDataTopic) {
+            this.serviceDiscoveryDataTopic = serviceDiscoveryDataTopic;
         }
     }
 

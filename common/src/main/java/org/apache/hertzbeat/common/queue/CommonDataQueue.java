@@ -52,7 +52,14 @@ public interface CommonDataQueue {
      * @throws InterruptedException when poll timeout
      */
     CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException;
-    
+
+    /**
+     * poll service discovery data
+     * @return metrics data
+     * @throws InterruptedException when poll timeout
+     */
+    CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException;
+
     /**
      * offer alert data
      * @param alert alert data
@@ -64,4 +71,10 @@ public interface CommonDataQueue {
      * @param metricsData metrics data
      */
     void sendMetricsData(CollectRep.MetricsData metricsData);
+
+    /**
+     * send service discovery data
+     * @param metricsData service discovery data
+     */
+    void sendServiceDiscoveryData(CollectRep.MetricsData metricsData);
 }

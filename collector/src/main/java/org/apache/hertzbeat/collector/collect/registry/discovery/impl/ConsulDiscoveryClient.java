@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.impl;
+package org.apache.hertzbeat.collector.collect.registry.discovery.impl;
 
 import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.agent.model.Check;
@@ -28,11 +28,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ConnectConfig;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClient;
+import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ConnectConfig;
+import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServiceInstance;
+import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 
 /**
  * DiscoveryClient impl of Consul
@@ -41,10 +41,10 @@ public class ConsulDiscoveryClient implements DiscoveryClient {
     private ConsulClient consulClient;
 
     @Override
-    public ConnectConfig buildConnectConfig(HttpsdProtocol httpsdProtocol) {
+    public ConnectConfig buildConnectConfig(RegistryProtocol registryProtocol) {
         return ConnectConfig.builder()
-                .host(httpsdProtocol.getHost())
-                .port(Integer.parseInt(httpsdProtocol.getPort()))
+                .host(registryProtocol.getHost())
+                .port(Integer.parseInt(registryProtocol.getPort()))
                 .build();
     }
 
