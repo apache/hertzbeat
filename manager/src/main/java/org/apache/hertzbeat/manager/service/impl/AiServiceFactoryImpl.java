@@ -26,22 +26,28 @@ import javax.annotation.PostConstruct;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 /**
  * AI bean factory
  */
 @Component
+@ConditionalOnProperty(prefix = "ai", name = "type")
 public class AiServiceFactoryImpl {
 
-    @Autowired
+    @Autowired(required = false)
     private List<AiService> aiService;
 
     private Map<AiTypeEnum, AiService> aiServiceFactoryMap = new HashMap<>();
 
     @PostConstruct
     public void init() {
+        if (CollectionUtils.isEmpty(aiService)) {
+            return;
+        }
         aiServiceFactoryMap = aiService.stream()
                 .collect(Collectors.toMap(AiService::getType, Function.identity()));
     }
@@ -49,7 +55,7 @@ public class AiServiceFactoryImpl {
     public AiService getAiServiceImplBean(String type) {
         Assert.notNull(type, "type is null");
         AiTypeEnum typeByName = AiTypeEnum.getTypeByName(type);
-        Assert.notNull(typeByName, "The current type is not supported");
+        Assert.notNull(typeByName, "The current type is not supported,please check that your type value is consistent with the documentation on the website");
         AiService aiServiceImpl = aiServiceFactoryMap.get(typeByName);
         Assert.notNull(aiServiceImpl, "No bean for current type found");
         return aiServiceImpl;
