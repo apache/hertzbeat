@@ -103,6 +103,7 @@ public class SdMonitorOperator {
 
     public static Job constructSdJob(Job appDefine, Param sdParam) {
         final Job sdJob = appDefine.clone();
+        final ServiceDiscoveryProtocol.Type sdType = ServiceDiscoveryProtocol.Type.getType(sdParam.getField());
         List<Metrics> metricsList = Lists.newArrayList();
         Map<String, String> i18n = Maps.newHashMap();
         i18n.put("zh-CN", "监控目标");
@@ -122,10 +123,10 @@ public class SdMonitorOperator {
                 .name("target")
                 .fields(fields)
                 .i18n(i18n)
-                .protocol("httpsd")
+                .protocol(sdType.getProtocolName())
                 .sdProtocol(ServiceDiscoveryProtocol.builder()
                         .sdSource(sdParam.getParamValue())
-                        .type(ServiceDiscoveryProtocol.Type.getType(sdParam.getField()))
+                        .type(sdType)
                         .build())
                 .build());
 

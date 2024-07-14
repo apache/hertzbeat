@@ -47,11 +47,21 @@ public class ServiceDiscoveryProtocol {
      * sd Type
      */
     public enum Type {
-        HTTP_SD,
+        HTTP_SD("httpsd"),
         ;
+
+        private final String protocolName;
+
+        Type(String protocolName) {
+            this.protocolName = protocolName;
+        }
 
         public static Type getType(String str) {
             return Arrays.stream(Type.values()).filter(t -> t.toString().equalsIgnoreCase(str)).findFirst().orElse(null);
+        }
+
+        public String getProtocolName() {
+            return protocolName;
         }
     }
 }
