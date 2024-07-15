@@ -23,13 +23,16 @@ import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
+import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.AliAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.AliAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -43,14 +46,12 @@ import reactor.core.publisher.Flux;
  * alibaba Ai
  */
 @Service("AlibabaAiServiceImpl")
+@ConditionalOnProperty(prefix = "ai", name = "type", havingValue = "alibabaAi")
 @Slf4j
 public class AlibabaAiServiceImpl implements AiService {
 
-    @Value("${aiConfig.model:qwen-turbo}")
-    private String model;
-    @Value("${aiConfig.api-key}")
-    private String apiKey;
-
+    @Autowired
+    private AiProperties aiProperties;
 
     private WebClient webClient;
 
@@ -59,7 +60,7 @@ public class AlibabaAiServiceImpl implements AiService {
         this.webClient = WebClient.builder()
                 .baseUrl(AiConstants.AliAiConstants.URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + aiProperties.getApiKey())
                 //sse
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM_VALUE)
                 .exchangeStrategies(ExchangeStrategies.builder()
@@ -74,45 +75,54 @@ public class AlibabaAiServiceImpl implements AiService {
     }
 
     @Override
-    public Flux<String> requestAi(String text) {
-        checkParam(text, apiKey);
+    public Flux<ServerSentEvent<String>> requestAi(String text) {
+        checkParam(text, aiProperties.getModel(), aiProperties.getApiKey());
+        try {
+            AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
+                    .model(aiProperties.getModel())
+                    .input(AliAiRequestParamDTO.Input.builder()
+                            .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
+                            .build())
+                    .parameters(AliAiRequestParamDTO.Parameters.builder()
+                            .maxTokens(AiConstants.AliAiConstants.MAX_TOKENS)
+                            .temperature(AiConstants.AliAiConstants.TEMPERATURE)
+                            .enableSearch(true)
+                            .resultFormat("message")
+                            .incrementalOutput(true)
+                            .build())
+                    .build();
 
-        AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
-                .model(model)
-                .input(AliAiRequestParamDTO.Input.builder()
-                        .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
-                        .build())
-                .parameters(AliAiRequestParamDTO.Parameters.builder()
-                        .maxTokens(AiConstants.AliAiConstants.MAX_TOKENS)
-                        .temperature(AiConstants.AliAiConstants.TEMPERATURE)
-                        .enableSearch(true)
-                        .resultFormat("message")
-                        .incrementalOutput(true)
-                        .build())
-                .build();
 
-
-        return webClient.post()
-                .body(BodyInserters.fromValue(aliAiRequestParamDTO))
-                .retrieve()
-                .bodyToFlux(AliAiResponse.class)
-                .map(aliAiResponse -> {
-                    if (Objects.nonNull(aliAiResponse)) {
-                        List<AliAiResponse.Choice> choices = aliAiResponse.getOutput().getChoices();
-                        if (CollectionUtils.isEmpty(choices)) {
-                            return "";
+            return webClient.post()
+                    .body(BodyInserters.fromValue(aliAiRequestParamDTO))
+                    .retrieve()
+                    .bodyToFlux(AliAiResponse.class)
+                    .map(aliAiResponse -> {
+                        if (Objects.nonNull(aliAiResponse)) {
+                            List<AliAiResponse.Choice> choices = aliAiResponse.getOutput().getChoices();
+                            if (CollectionUtils.isEmpty(choices)) {
+                                return ServerSentEvent.<String>builder().build();
+                            }
+                            String content = choices.get(0).getMessage().getContent();
+                            return ServerSentEvent.<String>builder()
+                                    .data(content)
+                                    .build();
                         }
-                        return choices.get(0).getMessage().getContent();
-                    }
-                    return "";
-                })
-                .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+                        return ServerSentEvent.<String>builder().build();
+                    })
+                    .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+
+        } catch (Exception e) {
+            log.info("KimiAiServiceImpl.requestAi exception:{}", e.toString());
+            throw e;
+        }
 
     }
 
 
-    private void checkParam(String param, String apiKey) {
+    private void checkParam(String param, String apiKey, String model) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(apiKey, "aiConfig.api-key is null");
+        Assert.notNull(param, "model is null");
+        Assert.notNull(apiKey, "ai.api-key is null");
     }
 }
