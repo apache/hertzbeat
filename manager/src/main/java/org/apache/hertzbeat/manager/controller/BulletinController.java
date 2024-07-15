@@ -26,9 +26,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -46,8 +44,8 @@ import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.util.Pair;
 import org.apache.hertzbeat.manager.service.BulletinService;
+import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -55,7 +53,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -78,6 +75,9 @@ public class BulletinController {
 
     @Autowired
     private RealTimeDataReader realTimeDataReader;
+
+    @Autowired
+    private MonitorService monitorService;
     /**
      * add a new bulletin
      */
@@ -136,7 +136,8 @@ public class BulletinController {
     }
 
     @GetMapping("/metrics/{id}")
-    @Operation(summary = "Query Bulletin Real Time Metrics Data", description = "Query Bulletin real-time metrics data of monitoring indicators")
+    @Operation(summary = "Query Bulletin Real Time Metrics Data",
+            description = "Query Bulletin real-time metrics data of monitoring indicators")
     public ResponseEntity<Message<List<MetricsData>>> getMetricsData(
             @Parameter(description = "Bulletin Id", example = "402372614668544")
             @PathVariable Long id) {
@@ -196,56 +197,51 @@ public class BulletinController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "real time store not available"));
         }
         List<Bulletin> bulletinList = bulletinService.listBulletin();
-        List<BulletinMetricsData> dataList = new ArrayList<>();
+        List<BulletinMetricsData> da = new ArrayList<>();
         for (Bulletin bulletin : bulletinList) {
-            List<String> metricList = bulletin.getMetrics();
-            Map<String, CollectRep.MetricsData> metricsDataMap = metricList.stream()
-                    .collect(Collectors.toMap(
-                            metric -> metric,
-                            metric -> metric.split("-")[0],
-                            (existing, replacement) -> existing
-                    ))
-                    .values().stream()
-                    .distinct()
-                    .collect(Collectors.toMap(
-                            metric -> metric,
-                            metric -> realTimeDataReader.getCurrentMetricsData(bulletin.getMonitorId(), metric)
-                    ));
+            BulletinMetricsData.BulletinMetricsDataBuilder dataBuilder = BulletinMetricsData.builder();
+            dataBuilder.id(bulletin.getId()).name(bulletin.getName()).app(bulletin.getApp());
 
+            BulletinMetricsData.Content.ContentBuilder contentBuilder = BulletinMetricsData.Content.builder();
+            contentBuilder.monitorId(bulletin.getMonitorId()).host(monitorService.getMonitor(bulletin.getMonitorId()).getHost());
 
+            BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder();
+            List<BulletinMetricsData.Metric> metrics = new ArrayList<>();
+            for (String metric : bulletin.getMetrics()) {
+                metricBuilder.name(metric.split("-")[0]);
+                List<BulletinMetricsData.Field> fields = new ArrayList<>();
+                CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(bulletin.getMonitorId(), metric.split("-")[0]);
 
-            for (Map.Entry<String, CollectRep.MetricsData> entry : metricsDataMap.entrySet()) {
-                CollectRep.MetricsData storageData = entry.getValue();
+                for (CollectRep.Field field : currentMetricsData.getFieldsList()) {
+                    fields.add(BulletinMetricsData.Field.builder().key(field.getName()).unit(field.getUnit()).build());
+                }
 
-                BulletinMetricsData.BulletinMetricsDataBuilder dataBuilder = BulletinMetricsData.builder();
-                dataBuilder.app(storageData.getApp());
-
-                BulletinMetricsData.Content.ContentBuilder contentBuilder = BulletinMetricsData.Content.builder();
-                BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder();
-
-                contentBuilder.id(storageData.getId());
-
-                List<BulletinMetricsData.Metric> metrics = storageData.getFieldsList().stream()
-                        .map(tmpField -> metricBuilder
-                                .type(entry.getKey().split("-")[0])
-                                .name(tmpField.getName())
-                                .unit(tmpField.getUnit())
-                                .build())
-                        .collect(Collectors.toList());
-
-                for (CollectRep.ValueRow valueRow : storageData.getValuesList()) {
-                    for (int i = 0; i < metrics.size(); i++) {
-                        BulletinMetricsData.Metric metric = metrics.get(i);
+                List<CollectRep.ValueRow> valuesList = currentMetricsData.getValuesList();
+                List<BulletinMetricsData.Field> metricFields = new ArrayList<>();
+                for (CollectRep.ValueRow valueRow : valuesList) {
+                    for (int i = 0; i < fields.size(); i++) {
+                        CollectRep.Field field = currentMetricsData.getFieldsList().get(i);
                         String origin = valueRow.getColumns(i);
-                        metric.setValue(origin);
+                        BulletinMetricsData.Field metricField = BulletinMetricsData.Field.builder()
+                                .key(field.getName())
+                                .unit(field.getUnit())
+                                .value(origin)
+                                .build();
+                        metricFields.add(metricField);
                     }
                 }
-                contentBuilder.metrics(metrics);
-                BulletinMetricsData bulletinMetricsData = dataBuilder.content(contentBuilder.build()).build();
-                dataList.add(bulletinMetricsData);
+                metricBuilder.fields(metricFields);
+                metrics.add(metricBuilder.build());
             }
+            contentBuilder.metrics(metrics);
+            dataBuilder.content(contentBuilder.build());
+            da.add(dataBuilder.build());
+        }
+
+        return ResponseEntity.ok(Message.success(da));
     }
-        return ResponseEntity.ok(Message.success(dataList));
-    }
+
+
+
 
 }

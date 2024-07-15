@@ -38,6 +38,7 @@ import { AppDefineService } from '../../service/app-define.service';
 import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
+import {$} from "protractor";
 
 @Component({
   selector: 'app-bulletin',
@@ -60,7 +61,7 @@ export class BulletinComponent implements OnInit {
   pageSize: number = 8;
   total: number = 0;
   defines!: BulletinDefine[];
-  tabDefines!: BulletinDefine[];
+  tabDefines!: any[];
   tableLoading: boolean = true;
   checkedDefineIds = new Set<number>();
   isSwitchExportTypeModalVisible = false;
@@ -73,25 +74,15 @@ export class BulletinComponent implements OnInit {
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
   loading: boolean = false;
-  listOfData: any[] = [];
-  listOfColumns: Array<{ key: string; title: string }> = [];
-  responseData: any[] = [];
-  metrics: string[] = [];
+  rawData: any[] = [];
 
-  id: any;
-  app: any;
-  metric: any;
-  fields: any;
-  valueRows: any;
   ngOnInit(): void {
     this.loadBulletinDefineTable();
-    this.tabDefines = this.defines;
-    this.loadData(402372614668544);
+    this.loadData();
   }
 
   sync() {
     this.loadBulletinDefineTable();
-    this.tabDefines = this.defines;
   }
 
   loadBulletinDefineTable() {
@@ -656,41 +647,58 @@ export class BulletinComponent implements OnInit {
     });
   }
 
-  loadData(bulletinId: number) {
+  loadData() {
     this.loading = true;
-    let metricData$ = this.bulletinDefineSvc
-      .getMonitorMetricsData(bulletinId)
+    const metricData$ = this.bulletinDefineSvc
+      .getAllMonitorMetricsData()
       .pipe(finalize(() => (this.loading = false)))
       .subscribe(
         message => {
           metricData$.unsubscribe();
           if (message.code === 0 && message.data) {
-            this.responseData = message.data;
-            this.responseData.forEach((item: any) => {
-              const { id, app, metrics, fields, valueRows } = message.data;
-              this.id = id;
-              this.app = app;
-              this.metric = metrics;
-              this.fields = fields;
-              this.valueRows = valueRows;
+            this.rawData = message.data;
+            const groupedData: any = {};
 
-              this.listOfColumns.push(
-                fields.map((field: { name: string; unit: any }) => ({
-                  key: field.name,
-                  title: field.name.toUpperCase() + (field.unit ? ` (${field.unit})` : '')
-                }))
-              );
+            this.rawData.forEach(item => {
+              const name = item.name;
+              if (!groupedData[name]) {
+                groupedData[name] = {
+                  bulletinColumn: {},
+                  data: []
+                };
+              }
 
-              this.listOfData.push(
-                valueRows.map((row: { labels: any; values: any[] }) => {
-                  const rowData: any = { ...row.labels };
-                  row.values.forEach((value, index) => {
-                    rowData[fields[index].name] = value.origin;
-                  });
-                  return rowData;
-                })
-              );
+              const transformedItem: any = {
+                id: item.id,
+                app: item.app,
+                monitorId: item.content.monitorId,
+                host: item.content.host
+              };
+
+              item.content.metrics.forEach((metric: { name: string | number; fields: { key: any; value: any; }[]; }) => {
+                if (!groupedData[name].bulletinColumn[metric.name]) {
+                  groupedData[name].bulletinColumn[metric.name] = new Set<string>();
+                }
+                metric.fields.forEach((field: { key: any; value: any; }) => {
+                  const key = `${metric.name}_${field.key}`;
+                  transformedItem[key] = field.value;
+                  groupedData[name].bulletinColumn[metric.name].add(field.key);
+                });
+              });
+
+              groupedData[name].data.push(transformedItem);
             });
+            console.log(groupedData);
+
+            this.tabDefines = Object.keys(groupedData).map(name => ({
+              name,
+              bulletinColumn: groupedData[name].bulletinColumn,
+              data: groupedData[name].data,
+              pageIndex: 1,
+              pageSize: 10,
+              total: groupedData[name].data.length
+            }));
+            console.log(this.tabDefines);
 
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${message.msg}`, '');
@@ -702,5 +710,8 @@ export class BulletinComponent implements OnInit {
           metricData$.unsubscribe();
         }
       );
+  }
+  getMetricNames(bulletinTab: any): string[] {
+    return Object.keys(bulletinTab.bulletinColumn);
   }
 }

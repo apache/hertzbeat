@@ -22,6 +22,7 @@ import {TagItem} from "./NoticeRule";
 
 export class BulletinDefine {
   id!: number;
+  name!: string;
   monitorIds!: number[];
   app!: string;
   metrics!: string[];

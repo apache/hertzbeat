@@ -83,5 +83,9 @@ export class BulletinDefineService {
     return this.http.get<Message<any>>(`${bulletin_define_uri}/metrics/${bulletinId}`);
   }
 
+  public getAllMonitorMetricsData(): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${bulletin_define_uri}/metrics`);
+  }
+
 
 }

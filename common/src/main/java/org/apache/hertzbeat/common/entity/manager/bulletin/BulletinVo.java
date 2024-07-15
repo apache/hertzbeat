@@ -38,6 +38,11 @@ public class BulletinVo {
     private Long id;
 
     /**
+     * Bulletin name
+     */
+    private String name;
+
+    /**
      * Bulletin metrics
      */
     private List<String> metrics;

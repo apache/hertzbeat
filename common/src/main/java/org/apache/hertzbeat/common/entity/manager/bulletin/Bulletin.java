@@ -60,6 +60,9 @@ public class Bulletin {
     @Schema(description = "Bulletin ID", example = "1")
     private Long id;
 
+    @Schema(description = "Bulletin Name", example = "Bulletin1", accessMode = READ_WRITE)
+    private String name;
+
     @Schema(description = "Monitor ID", example = "1")
     @Column(name = "monitor_id")
     private Long monitorId;
@@ -69,6 +72,7 @@ public class Bulletin {
 
     @Schema(description = "Monitor Metrics", example = "[\"cpu\", \"memory\"]")
     @Convert(converter = JsonStringListAttributeConverter.class)
+    @Column(length = 4096)
     private List<String> metrics;
 
     @Schema(description = "Tags(status:success,env:prod)", example = "{name: key1, value: value1}",

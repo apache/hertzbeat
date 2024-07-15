@@ -26,8 +26,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.dto.Field;
-import org.apache.hertzbeat.common.entity.dto.ValueRow;
 
 /**
  * Bulletin Metrics Data
@@ -38,6 +36,12 @@ import org.apache.hertzbeat.common.entity.dto.ValueRow;
 @NoArgsConstructor
 @Schema(description = "Bulletin Metrics Data")
 public class BulletinMetricsData {
+
+    @Schema(title = "Bulletin ID")
+    private Long id;
+
+    @Schema(title = "Bulletin Name")
+    private String name;
 
     @Schema(title = "Monitor Type")
     private String app;
@@ -51,7 +55,7 @@ public class BulletinMetricsData {
     @NoArgsConstructor
     public static class Content{
         @Schema(title = "Monitor ID")
-        private Long id;
+        private Long monitorId;
 
         @Schema(title = "Monitor IP")
         private String host;
@@ -66,16 +70,28 @@ public class BulletinMetricsData {
     @NoArgsConstructor
     @Schema(description = "Metrics Data")
     public static class Metric{
-        @Schema(title = "Metric type")
-        private String type;
 
-        @Schema(title = "Metric name")
+        @Schema(title = "Metric type")
         private String name;
 
-        @Schema(title = "Metric unit")
+        @Schema(title = "Metric fields")
+        private List<Field> fields;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Schema(description = "Metrics field")
+    public static class Field{
+
+        @Schema(title = "Field name")
+        private String key;
+
+        @Schema(title = "Field unit")
         private String unit;
 
-        @Schema(title = "Metric value")
+        @Schema(title = "Field value")
         private String value;
     }
 }

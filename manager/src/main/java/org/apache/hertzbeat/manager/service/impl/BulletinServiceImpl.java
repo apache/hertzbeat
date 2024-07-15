@@ -93,6 +93,7 @@ public class BulletinServiceImpl implements BulletinService {
         try {
             List<Bulletin> bulletins = bulletinDto.getMonitorIds().stream().map(monitorId -> {
                 Bulletin bulletin = new Bulletin();
+                bulletin.setName(bulletinDto.getName());
                 bulletin.setId(SnowFlakeIdGenerator.generateId());
                 bulletin.setMetrics(bulletinDto.getMetrics());
                 bulletin.setMonitorId(monitorId);
@@ -122,6 +123,7 @@ public class BulletinServiceImpl implements BulletinService {
             voList = bulletinPage.stream().map(bulletin -> {
                 BulletinVo vo = new BulletinVo();
                 vo.setId(bulletin.getId());
+                vo.setName(bulletin.getName());
                 vo.setTags(bulletin.getTags());
                 vo.setMetrics(bulletin.getMetrics());
                 vo.setMonitorId(bulletin.getMonitorId());

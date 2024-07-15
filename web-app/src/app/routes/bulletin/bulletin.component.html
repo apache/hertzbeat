@@ -43,39 +43,59 @@
 </app-toolbar>
 
 <nz-tabset nzType="card">
-  <nz-tab *ngFor="let d of this.tabDefines" [nzTitle]="d.app">
+  <nz-tab *ngFor="let bulletinTab of tabDefines" [nzTitle]="bulletinTab.name">
     <nz-table
-      *ngIf="d.app === this.app"
+      *ngIf="bulletinTab.data.length"
       #fixedTable
-      [nzData]="listOfData"
-      [nzPageIndex]="pageIndex"
-      [nzPageSize]="pageSize"
-      [nzTotal]="total"
+      [nzData]="bulletinTab.data.slice((bulletinTab.pageIndex - 1) * bulletinTab.pageSize, bulletinTab.pageIndex * bulletinTab.pageSize)"
+      [nzPageIndex]="bulletinTab.pageIndex"
+      [nzPageSize]="bulletinTab.pageSize"
+      [nzTotal]="bulletinTab.total"
       nzFrontPagination="false"
       [nzLoading]="tableLoading"
       nzShowSizeChanger
       [nzShowTotal]="rangeTemplate"
-      [nzPageSizeOptions]="[8, 15, 25]"
+      [nzPageSizeOptions]="[10, 20, 50, 100]"
       (nzQueryParams)="onTablePageChange($event)"
       nzShowPagination="true"
-      [nzScroll]="{ x: '1240px' }"
+      [nzScroll]="{ x: '+' +
+       'auto' }"
+      nzBordered
     >
       <thead>
-        <tr>
-          <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
-          <ng-container *ngFor="let column of listOfColumns">
-            <th>{{ column.title }}</th>
+      <tr>
+        <th nzAlign="center" nzLeft nzWidth="3%" rowspan="2">
+          <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
+        </th>
+        <th nzAlign="center" nzWidth="7%" rowspan="2">App</th>
+        <th nzAlign="center" nzWidth="7%" rowspan="2">Host</th>
+        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+          <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].size">{{ metricName }}</th>
+        </ng-container>
+      </tr>
+      <tr>
+        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+          <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+            <th nzAlign="center">{{ field }}</th>
           </ng-container>
-          <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
-        </tr>
+        </ng-container>
+        <th nzAlign="center" nzWidth="15%" rowspan="2">{{ 'common.edit' | i18n }}</th>
+      </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let data of fixedTable.data">
-          <td nzAlign="center" nzLeft [nzChecked]="checkedDefineIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
-          <ng-container *ngFor="let column of listOfColumns">
-            <td>{{ data[column.key] }}</td>
+      <tr *ngFor="let data of fixedTable.data">
+        <td nzAlign="center" nzLeft>
+          <label nz-checkbox [ngModel]="checkedDefineIds.has(data.id)" (ngModelChange)="onItemChecked(data.id, $event)"></label>
+        </td>
+        <td nzAlign="center">{{ data.app }}</td>
+        <td nzAlign="center">{{ data.host }}</td>
+        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+          <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+            <td nzAlign="center">{{ data[metricName + '_' + field] }}</td>
           </ng-container>
-          <td nzAlign="center">
+        </ng-container>
+        <td nzAlign="center">
+          <div style="display: flex; justify-content: center; gap: 8px;">
             <button
               nz-button
               nzType="primary"
@@ -95,16 +115,28 @@
             >
               <i nz-icon nzType="delete" nzTheme="outline"></i>
             </button>
-          </td>
-          <ng-container *ngFor="let metric of d.metrics">
-            <td nzAlign="center"></td>
-          </ng-container>
-        </tr>
+          </div>
+        </td>
+      </tr>
       </tbody>
     </nz-table>
-    <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+    <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ bulletinTab.total }} </ng-template>
   </nz-tab>
 </nz-tabset>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- new bulletin modal -->
 <nz-modal
@@ -119,7 +151,14 @@
   <div *nzModalContent class="-inner-content">
     <form nz-form #defineForm="ngForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'dropdown.label' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="textInput" nzRequired="true">{{ 'bulletin.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input nz-input placeholder="{{ 'bulletin.name.placeholder' | i18n }}" [(ngModel)]="define.name" name="inputText" required />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.type' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             nzAllowClear
@@ -135,8 +174,9 @@
           </nz-select>
         </nz-form-control>
       </nz-form-item>
+
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'dropdown.label' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-select
             nzAllowClear
@@ -152,8 +192,9 @@
           </nz-select>
         </nz-form-control>
       </nz-form-item>
+
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'dropdown.label' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.metrics' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <nz-transfer
             [nzDataSource]="hierarchies"
@@ -173,12 +214,12 @@
                 (nzCheckBoxChange)="treeCheckBoxChange($event, onItemSelect)"
               >
                 <ng-template let-node>
-                  <span
-                    (click)="checkBoxChange(node, onItemSelect)"
-                    class="ant-tree-node-content-wrapper ant-tree-node-content-wrapper-open"
-                  >
-                    {{ node.title }}
-                  </span>
+                <span
+                  (click)="checkBoxChange(node, onItemSelect)"
+                  class="ant-tree-node-content-wrapper ant-tree-node-content-wrapper-open"
+                >
+                  {{ node.title }}
+                </span>
                 </ng-template>
               </nz-tree>
             </ng-template>
@@ -187,4 +228,3 @@
       </nz-form-item>
     </form>
   </div>
-</nz-modal>

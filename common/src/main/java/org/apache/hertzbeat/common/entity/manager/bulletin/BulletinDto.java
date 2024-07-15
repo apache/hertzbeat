@@ -18,16 +18,16 @@
 
 package org.apache.hertzbeat.common.entity.manager.bulletin;
 
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Size;
 import java.util.List;
 import lombok.Data;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 
 @Data
 public class BulletinDto {
+
+    /**
+     * Bulletin name
+     */
+    private String name;
 
     /**
      * Monitor type eg: jvm, tomcat
