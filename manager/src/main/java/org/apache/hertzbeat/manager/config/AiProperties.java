@@ -15,52 +15,40 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.manager.config;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 /**
- * nginx protocol
+ * AiProperties
  */
+@Configuration
+@ConfigurationProperties(prefix = "ai")
 @Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class NginxProtocol {
-    /**
-     * nginx Host ip address or domain name
-     */
-    private String host;
+public class AiProperties {
 
     /**
-     * NGINX HOST PORT
+     * AI Type: zhiPu, alibabaAi, kimiAi, sparkDesk
      */
-    private String port;
+    private String type;
 
     /**
-     * TIME OUT PERIOD
+     * Model name: glm-4, qwen-turboo, moonshot-v1-8k, generalv3.5
      */
-    private String timeout;
+    private String model;
 
     /**
-     * Monitor module page url
+     * API key
      */
-    private String url;
+    private String apiKey;
 
     /**
-     * Whether nginx uses link encryption ssl/tls, i.e. http or https
+     * At present, only IFLYTEK large model needs to be filled in
      */
-    private String ssl = "false";
+    private String apiSecret;
 
-    /**
-     * Validates the relevant parameters
-     * @return is invalid true or false
-     */
-    public boolean isInValid() {
-        return StringUtils.isAnyBlank(host, port, timeout);
-    }
+
+
 }
