@@ -23,11 +23,12 @@ import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
+import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.AliAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.AliAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -45,15 +46,12 @@ import reactor.core.publisher.Flux;
  * alibaba Ai
  */
 @Service("AlibabaAiServiceImpl")
-@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "ai", name = "type", havingValue = "alibabaAi")
 @Slf4j
 public class AlibabaAiServiceImpl implements AiService {
 
-    @Value("${ai.model:qwen-turbo}")
-    private String model;
-    @Value("${ai.api-key}")
-    private String apiKey;
-
+    @Autowired
+    private AiProperties aiProperties;
 
     private WebClient webClient;
 
@@ -62,7 +60,7 @@ public class AlibabaAiServiceImpl implements AiService {
         this.webClient = WebClient.builder()
                 .baseUrl(AiConstants.AliAiConstants.URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + aiProperties.getApiKey())
                 //sse
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.TEXT_EVENT_STREAM_VALUE)
                 .exchangeStrategies(ExchangeStrategies.builder()
@@ -78,10 +76,10 @@ public class AlibabaAiServiceImpl implements AiService {
 
     @Override
     public Flux<ServerSentEvent<String>> requestAi(String text) {
-        checkParam(text, apiKey);
+        checkParam(text, aiProperties.getModel(), aiProperties.getApiKey());
         try {
             AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
-                    .model(model)
+                    .model(aiProperties.getModel())
                     .input(AliAiRequestParamDTO.Input.builder()
                             .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
                             .build())
@@ -122,8 +120,9 @@ public class AlibabaAiServiceImpl implements AiService {
     }
 
 
-    private void checkParam(String param, String apiKey) {
+    private void checkParam(String param, String apiKey, String model) {
         Assert.notNull(param, "text is null");
+        Assert.notNull(param, "model is null");
         Assert.notNull(apiKey, "ai.api-key is null");
     }
 }

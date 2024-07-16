@@ -22,11 +22,12 @@ import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
+import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -42,15 +43,12 @@ import reactor.core.publisher.Flux;
  * Kimi Ai
  */
 @Service("KimiAiServiceImpl")
-@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "ai", name = "type", havingValue = "kimiAi")
 @Slf4j
 public class KimiAiServiceImpl implements AiService {
 
-    @Value("${ai.model:moonshot-v1-8k}")
-    private String model;
-
-    @Value("${ai.api-key}")
-    private String apiKey;
+    @Autowired
+    private AiProperties aiProperties;
 
     private WebClient webClient;
 
@@ -59,7 +57,7 @@ public class KimiAiServiceImpl implements AiService {
         this.webClient = WebClient.builder()
                 .baseUrl(AiConstants.KimiAiConstants.URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + aiProperties.getApiKey())
                 .exchangeStrategies(ExchangeStrategies.builder()
                         .codecs(item -> item.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                         .build())
@@ -74,9 +72,9 @@ public class KimiAiServiceImpl implements AiService {
     @Override
     public Flux<ServerSentEvent<String>> requestAi(String text) {
         try {
-            checkParam(text, apiKey);
+            checkParam(text, aiProperties.getModel(), aiProperties.getApiKey());
             OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
-                    .model(model)
+                    .model(aiProperties.getModel())
                     .stream(Boolean.TRUE)
                     .maxTokens(AiConstants.KimiAiConstants.MAX_TOKENS)
                     .temperature(AiConstants.KimiAiConstants.TEMPERATURE)
@@ -101,8 +99,9 @@ public class KimiAiServiceImpl implements AiService {
 
     }
 
-    private void checkParam(String param, String apiKey) {
+    private void checkParam(String param, String model, String apiKey) {
         Assert.notNull(param, "text is null");
+        Assert.notNull(param, "model is null");
         Assert.notNull(apiKey, "ai.api-key is null");
     }
 }

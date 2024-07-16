@@ -37,7 +37,7 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 
 ### Add MYSQL jdbc driver jar
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 
 
