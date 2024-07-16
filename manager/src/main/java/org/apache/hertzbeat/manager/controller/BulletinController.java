@@ -217,20 +217,13 @@ public class BulletinController {
                 }
 
                 List<CollectRep.ValueRow> valuesList = currentMetricsData.getValuesList();
-                List<BulletinMetricsData.Field> metricFields = new ArrayList<>();
                 for (CollectRep.ValueRow valueRow : valuesList) {
                     for (int i = 0; i < fields.size(); i++) {
-                        CollectRep.Field field = currentMetricsData.getFieldsList().get(i);
                         String origin = valueRow.getColumns(i);
-                        BulletinMetricsData.Field metricField = BulletinMetricsData.Field.builder()
-                                .key(field.getName())
-                                .unit(field.getUnit())
-                                .value(origin)
-                                .build();
-                        metricFields.add(metricField);
+                        fields.get(i).setValue(origin);
                     }
+                    metricBuilder.fields(fields);
                 }
-                metricBuilder.fields(metricFields);
                 metrics.add(metricBuilder.build());
             }
             contentBuilder.metrics(metrics);
