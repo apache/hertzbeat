@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.store.history.vm;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
