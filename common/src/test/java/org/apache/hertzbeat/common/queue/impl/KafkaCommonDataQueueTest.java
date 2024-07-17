@@ -15,46 +15,39 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.queue;
+package org.apache.hertzbeat.common.queue.impl;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+
 /**
- * Test case for {@link CommonDataQueue}
+ * Test case for {@link KafkaCommonDataQueue}
  */
-class CommonDataQueueTest {
+class KafkaCommonDataQueueTest {
 
-    @BeforeEach
-    void setUp() {
-    }
+	@BeforeEach
+	void setUp() {
+	}
 
-    @AfterEach
-    void tearDown() {
-    }
+	@Test
+	void testSendAlertsData() {
+	}
 
-    @Test
-    void addAlertData() {
-    }
+	@Test
+	void testPollAlertsData() {
+	}
 
-    @Test
-    void pollAlertData() {
-    }
+	@Test
+	void testSendMetricsData() {
+	}
 
-    @Test
-    void pollAlertMetricsData() {
-    }
+	@Test
+	void testPollMetricsDataToAlerter() {
+	}
 
-    @Test
-    void pollPersistentStorageMetricsData() {
-    }
+	@Test
+	void testDestroy() {
+	}
 
-    @Test
-    void pollRealTimeStorageMetricsData() {
-    }
-
-    @Test
-    void sendMetricsData() {
-    }
 }
