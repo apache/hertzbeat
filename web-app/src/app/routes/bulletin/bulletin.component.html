@@ -58,85 +58,71 @@
       [nzPageSizeOptions]="[10, 20, 50, 100]"
       (nzQueryParams)="onTablePageChange($event)"
       nzShowPagination="true"
-      [nzScroll]="{ x: '+' +
-       'auto' }"
+      [nzScroll]="{ x: 'auto' }"
       nzBordered
     >
       <thead>
-      <tr>
-        <th nzAlign="center" nzLeft nzWidth="3%" rowspan="2">
-          <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
-        </th>
-        <th nzAlign="center" nzWidth="7%" rowspan="2">App</th>
-        <th nzAlign="center" nzWidth="7%" rowspan="2">Host</th>
-        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-          <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].size">{{ metricName }}</th>
-        </ng-container>
-      </tr>
-      <tr>
-        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-          <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-            <th nzAlign="center">{{ field }}</th>
+        <tr>
+          <th nzAlign="center" nzLeft nzWidth="3%" rowspan="2">
+            <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
+          </th>
+          <th nzAlign="center" nzWidth="7%" rowspan="2">App</th>
+          <th nzAlign="center" nzWidth="7%" rowspan="2">Host</th>
+          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+            <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].size">{{ metricName }}</th>
           </ng-container>
-        </ng-container>
-        <th nzAlign="center" nzWidth="15%" rowspan="2">{{ 'common.edit' | i18n }}</th>
-      </tr>
+        </tr>
+        <tr>
+          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+            <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+              <th nzAlign="center">{{ field }}</th>
+            </ng-container>
+          </ng-container>
+          <th nzAlign="center" nzWidth="15%" rowspan="2">{{ 'common.edit' | i18n }}</th>
+        </tr>
       </thead>
       <tbody>
-      <tr *ngFor="let data of fixedTable.data">
-        <td nzAlign="center" nzLeft>
-          <label nz-checkbox [ngModel]="checkedDefineIds.has(data.id)" (ngModelChange)="onItemChecked(data.id, $event)"></label>
-        </td>
-        <td nzAlign="center">{{ data.app }}</td>
-        <td nzAlign="center">{{ data.host }}</td>
-        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-          <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-            <td nzAlign="center">{{ data[metricName + '_' + field] }}</td>
+        <tr *ngFor="let data of fixedTable.data">
+          <td nzAlign="center" nzLeft>
+            <label nz-checkbox [ngModel]="checkedDefineIds.has(data.id)" (ngModelChange)="onItemChecked(data.id, $event)"></label>
+          </td>
+          <td nzAlign="center">{{ data.app }}</td>
+          <td nzAlign="center">{{ data.host }}</td>
+          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+            <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+              <td nzAlign="center">{{ field }}</td>
+            </ng-container>
           </ng-container>
-        </ng-container>
-        <td nzAlign="center">
-          <div style="display: flex; justify-content: center; gap: 8px;">
-            <button
-              nz-button
-              nzType="primary"
-              (click)="onEditOneBulletinDefine(data.id)"
-              nz-tooltip
-              [nzTooltipTitle]="'alert.setting.edit' | i18n"
-            >
-              <i nz-icon nzType="edit" nzTheme="outline"></i>
-            </button>
-            <button
-              nz-button
-              nzDanger
-              nzType="primary"
-              (click)="onDeleteOneBulletinDefine(data.id)"
-              nz-tooltip
-              [nzTooltipTitle]="'alert.setting.delete' | i18n"
-            >
-              <i nz-icon nzType="delete" nzTheme="outline"></i>
-            </button>
-          </div>
-        </td>
-      </tr>
+          <td nzAlign="center">
+            <div style="display: flex; justify-content: center; gap: 8px">
+              <button
+                nz-button
+                nzType="primary"
+                (click)="onEditOneBulletinDefine(data.id)"
+                nz-tooltip
+                [nzTooltipTitle]="'alert.setting.edit' | i18n"
+              >
+                <i nz-icon nzType="edit" nzTheme="outline"></i>
+              </button>
+              <button
+                nz-button
+                nzDanger
+                nzType="primary"
+                (click)="onDeleteOneBulletinDefine(data.id)"
+                nz-tooltip
+                [nzTooltipTitle]="'alert.setting.delete' | i18n"
+              >
+                <i nz-icon nzType="delete" nzTheme="outline"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
       </tbody>
     </nz-table>
 
     <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ bulletinTab.total }} </ng-template>
   </nz-tab>
 </nz-tabset>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 <!-- new bulletin modal -->
 <nz-modal
@@ -214,12 +200,12 @@
                 (nzCheckBoxChange)="treeCheckBoxChange($event, onItemSelect)"
               >
                 <ng-template let-node>
-                <span
-                  (click)="checkBoxChange(node, onItemSelect)"
-                  class="ant-tree-node-content-wrapper ant-tree-node-content-wrapper-open"
-                >
-                  {{ node.title }}
-                </span>
+                  <span
+                    (click)="checkBoxChange(node, onItemSelect)"
+                    class="ant-tree-node-content-wrapper ant-tree-node-content-wrapper-open"
+                  >
+                    {{ node.title }}
+                  </span>
                 </ng-template>
               </nz-tree>
             </ng-template>
@@ -228,3 +214,4 @@
       </nz-form-item>
     </form>
   </div>
+</nz-modal>

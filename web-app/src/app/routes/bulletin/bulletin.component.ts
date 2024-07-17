@@ -25,6 +25,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
+import { $ } from 'protractor';
 import { zip } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 
@@ -38,7 +39,6 @@ import { AppDefineService } from '../../service/app-define.service';
 import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
 import { TagService } from '../../service/tag.service';
-import {$} from "protractor";
 
 @Component({
   selector: 'app-bulletin',
@@ -675,20 +675,21 @@ export class BulletinComponent implements OnInit {
                 host: item.content.host
               };
 
-              item.content.metrics.forEach((metric: { name: string | number; fields: { key: any; value: any; }[]; }) => {
+              item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
                 if (!groupedData[name].bulletinColumn[metric.name]) {
                   groupedData[name].bulletinColumn[metric.name] = new Set<string>();
                 }
-                metric.fields.forEach((field: { key: any; value: any; }) => {
-                  const key = `${metric.name}_${field.key}`;
-                  transformedItem[key] = field.value;
-                  groupedData[name].bulletinColumn[metric.name].add(field.key);
+                metric.fields.forEach((item: any[]) => {
+                  item.forEach((field: any) => {
+                    transformedItem[field.key] = field.value;
+                    groupedData[name].bulletinColumn[metric.name].add(field.key);
+                  });
+                  groupedData[name].data.push(transformedItem);
+                  console.log(transformedItem);
                 });
               });
 
-              groupedData[name].data.push(transformedItem);
             });
-            console.log(groupedData);
 
             this.tabDefines = Object.keys(groupedData).map(name => ({
               name,
@@ -698,8 +699,6 @@ export class BulletinComponent implements OnInit {
               pageSize: 10,
               total: groupedData[name].data.length
             }));
-            console.log(this.tabDefines);
-
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
