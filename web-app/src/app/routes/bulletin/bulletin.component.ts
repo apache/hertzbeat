@@ -668,27 +668,33 @@ export class BulletinComponent implements OnInit {
                 };
               }
 
-              const transformedItem: any = {
+              let transformedItem: any = {
                 id: item.id,
                 app: item.app,
                 monitorId: item.content.monitorId,
-                host: item.content.host
+                host: item.content.host,
               };
 
               item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
                 if (!groupedData[name].bulletinColumn[metric.name]) {
                   groupedData[name].bulletinColumn[metric.name] = new Set<string>();
                 }
-                metric.fields.forEach((item: any[]) => {
-                  item.forEach((field: any) => {
-                    transformedItem[field.key] = field.value;
-                    groupedData[name].bulletinColumn[metric.name].add(field.key);
+                metric.fields.forEach((field: any[]) => {
+                  field.forEach((fieldItem: any) => {
+                    const key = fieldItem.key;
+                    const value = fieldItem.value;
+
+                    // Ensure the transformedItem has an array for each key
+                    if (!transformedItem[key]) {
+                      transformedItem[key] = [];
+                    }
+                    transformedItem[key].push(value);
+
+                    groupedData[name].bulletinColumn[metric.name].add(key);
                   });
-                  groupedData[name].data.push(transformedItem);
-                  console.log(transformedItem);
                 });
               });
-
+              groupedData[name].data.push(transformedItem);
             });
 
             this.tabDefines = Object.keys(groupedData).map(name => ({
@@ -710,7 +716,21 @@ export class BulletinComponent implements OnInit {
         }
       );
   }
+
   getMetricNames(bulletinTab: any): string[] {
     return Object.keys(bulletinTab.bulletinColumn);
   }
+
+  getRowSpan(data: any, bulletinTab: any): number {
+    let rowSpan = 1;
+    Object.keys(bulletinTab.bulletinColumn).forEach((metricName) => {
+      bulletinTab.bulletinColumn[metricName].forEach((field: string) => {
+        if (data[field] && data[field].length) {
+          rowSpan = Math.max(rowSpan, data[field].length);
+        }
+      });
+    });
+    return rowSpan;
+  }
+
 }
