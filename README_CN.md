@@ -460,6 +460,7 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/asd108908382"><img src="https://avatars.githubusercontent.com/u/77717999?v=4?s=100" width="100px;" alt="jiawei.guo"/><br /><sub><b>jiawei.guo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=asd108908382" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/QBH-insist"><img src="https://avatars.githubusercontent.com/u/39401478?v=4?s=100" width="100px;" alt="QBH-insist"/><br /><sub><b>QBH-insist</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=QBH-insist" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
