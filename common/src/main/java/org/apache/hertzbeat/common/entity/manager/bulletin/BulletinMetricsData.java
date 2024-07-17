@@ -75,7 +75,7 @@ public class BulletinMetricsData {
         private String name;
 
         @Schema(title = "Metric fields")
-        private List<Field> fields;
+        private List<List<Field>> fields;
     }
 
     @Data

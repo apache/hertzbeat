@@ -197,7 +197,7 @@ public class BulletinController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "real time store not available"));
         }
         List<Bulletin> bulletinList = bulletinService.listBulletin();
-        List<BulletinMetricsData> da = new ArrayList<>();
+        List<BulletinMetricsData> dataList = new ArrayList<>();
         for (Bulletin bulletin : bulletinList) {
             BulletinMetricsData.BulletinMetricsDataBuilder dataBuilder = BulletinMetricsData.builder();
             dataBuilder.id(bulletin.getId()).name(bulletin.getName()).app(bulletin.getApp());
@@ -209,32 +209,29 @@ public class BulletinController {
             List<BulletinMetricsData.Metric> metrics = new ArrayList<>();
             for (String metric : bulletin.getMetrics()) {
                 metricBuilder.name(metric.split("-")[0]);
-                List<BulletinMetricsData.Field> fields = new ArrayList<>();
                 CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(bulletin.getMonitorId(), metric.split("-")[0]);
-
-                for (CollectRep.Field field : currentMetricsData.getFieldsList()) {
-                    fields.add(BulletinMetricsData.Field.builder().key(field.getName()).unit(field.getUnit()).build());
-                }
-
+                List<List<BulletinMetricsData.Field>> fieldsList = new ArrayList<>();
                 List<CollectRep.ValueRow> valuesList = currentMetricsData.getValuesList();
                 for (CollectRep.ValueRow valueRow : valuesList) {
+                    List<BulletinMetricsData.Field> fields = new ArrayList<>();
+                    for (CollectRep.Field field : currentMetricsData.getFieldsList()) {
+                        fields.add(BulletinMetricsData.Field.builder().key(field.getName()).unit(field.getUnit()).build());
+                    }
                     for (int i = 0; i < fields.size(); i++) {
                         String origin = valueRow.getColumns(i);
                         fields.get(i).setValue(origin);
                     }
-                    metricBuilder.fields(fields);
+                    fieldsList.add(fields);
                 }
+                metricBuilder.fields(fieldsList);
                 metrics.add(metricBuilder.build());
             }
             contentBuilder.metrics(metrics);
             dataBuilder.content(contentBuilder.build());
-            da.add(dataBuilder.build());
+            dataList.add(dataBuilder.build());
         }
 
-        return ResponseEntity.ok(Message.success(da));
+        return ResponseEntity.ok(Message.success(dataList));
     }
-
-
-
 
 }
