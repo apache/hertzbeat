@@ -41,6 +41,7 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
     @Override
     public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
             throws IllegalAccessException, InstantiationException, IOException {
+
         String bundleName = toBundleName(baseName, locale);
         ResourceBundle bundle = null;
         if (JAVA_CLASS.equals(format)) {
@@ -58,20 +59,20 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
                             + " cannot be cast to ResourceBundle");
                 }
             } catch (ClassNotFoundException ignored) {}
-			catch (InvocationTargetException | NoSuchMethodException e) {
-				throw new RuntimeException(e);
-			}
-		} else if (JAVA_PROPERTIES.equals(format)) {
+            catch (InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+	} else if (JAVA_PROPERTIES.equals(format)) {
             final String resourceName = toResourceName0(bundleName);
             if (resourceName == null) {
                 return null;
             }
-			InputStream stream = getResourceInputStream(loader, resourceName, reload);
+	    InputStream stream = getResourceInputStream(loader, resourceName, reload);
 
-			if (stream != null) {
-				try (stream) {
-					bundle = new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
-				}
+            if (stream != null) {
+                try (stream) {
+                    bundle = new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
+                }
             }
         } else {
             throw new IllegalArgumentException("unknown format: " + format);
