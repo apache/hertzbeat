@@ -46,6 +46,7 @@ export class MonitorFormComponent implements OnChanges {
   @Output() readonly formCancel = new EventEmitter<any>();
   @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
+  @Output() readonly collectorChange = new EventEmitter<string>();
 
   hasAdvancedParams: boolean = false;
 
@@ -135,6 +136,10 @@ export class MonitorFormComponent implements OnChanges {
 
   onHostChange(host: string) {
     this.hostChange.emit(host);
+  }
+
+  onCollectorChange(host: string) {
+    this.collectorChange.emit(host);
   }
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {

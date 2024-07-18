@@ -107,6 +107,7 @@
             [extra]="{collectors}"
             [name]="'collector'"
             [(ngModel)]="collector"
+            (ngModelChange)="onCollectorChange($event)"
           />
         </nz-form-control>
       </nz-form-item>

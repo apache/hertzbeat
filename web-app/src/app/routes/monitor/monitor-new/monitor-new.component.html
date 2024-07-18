@@ -37,6 +37,7 @@
   [advancedParamDefines]="advancedParamDefines"
   [collector]="collector"
   [collectors]="collectors"
+  (collectorChange)="onCollectorChange($event)"
   (hostChange)="onHostChange($event)"
   (formCancel)="onCancel()"
   (formSubmit)="onSubmit($event)"

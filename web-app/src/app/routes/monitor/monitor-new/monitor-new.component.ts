@@ -161,6 +161,10 @@ export class MonitorNewComponent implements OnInit {
     }
   }
 
+  onCollectorChange(collector: string) {
+    this.collector = collector;
+  }
+
   onSubmit(info: any) {
     let addMonitor = {
       detected: this.detected,
