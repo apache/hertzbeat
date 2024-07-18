@@ -381,7 +381,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     /**
      * Query all devices by deviceId
      *
-     * @param deviceId 设备/实体
+     * @param deviceId deviceId
      */
     private List<String> queryAllDevices(String deviceId) {
         String showDevicesSql = String.format(SHOW_DEVICES, deviceId + ".*");

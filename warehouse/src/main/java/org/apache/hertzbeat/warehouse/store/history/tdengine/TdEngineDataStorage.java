@@ -102,7 +102,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     /**
      * {@code TdEngine} init TdEngineDatabase
      *
-     * @param tdEngineProperties {@link TdEngineProperties} 对象实例
+     * @param tdEngineProperties {@link TdEngineProperties}
      */
     private void initTdEngineDatabase(final TdEngineProperties tdEngineProperties) throws SQLException {
         final Properties parseResultProperties = com.taosdata.jdbc.utils.StringUtils.parseUrl(tdEngineProperties.url(), null);
