@@ -1,0 +1,17 @@
+@table-padding: 8px;
+
+.table {
+  width: 100%;
+  table-layout: auto; // 自动调整列宽
+
+  th {
+    white-space: nowrap; // 防止文本换行
+    padding: @table-padding; // 添加一些内边距，使内容不贴边
+    text-align: center; // 居中对齐
+  }
+
+  td {
+    padding: @table-padding; // 添加一些内边距，使内容不贴边
+    text-align: center; // 居中对齐
+  }
+}

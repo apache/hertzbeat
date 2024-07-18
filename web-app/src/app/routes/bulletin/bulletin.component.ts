@@ -681,7 +681,8 @@ export class BulletinComponent implements OnInit {
                 }
                 metric.fields.forEach((field: any[]) => {
                   field.forEach((fieldItem: any) => {
-                    const key = `${metric.name}_${fieldItem.key}`;
+                    const key = `${metric.name}$$$${fieldItem.key}`;
+                    console.log(key)
                     const value = fieldItem.value;
 
                     if (!transformedItem[key]) {
@@ -704,6 +705,7 @@ export class BulletinComponent implements OnInit {
               pageSize: 10,
               total: groupedData[name].data.length
             }));
+            console.log(this.tabDefines);
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
@@ -717,19 +719,21 @@ export class BulletinComponent implements OnInit {
   }
 
   getMetricNames(bulletinTab: any): string[] {
-    console.log(bulletinTab.bulletinColumn)
     return Object.keys(bulletinTab.bulletinColumn);
   }
 
-  getRowSpan(data: any, bulletinTab: any): number {
-    let rowSpan = 1;
-    Object.keys(bulletinTab.bulletinColumn).forEach(metricName => {
-      bulletinTab.bulletinColumn[metricName].forEach((field: string) => {
-        if (data[field] && data[field].length) {
-          rowSpan = Math.max(rowSpan, data[field].length);
-        }
-      });
-    });
-    return rowSpan;
+  getMaxRowSpan(data: { [x: string]: string | any[]; }, bulletinTab: { bulletinColumn: { [x: string]: any; }; }) {
+    let maxRowSpan = 1;
+    for (let metricName of this.getMetricNames(bulletinTab)) {
+      for (let field of bulletinTab.bulletinColumn[metricName]) {
+        maxRowSpan = Math.max(maxRowSpan, data[field].length);
+      }
+    }
+    return maxRowSpan;
+  }
+
+  getRowIndexes(data: { [x: string]: string | any[] }, bulletinTab: { bulletinColumn: { [x: string]: any } }) {
+    const maxRowSpan = this.getMaxRowSpan(data, bulletinTab);
+    return Array.from({ length: maxRowSpan }, (_, index) => index);
   }
 }
