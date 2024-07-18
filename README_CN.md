@@ -41,7 +41,7 @@
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助用户快速搭建自有监控系统。    
 
-----   
+----
 
 ![hertzbeat](home/static/img/home/1.png)
 
@@ -49,7 +49,7 @@
 
 ![hertzbeat](home/static/img/home/9.png)
 
-----   
+----
 
 ## 🥐 模块  
 
@@ -110,19 +110,23 @@
 
 1. `docker` 环境仅需一条命令即可开始     
 
-  ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+   ```shell
+   docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+   ```
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 3. 部署采集器集群（可选）
 
-  ```
-  docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-  ```
-     - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
-     - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
-     - `-e MANAGER_HOST=127.0.0.1` : 配置连接主 HertaBeat 服务的对外 IP。
-     - `-e MANAGER_PORT=1158` : 配置连接主 HertzBeat 服务的对外端口，默认1158。
+   ```shell
+   docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+   ```
+
+   - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
+    - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
+    - `-e MANAGER_HOST=127.0.0.1` : 配置连接主 HertaBeat 服务的对外 IP。
+    - `-e MANAGER_PORT=1158` : 配置连接主 HertzBeat 服务的对外端口，默认1158。
+
 
 更多配置详细步骤参考 [通过 Docker 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
