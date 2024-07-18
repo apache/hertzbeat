@@ -62,42 +62,48 @@
       nzBordered
     >
       <thead>
-        <tr>
-          <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
-          <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
-          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-            <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].size">{{ metricName }}</th>
-          </ng-container>
-        </tr>
-        <tr>
-          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-            <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-              <th nzAlign="center">{{ field }}</th>
-            </ng-container>
-          </ng-container>
-        </tr>
-      </thead>
-      <tbody>
-        <ng-container *ngFor="let data of fixedTable.data">
-          <tr>
-            <td nzAlign="center" [rowSpan]="2">{{ data.app }}</td>
-            <td nzAlign="center" [rowSpan]="2">{{ data.host }}</td>
-          </tr>
-          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-            <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-              <tr>
-                <ng-container *ngIf="data[field]">
-                  <td *ngFor="let value of data[field]">{{ value }}</td>
-                </ng-container>
-              </tr>
-            </ng-container>
+      <tr>
+        <th nzAlign="center" nzWidth="7%">App</th>
+        <th nzAlign="center" nzWidth="7%">Host</th>
+        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+          <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].size">{{ metricName }}</th>
+        </ng-container>
+      </tr>
+      <tr>
+        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+          <th nzAlign="center">{{ metricName }}</th>
+        </ng-container>
+        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+          <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+            <th nzAlign="center">{{ field }}</th>
           </ng-container>
         </ng-container>
+      </tr>
+      </thead>
+      <tbody>
+      <ng-container *ngFor="let data of fixedTable.data">
+        <ng-container *ngFor="let rowIndex of getRowIndexes(data, bulletinTab)">
+          <tr>
+            <ng-container *ngIf="rowIndex === 0">
+              <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, bulletinTab)">{{ data.app }}</td>
+              <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, bulletinTab)">{{ data.host }}</td>
+            </ng-container>
+            <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+              <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+                <td *ngIf="data[field].length > rowIndex">{{ data[field][rowIndex] }}</td>
+                <td *ngIf="data[field].length <= rowIndex"></td>
+              </ng-container>
+            </ng-container>
+          </tr>
+        </ng-container>
+      </ng-container>
       </tbody>
     </nz-table>
     <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ bulletinTab.total }} </ng-template>
   </nz-tab>
 </nz-tabset>
+
+
 
 <!-- new bulletin modal -->
 <nz-modal
