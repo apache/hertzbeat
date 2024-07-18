@@ -62,83 +62,42 @@
       nzBordered
     >
       <thead>
-      <tr>
-        <th nzAlign="center" nzLeft nzWidth="3%">
-          <label nz-checkbox [(ngModel)]="checkedAll" (ngModelChange)="onAllChecked($event)"></label>
-        </th>
-        <th nzAlign="center" nzWidth="7%">App</th>
-        <th nzAlign="center" nzWidth="7%">Host</th>
-        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-          <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].length">{{ metricName }}</th>
-        </ng-container>
-        <th nzAlign="center" nzWidth="15%">{{ 'common.edit' | i18n }}</th>
-      </tr>
-      <tr>
-        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-          <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-            <th nzAlign="center">{{ field }}</th>
-          </ng-container>
-        </ng-container>
-      </tr>
-      </thead>
-      <tbody>
-      <ng-container *ngFor="let data of fixedTable.data">
         <tr>
-          <td nzAlign="center" nzLeft [attr.rowspan]="getRowSpan(data, bulletinTab)">
-            <label nz-checkbox [ngModel]="checkedDefineIds.has(data.id)" (ngModelChange)="onItemChecked(data.id, $event)"></label>
-          </td>
-          <td nzAlign="center" [attr.rowspan]="getRowSpan(data, bulletinTab)">{{ data.app }}</td>
-          <td nzAlign="center" [attr.rowspan]="getRowSpan(data, bulletinTab)">{{ data.host }}</td>
+          <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
+          <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
+          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+            <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].size">{{ metricName }}</th>
+          </ng-container>
+        </tr>
+        <tr>
           <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
             <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-              <td nzAlign="center">
-                <ng-container *ngIf="data[field] && data[field].length">
-                  <div *ngFor="let value of data[field]">{{ value }}</div>
-                </ng-container>
-              </td>
+              <th nzAlign="center">{{ field }}</th>
             </ng-container>
           </ng-container>
-          <td nzAlign="center" [attr.rowspan]="getRowSpan(data, bulletinTab)">
-            <div style="display: flex; justify-content: center; gap: 8px">
-              <button
-                nz-button
-                nzType="primary"
-                (click)="onEditOneBulletinDefine(data.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'alert.setting.edit' | i18n"
-              >
-                <i nz-icon nzType="edit" nzTheme="outline"></i>
-              </button>
-              <button
-                nz-button
-                nzDanger
-                nzType="primary"
-                (click)="onDeleteOneBulletinDefine(data.id)"
-                nz-tooltip
-                [nzTooltipTitle]="'alert.setting.delete' | i18n"
-              >
-                <i nz-icon nzType="delete" nzTheme="outline"></i>
-              </button>
-            </div>
-          </td>
         </tr>
-        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-          <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-            <tr *ngFor="let value of data[field]">
-              <td nzAlign="center">{{ value }}</td>
-            </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let data of fixedTable.data">
+          <tr>
+            <td nzAlign="center" [rowSpan]="2">{{ data.app }}</td>
+            <td nzAlign="center" [rowSpan]="2">{{ data.host }}</td>
+          </tr>
+          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+            <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+              <tr>
+                <ng-container *ngIf="data[field]">
+                  <td *ngFor="let value of data[field]">{{ value }}</td>
+                </ng-container>
+              </tr>
+            </ng-container>
           </ng-container>
         </ng-container>
-      </ng-container>
       </tbody>
     </nz-table>
-
     <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ bulletinTab.total }} </ng-template>
   </nz-tab>
 </nz-tabset>
-
-
-
 
 <!-- new bulletin modal -->
 <nz-modal

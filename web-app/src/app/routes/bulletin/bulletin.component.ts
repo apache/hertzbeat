@@ -672,7 +672,7 @@ export class BulletinComponent implements OnInit {
                 id: item.id,
                 app: item.app,
                 monitorId: item.content.monitorId,
-                host: item.content.host,
+                host: item.content.host
               };
 
               item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
@@ -681,10 +681,9 @@ export class BulletinComponent implements OnInit {
                 }
                 metric.fields.forEach((field: any[]) => {
                   field.forEach((fieldItem: any) => {
-                    const key = fieldItem.key;
+                    const key = `${metric.name}_${fieldItem.key}`;
                     const value = fieldItem.value;
 
-                    // Ensure the transformedItem has an array for each key
                     if (!transformedItem[key]) {
                       transformedItem[key] = [];
                     }
@@ -718,12 +717,13 @@ export class BulletinComponent implements OnInit {
   }
 
   getMetricNames(bulletinTab: any): string[] {
+    console.log(bulletinTab.bulletinColumn)
     return Object.keys(bulletinTab.bulletinColumn);
   }
 
   getRowSpan(data: any, bulletinTab: any): number {
     let rowSpan = 1;
-    Object.keys(bulletinTab.bulletinColumn).forEach((metricName) => {
+    Object.keys(bulletinTab.bulletinColumn).forEach(metricName => {
       bulletinTab.bulletinColumn[metricName].forEach((field: string) => {
         if (data[field] && data[field].length) {
           rowSpan = Math.max(rowSpan, data[field].length);
@@ -732,5 +732,4 @@ export class BulletinComponent implements OnInit {
     });
     return rowSpan;
   }
-
 }
