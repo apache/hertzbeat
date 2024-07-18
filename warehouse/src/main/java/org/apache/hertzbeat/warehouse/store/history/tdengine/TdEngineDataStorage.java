@@ -100,7 +100,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * {@code TdEngine} 初始化数据库
+     * {@code TdEngine} init TdEngineDatabase
      *
      * @param tdEngineProperties {@link TdEngineProperties} 对象实例
      */
@@ -376,7 +376,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             instances.add(label);
         }
         if (instances.isEmpty()) {
-            // 若未指定instance，需查询当前指标数据前1周有多少个instance
+            // need to confirm that how many instances of current metrics one week ago
             String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
             Connection connection = null;
             try {
