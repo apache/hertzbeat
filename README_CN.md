@@ -110,21 +110,21 @@
 
 1. `docker` 环境仅需一条命令即可开始     
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+  ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
-3. 部署采集器集群(可选)
+3. 部署采集器集群（可选）
 
-```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
-   - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
-   - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
-   - `-e MANAGER_HOST=127.0.0.1` : 配置连接主 HertaBeat 服务的对外 IP。
-   - `-e MANAGER_PORT=1158` : 配置连接主 HertzBeat 服务的对外端口，默认1158。
+  ```
+  docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+  ```
+     - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
+     - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
+     - `-e MANAGER_HOST=127.0.0.1` : 配置连接主 HertaBeat 服务的对外 IP。
+     - `-e MANAGER_PORT=1158` : 配置连接主 HertzBeat 服务的对外端口，默认1158。
 
-更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
+更多配置详细步骤参考 [通过 Docker 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 ##### 方式二：通过安装包安装
 
@@ -132,7 +132,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml` (可选)
 3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
-5. 部署采集器集群(可选)
+5. 部署采集器集群（可选）
    - 下载采集器安装包 `hertzbeat-collector-xx.tar.gz` 到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
    - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主 HertzBeat 服务的对外 IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
@@ -164,7 +164,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 postgresql/mysql 数据库, victoria-metrics/iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
-详细步骤参考 [通过Docker-Compose安装HertzBeat](script/docker-compose/README.md)  
+详细步骤参考 [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)  
 
 ##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+postgresql+tsdb
 
