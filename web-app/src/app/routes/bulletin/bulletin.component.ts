@@ -682,13 +682,14 @@ export class BulletinComponent implements OnInit {
                 metric.fields.forEach((field: any[]) => {
                   field.forEach((fieldItem: any) => {
                     const key = `${metric.name}$$$${fieldItem.key}`;
-                    console.log(key)
+                    console.log(key);
                     const value = fieldItem.value;
+                    const unit = fieldItem.unit;
 
                     if (!transformedItem[key]) {
                       transformedItem[key] = [];
                     }
-                    transformedItem[key].push(value);
+                    transformedItem[key].push(`${value}$$$${unit}`);
 
                     groupedData[name].bulletinColumn[metric.name].add(key);
                   });
@@ -722,7 +723,7 @@ export class BulletinComponent implements OnInit {
     return Object.keys(bulletinTab.bulletinColumn);
   }
 
-  getMaxRowSpan(data: { [x: string]: string | any[]; }, bulletinTab: { bulletinColumn: { [x: string]: any; }; }) {
+  getMaxRowSpan(data: { [x: string]: string | any[] }, bulletinTab: { bulletinColumn: { [x: string]: any } }) {
     let maxRowSpan = 1;
     for (let metricName of this.getMetricNames(bulletinTab)) {
       for (let field of bulletinTab.bulletinColumn[metricName]) {

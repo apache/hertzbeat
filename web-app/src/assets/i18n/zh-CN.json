@@ -140,7 +140,9 @@
     "time": "发布时间",
     "status": "状态",
     "status.online": "已发布",
-    "status.offline": "未发布"
+    "status.offline": "未发布",
+    "help.content": "自定义监控看板,可以展示某种监控的duo'tai服务器的，磁盘、内存、一个总的概览，像是一个表格",
+    "help.link": ""
   },
   "question.link": "https://hertzbeat.apache.org/zh-cn/docs/help/issue",
   "alert.setting.new": "新增阈值规则",

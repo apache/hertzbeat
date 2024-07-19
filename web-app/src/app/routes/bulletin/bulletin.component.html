@@ -19,7 +19,7 @@
 
 <app-help-message-show
   [help_message_content]="'自定义监控看板'"
-  [guild_link]="'alert.help.center.setting' | i18n"
+  [guild_link]="'bulletin.help.link' | i18n"
   [module_name]="'menu.alert.setting'"
   [icon_name]="'calculator'"
 ></app-help-message-show>
@@ -63,38 +63,42 @@
       class="table"
     >
       <thead>
-      <tr>
-        <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
-        <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
-        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-          <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].size">{{ metricName }}</th>
-        </ng-container>
-      </tr>
-      <tr>
-        <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-          <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-            <th nzAlign="center">{{ field.split("$$$")[1] }}</th>
+        <tr>
+          <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
+          <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
+          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+            <th nzAlign="center" [colSpan]="bulletinTab.bulletinColumn[metricName].size">{{ metricName }}</th>
           </ng-container>
-        </ng-container>
-      </tr>
+        </tr>
+        <tr>
+          <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+            <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+              <th nzAlign="center">{{ field.split('$$$')[1] }}</th>
+            </ng-container>
+          </ng-container>
+        </tr>
       </thead>
       <tbody>
-      <ng-container *ngFor="let data of fixedTable.data">
-        <ng-container *ngFor="let rowIndex of getRowIndexes(data, bulletinTab)">
-          <tr>
-            <ng-container *ngIf="rowIndex === 0">
-              <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, bulletinTab)">{{ data.app }}</td>
-              <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, bulletinTab)">{{ data.host }}</td>
-            </ng-container>
-            <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
-              <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-                <td *ngIf="data[field].length > rowIndex">{{ data[field][rowIndex] }}</td>
-                <td *ngIf="data[field].length <= rowIndex"></td>
+        <ng-container *ngFor="let data of fixedTable.data">
+          <ng-container *ngFor="let rowIndex of getRowIndexes(data, bulletinTab)">
+            <tr>
+              <ng-container *ngIf="rowIndex === 0">
+                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, bulletinTab)">{{ data.app }}</td>
+                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, bulletinTab)">{{ data.host }}</td>
               </ng-container>
-            </ng-container>
-          </tr>
+              <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
+                <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
+                  <td *ngIf="data[field].length > rowIndex"
+                    >{{ data[field][rowIndex].split('$$$')[0] }}
+                    <nz-tag *ngIf="data[field][rowIndex] == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+                    <nz-tag *ngIf="data[field][rowIndex].split('$$$')[1]" nzColor="success">{{ data[field][rowIndex].split('$$$')[1] }}</nz-tag>
+                  </td>
+                  <td *ngIf="data[field].length <= rowIndex"></td>
+                </ng-container>
+              </ng-container>
+            </tr>
+          </ng-container>
         </ng-container>
-      </ng-container>
       </tbody>
     </nz-table>
 

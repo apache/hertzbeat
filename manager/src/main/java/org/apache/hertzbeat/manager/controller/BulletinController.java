@@ -207,9 +207,9 @@ public class BulletinController {
 
             BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder();
             List<BulletinMetricsData.Metric> metrics = new ArrayList<>();
-            for (String metric : bulletin.getMetrics()) {
-                metricBuilder.name(metric.split("-")[0]);
-                CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(bulletin.getMonitorId(), metric.split("-")[0]);
+            for (String metric : bulletin.getMetrics().stream().map(metric -> metric.split("-")[0]).distinct().toList()){
+                metricBuilder.name(metric);
+                CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(bulletin.getMonitorId(), metric);
                 List<List<BulletinMetricsData.Field>> fieldsList = new ArrayList<>();
                 List<CollectRep.ValueRow> valuesList = currentMetricsData.getValuesList();
                 for (CollectRep.ValueRow valueRow : valuesList) {
