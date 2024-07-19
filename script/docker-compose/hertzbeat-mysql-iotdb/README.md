@@ -19,7 +19,7 @@
 
 2. Add MYSQL jdbc driver jar
 
-   Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+   Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
    Copy the jar package to the ext-lib directory.
    
 3. Enter the deployment script docker-compose directory, execute

@@ -35,9 +35,9 @@ import { MonitorService } from '../../../service/monitor.service';
 })
 export class HelpMessageShowComponent implements OnInit {
   @Input()
-  help_message_content: string = 'content';
+  help_message_content: string = '';
   @Input()
-  guild_link: string = 'content';
+  guild_link: string = '';
   @Input()
   module_name!: string;
   @Input()
@@ -87,5 +87,9 @@ export class HelpMessageShowComponent implements OnInit {
       this.pageSize = 8;
       this.checkedMonitorIds = new Set<number>();
     });
+  }
+
+  isLoaded(): boolean {
+    return (this.app != undefined && this.module_name == undefined) || this.module_name != undefined;
   }
 }

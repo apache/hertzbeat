@@ -56,7 +56,6 @@ public class NginxProtocol {
      */
     private String ssl = "false";
 
-
     /**
      * Validates the relevant parameters
      * @return is invalid true or false

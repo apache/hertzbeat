@@ -17,20 +17,22 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.alibaba.fastjson.JSON;
+
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
+import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
-import org.apache.hertzbeat.manager.pojo.dto.ZhiPuAiResponse;
-import org.apache.hertzbeat.manager.pojo.dto.ZhiPuRequestParamDTO;
+import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
+import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -40,25 +42,24 @@ import reactor.core.publisher.Flux;
 
 
 /**
- * 智普AI
+ * ZhiPu AI
  */
 @Service("ZhiPuServiceImpl")
+@ConditionalOnProperty(prefix = "ai", name = "type", havingValue = "zhiPu")
 @Slf4j
 public class ZhiPuServiceImpl implements AiService {
-    @Value("${aiConfig.model:glm-4}")
-    private String model;
-    @Value("${aiConfig.api-key}")
-    private String apiKey;
+
+    @Autowired
+    private AiProperties aiProperties;
 
     private WebClient webClient;
-
 
     @PostConstruct
     private void init() {
         this.webClient = WebClient.builder()
                 .baseUrl(AiConstants.ZhiPuConstants.URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + aiProperties.getApiKey())
                 .exchangeStrategies(ExchangeStrategies.builder()
                         .codecs(item -> item.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                         .build())
@@ -71,46 +72,35 @@ public class ZhiPuServiceImpl implements AiService {
     }
 
     @Override
-    public Flux<String> requestAi(String text) {
-        checkParam(text, model, apiKey);
-        ZhiPuRequestParamDTO zhiPuRequestParamDTO = ZhiPuRequestParamDTO.builder()
-                .model(model)
-                //sse
-                .stream(Boolean.TRUE)
-                .maxTokens(AiConstants.ZhiPuConstants.MAX_TOKENS)
-                .temperature(AiConstants.ZhiPuConstants.TEMPERATURE)
-                .messages(List.of(new AiMessage(AiConstants.ZhiPuConstants.REQUEST_ROLE, text)))
-                .build();
-
-        return webClient.post()
-                .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
-                .retrieve()
-                .bodyToFlux(String.class)
-                .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                .map(this::convertToResponse)
-                .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
-
-
-    }
-
-    private String convertToResponse(String aiRes) {
+    public Flux<ServerSentEvent<String>> requestAi(String text) {
         try {
-            ZhiPuAiResponse zhiPuAiResponse = JSON.parseObject(aiRes, ZhiPuAiResponse.class);
-            if (Objects.nonNull(zhiPuAiResponse)) {
-                ZhiPuAiResponse.Choice choice = zhiPuAiResponse.getChoices().get(0);
-                return choice.getDelta().getContent();
-            }
+            checkParam(text, aiProperties.getModel(), aiProperties.getApiKey());
+            OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
+                    .model(aiProperties.getModel())
+                    //sse
+                    .stream(Boolean.TRUE)
+                    .maxTokens(AiConstants.ZhiPuConstants.MAX_TOKENS)
+                    .temperature(AiConstants.ZhiPuConstants.TEMPERATURE)
+                    .messages(List.of(new AiMessage(AiConstants.ZhiPuConstants.REQUEST_ROLE, text)))
+                    .build();
+
+            return webClient.post()
+                    .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
+                    .retrieve()
+                    .bodyToFlux(String.class)
+                    .filter(aiResponse -> !"[DONE]".equals(aiResponse))
+                    .map(OpenAiResponse::convertToResponse)
+                    .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
+
         } catch (Exception e) {
-            log.info("convertToResponse Exception:{}", e.toString());
+            log.info("ZhiPuServiceImpl.requestAi exception:{}", e.toString());
+            throw e;
         }
-
-        return "";
     }
-
 
     private void checkParam(String param, String model, String apiKey) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(apiKey, "aiConfig.api-key is null");
+        Assert.notNull(apiKey, "ai.api-key is null");
     }
 
 

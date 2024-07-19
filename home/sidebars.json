@@ -6,6 +6,7 @@
       "items": [
         "introduce",
         "start/quickstart",
+        "start/1.6.0-update",
         "start/docker-deploy",
         "start/package-deploy",
         "start/rainbond-deploy",
@@ -245,6 +246,7 @@
             "help/clickhouse",
             "help/elasticsearch",
             "help/influxdb",
+            "help/presto",
             "help/hugegraph"
           ]
         },
