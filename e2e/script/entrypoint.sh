@@ -18,4 +18,4 @@
 
 set -e
 
-atest run -p testsuite.yaml --report md
+atest run -p data/testsuite.yaml --report md
