@@ -108,4 +108,9 @@ public class Param {
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
+    @Override
+    public Param clone() {
+        // deep clone
+        return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
+    }
 }
