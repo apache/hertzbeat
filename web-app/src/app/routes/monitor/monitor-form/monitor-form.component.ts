@@ -98,7 +98,7 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
+    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
   }
 
   onSubmit(formGroup: FormGroup) {
@@ -127,7 +127,7 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
+    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
   }
 
   onCancel() {
@@ -136,10 +136,6 @@ export class MonitorFormComponent implements OnChanges {
 
   onHostChange(host: string) {
     this.hostChange.emit(host);
-  }
-
-  onCollectorChange(host: string) {
-    this.collectorChange.emit(host);
   }
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {

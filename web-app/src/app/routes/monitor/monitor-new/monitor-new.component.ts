@@ -161,15 +161,11 @@ export class MonitorNewComponent implements OnInit {
     }
   }
 
-  onCollectorChange(collector: string) {
-    this.collector = collector;
-  }
-
   onSubmit(info: any) {
     let addMonitor = {
       detected: this.detected,
       monitor: info.monitor,
-      collector: this.collector,
+      collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
     if (this.detected) {
@@ -199,7 +195,7 @@ export class MonitorNewComponent implements OnInit {
     let detectMonitor = {
       detected: true,
       monitor: info.monitor,
-      collector: this.collector,
+      collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
     this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
