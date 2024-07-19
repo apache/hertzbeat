@@ -265,7 +265,7 @@
               </nz-collapse-panel>
             </nz-collapse>
           </div>
-          <div *ngIf="!isExpr" id="rule" class="br-4" style="margin-top: 5px; padding: 5px; background: ghostwhite">
+          <div *ngIf="!isExpr" id="rule" class="br-4" style="margin-top: 5px; background: ghostwhite">
             <ngx-query-builder [classNames]="qbClassNames" [config]="qbConfig" [formControl]="qbFormCtrl">
               <ng-container *querySwitchGroup="let rule; let onChange = onChange">
                 <nz-radio-group

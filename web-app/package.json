@@ -56,7 +56,7 @@
     "@delon/mock": "17.3.1",
     "@delon/theme": "17.3.1",
     "@delon/util": "17.3.1",
-    "@kerwin612/ngx-query-builder": "0.6.3",
+    "@kerwin612/ngx-query-builder": "0.6.4",
     "ajv": "8.12.0",
     "ajv-formats": "2.1.1",
     "angular-tag-cloud-module": "17.0.1",

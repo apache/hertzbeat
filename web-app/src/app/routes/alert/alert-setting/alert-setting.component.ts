@@ -43,7 +43,8 @@ const AVAILABILITY = 'availability';
 
 @Component({
   selector: 'app-alert-setting',
-  templateUrl: './alert-setting.component.html'
+  templateUrl: './alert-setting.component.html',
+  styleUrls: ['./alert-setting.component.less']
 })
 export class AlertSettingComponent implements OnInit {
   constructor(
@@ -73,7 +74,12 @@ export class AlertSettingComponent implements OnInit {
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
   ];
-  qbClassNames: QueryBuilderClassNames = {};
+  qbClassNames: QueryBuilderClassNames = {
+    row: 'row',
+    rule: 'br-4 rule',
+    ruleSet: 'br-4 ruleset',
+    invalidRuleSet: 'br-4 ruleset-invalid'
+  };
   qbConfig: QueryBuilderConfig = {
     levelLimit: 3,
     rulesLimit: 5,
@@ -496,6 +502,14 @@ export class AlertSettingComponent implements OnInit {
     };
   }
 
+  private filterEmptyRules(ruleset: RuleSet): RuleSet | Rule {
+    if (ruleset.rules.length === 1 && (ruleset.rules[0] as RuleSet).rules) {
+      return ruleset.rules[0];
+    } else {
+      return ruleset;
+    }
+  }
+
   private expr2ruleset(expr: string): RuleSet {
     let ruleset = { rules: [] as any[], condition: 'and' };
     let current = ruleset;
@@ -513,7 +527,7 @@ export class AlertSettingComponent implements OnInit {
         i += 2;
       } else if (expr[i] === ')') {
         let parent = stack.pop();
-        parent.rules.push(current);
+        parent.rules.push(this.filterEmptyRules(current));
         current = parent;
         i++;
       } else {
@@ -538,7 +552,7 @@ export class AlertSettingComponent implements OnInit {
         i++;
       }
     }
-    return ruleset;
+    return this.filterEmptyRules(ruleset) as RuleSet;
   }
 
   getOperatorLabelByType = (operator: string) => {
