@@ -91,7 +91,9 @@
                   <td *ngIf="data[field].length > rowIndex"
                     >{{ data[field][rowIndex].split('$$$')[0] }}
                     <nz-tag *ngIf="data[field][rowIndex] == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
-                    <nz-tag *ngIf="data[field][rowIndex].split('$$$')[1]" nzColor="success">{{ data[field][rowIndex].split('$$$')[1] }}</nz-tag>
+                    <nz-tag *ngIf="data[field][rowIndex].split('$$$')[1]" nzColor="success">{{
+                      data[field][rowIndex].split('$$$')[1]
+                    }}</nz-tag>
                   </td>
                   <td *ngIf="data[field].length <= rowIndex"></td>
                 </ng-container>

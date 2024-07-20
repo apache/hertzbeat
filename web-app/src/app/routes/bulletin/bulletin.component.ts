@@ -73,40 +73,14 @@ export class BulletinComponent implements OnInit {
   appEntries: Array<{ value: any; key: string }> = [];
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
-  loading: boolean = false;
   rawData: any[] = [];
 
   ngOnInit(): void {
-    this.loadBulletinDefineTable();
     this.loadData();
   }
 
   sync() {
-    this.loadBulletinDefineTable();
-  }
-
-  loadBulletinDefineTable() {
-    this.tableLoading = true;
-    let bulletinDefineInit$ = this.bulletinDefineSvc.getBulletinDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
-      message => {
-        this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedDefineIds.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.defines = page.content;
-          this.pageIndex = page.number + 1;
-          this.total = page.totalElements;
-        } else {
-          console.warn(message.msg);
-        }
-        bulletinDefineInit$.unsubscribe();
-      },
-      error => {
-        this.tableLoading = false;
-        bulletinDefineInit$.unsubscribe();
-      }
-    );
+    this.loadData();
   }
 
   onNewBulletinDefine() {
@@ -158,7 +132,7 @@ export class BulletinComponent implements OnInit {
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
           }
-          this.loadBulletinDefineTable();
+          this.loadData();
           this.tableLoading = false;
         },
         error => {
@@ -239,7 +213,7 @@ export class BulletinComponent implements OnInit {
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
           this.updatePageIndex(defineIds.size);
-          this.loadBulletinDefineTable();
+          this.loadData();
         } else {
           this.tableLoading = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
@@ -283,7 +257,6 @@ export class BulletinComponent implements OnInit {
     const { pageSize, pageIndex, sort, filter } = params;
     this.pageIndex = pageIndex;
     this.pageSize = pageSize;
-    this.loadBulletinDefineTable();
   }
   // end: 列表多选逻辑
 
@@ -317,7 +290,7 @@ export class BulletinComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-              this.loadBulletinDefineTable();
+              this.loadData();
               this.resetManageModalData();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
@@ -341,7 +314,7 @@ export class BulletinComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-              this.loadBulletinDefineTable();
+              this.loadData();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
@@ -477,7 +450,7 @@ export class BulletinComponent implements OnInit {
           if (message.code === 0) {
             this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
             this.isConnectModalVisible = false;
-            this.loadBulletinDefineTable();
+            this.loadData();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
           }
@@ -648,75 +621,72 @@ export class BulletinComponent implements OnInit {
   }
 
   loadData() {
-    this.loading = true;
-    const metricData$ = this.bulletinDefineSvc
-      .getAllMonitorMetricsData()
-      .pipe(finalize(() => (this.loading = false)))
-      .subscribe(
-        message => {
-          metricData$.unsubscribe();
-          if (message.code === 0 && message.data) {
-            this.rawData = message.data;
-            const groupedData: any = {};
+    const metricData$ = this.bulletinDefineSvc.getAllMonitorMetricsData().subscribe(
+      message => {
+        metricData$.unsubscribe();
+        if (message.code === 0 && message.data) {
+          this.tableLoading = false;
+          this.rawData = message.data;
+          const groupedData: any = {};
 
-            this.rawData.forEach(item => {
-              const name = item.name;
-              if (!groupedData[name]) {
-                groupedData[name] = {
-                  bulletinColumn: {},
-                  data: []
-                };
-              }
-
-              let transformedItem: any = {
-                id: item.id,
-                app: item.app,
-                monitorId: item.content.monitorId,
-                host: item.content.host
+          this.rawData.forEach(item => {
+            const name = item.name;
+            if (!groupedData[name]) {
+              groupedData[name] = {
+                bulletinColumn: {},
+                data: []
               };
+            }
 
-              item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
-                if (!groupedData[name].bulletinColumn[metric.name]) {
-                  groupedData[name].bulletinColumn[metric.name] = new Set<string>();
-                }
-                metric.fields.forEach((field: any[]) => {
-                  field.forEach((fieldItem: any) => {
-                    const key = `${metric.name}$$$${fieldItem.key}`;
-                    console.log(key);
-                    const value = fieldItem.value;
-                    const unit = fieldItem.unit;
+            let transformedItem: any = {
+              id: item.id,
+              app: item.app,
+              monitorId: item.content.monitorId,
+              host: item.content.host
+            };
 
-                    if (!transformedItem[key]) {
-                      transformedItem[key] = [];
-                    }
-                    transformedItem[key].push(`${value}$$$${unit}`);
+            item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
+              if (!groupedData[name].bulletinColumn[metric.name]) {
+                groupedData[name].bulletinColumn[metric.name] = new Set<string>();
+              }
+              metric.fields.forEach((field: any[]) => {
+                field.forEach((fieldItem: any) => {
+                  const key = `${metric.name}$$$${fieldItem.key}`;
+                  console.log(key);
+                  const value = fieldItem.value;
+                  const unit = fieldItem.unit;
 
-                    groupedData[name].bulletinColumn[metric.name].add(key);
-                  });
+                  if (!transformedItem[key]) {
+                    transformedItem[key] = [];
+                  }
+                  transformedItem[key].push(`${value}$$$${unit}`);
+
+                  groupedData[name].bulletinColumn[metric.name].add(key);
                 });
               });
-              groupedData[name].data.push(transformedItem);
             });
+            groupedData[name].data.push(transformedItem);
+          });
 
-            this.tabDefines = Object.keys(groupedData).map(name => ({
-              name,
-              bulletinColumn: groupedData[name].bulletinColumn,
-              data: groupedData[name].data,
-              pageIndex: 1,
-              pageSize: 10,
-              total: groupedData[name].data.length
-            }));
-            console.log(this.tabDefines);
-          } else if (message.code !== 0) {
-            this.notifySvc.warning(`${message.msg}`, '');
-            console.info(`${message.msg}`);
-          }
-        },
-        error => {
-          console.error(error.msg);
-          metricData$.unsubscribe();
+          this.tabDefines = Object.keys(groupedData).map(name => ({
+            name,
+            bulletinColumn: groupedData[name].bulletinColumn,
+            data: groupedData[name].data,
+            pageIndex: 1,
+            pageSize: 10,
+            total: groupedData[name].data.length
+          }));
+          console.log(this.tabDefines);
+        } else if (message.code !== 0) {
+          this.notifySvc.warning(`${message.msg}`, '');
+          console.info(`${message.msg}`);
         }
-      );
+      },
+      error => {
+        console.error(error.msg);
+        metricData$.unsubscribe();
+      }
+    );
   }
 
   getMetricNames(bulletinTab: any): string[] {
