@@ -27,7 +27,6 @@ import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -38,140 +37,140 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @ConditionalOnProperty(
-		prefix = "common.queue",
-		name = "type",
-		havingValue = "redis"
+        prefix = "common.queue",
+        name = "type",
+        havingValue = "redis"
 )
 public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
 
-	private final RedisClient redisClient;
-	private final StatefulRedisConnection<String, String> connection;
-	private final RedisCommands<String, String> syncCommands;
-	private final String metricsDataQueueNameToAlerter;
-	private final String metricsDataQueueNameToPersistentStorage;
-	private final String metricsDataQueueNameToRealTimeStorage;
-	private final String alertsDataQueueName;
-	private final ObjectMapper objectMapper;
-	private final CommonProperties.RedisProperties redisProperties;
+    private final RedisClient redisClient;
+    private final StatefulRedisConnection<String, String> connection;
+    private final RedisCommands<String, String> syncCommands;
+    private final String metricsDataQueueNameToAlerter;
+    private final String metricsDataQueueNameToPersistentStorage;
+    private final String metricsDataQueueNameToRealTimeStorage;
+    private final String alertsDataQueueName;
+    private final ObjectMapper objectMapper;
+    private final CommonProperties.RedisProperties redisProperties;
 
-	public RedisCommonDataQueue(CommonProperties properties) {
+    public RedisCommonDataQueue(CommonProperties properties) {
 
-		if (properties == null || properties.getQueue() == null || properties.getQueue().getRedis() == null) {
-			log.error("init error, please config common.queue.redis props in application.yml");
-			throw new IllegalArgumentException("please config common.queue.redis props");
-		}
+        if (properties == null || properties.getQueue() == null || properties.getQueue().getRedis() == null) {
+            log.error("init error, please config common.queue.redis props in application.yml");
+            throw new IllegalArgumentException("please config common.queue.redis props");
+        }
 
-		this.redisProperties = properties.getQueue().getRedis();
-		RedisURI build = RedisURI.builder()
-				.withHost(redisProperties.getRedisHost())
-				.withPort(redisProperties.getRedisPort())
-				.build();
-		System.out.println(build.toString());
-		this.redisClient = RedisClient.create(
-				RedisURI.builder()
-						.withHost(redisProperties.getRedisHost())
-						.withPort(redisProperties.getRedisPort())
-						.build()
-		);
-		this.connection = redisClient.connect();
-		this.syncCommands = connection.sync();
-		this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
-		this.metricsDataQueueNameToPersistentStorage = redisProperties.getMetricsDataQueueNameToPersistentStorage();
-		this.metricsDataQueueNameToRealTimeStorage = redisProperties.getMetricsDataQueueNameToRealTimeStorage();
-		this.alertsDataQueueName = redisProperties.getAlertsDataQueueName();
-		this.objectMapper = new ObjectMapper();
-	}
+        this.redisProperties = properties.getQueue().getRedis();
+        RedisURI build = RedisURI.builder()
+                .withHost(redisProperties.getRedisHost())
+                .withPort(redisProperties.getRedisPort())
+                .build();
+        System.out.println(build.toString());
+        this.redisClient = RedisClient.create(
+                RedisURI.builder()
+                        .withHost(redisProperties.getRedisHost())
+                        .withPort(redisProperties.getRedisPort())
+                        .build()
+        );
+        this.connection = redisClient.connect();
+        this.syncCommands = connection.sync();
+        this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
+        this.metricsDataQueueNameToPersistentStorage = redisProperties.getMetricsDataQueueNameToPersistentStorage();
+        this.metricsDataQueueNameToRealTimeStorage = redisProperties.getMetricsDataQueueNameToRealTimeStorage();
+        this.alertsDataQueueName = redisProperties.getAlertsDataQueueName();
+        this.objectMapper = new ObjectMapper();
+    }
 
-	@Override
-	public Alert pollAlertsData() {
+    @Override
+    public Alert pollAlertsData() {
 
-		try {
-			String alertJson = syncCommands.rpop(alertsDataQueueName);
-			if (alertJson != null) {
-				return objectMapper.readValue(alertJson, Alert.class);
-			}
-		} catch (Exception e) {
-			log.error("please config common.queue.redis props correctly", e);
-			throw new RuntimeException(e);
-		}
-		return null;
-	}
+        try {
+            String alertJson = syncCommands.rpop(alertsDataQueueName);
+            if (alertJson != null) {
+                return objectMapper.readValue(alertJson, Alert.class);
+            }
+        } catch (Exception e) {
+            log.error("please config common.queue.redis props correctly", e);
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
 
-	@Override
-	public CollectRep.MetricsData pollMetricsDataToAlerter() {
+    @Override
+    public CollectRep.MetricsData pollMetricsDataToAlerter() {
 
-		try {
-			String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToAlerter);
-			if (metricsDataJson != null) {
-				return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			throw new RuntimeException(e);
-		}
-		return null;
-	}
+        try {
+            String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToAlerter);
+            if (metricsDataJson != null) {
+                return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
 
-	@Override
-	public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
+    @Override
+    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
 
-		try {
-			String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToPersistentStorage);
-			if (metricsDataJson != null) {
-				return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			throw new RuntimeException(e);
-		}
-		return null;
-	}
+        try {
+            String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToPersistentStorage);
+            if (metricsDataJson != null) {
+                return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
 
-	@Override
-	public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
+    @Override
+    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
 
-		try {
-			String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToRealTimeStorage);
-			if (metricsDataJson != null) {
-				return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			throw new RuntimeException(e);
-		}
-		return null;
-	}
+        try {
+            String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToRealTimeStorage);
+            if (metricsDataJson != null) {
+                return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
 
-	@Override
-	public void sendAlertsData(Alert alert) {
+    @Override
+    public void sendAlertsData(Alert alert) {
 
-		try {
-			String alertJson = objectMapper.writeValueAsString(alert);
-			syncCommands.lpush(alertsDataQueueName, alertJson);
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			throw new RuntimeException(e);
-		}
-	}
+        try {
+            String alertJson = objectMapper.writeValueAsString(alert);
+            syncCommands.lpush(alertsDataQueueName, alertJson);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 
-	@Override
-	public void sendMetricsData(CollectRep.MetricsData metricsData) {
+    @Override
+    public void sendMetricsData(CollectRep.MetricsData metricsData) {
 
-		try {
-			String metricsDataJson = objectMapper.writeValueAsString(metricsData);
-			syncCommands.lpush(metricsDataQueueNameToAlerter, metricsDataJson);
-			syncCommands.lpush(metricsDataQueueNameToPersistentStorage, metricsDataJson);
-			syncCommands.lpush(metricsDataQueueNameToRealTimeStorage, metricsDataJson);
-		} catch (Exception e) {
-			log.error(e.getMessage());
-			throw new RuntimeException(e);
-		}
-	}
+        try {
+            String metricsDataJson = objectMapper.writeValueAsString(metricsData);
+            syncCommands.lpush(metricsDataQueueNameToAlerter, metricsDataJson);
+            syncCommands.lpush(metricsDataQueueNameToPersistentStorage, metricsDataJson);
+            syncCommands.lpush(metricsDataQueueNameToRealTimeStorage, metricsDataJson);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
 
-	public void destroy() {
+    public void destroy() {
 
-		connection.close();
-		redisClient.shutdown();
-	}
+        connection.close();
+        redisClient.shutdown();
+    }
 
 }
