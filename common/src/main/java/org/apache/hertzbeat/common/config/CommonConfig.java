@@ -18,16 +18,17 @@
 package org.apache.hertzbeat.common.config;
 
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * common module config
  */
+
+@AutoConfiguration
 @ComponentScan(basePackages = "org.apache.hertzbeat.common")
 @EnableConfigurationProperties(CommonProperties.class)
-@Configuration
 public class CommonConfig {
 
     public CommonConfig(CommonProperties commonProperties) {
