@@ -99,13 +99,12 @@ public class RedisDataStorage extends AbstractRealTimeDataStorage {
             log.error("init error, please config Warehouse redis props in application.yml");
             return false;
         }
-        RedisProperties redisProp = redisProperties;
         RedisURI.Builder uriBuilder = RedisURI.builder()
-                .withHost(redisProp.host())
-                .withPort(redisProp.port())
+                .withHost(redisProperties.host())
+                .withPort(redisProperties.port())
                 .withTimeout(Duration.of(10, ChronoUnit.SECONDS));
-        if (redisProp.password() != null && !"".equals(redisProp.password())) {
-            uriBuilder.withPassword(redisProp.password().toCharArray());
+        if (redisProperties.password() != null && !"".equals(redisProperties.password())) {
+            uriBuilder.withPassword(redisProperties.password().toCharArray());
         }
         try {
             redisClient = RedisClient.create(uriBuilder.build());
