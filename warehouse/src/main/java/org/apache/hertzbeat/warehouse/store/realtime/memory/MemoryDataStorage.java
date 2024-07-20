@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
  * Store and collect real-time data - memory
  */
 @Component
-@ConditionalOnProperty(prefix = "warehouse.store.memory", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "warehouse.real-time.memory", name = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class MemoryDataStorage extends AbstractRealTimeDataStorage {
 
