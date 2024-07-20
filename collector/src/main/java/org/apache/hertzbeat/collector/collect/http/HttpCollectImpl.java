@@ -549,7 +549,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // if it has payload, would override post params
-        if (StringUtils.hasLength(httpProtocol.getPayload())) {
+        if (StringUtils.hasLength(httpProtocol.getPayload()) && (HttpMethod.POST.matches(httpMethod) || HttpMethod.PUT.matches(httpMethod))) {
             requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }
 
