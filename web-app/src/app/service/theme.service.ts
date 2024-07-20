@@ -17,9 +17,8 @@
  * under the License.
  */
 
-
-import { Inject, Injectable } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { Inject, Injectable } from '@angular/core';
 
 @Injectable({
   providedIn: 'root'
@@ -27,10 +26,7 @@ import { DOCUMENT } from '@angular/common';
 export class ThemeService {
   private readonly themeKey = 'theme';
 
-  constructor(@Inject(DOCUMENT) private doc: any) {
-
-  }
-
+  constructor(@Inject(DOCUMENT) private doc: any) {}
 
   setTheme(theme: string): void {
     localStorage.setItem(this.themeKey, theme);
@@ -69,13 +65,13 @@ export class ThemeService {
 
     this.setTheme(theme);
 
-    // 移除旧的主题
+    // remove old theme
     const existingLink = this.doc.getElementById(style.id);
     if (existingLink) {
       existingLink.remove();
     }
 
-    // 添加新的主题
+    // add new theme
     this.doc.body.appendChild(style);
   }
 }
