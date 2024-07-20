@@ -132,6 +132,11 @@ public interface DispatchConstants {
      */
     String PROTOCOL_IMAP = "imap";
 
+    /**
+     * protocol script
+     */
+    String PROTOCOL_SCRIPT = "script";
+
     // Protocol type related - end
 
     // http protocol related - start should reuse HttpHeaders as much as possible
