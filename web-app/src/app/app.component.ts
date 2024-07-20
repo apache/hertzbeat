@@ -5,7 +5,7 @@ import { ALAIN_I18N_TOKEN, TitleService, VERSION as VERSION_ALAIN } from '@delon
 import { environment } from '@env/environment';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { VERSION as VERSION_ZORRO } from 'ng-zorro-antd/version';
-import { ThemeService } from "./service/theme.service";
+import { ThemeService } from './service/theme.service';
 @Component({
   selector: 'app-root',
   template: ` <router-outlet></router-outlet> `
@@ -49,7 +49,7 @@ export class AppComponent implements OnInit {
     });
     // 主题设置
     const storedTheme = localStorage.getItem('theme');
-    if(storedTheme) {
+    if (storedTheme) {
       this.themeService.changeTheme(storedTheme);
     }
   }

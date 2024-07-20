@@ -26,7 +26,7 @@ import { finalize } from 'rxjs/operators';
 
 import { SystemConfig } from '../../../../pojo/SystemConfig';
 import { GeneralConfigService } from '../../../../service/general-config.service';
-import {ThemeService} from "../../../../service/theme.service";
+import { ThemeService } from '../../../../service/theme.service';
 
 @Component({
   selector: 'app-system-config',
