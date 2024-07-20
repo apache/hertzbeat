@@ -109,21 +109,25 @@
 
 ##### 1：Install quickly via docker   
 
-1. Just one command to get started:
+1. Just one command to get started
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+   ```shell
+   docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+   ```
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
 
 3. Deploy collector clusters (Optional)
 
-```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
-- `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
-- `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
-- `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
-- `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
+   ```shell
+   docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+   ```
+
+   - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
+   - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
+   - `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
+   - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
+
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache.org/docs/start/docker-deploy)   
 
@@ -167,7 +171,7 @@ Install the postgresql/mysql database, victoria-metrics/iotdb/tdengine database 
 
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
 
-##### 5. Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
+##### 5: Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
 
 Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 
