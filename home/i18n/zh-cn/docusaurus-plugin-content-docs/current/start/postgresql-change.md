@@ -12,36 +12,36 @@ PostgreSQL是一个功能强大，开源的关系型数据库管理系统（RDBM
 
 ### 通过Docker方式安装PostgreSQL    
 
-1. Download and install the Docker environment   
-   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
-   After the installation you can check if the Docker version normally output at the terminal.
-   ```
+1. 下载安装Docker环境   
+   Docker 的安装请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
+   安装完毕后请于终端检查Docker版本输出是否正常。  
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
    
 2. Docker安装 PostgreSQL
-   ```
+   ```shell
    $ docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
    ```
    使用```$ docker ps```查看数据库是否启动成功
 
-3. Create database in container manually or with [script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgresql-iotdb/conf/sql/schema.sql).
-
 ### 数据库创建  
 
 1. 进入 PostgreSQL 或使用客户端连接 PostgreSQL 服务 
-   ```
+   ```shell
    su - postgres
    psql
    ```
    
 2. 创建名称为hertzbeat的数据库    
-   `CREATE DATABASE hertzbeat;`
-
+   ```sql
+   CREATE DATABASE hertzbeat;
+   ```
 3. 查看hertzbeat数据库是否创建成功  
-   `\l`
-
+   ```sql
+   SELECT * FROM pg_database where datname='hertzbeat';
+   ```
 ### 修改hertzbeat的配置文件application.yml切换数据源
 
 1. 配置HertzBeat的配置文件
