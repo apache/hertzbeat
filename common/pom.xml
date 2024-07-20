@@ -106,6 +106,10 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+        </dependency>
         <!-- expr calculate -->
         <dependency>
             <groupId>org.apache.commons</groupId>
