@@ -115,7 +115,7 @@ git pull upstream master
 
 [Github Discussion](https://github.com/apache/hertzbeat/discussions)
 
-加微信号 `tan-cloud` 拉您进微信交流群
+加微信号 `ahertzbeat` 拉您进微信交流群
 
 ### 模块
 

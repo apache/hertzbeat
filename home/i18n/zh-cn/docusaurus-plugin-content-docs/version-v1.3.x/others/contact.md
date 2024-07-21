@@ -11,7 +11,7 @@ sidebar_label: 交流联系
 
 [Follow Us Twitter](https://twitter.com/hertzbeat1024)
 
-**微信交流群** 加微信号 tan-cloud 邀请您进微信群。
+**微信交流群** 加微信号 ahertzbeat 邀请您进微信群。
 
 **QQ交流群** 加QQ群号 630061200
 

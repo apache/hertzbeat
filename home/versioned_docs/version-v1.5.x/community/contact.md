@@ -10,7 +10,7 @@ sidebar_label: Discussion
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 
-WeChat Group : Add friend `tan-cloud` and invite to the group.
+WeChat Group : Add friend `ahertzbeat` and invite to the group.
 
 WeChat Public : Search  ID `usthecom`.
 
