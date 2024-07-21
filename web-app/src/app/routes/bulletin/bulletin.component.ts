@@ -92,11 +92,8 @@ export class BulletinComponent implements OnInit {
     this.isManageModalOkLoading = false;
   }
 
-  onEditOneBulletinDefine(alertDefineId: number) {
-    if (alertDefineId == null) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
-      return;
-    }
+  onEditOneBulletinDefine(bulletinDefineId: number) {
+
     this.editBulletinDefine(alertDefineId);
   }
 
@@ -676,7 +673,6 @@ export class BulletinComponent implements OnInit {
             pageSize: 10,
             total: groupedData[name].data.length
           }));
-          console.log(this.tabDefines);
         } else if (message.code !== 0) {
           this.notifySvc.warning(`${message.msg}`, '');
           console.info(`${message.msg}`);
