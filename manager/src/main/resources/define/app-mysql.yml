@@ -569,7 +569,7 @@ metrics:
       - field: connections
         type: 0
         i18n:
-          zh-CN: 当前连接数
+          zh-CN: 连接的总次数
           en-US: Connections
       - field: max_used_connections
         type: 0

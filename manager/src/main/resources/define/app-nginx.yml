@@ -69,6 +69,16 @@ params:
     required: true
     # default value 6000
     defaultValue: 6000
+  # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # When the type is boolean, the frontend will display a switch for it.
+    type: boolean
+    # required-true or false
+    required: false
 
 # collect metrics config list
 metrics:
@@ -99,6 +109,8 @@ metrics:
       port: ^_^port^_^
       # timeout
       timeout: ^_^timeout^_^
+      # ssl
+      ssl: ^_^ssl^_^
 
   - name: nginx_status
     i18n:
@@ -173,6 +185,8 @@ metrics:
       timeout: ^_^timeout^_^
       # http url
       url: /nginx-status
+      # ssl
+      ssl: ^_^ssl^_^
 
   - name: req_status
     i18n:
@@ -237,3 +251,5 @@ metrics:
       timeout: ^_^timeout^_^
       # http url
       url: /req-status
+      # ssl
+      ssl: ^_^ssl^_^

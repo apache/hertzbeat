@@ -15,46 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.queue;
+package org.apache.hertzbeat.warehouse.config;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
- * Test case for {@link CommonDataQueue}
+ * WarehouseAutoConfiguration class
+ * @version 2.1
  */
-class CommonDataQueueTest {
 
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
-
-    @Test
-    void addAlertData() {
-    }
-
-    @Test
-    void pollAlertData() {
-    }
-
-    @Test
-    void pollAlertMetricsData() {
-    }
-
-    @Test
-    void pollPersistentStorageMetricsData() {
-    }
-
-    @Test
-    void pollRealTimeStorageMetricsData() {
-    }
-
-    @Test
-    void sendMetricsData() {
-    }
+@AutoConfiguration
+@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
+public class WarehouseAutoConfiguration {
 }
