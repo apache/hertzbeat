@@ -73,6 +73,8 @@ public class CommonProperties {
 
         private KafkaProperties kafka;
 
+        private RedisProperties redis;
+
         public QueueType getType() {
             return type;
         }
@@ -88,6 +90,16 @@ public class CommonProperties {
         public void setKafka(KafkaProperties kafka) {
             this.kafka = kafka;
         }
+
+        public RedisProperties getRedis() {
+
+            return redis;
+        }
+
+        public void setRedis(RedisProperties redis) {
+
+            this.redis = redis;
+        }
     }
 
     /**
@@ -101,7 +113,106 @@ public class CommonProperties {
         /** with netty connect **/
         Netty,
         /** rabbit mq **/
-        Rabbit_Mq
+        Rabbit_Mq,
+        /** redis **/
+        Redis
+    }
+
+    /**
+     * redis data queue properties
+     */
+    public static class RedisProperties {
+
+        /**
+         * redis server host.
+         */
+        private String redisHost;
+
+        /**
+         * redis server port.
+         */
+        private int redisPort;
+
+        /**
+         * Queue name for metrics data to alerter
+         */
+        private String metricsDataQueueNameToAlerter;
+
+        /**
+         * Queue name for metrics data to persistent storage
+         */
+        private String metricsDataQueueNameToPersistentStorage;
+
+        /**
+         * Queue name for metrics data to real-time storage
+         */
+        private String metricsDataQueueNameToRealTimeStorage;
+
+        /**
+         * Queue name for alerts data
+         */
+        private String alertsDataQueueName;
+
+        public int getRedisPort() {
+
+            return redisPort;
+        }
+
+        public void setRedisPort(int redisPort) {
+
+            this.redisPort = redisPort;
+        }
+
+        public String getRedisHost() {
+
+            return redisHost;
+        }
+
+        public void setRedisHost(String redisHost) {
+
+            this.redisHost = redisHost;
+        }
+
+        public String getMetricsDataQueueNameToAlerter() {
+
+            return metricsDataQueueNameToAlerter;
+        }
+
+        public void setMetricsDataQueueNameToAlerter(String metricsDataQueueNameToAlerter) {
+
+            this.metricsDataQueueNameToAlerter = metricsDataQueueNameToAlerter;
+        }
+
+        public String getMetricsDataQueueNameToPersistentStorage() {
+
+            return metricsDataQueueNameToPersistentStorage;
+        }
+
+        public void setMetricsDataQueueNameToPersistentStorage(String metricsDataQueueNameToPersistentStorage) {
+
+            this.metricsDataQueueNameToPersistentStorage = metricsDataQueueNameToPersistentStorage;
+        }
+
+        public String getMetricsDataQueueNameToRealTimeStorage() {
+
+            return metricsDataQueueNameToRealTimeStorage;
+        }
+
+        public void setMetricsDataQueueNameToRealTimeStorage(String metricsDataQueueNameToRealTimeStorage) {
+
+            this.metricsDataQueueNameToRealTimeStorage = metricsDataQueueNameToRealTimeStorage;
+        }
+
+        public String getAlertsDataQueueName() {
+
+            return alertsDataQueueName;
+        }
+
+        public void setAlertsDataQueueName(String alertsDataQueueName) {
+
+            this.alertsDataQueueName = alertsDataQueueName;
+        }
+
     }
 
     /**
