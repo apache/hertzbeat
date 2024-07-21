@@ -41,7 +41,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Test case for {@link org.apache.hertzbeat.common.queue.impl.KafkaCommonDataQueue}
+ * Test case for {@link KafkaCommonDataQueue}
  */
 class KafkaCommonDataQueueTest {
 
