@@ -23,10 +23,11 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /**
  * Redis configuration information
  */
-@ConfigurationProperties(prefix = "warehouse.store.redis")
+@ConfigurationProperties(prefix = "warehouse.real-time.redis")
 public record RedisProperties(@DefaultValue("false") boolean enabled,
-                              @DefaultValue("127.0.0.1") String host,
-                              @DefaultValue("6379") Integer port,
+                              @DefaultValue("single") String mode,
+                              @DefaultValue("127.0.0.1:6379") String address,
+                              String masterName,
                               String password,
                               @DefaultValue("0") Integer db) {
 }
