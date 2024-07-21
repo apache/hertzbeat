@@ -127,8 +127,8 @@ class KafkaCommonDataQueueTest {
 
 	@Test
 	void testSendMetricsData() {
-		CollectRep.MetricsData metricsData = new CollectRep.MetricsData();
 
+		CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().build();
 		kafkaCommonDataQueue.sendMetricsData(metricsData);
 
 		ArgumentCaptor<ProducerRecord<Long, CollectRep.MetricsData>> captor = ArgumentCaptor.forClass(ProducerRecord.class);
@@ -142,7 +142,7 @@ class KafkaCommonDataQueueTest {
 	@Test
 	void testPollMetricsDataToAlerter() throws InterruptedException {
 
-		CollectRep.MetricsData metricsData = new CollectRep.MetricsData();
+		CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder().build();
 		ConsumerRecords<Long, CollectRep.MetricsData> records = new ConsumerRecords<>(Collections.emptyMap());
 		when(metricsDataToAlertConsumer.poll(Duration.ofSeconds(1))).thenReturn(records);
 

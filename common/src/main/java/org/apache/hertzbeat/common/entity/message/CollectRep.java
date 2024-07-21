@@ -449,7 +449,7 @@ public final class CollectRep {
         private MetricsData(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
             super(builder);
         }
-        public MetricsData() {
+        private MetricsData() {
             app_ = "";
             metrics_ = "";
             code_ = 0;
