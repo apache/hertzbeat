@@ -72,10 +72,6 @@ public class MemoryDataStorage extends AbstractRealTimeDataStorage {
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
-            log.debug("[warehouse memory] memory flush metrics data {} is null, ignore.", metricsData.getId());
-            return;
-        }
         Map<String, CollectRep.MetricsData> metricsDataMap = monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
         metricsDataMap.put(metrics, metricsData);
     }

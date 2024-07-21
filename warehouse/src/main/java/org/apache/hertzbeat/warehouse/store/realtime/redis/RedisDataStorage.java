@@ -64,10 +64,7 @@ public class RedisDataStorage extends AbstractRealTimeDataStorage {
         if (metricsData.getCode() != CollectRep.Code.SUCCESS || !isServerAvailable()) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse redis] redis flush metrics data {} - {} is null, ignore.", key, hashKey);
-            return;
-        }
+
         redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> {
             future.thenAccept(response -> {
                 if (response) {
