@@ -25,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -37,7 +36,7 @@ import org.springframework.context.annotation.Primary;
 @ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "memory", matchIfMissing = true)
 @Slf4j
 @Primary
-public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean {
+public class InMemoryCommonDataQueue implements CommonDataQueue {
 
     private final LinkedBlockingQueue<Alert> alertDataQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;

@@ -41,7 +41,6 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
@@ -51,7 +50,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "kafka")
 @Slf4j
-public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
+public class KafkaCommonDataQueue implements CommonDataQueue {
 
     private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
     private KafkaProducer<Long, Alert> alertDataProducer;

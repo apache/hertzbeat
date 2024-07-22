@@ -19,11 +19,12 @@ package org.apache.hertzbeat.common.queue;
 
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.springframework.beans.factory.DisposableBean;
 
 /**
  * common data queue
  */
-public interface CommonDataQueue {
+public interface CommonDataQueue extends DisposableBean {
 
     /**
      * poll alert data

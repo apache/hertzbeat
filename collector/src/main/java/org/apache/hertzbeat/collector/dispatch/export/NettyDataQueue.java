@@ -76,4 +76,9 @@ public class NettyDataQueue implements CommonDataQueue {
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
         collectJobService.sendAsyncCollectData(metricsData);
     }
+
+    @Override
+    public void destroy() throws Exception {
+    }
+
 }

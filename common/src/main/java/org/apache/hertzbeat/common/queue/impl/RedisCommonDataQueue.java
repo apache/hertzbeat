@@ -27,7 +27,6 @@ import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
@@ -41,7 +40,7 @@ import org.springframework.context.annotation.Configuration;
         name = "type",
         havingValue = "redis"
 )
-public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
+public class RedisCommonDataQueue implements CommonDataQueue {
 
     private final RedisClient redisClient;
     private final StatefulRedisConnection<String, String> connection;
