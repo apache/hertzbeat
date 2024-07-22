@@ -371,7 +371,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     
     @Data
     @AllArgsConstructor
-    private static class MetricsTime {
+    protected static class MetricsTime {
         private long startTime;
         private Metrics metrics;
         private Timeout timeout;
