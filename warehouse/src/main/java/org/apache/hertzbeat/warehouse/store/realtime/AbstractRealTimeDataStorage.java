@@ -26,7 +26,7 @@ import org.springframework.beans.factory.DisposableBean;
 @Slf4j
 public abstract class AbstractRealTimeDataStorage implements RealTimeDataReader, RealTimeDataWriter, DisposableBean {
 
-    protected boolean serverAvailable;
+    protected volatile boolean serverAvailable;
 
     /**
      * @return data Whether the storage is available

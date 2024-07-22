@@ -31,4 +31,6 @@ public interface SignConstants {
     String CARRIAGE_RETURN = "\r";
 
     String RIGHT_DASH = "/";
+
+    String COMMA = ",";
 }

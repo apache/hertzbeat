@@ -34,11 +34,13 @@ public class HostParamValidator implements ConstraintValidator<HostValid, String
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
         if (value != null && value.toLowerCase().contains(HTTP)){
-            value = value.replaceAll(PATTERN_HTTP, BLANK);
+            value = value.replaceFirst(PATTERN_HTTP, BLANK);
         }
         if (value != null && value.toLowerCase().contains(HTTPS)){
-            value = value.replace(PATTERN_HTTPS, BLANK);
+            value = value.replaceFirst(PATTERN_HTTPS, BLANK);
         }
+
         return IpDomainUtil.validateIpDomain(value);
     }
+
 }

@@ -15,16 +15,17 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.push.config;
+package org.apache.hertzbeat.warehouse.config;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
- * push configuration
+ * WarehouseAutoConfiguration class
+ * @version 2.1
  */
 
 @AutoConfiguration
-@ComponentScan(basePackages = "org.apache.hertzbeat.push")
-public class PushAutoConfiguration {
+@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
+public class WarehouseAutoConfiguration {
 }

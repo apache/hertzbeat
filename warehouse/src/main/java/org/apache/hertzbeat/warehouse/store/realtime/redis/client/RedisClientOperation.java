@@ -15,16 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.push.config;
+package org.apache.hertzbeat.warehouse.store.realtime.redis.client;
 
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
+import io.lettuce.core.RedisFuture;
+import io.lettuce.core.codec.RedisCodec;
+import java.util.Map;
+import java.util.function.Consumer;
+import org.apache.hertzbeat.warehouse.store.realtime.redis.RedisProperties;
 
 /**
- * push configuration
+ * Redis Client Operation
  */
+public interface RedisClientOperation<K, V> extends AutoCloseable {
+    RedisClientOperation<K, V> connect(RedisProperties redisProperties, RedisCodec<K, V> redisCodec);
 
-@AutoConfiguration
-@ComponentScan(basePackages = "org.apache.hertzbeat.push")
-public class PushAutoConfiguration {
+    V hget(K key, K field);
+
+    Map<K, V> hgetAll(K key);
+
+    void hset(K key, K field, V value, Consumer<RedisFuture<Boolean>> redisFutureConsumer);
 }

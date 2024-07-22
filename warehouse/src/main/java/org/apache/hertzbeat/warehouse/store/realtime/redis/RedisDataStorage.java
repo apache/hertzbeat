@@ -17,19 +17,13 @@
 
 package org.apache.hertzbeat.warehouse.store.realtime.redis;
 
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.RedisURI;
-import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.api.async.RedisAsyncCommands;
-import io.lettuce.core.api.sync.RedisCommands;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
+import org.apache.hertzbeat.warehouse.store.realtime.redis.client.RedisCommandDelegate;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.lang.NonNull;
@@ -40,35 +34,26 @@ import org.springframework.stereotype.Component;
  */
 @Primary
 @Component
-@ConditionalOnProperty(prefix = "warehouse.store.redis", name = "enabled", havingValue = "true")
+@ConditionalOnProperty(prefix = "warehouse.real-time.redis", name = "enabled", havingValue = "true")
 @Slf4j
 public class RedisDataStorage extends AbstractRealTimeDataStorage {
 
-    private RedisClient redisClient;
-    private final Integer db;
-    private StatefulRedisConnection<String, CollectRep.MetricsData> connection;
+    private final RedisCommandDelegate redisCommandDelegate;
 
     public RedisDataStorage(RedisProperties redisProperties) {
-        this.serverAvailable = initRedisClient(redisProperties);
-        this.db = getRedisSelectDb(redisProperties);
-    }
-
-    private Integer getRedisSelectDb(RedisProperties redisProperties){
-        return redisProperties.db();
+        final RedisCommandDelegate delegate = RedisCommandDelegate.getInstance();
+        this.serverAvailable = delegate.initRedisClient(redisProperties);
+        this.redisCommandDelegate = delegate;
     }
 
     @Override
     public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
-        RedisCommands<String, CollectRep.MetricsData> commands = connection.sync();
-        commands.select(db);
-        return commands.hget(String.valueOf(monitorId), metric);
+        return redisCommandDelegate.operate().hget(String.valueOf(monitorId), metric);
     }
 
     @Override
     public List<CollectRep.MetricsData> getCurrentMetricsData(@NonNull Long monitorId) {
-        RedisCommands<String, CollectRep.MetricsData> commands = connection.sync();
-        commands.select(db);
-        Map<String, CollectRep.MetricsData> metricsDataMap = commands.hgetall(String.valueOf(monitorId));
+        Map<String, CollectRep.MetricsData> metricsDataMap = redisCommandDelegate.operate().hgetAll(String.valueOf(monitorId));
         return new ArrayList<>(metricsDataMap.values());
     }
 
@@ -79,51 +64,20 @@ public class RedisDataStorage extends AbstractRealTimeDataStorage {
         if (metricsData.getCode() != CollectRep.Code.SUCCESS || !isServerAvailable()) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse redis] redis flush metrics data {} - {} is null, ignore.", key, hashKey);
-            return;
-        }
-        RedisAsyncCommands<String, CollectRep.MetricsData> commands = connection.async();
-        commands.select(db);
-        commands.hset(key, hashKey, metricsData).thenAccept(response -> {
-            if (response) {
-                log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
-            } else {
-                log.debug("[warehouse] redis replace data {}:{}.", key, hashKey);
-            }
+
+        redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> {
+            future.thenAccept(response -> {
+                if (response) {
+                    log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
+                } else {
+                    log.debug("[warehouse] redis replace data {}:{}.", key, hashKey);
+                }
+            });
         });
     }
 
-    private boolean initRedisClient(RedisProperties redisProperties) {
-        if (redisProperties == null) {
-            log.error("init error, please config Warehouse redis props in application.yml");
-            return false;
-        }
-        RedisProperties redisProp = redisProperties;
-        RedisURI.Builder uriBuilder = RedisURI.builder()
-                .withHost(redisProp.host())
-                .withPort(redisProp.port())
-                .withTimeout(Duration.of(10, ChronoUnit.SECONDS));
-        if (redisProp.password() != null && !"".equals(redisProp.password())) {
-            uriBuilder.withPassword(redisProp.password().toCharArray());
-        }
-        try {
-            redisClient = RedisClient.create(uriBuilder.build());
-            connection = redisClient.connect(new MetricsDataRedisCodec());
-            return true;
-        } catch (Exception e) {
-            log.error("init redis error {}", e.getMessage(), e);
-        }
-        return false;
-    }
-
     @Override
-    public void destroy() {
-        if (connection != null) {
-            connection.close();
-        }
-        if (redisClient != null) {
-            redisClient.shutdown();
-        }
+    public void destroy() throws Exception {
+        redisCommandDelegate.destroy();
     }
 }
