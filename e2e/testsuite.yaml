@@ -79,7 +79,7 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
-    bodyFromFile: monitor-sitemap.json
+    bodyFromFile: data/monitor-sitemap.json
 - name: listSitemapMonitor
   request:
     api: /api/monitors?pageIndex=0&pageSize=8&app=fullsite
@@ -107,7 +107,7 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
-    bodyFromFile: monitor-port.json
+    bodyFromFile: data/monitor-port.json
 - name: listPortMonitor
   request:
     api: /api/monitors?pageIndex=0&pageSize=8&app=port
@@ -135,7 +135,7 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
-    bodyFromFile: monitor-ssl.json
+    bodyFromFile: data/monitor-ssl.json
 - name: listSSLMonitor
   request:
     api: /api/monitors?pageIndex=0&pageSize=8&app=ssl_cert
@@ -163,7 +163,7 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
-    bodyFromFile: monitor-ping.json
+    bodyFromFile: data/monitor-ping.json
 - name: listPingMonitor
   request:
     api: /api/monitors?pageIndex=0&pageSize=8&app=ping
@@ -191,7 +191,7 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
-    bodyFromFile: monitor-udp.json
+    bodyFromFile: data/monitor-udp.json
 - name: listUDPMonitor
   request:
     api: /api/monitors?pageIndex=0&pageSize=8&app=udp_port
@@ -219,7 +219,7 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
-    bodyFromFile: monitor-website.json
+    bodyFromFile: data/monitor-website.json
 - name: listWebsiteMonitor
   request:
     api: /api/monitors?pageIndex=0&pageSize=8&app=website
@@ -247,7 +247,7 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
-    bodyFromFile: monitor-ftp.json
+    bodyFromFile: data/monitor-ftp.json
 - name: listFTPMonitor
   request:
     api: /api/monitors?pageIndex=0&pageSize=8&app=ftp
@@ -275,7 +275,7 @@ items:
     header:
       Authorization: Bearer {{.login.data.token}}
       Content-type: application/json
-    bodyFromFile: monitor-http.json
+    bodyFromFile: data/monitor-http.json
 - name: listHTTPMonitor
   request:
     api: /api/monitors?pageIndex=0&pageSize=8&app=api
