@@ -18,10 +18,6 @@ sidebar_label: Quick Start
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-```or use quay.io (if dockerhub network connect timeout)```
-
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
-
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 
 3. Deploy collector clusters(Optional)
