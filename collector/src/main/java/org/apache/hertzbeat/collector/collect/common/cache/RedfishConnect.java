@@ -39,7 +39,22 @@ public class RedfishConnect extends AbstractConnection<ConnectSession> {
     }
 
     @Override
+    public void check() throws Exception {
+
+        if (!reddishConnectSession.isOpen()) {
+            throw new RuntimeException("Connection is closed");
+        }
+    }
+
+    @Override
     public ConnectSession getConnection() {
+
+        try {
+            this.check();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
         return reddishConnectSession;
     }
 }

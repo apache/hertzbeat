@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.collect.common.cache;
 
 import com.mongodb.client.MongoClient;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
 
 /**
  * mongodb connect client
@@ -39,7 +40,21 @@ public class MongodbConnect extends AbstractConnection<MongoClient> {
     }
 
     @Override
+    public void check() throws Exception {
+
+        mongoClient.getDatabase("admin").runCommand(new Document("ping", 1));
+    }
+
+    @Override
     public MongoClient getConnection() {
+
+        try {
+            this.check();
+        }
+        catch (Exception e) {
+            throw new RuntimeException("Connection is closed");
+        }
+
         return mongoClient;
     }
 }

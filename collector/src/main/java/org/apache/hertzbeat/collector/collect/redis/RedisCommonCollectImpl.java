@@ -236,22 +236,26 @@ public class RedisCommonCollectImpl extends AbstractCollect {
      * @return connection
      */
     private StatefulConnection<String, String> getStatefulConnection(CacheIdentifier identifier) {
-        StatefulConnection<String, String> connection = null;
+
         Optional<RedisConnect> cacheOption = connectionCommonCache.getCache(identifier, true);
+
         if (cacheOption.isPresent()) {
             RedisConnect redisConnect = cacheOption.get();
-            connection = redisConnect.getConnection();
-            if (!connection.isOpen()) {
+
+            try {
+                return redisConnect.getConnection();
+            } catch (RuntimeException e) {
+                log.info("The Redis connection from cache is invalid, closing and removing: {}", e.getMessage());
                 try {
-                    connection.closeAsync();
-                } catch (Exception e) {
-                    log.info("The redis connect form cache, close error: {}", e.getMessage());
+                    redisConnect.getConnection().closeAsync();
+                } catch (Exception closeException) {
+                    log.info("Error closing Redis connection: {}", closeException.getMessage());
                 }
-                connection = null;
                 connectionCommonCache.removeCache(identifier);
             }
         }
-        return connection;
+
+        return null;
     }
 
     /**

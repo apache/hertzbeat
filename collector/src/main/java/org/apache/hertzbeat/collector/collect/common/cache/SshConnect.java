@@ -38,7 +38,22 @@ public class SshConnect extends AbstractConnection<ClientSession> {
         }
     }
 
+    @Override
+    public void check() throws Exception {
+
+        if (!clientSession.isOpen()) {
+            throw new Exception("ssh connection is not open");
+        }
+    }
+
     public ClientSession getConnection() {
+
+        try {
+            this.check();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
         return clientSession;
     }
 }

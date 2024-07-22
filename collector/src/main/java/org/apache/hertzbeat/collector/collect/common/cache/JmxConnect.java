@@ -41,7 +41,22 @@ public class JmxConnect extends AbstractConnection<JMXConnector> {
     }
 
     @Override
+    public void check() throws Exception {
+
+        if (connection.getConnectionId().isEmpty()) {
+            throw new RuntimeException("connection is closed");
+        }
+    }
+
+    @Override
     public JMXConnector getConnection() {
+
+        try {
+            this.check();
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
         return connection;
     }
 }
