@@ -4,7 +4,7 @@
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
-    "message": "Guides",
+    "message": "QuickStart",
     "description": "The label for category quickstart in sidebar docs"
   },
   "sidebar.docs.category.custom": {
