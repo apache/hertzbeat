@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import java.util.Objects;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertConvergeDao;
@@ -45,7 +46,10 @@ public class AlertConvergeServiceImpl implements AlertConvergeService {
  
     @Override
     public void validate(AlertConverge alertConverge, boolean isModify) throws IllegalArgumentException {
-        // todo 
+        // todo
+        if (Objects.isNull(alertConverge)) {
+            throw new IllegalArgumentException("alertConverge is null");
+        }
     }
     
     @Override

@@ -25,6 +25,8 @@ import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDao;
 import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
@@ -34,6 +36,7 @@ import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.dto.AlertReport;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,6 +57,14 @@ public class AlertServiceImpl implements AlertService {
     
     @Autowired
     private AlarmCommonReduce alarmCommonReduce;
+
+    @Override
+    public void validate(Alert alert, boolean isModify) throws IllegalArgumentException {
+        // todo
+        if (Objects.isNull(alert)) {
+            throw new IllegalArgumentException("Alarm priority cannot be empty");
+        }
+    }
 
     @Override
     public void addAlert(Alert alert) throws RuntimeException {
