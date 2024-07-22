@@ -17,28 +17,48 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import org.junit.jupiter.api.AfterEach;
+import java.util.concurrent.RejectedExecutionException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 
 /**
  * Test case for {@link WorkerPool}
  */
 class WorkerPoolTest {
 
+    private WorkerPool workerPool;
+
+    private Runnable mockTask;
+
     @BeforeEach
     void setUp() {
-    }
 
-    @AfterEach
-    void tearDown() {
-    }
-
-    @Test
-    void executeJob() {
+        workerPool = new WorkerPool();
+        mockTask = mock(Runnable.class);
     }
 
     @Test
-    void destroy() {
+    void testExecuteJob() {
+
+        assertDoesNotThrow(() -> workerPool.executeJob(mockTask));
     }
+
+    @Test
+    void testExecuteJobThrowsException() {
+
+        workerPool = mock(WorkerPool.class);
+        doThrow(new RejectedExecutionException()).when(workerPool).executeJob(mockTask);
+
+        assertThrows(RejectedExecutionException.class, () -> workerPool.executeJob(mockTask));
+    }
+
+    @Test
+    void testDestroy() {
+        assertDoesNotThrow(() -> workerPool.destroy());
+    }
+
 }

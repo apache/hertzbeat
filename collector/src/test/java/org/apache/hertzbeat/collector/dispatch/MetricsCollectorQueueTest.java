@@ -17,28 +17,39 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
 
 /**
  * Test case for {@link MetricsCollectorQueue}
  */
 class MetricsCollectorQueueTest {
 
+    private MetricsCollectorQueue metricsCollectorQueue;
+
+    private MetricsCollect mockJob;
+
     @BeforeEach
     void setUp() {
-    }
 
-    @AfterEach
-    void tearDown() {
-    }
-
-    @Test
-    void addJob() {
+        metricsCollectorQueue = new MetricsCollectorQueue();
+        mockJob = mock(MetricsCollect.class);
     }
 
     @Test
-    void getJob() {
+    void testAddJob() throws InterruptedException {
+
+        metricsCollectorQueue.addJob(mockJob);
+        assertEquals(mockJob, metricsCollectorQueue.getJob());
     }
+
+    @Test
+    void testGetJobTimeout() throws InterruptedException {
+
+        assertNull(metricsCollectorQueue.getJob());
+    }
+
 }
