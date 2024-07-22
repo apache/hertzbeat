@@ -46,6 +46,11 @@ public interface BulletinService {
      */
     Optional<Bulletin> getBulletinById(Long id);
 
+    /**
+     * delete Bulletin by id
+     */
+    boolean deleteBulletinById(Long id);
+
 
     /**
      * Save Bulletin

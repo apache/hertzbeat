@@ -54,6 +54,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -133,6 +134,21 @@ public class BulletinController {
          PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
          Page<BulletinVo> bulletinsPage = bulletinService.getBulletins(specification, pageRequest);
          return ResponseEntity.ok(Message.success(bulletinsPage));
+    }
+
+    /**
+     * delete bulletin by id
+     */
+    @Operation(summary = "Delete Bulletin by ID", description = "Delete Bulletin by ID")
+    @DeleteMapping
+    public ResponseEntity<Message<Void>> deleteBulletin(
+            @Parameter(description = "Bulletin ID", example = "402372614668544")
+            @RequestParam Long id) {
+        if (bulletinService.deleteBulletinById(id)) {
+            return ResponseEntity.ok(Message.success("Delete success"));
+        } else {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Delete failed"));
+        }
     }
 
     @GetMapping("/metrics/{id}")

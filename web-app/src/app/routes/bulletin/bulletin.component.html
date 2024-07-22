@@ -35,10 +35,6 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       新增看板项
     </button>
-    <button nz-button nzType="primary" (click)="onEditBulletinDefine()">
-      <i nz-icon nzType="edit" nzTheme="outline"></i>
-      编辑看板项
-    </button>
     <button nz-button nzType="primary" nzDanger (click)="onDeleteBulletinDefines()">
       <i nz-icon nzType="delete" nzTheme="outline"></i>
       删除看板项
@@ -198,6 +194,34 @@
               </nz-tree>
             </ng-template>
           </nz-transfer>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+
+<!-- delete bulletin modal -->
+<nz-modal
+  [(nzVisible)]="isDeleteModalVisible"
+  [nzTitle]="'删除看板'"
+  (nzOnCancel)="onDeleteModalCancel()"
+  (nzOnOk)="onDeleteModalOk()"
+  nzMaskClosable="false"
+  nzWidth="70%"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #defineForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="textInput" nzRequired="true">{{ 'bulletin.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            nzMode="multiple"
+            nzPlaceHolder="Please select"
+            [(ngModel)]="this.tabDefines"
+            [nzShowSearch]="true"
+          >
+            <nz-option *ngFor="let bulletinTab of tabDefines" [nzLabel]="bulletinTab.name" [nzValue]="bulletinTab.name"></nz-option>
+          </nz-select>
         </nz-form-control>
       </nz-form-item>
     </form>

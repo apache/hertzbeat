@@ -146,4 +146,19 @@ public class BulletinServiceImpl implements BulletinService {
     public Optional<Bulletin> getBulletinById(Long id) {
         return bulletinDao.findById(id);
     }
+
+    /**
+     * delete Bulletin by id
+     *
+     * @param id
+     */
+    @Override
+    public boolean deleteBulletinById(Long id) {
+        try {
+            bulletinDao.deleteById(id);
+            return true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
