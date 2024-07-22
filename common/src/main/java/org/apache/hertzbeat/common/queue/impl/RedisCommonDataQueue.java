@@ -17,7 +17,10 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -61,11 +64,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         }
 
         this.redisProperties = properties.getQueue().getRedis();
-        RedisURI build = RedisURI.builder()
-                .withHost(redisProperties.getRedisHost())
-                .withPort(redisProperties.getRedisPort())
-                .build();
-        System.out.println(build.toString());
+
         this.redisClient = RedisClient.create(
                 RedisURI.builder()
                         .withHost(redisProperties.getRedisHost())
@@ -78,7 +77,12 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.metricsDataQueueNameToPersistentStorage = redisProperties.getMetricsDataQueueNameToPersistentStorage();
         this.metricsDataQueueNameToRealTimeStorage = redisProperties.getMetricsDataQueueNameToRealTimeStorage();
         this.alertsDataQueueName = redisProperties.getAlertsDataQueueName();
-        this.objectMapper = new ObjectMapper();
+
+        this.objectMapper = new ObjectMapper()
+                .registerModule(new ProtobufModule())
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(SerializationFeature.FAIL_ON_SELF_REFERENCES, false);
     }
 
     @Override
