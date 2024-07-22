@@ -644,6 +644,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalCancel() {
+    this.cascadeValues = [];
     this.isExpr = false;
     this.resetQbData({ condition: 'and', rules: [] });
     this.isManageModalVisible = false;
