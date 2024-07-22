@@ -17,11 +17,8 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,7 +27,6 @@ import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobServi
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
-import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;

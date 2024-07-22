@@ -368,7 +368,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
         return mapList;
     }
-    
+
+    /**
+     * Metrics times.
+     */
     @Data
     @AllArgsConstructor
     protected static class MetricsTime {
