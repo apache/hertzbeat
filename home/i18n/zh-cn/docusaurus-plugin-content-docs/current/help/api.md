@@ -14,7 +14,7 @@ keywords: [开源监控系统, 开源网站监控, HTTP API监控]
 | 监控Host     | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
 | 任务名称     | 标识此监控的名称，名称需要保证唯一性。  |
 | 端口        | 网站对外提供的端口，http一般默认为80，https一般默认为443。  |
-| 相对路径     | 网站地址除IP端口外的后缀路径，例如 `www.tancloud.cn/console` 网站的相对路径为 `/console`。  |
+| 相对路径     | 网站地址除IP端口外的后缀路径，例如 `www.tancloud.io/console` 网站的相对路径为 `/console`。  |
 | 请求方式     | 设置接口调用的请求方式：GET,POST,PUT,DELETE。  |
 | 启用HTTPS   | 是否通过HTTPS访问网站，注意⚠️开启HTTPS一般默认对应端口需要改为443  |
 | 用户名      | 接口Basic认证或Digest认证时使用的用户名 |
