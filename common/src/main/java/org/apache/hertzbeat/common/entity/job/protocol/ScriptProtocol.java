@@ -15,14 +15,44 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
-import org.springframework.context.annotation.ComponentScan;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * WarehouseAutoConfiguration class
- * @version 2.1
+ * script protocol
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.warehouse")
-public class WarehouseAutoConfiguration {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+
+public class ScriptProtocol {
+    /**
+     * OS charset
+     */
+    private String charset;
+
+    /**
+     * Script working directory
+     */
+    private String workDirectory;
+
+    /**
+     * Script command
+     */
+    private String scriptCommand;
+
+    /**
+     * File name of script
+     */
+    private String scriptPath;
+
+    /**
+     * Response data parsing mode：oneRow, multiRow
+     */
+    private String parseType;
 }
