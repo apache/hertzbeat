@@ -15,24 +15,44 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.store.realtime;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.DisposableBean;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * Real-time data storage abstract class
+ * script protocol
  */
-@Slf4j
-public abstract class AbstractRealTimeDataStorage implements RealTimeDataReader, RealTimeDataWriter, DisposableBean {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 
-    protected volatile boolean serverAvailable;
+public class ScriptProtocol {
+    /**
+     * OS charset
+     */
+    private String charset;
 
     /**
-     * @return data Whether the storage is available
+     * Script working directory
      */
-    @Override
-    public boolean isServerAvailable() {
-        return serverAvailable;
-    }
+    private String workDirectory;
+
+    /**
+     * Script command
+     */
+    private String scriptCommand;
+
+    /**
+     * File name of script
+     */
+    private String scriptPath;
+
+    /**
+     * Response data parsing mode：oneRow, multiRow
+     */
+    private String parseType;
 }
