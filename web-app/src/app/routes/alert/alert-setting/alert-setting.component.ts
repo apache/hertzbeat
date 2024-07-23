@@ -644,6 +644,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalCancel() {
+    this.cascadeValues = [];
     this.isExpr = false;
     this.resetQbData({ condition: 'and', rules: [] });
     this.isManageModalVisible = false;
@@ -698,6 +699,7 @@ export class AlertSettingComponent implements OnInit {
         .subscribe(
           message => {
             if (message.code === 0) {
+              this.cascadeValues = [];
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.loadAlertDefineTable();
@@ -722,6 +724,7 @@ export class AlertSettingComponent implements OnInit {
         .subscribe(
           message => {
             if (message.code === 0) {
+              this.cascadeValues = [];
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
               this.loadAlertDefineTable();
