@@ -94,7 +94,7 @@ export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
         })
       )
       .subscribe(value => {
-        // 远程加载搜索数据
+        // Remote loading of search data
         let searchMonitors$ = this.monitorSvc.searchMonitors(undefined, undefined, value, 9, 0, 10).subscribe(
           message => {
             this.loading = false;

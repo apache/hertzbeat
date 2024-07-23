@@ -117,7 +117,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.router.navigate(['/monitors'], { queryParams: { tag: data.text } });
   }
 
-  // start 大类别数量信息
+  // start -- quantitative information summary
   appCountService: AppCount = new AppCount();
   appCountOs: AppCount = new AppCount();
   appCountDb: AppCount = new AppCount();
@@ -159,7 +159,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ]
   };
 
-  // start 数量全局概览
+  // start -- quantity overall overview
   interval$!: any;
   appsCountLoading: boolean = true;
   appsCountTableData: any[] = [];
@@ -172,7 +172,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   collectorsLoading: boolean = false;
   collectors!: CollectorSummary[];
 
-  // 告警列表
+  // alert list
   alerts!: Alert[];
   alertContentLoading: boolean = false;
 
@@ -309,7 +309,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           data: [
             {
               value: 0,
-              // 设置单个柱子的样式
+              // Set the style of the individual columns
               itemStyle: {
                 color: '#ffb72b',
                 shadowColor: '#91cc75'
@@ -417,9 +417,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           apps.forEach(app => {
             let appName = this.i18nSvc.fanyi(`monitor.app.${app.app}`);
             this.appsCountTableData.push({
-              // 自定义属性
+              // custom attribute
               app: app.app,
-              // 默认属性
+              // default attribute
               name: appName,
               value: app.size
             });
@@ -554,13 +554,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // start 告警分布
+  // start -- alarm distribution
   alertsEChartOption!: EChartsOption;
   alertsTheme!: EChartsOption;
   alertsEchartsInstance!: any;
   alertsLoading: boolean = true;
 
-  // start 告警处理率
+  // start -- alarm processing rate
   alertsDealEChartOption!: EChartsOption;
   alertsDealTheme!: EChartsOption;
   alertsDealEchartsInstance!: any;
