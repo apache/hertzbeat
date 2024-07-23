@@ -140,15 +140,15 @@ export class MonitorFormComponent implements OnChanges {
   onParamBooleanChanged(booleanValue: boolean, field: string) {
     // 对SSL的端口联动处理, 不开启SSL默认80端口，开启SSL默认443
     if (field === 'ssl') {
-      this.params.forEach(param => {
-        if (param.field === 'port') {
-          if (booleanValue) {
-            param.paramValue = '443';
-          } else {
-            param.paramValue = '80';
-          }
+      const portParam = this.params.find(param => param.field === 'port');
+      if (portParam) {
+        if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
+          portParam.paramValue = 443;
         }
-      });
+        if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
+          portParam.paramValue = 80;
+        }
+      }
     }
   }
 
