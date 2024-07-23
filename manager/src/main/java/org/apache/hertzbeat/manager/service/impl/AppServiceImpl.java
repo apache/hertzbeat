@@ -397,6 +397,21 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         Assert.notEmpty(app.getMetrics(), "monitoring template require attributes metrics");
         var hasAvailableMetrics = app.getMetrics().stream().anyMatch(item -> item.getPriority() == 0);
         Assert.isTrue(hasAvailableMetrics, "monitoring template metrics list must have one priority 0 metrics");
+        CommonUtil.validDefineI18n(app.getName(), "name");
+        CommonUtil.validDefineI18n(app.getHelp(), "help");
+        CommonUtil.validDefineI18n(app.getHelpLink(), "helpLink");
+        for (ParamDefine param : app.getParams()) {
+            CommonUtil.validDefineI18n(param.getName(),  param.getField() + " param");
+        }
+        for (Metrics metric : app.getMetrics()) {
+            CommonUtil.validDefineI18n(metric.getI18n(), metric.getName() + " metric");
+            if (metric.getFields() == null){
+                continue;
+            }
+            for (Metrics.Field field : metric.getFields()) {
+                CommonUtil.validDefineI18n(field.getI18n(), metric.getName() + " metric " + field.getField() + " field");
+            }
+        }
         if (!isModify) {
             Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
                     "monitoring template name " + app.getApp() + " already exists.");
