@@ -1,7 +1,7 @@
 {
   "version.label": {
-    "message": "v1.3.x",
-    "description": "The label for version v1.3.x"
+    "message": "v1.5.x",
+    "description": "The label for version v1.5.x"
   },
   "sidebar.docs.category.quickstart": {
     "message": "quickstart",
@@ -31,6 +31,30 @@
     "message": "snmp",
     "description": "The label for category snmp in sidebar docs"
   },
+  "sidebar.docs.category.push": {
+    "message": "push",
+    "description": "The label for category push in sidebar docs"
+  },
+  "sidebar.docs.category.NGQL": {
+    "message": "NGQL",
+    "description": "The label for category NGQL in sidebar docs"
+  },
+  "sidebar.docs.category.Community": {
+    "message": "Community",
+    "description": "The label for category Community in sidebar docs"
+  },
+  "sidebar.docs.category.contribution": {
+    "message": "contribution",
+    "description": "The label for category contribution in sidebar docs"
+  },
+  "sidebar.docs.category.submit": {
+    "message": "submit",
+    "description": "The label for category submit in sidebar docs"
+  },
+  "sidebar.docs.category.release": {
+    "message": "release",
+    "description": "The label for category release in sidebar docs"
+  },
   "sidebar.docs.category.help": {
     "message": "help",
     "description": "The label for category help in sidebar docs"
@@ -39,9 +63,17 @@
     "message": "service",
     "description": "The label for category service in sidebar docs"
   },
+  "sidebar.docs.category.program": {
+    "message": "program",
+    "description": "The label for category program in sidebar docs"
+  },
   "sidebar.docs.category.database": {
     "message": "database",
     "description": "The label for category database in sidebar docs"
+  },
+  "sidebar.docs.category.cache": {
+    "message": "cache",
+    "description": "The label for category cache in sidebar docs"
   },
   "sidebar.docs.category.os": {
     "message": "os",
@@ -51,9 +83,25 @@
     "message": "mid",
     "description": "The label for category mid in sidebar docs"
   },
+  "sidebar.docs.category.bigdata": {
+    "message": "bigdata",
+    "description": "The label for category bigdata in sidebar docs"
+  },
+  "sidebar.docs.category.webserver": {
+    "message": "webserver",
+    "description": "The label for category webserver in sidebar docs"
+  },
   "sidebar.docs.category.cloud-native": {
     "message": "cloud-native",
     "description": "The label for category cloud-native in sidebar docs"
+  },
+  "sidebar.docs.category.llm": {
+    "message": "llm",
+    "description": "The label for category llm in sidebar docs"
+  },
+  "sidebar.docs.category.network": {
+    "message": "network",
+    "description": "The label for category network in sidebar docs"
   },
   "sidebar.docs.category.threshold": {
     "message": "threshold",
@@ -67,12 +115,8 @@
     "message": "Others",
     "description": "The label for category Others in sidebar docs"
   },
-  "sidebar.docs.link.Cloud Service": {
-    "message": "Cloud Service",
-    "description": "The label for link Cloud Service in sidebar docs, linking to https://console.tancloud.cn"
-  },
-  "sidebar.docs.link.Install via HuaweiCloud": {
-    "message": "Install via HuaweiCloud",
-    "description": "The label for link Install via HuaweiCloud in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
+  "sidebar.docs.link.Install via Helm": {
+    "message": "Install via Helm",
+    "description": "The label for link Install via Helm in sidebar docs, linking to https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
   }
 }
