@@ -18,7 +18,7 @@ spring:
   application:
     name: ${HOSTNAME:@hertzbeat@}${PID}
   profiles:
-    active: pg
+    active: prod
   mvc:
     static-path-pattern: /**
   jackson:
