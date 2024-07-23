@@ -174,7 +174,7 @@ export class AlertSilenceComponent implements OnInit {
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -191,9 +191,9 @@ export class AlertSilenceComponent implements OnInit {
     }
   }
   /**
-   * 分页回调
+   * Paging callback
    *
-   * @param params 页码信息
+   * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
     const { pageSize, pageIndex, sort, filter } = params;
@@ -201,9 +201,9 @@ export class AlertSilenceComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadAlertSilenceTable();
   }
-  // end: 列表多选逻辑
+  // end: List multiple choice paging
 
-  // start 新增修改告警静默 model
+  // start -- new or update alert silence model
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
