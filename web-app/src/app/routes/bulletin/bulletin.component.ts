@@ -26,14 +26,11 @@ import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange } from 'ng-zorro-antd/transfer';
 import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
 import { finalize } from 'rxjs/operators';
-
 import { BulletinDefine } from '../../pojo/BulletinDefine';
 import { Monitor } from '../../pojo/Monitor';
-import { AlertDefineService } from '../../service/alert-define.service';
 import { AppDefineService } from '../../service/app-define.service';
 import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
-import { TagService } from '../../service/tag.service';
 
 @Component({
   selector: 'app-bulletin',
@@ -53,10 +50,9 @@ export class BulletinComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
-  defines!: BulletinDefine[];
   tabDefines!: any[];
   tableLoading: boolean = true;
-  checkedDefineIds = new Set<number>();
+  checkedDefineIds: number[] = [];
   isAppListLoading = false;
   isMonitorListLoading = false;
   treeNodes!: NzTreeNodeOptions[];
@@ -85,22 +81,10 @@ export class BulletinComponent implements OnInit {
   }
 
 
-  onDeleteOneBulletinDefine(bulletinDefineId: number) {
-    let defineIds = new Set<number>();
-    defineIds.add(bulletinDefineId);
-    this.modal.confirm({
-      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
-      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
-      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
-      nzOkDanger: true,
-      nzOkType: 'primary',
-      nzClosable: false,
-      nzOnOk: () => this.deleteBulletinDefines(defineIds)
-    });
-  }
 
-  deleteBulletinDefines(defineIds: Set<number>) {
-    if (defineIds == null || defineIds.size == 0) {
+
+  deleteBulletinDefines(defineIds: number[]) {
+    if (defineIds == null || defineIds.length == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
@@ -110,7 +94,7 @@ export class BulletinComponent implements OnInit {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.updatePageIndex(defineIds.size);
+          this.updatePageIndex(defineIds.length);
           this.loadData();
         } else {
           this.tableLoading = false;
@@ -376,13 +360,13 @@ export class BulletinComponent implements OnInit {
             const name = item.name;
             if (!groupedData[name]) {
               groupedData[name] = {
+                id: item.id,
                 bulletinColumn: {},
                 data: []
               };
             }
 
             let transformedItem: any = {
-              id: item.id,
               app: item.app,
               monitorId: item.content.monitorId,
               host: item.content.host
@@ -395,7 +379,6 @@ export class BulletinComponent implements OnInit {
               metric.fields.forEach((field: any[]) => {
                 field.forEach((fieldItem: any) => {
                   const key = `${metric.name}$$$${fieldItem.key}`;
-                  console.log(key);
                   const value = fieldItem.value;
                   const unit = fieldItem.unit;
 
@@ -413,12 +396,14 @@ export class BulletinComponent implements OnInit {
 
           this.tabDefines = Object.keys(groupedData).map(name => ({
             name,
+            id: groupedData[name].id,
             bulletinColumn: groupedData[name].bulletinColumn,
             data: groupedData[name].data,
             pageIndex: 1,
             pageSize: 10,
             total: groupedData[name].data.length
           }));
+          console.log(this.tabDefines)
         } else if (message.code !== 0) {
           this.notifySvc.warning(`${message.msg}`, '');
           console.info(`${message.msg}`);
@@ -461,6 +446,10 @@ export class BulletinComponent implements OnInit {
   }
 
   onDeleteModalOk() {
+    console.log(this.checkedDefineIds)
+    this.deleteBulletinDefines(this.checkedDefineIds);
+    this.isDeleteModalOkLoading = false;
+    this.isDeleteModalVisible = false;
 
   }
 }

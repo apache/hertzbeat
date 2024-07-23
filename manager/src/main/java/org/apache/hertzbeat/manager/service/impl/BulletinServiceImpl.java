@@ -148,14 +148,14 @@ public class BulletinServiceImpl implements BulletinService {
     }
 
     /**
-     * delete Bulletin by id
+     * delete Bulletin by ids
      *
-     * @param id
+     * @param ids
      */
     @Override
-    public boolean deleteBulletinById(Long id) {
+    public boolean deleteBulletinById(List<Long> ids) {
         try {
-            bulletinDao.deleteById(id);
+            ids.forEach(id -> bulletinDao.deleteById(id));
             return true;
         } catch (Exception e) {
             throw new RuntimeException(e);

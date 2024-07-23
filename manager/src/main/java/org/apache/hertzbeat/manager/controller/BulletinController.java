@@ -143,8 +143,8 @@ public class BulletinController {
     @DeleteMapping
     public ResponseEntity<Message<Void>> deleteBulletin(
             @Parameter(description = "Bulletin ID", example = "402372614668544")
-            @RequestParam Long id) {
-        if (bulletinService.deleteBulletinById(id)) {
+            @RequestParam List<Long> ids) {
+        if (bulletinService.deleteBulletinById(ids)) {
             return ResponseEntity.ok(Message.success("Delete success"));
         } else {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Delete failed"));

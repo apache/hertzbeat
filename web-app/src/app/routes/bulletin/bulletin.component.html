@@ -217,10 +217,11 @@
           <nz-select
             nzMode="multiple"
             nzPlaceHolder="Please select"
-            [(ngModel)]="this.tabDefines"
+            [(ngModel)]="this.checkedDefineIds"
             [nzShowSearch]="true"
+            name="delete"
           >
-            <nz-option *ngFor="let bulletinTab of tabDefines" [nzLabel]="bulletinTab.name" [nzValue]="bulletinTab.name"></nz-option>
+            <nz-option *ngFor="let bulletinTab of tabDefines" [nzLabel]="bulletinTab.name" [nzValue]="bulletinTab.id"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
