@@ -52,7 +52,8 @@ public class SshConnect extends AbstractConnection<ClientSession> {
             this.check();
         }
         catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            log.error(e.getMessage());
+            return null;
         }
         return clientSession;
     }

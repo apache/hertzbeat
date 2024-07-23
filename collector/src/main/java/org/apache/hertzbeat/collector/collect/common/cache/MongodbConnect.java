@@ -52,7 +52,8 @@ public class MongodbConnect extends AbstractConnection<MongoClient> {
             this.check();
         }
         catch (Exception e) {
-            throw new RuntimeException("Connection is closed");
+            log.error(e.getMessage());
+            return null;
         }
 
         return mongoClient;

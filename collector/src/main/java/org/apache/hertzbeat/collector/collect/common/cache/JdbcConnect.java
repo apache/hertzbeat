@@ -55,7 +55,8 @@ public class JdbcConnect extends AbstractConnection<Connection> {
             this.check();
         }
         catch (SQLException e) {
-            throw new RuntimeException(e.getMessage());
+            log.error(e.getMessage());
+            return null;
         }
         return connection;
     }

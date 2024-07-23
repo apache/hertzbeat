@@ -55,7 +55,8 @@ public class JmxConnect extends AbstractConnection<JMXConnector> {
             this.check();
         }
         catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            log.error(e.getMessage());
+            return null;
         }
         return connection;
     }

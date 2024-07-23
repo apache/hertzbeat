@@ -53,7 +53,8 @@ public class RedfishConnect extends AbstractConnection<ConnectSession> {
             this.check();
         }
         catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            log.error(e.getMessage());
+            return null;
         }
         return reddishConnectSession;
     }
