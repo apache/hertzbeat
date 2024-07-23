@@ -48,7 +48,7 @@ export class AlertNoticeComponent implements OnInit {
   loading = false;
   code: string = '';
   originalCode: string = '';
-  // start 新增或修改通知接收对象弹出框
+  // start -- new or update notice receiver pop-up box
   isManageReceiverModalVisible: boolean = false;
   isManageReceiverModalAdd: boolean = true;
   isManageReceiverModalOkLoading: boolean = false;
@@ -232,7 +232,7 @@ export class AlertNoticeComponent implements OnInit {
     });
   }
 
-  // start 新增或修改通知策略弹出框
+  // start -- new or update notice strategy pop-up box
 
   deleteOneNoticeTemplate(templateId: number) {
     const deleteTemplate$ = this.noticeTemplateSvc
