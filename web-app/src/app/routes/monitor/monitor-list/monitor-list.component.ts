@@ -67,7 +67,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   exportJsonButtonLoading = false;
   exportYamlButtonLoading = false;
   exportExcelButtonLoading = false;
-  // 过滤搜索
   filterContent!: string;
   filterStatus: number = 9;
   // app type search filter
@@ -233,8 +232,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       return;
     }
     this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
-    // 参数样例
-    // this.router.navigate(['/monitors/new'],{queryParams: {app: "linux"}});
   }
 
   onDeleteOneMonitor(monitorId: number) {
@@ -470,7 +467,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     );
   }
 
-  // begin: 列表多选逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
 
   onAllChecked(checked: boolean) {
@@ -489,16 +486,16 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     }
   }
 
-  // end: 列表多选逻辑
+  // end: List multiple choice paging
 
   notifyCopySuccess() {
     this.messageSvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), { nzDuration: 800 });
   }
 
   /**
-   * 分页回调
+   * Paging callback
    *
-   * @param params 页码信息
+   * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
     const { pageSize, pageIndex, sort, filter } = params;

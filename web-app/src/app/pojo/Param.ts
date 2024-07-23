@@ -22,6 +22,5 @@ export class Param {
   field!: string;
   type: number | undefined;
   paramValue: any;
-  // 是否显示
   display: boolean = true;
 }
