@@ -72,7 +72,7 @@ export class MonitorEditComponent implements OnInit {
           this.isSpinning = true;
           let id = paramMap.get('monitorId');
           this.monitor.id = Number(id);
-          // 查询监控信息
+          // query monitor by id
           return this.monitorSvc.getMonitor(this.monitor.id);
         })
       )
