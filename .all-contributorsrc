@@ -1991,6 +1991,24 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "jiangsh-ui",
+      "name": "jiangsh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/86990361?v=4",
+      "profile": "https://github.com/jiangsh-ui",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "keaifafafa",
+      "name": "Keaifa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/83876361?v=4",
+      "profile": "https://github.com/keaifafafa",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

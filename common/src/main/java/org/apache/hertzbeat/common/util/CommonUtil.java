@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalTime;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -205,6 +206,7 @@ public final class CommonUtil {
         }
         return Optional.ofNullable(i18nMap.get(lang))
                 .orElse(i18nMap.values().stream()
+                        .filter(Objects::nonNull)
                         .findFirst().orElse(null));
     }
 
