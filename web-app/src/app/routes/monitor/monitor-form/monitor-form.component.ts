@@ -140,15 +140,15 @@ export class MonitorFormComponent implements OnChanges {
   onParamBooleanChanged(booleanValue: boolean, field: string) {
     // For SSL port linkage, port 80 by default is not enabled, but port 443 by default is enabled
     if (field === 'ssl') {
-      this.params.forEach(param => {
-        if (param.field === 'port') {
-          if (booleanValue) {
-            param.paramValue = '443';
-          } else {
-            param.paramValue = '80';
-          }
+      const portParam = this.params.find(param => param.field === 'port');
+      if (portParam) {
+        if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
+          portParam.paramValue = 443;
         }
-      });
+        if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
+          portParam.paramValue = 80;
+        }
+      }
     }
   }
 
