@@ -17,15 +17,10 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
-import io.lettuce.core.resource.ClientResources;
-import io.swagger.v3.core.util.Json;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -33,7 +28,6 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.ProtoJsonUtil;
-
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
