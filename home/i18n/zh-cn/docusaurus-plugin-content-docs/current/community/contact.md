@@ -9,7 +9,7 @@ sidebar_label: 交流联系
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 
-微信交流群 : 加 `tan-cloud` 好友邀请进群.
+微信交流群 : 加 `ahertzbeat` 好友邀请进群.
 
 微信公众号 : 搜索 ID `usthecom`.
 
