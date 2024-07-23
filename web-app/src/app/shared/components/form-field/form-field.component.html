@@ -148,7 +148,7 @@
     (ngModelChange)="onChange($event)"
     [nzMin]="extra.interval_type === 'push' ? 1 : 10"
     [nzMax]="604800"
-    [nzStep]="extra.interval_type === 'push' ? 1 : 10"
+    [nzStep]="extra.interval_type === 'push' ? 1 : 5"
     name="intervals"
     id="intervals"
   >
