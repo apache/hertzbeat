@@ -177,7 +177,7 @@
 
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 
-<!-- 新增或修改告警定义弹出框 -->
+<!-- new or update alert definition pop-up box -->
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
   [nzTitle]="isManageModalAdd ? ('alert.setting.new' | i18n) : ('alert.setting.edit' | i18n)"
@@ -502,7 +502,7 @@
   </div>
 </nz-modal>
 
-<!-- 关联告警定义与监控关系弹出框 -->
+<!-- associate alert definition and monitoring pop-up box -->
 
 <nz-modal
   [(nzVisible)]="isConnectModalVisible"
@@ -549,7 +549,7 @@
   </nz-transfer>
 </nz-modal>
 
-<!-- 导出告警定义弹出框 -->
+<!-- export alert definitions pop-up box -->
 <nz-modal
   [(nzVisible)]="isSwitchExportTypeModalVisible"
   [nzTitle]="'alert.export.switch-type' | i18n"

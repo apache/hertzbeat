@@ -50,7 +50,7 @@ export class CollectorComponent implements OnInit {
   collectors!: CollectorSummary[];
   tableLoading: boolean = false;
   checkedCollectors = new Set<string>();
-  // 搜索过滤相关属性
+  // used for filtering collector name
   search: string | undefined;
 
   ngOnInit(): void {
@@ -245,7 +245,7 @@ export class CollectorComponent implements OnInit {
     );
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -267,7 +267,7 @@ export class CollectorComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadCollectorsTable();
   }
-  // end: 列表多选分页逻辑
+  // end: List multiple choice paging
 
   // start deploy collector model
   isDeployCollectorModalVisible = false;
