@@ -58,7 +58,7 @@ export class SystemConfigComponent implements OnInit {
         if (message.code === 0) {
           if (message.data) {
             this.config = message.data;
-            this.changeTheme(this.config.theme); // 刷新后更新主题
+            this.changeTheme(this.config.theme); // update theme after config is loaded
           } else {
             this.config = new SystemConfig();
           }

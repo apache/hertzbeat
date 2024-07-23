@@ -94,7 +94,7 @@ export class AlertSettingComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAlertDefineTable();
-    // 查询监控层级
+    // query monitoring hierarchy
     const getHierarchy$ = this.appDefineSvc
       .getAppHierarchy(this.i18nSvc.defaultLang)
       .pipe(
@@ -368,7 +368,7 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -385,9 +385,9 @@ export class AlertSettingComponent implements OnInit {
     }
   }
   /**
-   * 分页回调
+   * Paging callback
    *
-   * @param params 页码信息
+   * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
     const { pageSize, pageIndex, sort, filter } = params;
@@ -395,9 +395,9 @@ export class AlertSettingComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadAlertDefineTable();
   }
-  // end: 列表多选逻辑
+  // end: List multiple choice paging
 
-  // start 新增修改告警定义model
+  // start -- new or update alert definition model
   isLoadingEdit = -1;
   isManageModalVisible = false;
   isManageModalOkLoading = false;
@@ -738,9 +738,9 @@ export class AlertSettingComponent implements OnInit {
         );
     }
   }
-  // end 新增修改告警定义model
+  // end -- new or update alert definition model
 
-  // start 告警定义与监控关联model
+  // start -- associate alert definition and monitoring model
   isConnectModalVisible = false;
   isConnectModalOkLoading = false;
   transferData: TransferItem[] = [];
@@ -843,5 +843,5 @@ export class AlertSettingComponent implements OnInit {
       }
     });
   }
-  // end 告警定义与监控关联model
+  // end -- associate alert definition and monitoring model
 }

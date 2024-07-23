@@ -49,8 +49,8 @@ export class AlertSilenceService {
   public deleteAlertSilences(silenceIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     silenceIds.forEach(silenceId => {
-      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
-      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      // HttpParams is unmodifiable, so we need to save the return value of append/set
+      // Method append can append same key, set will replace the previous value
       httpParams = httpParams.append('ids', silenceId);
     });
     const options = { params: httpParams };
@@ -60,7 +60,7 @@ export class AlertSilenceService {
   public getAlertSilences(search: string, pageIndex: number, pageSize: number): Observable<Message<Page<AlertSilence>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
-    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+    // HttpParams is unmodifiable, so we need to save the return value of append/set
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
       sort: 'id',
