@@ -20,11 +20,11 @@ package org.apache.hertzbeat.common.queue.impl;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.hubspot.jackson.datatype.protobuf.ProtobufModule;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
+import io.lettuce.core.resource.ClientResources;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -79,7 +79,6 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.alertsDataQueueName = redisProperties.getAlertsDataQueueName();
 
         this.objectMapper = new ObjectMapper()
-                .registerModule(new ProtobufModule())
                 .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .configure(SerializationFeature.FAIL_ON_SELF_REFERENCES, false);

@@ -128,19 +128,5 @@
             <artifactId>jutf7</artifactId>
             <version>1.0.0</version>
         </dependency>
-
-        <!-- test -->
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <version>1.17.6</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.hubspot.jackson</groupId>
-            <artifactId>jackson-datatype-protobuf</artifactId>
-            <version>0.9.12</version>
-        </dependency>
-
     </dependencies>
 </project>
