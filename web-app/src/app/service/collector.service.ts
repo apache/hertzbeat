@@ -40,7 +40,7 @@ export class CollectorService {
   public queryCollectors(search: string | undefined, pageIndex: number, pageSize: number): Observable<Message<Page<CollectorSummary>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
-    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+    // HttpParams is unmodifiable, so we need to save the return value of append/set
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
       pageIndex: pageIndex,
@@ -56,32 +56,30 @@ export class CollectorService {
   public goOnlineCollector(collectors: Set<string>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     collectors.forEach(collector => {
-      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
-      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      // HttpParams is unmodifiable, so we need to save the return value of append/set
+      // Method append can append same key, set will replace the previous value
       httpParams = httpParams.append('collectors', collector);
     });
     const options = { params: httpParams };
-    // 修复上下线接口调用异常问题  miki
     return this.http.put<Message<any>>(`${collector_uri}/online`, null, options);
   }
 
   public goOfflineCollector(collectors: Set<string>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     collectors.forEach(collector => {
-      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
-      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      // HttpParams is unmodifiable, so we need to save the return value of append/set
+      // Method append can append same key, set will replace the previous value
       httpParams = httpParams.append('collectors', collector);
     });
     const options = { params: httpParams };
-    // 修复上下线接口调用异常问题  miki
     return this.http.put<Message<any>>(`${collector_uri}/offline`, null, options);
   }
 
   public deleteCollector(collectors: Set<string>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     collectors.forEach(collector => {
-      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
-      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      // HttpParams is unmodifiable, so we need to save the return value of append/set
+      // Method append can append same key, set will replace the previous value
       httpParams = httpParams.append('collectors', collector);
     });
     const options = { params: httpParams };
