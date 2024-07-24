@@ -210,4 +210,17 @@ public final class CommonUtil {
                         .findFirst().orElse(null));
     }
 
+    public static void validDefineI18n(Map<String, String> i18nMap, String field) {
+        if (i18nMap == null || i18nMap.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : i18nMap.entrySet()) {
+            String value = entry.getValue();
+            String lang = entry.getKey();
+            if (StringUtils.isBlank(value)) {
+                throw new IllegalArgumentException("monitoring template " + field + " " + lang + " value can not blank");
+            }
+        }
+    }
+
 }
