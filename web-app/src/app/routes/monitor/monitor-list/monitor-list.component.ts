@@ -106,7 +106,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     // Set up an interval to refresh the table every 2 minutes
     this.intervalId = setInterval(() => {
       this.sync();
-    }, 12000); // 120000 ms = 2 minutes
+    }, 120000); // 120000 ms = 2 minutes
   }
 
   ngOnDestroy(): void {
