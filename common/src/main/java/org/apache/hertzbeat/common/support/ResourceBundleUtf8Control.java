@@ -20,21 +20,18 @@ package org.apache.hertzbeat.common.support;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * i18n resource bundle control
  */
-@Slf4j
+
 public class ResourceBundleUtf8Control extends ResourceBundle.Control {
 
     private static final String JAVA_CLASS = "java.class";
@@ -44,6 +41,7 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
     @Override
     public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
             throws IllegalAccessException, InstantiationException, IOException {
+
         String bundleName = toBundleName(baseName, locale);
         ResourceBundle bundle = null;
         if (JAVA_CLASS.equals(format)) {
@@ -55,48 +53,25 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
                 // If the class isn't a ResourceBundle subclass, throw a
                 // ClassCastException.
                 if (ResourceBundle.class.isAssignableFrom(bundleClass)) {
-                    bundle = bundleClass.newInstance();
+                    bundle = bundleClass.getDeclaredConstructor().newInstance();
                 } else {
                     throw new ClassCastException(bundleClass.getName()
                             + " cannot be cast to ResourceBundle");
                 }
             } catch (ClassNotFoundException ignored) {}
-        } else if (JAVA_PROPERTIES.equals(format)) {
-            final String resourceName = toResourceName0(bundleName, "properties");
+            catch (InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+	} else if (JAVA_PROPERTIES.equals(format)) {
+            final String resourceName = toResourceName0(bundleName);
             if (resourceName == null) {
                 return null;
             }
-            final ClassLoader classLoader = loader;
-            final boolean reloadFlag = reload;
-            InputStream stream;
-            try {
-                stream = AccessController.doPrivileged(
-                        (PrivilegedExceptionAction<InputStream>) () -> {
-                            InputStream is = null;
-                            if (reloadFlag) {
-                                URL url = classLoader.getResource(resourceName);
-                                if (url != null) {
-                                    URLConnection connection = url.openConnection();
-                                    if (connection != null) {
-                                        // Disable caches to get fresh data for
-                                        // reloading.
-                                        connection.setUseCaches(false);
-                                        is = connection.getInputStream();
-                                    }
-                                }
-                            } else {
-                                is = classLoader.getResourceAsStream(resourceName);
-                            }
-                            return is;
-                        });
-            } catch (PrivilegedActionException e) {
-                throw (IOException) e.getException();
-            }
+	    InputStream stream = getResourceInputStream(loader, resourceName, reload);
+
             if (stream != null) {
-                try {
+                try (stream) {
                     bundle = new PropertyResourceBundle(new InputStreamReader(stream, StandardCharsets.UTF_8));
-                } finally {
-                    stream.close();
                 }
             }
         } else {
@@ -105,12 +80,34 @@ public class ResourceBundleUtf8Control extends ResourceBundle.Control {
         return bundle;
     }
 
-    private String toResourceName0(String bundleName, String suffix) {
+    private String toResourceName0(String bundleName) {
         // application protocol check
         if (bundleName.contains(SPILT)) {
             return null;
         } else {
-            return toResourceName(bundleName, suffix);
+            return toResourceName(bundleName, "properties");
         }
     }
+
+    private InputStream getResourceInputStream(ClassLoader classLoader, String resourceName, boolean reloadFlag) throws IOException {
+
+        InputStream is = null;
+
+        if (reloadFlag) {
+            URL url = classLoader.getResource(resourceName);
+            if (url != null) {
+                URLConnection connection = url.openConnection();
+                if (connection != null) {
+                    // Disable caches to get fresh data for reloading.
+                    connection.setUseCaches(false);
+                    is = connection.getInputStream();
+                }
+            }
+        } else {
+            is = classLoader.getResourceAsStream(resourceName);
+        }
+
+        return is;
+    }
+
 }

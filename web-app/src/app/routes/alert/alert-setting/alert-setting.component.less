@@ -1,0 +1,49 @@
+::ng-deep {
+
+  .row {
+    margin-top: 6px;
+
+    .ruleset {
+      border: 1px solid #CCC;
+    }
+  }
+
+  .ruleset-invalid {
+    border: none!important;
+
+    .ruleset {
+      border: 1px solid #ff4d4f !important;
+    }
+
+    >p {
+      margin: 0!important;
+      color: #ff4d4f !important;
+    }
+  }
+
+  .ruleset {
+    min-width: 400px;
+    overflow-x: auto;
+    padding: 6px 8px;
+  }
+
+  .rule {
+    display: flex;
+    gap: 10px;
+    min-width: 300px;
+    overflow-x: auto;
+    padding: 6px 8px;
+    border: 1px solid #CCC;
+
+    .q-rule-content {
+      flex: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .q-rule-actions {
+      flex-shrink: 0;
+    }
+  }
+}

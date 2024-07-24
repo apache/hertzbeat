@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class WareHouseApplicationReadyListener {
 
-    private Optional<AbstractHistoryDataStorage> historyDataStorage;
+    private final Optional<AbstractHistoryDataStorage> historyDataStorage;
 
     public WareHouseApplicationReadyListener(Optional<AbstractHistoryDataStorage> historyDataStorage) {
         this.historyDataStorage = historyDataStorage;

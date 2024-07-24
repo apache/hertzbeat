@@ -193,7 +193,7 @@ export class SettingPluginsComponent implements OnInit {
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
 
   onAllChecked(checked: boolean) {
