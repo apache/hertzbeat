@@ -43,12 +43,15 @@ import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
@@ -89,6 +92,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Resource
     private ParamDao paramDao;
+
+    @Resource
+    private DefineDao defineDao;
     
     @Resource
     private WarehouseService warehouseService;
@@ -422,13 +428,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         if (monitors != null && !monitors.isEmpty()) {
             throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
         }
-        var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
-        var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
-        var defineAppFile = new File(defineAppPath);
-        if (defineAppFile.exists() && defineAppFile.isFile()) {
-            defineAppFile.delete();
-        }
-        appDefines.remove(app.toLowerCase());
+        appDefineStore.delete(app);
     }
 
     @Override
@@ -476,6 +476,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         } else {
             if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
                 appDefineStore = new ObjectStoreAppDefineStoreImpl();
+            } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE){
+                appDefineStore = new DatabaseAppDefineStoreImpl();
             } else {
                 appDefineStore = new LocalFileAppDefineStoreImpl();
             }
@@ -504,6 +506,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
         void save(String app, String ymlContent);
 
+        void delete(String app);
     }
 
     private class JarAppDefineStoreImpl implements AppDefineStore {
@@ -548,6 +551,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         @Override
         public void save(String app, String ymlContent) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void delete(String app) {
+            throw new UnsupportedOperationException("define yml inside jars cannot be deleted");
         }
 
     }
@@ -626,6 +634,22 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
             }
         }
+
+        @Override
+        public void delete(String app) {
+            var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
+            var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
+            var defineAppFile = new File(defineAppPath);
+
+            if (!defineAppFile.exists() && appDefines.containsKey(app.toLowerCase())){
+                throw new CommonException("the app define file is not in current file server provider");
+            }
+
+            if (defineAppFile.exists() && defineAppFile.isFile()) {
+                defineAppFile.delete();
+            }
+            appDefines.remove(app.toLowerCase());
+        }
     }
 
     private class ObjectStoreAppDefineStoreImpl implements AppDefineStore {
@@ -667,6 +691,20 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             objectStoreService.upload(getDefineAppPath(app), IOUtils.toInputStream(ymlContent, StandardCharsets.UTF_8));
         }
 
+        @Override
+        public void delete(String app) {
+            var objectStoreService = getObjectStoreService();
+            String defineAppPath = getDefineAppPath(app);
+            boolean exist = objectStoreService.isExist(defineAppPath);
+            if (!exist && appDefines.containsKey(app.toLowerCase())){
+                throw new CommonException("the app define file is not in current file server provider");
+            }
+            if (exist){
+                objectStoreService.remove(defineAppPath);
+            }
+            appDefines.remove(app.toLowerCase());
+        }
+
         private ObjectStoreService getObjectStoreService() {
             return SpringContextHolder.getBean(ObsObjectStoreServiceImpl.class);
         }
@@ -677,4 +715,46 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     }
 
+    private class DatabaseAppDefineStoreImpl implements AppDefineStore {
+
+        @Override
+        public boolean loadAppDefines() {
+            Yaml yaml = new Yaml();
+            List<Define> defines = defineDao.findAll();
+            for (Define define : defines) {
+                var app = yaml.loadAs(define.getContent(), Job.class);
+                if (app != null){
+                    appDefines.put(define.getApp().toLowerCase(), app);
+                }
+            }
+            // merge define yml files inside jars
+            return false;
+        }
+
+        @Override
+        public String loadAppDefine(String app) {
+            Optional<Define> defineOptional = defineDao.findById(app);
+            return defineOptional.map(Define::getContent).orElse(null);
+        }
+
+        @Override
+        public void save(String app, String ymlContent) {
+            Define define = new Define();
+            define.setApp(app);
+            define.setContent(ymlContent);
+            defineDao.save(define);
+        }
+
+        @Override
+        public void delete(String app) {
+            Optional<Define> defineOptional = defineDao.findById(app);
+            if (defineOptional.isEmpty() && appDefines.containsKey(app.toLowerCase())){
+                throw new CommonException("the app define file is not in current file server provider");
+            }
+            if (defineOptional.isPresent()){
+                defineDao.deleteById(app);
+            }
+            appDefines.remove(app.toLowerCase());
+        }
+    }
 }
