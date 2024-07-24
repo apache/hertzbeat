@@ -17,23 +17,121 @@
 
 package org.apache.hertzbeat.manager.component.alerter;
 
+import java.util.List;
+
+import org.apache.hertzbeat.alert.AlerterWorkerPool;
+import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.apache.hertzbeat.common.entity.manager.NoticeRule;
+import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.manager.service.NoticeConfigService;
+import org.apache.hertzbeat.manager.service.PluginService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link DispatcherAlarm}
  */
+
+@ExtendWith(MockitoExtension.class)
 class DispatcherAlarmTest {
+
+    @Mock
+    private AlerterWorkerPool workerPool;
+
+    @Mock
+    private CommonDataQueue dataQueue;
+
+    @Mock
+    private NoticeConfigService noticeConfigService;
+
+    @Mock
+    private AlertStoreHandler alertStoreHandler;
+
+    @Mock
+    private PluginService pluginService;
+
+    @Mock
+    private AlertNotifyHandler alertNotifyHandler;
+
+    private DispatcherAlarm dispatcherAlarm;
+
+    private static final int DISPATCH_THREADS = 3;
 
     @BeforeEach
     void setUp() {
+
+        List<AlertNotifyHandler> alertNotifyHandlerList = List.of(alertNotifyHandler);
+        dispatcherAlarm = new DispatcherAlarm(
+                workerPool,
+                dataQueue,
+                noticeConfigService,
+                alertStoreHandler,
+                alertNotifyHandlerList,
+                pluginService
+        );
     }
 
     @Test
-    void afterPropertiesSet() {
+    void testAfterPropertiesSet() {
+
+        dispatcherAlarm.afterPropertiesSet();
+        verify(workerPool, times(DISPATCH_THREADS)).executeJob(any(Runnable.class));
     }
 
     @Test
-    void sendNoticeMsg() {
+    void testSendNoticeMsg() {
+
+        NoticeReceiver receiver = mock(NoticeReceiver.class);
+        NoticeTemplate noticeTemplate = mock(NoticeTemplate.class);
+        Alert alert = mock(Alert.class);
+
+        assertTrue(dispatcherAlarm.sendNoticeMsg(receiver, noticeTemplate, alert));
+        verify(alertNotifyHandler).send(receiver, noticeTemplate, alert);
     }
+
+    @Test
+    void testSendNoticeMsgReceiverNull() {
+
+        Alert alert = mock(Alert.class);
+        boolean result = dispatcherAlarm.sendNoticeMsg(null, null, alert);
+        assertFalse(result);
+    }
+
+    @Test
+    void testSendNoticeMsgReceiverTypeNull() {
+
+        NoticeReceiver receiver = mock(NoticeReceiver.class);
+        Alert alert = mock(Alert.class);
+        when(receiver.getType()).thenReturn(null);
+
+        boolean result = dispatcherAlarm.sendNoticeMsg(receiver, null, alert);
+        assertFalse(result);
+    }
+
+    @Test
+    void testSendNoticeMsgNoHandler() {
+
+        NoticeReceiver receiver = mock(NoticeReceiver.class);
+        Alert alert = mock(Alert.class);
+        when(receiver.getType()).thenReturn((byte) 2);
+
+        assertFalse(dispatcherAlarm.sendNoticeMsg(receiver, null, alert));
+    }
+
 }
