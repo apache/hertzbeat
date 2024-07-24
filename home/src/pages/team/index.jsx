@@ -1037,7 +1037,7 @@ export default function () {
                     href="https://github.com/apache/hertzbeat/commits?author=yuluo-yx" title="Code">💻</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/Yanshuming1"><img
                     src="https://avatars.githubusercontent.com/u/118667222?v=4?s=100" width="100px;"
-                    alt="xiaoming student"/><br/><sub><b>xiaoming student</b></sub></a><br/><a
+                    alt="linDong"/><br/><sub><b>linDong</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=Yanshuming1" title="Code">💻</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/lwjxy"><img
                     src="https://avatars.githubusercontent.com/u/52726400?v=4?s=100" width="100px;"
