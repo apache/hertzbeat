@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
@@ -27,6 +26,8 @@ import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.ProtoJsonUtil;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -50,7 +51,6 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final String metricsDataQueueNameToPersistentStorage;
     private final String metricsDataQueueNameToRealTimeStorage;
     private final String alertsDataQueueName;
-    private final ObjectMapper objectMapper;
     private final CommonProperties.RedisProperties redisProperties;
 
     public RedisCommonDataQueue(CommonProperties properties) {
@@ -61,11 +61,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         }
 
         this.redisProperties = properties.getQueue().getRedis();
-        RedisURI build = RedisURI.builder()
-                .withHost(redisProperties.getRedisHost())
-                .withPort(redisProperties.getRedisPort())
-                .build();
-        System.out.println(build.toString());
+
         this.redisClient = RedisClient.create(
                 RedisURI.builder()
                         .withHost(redisProperties.getRedisHost())
@@ -78,7 +74,6 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.metricsDataQueueNameToPersistentStorage = redisProperties.getMetricsDataQueueNameToPersistentStorage();
         this.metricsDataQueueNameToRealTimeStorage = redisProperties.getMetricsDataQueueNameToRealTimeStorage();
         this.alertsDataQueueName = redisProperties.getAlertsDataQueueName();
-        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -87,7 +82,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         try {
             String alertJson = syncCommands.rpop(alertsDataQueueName);
             if (alertJson != null) {
-                return objectMapper.readValue(alertJson, Alert.class);
+                return JsonUtil.fromJson(alertJson, Alert.class);
             }
         } catch (Exception e) {
             log.error("please config common.queue.redis props correctly", e);
@@ -102,7 +97,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         try {
             String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToAlerter);
             if (metricsDataJson != null) {
-                return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
+                return (CollectRep.MetricsData) ProtoJsonUtil.toProtobuf(metricsDataJson, CollectRep.MetricsData.newBuilder());
             }
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -117,7 +112,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         try {
             String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToPersistentStorage);
             if (metricsDataJson != null) {
-                return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
+                return JsonUtil.fromJson(metricsDataJson, CollectRep.MetricsData.class);
             }
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -132,7 +127,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         try {
             String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToRealTimeStorage);
             if (metricsDataJson != null) {
-                return objectMapper.readValue(metricsDataJson, CollectRep.MetricsData.class);
+                return JsonUtil.fromJson(metricsDataJson, CollectRep.MetricsData.class);
             }
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -145,7 +140,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     public void sendAlertsData(Alert alert) {
 
         try {
-            String alertJson = objectMapper.writeValueAsString(alert);
+            String alertJson = JsonUtil.toJson(alert);
             syncCommands.lpush(alertsDataQueueName, alertJson);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -157,7 +152,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
 
         try {
-            String metricsDataJson = objectMapper.writeValueAsString(metricsData);
+            String metricsDataJson = ProtoJsonUtil.toJsonStr(metricsData);
             syncCommands.lpush(metricsDataQueueNameToAlerter, metricsDataJson);
             syncCommands.lpush(metricsDataQueueNameToPersistentStorage, metricsDataJson);
             syncCommands.lpush(metricsDataQueueNameToRealTimeStorage, metricsDataJson);
