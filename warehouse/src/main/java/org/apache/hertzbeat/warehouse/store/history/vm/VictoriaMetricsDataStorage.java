@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.store.history.vm;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -103,13 +102,21 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private boolean checkVictoriaMetricsDatasourceAvailable() {
         // check server status
         try {
-            String result = restTemplate.getForObject(victoriaMetricsProp.url() + STATUS_PATH, String.class);
-
-            JsonNode jsonNode = JsonUtil.fromJson(result);
-            if (jsonNode != null && STATUS_SUCCESS.equalsIgnoreCase(jsonNode.get(STATUS).asText())) {
+            HttpHeaders headers = new HttpHeaders();
+            if (StringUtils.hasText(victoriaMetricsProp.username())
+                    && StringUtils.hasText(victoriaMetricsProp.password())) {
+                String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
+                String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+                headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+            }
+            HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
+            ResponseEntity<String> responseEntity = restTemplate.exchange(victoriaMetricsProp.url() + STATUS_PATH,
+                    HttpMethod.GET, httpEntity, String.class);
+            if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                log.info("check victoria metrics server status success.");
                 return true;
             }
-            log.error("check victoria metrics server status not success: {}.", result);
+            log.error("check victoria metrics server status not success: {}.", responseEntity.getBody());
         } catch (Exception e) {
             log.error("check victoria metrics server status error: {}.", e.getMessage());
         }

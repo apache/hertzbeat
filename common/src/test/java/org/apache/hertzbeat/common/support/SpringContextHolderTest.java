@@ -20,28 +20,91 @@ package org.apache.hertzbeat.common.support;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 /**
  * Test case for {@link SpringContextHolder}
  */
 class SpringContextHolderTest {
 
+    private ApplicationContext applicationContext;
+
+    private ConfigurableApplicationContext configurableApplicationContext;
+
+    private SpringContextHolder springContextHolder;
+
     @BeforeEach
-    void setUp() {
+    public void setUp() {
+
+        applicationContext = mock(ApplicationContext.class);
+        configurableApplicationContext = mock(ConfigurableApplicationContext.class);
+        springContextHolder = new SpringContextHolder();
     }
 
     @Test
-    void setApplicationContext() {
+    public void testSetApplicationContext() throws BeansException {
+
+        springContextHolder.setApplicationContext(configurableApplicationContext);
+
+        assertNotNull(SpringContextHolder.getApplicationContext());
     }
 
     @Test
-    void getApplicationContext() {
+    public void testGetApplicationContext() {
+
+        springContextHolder.setApplicationContext(applicationContext);
+        assertNotNull(SpringContextHolder.getApplicationContext());
     }
 
     @Test
-    void getBean() {
+    public void testGetBeanByClass() {
+
+        Class<String> beanClass = String.class;
+        String bean = "bean";
+        when(applicationContext.getBean(beanClass)).thenReturn(bean);
+
+        springContextHolder.setApplicationContext(applicationContext);
+        String retrievedBean = SpringContextHolder.getBean(beanClass);
+
+        assertEquals(bean, retrievedBean);
     }
 
     @Test
-    void testGetBean() {
+    public void testShutdown() {
+
+        springContextHolder.setApplicationContext(configurableApplicationContext);
+        SpringContextHolder.shutdown();
+
+        verify(configurableApplicationContext, times(1)).close();
     }
+
+    @Test
+    public void testIsActive() {
+
+        when(configurableApplicationContext.isActive()).thenReturn(true);
+        springContextHolder.setApplicationContext(configurableApplicationContext);
+        assertTrue(SpringContextHolder.isActive());
+    }
+
+    @Test
+    public void testAssertApplicationContextThrowsException() {
+
+        RuntimeException exception = assertThrows(RuntimeException.class, SpringContextHolder::getApplicationContext);
+        assertEquals(
+                "applicationContext is null, please inject the springContextHolder",
+                exception.getMessage()
+        );
+    }
+
 }

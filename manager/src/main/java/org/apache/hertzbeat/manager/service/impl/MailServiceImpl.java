@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import freemarker.cache.StringTemplateLoader;
+import freemarker.core.TemplateClassResolver;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -99,6 +100,7 @@ public class MailServiceImpl implements MailService {
         String templateName = "mailTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
         cfg.setTemplateLoader(stringLoader);
+        cfg.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         templateMail = cfg.getTemplate(templateName, Locale.CHINESE);
         return FreeMarkerTemplateUtils.processTemplateIntoString(templateMail, model);
     }

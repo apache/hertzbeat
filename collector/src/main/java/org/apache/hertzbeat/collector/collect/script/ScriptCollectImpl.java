@@ -123,11 +123,9 @@ public class ScriptCollectImpl extends AbstractCollect {
                     response.append(line).append("\n");
                 }
             }
-            int a = process.waitFor();
-            log.info("code: " + a);
+            process.waitFor();
             Long responseTime = System.currentTimeMillis() - startTime;
             String result = String.valueOf(response);
-            log.info("result: " + result);
             if (!StringUtils.hasText(result)) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("Script response data is null");
@@ -217,9 +215,6 @@ public class ScriptCollectImpl extends AbstractCollect {
 
     private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
         String[] lines = result.split("\n");
-        for (int i = 0; i < lines.length; i++) {
-            log.info("result lines" + i + ": " + lines[i]);
-        }
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
             return;

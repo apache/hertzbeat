@@ -26,7 +26,10 @@ import java.util.Objects;
 /**
  * String processing tools
  */
-public class StrUtil {
+public final class StrUtil {
+
+    private StrUtil() {
+    }
 
     /**
      * Handle Comma Separated Data
