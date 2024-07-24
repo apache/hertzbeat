@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import freemarker.cache.StringTemplateLoader;
+import freemarker.core.TemplateClassResolver;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -64,6 +65,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         freemarker.template.Template templateRes;
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
         cfg.setNumberFormat(NUMBER_FORMAT);
+        cfg.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         Map<String, Object> model = new HashMap<>(16);
         model.put("title", bundle.getString("alerter.notify.title"));
 

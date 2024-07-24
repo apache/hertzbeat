@@ -207,7 +207,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             var name = job.getName();
             var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
             if (i18nName != null) {
-                i18nMap.put("monitor.app." + job.getApp(), i18nName);
+                i18nMap.put("monitor.app." + job.getApp().toLowerCase(), i18nName);
             }
             var help = job.getHelp();
             var i18nHelp = CommonUtil.getLangMappingValueFromI18nMap(lang, help);

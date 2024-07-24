@@ -22,7 +22,6 @@ type: application
 home: https://hertzbeat.apache.org/
 sources:
   - https://github.com/apache/hertzbeat
-  - https://charts.hertzbeat.com
 maintainers:
   - name: hertzbeat-dev
     email: dev@hertzbeat.apache.org
