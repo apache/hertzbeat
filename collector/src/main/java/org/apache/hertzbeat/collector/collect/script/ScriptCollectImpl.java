@@ -105,8 +105,6 @@ public class ScriptCollectImpl extends AbstractCollect {
             builder.setMsg("At least one script command or script path is required.");
             return;
         }
-        //
-        processBuilder.redirectErrorStream(true);
         // set work directory
         String workDirectory = scriptProtocol.getWorkDirectory();
         if (StringUtils.hasText(workDirectory)) {
