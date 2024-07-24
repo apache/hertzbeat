@@ -49,7 +49,7 @@ export class MonitorNewComponent implements OnInit {
   collectors!: Collector[];
   collector: string = '';
   detected: boolean = false;
-  // 是否显示加载中
+  // whether it is loading
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
   constructor(
