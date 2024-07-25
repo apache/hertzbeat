@@ -58,7 +58,7 @@ import { AlertService } from '../../../service/alert.service';
             <nz-list-item-meta [nzTitle]="nzTitle" [nzDescription]="nzDescription" [nzAvatar]="item.avatar">
               <ng-template #nzTitle>
                 <ng-container *nzStringTemplateOutlet="item.title; context: { $implicit: item }">
-                  {{ item.title }}
+                  <a (click)="gotoDetail(item.monitorId)">{{ item.title }}</a>
                 </ng-container>
                 @if (item.extra) {<div class="notice-icon__item-extra">
                   <nz-tag [nzColor]="item.color">{{ item.extra }}</nz-tag>
@@ -164,6 +164,7 @@ export class HeaderNotifyComponent implements OnInit {
             alerts.forEach(alert => {
               let item = {
                 id: alert.id,
+                monitorId: alert.tags?.monitorId,
                 avatar: '/assets/img/notification.svg',
                 title: `${alert.tags?.monitorName}--${this.i18nSvc.fanyi(`alert.priority.${alert.priority}`)}`,
                 datetime: new Date(alert.lastAlarmTime).toLocaleString(),
@@ -243,5 +244,10 @@ export class HeaderNotifyComponent implements OnInit {
   gotoAlertCenter(): void {
     this.popoverVisible = false;
     this.router.navigateByUrl(`/alert/center`);
+  }
+
+  gotoDetail(monitorId: number): void {
+    this.popoverVisible = false;
+    this.router.navigateByUrl(`/monitors/${monitorId}`);
   }
 }
