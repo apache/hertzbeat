@@ -137,14 +137,14 @@ public class BulletinController {
     }
 
     /**
-     * delete bulletin by id
+     * delete bulletin by name
      */
-    @Operation(summary = "Delete Bulletin by ID", description = "Delete Bulletin by ID")
+    @Operation(summary = "Delete Bulletin by Name", description = "Delete Bulletin by Name")
     @DeleteMapping
     public ResponseEntity<Message<Void>> deleteBulletin(
-            @Parameter(description = "Bulletin ID", example = "402372614668544")
-            @RequestParam List<Long> ids) {
-        if (bulletinService.deleteBulletinById(ids)) {
+            @Parameter(description = "Bulletin Name", example = "402372614668544")
+            @RequestParam List<String> names) {
+        if (bulletinService.deleteBulletinByName(names)) {
             return ResponseEntity.ok(Message.success("Delete success"));
         } else {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Delete failed"));
@@ -226,6 +226,7 @@ public class BulletinController {
             for (String metric : bulletin.getMetrics().stream().map(metric -> metric.split("-")[0]).distinct().toList()){
                 metricBuilder.name(metric);
                 CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(bulletin.getMonitorId(), metric);
+
                 List<List<BulletinMetricsData.Field>> fieldsList = new ArrayList<>();
                 List<CollectRep.ValueRow> valuesList = currentMetricsData.getValuesList();
                 for (CollectRep.ValueRow valueRow : valuesList) {
@@ -242,6 +243,7 @@ public class BulletinController {
                 metricBuilder.fields(fieldsList);
                 metrics.add(metricBuilder.build());
             }
+
             contentBuilder.metrics(metrics);
             dataBuilder.content(contentBuilder.build());
             dataList.add(dataBuilder.build());

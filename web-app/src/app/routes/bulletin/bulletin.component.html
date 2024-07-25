@@ -47,16 +47,11 @@
     <nz-table
       *ngIf="bulletinTab.data.length"
       #fixedTable
-      [nzData]="bulletinTab.data.slice((bulletinTab.pageIndex - 1) * bulletinTab.pageSize, bulletinTab.pageIndex * bulletinTab.pageSize)"
-      [nzPageIndex]="bulletinTab.pageIndex"
-      [nzPageSize]="bulletinTab.pageSize"
-      [nzTotal]="bulletinTab.total"
+      [nzData]="bulletinTab.data"
       nzFrontPagination="false"
       [nzLoading]="tableLoading"
       nzShowSizeChanger
       [nzShowTotal]="rangeTemplate"
-      [nzPageSizeOptions]="[10, 20, 50, 100]"
-      (nzQueryParams)="onTablePageChange($event)"
       nzShowPagination="true"
       [nzScroll]="{ x: 'auto' }"
       nzBordered
@@ -88,14 +83,13 @@
               </ng-container>
               <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
                 <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-                  <td *ngIf="data[field].length > rowIndex"
-                    >{{ data[field][rowIndex].split('$$$')[0] }}
+                  <td *ngIf= "data[field] !== null">
+                    {{ data[field][rowIndex].split('$$$')[0] }}
                     <nz-tag *ngIf="data[field][rowIndex] == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
                     <nz-tag *ngIf="data[field][rowIndex].split('$$$')[1]" nzColor="success">{{
                       data[field][rowIndex].split('$$$')[1]
                     }}</nz-tag>
                   </td>
-                  <td *ngIf="data[field].length <= rowIndex"></td>
                 </ng-container>
               </ng-container>
             </tr>
@@ -217,11 +211,11 @@
           <nz-select
             nzMode="multiple"
             nzPlaceHolder="Please select"
-            [(ngModel)]="this.checkedDefineIds"
+            [(ngModel)]="this.bulletinNames"
             [nzShowSearch]="true"
             name="delete"
           >
-            <nz-option *ngFor="let bulletinTab of tabDefines" [nzLabel]="bulletinTab.name" [nzValue]="bulletinTab.id"></nz-option>
+            <nz-option *ngFor="let bulletinTab of tabDefines" [nzLabel]="bulletinTab.name" [nzValue]="bulletinTab.name"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>

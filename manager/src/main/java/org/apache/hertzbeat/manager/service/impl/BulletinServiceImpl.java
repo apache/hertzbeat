@@ -40,6 +40,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Bulletin Service Implementation
@@ -140,7 +141,6 @@ public class BulletinServiceImpl implements BulletinService {
     /**
      * Get Bulletin by id
      *
-     * @param id
      */
     @Override
     public Optional<Bulletin> getBulletinById(Long id) {
@@ -148,14 +148,14 @@ public class BulletinServiceImpl implements BulletinService {
     }
 
     /**
-     * delete Bulletin by ids
+     * delete Bulletin by names
      *
-     * @param ids
      */
     @Override
-    public boolean deleteBulletinById(List<Long> ids) {
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteBulletinByName(List<String> names) {
         try {
-            ids.forEach(id -> bulletinDao.deleteById(id));
+            bulletinDao.deleteByNameIn(names);
             return true;
         } catch (Exception e) {
             throw new RuntimeException(e);

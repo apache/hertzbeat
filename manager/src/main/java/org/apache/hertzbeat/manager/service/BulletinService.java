@@ -49,7 +49,7 @@ public interface BulletinService {
     /**
      * delete Bulletin by id
      */
-    boolean deleteBulletinById(List<Long> ids);
+    boolean deleteBulletinByName(List<String> names);
 
 
     /**

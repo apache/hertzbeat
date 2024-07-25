@@ -47,12 +47,9 @@ export class BulletinComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
   search!: string;
-  pageIndex: number = 1;
-  pageSize: number = 8;
-  total: number = 0;
   tabDefines!: any[];
   tableLoading: boolean = true;
-  checkedDefineIds: number[] = [];
+  bulletinNames: string[] = [];
   isAppListLoading = false;
   isMonitorListLoading = false;
   treeNodes!: NzTreeNodeOptions[];
@@ -81,20 +78,17 @@ export class BulletinComponent implements OnInit {
   }
 
 
-
-
-  deleteBulletinDefines(defineIds: number[]) {
-    if (defineIds == null || defineIds.length == 0) {
+  deleteBulletinDefines(defineNames: string[]) {
+    if (defineNames == null || defineNames.length == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
     this.tableLoading = true;
-    const deleteDefines$ = this.bulletinDefineSvc.deleteBulletinDefines(defineIds).subscribe(
+    const deleteDefines$ = this.bulletinDefineSvc.deleteBulletinDefines(defineNames).subscribe(
       message => {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.updatePageIndex(defineIds.length);
           this.loadData();
         } else {
           this.tableLoading = false;
@@ -109,17 +103,6 @@ export class BulletinComponent implements OnInit {
     );
   }
 
-  updatePageIndex(delSize: number) {
-    const lastPage = Math.max(1, Math.ceil((this.total - delSize) / this.pageSize));
-    this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
-  }
-
-
-  onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
-    this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
-  }
 
   isManageModalVisible = false;
   isManageModalOkLoading = false;
@@ -354,56 +337,7 @@ export class BulletinComponent implements OnInit {
         if (message.code === 0 && message.data) {
           this.tableLoading = false;
           this.rawData = message.data;
-          const groupedData: any = {};
-
-          this.rawData.forEach(item => {
-            const name = item.name;
-            if (!groupedData[name]) {
-              groupedData[name] = {
-                id: item.id,
-                bulletinColumn: {},
-                data: []
-              };
-            }
-
-            let transformedItem: any = {
-              app: item.app,
-              monitorId: item.content.monitorId,
-              host: item.content.host
-            };
-
-            item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
-              if (!groupedData[name].bulletinColumn[metric.name]) {
-                groupedData[name].bulletinColumn[metric.name] = new Set<string>();
-              }
-              metric.fields.forEach((field: any[]) => {
-                field.forEach((fieldItem: any) => {
-                  const key = `${metric.name}$$$${fieldItem.key}`;
-                  const value = fieldItem.value;
-                  const unit = fieldItem.unit;
-
-                  if (!transformedItem[key]) {
-                    transformedItem[key] = [];
-                  }
-                  transformedItem[key].push(`${value}$$$${unit}`);
-
-                  groupedData[name].bulletinColumn[metric.name].add(key);
-                });
-              });
-            });
-            groupedData[name].data.push(transformedItem);
-          });
-
-          this.tabDefines = Object.keys(groupedData).map(name => ({
-            name,
-            id: groupedData[name].id,
-            bulletinColumn: groupedData[name].bulletinColumn,
-            data: groupedData[name].data,
-            pageIndex: 1,
-            pageSize: 10,
-            total: groupedData[name].data.length
-          }));
-          console.log(this.tabDefines)
+          this.updateTabDefines();
         } else if (message.code !== 0) {
           this.notifySvc.warning(`${message.msg}`, '');
           console.info(`${message.msg}`);
@@ -416,6 +350,55 @@ export class BulletinComponent implements OnInit {
     );
   }
 
+  updateTabDefines() {
+    const groupedData: any = {};
+
+    this.rawData.forEach(item => {
+      const name = item.name;
+      if (!groupedData[name]) {
+        groupedData[name] = {
+          id: item.id,
+          bulletinColumn: {},
+          data: []
+        };
+      }
+
+      let transformedItem: any = {
+        app: item.app,
+        monitorId: item.content.monitorId,
+        host: item.content.host
+      };
+
+      item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
+        if (!groupedData[name].bulletinColumn[metric.name]) {
+          groupedData[name].bulletinColumn[metric.name] = new Set<string>();
+        }
+        metric.fields.forEach((field: any[]) => {
+          field.forEach((fieldItem: any) => {
+            const key = `${metric.name}$$$${fieldItem.key}`;
+            const value = fieldItem.value;
+            const unit = fieldItem.unit;
+
+            if (!transformedItem[key]) {
+              transformedItem[key] = [];
+            }
+            transformedItem[key].push(`${value}$$$${unit}`);
+
+            groupedData[name].bulletinColumn[metric.name].add(key);
+          });
+        });
+      });
+      groupedData[name].data.push(transformedItem);
+    });
+
+    this.tabDefines = Object.keys(groupedData).map(name => ({
+      name,
+      id: groupedData[name].id,
+      bulletinColumn: groupedData[name].bulletinColumn,
+      data: groupedData[name].data,
+    }));
+  }
+
   getMetricNames(bulletinTab: any): string[] {
     return Object.keys(bulletinTab.bulletinColumn);
   }
@@ -424,7 +407,9 @@ export class BulletinComponent implements OnInit {
     let maxRowSpan = 1;
     for (let metricName of this.getMetricNames(bulletinTab)) {
       for (let field of bulletinTab.bulletinColumn[metricName]) {
-        maxRowSpan = Math.max(maxRowSpan, data[field].length);
+        if (Array.isArray(data[field])) {
+          maxRowSpan = Math.max(maxRowSpan, data[field].length);
+        }
       }
     }
     return maxRowSpan;
@@ -446,10 +431,11 @@ export class BulletinComponent implements OnInit {
   }
 
   onDeleteModalOk() {
-    console.log(this.checkedDefineIds)
-    this.deleteBulletinDefines(this.checkedDefineIds);
+    this.deleteBulletinDefines(this.bulletinNames);
     this.isDeleteModalOkLoading = false;
     this.isDeleteModalVisible = false;
 
   }
+
+  protected readonly Array = Array;
 }

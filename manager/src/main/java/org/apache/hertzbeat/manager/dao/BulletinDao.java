@@ -21,10 +21,15 @@
 package org.apache.hertzbeat.manager.dao;
 
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface BulletinDao extends JpaRepository<Bulletin, Long>, JpaSpecificationExecutor<Bulletin> {
+    /**
+     * Delete Bulletin by name
+     */
+    void deleteByNameIn(List<String> names);
 
 }

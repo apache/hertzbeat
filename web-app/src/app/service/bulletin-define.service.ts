@@ -40,13 +40,13 @@ export class BulletinDefineService {
     return this.http.put<Message<any>>(bulletin_define_uri, body);
   }
 
-  public deleteBulletinDefines(bulletinDefineIds: number[]): Observable<Message<any>> {
-    let httpParams = new HttpParams();
-    bulletinDefineIds.forEach(bulletinDefineId => {
-      httpParams = httpParams.append('ids', bulletinDefineId);
+  public deleteBulletinDefines(names: string[]): Observable<Message<any>> {
+    let params = new HttpParams();
+    names.forEach(name => {
+      params = params.append('names', name);
     });
-    const options = { params: httpParams };
-    return this.http.delete<Message<any>>(bulletin_define_uri, options);
+
+    return this.http.delete<Message<any>>(bulletin_define_uri, { params });
   }
 
   public getAllMonitorMetricsData(): Observable<Message<any>> {
