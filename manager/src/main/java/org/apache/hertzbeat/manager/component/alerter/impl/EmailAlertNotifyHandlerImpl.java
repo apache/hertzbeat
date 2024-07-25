@@ -69,6 +69,9 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Value("${spring.mail.properties.mail.smtp.ssl.enable:true}")
     private boolean sslEnable = true;
 
+    @Value("${spring.mail.properties.mail.smtp.starttls.enable:false}")
+    private boolean starttlsEnable = false;
+
     private final GeneralConfigDao generalConfigDao;
 
     private final ObjectMapper objectMapper;
@@ -97,6 +100,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                         sender.setPassword(emailNoticeSenderConfig.getEmailPassword());
                         Properties props = sender.getJavaMailProperties();
                         props.put("mail.smtp.ssl.enable", emailNoticeSenderConfig.isEmailSsl());
+                        props.put("mail.smtp.starttls.enable", emailNoticeSenderConfig.isEmailStarttls());
                         fromUsername = emailNoticeSenderConfig.getEmailUsername();
                         useDatabase = true;
                     }
@@ -109,6 +113,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
                     sender.setPassword(password);
                     Properties props = sender.getJavaMailProperties();
                     props.put("mail.smtp.ssl.enable", sslEnable);
+                    props.put("mail.smtp.starttls.enable", starttlsEnable);
                 }
             } catch (Exception e) {
                 log.error("Type not found {}", e.getMessage());

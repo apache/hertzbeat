@@ -54,5 +54,7 @@ public class EmailNoticeSender {
 
     private boolean emailSsl = true;
 
+    private boolean emailStarttls = false;
+
     private boolean enable = true;
 }
