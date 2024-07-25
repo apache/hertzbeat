@@ -55,4 +55,9 @@ public class ScriptProtocol {
      * Response data parsing mode：oneRow, multiRow
      */
     private String parseType;
+
+    /**
+     * Script tool name, exp: bash, cmd, powershell
+     */
+    private String scriptTool;
 }

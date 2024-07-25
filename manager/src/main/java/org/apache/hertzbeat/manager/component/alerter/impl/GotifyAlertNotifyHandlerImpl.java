@@ -87,7 +87,7 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     }
 
     @Data
-    private static class GotifyWebHookDto {
+    protected static class GotifyWebHookDto {
         private String title;
         private String message;
         private Extras extras;
