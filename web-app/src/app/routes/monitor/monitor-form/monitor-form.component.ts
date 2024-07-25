@@ -46,6 +46,7 @@ export class MonitorFormComponent implements OnChanges {
   @Output() readonly formCancel = new EventEmitter<any>();
   @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
+  @Output() readonly collectorChange = new EventEmitter<string>();
 
   hasAdvancedParams: boolean = false;
 
@@ -97,7 +98,7 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
+    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
   }
 
   onSubmit(formGroup: FormGroup) {
@@ -126,7 +127,7 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
+    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
   }
 
   onCancel() {

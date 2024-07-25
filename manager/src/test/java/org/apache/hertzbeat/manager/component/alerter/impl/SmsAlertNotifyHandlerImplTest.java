@@ -15,49 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package org.apache.hertzbeat.manager.component.alerter.impl;
 
 /**
- * script protocol
+ * test case for {@link SmsAlertNotifyHandlerImpl}
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 
-public class ScriptProtocol {
-    /**
-     * OS charset
-     */
-    private String charset;
-
-    /**
-     * Script working directory
-     */
-    private String workDirectory;
-
-    /**
-     * Script command
-     */
-    private String scriptCommand;
-
-    /**
-     * File name of script
-     */
-    private String scriptPath;
-
-    /**
-     * Response data parsing mode：oneRow, multiRow
-     */
-    private String parseType;
-
-    /**
-     * Script tool name, exp: bash, cmd, powershell
-     */
-    private String scriptTool;
+class SmsAlertNotifyHandlerImplTest {
 }
