@@ -46,6 +46,7 @@ export class MonitorFormComponent implements OnChanges {
   @Output() readonly formCancel = new EventEmitter<any>();
   @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
+  @Output() readonly collectorChange = new EventEmitter<string>();
 
   hasAdvancedParams: boolean = false;
 
@@ -97,7 +98,7 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
+    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
   }
 
   onSubmit(formGroup: FormGroup) {
@@ -126,7 +127,7 @@ export class MonitorFormComponent implements OnChanges {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
+    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
   }
 
   onCancel() {
@@ -140,15 +141,15 @@ export class MonitorFormComponent implements OnChanges {
   onParamBooleanChanged(booleanValue: boolean, field: string) {
     // For SSL port linkage, port 80 by default is not enabled, but port 443 by default is enabled
     if (field === 'ssl') {
-      this.params.forEach(param => {
-        if (param.field === 'port') {
-          if (booleanValue) {
-            param.paramValue = '443';
-          } else {
-            param.paramValue = '80';
-          }
+      const portParam = this.params.find(param => param.field === 'port');
+      if (portParam) {
+        if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
+          portParam.paramValue = 443;
         }
-      });
+        if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
+          portParam.paramValue = 80;
+        }
+      }
     }
   }
 

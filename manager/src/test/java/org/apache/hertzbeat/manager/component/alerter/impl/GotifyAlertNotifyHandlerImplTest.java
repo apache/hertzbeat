@@ -15,25 +15,12 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.component.alerter;
+package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 
 /**
- * Test case for {@link AlertNotifyHandler}
+ * Test case for {@link AliYunAlertNotifyHandlerImpl}
  */
-class AlertNotifyHandlerTest {
 
-    @BeforeEach
-    void setUp() {
-    }
-
-    @Test
-    void send() {
-    }
-
-    @Test
-    void type() {
-    }
+class GotifyAlertNotifyHandlerImplTest {
 }
