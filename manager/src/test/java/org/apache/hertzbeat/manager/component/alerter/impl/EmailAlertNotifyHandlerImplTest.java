@@ -75,7 +75,6 @@ class EmailAlertNotifyHandlerImplTest {
         ReflectionTestUtils.setField(emailAlertNotifyHandler, "password", "demo");
         ReflectionTestUtils.setField(emailAlertNotifyHandler, "port", 465);
         ReflectionTestUtils.setField(emailAlertNotifyHandler, "sslEnable", true);
-        ReflectionTestUtils.setField(emailAlertNotifyHandler, "bundle", ResourceBundle.getBundle("alerter"));
     }
 
     @Test
