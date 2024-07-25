@@ -334,6 +334,7 @@
   "alert.notice.sender.mail.password": "郵件密碼",
   "alert.notice.sender.mail.port": "郵件端口",
   "alert.notice.sender.mail.ssl": "是否啟用SSL",
+  "alert.notice.sender.mail.starttls": "是否啟用STARTTLS",
   "alert.notice.sender.mail.enable": "啟用郵件設定",
   "alert.export.switch-type": "請選擇導出文件格式!",
   "alert.export.use-type": "以 {{type}} 文件格式導出阈值規則",
