@@ -334,6 +334,7 @@
   "alert.notice.sender.mail.password": "Email Password",
   "alert.notice.sender.mail.port": "Email Port",
   "alert.notice.sender.mail.ssl": "Enable SSL",
+  "alert.notice.sender.mail.starttls": "Enable STARTTLS",
   "alert.notice.sender.mail.enable": "Enable Email Configuration",
   "alert.export.switch-type": "Please select the export file format!",
   "alert.export.use-type": "Export rules in {{type}} file format",

@@ -104,6 +104,8 @@ spring:
           socketFactoryClass: javax.net.ssl.SSLSocketFactory
           ssl:
             enable: true
+          starttls:
+            enable: false
 
 common:
   queue:

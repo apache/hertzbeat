@@ -335,6 +335,7 @@
   "alert.notice.sender.mail.password": "邮箱密码",
   "alert.notice.sender.mail.port": "邮箱端口",
   "alert.notice.sender.mail.ssl": "是否启用SSL",
+  "alert.notice.sender.mail.starttls": "是否启用STARTTLS",
   "alert.notice.sender.mail.enable": "是否启用邮箱配置",
   "alert.export.switch-type": "请选择导出文件格式!",
   "alert.export.use-type": "以 {{type}} 文件格式导出阈值规则",
