@@ -69,7 +69,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
     @Value("${spring.mail.properties.mail.smtp.ssl.enable:true}")
     private boolean sslEnable = true;
 
-    @Value(("${spring.mail.properties.mail.smtp.starttls.enable:false}"))
+    @Value("${spring.mail.properties.mail.smtp.starttls.enable:false}")
     private boolean starttlsEnable = false;
 
     private final GeneralConfigDao generalConfigDao;
