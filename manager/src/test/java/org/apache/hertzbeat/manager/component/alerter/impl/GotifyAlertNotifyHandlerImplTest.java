@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-
-import java.util.Date;
 import java.util.ResourceBundle;
 
 import org.apache.hertzbeat.alert.AlerterProperties;
@@ -28,10 +26,8 @@ import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.xbill.DNS.dnssec.R;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
