@@ -123,7 +123,7 @@ public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerIm
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    private static class WeChatAppReq {
+    protected static class WeChatAppReq {
 
         @JsonProperty(value = "errcode")
         private Integer errCode;
@@ -139,7 +139,7 @@ public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerIm
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    private static class WeChatAppDTO {
+    protected static class WeChatAppDTO {
 
         /**
          * markdown format
@@ -172,7 +172,7 @@ public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerIm
         private MarkdownDTO markdown;
 
         @Data
-        private static class MarkdownDTO {
+        protected static class MarkdownDTO {
             /**
              * message content
              */
@@ -180,7 +180,7 @@ public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerIm
         }
 
         @Data
-        private static class TextDTO {
+        protected static class TextDTO {
             /**
              * message content
              */
