@@ -54,8 +54,8 @@
       class="mobile-hide"
       nzAllowClear
       [nzPlaceHolder]="'alert.center.filter-priority' | i18n"
-      (ngModelChange)="loadAlertsTable()"
       [(ngModel)]="filterPriority"
+      (ngModelChange)="loadAlertsTable()"
     >
       <nz-option [nzLabel]="'alert.priority.all' | i18n" [nzValue]="9"></nz-option>
       <nz-option [nzLabel]="'alert.priority.2' | i18n" [nzValue]="2"></nz-option>
@@ -66,8 +66,8 @@
       class="mobile-hide"
       nzAllowClear
       [nzPlaceHolder]="'alert.center.filter-status' | i18n"
-      (ngModelChange)="loadAlertsTable()"
       [(ngModel)]="filterStatus"
+      (ngModelChange)="loadAlertsTable()"
     >
       <nz-option [nzLabel]="'alert.status.all' | i18n" [nzValue]="9"></nz-option>
       <nz-option [nzLabel]="'alert.status.0' | i18n" [nzValue]="0"></nz-option>
@@ -79,7 +79,7 @@
       class="mobile-hide"
       [placeholder]="'alert.center.search' | i18n"
       [(value)]="filterContent"
-      (valueChange)="loadAlertsTable()"
+      (keydown.enter)="loadAlertsTable()"
     />
   </ng-template>
 </app-toolbar>

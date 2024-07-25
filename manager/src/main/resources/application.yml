@@ -179,7 +179,7 @@ warehouse:
 
 alerter:
   # custom console url
-  console-url: https://console.tancloud.cn
+  console-url: https://console.tancloud.io
   # we work
   we-work-webhook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
   # ding ding talk
