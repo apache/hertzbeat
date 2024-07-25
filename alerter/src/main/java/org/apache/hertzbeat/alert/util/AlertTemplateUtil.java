@@ -26,7 +26,10 @@ import lombok.extern.slf4j.Slf4j;
  * Alarm template keyword matching replacement engine tool
  */
 @Slf4j
-public class AlertTemplateUtil {
+public final class AlertTemplateUtil {
+
+    private AlertTemplateUtil() {
+    }
 
     /**
      * Match the variable ${key}
@@ -37,6 +40,10 @@ public class AlertTemplateUtil {
     public static String render(String template, Map<String, Object> replaceData) {
         if (template == null) {
             return null;  
+        }
+        if (replaceData == null) {
+            log.warn("The replaceData is null.");
+            return template;
         }
         try {
             Matcher matcher = PATTERN.matcher(template);

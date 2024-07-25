@@ -53,13 +53,11 @@ import org.apache.hertzbeat.common.util.MapCapUtil;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-
 /**
  * Redis single cluster collector
  */
 @Slf4j
 public class RedisCommonCollectImpl extends AbstractCollect {
-
 
     private static final String CLUSTER = "3";
 
@@ -76,14 +74,15 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException{
+        Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
+        RedisProtocol redisProtocol = metrics.getRedis();
+        Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
+        Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        try {
-            preCheck(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         try {
             if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 List<Map<String, String>> redisInfoList = getClusterRedisInfo(metrics);
@@ -329,13 +328,6 @@ public class RedisCommonCollectImpl extends AbstractCollect {
             }
         }
         return result;
-    }
-
-    private void preCheck(Metrics metrics) {
-    	Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
-        RedisProtocol redisProtocol = metrics.getRedis();
-        Assert.hasText(redisProtocol.getHost(), "Redis Protocol host is required.");
-        Assert.hasText(redisProtocol.getPort(), "Redis Protocol port is required.");
     }
 
     @Override

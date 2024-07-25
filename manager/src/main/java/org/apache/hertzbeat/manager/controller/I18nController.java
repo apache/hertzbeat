@@ -32,8 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Internationalization I 18 N
- * 国际化I18N
+ * Internationalization I18N
  */
 @Tag(name = "I18N International Resource API")
 @RestController

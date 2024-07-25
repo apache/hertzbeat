@@ -23,12 +23,17 @@ import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -54,20 +59,24 @@ public class SslCertificateCollectImpl extends AbstractCollect {
     private static final String NAME_END_TIME = "end_time";
     private static final String NAME_END_TIMESTAMP = "end_timestamp";
 
-    public SslCertificateCollectImpl() {}
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getHttp() == null) {
+            throw new IllegalArgumentException("Http/Https collect must has http params");
+        }
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder,
                         long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
+
         HttpProtocol httpProtocol = metrics.getHttp();
+        String url = httpProtocol.getUrl();
+        if (!StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
+            httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
+        }
+
         HttpsURLConnection urlConnection = null;
         try {
             String uri = "";
@@ -77,6 +86,14 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                 uri = "https://" + httpProtocol.getHost() + ":" + httpProtocol.getPort();
             }
             urlConnection = (HttpsURLConnection) new URL(uri).openConnection();
+
+            boolean verifySsl = Boolean.parseBoolean(httpProtocol.getSsl());
+            // ignore ssl verify
+            if (!verifySsl){
+                SSLContext ignoreSslContext = createIgnoreVerifySslContext();
+                urlConnection.setSSLSocketFactory(ignoreSslContext.getSocketFactory());
+            }
+
             urlConnection.connect();
             Certificate[] certificates = urlConnection.getServerCertificates();
             if (certificates == null || certificates.length == 0) {
@@ -153,14 +170,32 @@ public class SslCertificateCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SSL_CERT;
     }
 
-    private void validateParams(Metrics metrics) throws Exception {
-        if (metrics == null || metrics.getHttp() == null) {
-            throw new Exception("Http/Https collect must has http params");
-        }
-        HttpProtocol httpProtocol = metrics.getHttp();
-        String url = httpProtocol.getUrl();
-        if (!StringUtils.hasText(url) || !url.startsWith(RIGHT_DASH)) {
-            httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
-        }
+    private void validateParams(Metrics metrics) {
+
+    }
+
+    public SSLContext createIgnoreVerifySslContext() throws NoSuchAlgorithmException, KeyManagementException {
+        SSLContext sc = SSLContext.getInstance("TLS");
+        X509TrustManager trustManager = new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(
+                    java.security.cert.X509Certificate[] paramArrayOfX509Certificate,
+                    String paramString) {
+            }
+
+            @Override
+            public void checkServerTrusted(
+                    java.security.cert.X509Certificate[] paramArrayOfX509Certificate,
+                    String paramString) {
+            }
+
+            @Override
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        };
+
+        sc.init(null, new TrustManager[]{trustManager}, null);
+        return sc;
     }
 }

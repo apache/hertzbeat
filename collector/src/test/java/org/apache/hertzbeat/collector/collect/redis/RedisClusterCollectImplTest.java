@@ -41,8 +41,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test case for {@link RedisCommonCollectImpl}
- *
- *
  */
 @ExtendWith(MockitoExtension.class)
 public class RedisClusterCollectImplTest {
@@ -128,6 +126,7 @@ public class RedisClusterCollectImplTest {
         Mockito.when(cmd.info(metrics.getName())).thenReturn(info);
         Mockito.when(cmd.clusterInfo()).thenReturn(clusterInfo);
 
+        redisClusterCollect.preCheck(metrics);
         redisClusterCollect.collect(builder, 1L, "test", metrics);
 
         assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);

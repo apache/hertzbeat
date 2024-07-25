@@ -50,7 +50,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Monitor and manage batch API
- * 监控管理批量API
  */
 @Tag(name = "Monitor Manage Batch API")
 @RestController
@@ -152,6 +151,7 @@ public class MonitorsController {
         Message<List<Monitor>> message = Message.success(monitors);
         return ResponseEntity.ok(message);
     }
+
 
     @DeleteMapping
     @Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",

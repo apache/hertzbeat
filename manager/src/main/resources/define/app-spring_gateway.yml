@@ -79,6 +79,32 @@ params:
     required: true
     # hide-true or false
     hide: true
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: Basic Auth Username
+      en-US: Basic Auth Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: Basic Auth Password
+      en-US: Basic Auth Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
 # collect metrics config list
 metrics:
   # metrics - available
@@ -106,6 +132,12 @@ metrics:
       method: GET
       # enable SSL/TLS, that is, whether it is http or https, the default is false
       ssl: ^_^ssl^_^
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
       parseType: default
 
@@ -135,12 +167,12 @@ metrics:
       - $.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value
     # A list of calculation scripts for metric values.
     calculates:
-      - profile=#`$.activeProfiles[0]`
-      - port=#`$.propertySources[?(@.name=='server.ports')].properties.*.value`
-      - os=#`$.propertySources[?(@.name=='systemProperties')].properties['os.name'].value`
-      - jdk_vendor=#`$.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value`
-      - jvm_version=#`$.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value`
-      - os_arch=#`$.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value`
+      - profile=$.activeProfiles[0]
+      - port=$.propertySources[?(@.name=='server.ports')].properties.*.value
+      - os=$.propertySources[?(@.name=='systemProperties')].properties['os.name'].value
+      - jdk_vendor=$.propertySources[?(@.name=='systemProperties')].properties['jdk.vendor.version'].value
+      - jvm_version=$.propertySources[?(@.name=='systemProperties')].properties['java.runtime.version'].value
+      - os_arch=$.propertySources[?(@.name=='systemProperties')].properties['os.arch'].value
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # Specific collection configuration when protocol is http protocol
@@ -155,6 +187,12 @@ metrics:
       method: GET
       # enable SSL/TLS, that is, whether it is http or https, the default is false
       ssl: ^_^ssl^_^
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
       parseType: jsonPath
       # http response data parse script
@@ -173,6 +211,10 @@ metrics:
       url: ^_^base_path^_^/metrics/jvm.threads.states
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
@@ -188,7 +230,7 @@ metrics:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
       - state='^o^state^o^'
-      - size=#`$.measurements[?(@.statistic == "VALUE")].value`
+      - size=$.measurements[?(@.statistic == "VALUE")].value
     protocol: http
     http:
       host: ^_^host^_^
@@ -196,6 +238,10 @@ metrics:
       url: ^_^base_path^_^/metrics/jvm.threads.states?tag=state:^o^state^o^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$'
 
@@ -212,6 +258,10 @@ metrics:
       url: ^_^base_path^_^/metrics/jvm.memory.used
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
@@ -228,7 +278,7 @@ metrics:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
       - space="^o^id^o^"
-      - mem_used=#`$.measurements[?(@.statistic == "VALUE")].value`
+      - mem_used=$.measurements[?(@.statistic == "VALUE")].value
     units:
       - mem_used=B->MB
     protocol: http
@@ -238,6 +288,10 @@ metrics:
       url: ^_^base_path^_^/metrics/jvm.memory.used?tag=id:^o^id^o^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$'
 
@@ -253,6 +307,10 @@ metrics:
       url: ^_^base_path^_^/health
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: default
 
   - name: route_id
@@ -268,6 +326,10 @@ metrics:
       url: ^_^base_path^_^/gateway/routes
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$[*].route_id'
 
@@ -289,9 +351,9 @@ metrics:
       - $.order
     calculates:
       - route_id="^o^name^o^"
-      - predicate=#`$.predicate`
-      - uri=#`$.uri`
-      - order=#`$.order`
+      - predicate=$.predicate
+      - uri=$.uri
+      - order=$.order
     protocol: http
     http:
       host: ^_^host^_^
@@ -299,5 +361,9 @@ metrics:
       url: ^_^base_path^_^/gateway/routes/^o^name^o^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$'

@@ -25,7 +25,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 
-
 /**
  * collector info
  */
@@ -39,9 +38,10 @@ public class CollectorInfo {
     @NotNull
     private String name;
     
-    @NotNull
     private String ip;
-    
+
+    private String version;
+
     @NotNull
     private String mode = CommonConstants.MODE_PUBLIC;
 }

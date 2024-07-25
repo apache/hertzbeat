@@ -128,10 +128,10 @@ public class CalculateStatus {
                                 List<Monitor> monitorList = monitorDao.findAll(specification);
                                 state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN;
                                 for (Monitor monitor : monitorList) {
-                                    if (monitor.getStatus() == CommonConstants.UN_AVAILABLE_CODE) {
+                                    if (monitor.getStatus() == CommonConstants.MONITOR_DOWN_CODE) {
                                         state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL;
                                         break;
-                                    } else if (monitor.getStatus() == CommonConstants.AVAILABLE_CODE) {
+                                    } else if (monitor.getStatus() == CommonConstants.MONITOR_UP_CODE) {
                                         state = CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL;
                                     }
                                 }   

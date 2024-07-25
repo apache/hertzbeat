@@ -65,6 +65,43 @@ public class ConsistentHash {
     }
 
     /**
+     * add virtual node
+     * @param newNode node
+     * @param identity virtual node identity
+     */
+    public synchronized void addVirtualNode(Node newNode, String identity){
+        int virtualHashKey = hash(identity);
+        hashCircle.put(virtualHashKey, newNode);
+        newNode.addVirtualNodeJobs(virtualHashKey, ConcurrentHashMap.newKeySet(16));
+        Map.Entry<Integer, Node> higherVirtualNode = hashCircle.higherOrFirstEntry(virtualHashKey);
+        // Reassign tasks that are routed to the higherVirtualNode virtual node
+        // Tasks are either on the original virtual node or on the new virtual node
+        Integer higherVirtualNodeKey = higherVirtualNode.getKey();
+        Node higherNode = higherVirtualNode.getValue();
+        Set<Long[]> dispatchJobs = higherNode.clearVirtualNodeJobs(higherVirtualNodeKey);
+        if (dispatchJobs != null && !dispatchJobs.isEmpty()) {
+            Set<Long[]> reDispatchJobs = ConcurrentHashMap.newKeySet(dispatchJobs.size());
+            Iterator<Long[]> iterator = dispatchJobs.iterator();
+            while (iterator.hasNext()) {
+                Long[] jobHash = iterator.next();
+                int dispatchHash = jobHash[1].intValue();
+                if (dispatchHash <= virtualHashKey) {
+                    reDispatchJobs.add(jobHash);
+                    iterator.remove();
+                }
+            }
+            higherNode.virtualNodeMap.put(higherVirtualNodeKey, dispatchJobs);
+            Set<Long> jobIds = reDispatchJobs.stream().map(item -> item[0]).collect(Collectors.toSet());
+            newNode.addVirtualNodeJobs(virtualHashKey, reDispatchJobs);
+            if (higherNode != newNode) {
+                higherNode.assignJobs.removeAssignJobs(jobIds);
+                higherNode.assignJobs.addRemovingJobs(jobIds);
+                newNode.assignJobs.addAddingJobs(jobIds);
+            }
+        }
+    }
+
+    /**
      * add collector node
      * @param newNode node
      */
@@ -73,47 +110,48 @@ public class ConsistentHash {
         if (!CommonConstants.MODE_PRIVATE.equals(newNode.mode)) {
             byte virtualNodeNum = newNode.quality == null ? VIRTUAL_NODE_DEFAULT_SIZE : newNode.quality;
             for (byte i = 0; i < virtualNodeNum; i++) {
-                int virtualHashKey = hash(newNode.identity + i);
-                hashCircle.put(virtualHashKey, newNode);
-                newNode.addVirtualNodeJobs(virtualHashKey, ConcurrentHashMap.newKeySet(16));
-                Map.Entry<Integer, Node> higherVirtualNode = hashCircle.higherEntry(virtualHashKey);
-                if (higherVirtualNode == null) {
-                    higherVirtualNode = hashCircle.firstEntry();
-                }
-                // Reassign tasks that are routed to the higherVirtualNode virtual node
-                // Tasks are either on the original virtual node or on the new virtual node
-                Integer higherVirtualNodeKey = higherVirtualNode.getKey();
-                Node higherNode = higherVirtualNode.getValue();
-                Set<Long[]> dispatchJobs = higherNode.clearVirtualNodeJobs(higherVirtualNodeKey);
-                if (dispatchJobs != null && !dispatchJobs.isEmpty()) {
-                    Set<Long[]> reDispatchJobs = ConcurrentHashMap.newKeySet(dispatchJobs.size());
-                    Iterator<Long[]> iterator = dispatchJobs.iterator();
-                    while (iterator.hasNext()) {
-                        Long[] jobHash = iterator.next();
-                        int dispatchHash = jobHash[1].intValue();
-                        if (dispatchHash <= virtualHashKey) {
-                            reDispatchJobs.add(jobHash);
-                            iterator.remove();
-                        }
-                    }
-                    higherNode.virtualNodeMap.put(higherVirtualNodeKey, dispatchJobs);
-                    Set<Long> jobIds = reDispatchJobs.stream().map(item -> item[0]).collect(Collectors.toSet());
-                    newNode.addVirtualNodeJobs(virtualHashKey, reDispatchJobs);
-                    if (higherNode != newNode) {
-                        higherNode.assignJobs.removeAssignJobs(jobIds);
-                        higherNode.assignJobs.addRemovingJobs(jobIds);
-                        newNode.assignJobs.addAddingJobs(jobIds);
-                    }
-                }
-            }   
+                addVirtualNode(newNode, newNode.identity + i);
+            }
         }
         existNodeMap.put(newNode.identity, newNode);
-        if (!dispatchJobCache.isEmpty()) {
-            int size = dispatchJobCache.size();
-            for (int index = 0; index < size; index++) {
-                DispatchJob dispatchJob = dispatchJobCache.remove(0);
-                dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId, false);
-            }
+        dispatchJobInCache();
+    }
+
+    /**
+     * remove virtual node
+     * @param deletedNode node
+     * @param virtualNodeHash virtual node hash key
+     */
+    public synchronized void removeVirtualNode(Node deletedNode, Integer virtualNodeHash) {
+        Set<Long[]> removeJobHashSet = deletedNode.virtualNodeMap.get(virtualNodeHash);
+        // Migrate the virtualNodeEntry collection task to the nearest virtual node that is larger than it
+        hashCircle.remove(virtualNodeHash);
+        if (removeJobHashSet == null || removeJobHashSet.isEmpty()) {
+            return;
+        }
+        Map.Entry<Integer, Node> higherVirtualEntry = hashCircle.higherOrFirstEntry(virtualNodeHash);
+        if (higherVirtualEntry == null || higherVirtualEntry.getValue() == deletedNode) {
+            higherVirtualEntry = null;
+        }
+        // jobId
+        Set<Long> removeJobIds = removeJobHashSet.stream().map(item -> item[0]).collect(Collectors.toSet());
+        deletedNode.assignJobs.removeAssignJobs(removeJobIds);
+        deletedNode.assignJobs.addRemovingJobs(removeJobIds);
+        if (higherVirtualEntry == null) {
+            // jobId-dispatchHash
+            removeJobHashSet.forEach(value -> {
+                Long jobId = value[0];
+                Integer dispatchHash = value[1].intValue();
+                if (removeJobIds.contains(jobId)) {
+                    dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
+                } else {
+                    log.error("Get job {} from removeJobMap null.", jobId);
+                }
+            });
+        } else {
+            Node higherVirtualNode = higherVirtualEntry.getValue();
+            higherVirtualNode.addVirtualNodeJobs(higherVirtualEntry.getKey(), removeJobHashSet);
+            higherVirtualNode.assignJobs.addAddingJobs(removeJobIds);
         }
     }
 
@@ -126,43 +164,15 @@ public class ConsistentHash {
         if (deletedNode == null) {
             return null;
         }
-        for (Map.Entry<Integer, Set<Long[]>> virtualNodeEntry : deletedNode.virtualNodeMap.entrySet()) {
-            Integer virtualNodeHash = virtualNodeEntry.getKey();
-            Set<Long[]> removeJobHashSet = virtualNodeEntry.getValue();
-            // Migrate the virtualNodeEntry collection task to the nearest virtual node that is larger than it
-            hashCircle.remove(virtualNodeHash);
-            if (removeJobHashSet == null || removeJobHashSet.isEmpty()) {
-                continue;
-            }
-            Map.Entry<Integer, Node> higherVirtualEntry = hashCircle.higherEntry(virtualNodeHash);
-            if (higherVirtualEntry == null) {
-                higherVirtualEntry = hashCircle.firstEntry();
-            }
-            if (higherVirtualEntry == null || higherVirtualEntry.getValue() == deletedNode) {
-                higherVirtualEntry = null;
-            }
-            // jobId
-            Set<Long> removeJobIds = removeJobHashSet.stream().map(item -> item[0]).collect(Collectors.toSet());
-            deletedNode.assignJobs.removeAssignJobs(removeJobIds);
-            deletedNode.assignJobs.addRemovingJobs(removeJobIds);
-            if (higherVirtualEntry == null) {
-                // jobId-dispatchHash
-                virtualNodeEntry.getValue().forEach(value -> {
-                    Long jobId = value[0];
-                    Integer dispatchHash = value[1].intValue();
-                    if (removeJobIds.contains(jobId)) {
-                        dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
-                    } else {
-                        log.error("Get job {} from removeJobMap null.", jobId);
-                    }
-                });
-            } else {
-                Node higherVirtualNode = higherVirtualEntry.getValue();
-                higherVirtualNode.addVirtualNodeJobs(higherVirtualEntry.getKey(), removeJobHashSet);
-                higherVirtualNode.assignJobs.addAddingJobs(removeJobIds);
-            }
+        for (Integer virtualNodeHash : deletedNode.virtualNodeMap.keySet()) {
+            removeVirtualNode(deletedNode, virtualNodeHash);
         }
         deletedNode.destroy();
+        dispatchJobInCache();
+        return deletedNode;
+    }
+
+    public synchronized void dispatchJobInCache() {
         if (!dispatchJobCache.isEmpty()) {
             int size = dispatchJobCache.size();
             for (int index = 0; index < size; index++) {
@@ -170,7 +180,6 @@ public class ConsistentHash {
                 dispatchJob(dispatchJob.dispatchHash, dispatchJob.jobId, false);
             }
         }
-        return deletedNode;
     }
 
     /**
@@ -180,7 +189,7 @@ public class ConsistentHash {
     public Map<String, Node> getAllNodes() {
         return existNodeMap;
     }
-    
+
     /**
      * get node
      * @param collectorName collector name
@@ -213,7 +222,7 @@ public class ConsistentHash {
         int dispatchHash = hash(dispatchKey);
         return dispatchJob(dispatchHash, jobId, true);
     }
-    
+
     /**
      * The collector node to which the collector is assigned is obtained in advance based on the collection task information
      *
@@ -243,17 +252,14 @@ public class ConsistentHash {
             dispatchJobCache.add(new DispatchJob(dispatchHash, jobId));
             return null;
         }
-        Map.Entry<Integer, Node> ceilEntry = hashCircle.ceilingEntry(dispatchHash);
-        if (ceilEntry == null) {
-            ceilEntry = hashCircle.firstEntry();
-        }
+        Map.Entry<Integer, Node> ceilEntry = hashCircle.ceilingOrFirstEntry(dispatchHash);
         int virtualKey = ceilEntry.getKey();
         Node curNode = ceilEntry.getValue();
 
         curNode.addJob(virtualKey, dispatchHash, jobId, isFlushed);
         return curNode;
     }
-    
+
     /**
      * The collector node to which the collector is assigned is obtained in advance based on the collection task information
      *
@@ -265,10 +271,7 @@ public class ConsistentHash {
             log.warn("There is no available collector registered.");
             return null;
         }
-        Map.Entry<Integer, Node> ceilEntry = hashCircle.ceilingEntry(dispatchHash);
-        if (ceilEntry == null) {
-            ceilEntry = hashCircle.firstEntry();
-        }
+        Map.Entry<Integer, Node> ceilEntry = hashCircle.ceilingOrFirstEntry(dispatchHash);
         return ceilEntry.getValue();
     }
 
@@ -389,7 +392,7 @@ public class ConsistentHash {
             Set<Long[]> virtualNodeJob = virtualNodeMap.computeIfAbsent(virtualNodeKey, k -> ConcurrentHashMap.newKeySet(16));
             virtualNodeJob.add(new Long[]{jobId, dispatchHash.longValue()});
             if (isFlushed) {
-                assignJobs.addAssignJob(jobId);   
+                assignJobs.addAssignJob(jobId);
             } else {
                 assignJobs.addAddingJob(jobId);
             }
@@ -416,13 +419,13 @@ public class ConsistentHash {
             if (virtualNodeMap == null) {
                 virtualNodeMap = new ConcurrentHashMap<>(16);
             }
-            Set<Long[]> virtualNodeJobs = virtualNodeMap.get(virtualHashKey);
-            if (virtualNodeJobs != null) {
-                reDispatchJobs.addAll(virtualNodeJobs);
-            }
+            virtualNodeMap.computeIfPresent(virtualHashKey, (k, v) -> {
+                reDispatchJobs.addAll(v);
+                return v;
+            });
             virtualNodeMap.put(virtualHashKey, reDispatchJobs);
         }
-        
+
         public void removeVirtualNodeJob(Long jobId) {
             if (jobId == null || virtualNodeMap == null) {
                 return;

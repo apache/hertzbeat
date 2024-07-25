@@ -34,8 +34,7 @@ public class TemplateConfigServiceImpl extends AbstractGeneralConfigServiceImpl<
     
     @Resource
     private AppService appService;
-    
-    
+
     /**
      *
      * <p>Constructor, passing in GeneralConfigDao, ObjectMapper and type.</p>
@@ -58,7 +57,6 @@ public class TemplateConfigServiceImpl extends AbstractGeneralConfigServiceImpl<
     public String type() {
         return "template";
     }
-    
     
     @Override
     protected TypeReference<TemplateConfig> getTypeReference() {

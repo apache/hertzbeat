@@ -56,7 +56,7 @@ params:
     # default value
     defaultValue: 80
     # field-param field key
-  - field: method
+  - field: httpMethod
     # name-param field display i18n name
     name:
       zh-CN: 请求方式
@@ -180,6 +180,11 @@ params:
     type: textarea
     # param field input placeholder
     placeholder: 'Available When POST PUT'
+    # dependent parameter values list
+    depend:
+      httpMethod:
+        - POST
+        - PUT
     # required-true or false
     required: false
     # hide param-true or false
@@ -213,7 +218,7 @@ params:
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
-    limit: 20
+    limit: 50
     # required-true or false
     required: false
     # hide param-true or false
@@ -291,7 +296,7 @@ metrics:
       port: ^_^port^_^
       url: ^_^uri^_^
       timeout: ^_^timeout^_^
-      method: ^_^method^_^
+      method: ^_^httpMethod^_^
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
       headers:

@@ -83,20 +83,20 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
             log.warn("[jpa-metrics-store]-start running expired data cleaner."
                     + "Please use time series db instead of jpa for better performance");
             String expireTimeStr = jpaProperties.expireTime();
-            long expireTime = 0;
+            long expireTime;
             try {
                 if (NumberUtils.isParsable(expireTimeStr)) {
                     expireTime = NumberUtils.toLong(expireTimeStr);
-                    expireTime = (ZonedDateTime.now().toEpochSecond() + expireTime) * 1000;
+                    expireTime = (ZonedDateTime.now().toEpochSecond() + expireTime) * 1000L;
                 } else {
                     TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(expireTimeStr);
                     ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                    expireTime = dateTime.toEpochSecond() * 1000;
+                    expireTime = dateTime.toEpochSecond() * 1000L;
                 }
             } catch (Exception e) {
                 log.error("expiredDataCleaner time error: {}. use default expire time to clean: 1h", e.getMessage());
                 ZonedDateTime dateTime = ZonedDateTime.now().minus(Duration.ofHours(1));
-                expireTime = dateTime.toEpochSecond() * 1000;
+                expireTime = dateTime.toEpochSecond() * 1000L;
             }
             try {
                 int rows = historyDao.deleteHistoriesByTimeBefore(expireTime);
@@ -217,7 +217,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 try {
                     TemporalAmount temporalAmount = TimePeriodUtil.parseTokenTime(history);
                     ZonedDateTime dateTime = ZonedDateTime.now().minus(temporalAmount);
-                    long timeBefore = dateTime.toEpochSecond() * 1000;
+                    long timeBefore = dateTime.toEpochSecond() * 1000L;
                     Predicate timePredicate = criteriaBuilder.ge(root.get("time"), timeBefore);
                     andList.add(timePredicate);
                 } catch (Exception e) {

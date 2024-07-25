@@ -89,7 +89,7 @@ params:
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
-    limit: 20
+    limit: 50
     # required-true or false
     required: true
   # field-param field key
@@ -466,7 +466,7 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
-      script: ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf "&"; } print ""}' | head -n 11
+      script: ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11
       parseType: multiRow
 
   - name: top_mem_process
@@ -507,5 +507,5 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
-      script: ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf "&"; } print ""}' | head -n 11
+      script: ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11
       parseType: multiRow

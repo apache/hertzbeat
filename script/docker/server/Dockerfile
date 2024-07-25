@@ -29,13 +29,15 @@ RUN mkdir /var/run/sshd
 RUN localedef -c -f UTF-8 -i zh_CN zh_CN.UTF-8
 RUN localedef -c -f UTF-8 -i en_US en_US.UTF-8
 
-ADD apache-hertzbeat-${VERSION}-incubating-bin.tar /opt/
+ADD apache-hertzbeat-${VERSION}-incubating-bin.tar.gz /opt/
 
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
+RUN mv /opt/apache-hertzbeat-${VERSION}-incubating-bin /opt/hertzbeat
+
 EXPOSE 1157 1158 22
 
-WORKDIR /opt/apache-hertzbeat/
+WORKDIR /opt/hertzbeat/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]

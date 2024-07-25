@@ -51,5 +51,9 @@ public interface RemotingServer extends RemotingService {
      */
     ClusterMsg.Message sendMsgSync(Channel channel, ClusterMsg.Message request, int timeoutMillis);
 
+    /**
+     * register hook.
+     * @param nettyHookList hook list
+     */
     void registerHook(List<NettyHook> nettyHookList);
 }

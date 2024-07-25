@@ -20,8 +20,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- *
- * Created by gcdd1993 on 2023/7/9
+ * test case for {@link PrivateKeyUtils}
  */
 class PrivateKeyUtilsTest {
 

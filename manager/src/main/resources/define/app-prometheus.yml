@@ -127,21 +127,6 @@ params:
     required: false
     # hide param-true or false
     hide: true
-  # field-param field key
-  - field: payload
-    # name-param field display i18n name
-    name:
-      zh-CN: 请求BODY
-      en-US: BODY
-    # type-param field type(most mapping the html input type)
-    type: textarea
-    # param field input placeholder
-    placeholder: 'Available When POST PUT'
-    # required-true or false
-    required: false
-    # hide param-true or false
-    hide: true
-    # field-param field key
   - field: authType
     # name-param field display i18n name
     name:
@@ -168,7 +153,7 @@ params:
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
-    limit: 20
+    limit: 50
     # required-true or false
     required: false
     # hide param-true or false

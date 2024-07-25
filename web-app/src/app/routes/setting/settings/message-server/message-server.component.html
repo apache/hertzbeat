@@ -80,25 +80,25 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="emailUsername" nzRequired="true">{{ 'alert.notice.sender.mail.username' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="emailSender.emailUsername" nz-input name="emailUsername" type="text" id="emailUsername" />
+          <input [(ngModel)]="emailSender.emailUsername" nz-input required name="emailUsername" type="text" id="emailUsername" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="emailPassword" nzRequired="true">{{ 'alert.notice.sender.mail.password' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="emailSender.emailPassword" nz-input name="emailPassword" type="password" id="emailPassword" />
+          <input [(ngModel)]="emailSender.emailPassword" nz-input required name="emailPassword" type="password" id="emailPassword" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="emailSsl" nzRequired="true">{{ 'alert.notice.sender.mail.ssl' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-switch [(ngModel)]="emailSender.emailSsl" name="emailSsl" id="emailSsl"></nz-switch>
+          <nz-switch [(ngModel)]="emailSender.emailSsl" required name="emailSsl" id="emailSsl"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
         <nz-form-label nzSpan="7" nzFor="emailEnable" nzRequired="true">{{ 'alert.notice.sender.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-switch [(ngModel)]="emailSender.enable" name="emailEnable" id="emailEnable"></nz-switch>
+          <nz-switch [(ngModel)]="emailSender.enable" required name="emailEnable" id="emailEnable"></nz-switch>
         </nz-form-control>
       </nz-form-item>
     </form>

@@ -205,7 +205,7 @@ Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
 6. 待本地后端启动后，在web-app目录下启动本地前端 `ng serve --open`
 
-7. 浏览器访问 localhost:4200 即可开始，默认账号密码 admin/hertzbeat**
+7. 浏览器访问 localhost:4200 即可开始，默认账号密码 *admin/hertzbeat*
 
 ### 寻找任务  
 

@@ -203,7 +203,7 @@ metrics:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
       - state='^o^state^o^'
-      - number=#`$.measurements[?(@.statistic == "VALUE")].value`
+      - number=$.measurements[?(@.statistic == "VALUE")].value
     protocol: http
     http:
       host: ^_^host^_^
@@ -250,7 +250,7 @@ metrics:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
       - space="^o^id^o^"
-      - mem_used=#`$.measurements[?(@.statistic == "VALUE")].value`
+      - mem_used=$.measurements[?(@.statistic == "VALUE")].value
     units:
       - mem_used=B->MB
     protocol: http

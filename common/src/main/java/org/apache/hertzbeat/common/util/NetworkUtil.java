@@ -20,7 +20,7 @@ package org.apache.hertzbeat.common.util;
 /**
  * network util
  */
-public class NetworkUtil {
+public final class NetworkUtil {
 
     public static final String OS_NAME = System.getProperty("os.name");
 
@@ -39,6 +39,9 @@ public class NetworkUtil {
         if (OS_NAME != null && OS_NAME.toLowerCase().contains(WINDOWS)) {
             isWindowsPlatform = true;
         }
+    }
+
+    private NetworkUtil() {
     }
 
     /**

@@ -132,7 +132,9 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
 
     @Override
     public long getAlertTime() {
-        return DateUtil.getTimeStampFromFormat(getFirstOccurTime(), "yyyy-MM-dd HH:mm:ss");
+
+        return DateUtil.getTimeStampFromFormat(getFirstOccurTime(), "yyyy-MM-dd HH:mm:ss")
+                .orElse(0L);
     }
 
     @Override

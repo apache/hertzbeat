@@ -1,0 +1,161 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'plugin.help' | i18n"
+  [guild_link]="'plugin.help.link' | i18n"
+  [module_name]="'menu.advanced.plugins'"
+  [icon_name]="'usb'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
+    <button nz-button nzType="primary" (click)="onNewPlugin()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'plugin.upload' | i18n }}
+    </button>
+
+    <button nz-button nzType="primary" nzDanger (click)="onDeletePlugins()">
+      <i nz-icon nzType="delete" nzTheme="outline"></i>
+      {{ 'plugin.delete' | i18n }}
+    </button>
+  </ng-template>
+  <ng-template #right>
+    <app-multi-func-input
+      class="mobile-hide"
+      groupStyle="width: 250px;"
+      [placeholder]="'plugin.search' | i18n"
+      [(value)]="search"
+      (valueChange)="loadPluginsTable()"
+    />
+  </ng-template>
+</app-toolbar>
+
+<nz-table
+  #fixedTable
+  [nzData]="plugins"
+  [nzPageIndex]="pageIndex"
+  [nzPageSize]="pageSize"
+  [nzTotal]="total"
+  nzFrontPagination="false"
+  [nzLoading]="tableLoading"
+  nzShowSizeChanger
+  [nzShowTotal]="rangeTemplate"
+  [nzPageSizeOptions]="[8, 15, 25]"
+  (nzQueryParams)="onTablePageChange($event)"
+  nzShowPagination="true"
+  [nzScroll]="{ x: '1240px' }"
+>
+  <thead>
+    <tr>
+      <th nzAlign="center" nzLeft nzWidth="3%" [(nzChecked)]="checkedAll" (nzCheckedChange)="onAllChecked($event)"></th>
+      <th nzAlign="center" nzWidth="15%">{{ 'plugin.name' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'plugin.type' | i18n }}</th>
+      <th nzAlign="center" nzWidth="15%">{{ 'plugin.status' | i18n }}</th>
+      <th nzAlign="center" nzWidth="17%">{{ 'common.edit' | i18n }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let data of fixedTable.data">
+      <td nzAlign="center" nzLeft [nzChecked]="checkedTagIds.has(data.id)" (nzCheckedChange)="onItemChecked(data.id, $event)"></td>
+      <td nzAlign="center">{{ data.name }}</td>
+      <td nzAlign="left">
+        <nz-tag *ngFor="let item of data?.items; let i = index" style="margin-top: 2px" class="hoverClass">
+          {{ 'plugin.type.' + item.type | i18n }}
+        </nz-tag>
+      </td>
+
+      <td nzAlign="center">
+        <nz-switch [(ngModel)]="data.enableStatus" (ngModelChange)="updatePluginEnableStatus(data)" name="enable"></nz-switch>
+      </td>
+      <!--      <td nzAlign="center">{{ data.enableStatus }}</td>-->
+      <td nzAlign="center">
+        <div class="actions">
+          <button
+            nz-button
+            nzType="primary"
+            nzDanger
+            (click)="onDeleteOnePlugin(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'plugin.delete' | i18n"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</nz-table>
+
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+
+<!-- upload plugin pop-up window -->
+<nz-modal
+  [(nzVisible)]="isManageModalVisible"
+  [nzTitle]="isManageModalAdd ? ('plugin.upload' | i18n) : ('plugin.edit' | i18n)"
+  (nzOnCancel)="onManageModalCancel()"
+  (nzOnOk)="onManageModalOk()"
+  nzMaskClosable="false"
+  nzWidth="30%"
+  [nzOkLoading]="isManageModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form [formGroup]="pluginForm" nz-form>
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired="true" nzFor="name">{{ 'plugin.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="14" [nzErrorTip]="'validation.required' | i18n">
+          <input nz-input formControlName="name" id="name" />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired="true" nzFor="jarFile">{{ 'plugin.jar.file' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="14" [nzErrorTip]="'validation.required' | i18n">
+          <nz-upload
+            nzAccept=".jar"
+            nzAction=""
+            nzListType="text"
+            ngDefaultControl
+            formControlName="jarFile"
+            [(nzFileList)]="fileList"
+            [nzRemove]="fileRemove"
+            [nzBeforeUpload]="beforeUpload"
+          >
+            <button nz-button>
+              <i nz-icon nzType="upload"></i>
+              {{ 'common.file.select' | i18n }}
+            </button>
+          </nz-upload>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="6" nzRequired="true" nzFor="enableStatus">{{ 'plugin.status' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="14">
+          <nz-switch formControlName="enableStatus" required></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

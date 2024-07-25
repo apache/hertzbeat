@@ -54,7 +54,6 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
-
 /**
  * nginx collect
  */
@@ -75,22 +74,22 @@ public class NginxCollectImpl extends AbstractCollect {
     private static final String REGEX_SPLIT = "\\r?\\n";
     private static final String REGEX_LINE_SPLIT = "\\s+";
 
-
-    public NginxCollectImpl() {
-        
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        final NginxProtocol nginxProtocol;
+        if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
+            throw new IllegalArgumentException("Nginx collect must has nginx params");
+        }
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
-        // validate parameters
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
+        NginxProtocol nginxProtocol = metrics.getNginx();
+        String url = nginxProtocol.getUrl();
+        if (StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
+            nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
         }
 
         HttpContext httpContext = createHttpContext(metrics.getNginx());
@@ -130,20 +129,6 @@ public class NginxCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_NGINX;
     }
 
-    private void validateParams(Metrics metrics) throws Exception {
-        final NginxProtocol nginxProtocol;
-        
-        if (metrics == null || (nginxProtocol = metrics.getNginx()) == null || nginxProtocol.isInValid()) {
-            throw new Exception("Nginx collect must has nginx params");
-        }
-        
-        String url = nginxProtocol.getUrl();
-        
-        if (StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
-            nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
-        }
-    }
-
     private HttpContext createHttpContext(NginxProtocol nginxProtocol) {
         HttpHost host = new HttpHost(nginxProtocol.getHost(), Integer.parseInt(nginxProtocol.getPort()));
         HttpClientContext httpClientContext = new HttpClientContext();
@@ -164,7 +149,12 @@ public class NginxCollectImpl extends AbstractCollect {
                     ? String.format("[%s]:%s", host, portWithUri)
                     : String.format("%s:%s", host, portWithUri);
 
-            requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+            boolean ssl = Boolean.parseBoolean(nginxProtocol.getSsl());
+            if (ssl){
+                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
+            } else {
+                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+            }
         }
 
         requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");

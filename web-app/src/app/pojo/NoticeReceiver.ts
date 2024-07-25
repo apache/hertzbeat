@@ -27,6 +27,7 @@ export class NoticeReceiver {
   email!: string;
   tgBotToken!: string;
   tgUserId!: string;
+  userId!: string;
   slackWebHookUrl!: string;
   discordChannelId!: string;
   discordBotToken!: string;
@@ -36,6 +37,8 @@ export class NoticeReceiver {
   corpId!: string;
   agentId!: number;
   appSecret!: string;
+  partyId!: string;
+  tagId!: string;
   smnAk!: string;
   smnSk!: string;
   smnProjectId!: string;

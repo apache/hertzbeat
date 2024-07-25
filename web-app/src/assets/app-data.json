@@ -115,6 +115,20 @@
           "icon": "anticon-global"
         },
         {
+          "key": "server",
+          "text": "Server",
+          "hide": false,
+          "i18n": "menu.monitor.server",
+          "icon": "anticon-hdd"
+        },
+        {
+          "key": "llm",
+          "text": "AiLLM",
+          "hide": false,
+          "i18n": "menu.monitor.llm",
+          "icon": "anticon-partition"
+        },
+        {
           "key": "custom",
           "text": "Custom",
           "i18n": "menu.monitor.custom",
@@ -185,6 +199,12 @@
           "i18n": "menu.advanced.tags",
           "icon": "anticon-tags",
           "link": "/setting/tags"
+        },
+        {
+          "text": "plugins",
+          "i18n": "menu.advanced.plugins",
+          "icon": "anticon-usb",
+          "link": "/setting/plugins"
         }
       ]
     },

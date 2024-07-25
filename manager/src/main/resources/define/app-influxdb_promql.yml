@@ -42,7 +42,7 @@ params:
     type: number
     range: '[0,65535]'
     required: true
-    defaultValue: 80
+    defaultValue: 9090
   - field: method
     name:
       zh-CN: 请求方式
@@ -58,6 +58,7 @@ params:
         value: PUT
       - label: DELETE请求
         value: DELETE
+    defaultValue: GET
   - field: uri
     name:
       zh-CN: 相对路径
@@ -66,6 +67,7 @@ params:
     limit: 200
     required: true
     placeholder: 'API地址除IP端口外的路径 例如:/v2/book/bar'
+    defaultValue: /api/v1/query
   - field: ssl
     name:
       zh-CN: 启动SSL
@@ -121,7 +123,7 @@ params:
       zh-CN: 用户名
       en-US: Username
     type: text
-    limit: 20
+    limit: 50
     required: false
     hide: true
   - field: password

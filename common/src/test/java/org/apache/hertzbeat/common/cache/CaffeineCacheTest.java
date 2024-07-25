@@ -17,15 +17,13 @@
 
 package org.apache.hertzbeat.common.cache;
 
+import java.time.Duration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-
 /**
- *
- *
+ * Test case for {@link CaffeineCacheServiceImpl}
  */
 class CaffeineCacheTest {
     private CommonCacheService<String, String> cacheService;

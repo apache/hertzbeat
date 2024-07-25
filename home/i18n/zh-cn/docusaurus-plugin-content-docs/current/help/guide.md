@@ -26,6 +26,15 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[FTP服务器](ftp) <br />
   &emsp;&#x1F449;&emsp;[Websocket](websocket) <br />
 
+### 应用程序监控
+
+&emsp;&#x1F449;&emsp;[Linux进程](process) <br />
+&emsp;&#x1F449;&emsp;[JVM虚拟机](jvm) <br />
+&emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
+&emsp;&#x1F449;&emsp;[SpringBoot3.0](springboot3) <br />
+&emsp;&#x1F449;&emsp;[DynamicTp线程池](dynamic_tp) <br />
+
+
 ### 数据库监控  
 
   &emsp;&#x1F449;&emsp;[MYSQL数据库监控](mysql) <br />
@@ -40,6 +49,11 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[MongoDB数据库监控](mongodb) <br />
   &emsp;&#x1F449;&emsp;[NebulaGraph集群监控](nebulagraph_cluster) <br />
 
+### 缓存监控
+
+&emsp;&#x1F449;&emsp;[Redis](redis) <br />
+&emsp;&#x1F449;&emsp;[Memcached](memcached) <br />
+
 ### 操作系统监控     
 
   &emsp;&#x1F449;&emsp;[Linux操作系统监控](linux) <br />
@@ -49,6 +63,7 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[FreeBSD操作系统监控](freebsd) <br />
   &emsp;&#x1F449;&emsp;[RedHat操作系统监控](redhat) <br />
   &emsp;&#x1F449;&emsp;[RockyLinux操作系统监控](rockylinux) <br />
+  &emsp;&#x1F449;&emsp;[EulerOS操作系统监控](euleros) <br />
 
 ### 中间件监控
 
@@ -72,10 +87,16 @@ sidebar_label: 帮助入门
   &emsp;&#x1F449;&emsp;[Clickhouse](clickhouse) <br />
   &emsp;&#x1F449;&emsp;[ElasticSearch](elasticsearch) <br />
   &emsp;&#x1F449;&emsp;[Flink](flink) <br />
-  
+
+### Ai大模型监控
+
+&emsp;&#x1F449;&emsp;[OpenAi](openai) <br />
+
 ### 网络监控 
  
   &emsp;&#x1F449;&emsp;[华为通用交换机](huawei_switch) <br /> 
+
+### 服务器监控
 
 ## 💡 告警服务  
 
@@ -109,3 +130,7 @@ sidebar_label: 帮助入门
 &emsp;&#x1F449;&emsp;[配置钉钉机器人通知](alert_dingtalk) <br />
 &emsp;&#x1F449;&emsp;[配置飞书机器人通知](alert_feishu) <br />
 &emsp;&#x1F449;&emsp;[配置华为云SMN通知](alert_smn) <br />
+
+### 插件
+
+&emsp;&#x1F449;&emsp;[插件](plugin) <br />

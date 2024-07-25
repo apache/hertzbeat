@@ -19,16 +19,20 @@ package org.apache.hertzbeat.common.util;
 
 import com.google.protobuf.Message;
 import com.google.protobuf.util.JsonFormat;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * protobuf json convert util
  */
 @Slf4j
-public class ProtoJsonUtil {
+public final class ProtoJsonUtil {
 
     private static final JsonFormat.Printer PRINTER = JsonFormat.printer();
     private static final JsonFormat.Parser PARSER = JsonFormat.parser();
+
+    private ProtoJsonUtil() {
+    }
 
     /**
      * protobuf to json
@@ -36,6 +40,12 @@ public class ProtoJsonUtil {
      * @return json
      */
     public static String toJsonStr(Message proto) {
+
+        if (Objects.isNull(proto)) {
+            log.error("proto is null");
+            return null;
+        }
+
         try {
             return PRINTER.print(proto);
         } catch (Exception e) {
@@ -51,6 +61,12 @@ public class ProtoJsonUtil {
      * @return protobuf
      */
     public static Message toProtobuf(String json, Message.Builder builder) {
+
+        if (Objects.isNull(json) || Objects.isNull(builder)) {
+            log.error("json or builder is null");
+            return null;
+        }
+
         try {
             PARSER.merge(json, builder);
             return builder.build();

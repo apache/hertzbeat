@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.util;
 
-
 /**
  * Snowflake Algorithm Generator Tool
  */

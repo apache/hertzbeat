@@ -6,6 +6,7 @@
       "items": [
         "introduce",
         "start/quickstart",
+        "start/1.6.0-update",
         "start/docker-deploy",
         "start/package-deploy",
         "start/rainbond-deploy",
@@ -19,11 +20,9 @@
         "start/victoria-metrics-init",
         "start/iotdb-init",
         "start/tdengine-init",
-        "start/greptime-init",
         "start/influxdb-init",
-        "start/mysql-change",
         "start/postgresql-change",
-        "start/account-modify",
+        "start/mysql-change",
         "start/custom-config",
         "start/ssl-cert-practice"
       ]
@@ -61,6 +60,13 @@
         },
         {
           "type": "category",
+          "label": "telnet",
+          "items": [
+            "advanced/extend-telnet"
+          ]
+        },
+        {
+          "type": "category",
           "label": "jmx",
           "items": [
             "advanced/extend-jmx"
@@ -71,13 +77,6 @@
           "label": "snmp",
           "items": [
             "advanced/extend-snmp"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "push",
-          "items": [
-            "advanced/extend-push"
           ]
         },
         {
@@ -142,13 +141,13 @@
           "items": [
             "help/website",
             "help/api",
-            "help/openai",
             "help/ping",
             "help/port",
             "help/udp_port",
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
+            "help/imap",
             "help/pop3",
             "help/smtp",
             "help/ntp",
@@ -182,7 +181,8 @@
             "help/nebulaGraph",
             "help/nebulagraph_cluster",
             "help/tidb",
-            "help/mongodb"
+            "help/mongodb",
+            "help/mongodb_atlas"
           ]
         },
         {
@@ -206,7 +206,8 @@
             "help/opensuse",
             "help/freebsd",
             "help/redhat",
-            "help/rockylinux"
+            "help/rockylinux",
+            "help/euleros"
           ]
         },
         {
@@ -220,7 +221,8 @@
             "help/rocketmq",
             "help/spring_gateway",
             "help/nacos",
-            "help/kafka"
+            "help/kafka",
+            "help/pulsar"
           ]
         },
         {
@@ -229,6 +231,7 @@
           "items": [
             "help/spark",
             "help/flink",
+            "help/flink_on_yarn",
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
@@ -242,7 +245,9 @@
             "help/airflow",
             "help/clickhouse",
             "help/elasticsearch",
-            "help/influxdb"
+            "help/influxdb",
+            "help/presto",
+            "help/hugegraph"
           ]
         },
         {
@@ -259,6 +264,28 @@
           "items": [
             "help/docker",
             "help/kubernetes"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "llm",
+          "items": [
+            "help/openai"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "aiConfig",
+          "items": [
+            "help/aiConfig"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "custom",
+          "items": [
+            "help/kafka_promql",
+            "help/influxdb_promql"
           ]
         },
         {
@@ -293,7 +320,9 @@
             "help/alert_smn"
           ]
         },
-        "help/issue"
+        "help/issue",
+        "help/plugin",
+        "help/time_expression"
       ]
     },
     {

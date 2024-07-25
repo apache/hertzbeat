@@ -87,7 +87,6 @@ public class Monitor {
 
     /**
      * Type of monitoring: linux, mysql, jvm...
-     * 监控的类型:linux,mysql,jvm...
      */
     @Schema(title = "Type of monitoring", example = "TanCloud", accessMode = READ_WRITE)
     @Size(max = 100)
@@ -95,7 +94,6 @@ public class Monitor {
 
     /**
      * Monitored peer host: ipv4, ipv6, domain name
-     * 监控的对端host:ipv4,ipv6,域名
      */
     @Schema(title = "The host to monitor", example = "192.167.25.11", accessMode = READ_WRITE)
     @Size(max = 100)
@@ -104,24 +102,21 @@ public class Monitor {
 
     /**
      * Monitoring collection interval time, in seconds
-     * 监控的采集间隔时间,单位秒
      */
     @Schema(title = "Monitoring of the acquisition interval time in seconds", example = "600", accessMode = READ_WRITE)
     @Min(10)
     private Integer intervals;
 
     /**
-     * Monitoring status 0: Unmonitored, 1: Available, 2: Unavailable
-     * 任务状态 0:未监控,1:可用,2:不可用
+     * Monitoring status 0: Paused, 1: Up, 2: Down
      */
-    @Schema(title = "Task status 0: not monitored,1: available,2: unavailable", accessMode = READ_WRITE)
+    @Schema(title = "Task status 0: Paused, 1: Up, 2: Down", accessMode = READ_WRITE)
     @Min(0)
     @Max(4)
     private byte status;
 
     /**
      * Monitoring note description
-     * 监控备注描述
      */
     @Schema(title = "Monitor note description", example = "Availability monitoring of the SAAS website TanCloud", accessMode = READ_WRITE)
     @Size(max = 255)

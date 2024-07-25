@@ -21,7 +21,6 @@ import java.util.Objects;
 import lombok.Builder;
 import lombok.Data;
 
-
 /**
  * resource identifier in cache
  */

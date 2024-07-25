@@ -36,17 +36,17 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 @Slf4j
 public class IcmpCollectImpl extends AbstractCollect {
 
-    public IcmpCollectImpl(){}
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getIcmp() == null) {
+            throw new IllegalArgumentException("ICMP collect must has icmp params");
+        }
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // Simple validation requires mandatory parameters
-        if (metrics == null || metrics.getIcmp() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("ICMP collect must has icmp params");
-            return;
-        }
+
         IcmpProtocol icmp = metrics.getIcmp();
         // The default timeout is 6000 milliseconds
         int timeout = 6000;

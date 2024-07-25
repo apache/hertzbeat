@@ -197,17 +197,27 @@
             <groupId>com.vesoft</groupId>
             <artifactId>client</artifactId>
             <version>3.6.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>javax.servlet-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba</groupId>
+                    <artifactId>fastjson</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>apache-hertzbeat-collector-${hzb.version}</finalName>
+    </build>
 
     <profiles>
         <profile>
             <id>inner</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
-                <finalName>apache-hertzbeat-collector</finalName>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -229,7 +239,6 @@
         <profile>
             <id>cluster</id>
             <build>
-                <finalName>apache-hertzbeat-collector</finalName>
                 <resources>
                     <resource>
                         <directory>src/main/resources</directory>
@@ -304,7 +313,6 @@
         <profile>
             <id>runtime</id>
             <build>
-                <finalName>apache-hertzbeat-collector</finalName>
                 <resources>
                     <resource>
                         <directory>src/main/resources</directory>
@@ -368,6 +376,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -382,6 +391,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-macos-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -396,6 +406,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-macos-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -410,6 +421,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-linux-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -424,6 +436,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-linux-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -438,6 +451,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/collector/assembly-windows-64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>

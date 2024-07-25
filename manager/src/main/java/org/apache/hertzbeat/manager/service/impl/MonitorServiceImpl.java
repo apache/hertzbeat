@@ -161,11 +161,14 @@ public class MonitorServiceImpl implements MonitorService {
         } else {
             collectRep = collectJobScheduling.collectSyncJobData(appDefine);
         }
+        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
         // If the detection result fails, a detection exception is thrown
         if (collectRep == null || collectRep.isEmpty()) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException("Collect Timeout No Response");
         }
         if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
     }
@@ -202,6 +205,10 @@ public class MonitorServiceImpl implements MonitorService {
                 collectJobScheduling.addAsyncCollectJob(appDefine, collector);
 
         try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
+
+        try {
             if (collector != null) {
                 CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
                         .collector(collector)
@@ -211,7 +218,6 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.AVAILABLE_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -254,11 +260,15 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setConfigmap(configmaps);
         // Send the collection task to get the job ID
         long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, null);
+
+        try {
+            detectMonitor(monitor, params, null);
+        } catch (Exception ignored) {}
+
         // Brush the library after the download is successful
         try {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.AVAILABLE_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -514,7 +524,7 @@ public class MonitorServiceImpl implements MonitorService {
                 tag.setTagValue(monitor.getName());
             }
         }
-        if (preMonitor.getStatus() != CommonConstants.UN_MANAGE_CODE) {
+        if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
             // Construct the collection task Job entity
             Job appDefine = appService.getAppDefine(monitor.getApp());
             if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
@@ -538,6 +548,9 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setJobId(newJobId);
         }
+        try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
         // After the update is successfully released, refresh the database
         try {
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitorId);
@@ -547,7 +560,6 @@ public class MonitorServiceImpl implements MonitorService {
                         .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
-            monitor.setStatus(preMonitor.getStatus());
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
@@ -640,8 +652,8 @@ public class MonitorServiceImpl implements MonitorService {
         // The jobId is not deleted, and the jobId is reused again after the management is started.
         List<Monitor> managedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
-                        monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.UN_MANAGE_CODE))
+                        monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
+                .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE))
                 .collect(Collectors.toList());
         if (!managedMonitors.isEmpty()) {
             for (Monitor monitor : managedMonitors) {
@@ -656,8 +668,8 @@ public class MonitorServiceImpl implements MonitorService {
         // Update monitoring status Add corresponding monitoring periodic task
         List<Monitor> unManagedMonitors = monitorDao.findMonitorsByIdIn(ids)
                 .stream().filter(monitor ->
-                        monitor.getStatus() == CommonConstants.UN_MANAGE_CODE)
-                .peek(monitor -> monitor.setStatus(CommonConstants.AVAILABLE_CODE))
+                        monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
+                .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
                 .collect(Collectors.toList());
         if (!unManagedMonitors.isEmpty()) {
             for (Monitor monitor : unManagedMonitors) {
@@ -686,11 +698,13 @@ public class MonitorServiceImpl implements MonitorService {
                 // Issue collection tasks
                 Optional<CollectorMonitorBind> bindOptional =
                         collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
-                long newJobId = bindOptional.map(bind ->
-                                collectJobScheduling.addAsyncCollectJob(appDefine, bind.getCollector()))
-                        .orElseGet(() -> collectJobScheduling.addAsyncCollectJob(appDefine, null));
+                String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElseGet(() -> null);
+                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
+                try {
+                    detectMonitor(monitor, params, collector);
+                } catch (Exception ignored) {}
             }
             monitorDao.saveAll(unManagedMonitors);
         }
@@ -708,9 +722,9 @@ public class MonitorServiceImpl implements MonitorService {
             AppCount appCount = appCountMap.getOrDefault(item.getApp(), new AppCount());
             appCount.setApp(item.getApp());
             switch (item.getStatus()) {
-                case CommonConstants.AVAILABLE_CODE -> appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
-                case CommonConstants.UN_AVAILABLE_CODE -> appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
-                case CommonConstants.UN_MANAGE_CODE -> appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
+                case CommonConstants.MONITOR_UP_CODE -> appCount.setAvailableSize(appCount.getAvailableSize() + item.getSize());
+                case CommonConstants.MONITOR_DOWN_CODE -> appCount.setUnAvailableSize(appCount.getUnAvailableSize() + item.getSize());
+                case CommonConstants.MONITOR_PAUSED_CODE -> appCount.setUnManageSize(appCount.getUnManageSize() + item.getSize());
                 default -> {}
             }
             appCountMap.put(item.getApp(), appCount);
@@ -750,7 +764,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public void updateAppCollectJob(Job job) {
         List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp())
-                .stream().filter(monitor -> monitor.getStatus() != CommonConstants.UN_MANAGE_CODE)
+                .stream().filter(monitor -> monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
                 .toList();
         if (monitors.isEmpty()) {
             return;

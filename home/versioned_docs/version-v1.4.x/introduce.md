@@ -11,7 +11,7 @@ slug: /
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/apache/hertzbeat/general)
+[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
@@ -105,7 +105,7 @@ Do you believe that users can just write a monitoring template on the UI page, c
 
 ### No Agent Required
 
-> For users who have used various systems, the most troublesome thing is the installation, deployment, debugging and upgrading of various `agents'.     
+> For users who have used various systems, the most troublesome thing is the installation, deployment, debugging and upgrading of various `agents`.     
 > You need to install one `agent` per host, and several corresponding `agents` to monitor different application middleware, and the number of monitoring can easily reach thousands, so writing a batch script may ease the burden.    
 > The problem of whether the version of `agent` is compatible with the main application, debugging the communication between `agent` and the main application, upgrading the `agent` synchronization and so on and so forth, are all big headaches.   
 

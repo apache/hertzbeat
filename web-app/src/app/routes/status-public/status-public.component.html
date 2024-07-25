@@ -18,7 +18,7 @@
 -->
 
 <nz-spin [nzSpinning]="loading" [nzTip]="'Loading...'" nzSize="large">
-  <div class="status-header" [style]="'border-radius: 6px;margin-top: 10px;background:' + (statusOrg.color || '#e9f3d3')">
+  <div class="status-header br-8" [style]="'margin-top: 10px;background:' + (statusOrg.color || '#e9f3d3')">
     <header-i18n showLangText="false" class="langs"></header-i18n>
     <div>
       <a [href]="statusOrg.home" target="_blank">
@@ -41,7 +41,11 @@
         </a>
       </div>
     </div>
-    <div *ngIf="statusOrg.state == 0" class="org-status" style="background-color: green; display: flex; justify-content: space-between">
+    <div
+      *ngIf="statusOrg.state == 0"
+      class="org-status br-8"
+      style="background-color: green; display: flex; justify-content: space-between"
+    >
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="check-circle" nzTheme="outline"></span>
         <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.0' | i18n }} </span>
@@ -50,7 +54,11 @@
         <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
       </div>
     </div>
-    <div *ngIf="statusOrg.state == 1" class="org-status" style="background-color: orange; display: flex; justify-content: space-between">
+    <div
+      *ngIf="statusOrg.state == 1"
+      class="org-status br-8"
+      style="background-color: orange; display: flex; justify-content: space-between"
+    >
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="exclamation-circle" nzTheme="outline"></span>
         <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.1' | i18n }} </span>
@@ -59,7 +67,7 @@
         <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
       </div>
     </div>
-    <div *ngIf="statusOrg.state == 2" class="org-status" style="background-color: red; display: flex; justify-content: space-between">
+    <div *ngIf="statusOrg.state == 2" class="org-status br-8" style="background-color: red; display: flex; justify-content: space-between">
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="close-circle" nzTheme="outline"></span>
         <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.2' | i18n }} </span>
@@ -69,7 +77,7 @@
       </div>
     </div>
     <div style="margin-top: 50px">
-      <div *ngFor="let component of componentStatus" class="component-status">
+      <div *ngFor="let component of componentStatus" class="component-status br-8">
         <div style="margin: 10px; display: flex; justify-content: space-between">
           <div style="font-weight: bold; font-size: large">
             <span>{{ component.info.name }}</span>
@@ -99,8 +107,8 @@
         <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex">
           <div
             *ngFor="let historyItem of component.history"
-            class="history_block"
-            [style]="'border-radius: 3px;background:' + calculateHistoryBlockRgb(historyItem)"
+            class="history_block br-8"
+            [style]="'background:' + calculateHistoryBlockRgb(historyItem)"
             nz-popover
             [nzPopoverContent]="contentTemplate"
             nzPopoverPlacement="bottom"
@@ -138,7 +146,11 @@
         </a>
       </div>
     </div>
-    <div *ngIf="statusOrg.state == 0" class="org-status" style="background-color: green; display: flex; justify-content: space-between">
+    <div
+      *ngIf="statusOrg.state == 0"
+      class="org-status br-8"
+      style="background-color: green; display: flex; justify-content: space-between"
+    >
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="check-circle" nzTheme="outline"></span>
         <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.0' | i18n }} </span>
@@ -147,7 +159,11 @@
         <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
       </div>
     </div>
-    <div *ngIf="statusOrg.state == 1" class="org-status" style="background-color: orange; display: flex; justify-content: space-between">
+    <div
+      *ngIf="statusOrg.state == 1"
+      class="org-status br-8"
+      style="background-color: orange; display: flex; justify-content: space-between"
+    >
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="exclamation-circle" nzTheme="outline"></span>
         <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.1' | i18n }} </span>
@@ -156,7 +172,7 @@
         <span style="color: #f0f0f0; margin-right: 4px; font-size: medium"> Updated {{ statusOrg.gmtUpdate | elapsedTime }} </span>
       </div>
     </div>
-    <div *ngIf="statusOrg.state == 2" class="org-status" style="background-color: red; display: flex; justify-content: space-between">
+    <div *ngIf="statusOrg.state == 2" class="org-status br-8" style="background-color: red; display: flex; justify-content: space-between">
       <div>
         <span nz-icon style="color: #f0f0f0" nzType="close-circle" nzTheme="outline"></span>
         <span style="color: #f0f0f0; margin-left: 4px"> {{ 'status.public.org.state.2' | i18n }} </span>
@@ -170,7 +186,8 @@
         <nz-collapse-panel *ngFor="let incident of incidentStatus" [nzHeader]="incidentHeader" nzShowArrow="false">
           <div
             *ngFor="let content of incident.contents"
-            style="border: 1px dotted green; border-radius: 3px; margin-bottom: 4px; background: #f8f6f3"
+            class="br-8"
+            style="border: 1px dotted green; margin-bottom: 4px; background: #f8f6f3"
           >
             <nz-list nzSize="small" nzSplit="false">
               <nz-list-item style="font-size: medium">
@@ -194,19 +211,15 @@
             </nz-list>
           </div>
           <ng-template #incidentHeader>
-            <div style="width: 100%; border: 1px dotted gray; border-radius: 3px">
+            <div class="br-8" style="width: 100%; border: 1px solid gray" [ngStyle]="{ borderColor: getStatusBorderColor(incident.state) }">
               <div style="margin: 10px; display: flex; justify-content: space-between">
                 <div style="font-weight: bold; font-size: large">
-                  <span *ngIf="incident.state == 0" style="color: #ff2f2f">{{ incident.name }}</span>
-                  <span *ngIf="incident.state == 1" style="color: #e56c23">{{ incident.name }}</span>
-                  <span *ngIf="incident.state == 2" style="color: #19a7e7">{{ incident.name }}</span>
-                  <span *ngIf="incident.state == 3" style="color: #34be8f">{{ incident.name }}</span>
+                  <span>{{ incident.name }}</span>
                 </div>
                 <div style="font-weight: bold">
-                  <span *ngIf="incident.state == 0" style="color: #ff2f2f">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-                  <span *ngIf="incident.state == 1" style="color: #e56c23">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-                  <span *ngIf="incident.state == 2" style="color: #19a7e7">{{ 'status.incident.state.' + incident.state | i18n }}</span>
-                  <span *ngIf="incident.state == 3" style="color: #34be8f">{{ 'status.incident.state.' + incident.state | i18n }}</span>
+                  <span [ngStyle]="{ color: getStatusBorderColor(incident.state) }">{{
+                    'status.incident.state.' + incident.state | i18n
+                  }}</span>
                 </div>
               </div>
               <div style="margin-left: 10px; margin-top: 10px; margin-bottom: 10px; display: flex; font-size: medium">

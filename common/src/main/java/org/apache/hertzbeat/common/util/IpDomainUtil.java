@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.util;
 
-
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -30,10 +29,10 @@ import org.apache.http.conn.util.InetAddressUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * ipv4 ipv6 domain util
+ * ipv4 ipv6 domain util.
  */
 @Slf4j
-public class IpDomainUtil {
+public final class IpDomainUtil {
     
     private static final Pattern DOMAIN_PATTERN =
             Pattern.compile("^[-\\w]+(\\.[-\\w]+)*$");
@@ -41,12 +40,15 @@ public class IpDomainUtil {
     private static final String LOCALHOST = "localhost";
 
     /**
-     * HTTP header schema
+     * HTTP header schema.
      */
     private static final Pattern DOMAIN_SCHEMA = Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://){1}[^\\s]*");
 
+    private IpDomainUtil() {
+    }
+
     /**
-     * whether it is ip or domain
+     * whether it is ip or domain.
      * @param ipDomain ip domain string
      * @return true-yes false-no
      */
@@ -68,7 +70,7 @@ public class IpDomainUtil {
     }
 
     /**
-     * if domain or ip has http / https schema
+     * if domain or ip has http / https schema.
      * @param domainIp host
      * @return true or false
      */
@@ -80,7 +82,7 @@ public class IpDomainUtil {
     }
 
     /**
-     * get localhost IP
+     * get localhost IP.
      * @return ip
      */
     public static String getLocalhostIp() {
@@ -104,9 +106,9 @@ public class IpDomainUtil {
         }
         return null;
     }
-
+    
     /**
-     *
+     * check IP address type.
      * @param ipDomain ip domain
      * @return IP address type
      */
@@ -118,7 +120,7 @@ public class IpDomainUtil {
     }
     
     /**
-     * get current local host name
+     * get current local host name.
      * @return hostname
      */
     public static String getCurrentHostName() {

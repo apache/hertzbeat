@@ -89,7 +89,7 @@ params:
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
-    limit: 20
+    limit: 50
     # required-true or false
     required: true
   # field-param field key

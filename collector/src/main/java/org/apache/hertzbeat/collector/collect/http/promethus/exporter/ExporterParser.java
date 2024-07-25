@@ -27,7 +27,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.http.promethus.ParseException;
 import org.apache.hertzbeat.common.util.StrBuffer;
-import org.springframework.util.StringUtils;
 
 /**
  * Resolves the data passed by prometheus's exporter interface http:xxx/metrics
@@ -38,7 +37,7 @@ public class ExporterParser {
     private static final String HELP = "HELP";
     private static final String TYPE = "TYPE";
     private static final String EOF = "EOF";
-
+    private static final String METRIC_NAME_LABEL = ".name";
     private static final String QUANTILE_LABEL = "quantile";
     private static final String BUCKET_LABEL = "le";
     private static final String NAME_LABEL = "__name__";
@@ -52,12 +51,10 @@ public class ExporterParser {
     private static final char ENTER = '\n';
     private static final char SPACE = ' ';
     private static final char COMMA = ',';
-
+    private final Lock lock = new ReentrantLock();
     private MetricFamily currentMetricFamily;
     private String currentQuantile;
     private String currentBucket;
-
-    private final Lock lock = new ReentrantLock();
 
     public Map<String, MetricFamily> textToMetric(String resp) {
         // key: metric name, value: metric family
@@ -81,23 +78,26 @@ public class ExporterParser {
         buffer.skipBlankTabs();
         if (buffer.isEmpty()) return;
         switch (buffer.charAt(0)) {
-            case '#':
+            case '#' -> {
                 buffer.read();
                 this.currentMetricFamily = null;
                 this.parseComment(metricMap, buffer);
-                break;
-            case ENTER:
-                break;
-            default:
+            }
+            case ENTER -> {
+            }
+            default -> {
                 this.currentBucket = null;
                 this.currentQuantile = null;
                 this.parseMetric(buffer);
+            }
         }
     }
 
     private void parseComment(Map<String, MetricFamily> metricMap, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         String token = this.readTokenUnitWhitespace(buffer);
         if (EOF.equals(token)) {
             return;
@@ -112,7 +112,8 @@ public class ExporterParser {
         switch (token) {
             case HELP -> this.parseHelp(buffer);
             case TYPE -> this.parseType(buffer);
-            default -> {}
+            default -> {
+            }
         }
     }
 
@@ -133,35 +134,35 @@ public class ExporterParser {
 
     private void parseMetric(StrBuffer buffer) {
         String metricName = this.readTokenAsMetricName(buffer);
+        MetricFamily.Label label = new MetricFamily.Label();
+        label.setName(METRIC_NAME_LABEL);
+        label.setValue(metricName);
+
         if (metricName.isEmpty()) {
             log.error("error parse metric, metric name is null, line: {}", buffer.toStr());
             return;
         }
+
         List<MetricFamily.Metric> metricList = this.currentMetricFamily.getMetricList();
         if (metricList == null) {
             metricList = new ArrayList<>();
             this.currentMetricFamily.setMetricList(metricList);
         }
-        // TODO: This part may have issues. The current logic creates only one metric for both HISTOGRAM and SUMMARY
-        // compared to the source code, there is a slight modification: the source code stores parsing results in a property
-        // here, the results are passed through parameters.
-        MetricFamily.Metric metric;
-        if (!metricList.isEmpty()
-                && (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM)
-                || this.currentMetricFamily.getMetricType().equals(MetricType.SUMMARY))) {
-            metric = metricList.get(0);
-        } else {
-            metric = new MetricFamily.Metric();
-            metricList.add(metric);
-        }
 
+        // TODO For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+        MetricFamily.Metric metric = new MetricFamily.Metric();
+        metricList.add(metric);
+
+        metric.setLabelPair(new ArrayList<>());
+        metric.getLabelPair().add(label);
         this.readLabels(metric, buffer);
     }
 
     private void readLabels(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
-        metric.setLabelPair(new ArrayList<>());
+        if (buffer.isEmpty()) {
+            return;
+        }
         if (buffer.charAt(0) == LEFT_CURLY_BRACKET) {
             buffer.read();
             this.startReadLabelName(metric, buffer);
@@ -172,11 +173,15 @@ public class ExporterParser {
 
     private void startReadLabelName(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         if (buffer.charAt(0) == RIGHT_CURLY_BRACKET) {
             buffer.read();
             buffer.skipBlankTabs();
-            if (buffer.isEmpty()) return;
+            if (buffer.isEmpty()) {
+                return;
+            }
             this.readLabelValue(metric, new MetricFamily.Label(), buffer);
             return;
         }
@@ -194,7 +199,9 @@ public class ExporterParser {
 
     private void startReadLabelValue(MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         char c = buffer.read();
         if (c != QUOTES) {
             throw new ParseException("expected '\"' at start of label value, line: " + buffer.toStr());
@@ -208,10 +215,12 @@ public class ExporterParser {
             this.currentQuantile = labelValue;
         } else if (this.currentMetricFamily.getMetricType().equals(MetricType.HISTOGRAM) && label.getName().equals(BUCKET_LABEL)) {
             this.currentBucket = labelValue;
-        } else {
-            metric.getLabelPair().add(label);
         }
-        if (buffer.isEmpty()) return;
+        metric.getLabelPair().add(label);
+
+        if (buffer.isEmpty()) {
+            return;
+        }
         c = buffer.read();
         switch (c) {
             case COMMA -> this.startReadLabelName(metric, buffer);
@@ -245,47 +254,16 @@ public class ExporterParser {
                 metric.setUntyped(untyped);
             }
             case SUMMARY -> {
-                MetricFamily.Summary summary = metric.getSummary();
-                if (summary == null) {
-                    summary = new MetricFamily.Summary();
-                    metric.setSummary(summary);
-                }
-                // Process data for xxx_sum
-                if (label != null && this.isSum(label.getName())) {
-                    summary.setSum(buffer.toDouble());
-                }
-                // Process data for xxx_count
-                else if (label != null && this.isCount(label.getName())) {
-                    summary.setCount(buffer.toLong());
-                }
-                // Handle format for "xxx{quantile=\"0\"} 0"
-                else if (StringUtils.hasText(this.currentQuantile)) {
-                    List<MetricFamily.Quantile> quantileList = summary.getQuantileList();
-                    MetricFamily.Quantile quantile = new MetricFamily.Quantile();
-                    quantile.setXLabel(StrBuffer.parseDouble(this.currentQuantile));
-                    quantile.setValue(buffer.toDouble());
-                    quantileList.add(quantile);
-                }
+                // For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+                MetricFamily.Summary summary = new MetricFamily.Summary();
+                summary.setValue(buffer.toDouble());
+                metric.setSummary(summary);
             }
             case HISTOGRAM -> {
-                MetricFamily.Histogram histogram = metric.getHistogram();
-                if (histogram == null) {
-                    histogram = new MetricFamily.Histogram();
-                    metric.setHistogram(histogram);
-                }
-                if (label != null && this.isSum(label.getName())) {
-                    histogram.setSum(buffer.toDouble());
-                } else if (label != null && this.isCount(label.getName())) {
-                    histogram.setCount(buffer.toLong());
-                }
-                // Process the format "xxx{quantile=\"0\"} 0"
-                else if (StringUtils.hasText(this.currentBucket)) {
-                    List<MetricFamily.Bucket> bucketList = histogram.getBucketList();
-                    MetricFamily.Bucket bucket = new MetricFamily.Bucket();
-                    bucket.setUpperBound(StrBuffer.parseDouble(this.currentBucket));
-                    bucket.setCumulativeCount(buffer.toLong());
-                    bucketList.add(bucket);
-                }
+                // For the time being, the data is displayed in the form of labels. If there is a better chart display method in the future, we will optimize it.
+                MetricFamily.Histogram histogram = new MetricFamily.Histogram();
+                histogram.setValue(buffer.toDouble());
+                metric.setHistogram(histogram);
             }
             default -> throw new ParseException("no such type in metricFamily");
         }
@@ -378,15 +356,12 @@ public class ExporterParser {
                 escaped = false;
             } else {
                 switch (c) {
-                    case QUOTES:
+                    case QUOTES -> {
                         return builder.toString();
-                    case ENTER:
-                        throw new ParseException("parse label value error, next line");
-                    case '\\':
-                        escaped = true;
-                        break;
-                    default:
-                        builder.append(c);
+                    }
+                    case ENTER -> throw new ParseException("parse label value error, next line");
+                    case '\\' -> escaped = true;
+                    default -> builder.append(c);
                 }
             }
         }

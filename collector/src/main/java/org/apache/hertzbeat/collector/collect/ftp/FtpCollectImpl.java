@@ -41,20 +41,26 @@ public class FtpCollectImpl extends AbstractCollect {
     private static final String ANONYMOUS = "anonymous";
     private static final String PASSWORD = "password";
 
+    /**
+     * preCheck params
+     */
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException{
+        if (metrics == null || metrics.getFtp() == null) {
+            throw new IllegalArgumentException("Ftp collect must has ftp params.");
+        }
+        FtpProtocol ftpProtocol = metrics.getFtp();
+        Assert.hasText(ftpProtocol.getHost(), "Ftp Protocol host is required.");
+        Assert.hasText(ftpProtocol.getPort(), "Ftp Protocol port is required.");
+        Assert.hasText(ftpProtocol.getDirection(), "Ftp Protocol direction is required.");
+        Assert.hasText(ftpProtocol.getTimeout(), "Ftp Protocol timeout is required.");
+    }
+
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         FTPClient ftpClient = new FTPClient();
         FtpProtocol ftpProtocol = metrics.getFtp();
-        // Judge whether the basic information is wrong
-        try {
-            preCheck(metrics);
-        } catch (Exception e) {
-            log.info("[FtpProtocol] error: {}", CommonUtil.getMessageFromThrowable(e), e);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         // Set timeout
         ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
 
@@ -139,20 +145,6 @@ public class FtpCollectImpl extends AbstractCollect {
             log.info("[ftp connection] error: {}", CommonUtil.getMessageFromThrowable(e), e);
             throw new IllegalArgumentException("The host or port may be wrong.");
         }
-    }
-
-    /**
-     * preCheck params
-     */
-    private void preCheck(Metrics metrics) {
-        if (metrics == null || metrics.getFtp() == null) {
-            throw new IllegalArgumentException("Ftp collect must has ftp params.");
-        }
-        FtpProtocol ftpProtocol = metrics.getFtp();
-        Assert.hasText(ftpProtocol.getHost(), "Ftp Protocol host is required.");
-        Assert.hasText(ftpProtocol.getPort(), "Ftp Protocol port is required.");
-        Assert.hasText(ftpProtocol.getDirection(), "Ftp Protocol direction is required.");
-        Assert.hasText(ftpProtocol.getTimeout(), "Ftp Protocol timeout is required.");
     }
 
     @Override

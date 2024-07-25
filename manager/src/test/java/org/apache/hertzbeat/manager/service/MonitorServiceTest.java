@@ -681,7 +681,7 @@ class MonitorServiceTest {
         List<Monitor> monitors = new ArrayList<>();
         for (Long id : ids) {
             Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
-            monitor.setStatus(CommonConstants.UN_MANAGE_CODE);
+            monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
             monitors.add(monitor);
         }
         when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
@@ -700,7 +700,7 @@ class MonitorServiceTest {
         List<AppCount> appCounts = new ArrayList<>();
         AppCount appCount = new AppCount();
         appCount.setApp("test");
-        appCount.setStatus(CommonConstants.AVAILABLE_CODE);
+        appCount.setStatus(CommonConstants.MONITOR_UP_CODE);
         appCounts.add(appCount);
         when(monitorDao.findAppsStatusCount()).thenReturn(appCounts);
 
@@ -721,7 +721,7 @@ class MonitorServiceTest {
 
     @Test
     void updateMonitorStatus() {
-        assertDoesNotThrow(() -> monitorService.updateMonitorStatus(1L, CommonConstants.AVAILABLE_CODE));
+        assertDoesNotThrow(() -> monitorService.updateMonitorStatus(1L, CommonConstants.MONITOR_UP_CODE));
     }
 
     @Test
@@ -765,7 +765,6 @@ class MonitorServiceTest {
     void getMonitorMetrics() {
         Assertions.assertDoesNotThrow(() -> appService.getAppDefineMetricNames("test"));
     }
-
 
     @Test
     void copyMonitors() {

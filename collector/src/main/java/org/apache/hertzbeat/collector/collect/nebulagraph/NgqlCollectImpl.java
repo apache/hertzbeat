@@ -51,24 +51,34 @@ public class NgqlCollectImpl extends AbstractCollect {
     private static final String COMMAND_SHOW_JOBS = "SHOW JOBS;";
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        NgqlProtocol ngql = metrics.getNgql();
+        Assert.hasText(ngql.getHost(), "NGQL protocol host is required");
+        Assert.hasText(ngql.getPort(), "Port protocol host is required");
+        Assert.hasText(ngql.getParseType(), "NGQL protocol parseType is required");
+        Assert.hasText(ngql.getUsername(), "NGQL protocol username is required");
+        Assert.hasText(ngql.getPassword(), "NGQL protocol password is required");
+    }
+
+    @Override
     public void collect(Builder builder, long monitorId, String app, Metrics metrics) {
-        // check the params
+        NgqlProtocol ngql = metrics.getNgql();
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        NebulaTemplate nebulaTemplate = new NebulaTemplate();
         try {
-            validateParams(metrics);
+            boolean initSuccess = nebulaTemplate.initSession(ngql);
+            if (!initSuccess) {
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("Failed to connect Nebula Graph");
+                return;
+            }
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(e.getMessage());
             return;
         }
-        NgqlProtocol ngql = metrics.getNgql();
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-        NebulaTemplate nebulaTemplate = new NebulaTemplate(metrics.getNgql());
-        if (!nebulaTemplate.isInitSuccess()) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Failed to connect Nebula Graph");
-            return;
-        }
+
         stopWatch.stop();
         long responseTime = stopWatch.getTotalTimeMillis();
         try {
@@ -77,20 +87,12 @@ public class NgqlCollectImpl extends AbstractCollect {
                 case PARSE_TYPE_ONE_ROW -> queryOneRow(nebulaTemplate, ngql, metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> queryMultiRow(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
                 case PARSE_TYPE_COLUMNS -> queryColumns(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
-                default -> {}
+                default -> {
+                }
             }
         } finally {
             nebulaTemplate.closeSessionAndPool();
         }
-    }
-
-    private void validateParams(Metrics metrics) {
-        NgqlProtocol ngql = metrics.getNgql();
-        Assert.hasText(ngql.getHost(), "NGQL protocol host is required");
-        Assert.hasText(ngql.getPort(), "Port protocol host is required");
-        Assert.hasText(ngql.getParseType(), "NGQL protocol parseType is required");
-        Assert.hasText(ngql.getUsername(), "NGQL protocol username is required");
-        Assert.hasText(ngql.getPassword(), "NGQL protocol password is required");
     }
 
     /**

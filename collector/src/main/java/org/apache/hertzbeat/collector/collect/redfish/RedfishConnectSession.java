@@ -27,7 +27,6 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 
-
 /**
  * Redfish connect session
  */

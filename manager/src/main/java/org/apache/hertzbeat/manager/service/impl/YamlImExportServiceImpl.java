@@ -36,7 +36,6 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
     public static final String TYPE = "YAML";
     public static final String FILE_SUFFIX = ".yaml";
 
-
     /**
      * Export file type
      * @return file type
@@ -72,7 +71,6 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      * Export Configuration to Output Stream
      * @param monitorList configuration list
      * @param os          output stream
-     *
      */
     @Override
     void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {

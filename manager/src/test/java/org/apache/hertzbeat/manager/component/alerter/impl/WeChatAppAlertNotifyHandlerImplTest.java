@@ -31,15 +31,12 @@ import org.springframework.util.StringUtils;
 
 /**
  * unit test case for WeChatAppAlertNotifyHandlerImpl
- *
  */
 @Slf4j
 public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
 
-
     @Resource
-    private WeWorkAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
-
+    private WeComAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
 
     @Test
     public void send() {
@@ -74,6 +71,5 @@ public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrati
 
         weChatAppAlertNotifyHandler.send(receiver, noticeTemplate, alert);
     }
-
 
 }

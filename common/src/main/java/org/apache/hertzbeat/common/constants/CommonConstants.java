@@ -56,27 +56,21 @@ public interface CommonConstants {
      * Response status code: Incorrect login account password
      */
     byte MONITOR_LOGIN_FAILED_CODE = 0x05;
+    
+    /**
+     * Monitoring status 0: Paused, 1: Up, 2: Down
+     */
+    byte MONITOR_PAUSED_CODE = 0x00;
 
     /**
-     * Response status code: Registration failed exception
+     * Monitoring status 0: Paused, 1: Up, 2: Down
      */
-    byte MONITOR_REGISTER_FAILED_CODE = 0x06;
-
-
-    /**
-     * Monitoring Status Code: Unmonitored
-     */
-    byte UN_MANAGE_CODE = 0x00;
+    byte MONITOR_UP_CODE = 0x01;
 
     /**
-     * Monitoring Status Code: Available
+     * Monitoring status 0: Paused, 1: Up, 2: Down
      */
-    byte AVAILABLE_CODE = 0x01;
-
-    /**
-     * Monitoring Status Code: Not Available
-     */
-    byte UN_AVAILABLE_CODE = 0x02;
+    byte MONITOR_DOWN_CODE = 0x02;
 
     /**
      * Alarm status: 0 - normal alarm (to be processed)
@@ -353,8 +347,7 @@ public interface CommonConstants {
      * status page component calculate method manual
      */
     byte STATUS_PAGE_CALCULATE_METHOD_MANUAL = 1;
-    
-    
+
     /**
      * status page incident state investigating
      */

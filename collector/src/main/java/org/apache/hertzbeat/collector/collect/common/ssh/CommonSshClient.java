@@ -26,7 +26,6 @@ import org.apache.sshd.common.PropertyResolverUtils;
 import org.apache.sshd.common.kex.BuiltinDHFactories;
 import org.apache.sshd.core.CoreModuleProperties;
 
-
 /**
  * common ssh pool client
  */

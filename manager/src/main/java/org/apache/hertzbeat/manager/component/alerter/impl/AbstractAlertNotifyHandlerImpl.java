@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import freemarker.cache.StringTemplateLoader;
+import freemarker.core.TemplateClassResolver;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -43,6 +44,7 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
 
 /**
+ * Abstract alert notify handler implementation.
  */
 @Slf4j
 abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
@@ -63,6 +65,7 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         freemarker.template.Template templateRes;
         Configuration cfg = new Configuration(Configuration.VERSION_2_3_0);
         cfg.setNumberFormat(NUMBER_FORMAT);
+        cfg.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         Map<String, Object> model = new HashMap<>(16);
         model.put("title", bundle.getString("alerter.notify.title"));
 
@@ -106,13 +109,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("content", alert.getContent());
         model.put("tagsLabel", bundle.getString("alerter.notify.tags"));
         model.put("tags", alert.getTags());
-        if (noticeTemplate == null) {
-            noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType(type());
-        }
-        if (noticeTemplate == null) {
-            log.error("alert does not have mapping default notice template. type: {}.", type());
-            throw new NullPointerException(type() + " does not have mapping default notice template");
-        }
         // Single instance reuse cache considers mulitple-threading issues
         String templateName = "freeMakerTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
@@ -128,5 +124,3 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         this.bundle = ResourceBundleUtil.getBundle("alerter");
     }
 }
-
-

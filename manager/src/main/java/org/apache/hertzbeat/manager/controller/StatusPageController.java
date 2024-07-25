@@ -47,7 +47,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/status/page", produces = {APPLICATION_JSON_VALUE})
 public class StatusPageController {
 
-
     @Autowired
     private StatusPageService statusPageService;
     

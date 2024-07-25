@@ -42,7 +42,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/status/page/public", produces = {APPLICATION_JSON_VALUE})
 public class StatusPagePublicController {
 
-
     @Autowired
     private StatusPageService statusPageService;
     

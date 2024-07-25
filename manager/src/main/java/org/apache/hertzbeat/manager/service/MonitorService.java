@@ -37,7 +37,6 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public interface MonitorService {
 
-
     /**
      * Monitoring Availability Probes
      * @param monitor   Monitoring entity information
@@ -179,7 +178,6 @@ public interface MonitorService {
      * @param ids monitor id
      */
     void copyMonitors(List<Long> ids);
-
 
     /**
      * update app collect job by app

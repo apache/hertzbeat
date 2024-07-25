@@ -18,12 +18,11 @@
 package org.apache.hertzbeat.warehouse.store.history;
 
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.springframework.beans.factory.DisposableBean;
 
 /**
- *
+ * history data writer
  */
-public interface HistoryDataWriter extends DisposableBean {
+public interface HistoryDataWriter {
 
     /**
      * @return data storage available

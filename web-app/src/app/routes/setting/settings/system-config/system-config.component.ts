@@ -26,6 +26,7 @@ import { finalize } from 'rxjs/operators';
 
 import { SystemConfig } from '../../../../pojo/SystemConfig';
 import { GeneralConfigService } from '../../../../service/general-config.service';
+import { ThemeService } from '../../../../service/theme.service';
 
 @Component({
   selector: 'app-system-config',
@@ -38,6 +39,7 @@ export class SystemConfigComponent implements OnInit {
     private notifySvc: NzNotificationService,
     private configService: GeneralConfigService,
     private settings: SettingsService,
+    private themeService: ThemeService,
     @Inject(DOCUMENT) private doc: any,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
@@ -103,22 +105,8 @@ export class SystemConfigComponent implements OnInit {
         }
       );
   }
+
   changeTheme(theme: string): void {
-    const style = this.doc.createElement('link');
-    style.type = 'text/css';
-    style.rel = 'stylesheet';
-    if (theme == 'dark') {
-      style.id = 'dark-theme';
-      style.href = 'assets/style.dark.css';
-    } else if (theme == 'compact') {
-      style.id = 'compact-theme';
-      style.href = 'assets/style.compact.css';
-    } else {
-      const dom = document.getElementById('dark-theme');
-      if (dom) {
-        dom.remove();
-      }
-    }
-    this.doc.body.append(style);
+    this.themeService.changeTheme(theme);
   }
 }

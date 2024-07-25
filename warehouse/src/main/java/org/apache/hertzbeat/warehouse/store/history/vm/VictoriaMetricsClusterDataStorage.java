@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.warehouse.store.history.vm;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -58,7 +57,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
 
 /**
  * tdengine data storage

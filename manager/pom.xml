@@ -82,6 +82,11 @@
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-push</artifactId>
         </dependency>
+        <!-- plugin -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-plugin</artifactId>
+        </dependency>
         <!-- spring -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -101,6 +106,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
+
+        <!--webflux-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
         <!--   freemarker     -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -193,10 +205,29 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- sms -->
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-sms</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.squareup.okhttp</groupId>
+                    <artifactId>logging-interceptor</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.squareup.okhttp</groupId>
+                    <artifactId>okhttp</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.squareup.okio</groupId>
+                    <artifactId>okio</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
     </dependencies>
 
     <build>
-        <finalName>apache-hertzbeat</finalName>
+        <finalName>apache-hertzbeat-${hzb.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -243,10 +274,7 @@
 
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+            <id>release</id>
             <build>
                 <plugins>
                     <!--Critical plugin, assembly plugin provided by maven, should be placed last-->
@@ -311,6 +339,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-macos-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -325,6 +354,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-macos-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -339,6 +369,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-linux-arm64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -353,6 +384,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-linux-amd64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -367,6 +399,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-windows-64.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -381,6 +414,7 @@
                                     <descriptors>
                                         <descriptor>../script/assembly/server/assembly-docker-compose.xml</descriptor>
                                     </descriptors>
+                                    <outputDirectory>../dist</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>

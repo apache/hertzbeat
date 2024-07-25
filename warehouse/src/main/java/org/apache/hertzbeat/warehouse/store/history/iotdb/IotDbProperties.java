@@ -42,7 +42,6 @@ public record IotDbProperties(@DefaultValue("false") boolean enabled,
                               String password,
                               List<String> nodeUrls,
                               ZoneId zoneId,
-                              IotDbVersion version,
                               long queryTimeoutInMs,
                               String expireTime) {
 }

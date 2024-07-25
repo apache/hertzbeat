@@ -1,7 +1,7 @@
 ---
 id: mysql-change  
-title: 关系型数据库使用 Mysql 替换依赖的 H2 存储系统元数据            
-sidebar_label: 元数据使用Mysql存储(可选)      
+title: 关系型数据库使用 Mysql 替换依赖的 H2 存储系统元数据(可选)            
+sidebar_label: 元数据存储Mysql      
 ---
 MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 
@@ -11,8 +11,8 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 
 ### 通过Docker方式安装MYSQL   
 1. 下载安装Docker环境   
-   Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-   安装完毕后终端查看Docker版本是否正常输出。  
+   Docker 的安装请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
+   安装完毕后请于终端检查Docker版本输出是否正常。  
    ```
    $ docker -v
    Docker version 20.10.12, build e91ed57
@@ -37,15 +37,20 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 3. 查看hertzbeat数据库是否创建成功
    `show databases;`
 
+### 添加 MYSQL jdbc 驱动 jar
+
+- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
+- 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
+
 ### 修改hertzbeat的配置文件application.yml切换数据源   
 
-1. 配置HertzBeat的配置文件
-   修改位于 `hertzbeat/config/application.yml` 的配置文件   
-   注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
-   替换里面的`spring.database`数据源参数，IP端口账户密码驱动   
-   ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://github.com/hertzbeat/hertzbeat/raw/master/script/application.yml)  
-   
-需修改部分原参数: 
+- 配置 HertzBeat 的配置文件  
+  修改位于 `hertzbeat/config/application.yml` 的配置文件   
+  注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
+  替换里面的`spring.database`数据源参数，IP端口账户密码驱动   
+  ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://github.com/hertzbeat/hertzbeat/raw/master/script/application.yml)  
+
+  需修改部分原参数: 
 ```yaml
 spring:
   datasource:
@@ -53,35 +58,38 @@ spring:
     username: sa
     password: 123456
     url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    hikari:
+      max-lifetime: 120000
+
+  jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: h2
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
 ```
-具体替换参数如下,需根据mysql环境配置账户密码IP:   
+  具体替换参数如下,需根据mysql环境配置账户密码IP:   
 ```yaml
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: 123456
-    url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
-```
-
-2. 通过docker启动时，需要修改host为宿主机的外网Ip，包括mysql连接字符串和redis。
-
-
-**启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**  
-
-### 常见问题   
-
-1. 缺少hibernate的mysql方言，导致启动异常 Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set
-
-如果上述配置启动系统，出现` Caused by: org.hibernate.HibernateException: Access to DialectResolutionInfo cannot be null when 'hibernate.dialect' not set`异常，   
-需要在`application.yml`文件中增加以下配置：
-
-```yaml
-spring:
+    url: jdbc:mysql://mysql:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+    hikari:
+      max-lifetime: 120000
   jpa:
-    hibernate:
-      ddl-auto: update 
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: mysql
     properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+      eclipselink:
+        logging:
+          level: SEVERE
 ```
+
+- 通过docker启动时，建议修改host为宿主机的外网IP地址，包括mysql连接字符串。  
+
+**启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**

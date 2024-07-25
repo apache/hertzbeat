@@ -15,7 +15,7 @@
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 # 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
-category: os
+category: server
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
 app: redfish
@@ -103,7 +103,7 @@ params:
     type: text
     # when type is text, use limit to limit string length
     # 当type为text时,用limit表示字符串限制大小
-    limit: 20
+    limit: 50
     # required-true or false
     # required-是否是必输项 true-必填 false-可选
     required: false

@@ -15,18 +15,23 @@ sidebar_label: Download
 ## 最新版本
 
 :::tip
-Apache 版本即将到来!
+以前版本的 HertzBeat 可能会受到安全问题的影响，请考虑使用最新版本。
 :::
 
----- 
 
-## 非 Apache 版本
+| 版本      | 日期            | 下载                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Release Notes                                                           |
+|---------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
+| v1.6.0  | 2024.06.10    | [apache-hertzbeat-1.6.0-incubating-bin.tar.gz](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-1.6.0-incubating-bin.tar.gz) ( [signature](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz) ( [signature](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-1.6.0-incubating-src.tar.gz](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-1.6.0-incubating-src.tar.gz) ( [signature](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc) , [sha512](https://downloads.apache.org/incubator/hertzbeat/1.6.0/apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512) ) | [release note](https://github.com/apache/hertzbeat/releases/tag/v1.6.0) |
 
-:::tip
-这些版本是在 HertzBeat 项目加入 ASF 孵化器之前发布的。
-这些版本没有遵循 ASF 发布流程。
-:::
 
-| Version | Date       | Source                                                                     | Binary                                                                                                                                                                                                                                                  | Release Notes                                                           |
-|---------|------------|----------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
-| v1.5.0  | 2024.03.08 | [source](https://github.com/apache/hertzbeat/archive/refs/tags/v1.5.0.zip) | [hertzbeat-1.5.0.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.5.0/hertzbeat-1.5.0.tar.gz) <br/> [hertzbeat-collector-1.5.0.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.5.0/hertzbeat-collector-1.5.0.tar.gz) | [release note](https://github.com/apache/hertzbeat/releases/tag/v1.5.0) |
+## Docker 镜像版本
+
+> Apache HertzBeat 为每个版本制作了 Docker 镜像. 你可以从 [Docker Hub](https://hub.docker.com/r/apache/hertzbeat) 拉取使用.
+
+- HertzBeat https://hub.docker.com/r/apache/hertzbeat
+- HertzBeat Collector https://hub.docker.com/r/apache/hertzbeat-collector
+
+
+## 归档版本
+
+在这里查看所有归档版本：[archive](https://archive.apache.org/dist/incubator/hertzbeat/).

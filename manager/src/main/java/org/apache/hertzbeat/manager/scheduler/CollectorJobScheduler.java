@@ -107,6 +107,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
             if (collectorInfo != null) {
                 collector.setIp(collectorInfo.getIp());
                 collector.setMode(collectorInfo.getMode());
+                collector.setVersion(collectorInfo.getVersion());
             }
         } else {
             if (collectorInfo == null) {
@@ -117,6 +118,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     .name(identity)
                     .ip(collectorInfo.getIp())
                     .mode(collectorInfo.getMode())
+                    .version(collectorInfo.getVersion())
                     .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
                     .build();
         }
@@ -133,7 +135,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 continue;
             }
             Monitor monitor = monitorOptional.get();
-            if (monitor.getStatus() == CommonConstants.UN_MANAGE_CODE) {
+            if (monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
                 continue;
             }
             try {
@@ -267,6 +269,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         CollectorInfo collectorInfo = CollectorInfo.builder()
                 .name(collector.getName())
                 .ip(collector.getIp())
+                .version(collector.getVersion())
                 .mode(collector.getMode())
                 .build();
         this.collectorGoOnline(identity, collectorInfo);

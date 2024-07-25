@@ -51,14 +51,19 @@ public class RedfishCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getRedfish() == null) {
+            throw new IllegalArgumentException("Redfish collect must has redfish params");
         }
+        RedfishProtocol redfishProtocol = metrics.getRedfish();
+        Assert.hasText(redfishProtocol.getHost(), "Redfish Protocol host is required.");
+        Assert.hasText(redfishProtocol.getPort(), "Redfish Protocol port is required.");
+        Assert.hasText(redfishProtocol.getUsername(), "Redfish Protocol username is required.");
+        Assert.hasText(redfishProtocol.getPassword(), "Redfish Protocol password is required.");
+    }
+
+    @Override
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         ConnectSession connectSession = null;
         try {
             connectSession = getRedfishConnectSession(metrics.getRedfish());
@@ -115,17 +120,6 @@ public class RedfishCollectImpl extends AbstractCollect {
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_REDFISH;
-    }
-
-    private void validateParams(Metrics metrics) throws Exception {
-        if (metrics == null || metrics.getRedfish() == null) {
-            throw new Exception("Redfish collect must has redfish params");
-        }
-        RedfishProtocol redfishProtocol = metrics.getRedfish();
-        Assert.hasText(redfishProtocol.getHost(), "Redfish Protocol host is required.");
-        Assert.hasText(redfishProtocol.getPort(), "Redfish Protocol port is required.");
-        Assert.hasText(redfishProtocol.getUsername(), "Redfish Protocol username is required.");
-        Assert.hasText(redfishProtocol.getPassword(), "Redfish Protocol password is required.");
     }
 
 

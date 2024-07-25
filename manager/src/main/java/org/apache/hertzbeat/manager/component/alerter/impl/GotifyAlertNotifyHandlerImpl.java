@@ -92,7 +92,6 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         private String message;
         private Extras extras;
 
-
         @Data
         public static class Extras {
             @JsonProperty("client::display")
@@ -103,7 +102,6 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         public static class ClientDisplay {
             private String contentType;
         }
-
 
     }
 }

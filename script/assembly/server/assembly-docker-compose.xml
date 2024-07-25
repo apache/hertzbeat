@@ -19,11 +19,12 @@
           xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd
 http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <!--Required, will be appended to the end of the packaged file name-->
-    <id>1.6.0-incubating-docker-compose</id>
+    <id>incubating-docker-compose</id>
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>apache-hertzbeat-${hzb.version}-incubating-docker-compose</baseDirectory>
     <!--Packaging type, multiple types can be set, different types will be packaged when packaging-->
     <formats>
         <format>tar.gz</format>
-        <format>zip</format>
     </formats>
     
     <fileSets>
@@ -74,6 +75,18 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>README.md</include>
             </includes>
             <outputDirectory>/</outputDirectory>
+        </fileSet>
+        
+        <!-- doc -->
+        <fileSet>
+            <directory>../</directory>
+            <outputDirectory>/</outputDirectory>
+            <includes>
+                <include>DISCLAIMER</include>
+                <include>LICENSE</include>
+                <include>NOTICE</include>
+                <include>README.md</include>
+            </includes>
         </fileSet>
     </fileSets>
 </assembly>

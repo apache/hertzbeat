@@ -85,7 +85,7 @@ params:
       zh-CN: 用户名
       en-US: Username
     type: text
-    limit: 20
+    limit: 50
     required: false
     hide: true
   - field: password
@@ -171,11 +171,11 @@ metrics:
       - jobs-cancelled
       - jobs-failed
     calculates:
-      - slots_total=#`slots-total`
-      - slots_used=#`slots-total`-#`slots-available`
-      - task_total=#`jobs-running`+#`jobs-finished`+#`jobs-cancelled`+#`jobs-failed`
-      - jobs_running=#`jobs-running`
-      - jobs_failed=#`jobs-failed`
+      - slots_total=slots-total
+      - slots_used=slots-total-slots-available
+      - task_total=jobs-running+jobs-finished+jobs-cancelled+jobs-failed
+      - jobs_running=jobs-running
+      - jobs_failed=jobs-failed
     protocol: http
     http:
       host: ^_^host^_^

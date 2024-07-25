@@ -42,7 +42,28 @@
   .ant-timeline-item {
     padding-bottom: 10px;
   }
+  .tag-animation-delay {
+    cursor: pointer;
   }
+  .ant-spin-nested-loading, .ant-spin-container {
+    height: 100%;
+  }
+  .timeline-card {
+    .ant-card {
+      display: flex;
+      flex-direction: column;
+      cursor: default!important;
+      .ant-card-head {
+        flex-shrink: 0;
+      }
+      .ant-card-body {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 12px;
+      }
+    }
+  }
+}
 
 [data-theme='dark'] {
   :host ::ng-deep {

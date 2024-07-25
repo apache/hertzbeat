@@ -61,7 +61,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-
 /**
  * Calculate alarms based on the alarm definition rules and collected data
  */
@@ -101,7 +100,7 @@ public class CalculateAlarm {
         this.triggeredAlertMap = new ConcurrentHashMap<>(16);
         this.notRecoveredAlertMap = new ConcurrentHashMap<>(16);
         // Initialize stateAlertMap
-        List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.UN_AVAILABLE_CODE);
+        List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.MONITOR_DOWN_CODE);
         if (monitors != null) {
             for (Monitor monitor : monitors) {
                 HashMap<String, String> tags = new HashMap<>(8);

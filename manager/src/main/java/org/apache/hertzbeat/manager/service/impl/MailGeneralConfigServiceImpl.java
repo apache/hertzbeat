@@ -24,7 +24,6 @@ import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.springframework.stereotype.Service;
 
-
 /**
  * MailGeneralConfigServiceImpl class is the implementation of general email configuration service,
  * which inherits the AbstractGeneralConfigServiceImpl class.

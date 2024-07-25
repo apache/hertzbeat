@@ -48,12 +48,11 @@ sidebar_position: 4
   see **Committer Account Creation**
 
     - Wait until root says it is done
-    - PMC Chair enables svn and other access
-    - Add committer to the appropriate groups in JIRA and CWiki
+    - [Roster](https://whimsy.apache.org/roster/ppmc/hertzbeat) add the new committer
 
-- Notify the committer of completion
+- Announce the new committer
 
-  see **Committer Done Template**
+  see **Announce New Committer Template**
 
 ## Template
 
@@ -73,11 +72,35 @@ Subject: [VOTE] New committer: ${NEW_COMMITTER_NAME}
 ```text
 Hi HertzBeat PPMC,
 
-This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our new committer.
+This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our community new committer.
 
-${Work list}[1]
+Work list: https://github.com/apache/hertzbeat/commits?author=${NEW_COMMITTER_NAME}
 
-[1] https://github.com/apache/hertzbeat/commits?author=${NEW_COMMITTER_NAME}
+Here is the list of ${NEW_COMMITTER_NAME}'s contributions in HertzBeat Community:
+
+> [27 commits](https://github.com/apache/hertzbeat/commits?author=xxx)
+>
+> 7,495 ++    627 --
+
+Submitted PR (27 commits)
+- [ISSUE #4534] [feature] add new feature in hertzbeat #3445
+- xxx
+
+Submitted Issues (18 commits)
+
+- [bug] find some bugs in hertzbeat nodes #6565
+- xxx
+
+Please vote:
+
++1: I support this proposal and will welcome ${NEW_COMMITTER_NAME} as a committer.
++0: I don't care.
+-1: I object to this proposal and here are my reasons.
+
+This vote will be open for at least 7 days.
+
+Best Wishes,
+ttt
 ```
 
 Note that, Voting ends one week from today, i.e.
@@ -210,36 +233,23 @@ Yours,
 The Apache HertzBeat PPMC
 ```
 
-### Committer Done Template
+### Announce New Committer Template
 
 ```text
-To: private@hertzbeat.apache.org, ${NEW_COMMITTER_EMAIL}
-Subject: account request: ${NEW_COMMITTER_NAME}
+To: dev@hertzbeat.apache.org, ${NEW_COMMITTER_EMAIL}
+Subject: [ANNOUNCE] New committer: ${NEW_COMMITTER_NAME}
 ```
 
 ```text
-${NEW_COMMITTER_NAME}, as you know, the ASF Infrastructure has set up your
-committer account with the username '${NEW_COMMITTER_APACHE_NAME}'.
+Hello Community,
 
-Please follow the instructions to set up your SSH,
-svn password, svn configuration, email forwarding, etc.
-https://www.apache.org/dev/#committers
+The Podling Project Management Committee (PPMC) for Apache HertzBeat (incubating)
+has invited ${NEW_COMMITTER_NAME} to become a committer and we are pleased to
+announce that he has accepted.
 
-You have commit access to specific sections of the
-ASF repository, as follows:
+${NEW_COMMITTER_NAME} is active in the Apache HertzBeat community, hope to see your
+further interactions with the community!
+Thanks for your contributions.
 
-The general "committers" at:
-  https://svn.apache.org/repos/private/committers
-
-If you have any questions during this phase, then please
-see the following resources:
-
-Apache developer's pages: https://www.apache.org/dev/
-Incubator committer guide: https://incubator.apache.org/guides/committer.html
-
-Naturally, if you don't understand anything be sure to ask us on the dev@hertzbeat.apache.org mailing list. 
-Documentation is maintained by volunteers and hence can be out-of-date and incomplete - of course
-you can now help fix that.
-
-A PPMC member will announce your election to the dev list soon.
+Best Wishes!
 ```

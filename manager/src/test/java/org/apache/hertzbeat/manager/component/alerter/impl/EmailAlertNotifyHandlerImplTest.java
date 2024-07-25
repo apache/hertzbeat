@@ -36,4 +36,5 @@ class EmailAlertNotifyHandlerImplTest {
     @Test
     void type() {
     }
+
 }

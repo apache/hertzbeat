@@ -127,19 +127,25 @@ public interface DispatchConstants {
      * protocol redfish
      */
     String PROTOCOL_REDFISH = "redfish";
+    /**
+     * protocol imap
+     */
+    String PROTOCOL_IMAP = "imap";
+
+    /**
+     * protocol script
+     */
+    String PROTOCOL_SCRIPT = "script";
 
     // Protocol type related - end
-    // 协议类型相关 - end //
 
     // http protocol related - start should reuse HttpHeaders as much as possible
-    // http协议相关 - start 需尽可能先复用 HttpHeaders //
     /**
-     * verification method   认证方式 Bearer Token
+     * verification method Bearer Token
      */
     String BEARER_TOKEN = "Bearer Token";
     /**
      * Bearer Token The authentication parameter character
-     * Bearer Token 的认证参数字符
      */
     String BEARER = "Bearer";
     /**
@@ -147,38 +153,35 @@ public interface DispatchConstants {
      */
     String BASIC = "Basic";
     /**
-     * verification method  认证方式 Basic Auth
+     * verification method authentication method Basic Auth
      */
     String BASIC_AUTH = "Basic Auth";
     /**
-     * verification method  认证方式 Digest Auth
+     * verification method authentication method Digest Auth
      */
     String DIGEST_AUTH = "Digest Auth";
     /**
-     * Analysis method  解析规则 默认规则
+     * Analysis method resolution: default rule
      */
     String PARSE_DEFAULT = "default";
     /**
-     * Analysis method   解析方式 自定义json path
+     * Analysis method resolution: json path
      */
     String PARSE_JSON_PATH = "jsonPath";
     /**
-     * Analysis method   解析方式 自定义xml path
+     * Analysis method resolution: custom xml path
      */
     String PARSE_XML_PATH = "xmlPath";
     /**
      * Analysis method  Website availability monitoring rules Provide responseTime metrics
-     * 解析方式 网站可用性监控规则 提供responseTime指标
      */
     String PARSE_WEBSITE = "website";
     /**
      * Analysis method Sitemap site-wide availability monitoring rules
-     * 解析方式 网站地图全站可用性监控规则
      */
     String PARSE_SITE_MAP = "sitemap";
     /**
      * Parsing method prometheus exporter data
-     * 解析方式 prometheus exporter接口获取的数据
      */
     String PARSE_PROMETHEUS = "prometheus";
     /**
@@ -187,7 +190,6 @@ public interface DispatchConstants {
     String PARSE_PROMETHEUS_ACCEPT = "application/openmetrics-text; version=0.0.1,text/plain;version=0.0.4;q=0.5,*/*;q=0.1";
     /**
      * PromQL Prometheus Query Language
-     * 解析方式 Prometheus Query Language
      */
     String PARSE_PROM_QL = "PromQL";
     String PARSE_PROM_QL_VECTOR = "vector";

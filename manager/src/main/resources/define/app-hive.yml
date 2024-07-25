@@ -127,10 +127,10 @@ metrics:
       - $.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion
       - $.beans[?(@.name == 'java.lang:type=Runtime')].Uptime
     calculates:
-      - vm_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmName`
-      - vm_vendor=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmVendor`
-      - vm_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion`
-      - up_time=#`$.beans[?(@.name == 'java.lang:type=Runtime')].Uptime`
+      - vm_name=$.beans[?(@.name == 'java.lang:type=Runtime')].VmName
+      - vm_vendor=$.beans[?(@.name == 'java.lang:type=Runtime')].VmVendor
+      - vm_version=$.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion
+      - up_time=$.beans[?(@.name == 'java.lang:type=Runtime')].Uptime
     protocol: http
     http:
       host: ^_^host^_^
@@ -169,12 +169,12 @@ metrics:
       - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value
     # A list of calculation scripts for metric values.
     calculates:
-      - https_proxyPort=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value`
-      - os_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.name')].value`
-      - os_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.version')].value`
-      - os_arch=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.arch')].value`
-      - java_runtime_name=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.name')].value`
-      - java_runtime_version=#`$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.version')].value`
+      - https_proxyPort=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value
+      - os_name=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.name')].value
+      - os_version=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.version')].value
+      - os_arch=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.arch')].value
+      - java_runtime_name=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.name')].value
+      - java_runtime_version=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.version')].value
     # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # Specific collection configuration when protocol is http protocol
@@ -211,10 +211,10 @@ metrics:
       - $.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount
       - $.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount
     calculates:
-      - thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount`
-      - total_started_thread=#`$.beans[?(@.name == 'java.lang:type=Threading')].TotalStartedThreadCount`
-      - peak_thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount`
-      - daemon_thread_count=#`$.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount`
+      - thread_count=$.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount
+      - total_started_thread=$.beans[?(@.name == 'java.lang:type=Threading')].TotalStartedThreadCount
+      - peak_thread_count=$.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount
+      - daemon_thread_count=$.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount
     protocol: http
     http:
       host: ^_^host^_^
@@ -246,10 +246,10 @@ metrics:
       - $.beans[?(@.Name == 'Code Cache')].Usage.max
       - $.beans[?(@.Name == 'Code Cache')].Usage.used
     calculates:
-      - committed=#`$.beans[?(@.Name == 'Code Cache')].Usage.committed`
-      - init=#`$.beans[?(@.Name == 'Code Cache')].Usage.init`
-      - max=#`$.beans[?(@.Name == 'Code Cache')].Usage.max`
-      - used=#`$.beans[?(@.Name == 'Code Cache')].Usage.used`
+      - committed=$.beans[?(@.Name == 'Code Cache')].Usage.committed
+      - init=$.beans[?(@.Name == 'Code Cache')].Usage.init
+      - max=$.beans[?(@.Name == 'Code Cache')].Usage.max
+      - used=$.beans[?(@.Name == 'Code Cache')].Usage.used
     units:
       - committed=B->MB
       - init=B->MB

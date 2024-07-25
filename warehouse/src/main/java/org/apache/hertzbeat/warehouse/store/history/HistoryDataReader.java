@@ -20,12 +20,11 @@ package org.apache.hertzbeat.warehouse.store.history;
 import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Value;
-import org.springframework.beans.factory.DisposableBean;
 
 /**
- *
+ * history data reader
  */
-public interface HistoryDataReader extends DisposableBean {
+public interface HistoryDataReader {
 
     /**
      * @return data storage available

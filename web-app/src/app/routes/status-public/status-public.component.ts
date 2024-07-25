@@ -164,5 +164,17 @@ export class StatusPublicComponent implements OnInit {
     return processTime;
   }
 
+  getStatusBorderColor(status: number): string {
+    if (status === 0) {
+      return '#ff2f2f';
+    } else if (status === 1) {
+      return '#e56c23';
+    } else if (status === 2) {
+      return '#19a7e7';
+    } else {
+      return '#34be8f';
+    }
+  }
+
   protected readonly Array = Array;
 }

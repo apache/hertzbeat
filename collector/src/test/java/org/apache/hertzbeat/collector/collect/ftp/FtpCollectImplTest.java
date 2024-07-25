@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.collect.ftp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +45,6 @@ class FtpCollectImplTest {
 
     @Test
     void testPreCheck() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         FtpProtocol ftpProtocol = FtpProtocol.builder()
                 .host("127.0.0.1")
                 .username("admin")
@@ -60,8 +60,7 @@ class FtpCollectImplTest {
         metrics.setName("server");
         metrics.setFtp(ftpProtocol);
         metrics.setAliasFields(aliasField);
-        ftpCollectImpl.collect(builder, 1L, "test", metrics);
-        assertEquals(builder.getCode(), CollectRep.Code.UN_CONNECTABLE);
+        assertThrows(IllegalArgumentException.class, ()-> ftpCollectImpl.preCheck(metrics));
 
     }
 
@@ -96,7 +95,7 @@ class FtpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setFtp(ftpProtocol);
         metrics.setAliasFields(aliasField);
-
+        ftpCollectImpl.preCheck(metrics);
         ftpCollectImpl.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {

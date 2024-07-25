@@ -8,13 +8,14 @@
 <a href="README_CN.md">中文文档</a> | <a href="README.md">English Document</a>
 </h4>      
 
-> 实时监控系统，无需Agent，性能集群，兼容Prometheus，自定义监控和状态页构建能力。
+> 实时监控系统，无需 Agent，性能集群，兼容 Prometheus，自定义监控和状态页构建能力。
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/apache/hertzbeat/general)
+[![codecov](https://codecov.io/gh/apache/HertzBeat/branch/master/graph/badge.svg)](https://app.codecov.io/gh/apache/hertzbeat)
+[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
 
@@ -25,11 +26,11 @@
 
 ## 🎡 <font color="green">介绍</font>
 
-[Apache HertzBeat](https://github.com/apache/hertzbeat) (incubating) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
+[Apache HertzBeat](https://github.com/apache/hertzbeat) （incubating）是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。     
 
 ### 特点
 
-- 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
+- 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web 服务器，云原生，网络，自定义等监控阈值告警通知一步到位。
 - 易用友好，无需 `Agent`，全 `WEB` 页面操作，鼠标点一点就能监控告警，零上手学习成本。    
 - 将 `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` 等协议规范可配置化，只需在浏览器配置监控模版 `YML` 就能使用这些协议去自定义采集想要的指标。您相信只需配置下就能立刻适配一款 `K8s` 或 `Docker` 等新的监控类型吗？  
 - 兼容 `Prometheus` 的系统生态并且更多，只需页面操作就可以监控 `Prometheus` 所能监控的。
@@ -40,7 +41,7 @@
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助用户快速搭建自有监控系统。    
 
-----   
+----
 
 ![hertzbeat](home/static/img/home/1.png)
 
@@ -48,7 +49,7 @@
 
 ![hertzbeat](home/static/img/home/9.png)
 
-----   
+----
 
 ## 🥐 模块  
 
@@ -56,7 +57,7 @@
 
 ## ⛄ 已支持    
 
-> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!    
+> 我们将监控采集类型（mysql,jvm,k8s）都定义为 `yml` 监控模版，用户可以导入这些模版来支持对应类型的监控!    
 > 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
 
 - [Website](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-website.yml), [Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-port.yml),
@@ -100,40 +101,44 @@
 
 ## 🐕 快速开始  
 
-- 如果您是想将HertzBeat部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。  
+- 如果您是想将 HertzBeat 部署到内网环境搭建监控系统，请参考下面的部署文档进行操作。  
 
-### 🍞 HertzBeat安装
-> HertzBeat支持通过源码安装启动，Docker容器运行和安装包方式安装部署，CPU架构支持x86/arm64。
+### 🍞 HertzBeat 安装
+> HertzBeat 支持通过源码安装启动，Docker 容器运行和安装包方式安装部署，CPU 架构支持 x86/arm64。
 
-##### 方式一：Docker方式快速安装  
+##### 方式一：Docker 方式快速安装  
 
 1. `docker` 环境仅需一条命令即可开始     
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+   ```shell
+   docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+   ```
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
-3. 部署采集器集群(可选)
+3. 部署采集器集群（可选）
 
-```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
+   ```shell
+   docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+   ```
+
    - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
-   - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
-   - `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertaBeat服务的对外IP。
-   - `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
+    - `-e MODE=public` : 配置运行模式(public or private), 公共集群模式或私有云边模式。
+    - `-e MANAGER_HOST=127.0.0.1` : 配置连接主 HertaBeat 服务的对外 IP。
+    - `-e MANAGER_PORT=1158` : 配置连接主 HertzBeat 服务的对外端口，默认1158。
 
-更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
+
+更多配置详细步骤参考 [通过 Docker 方式安装 HertzBeat](https://hertzbeat.apache.org/docs/start/docker-deploy)
 
 ##### 方式二：通过安装包安装
 
-1. 下载您系统环境对应的安装包`hertzbeat-xx.tar.gz` [GITHUB Release](https://github.com/apache/hertzbeat/releases)
-2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
+1. 下载您系统环境对应的安装包 `hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
+2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml` (可选)
 3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
-5. 部署采集器集群(可选)
-   - 下载采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [GITHUB Release](https://github.com/apache/hertzbeat/releases)
-   - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主HertzBeat服务的对外IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
+5. 部署采集器集群（可选）
+   - 下载采集器安装包 `hertzbeat-collector-xx.tar.gz` 到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
+   - 配置采集器的配置文件 `hertzbeat-collector/config/application.yml` 里面的连接主 HertzBeat 服务的对外 IP，端口，当前采集器名称(需保证唯一性)等参数 `identity` `mode` (public or private) `manager-host` `manager-port`
      ```yaml
      collector:
        dispatch:
@@ -146,26 +151,26 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
              manager-port: ${MANAGER_PORT:1158}
      ```
    - 启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
-   - 浏览器访问主HertzBeat服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
+   - 浏览器访问主 HertzBeat 服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
 
 更多配置详细步骤参考 [通过安装包安装HertzBeat](https://hertzbeat.apache.org/docs/start/package-deploy)
 
 ##### 方式三：本地代码启动
 
-1. 此为前后端分离项目，本地代码调试需要分别启动后端工程`manager`和前端工程`web-app`
-2. 后端：需要`maven3+`, `java17`和`lombok`环境，修改`YML`配置信息并启动`manager`服务
-3. 前端：需要`nodejs npm angular-cli`环境，待本地后端启动后，在`web-app`目录下启动 `ng serve --open`
+1. 此为前后端分离项目，本地代码调试需要分别启动后端工程 `manager` 和前端工程 `web-app`
+2. 后端：需要 `maven3+`, `java17` 和 `lombok` 环境，修改 `YML` 配置信息并启动 `manager` 服务
+3. 前端：需要 `nodejs npm angular-cli`环境，待本地后端启动后，在 `web-app` 目录下启动 `ng serve --open`
 4. 浏览器访问 `http://localhost:4200` 即可开始，默认账号密码 `admin/hertzbeat`
 
 详细步骤参考 [参与贡献之本地代码启动](CONTRIBUTING.md)
 
-##### 方式四：Docker-Compose 统一安装 hertzbeat+mysql+tsdb
+##### 方式四：Docker-Compose 统一安装 hertzbeat+postgresql+tsdb
 
-通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 mysql/postgresql 数据库, iotdb/tdengine/victoria-metrics 时序数据库和 hertzbeat 安装部署。
+通过 [Docker-Compose 部署脚本](script/docker-compose) 一次性把 postgresql/mysql 数据库, victoria-metrics/iotdb/tdengine 时序数据库和 hertzbeat 安装部署。
 
-详细步骤参考 [通过Docker-Compose安装HertzBeat](script/docker-compose/README.md)  
+详细步骤参考 [通过 Docker-Compose 安装 HertzBeat](script/docker-compose/README.md)  
 
-##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+mysql+tsdb
+##### 方式五：Kubernetes Helm Charts 部署 hertzbeat+collector+postgresql+tsdb
 
 通过 Helm Chart 一次性将 HertzBeat 集群组件部署到 Kubernetes 集群中。
 
@@ -410,7 +415,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="http://sharehoo.cn/"><img src="https://avatars.githubusercontent.com/u/45377370?v=4?s=100" width="100px;" alt="miki"/><br /><sub><b>miki</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=miki-hmt" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://codeflex.substack.com/"><img src="https://avatars.githubusercontent.com/u/85513042?v=4?s=100" width="100px;" alt="Keshav Carpenter"/><br /><sub><b>Keshav Carpenter</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=alpha951" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=alpha951" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/makechoicenow"><img src="https://avatars.githubusercontent.com/u/9911918?v=4?s=100" width="100px;" alt="makechoicenow"/><br /><sub><b>makechoicenow</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=makechoicenow" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gjjjj0101"><img src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;" alt="Gao Jian"/><br /><sub><b>Gao Jian</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a> <a href="#design-gjjjj0101" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/gjjjj0101"><img src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;" alt="Gao Jian"/><br /><sub><b>Gao Jian</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a> <a href="#design-gjjjj0101" title="Design">🎨</a> <a href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Tests">⚠️</a></td>
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://jangto.tistory.com/"><img src="https://avatars.githubusercontent.com/u/37864182?v=4?s=100" width="100px;" alt="Hyeon Sung"/><br /><sub><b>Hyeon Sung</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=dukbong" title="Code">💻</a></td>
@@ -435,6 +440,31 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/HeartLinked"><img src="https://avatars.githubusercontent.com/u/78212101?v=4?s=100" width="100px;" alt="feiyang li"/><br /><sub><b>feiyang li</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=HeartLinked" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Aias00"><img src="https://avatars.githubusercontent.com/u/25810623?v=4?s=100" width="100px;" alt="aias00"/><br /><sub><b>aias00</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Aias00" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/westboy"><img src="https://avatars.githubusercontent.com/u/6385565?v=4?s=100" width="100px;" alt="Jin"/><br /><sub><b>Jin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=westboy" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://blog.csdn.net/qq_52397471"><img src="https://avatars.githubusercontent.com/u/77964041?v=4?s=100" width="100px;" alt="YuLuo"/><br /><sub><b>YuLuo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yuluo-yx" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Yanshuming1"><img src="https://avatars.githubusercontent.com/u/118667222?v=4?s=100" width="100px;" alt="xiaoming student"/><br /><sub><b>xiaoming student</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Yanshuming1" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lwjxy"><img src="https://avatars.githubusercontent.com/u/52726400?v=4?s=100" width="100px;" alt="lwjxy"/><br /><sub><b>lwjxy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lwjxy" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://thespica.github.io/"><img src="https://avatars.githubusercontent.com/u/119573640?v=4?s=100" width="100px;" alt="John"/><br /><sub><b>John</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/boatrainlsz"><img src="https://avatars.githubusercontent.com/u/18243785?v=4?s=100" width="100px;" alt="boatrainlsz"/><br /><sub><b>boatrainlsz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=boatrainlsz" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.yitianyigexiangfa.com/"><img src="https://avatars.githubusercontent.com/u/3973419?v=4?s=100" width="100px;" alt="Bill Lau"/><br /><sub><b>Bill Lau</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=JavaProgrammerLB" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lw-yang"><img src="https://avatars.githubusercontent.com/u/23456873?v=4?s=100" width="100px;" alt="lwyang"/><br /><sub><b>lwyang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lw-yang" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/xfl12345"><img src="https://avatars.githubusercontent.com/u/17960863?v=4?s=100" width="100px;" alt="xfl12345"/><br /><sub><b>xfl12345</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=xfl12345" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/yykaue"><img src="https://avatars.githubusercontent.com/u/22905143?v=4?s=100" width="100px;" alt="Limbo"/><br /><sub><b>Limbo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yykaue" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/irenhongyan"><img src="https://avatars.githubusercontent.com/u/53438321?v=4?s=100" width="100px;" alt="哈哈哈哈哈哈哈哈哈"/><br /><sub><b>哈哈哈哈哈哈哈哈哈</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=irenhongyan" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ileonli"><img src="https://avatars.githubusercontent.com/u/45332412?v=4?s=100" width="100px;" alt="Leon Li"/><br /><sub><b>Leon Li</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ileonli" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://fnil.net/"><img src="https://avatars.githubusercontent.com/u/14142?v=4?s=100" width="100px;" alt="dennis zhuang"/><br /><sub><b>dennis zhuang</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=killme2008" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/kerwin612"><img src="https://avatars.githubusercontent.com/u/3371163?v=4?s=100" width="100px;" alt="Kerwin Bryant"/><br /><sub><b>Kerwin Bryant</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=kerwin612" title="Code">💻</a> <a href="#design-kerwin612" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShineDevelopment"><img src="https://avatars.githubusercontent.com/u/59306780?v=4?s=100" width="100px;" alt="daixianglong"/><br /><sub><b>daixianglong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ShineDevelopment" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/mchgood"><img src="https://avatars.githubusercontent.com/u/38482005?v=4?s=100" width="100px;" alt="mchgood"/><br /><sub><b>mchgood</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=mchgood" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/pwallk"><img src="https://avatars.githubusercontent.com/u/69385076?v=4?s=100" width="100px;" alt="kangli"/><br /><sub><b>kangli</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pwallk" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/cdphantom"><img src="https://avatars.githubusercontent.com/u/12674795?v=4?s=100" width="100px;" alt="cdphantom"/><br /><sub><b>cdphantom</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=cdphantom" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/asd108908382"><img src="https://avatars.githubusercontent.com/u/77717999?v=4?s=100" width="100px;" alt="jiawei.guo"/><br /><sub><b>jiawei.guo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=asd108908382" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/QBH-insist"><img src="https://avatars.githubusercontent.com/u/39401478?v=4?s=100" width="100px;" alt="QBH-insist"/><br /><sub><b>QBH-insist</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=QBH-insist" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -454,7 +484,7 @@ Thanks these wonderful people, welcome to join us:
 
 微信交流群 : 加 `tan-cloud` 好友邀请进群.
 
-微信公众号 : 搜索 `Apache HertzBeat` or `usthecom`.
+微信公众号 : 搜索 ID `usthecom`.
 
 [QQ交流群](https://jq.qq.com/?_wv=1027&k=Bud9OzdI) : 群号 `630061200`
 

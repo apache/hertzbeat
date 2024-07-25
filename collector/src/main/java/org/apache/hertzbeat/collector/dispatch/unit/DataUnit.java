@@ -19,7 +19,6 @@ package org.apache.hertzbeat.collector.dispatch.unit;
 
 /**
  * the enum of data size
- * 数据空间大小的枚举类
  */
 public enum DataUnit {
     /**

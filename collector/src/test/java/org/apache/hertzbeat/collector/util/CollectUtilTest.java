@@ -32,8 +32,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -42,14 +40,6 @@ import org.junit.jupiter.api.Test;
 class CollectUtilTest {
 
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
-
-    @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
-    }
 
     @Test
     void countMatchKeyword() {
@@ -91,6 +81,15 @@ class CollectUtilTest {
         assertNull(res4.getValue());
         assertNull(res4.getUnit());
 
+        CollectUtil.DoubleAndUnit res5 = CollectUtil.extractDoubleAndUnitFromStr("200Ki");
+        assertEquals(200, res5.getValue());
+        assertEquals("Ki", res5.getUnit());
+        CollectUtil.DoubleAndUnit res6 = CollectUtil.extractDoubleAndUnitFromStr("200Mi");
+        assertEquals(200, res6.getValue());
+        assertEquals("Mi", res6.getUnit());
+        CollectUtil.DoubleAndUnit res7 = CollectUtil.extractDoubleAndUnitFromStr("200Gi");
+        assertEquals(200, res7.getValue());
+        assertEquals("Gi", res7.getUnit());
     }
 
 

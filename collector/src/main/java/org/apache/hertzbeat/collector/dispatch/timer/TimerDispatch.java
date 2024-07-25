@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.collector.dispatch.timer;
 
-
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;

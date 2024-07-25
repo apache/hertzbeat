@@ -476,9 +476,9 @@ metrics:
         - $.['exceptions.RegionTooBusyException']
       calculates:
         - numActiveHandler=$.numActiveHandler
-        - NotServingRegionException=#`$.['exceptions.NotServingRegionException']`
-        - RegionMovedException=#`$.['exceptions.RegionMovedException']`
-        - RegionTooBusyException=#`$.['exceptions.RegionTooBusyException']`
+        - NotServingRegionException=$.['exceptions.NotServingRegionException']
+        - RegionMovedException=$.['exceptions.RegionMovedException']
+        - RegionTooBusyException=$.['exceptions.RegionTooBusyException']
       protocol: http
       http:
         host: ^_^host^_^

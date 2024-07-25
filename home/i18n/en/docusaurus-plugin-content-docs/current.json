@@ -1,6 +1,6 @@
 {
   "version.label": {
-    "message": "v1.5.x",
+    "message": "v1.6.x",
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
@@ -22,6 +22,11 @@
   "sidebar.docs.category.ssh": {
     "message": "SSH Protocol",
     "description": "The label for category ssh in sidebar docs"
+  },
+
+  "sidebar.docs.category.telnet": {
+    "message": "TELNET Protocol",
+    "description": "The label for category telnet in sidebar docs"
   },
   "sidebar.docs.category.help": {
     "message": "Help",
@@ -108,7 +113,19 @@
     "description": "The label for category Community in sidebar docs"
   },
   "sidebar.docs.category.network": {
-    "message": "Network",
+    "message": "Network Monitor",
     "description": "The label for category network in sidebar docs"
+  },
+  "sidebar.docs.category.NGQL": {
+    "message": "NGQL",
+    "description": "The label for category NGQL in sidebar docs"
+  },
+  "sidebar.docs.category.llm": {
+    "message": "Ai LLM Monitor",
+    "description": "The label for category llm in sidebar docs"
+  },
+  "sidebar.docs.category.aiConfig": {
+    "message": "Ai LLM Config",
+    "description": "The label for category aiConfig in sidebar docs"
   }
 }

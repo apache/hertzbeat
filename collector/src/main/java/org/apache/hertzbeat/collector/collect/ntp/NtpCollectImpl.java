@@ -47,17 +47,17 @@ import org.apache.hertzbeat.common.util.CommonUtil;
  */
 @Slf4j
 public class NtpCollectImpl extends AbstractCollect {
-    public NtpCollectImpl() {
+
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getNtp() == null) {
+            throw new IllegalArgumentException("NTP collect must have NTP params");
+        }
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getNtp() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("NTP collect must have NTP params");
-            return;
-        }
         NtpProtocol ntpProtocol = metrics.getNtp();
         String host = ntpProtocol.getHost();
         int timeout = CollectUtil.getTimeout(ntpProtocol.getTimeout());

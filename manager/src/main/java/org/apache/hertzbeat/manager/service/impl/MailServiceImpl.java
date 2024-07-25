@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import freemarker.cache.StringTemplateLoader;
+import freemarker.core.TemplateClassResolver;
 import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import java.io.IOException;
@@ -95,16 +96,11 @@ public class MailServiceImpl implements MailService {
         model.put("consoleUrl", alerterProperties.getConsoleUrl());
         model.put("nameContent", bundle.getString("alerter.notify.content"));
         model.put("content", alert.getContent());
-        if (noticeTemplate == null) {
-            noticeTemplate = noticeConfigService.getDefaultNoticeTemplateByType((byte) 1);
-        }
-        if (noticeTemplate == null) {
-            throw new NullPointerException("email does not have mapping default notice template");
-        }
         StringTemplateLoader stringLoader = new StringTemplateLoader();
         String templateName = "mailTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
         cfg.setTemplateLoader(stringLoader);
+        cfg.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         templateMail = cfg.getTemplate(templateName, Locale.CHINESE);
         return FreeMarkerTemplateUtils.processTemplateIntoString(templateMail, model);
     }

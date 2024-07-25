@@ -24,16 +24,14 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-
-
 /**
- *
+ * WareHouseApplicationReadyListener
  */
 @Slf4j
 @Component
 public class WareHouseApplicationReadyListener {
 
-    private Optional<AbstractHistoryDataStorage> historyDataStorage;
+    private final Optional<AbstractHistoryDataStorage> historyDataStorage;
 
     public WareHouseApplicationReadyListener(Optional<AbstractHistoryDataStorage> historyDataStorage) {
         this.historyDataStorage = historyDataStorage;

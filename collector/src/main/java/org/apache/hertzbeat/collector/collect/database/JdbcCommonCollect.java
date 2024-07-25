@@ -64,16 +64,22 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getJdbc() == null) {
+            throw new IllegalArgumentException("Database collect must has jdbc params");
+        }
+        if (StringUtils.hasText(metrics.getJdbc().getUrl())) {
+            for (String keyword : VULNERABLE_KEYWORDS) {
+                if (metrics.getJdbc().getUrl().contains(keyword)) {
+                    throw new IllegalArgumentException("Jdbc url prohibit contains vulnerable param " + keyword);
+                }
+            }
+        }
+    }
+
+    @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        // check the params
-        try {
-            validateParams(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
         int timeout = CollectUtil.getTimeout(jdbcProtocol.getTimeout());
@@ -310,18 +316,5 @@ public class JdbcCommonCollect extends AbstractCollect {
                     "jdbc:dm://" + jdbcProtocol.getHost() + ":" + jdbcProtocol.getPort();
             default -> throw new IllegalArgumentException("Not support database platform: " + jdbcProtocol.getPlatform());
         };
-    }
-
-    private void validateParams(Metrics metrics) throws IllegalArgumentException {
-        if (metrics == null || metrics.getJdbc() == null) {
-            throw new IllegalArgumentException("Database collect must has jdbc params");
-        }
-        if (StringUtils.hasText(metrics.getJdbc().getUrl())) {
-            for (String keyword : VULNERABLE_KEYWORDS) {
-                if (metrics.getJdbc().getUrl().contains(keyword)) {
-                    throw new IllegalArgumentException("Jdbc url prohibit contains vulnerable param " + keyword);
-                }
-            }
-        }
     }
 }

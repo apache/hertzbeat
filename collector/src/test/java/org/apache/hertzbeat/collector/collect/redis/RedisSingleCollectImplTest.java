@@ -38,7 +38,6 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-
 /**
  * Test case for {@link RedisCommonCollectImpl}
  */
@@ -77,13 +76,29 @@ class RedisSingleCollectImplTest {
 
     @Test
     void collect() {
+        String info = """
+            # CPU
+            used_cpu_sys:0.544635
+            used_cpu_user:0.330690
+            """;
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         List<String> aliasField = new ArrayList<>();
         aliasField.add("used_cpu_sys");
         Metrics metrics = new Metrics();
         metrics.setRedis(redisProtocol);
+        metrics.setName("cpu");
         metrics.setAliasFields(aliasField);
+        metrics.setFields(List.of());
+
+        MockedStatic<RedisClient> clientMockedStatic = Mockito.mockStatic(RedisClient.class);
+        clientMockedStatic.when(() -> RedisClient.create(Mockito.any(ClientResources.class), Mockito.any(RedisURI.class)))
+            .thenReturn(client);
+        Mockito.when(client.connect()).thenReturn(connection);
+        Mockito.when(connection.sync()).thenReturn(cmd);
+        Mockito.when(cmd.info(metrics.getName())).thenReturn(info);
         redisSingleCollect.collect(builder, 1L, "test", metrics);
+        assertEquals(builder.getValues(0).getColumns(0), "0.544635");
+        clientMockedStatic.close();
     }
 
     @Test
@@ -126,6 +141,7 @@ class RedisSingleCollectImplTest {
         Mockito.when(connection.sync()).thenReturn(cmd);
         Mockito.when(cmd.info(metrics.getName())).thenReturn(redisInfo);
 
+        redisSingleCollect.preCheck(metrics);
         redisSingleCollect.collect(builder, 1L, "test", metrics);
         assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
         for (CollectRep.ValueRow row : builder.getValuesList()) {
@@ -133,5 +149,6 @@ class RedisSingleCollectImplTest {
             assertEquals(row.getColumns(0), redisMode);
             assertEquals(row.getColumns(1), version);
         }
+        clientMockedStatic.close();
     }
 }

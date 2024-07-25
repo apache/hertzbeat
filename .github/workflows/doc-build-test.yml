@@ -1,0 +1,118 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+name: DOC CI
+
+on:
+  push:
+    branches: [ master, dev ]
+    paths:
+      - 'home/**'
+  pull_request:
+    branches: [ master, dev ]
+    paths:
+      - 'home/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check filename in home/blog
+        run: |
+          TARGET_DIR="./home/blog"
+          invalid_files=()
+          while IFS= read -r -d '' file; do
+            filename=$(basename "$file")
+            if [[ ! "$filename" =~ ^[_a-z0-9-]+(\.[_a-z0-9-]+)*$ ]]; then
+              invalid_files+=("$file")
+            fi
+          done < <(find "$TARGET_DIR" -type f -print0)  
+          if [ ${#invalid_files[@]} -ne 0 ]; then
+            echo "Error: The following files have invalid names:(File name should only contain lowercase letters, numbers, and hyphens.)"
+            for invalid_file in "${invalid_files[@]}"; do
+              echo "$invalid_file"
+            done
+            exit 1
+          else
+            echo "All file names are valid."
+          fi
+      - name: Check filename in home/docs
+        run: |
+          TARGET_DIR="./home/docs"
+          invalid_files=()
+          while IFS= read -r -d '' file; do
+            filename=$(basename "$file")
+            if [[ ! "$filename" =~ ^[_a-z0-9-]+(\.[_a-z0-9-]+)*$ ]]; then
+              invalid_files+=("$file")
+            fi
+          done < <(find "$TARGET_DIR" -type f -print0)  
+          if [ ${#invalid_files[@]} -ne 0 ]; then
+            echo "Error: The following files have invalid names:(File name should only contain lowercase letters, numbers, and hyphens.)"
+            for invalid_file in "${invalid_files[@]}"; do
+              echo "$invalid_file"
+            done
+            exit 1
+          else
+            echo "All file names are valid."
+          fi
+      - name: Check filename in /zh-cn/docusaurus-plugin-content-blog
+        run: |
+          TARGET_DIR="./home/i18n/zh-cn/docusaurus-plugin-content-blog"
+          invalid_files=()
+          while IFS= read -r -d '' file; do
+            filename=$(basename "$file")
+            if [[ ! "$filename" =~ ^[_a-z0-9-]+(\.[_a-z0-9-]+)*$ ]]; then
+              invalid_files+=("$file")
+            fi
+          done < <(find "$TARGET_DIR" -type f -print0)  
+          if [ ${#invalid_files[@]} -ne 0 ]; then
+            echo "Error: The following files have invalid names:(File name should only contain lowercase letters, numbers, and hyphens.)"
+            for invalid_file in "${invalid_files[@]}"; do
+              echo "$invalid_file"
+            done
+            exit 1
+          else
+            echo "All file names are valid."
+          fi
+      - name: Check filename in /home/i18n/zh-cn/docusaurus-plugin-content-docs/current
+        run: |
+          TARGET_DIR="./home/i18n/zh-cn/docusaurus-plugin-content-docs/current"
+          invalid_files=()
+          while IFS= read -r -d '' file; do
+            filename=$(basename "$file")
+            if [[ ! "$filename" =~ ^[_a-z0-9-]+(\.[_a-z0-9-]+)*$ ]]; then
+              invalid_files+=("$file")
+            fi
+          done < <(find "$TARGET_DIR" -type f -print0)  
+          if [ ${#invalid_files[@]} -ne 0 ]; then
+            echo "Error: The following files have invalid names:(File name should only contain lowercase letters, numbers, and hyphens.)"
+            for invalid_file in "${invalid_files[@]}"; do
+              echo "$invalid_file"
+            done
+            exit 1
+          else
+            echo "All file names are valid."
+          fi
+      - name: NPM INSTALL
+        working-directory: home
+        run: npm install
+      - name: NPM BUILD
+        working-directory: home
+        run: npm run build

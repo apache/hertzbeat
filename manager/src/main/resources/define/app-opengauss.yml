@@ -64,7 +64,7 @@ params:
       zh-CN: 用户名
       en-US: Username
     type: text
-    limit: 20
+    limit: 50
     required: false
   - field: password
     name:

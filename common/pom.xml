@@ -96,15 +96,6 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
-        <!-- sms -->
-        <dependency>
-            <groupId>com.tencentcloudapi</groupId>
-            <artifactId>tencentcloud-sdk-java-sms</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>dysmsapi20170525</artifactId>
-        </dependency>
         <!-- caffeine-->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
@@ -115,6 +106,11 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
         </dependency>
+        <!-- redis -->
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
+        </dependency>
         <!-- expr calculate -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -124,6 +120,13 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.beetstra.jutf7/jutf7 -->
+        <dependency>
+            <groupId>com.beetstra.jutf7</groupId>
+            <artifactId>jutf7</artifactId>
+            <version>1.0.0</version>
         </dependency>
     </dependencies>
 </project>

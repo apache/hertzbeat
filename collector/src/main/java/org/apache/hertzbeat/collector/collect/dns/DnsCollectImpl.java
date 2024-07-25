@@ -90,19 +90,20 @@ public class DnsCollectImpl extends AbstractCollect {
     private static final String AUTHORITY_ROW_COUNT = "authorityRowCount";
     private static final String ADDITIONAL_ROW_COUNT = "additionalRowCount";
 
-
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
         // compatible with monitoring template configurations of older versions
         if (StringUtils.isBlank(metrics.getDns().getQueryClass())) {
             metrics.getDns().setQueryClass(DClass.string(DClass.IN));
         }
         // check params
         if (checkDnsProtocolFailed(metrics.getDns())) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("DNS collect must have a valid DNS protocol param! ");
-            return;
+            throw new IllegalArgumentException("DNS collect must have a valid DNS protocol param! ");
         }
+    }
+
+    @Override
+    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
 
         DnsResolveResult dnsResolveResult;
         try {
@@ -157,7 +158,7 @@ public class DnsCollectImpl extends AbstractCollect {
         responseTimeStopWatch.start();
 
         Name name = Name.fromString(dns.getAddress(), Name.root);
-        Message query = Message.newQuery(Record.newRecord(name, Type.ANY, DClass.ANY));
+        Message query = Message.newQuery(Record.newRecord(name, Type.ANY, DClass.value(dns.getQueryClass())));
         Resolver res = new SimpleResolver(dns.getDnsServerIP());
         res.setTimeout(Duration.of(Long.parseLong(dns.getTimeout()), ChronoUnit.MILLIS));
         res.setTCP(Boolean.parseBoolean(dns.getTcp()));
@@ -194,7 +195,7 @@ public class DnsCollectImpl extends AbstractCollect {
 
     private List<String> getSectionInfo(Message message, int section) {
         List<RRset> currentSetList = message.getSectionRRsets(section);
-        
+
         if (CollectionUtils.isEmpty(currentSetList)) {
             return Lists.newArrayList();
         }
@@ -204,7 +205,6 @@ public class DnsCollectImpl extends AbstractCollect {
 
         return infoList;
     }
-
 
     @Data
     @Builder

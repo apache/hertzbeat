@@ -23,7 +23,7 @@ import lombok.Data;
 import lombok.ToString;
 
 /**
- *
+ * MetricFamily.
  */
 @Data
 @ToString
@@ -170,6 +170,11 @@ public class MetricFamily {
     public static class Summary {
 
         /**
+         * value
+         */
+        private double value;
+
+        /**
          * count
          */
         private long count;
@@ -206,6 +211,11 @@ public class MetricFamily {
      */
     @Data
     public static class Histogram {
+
+        /**
+         * value
+         */
+        private double value;
 
         /**
          * count

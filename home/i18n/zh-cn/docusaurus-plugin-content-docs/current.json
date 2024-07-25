@@ -1,6 +1,6 @@
 {
   "version.label": {
-    "message": "v1.5.x",
+    "message": "v1.6.x",
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
@@ -23,6 +23,10 @@
     "message": "SSH协议",
     "description": "The label for category ssh in sidebar docs"
   },
+  "sidebar.docs.category.telnet": {
+    "message": "TELNET协议",
+    "description": "The label for category telnet in sidebar docs"
+  },
   "sidebar.docs.category.help": {
     "message": "帮助文档",
     "description": "The label for category help in sidebar docs"
@@ -36,11 +40,11 @@
     "description": "The label for category database in sidebar docs"
   },
   "sidebar.docs.category.os": {
-    "message": "操作系统",
+    "message": "操作系统监控",
     "description": "The label for category os in sidebar docs"
   },
   "sidebar.docs.category.mid": {
-    "message": "中间件",
+    "message": "中间件监控",
     "description": "The label for category mid in sidebar docs"
   },
   "sidebar.docs.category.threshold": {
@@ -56,7 +60,7 @@
     "description": "The label for category Others in sidebar docs"
   },
   "sidebar.docs.category.cloud-native": {
-    "message": "云原生",
+    "message": "云原生监控",
     "description": "The label for category cloud-native in sidebar docs"
   },
   "sidebar.docs.link.Install via HuaweiCloud": {
@@ -80,19 +84,19 @@
     "description": "The label for category push in sidebar docs"
   },
   "sidebar.docs.category.program": {
-    "message": "应用程序",
+    "message": "应用程序监控",
     "description": "The label for category program in sidebar docs"
   },
   "sidebar.docs.category.cache": {
-    "message": "缓存",
+    "message": "缓存监控",
     "description": "The label for category cache in sidebar docs"
   },
   "sidebar.docs.category.bigdata": {
-    "message": "大数据",
+    "message": "大数据监控",
     "description": "The label for category bigdata in sidebar docs"
   },
   "sidebar.docs.category.webserver": {
-    "message": "Web服务器",
+    "message": "Web服务器监控",
     "description": "The label for category webserver in sidebar docs"
   },
   "sidebar.docs.category.Community": {
@@ -112,7 +116,19 @@
     "description": "The label for category release in sidebar docs"
   },
   "sidebar.docs.category.network": {
-    "message": "网络",
+    "message": "网络监控",
     "description": "The label for category network in sidebar docs"
+  },
+  "sidebar.docs.category.NGQL": {
+    "message": "NGQL",
+    "description": "The label for category NGQL in sidebar docs"
+  },
+  "sidebar.docs.category.llm": {
+    "message": "Ai大模型监控",
+    "description": "The label for category llm in sidebar docs"
+  },
+  "sidebar.docs.category.aiConfig": {
+    "message": "Ai大模型配置",
+    "description": "The label for category aiConfig in sidebar docs"
   }
 }

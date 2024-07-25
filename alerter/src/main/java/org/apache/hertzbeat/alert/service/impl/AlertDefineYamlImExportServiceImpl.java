@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
-
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-
 /**
  * Configure the import and export Yaml format
  */
@@ -38,7 +36,6 @@ public class AlertDefineYamlImExportServiceImpl extends AlertDefineAbstractImExp
 
     public static final String TYPE = "YAML";
     public static final String FILE_SUFFIX = ".yaml";
-
 
     @Override
     public String type() {

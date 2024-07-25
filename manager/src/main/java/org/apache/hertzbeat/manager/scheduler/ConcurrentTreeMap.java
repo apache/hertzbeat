@@ -72,11 +72,37 @@ public class ConcurrentTreeMap<K, V> extends TreeMap<K, V> {
         }
     }
 
+    public Map.Entry<K, V> higherOrFirstEntry(K key){
+        readWriteLock.readLock().lock();
+        try {
+            Map.Entry<K, V> entry = super.higherEntry(key);
+            if (entry == null) {
+                return super.firstEntry();
+            }
+            return entry;
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
+    }
+
     @Override
     public Map.Entry<K, V> ceilingEntry(K key) {
         readWriteLock.readLock().lock();
         try {
             return super.ceilingEntry(key);
+        } finally {
+            readWriteLock.readLock().unlock();
+        }
+    }
+
+    public Map.Entry<K, V> ceilingOrFirstEntry(K key) {
+        readWriteLock.readLock().lock();
+        try {
+            Map.Entry<K, V> entry = super.ceilingEntry(key);
+            if (entry == null) {
+                return super.firstEntry();
+            }
+            return entry;
         } finally {
             readWriteLock.readLock().unlock();
         }

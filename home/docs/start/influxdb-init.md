@@ -1,7 +1,7 @@
 ---
 id: influxdb-init  
 title: Use Time Series Database InfluxDB to Store Metrics Data (Optional)     
-sidebar_label: Use InfluxDB Store Metrics  
+sidebar_label: Metrics Store InfluxDB  
 ---
 
 Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
@@ -43,7 +43,7 @@ Note⚠️ Need InfluxDB 1.x Version.
 ### Configure the database connection in hertzbeat `application.yml` configuration file  
 
 1. Configure HertzBeat's configuration file   
-   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)        
+   Modify `hertzbeat/config/application.yml` configuration file          
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
    Replace `warehouse.store.influxdb` data source parameters, URL account and password.       
 

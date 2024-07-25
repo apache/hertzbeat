@@ -47,7 +47,6 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
-
 /**
  *  NebulaGraph collect
  */
@@ -67,15 +66,16 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
 
     private static final String STORAGE_API = "/rocksdb_stats";
 
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getNebulaGraph() == null) {
+            throw new IllegalArgumentException("NebulaGraph collect must has NebulaGraph params");
+        }
+    }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
         long startTime = System.currentTimeMillis();
-        if (metrics == null || metrics.getNebulaGraph() == null) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("NebulaGraph collect must has NebulaGraph params");
-            return;
-        }
         NebulaGraphProtocol nebulaGraph = metrics.getNebulaGraph();
         String timePeriod = nebulaGraph.getTimePeriod();
 

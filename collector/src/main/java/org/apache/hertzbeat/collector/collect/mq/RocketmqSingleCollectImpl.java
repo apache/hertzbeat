@@ -106,15 +106,20 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
         ThreadUtils.shutdownGracefully(this.executorService, 10L, TimeUnit.SECONDS);
     }
 
+    /**
+     * preCheck params
+     * @param metrics metrics config
+     */
+    @Override
+    public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        Assert.isTrue(metrics != null && metrics.getRocketmq() != null, "Mongodb collect must has rocketmq params");
+        RocketmqProtocol rocketmq = metrics.getRocketmq();
+        Assert.hasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
+        Assert.hasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
+    }
+
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        try {
-            preCheck(metrics);
-        } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return;
-        }
         DefaultMQAdminExt mqAdminExt = null;
         try {
             mqAdminExt = this.createMqAdminExt(metrics);
@@ -141,16 +146,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
         return DispatchConstants.PROTOCOL_ROCKETMQ;
     }
 
-    /**
-     * preCheck params
-     * @param metrics metrics config
-     */
-    private void preCheck(Metrics metrics) {
-        Assert.isTrue(metrics != null && metrics.getRocketmq() != null, "Mongodb collect must has rocketmq params");
-        RocketmqProtocol rocketmq = metrics.getRocketmq();
-        Assert.hasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
-        Assert.hasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
-    }
 
     /**
      * create the DefaultMQAdminExt

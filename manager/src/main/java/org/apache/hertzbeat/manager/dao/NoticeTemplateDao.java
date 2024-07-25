@@ -25,6 +25,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  * Query all enabled notification policies
  */
 public interface NoticeTemplateDao extends JpaRepository<NoticeTemplate, Long>, JpaSpecificationExecutor<NoticeTemplate> {
-    
 
 }

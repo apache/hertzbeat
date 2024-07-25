@@ -61,9 +61,8 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   showBasic = true;
 
   ngOnInit(): void {
-    this.loadRealTimeMetric();
     this.countDownTime = this.deadline;
-    this.interval$ = setInterval(this.countDown.bind(this), 1000);
+    this.loadRealTimeMetric();
   }
 
   loadMetricChart() {
@@ -157,6 +156,9 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           } else {
             console.warn(message.msg);
           }
+          if (this.interval$ === undefined) {
+            this.interval$ = setInterval(this.countDown.bind(this), 1000);
+          }
           this.isSpinning = false;
         },
         error => {
@@ -164,10 +166,6 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           console.error(error.msg);
         }
       );
-  }
-
-  showBasicStatus(show: boolean) {
-    this.showBasic = show;
   }
 
   countDown() {

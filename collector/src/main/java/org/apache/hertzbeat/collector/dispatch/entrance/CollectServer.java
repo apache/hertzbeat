@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.entrance.processor.CollectCyclicDataProcessor;
@@ -37,7 +38,6 @@ import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.support.CommonThreadPool;
-import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.remoting.RemotingClient;
 import org.apache.hertzbeat.remoting.event.NettyEventListener;
@@ -45,7 +45,6 @@ import org.apache.hertzbeat.remoting.netty.NettyClientConfig;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingClient;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
@@ -53,7 +52,7 @@ import org.springframework.stereotype.Component;
  * collect server
  */
 @Component
-@Order(value = Ordered.LOWEST_PRECEDENCE)
+@Order
 @ConditionalOnProperty(prefix = "collector.dispatch.entrance.netty",
         name = "enabled", havingValue = "true")
 @Slf4j
@@ -63,6 +62,8 @@ public class CollectServer implements CommandLineRunner {
 
     private final TimerDispatch timerDispatch;
 
+    private final CollectorInfoProperties infoProperties;
+    
     private RemotingClient remotingClient;
 
     private ScheduledExecutorService scheduledExecutor;
@@ -70,7 +71,8 @@ public class CollectServer implements CommandLineRunner {
     public CollectServer(final CollectJobService collectJobService,
                          final TimerDispatch timerDispatch,
                          final DispatchProperties properties,
-                         final CommonThreadPool threadPool) {
+                         final CommonThreadPool threadPool,
+                         final CollectorInfoProperties infoProperties) {
         if (properties == null || properties.getEntrance() == null || properties.getEntrance().getNetty() == null) {
             log.error("init error, please config dispatch entrance netty props in application.yml");
             throw new IllegalArgumentException("please config dispatch entrance netty props");
@@ -82,6 +84,7 @@ public class CollectServer implements CommandLineRunner {
         this.collectJobService = collectJobService;
         this.timerDispatch = timerDispatch;
         this.collectJobService.setCollectServer(this);
+        this.infoProperties = infoProperties;
         this.init(properties, threadPool);
     }
 
@@ -131,8 +134,9 @@ public class CollectServer implements CommandLineRunner {
             String mode = CollectServer.this.collectJobService.getCollectorMode();
             CollectorInfo collectorInfo = CollectorInfo.builder()
                     .name(identity)
-                    .ip(IpDomainUtil.getLocalhostIp())
+                    .ip(infoProperties.getIp())
                     .mode(mode)
+                    .version(infoProperties.getVersion())
                     // todo more info
                     .build();
             timerDispatch.goOnline();

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
-category: service
+category: llm
 # The monitoring type eg: linux windows tomcat mysql aws...
 app: openai
 # The monitoring i18n name
@@ -313,6 +313,9 @@ metrics:
       method: GET
       # if enabled https
       ssl: false
+      params:
+        start_date: ${@date}
+        end_date: ${@date+1d}
       # http auth
       authorization:
         # http auth type: Basic Auth, Digest Auth, Bearer Token

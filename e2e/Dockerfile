@@ -15,9 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-FROM ghcr.io/linuxsuren/api-testing:v0.0.16
+FROM ghcr.io/linuxsuren/api-testing:v0.0.17
 
 WORKDIR /workspace
 COPY . .
 
-CMD [ "/workspace/entrypoint.sh" ]
+CMD [ "/workspace/script/entrypoint.sh" ]

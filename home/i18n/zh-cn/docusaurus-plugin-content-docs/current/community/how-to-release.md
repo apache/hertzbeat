@@ -194,6 +194,12 @@ yarn package
 > 在项目根目录下执行以下命令
 
 ```shell
+mvn clean package -Prelease
+```
+
+然后
+
+```shell
 mvn clean install
 ```
 
@@ -206,7 +212,6 @@ mvn clean package -Pcluster
 生成的二进制包在:
 
 - `dist/apache-hertzbeat-{version}-incubating-bin.tar.gz`
-- `dist/apache-hertzbeat-{version}-incubating-docker-compose.tar.gz`
 - `dist/apache-hertzbeat-collector-{version}-incubating-bin.tar.gz`
 
 #### 3.4 打包项目源代码
@@ -250,9 +255,6 @@ apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz.sha512
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.asc
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz.sha512
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.asc
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz.sha512
@@ -286,8 +288,6 @@ apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz: OK
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-1.6.0-incubating-bin.tar.gz: OK
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz: OK
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz
 apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 ```
@@ -351,7 +351,7 @@ This is a call for vote to release Apache HertzBeat (incubating) version release
 Apache HertzBeat - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 Release notes:
-https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
 The release candidates:
 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
@@ -359,7 +359,7 @@ https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
 Git tag for the release:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
-The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
+The artifacts signed with PGP key [33545C76], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
 
 The vote will be open for at least 72 hours or until the necessary number of votes are reached.
@@ -385,7 +385,7 @@ More detail checklist please refer:
 https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist
 
 Steps to validate the release，Please refer to:
-https://hertzbeat.apache.org/community/release/how-to-verify
+https://hertzbeat.apache.org/docs/community/how_to_verify_release
 
 How to Build:
 https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
@@ -460,7 +460,7 @@ https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/
 Git tag for the release:
 https://github.com/apache/hertzbeat/releases/tag/v1.6.0-rc1
 
-The artifacts signed with PGP key [05016886], corresponding to [muchunjin@apache.org], that can be found in keys file:
+The artifacts signed with PGP key [33545C76], corresponding to [muchunjin@apache.org], that can be found in keys file:
 https://downloads.apache.org/incubator/hertzbeat/KEYS
 
 The vote will be open for at least 72 hours or until the necessary number of votes are reached.
@@ -475,7 +475,7 @@ More detailed checklist please refer:
 
 Steps to validate the release， Please refer to:
 • https://www.apache.org/info/verification.html
-• https://hertzbeat.apache.org/community/release/how-to-verify
+• https://hertzbeat.apache.org/docs/community/how_to_verify_release
 
 
 How to Build:
@@ -494,7 +494,6 @@ ChunJin Mu
 如果72小时后没有-1，回复邮件如下
 
 > `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org <br />
 > `Body`:
 
 ```
@@ -507,27 +506,24 @@ Chunjin Mu
 然后将统计投票结果，并发送投票结果邮件，如下所示。
 
 > `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org、tison@apache.org、willem.jiang@gmail.com <br />
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```
-Hi all,
+Hi Incubator Community,
 
-Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
-I'm happy to announce the vote has passed:
+The vote to release Apache HertzBeat (incubating) 1.6.0-rc4 has passed with 3 +1 binding and no +0 or -1 votes.
 
 3 binding votes, no +0 or -1 votes.
-Thanks for reviewing and voting.
 
 +3 (binding) +1, from:
-- cc
+- xxx
 
 no 0 or -1 votes.
 
 Vote thread:
-https://lists.apache.org/thread/k3cvcbzxqs6qy62d1o6r9pqpykcgvvhm
 
+https://lists.apache.org/thread/m1kyn4l30y55p6q39m0ys5djvdd73h0f
 
 Thanks everyone for your feedback and help with HertzBeat apache release. The HertzBeat team will take the steps to complete this release and will announce it soon.
 
@@ -558,41 +554,51 @@ https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugi
 
 #### 4.3 Github 生成 Release
 
-基于 release-1.6.0-rc1 分支创建一个名为 v1.6.0 的标签，并将此标签设置为 latest release。
+基于 release-1.6.0-rc1 分支修改创建一个名为 v1.6.0 的标签，并将此标签设置为 latest release。
+
+:::tip
+在原有的 Release 上面修改，无需重新创建 Release。
+:::
 
 然后输入发版标题和描述
 
 - 发版标题: 
 ```
-v1.6.0-incubating
+v1.6.0
 ```
 - 描述:
 ```
-Release-1.6.0-incubating
+xxx
 release note: xxx
 ```
 
 然后点击`Publish release`按钮。
 
-然后将 release-1.6.0-rc1 分支重命名 为release-1.6.0。
+然后将 release-1.6.0-rc1 分支重命名 为 release-1.6.0。
 
 #### 4.4 发送新版本公告邮件
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org <br />
-> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 1.6.0 <br />
+> `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
 ```
-Hi all,
+Hi Community,
 
 We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
-Once again I would like to express my thanks to your help.
+Thanks again for your help. 
 
-Apache HertzBeat(https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-Download Links: https://hertzbeat.apache.org/download/
-Release Notes: https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+Download Link: 
+https://hertzbeat.apache.org/docs/download/
+
+Release Note: 
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+
+Website: 
+https://hertzbeat.apache.org/
 
 HertzBeat Resources:
 - Issue: https://github.com/apache/hertzbeat/issues

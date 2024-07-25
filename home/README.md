@@ -49,6 +49,12 @@ If you are using GitHub pages for hosting, this command is a convenient way to b
 GITHUB_HOST=gitee.com USE_SSH=true yarn deploy  
 ```
 
+### Archive Version
+
+```shell
+yarn docusaurus docs:version v1.5.x
+```
+
 
 ## Directory Structure
 

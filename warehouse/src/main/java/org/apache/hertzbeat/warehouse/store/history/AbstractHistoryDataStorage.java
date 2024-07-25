@@ -18,12 +18,13 @@
 package org.apache.hertzbeat.warehouse.store.history;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.DisposableBean;
 
 /**
  * data storage abstract class
  */
 @Slf4j
-public abstract class AbstractHistoryDataStorage implements HistoryDataReader, HistoryDataWriter {
+public abstract class AbstractHistoryDataStorage implements HistoryDataReader, HistoryDataWriter, DisposableBean {
 
     protected boolean serverAvailable;
 

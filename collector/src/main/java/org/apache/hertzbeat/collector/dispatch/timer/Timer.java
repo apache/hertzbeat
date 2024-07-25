@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.dispatch.timer;
 
 import java.util.Set;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**

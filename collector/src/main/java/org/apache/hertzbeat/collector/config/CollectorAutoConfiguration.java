@@ -17,12 +17,15 @@
 
 package org.apache.hertzbeat.collector.config;
 
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Collector Auto Configuration
  * @version 2.1
  */
+
+@AutoConfiguration
 @ComponentScan(basePackages = "org.apache.hertzbeat.collector")
 public class CollectorAutoConfiguration {
 }

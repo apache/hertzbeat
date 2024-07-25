@@ -20,11 +20,16 @@ package org.apache.hertzbeat.common.util;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.TemporalAmount;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * time util
  */
-public class TimePeriodUtil {
+@Slf4j
+public final class TimePeriodUtil {
+
+    private TimePeriodUtil() {
+    }
 
     /**
      * parse tokenTime to TemporalAmount
@@ -32,6 +37,12 @@ public class TimePeriodUtil {
      * @return TemporalAmount
      */
     public static TemporalAmount parseTokenTime(String tokenTime) {
+
+        if (tokenTime == null || tokenTime.length() < 2) {
+            log.error("tokenTime is invalid");
+            return null;
+        }
+
         if (Character.isUpperCase(tokenTime.charAt(tokenTime.length() - 1))) {
             return Period.parse("P" + tokenTime);
         } else {

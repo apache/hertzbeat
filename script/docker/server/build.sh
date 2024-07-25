@@ -23,7 +23,6 @@ CURRENT_DIR=`pwd`
 cd ../../../dist
 # auto detect hertzbeat version
 VERSION=`ls apache-hertzbeat-*-incubating-docker-compose.tar.gz| awk -F"-" '{print $3}'`
-VERSION=`ls *.tar| awk -F"-" '{print $3}'`
 # use the version param
 if [ -n "$1" ]; then
     VERSION="$1";

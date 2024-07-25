@@ -88,7 +88,7 @@ params:
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
-    limit: 20
+    limit: 50
     # required-true or false
     required: false
   # field-param field key
@@ -155,8 +155,11 @@ metrics:
         i18n:
           zh-CN: 指标值
           en-US: value
-#      - field: description
-#        type: 1
+      - field: description
+        type: 1
+        i18n:
+          zh-CN: 说明
+          en-US: description
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -167,8 +170,7 @@ metrics:
       database: ^_^database^_^
       timeout: ^_^timeout^_^
       queryType: multiRow
-      sql: SELECT * FROM system.metrics LIMIT 10;
-
+      sql: SELECT  * FROM system.metrics where metric in ('VersionInteger','Query','Merge','Move','PartMutation','QueryThread','QueryPreempted','revision','TCPConnection','HTTPConnection','ZooKeeperWatch','EphemeralNode','contextLockWait','delayedInserts','dictCacheRequests','distributedSend','GlobalThread','GlobalThreadActive','LocalThread','LocalThreadActive','ReadonlyReplica','memoryTracking','OpenFileForRead','OpenFileForWrite','ReplicatedFetch','ReplicatedSend','ReplicatedChecks','RWLockWaitingReaders','RWLockWaitingWriters','RWLockActiveReaders','RWLockActiveWriters','storageBufferRows','StorageBufferBytes')
   - name: events
     priority: 2
     i18n:
@@ -186,8 +188,11 @@ metrics:
         i18n:
           zh-CN: 值
           en-US: value
-#      - field: description
-#        type: 1
+      - field: description
+        type: 1
+        i18n:
+          zh-CN: 说明
+          en-US: description
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -198,7 +203,7 @@ metrics:
       database: ^_^database^_^
       timeout: ^_^timeout^_^
       queryType: multiRow
-      sql: SELECT * FROM system.events LIMIT 5;
+      sql: SELECT * FROM system.events where event in ('Query','SelectQuery','InsertQuery','InsertedRows','InsertedBytes','FailedQuery','FailedSelectQuery','FileOpen','MergeTreeDataWriterRows','MergeTreeDataWriterCompressedBytes');
 
   - name: asynchronous
     priority: 3
@@ -217,8 +222,11 @@ metrics:
         i18n:
           zh-CN: 指标值
           en-US: value
-#      - field: description
-#        type: 1
+      - field: description
+        type: 1
+        i18n:
+          zh-CN: 说明
+          en-US: description
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -229,4 +237,4 @@ metrics:
       database: ^_^database^_^
       timeout: ^_^timeout^_^
       queryType: multiRow
-      sql: SELECT * FROM system.asynchronous_metrics LIMIT 10;
+      sql: SELECT * FROM system.asynchronous_metrics where metric in ('AsynchronousMetricsCalculationTimeSpent','jemalloc.arenas.all.muzzy_purged','jemalloc.arenas.all.dirty_purged','BlockReadBytes_ram1','jemalloc.background_thread.run_intervals','BlockQueueTime_nbd13','jemalloc.background_thread.num_threads','jemalloc.resident','InterserverThreads','BlockWriteMerges_nbd7','MarkCacheBytes','MarkCacheFiles','MaxPartCountForPartition');

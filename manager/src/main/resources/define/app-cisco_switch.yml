@@ -56,7 +56,7 @@ params:
     # default value
     defaultValue: 161
   # field-param field key
-  - field: version
+  - field: snmpVersion
     # name-param field display i18n name
     name:
       zh-CN: SNMP 版本
@@ -87,6 +87,11 @@ params:
     required: false
     # param field input placeholder
     placeholder: 'Snmp community for v1 v2c'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 0
+        - 1
   # field-param field key
   - field: username
     # name-param field display i18n name
@@ -96,11 +101,15 @@ params:
     # type-param field type(most mapping the html input type)
     type: text
     # when type is text, use limit to limit string length
-    limit: 20
+    limit: 50
     # required-true or false
     required: false
     # param field input placeholder
     placeholder: 'Snmp username for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
   # field-param field key
   - field: contextName
     # name-param field display i18n name
@@ -115,6 +124,10 @@ params:
     required: false
     # param field input placeholder
     placeholder: 'Snmp contextName for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: authPassphrase
     # name-param field display i18n name
@@ -129,6 +142,10 @@ params:
     required: false
     # param field input placeholder
     placeholder: 'Snmp authPassword for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: authPasswordEncryption
     # name-param field display i18n name
@@ -145,6 +162,10 @@ params:
         value: 0
       - label: SHA1
         value: 1
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: privPassphrase
     # name-param field display i18n name
@@ -159,6 +180,10 @@ params:
     required: false
     # param field input placeholder
     placeholder: 'Snmp authPassword for v3'
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: privPasswordEncryption
     # name-param field display i18n name
@@ -175,6 +200,10 @@ params:
         value: 0
       - label: AES128
         value: 1
+    # dependent parameter values list
+    depend:
+      snmpVersion:
+        - 3
     # field-param field key
   - field: timeout
     # name-param field display i18n name
@@ -261,7 +290,7 @@ metrics:
       # snmp community
       community: ^_^community^_^
       # snmp version
-      version: ^_^version^_^
+      version: ^_^snmpVersion^_^
       # snmp operation: get, walk
       operation: get
       # metrics oids: metric_name - oid_value
@@ -389,7 +418,7 @@ metrics:
       contextName: ^_^contextName^_^
       timeout: ^_^timeout^_^
       community: ^_^community^_^
-      version: ^_^version^_^
+      version: ^_^snmpVersion^_^
       operation: walk
       oids:
         ifIndex: 1.3.6.1.2.1.2.2.1.1

@@ -19,12 +19,11 @@ package org.apache.hertzbeat.manager.service;
 
 /**
  * <p>ConfigService interface provides CRUD operations for configurations.</p>
- * @param <T> 配置类型
+ * @param <T> configuration type.
  * @version 1.0
  */
 public interface GeneralConfigService<T> {
-    
-    
+
     /**
      * config type: email, sms
      * @return type string

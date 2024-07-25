@@ -26,16 +26,18 @@ import com.google.common.collect.Lists;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ConnectConfig;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientHealthStatus;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServerInfo;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.ServiceInstance;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ConnectConfig;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 
 /**
  * DiscoveryClient impl of Nacos
- *
  */
+@Slf4j
 public class NacosDiscoveryClient implements DiscoveryClient {
     private NamingService namingService;
     private ConnectConfig localConnectConfig;
@@ -63,20 +65,27 @@ public class NacosDiscoveryClient implements DiscoveryClient {
         if (Objects.isNull(namingService)) {
             throw new NullPointerException("NamingService is null");
         }
-        String serverStatus = namingService.getServerStatus();
-        return switch (serverStatus) {
-            case "UP" -> ServerInfo.builder()
+        ServerInfo serverInfo;
+        if (healthCheck()) {
+            serverInfo = ServerInfo.builder()
                     .address(localConnectConfig.getHost())
                     .port(String.valueOf(localConnectConfig.getPort()))
                     .build();
-            case "DOWN" -> throw new RuntimeException("Nacos connection failed");
-            default -> throw new RuntimeException("ServerStatus must be UP or DOWN");
-        };
+        } else {
+            throw new RuntimeException("NamingService is not healthy");
+        }
+
+        return serverInfo;
     }
 
     @Override
     public List<ServiceInstance> getServices() {
         if (Objects.isNull(namingService)) {
+            log.error("NamingService is null");
+            return Collections.emptyList();
+        }
+        if (!healthCheck()) {
+            log.error("NamingService is not healthy");
             return Collections.emptyList();
         }
         List<ServiceInstance> serviceInstanceList = Lists.newArrayList();
@@ -87,8 +96,12 @@ public class NacosDiscoveryClient implements DiscoveryClient {
                                 .serviceId(instance.getInstanceId())
                                 .serviceName(instance.getServiceName())
                                 .address(instance.getIp())
-                                .port(String.valueOf(instance.getPort()))
-                                .healthStatus(instance.isHealthy() ? "UP" : "DOWN")
+                                .weight(instance.getWeight())
+                                .metadata(instance.getMetadata())
+                                .port(instance.getPort())
+                                .healthStatus(instance.isHealthy()
+                                        ? DiscoveryClientHealthStatus.UP
+                                        : DiscoveryClientHealthStatus.DOWN)
                                 .build()));
             }
         } catch (NacosException e) {
@@ -99,6 +112,12 @@ public class NacosDiscoveryClient implements DiscoveryClient {
     }
 
     @Override
+    public boolean healthCheck() {
+
+        return namingService.getServerStatus().equals(DiscoveryClientHealthStatus.UP);
+    }
+
+    @Override
     public void close() {
         if (namingService == null) {
             return;
@@ -106,7 +125,8 @@ public class NacosDiscoveryClient implements DiscoveryClient {
 
         try {
             namingService.shutDown();
-        } catch (NacosException ignore) {
+        } catch (NacosException exception) {
+            log.error("Nacos client close exception: {}", exception.toString());
         }
     }
 }
