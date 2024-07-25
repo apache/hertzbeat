@@ -59,8 +59,8 @@ final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonParser parser = new JsonParser();
-        JsonObject jsonObject = parser.parse(response.body()).getAsJsonObject();
+//        JsonParser parser = new JsonParser();
+        JsonObject jsonObject = JsonParser.parseString(response.body()).getAsJsonObject();
         String accessToken = null;
         if (jsonObject.has(ACCESS_TOKEN)) {
             accessToken = jsonObject.get(ACCESS_TOKEN).getAsString();

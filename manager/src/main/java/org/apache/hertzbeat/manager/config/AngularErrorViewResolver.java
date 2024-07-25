@@ -19,9 +19,6 @@ package org.apache.hertzbeat.manager.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.template.TemplateAvailabilityProvider;
 import org.springframework.boot.autoconfigure.template.TemplateAvailabilityProviders;
@@ -33,10 +30,15 @@ import org.springframework.core.Ordered;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.View;
+
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
 
 /**
  * Solve the front-end routing problem of angular static website resources with DefaultErrorViewResolver and route the 404 website request to the angular front-end
@@ -134,7 +136,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
         }
 
         @Override
-        public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response)
+        public void render(Map<String, ?> model, @NonNull HttpServletRequest request, HttpServletResponse response)
                 throws Exception {
             response.setContentType(getContentType());
             FileCopyUtils.copy(this.resource.getInputStream(), response.getOutputStream());

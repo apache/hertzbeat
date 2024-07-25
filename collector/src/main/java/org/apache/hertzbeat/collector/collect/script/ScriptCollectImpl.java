@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -202,11 +203,7 @@ public class ScriptCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = mapValue.get(field);
-            if (fieldValue == null) {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            } else {
-                valueRowBuilder.addColumns(fieldValue);
-            }
+            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
         }
         builder.addValues(valueRowBuilder.build());
     }

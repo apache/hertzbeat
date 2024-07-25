@@ -61,7 +61,7 @@ public class AccountController {
     /**
      * account data provider
      */
-    private SurenessAccountProvider accountProvider = new DocumentAccountProvider();
+    private final SurenessAccountProvider accountProvider = new DocumentAccountProvider();
 
     @PostMapping("/form")
     @Operation(summary = "Account password login to obtain associated user information", description = "Account password login to obtain associated user information")

@@ -43,7 +43,7 @@ public class CommonSshClient {
         PropertyResolverUtils.updateProperty(
                 SSH_CLIENT, CoreModuleProperties.HEARTBEAT_INTERVAL.getName(), 2000);
         PropertyResolverUtils.updateProperty(
-                SSH_CLIENT, CoreModuleProperties.HEARTBEAT_REPLY_WAIT.getName(), 300_000);
+                SSH_CLIENT, CoreModuleProperties.HEARTBEAT_NO_REPLY_MAX.getName(), 300_000);
         PropertyResolverUtils.updateProperty(
                 SSH_CLIENT, CoreModuleProperties.SOCKET_KEEPALIVE.getName(), true);
         // set support all KeyExchange
