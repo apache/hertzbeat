@@ -171,6 +171,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // collector list
   collectorsLoading: boolean = false;
   collectors!: CollectorSummary[];
+  collectorsTabSelectedIndex = 0;
 
   // alert list
   alerts!: Alert[];
