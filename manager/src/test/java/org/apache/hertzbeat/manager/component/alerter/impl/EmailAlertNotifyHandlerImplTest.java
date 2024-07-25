@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import java.util.Date;
 import java.util.Properties;
-import java.util.ResourceBundle;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
