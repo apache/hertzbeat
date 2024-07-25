@@ -51,7 +51,7 @@ export class MonitorDataChartComponent implements OnInit {
   lineHistoryTheme!: EChartsOption;
   loading: boolean = true;
   echartsInstance!: any;
-  // 查询历史数据时间段 默认最近6小时
+  // Default historical data period is last 6 hours
   timePeriod: string = '6h';
   constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
@@ -228,7 +228,7 @@ export class MonitorDataChartComponent implements OnInit {
     if (isInterval == undefined) {
       isInterval = false;
     }
-    // 读取指标历史数据
+    // load historical metrics data
     this.loading = true;
     let metricData$ = this.monitorSvc
       .getMonitorMetricHistoryData(this.monitorId, this.app, this.metrics, this.metric, this.timePeriod, isInterval)
