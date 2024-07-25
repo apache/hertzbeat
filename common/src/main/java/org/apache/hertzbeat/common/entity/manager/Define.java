@@ -18,11 +18,8 @@
 package org.apache.hertzbeat.common.entity.manager;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,6 +48,7 @@ public class Define {
     @Schema(title = "app", example = "websocket")
     private String app;
 
+    @Lob
     @Column(columnDefinition = "text")
     @Schema(title = "define content", description = "define yml content")
     private String content;
