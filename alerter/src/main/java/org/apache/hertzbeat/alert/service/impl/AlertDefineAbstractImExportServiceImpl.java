@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
@@ -51,7 +50,7 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
         var formList = parseImport(is)
                 .stream()
                 .map(this::convert)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         if (!CollectionUtils.isEmpty(formList)) {
             formList.forEach(alertDefine -> {
                 alertDefineService.validate(alertDefine, false);
@@ -65,7 +64,7 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
         var monitorList = configList.stream()
                 .map(it -> alertDefineService.getAlertDefine(it))
                 .map(this::convert)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         writeOs(monitorList, os);
     }
 

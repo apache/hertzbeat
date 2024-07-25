@@ -32,6 +32,14 @@ import org.springframework.data.jpa.domain.Specification;
 public interface AlertService {
 
     /**
+     * Verify the correctness of the request data parameters
+     * @param alert        AlertSilence
+     * @param isModify     whether modify
+     * @throws IllegalArgumentException A checksum parameter error is thrown
+     */
+    void validate(Alert alert, boolean isModify) throws IllegalArgumentException;
+
+    /**
      * Add alarm record
      * @param alert Alert entity   
      * @throws RuntimeException Add process exception throw    

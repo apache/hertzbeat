@@ -50,6 +50,8 @@ public class AlertSilenceServiceImpl implements AlertSilenceService {
         // if the alarm silent selection date set in periodic situations is empty, it will be deemed to be all checked.
         if (alertSilence.getType() == 1 && alertSilence.getDays() == null) {
             alertSilence.setDays(Arrays.asList((byte) 7, (byte) 1, (byte) 2, (byte) 3, (byte) 4, (byte) 5, (byte) 6));
+        } else {
+            throw new IllegalArgumentException("periodic silence must set the alarm silent selection date");
         }
     }
 

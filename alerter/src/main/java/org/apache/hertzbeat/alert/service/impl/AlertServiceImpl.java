@@ -25,6 +25,7 @@ import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDao;
 import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
@@ -54,6 +55,14 @@ public class AlertServiceImpl implements AlertService {
     
     @Autowired
     private AlarmCommonReduce alarmCommonReduce;
+
+    @Override
+    public void validate(Alert alert, boolean isModify) throws IllegalArgumentException {
+        // todo
+        if (Objects.isNull(alert)) {
+            throw new IllegalArgumentException("Alarm priority cannot be empty");
+        }
+    }
 
     @Override
     public void addAlert(Alert alert) throws RuntimeException {
