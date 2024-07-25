@@ -33,6 +33,8 @@
           <br />
           {{ 'alert.notice.sender.mail.ssl' | i18n }}: {{ emailSender.emailSsl ? ('common.yes' | i18n) : ('common.no' | i18n) }}
           <br />
+          {{ 'alert.notice.sender.mail.starttls' | i18n }}: {{ emailSender.emailStarttls ? ('common.yes' | i18n) : ('common.no' | i18n) }}
+          <br />
           {{ 'alert.notice.sender.mail.enable' | i18n }}: {{ emailSender.enable ? ('common.yes' | i18n) : ('common.no' | i18n) }}
         </ng-template>
       </nz-list-item-meta>
@@ -93,6 +95,12 @@
         <nz-form-label nzSpan="7" nzFor="emailSsl" nzRequired="true">{{ 'alert.notice.sender.mail.ssl' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-switch [(ngModel)]="emailSender.emailSsl" required name="emailSsl" id="emailSsl"></nz-switch>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item>
+        <nz-form-label nzSpan="7" nzFor="emailStarttls" nzRequired="true">{{ 'alert.notice.sender.mail.starttls' | i18n }}</nz-form-label>
+        <nz-form-control nzSpan="12">
+          <nz-switch [(ngModel)]="emailSender.emailStarttls" required name="emailStarttls" id="emailStarttls"></nz-switch>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
