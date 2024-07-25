@@ -52,7 +52,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
- * Test case for {@link AliYunAlertNotifyHandlerImpl}
+ * Test case for {@link GotifyAlertNotifyHandlerImpl}
  */
 
 class GotifyAlertNotifyHandlerImplTest {
