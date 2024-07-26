@@ -91,7 +91,7 @@ class SmsAlertNotifyHandlerImplTest {
 
 		notifyHandler.send(receiver, noticeTemplate, alert);
 
-		String[] expectedParams = {"MonitorName", "严重告警", "Alert Content"};
+		String[] expectedParams = {"MonitorName", "Critical Alert", "Alert Content"};
 		verify(tencentSmsClient).sendMessage(expectedParams, new String[]{"1234567890"});
 	}
 
