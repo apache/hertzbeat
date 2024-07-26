@@ -45,6 +45,7 @@ export class MessageServerComponent implements OnInit {
   senderServerLoading: boolean = true;
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
+  isSmsServerModalVisible: boolean = false;
   emailSender = new EmailNoticeSender();
 
   ngOnInit(): void {
@@ -112,6 +113,48 @@ export class MessageServerComponent implements OnInit {
         },
         error => {
           this.isEmailServerModalVisible = false;
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
+        }
+      );
+  }
+
+  onConfigSmsServer() {
+    this.isSmsServerModalVisible = true;
+  }
+
+  onCancelSmsServer() {
+    this.isSmsServerModalVisible = false;
+  }
+
+  onSaveSmsServer() {
+    if (this.senderForm?.invalid) {
+      Object.values(this.senderForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
+    const modalOk$ = this.noticeSenderSvc
+      .saveGeneralConfig(this.emailSender, 'email')
+      .pipe(
+        finalize(() => {
+          modalOk$.unsubscribe();
+          this.senderServerLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.isSmsServerModalVisible = false;
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
+          }
+        },
+        error => {
+          this.isSmsServerModalVisible = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
         }
       );
