@@ -53,7 +53,6 @@ public class Define {
     private String app;
 
     @Lob
-    @Column(columnDefinition = "text")
     @Schema(title = "define content", description = "define yml content")
     private String content;
 
