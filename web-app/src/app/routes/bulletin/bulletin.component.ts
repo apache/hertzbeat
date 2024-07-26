@@ -249,7 +249,7 @@ export class BulletinComponent implements OnInit {
 
     const traverse = (nodes: any[], parentKey: string | null = null, parentId: number | null = null) => {
       nodes.forEach(node => {
-        const key = parentKey ? `${parentKey}-${node.value}` : node.value;
+        const key = parentKey ? `${parentKey}$$$${node.value}` : node.value;
         const isRootNode = parentId === null;
         const item: NzTreeNodeOptions = {
           id: currentId++,
