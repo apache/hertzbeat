@@ -93,8 +93,8 @@
       class="mobile-hide"
       nzAllowClear
       [nzPlaceHolder]="'monitor.status' | i18n"
-      (ngModelChange)="onFilterSearchMonitors()"
       [(ngModel)]="filterStatus"
+      (ngModelChange)="onFilterSearchMonitors()"
     >
       <nz-option [nzLabel]="'monitor.status.all' | i18n" [nzValue]="9"></nz-option>
       <nz-option [nzLabel]="'monitor.status.up' | i18n" [nzValue]="1"></nz-option>
