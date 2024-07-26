@@ -26,7 +26,19 @@ import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
  * Account service
  */
 public interface AccountService {
+    /**
+     * Account password login to obtain associated user information
+     * @param loginDto loginDto
+     * @return token info
+     * @throws AuthenticationException when authentication is failed
+     */
     Map<String, String> authGetToken(LoginDto loginDto) throws AuthenticationException;
 
+    /**
+     * Use refresh TOKEN to re-acquire TOKEN
+     * @param refreshToken refreshToken
+     * @return token and refresh token
+     * @throws AuthenticationException failed to refresh
+     */
     RefreshTokenResponse refreshToken(String refreshToken) throws AuthenticationException;
 }
