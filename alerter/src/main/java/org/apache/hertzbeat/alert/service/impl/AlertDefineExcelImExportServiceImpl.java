@@ -25,8 +25,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
+import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -73,7 +76,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
      * @return form list
      */
     @Override
-    List<ExportAlertDefineDTO> parseImport(InputStream is) {
+    public List<ExportAlertDefineDTO> parseImport(InputStream is) {
         try (Workbook workbook = WorkbookFactory.create(is)) {
             Sheet sheet = workbook.getSheetAt(0);
             List<ExportAlertDefineDTO> alertDefines = new ArrayList<>();
@@ -184,9 +187,9 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
      * @param os          output stream
      */
     @Override
-    void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
+    public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
         try {
-            Workbook workbook = WorkbookFactory.create(true);
+            Workbook workbook = new HSSFWorkbook();
             String sheetName = "Export AlertDefine";
             Sheet sheet = workbook.createSheet(sheetName);
             sheet.setDefaultColumnWidth(20);
