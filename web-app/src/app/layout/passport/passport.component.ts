@@ -12,12 +12,6 @@ import { CONSTANTS } from '../../shared/constants';
 })
 export class LayoutPassportComponent implements OnInit {
   version = CONSTANTS.VERSION;
-  links = [
-    {
-      title: this.i18nSvc.fanyi('app.passport.welcome'),
-      href: 'https://console.tancloud.cn'
-    }
-  ];
 
   currentYear = new Date().getFullYear();
 
