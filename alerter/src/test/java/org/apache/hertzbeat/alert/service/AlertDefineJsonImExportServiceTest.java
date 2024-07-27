@@ -1,0 +1,136 @@
+package org.apache.hertzbeat.alert.service;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
+import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
+import org.apache.hertzbeat.alert.service.impl.AlertDefineJsonImExportServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * test case for {@link AlertDefineJsonImExportServiceImpl}
+ */
+
+@ExtendWith(MockitoExtension.class)
+class AlertDefineJsonImExportServiceImplTest {
+
+	@Mock
+	private ObjectMapper objectMapper;
+
+	@InjectMocks
+	private AlertDefineJsonImExportServiceImpl service;
+
+	private static final String JSON_DATA = "[{\"alertDefine\":{\"app\":\"App1\",\"metric\":\"Metric1\",\"field\":\"Field1\",\"preset\":true,\"expr\":\"Expr1\",\"priority\":1,\"times\":1,\"tags\":[],\"enable\":true,\"recoverNotice\":true,\"template\":\"Template1\"}}]";
+
+	private InputStream inputStream;
+	private List<ExportAlertDefineDTO> alertDefineList;
+
+	@BeforeEach
+	public void setup() {
+
+		inputStream = new ByteArrayInputStream(JSON_DATA.getBytes());
+
+		AlertDefineDTO alertDefine = new AlertDefineDTO();
+		alertDefine.setApp("App1");
+		alertDefine.setMetric("Metric1");
+		alertDefine.setField("Field1");
+		alertDefine.setPreset(true);
+		alertDefine.setExpr("Expr1");
+		alertDefine.setPriority((byte) 1);
+		alertDefine.setTimes(1);
+		alertDefine.setTags(List.of());
+		alertDefine.setEnable(true);
+		alertDefine.setRecoverNotice(true);
+		alertDefine.setTemplate("Template1");
+
+		ExportAlertDefineDTO exportAlertDefine = new ExportAlertDefineDTO();
+		exportAlertDefine.setAlertDefine(alertDefine);
+
+		alertDefineList = List.of(exportAlertDefine);
+	}
+
+	@Test
+	void testParseImport() throws IOException {
+
+		when(objectMapper.readValue(
+				any(InputStream.class),
+				any(TypeReference.class))
+		).thenReturn(alertDefineList);
+
+		List<ExportAlertDefineDTO> result = service.parseImport(inputStream);
+
+		assertNotNull(result);
+		assertEquals(1, result.size());
+		assertEquals(alertDefineList, result);
+		verify(objectMapper, times(1)).readValue(any(InputStream.class), any(TypeReference.class));
+	}
+
+	@Test
+	void testParseImportFailed() throws IOException {
+
+		when(objectMapper.readValue(
+				any(InputStream.class),
+				any(TypeReference.class))
+		).thenThrow(new IOException("Test Exception"));
+
+		RuntimeException exception = assertThrows(RuntimeException.class, () -> service.parseImport(inputStream));
+
+		assertEquals("import alertDefine failed", exception.getMessage());
+		verify(objectMapper, times(1)).readValue(any(InputStream.class), any(TypeReference.class));
+	}
+
+	@Test
+	void testWriteOs() throws IOException {
+
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+		service.writeOs(alertDefineList, outputStream);
+
+		verify(
+				objectMapper,
+				times(1)
+		).writeValue(
+				any(OutputStream.class),
+				eq(alertDefineList)
+		);
+	}
+
+	@Test
+	void testWriteOsFailed() throws IOException {
+
+		doThrow(new IOException("Test Exception")).when(objectMapper).writeValue(any(OutputStream.class), any());
+
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+		RuntimeException exception = assertThrows(
+				RuntimeException.class,
+				() -> service.writeOs(alertDefineList, outputStream)
+		);
+
+		assertEquals("export alertDefine failed", exception.getMessage());
+		verify(objectMapper, times(1)).writeValue(any(OutputStream.class), eq(alertDefineList));
+	}
+
+}
