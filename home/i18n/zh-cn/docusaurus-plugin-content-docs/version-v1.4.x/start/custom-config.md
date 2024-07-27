@@ -50,7 +50,7 @@ common:
 ```yaml
 alerter:
   # 自定义控制台地址
-  console-url: https://console.tancloud.cn
+  console-url: https://console.tancloud.io
 ```
 
 3. 使用外置redis代替内存存储实时指标数据  
