@@ -39,9 +39,7 @@
     </nz-list-item>
     <nz-list-item [nzActions]="[phoneOp]">
       <ng-template #phoneOp>
-        <a disabled>
-          {{ 'common.button.setting' | i18n }}
-        </a>
+        <a (click)="onConfigSmsServer()">{{ 'common.button.setting' | i18n }}</a>
       </ng-template>
       <nz-list-item-meta [nzTitle]="'settings.server.sms' | i18n" [nzDescription]="smsDesc">
         <ng-template #emailOp>
@@ -49,15 +47,15 @@
         </ng-template>
         <nz-list-item-meta [nzTitle]="'settings.server.sms' | i18n" [nzDescription]="smsDesc">
           <ng-template #smsDesc>
-            {{ 'alert.notice.sender.mail.host' | i18n }}: {{ emailSender.emailHost }}
+            {{ 'alert.notice.sender.sms.tencent.secretId' | i18n }}: {{ smsNoticeSender.secretId }}
             <br />
-            {{ 'alert.notice.sender.mail.username' | i18n }}: {{ emailSender.emailUsername }}
+            {{ 'alert.notice.sender.sms.tencent.secretKey' | i18n }}: {{ smsNoticeSender.secretKey }}
             <br />
-            {{ 'alert.notice.sender.mail.port' | i18n }}: {{ emailSender.emailPort }}
+            {{ 'alert.notice.sender.sms.tencent.signName' | i18n }}: {{ smsNoticeSender.signName }}
             <br />
-            {{ 'alert.notice.sender.mail.ssl' | i18n }}: {{ emailSender.emailSsl ? ('common.yes' | i18n) : ('common.no' | i18n) }}
+            {{ 'alert.notice.sender.sms.tencent.appId' | i18n }}: {{ smsNoticeSender.appId }}
             <br />
-            {{ 'alert.notice.sender.mail.enable' | i18n }}: {{ emailSender.enable ? ('common.yes' | i18n) : ('common.no' | i18n) }}
+            {{ 'alert.notice.sender.sms.tencent.templateId' | i18n }}: {{ smsNoticeSender.templateId }}
           </ng-template>
         </nz-list-item-meta>
       </nz-list-item-meta>
@@ -130,39 +128,47 @@
   <div *nzModalContent class="-inner-content">
     <form nz-form #senderForm="ngForm">
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="emailHost" nzRequired="true">{{ 'alert.notice.sender.mail.host' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="secretId" nzRequired="true">{{
+          'alert.notice.sender.sms.tencent.secretId' | i18n
+        }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="emailSender.emailHost" nz-input required name="emailHost" type="text" id="emailHost" />
+          <input [(ngModel)]="smsNoticeSender.secretId" nz-input required name="secretId" type="text" id="secretId" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="emailPort" nzRequired="true">{{ 'alert.notice.sender.mail.port' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="secretKey" nzRequired="true">{{
+          'alert.notice.sender.sms.tencent.secretKey' | i18n
+        }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="emailSender.emailPort" nz-input required name="emailPort" type="number" id="emailPort" />
+          <input [(ngModel)]="smsNoticeSender.secretKey" nz-input required name="secretKey" type="number" id="secretKey" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="emailUsername" nzRequired="true">{{ 'alert.notice.sender.mail.username' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="signName" nzRequired="true">{{
+          'alert.notice.sender.sms.tencent.signName' | i18n
+        }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="emailSender.emailUsername" nz-input required name="emailUsername" type="text" id="emailUsername" />
+          <input [(ngModel)]="smsNoticeSender.signName" nz-input required name="signName" type="text" id="signName" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label [nzSpan]="7" nzFor="emailPassword" nzRequired="true">{{ 'alert.notice.sender.mail.password' | i18n }}</nz-form-label>
+        <nz-form-label [nzSpan]="7" nzFor="appId" nzRequired="true">{{ 'alert.notice.sender.sms.tencent.appId' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <input [(ngModel)]="emailSender.emailPassword" nz-input required name="emailPassword" type="password" id="emailPassword" />
+          <input [(ngModel)]="smsNoticeSender.appId" nz-input required name="appId" type="text" id="appId" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="emailSsl" nzRequired="true">{{ 'alert.notice.sender.mail.ssl' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="templateId" nzRequired="true">{{
+          'alert.notice.sender.sms.tencent.templateId' | i18n
+        }}</nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-switch [(ngModel)]="emailSender.emailSsl" required name="emailSsl" id="emailSsl"></nz-switch>
+          <input [(ngModel)]="smsNoticeSender.templateId" nz-input required name="templateId" type="text" id="templateId" />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item>
-        <nz-form-label nzSpan="7" nzFor="emailEnable" nzRequired="true">{{ 'alert.notice.sender.enable' | i18n }}</nz-form-label>
+        <nz-form-label nzSpan="7" nzFor="smsEnable" nzRequired="true">{{ 'alert.notice.sender.enable' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
-          <nz-switch [(ngModel)]="emailSender.enable" required name="emailEnable" id="emailEnable"></nz-switch>
+          <nz-switch [(ngModel)]="smsNoticeSender.enable" required name="smsEnable" id="smsEnable"></nz-switch>
         </nz-form-control>
       </nz-form-item>
     </form>

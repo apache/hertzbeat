@@ -26,6 +26,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
+import { TencentSmsSender } from '../../../../pojo/TencentSmsSender';
 import { GeneralConfigService } from '../../../../service/general-config.service';
 
 @Component({
@@ -47,6 +48,7 @@ export class MessageServerComponent implements OnInit {
   isEmailServerModalVisible: boolean = false;
   isSmsServerModalVisible: boolean = false;
   emailSender = new EmailNoticeSender();
+  smsNoticeSender = new TencentSmsSender();
 
   ngOnInit(): void {
     this.loadSenderServer();
@@ -137,7 +139,7 @@ export class MessageServerComponent implements OnInit {
       return;
     }
     const modalOk$ = this.noticeSenderSvc
-      .saveGeneralConfig(this.emailSender, 'email')
+      .saveGeneralConfig(this.smsNoticeSender, 'sms')
       .pipe(
         finalize(() => {
           modalOk$.unsubscribe();
