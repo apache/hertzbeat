@@ -125,13 +125,7 @@ class AlertDefineJsonImExportServiceImplTest {
 
 		service.writeOs(alertDefineList, outputStream);
 
-		verify(
-				objectMapper,
-				times(1)
-		).writeValue(
-				any(OutputStream.class),
-				eq(alertDefineList)
-		);
+		verify(objectMapper, times(1)).writeValue(any(OutputStream.class), eq(alertDefineList));
 	}
 
 	@Test
