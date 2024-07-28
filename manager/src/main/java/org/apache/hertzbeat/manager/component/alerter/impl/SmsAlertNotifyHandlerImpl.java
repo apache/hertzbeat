@@ -57,33 +57,42 @@ final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         // SMS notification
         try {
-            boolean useDatabase = false;
-            GeneralConfig smsConfig = generalConfigDao.findByType(TYPE);
-            if (smsConfig != null && smsConfig.getContent() != null) {
-                // enable database configuration
-                String content = smsConfig.getContent();
-                SmsNoticeSender smsNoticeSenderConfig = JsonUtil.fromJson(content, SmsNoticeSender.class);
-                if (smsNoticeSenderConfig.isEnable()) {
-                    if (SmsTypeEnum.tencent.name().equalsIgnoreCase(smsNoticeSenderConfig.getType())) {
-                        tencentSmsClient = new TencentSmsClient(smsNoticeSenderConfig.getTencent());
-                        useDatabase = true;
-                    }
-                }
-            }
-            if (!useDatabase) {
-                tencentSmsClient = new TencentSmsClient(commonProperties);
-            }
-            String monitorName = null;
-            if (alert.getTags() != null) {
-                monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
-            }
-            String[] params = new String[3];
-            params[0] = monitorName == null ? alert.getTarget() : monitorName;
-            params[1] = bundle.getString("alerter.priority." + alert.getPriority());
-            params[2] = alert.getContent();
-            tencentSmsClient.sendMessage(params, new String[]{receiver.getPhone()});
+            getSmsSender();
+            doSendSms(receiver, alert);
         } catch (Exception e) {
             throw new AlertNoticeException("[Sms Notify Error] " + e.getMessage());
+        }
+    }
+    
+    private void doSendSms(final NoticeReceiver receiver, final Alert alert) {
+        String monitorName = null;
+        if (alert.getTags() != null) {
+            monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
+        }
+        String[] params = new String[3];
+        params[0] = monitorName == null ? alert.getTarget() : monitorName;
+        params[1] = bundle.getString("alerter.priority." + alert.getPriority());
+        params[2] = alert.getContent();
+        tencentSmsClient.sendMessage(params, new String[]{receiver.getPhone()});
+    }
+    
+    private void getSmsSender() {
+        boolean useDatabase = false;
+        GeneralConfig smsConfig = generalConfigDao.findByType(TYPE);
+        if (smsConfig != null && smsConfig.getContent() != null) {
+            // enable database configuration
+            String content = smsConfig.getContent();
+            SmsNoticeSender smsNoticeSenderConfig = JsonUtil.fromJson(content, SmsNoticeSender.class);
+            if (null != smsNoticeSenderConfig && smsNoticeSenderConfig.isEnable()) {
+                // tencent sms
+                if (SmsTypeEnum.tencent.name().equalsIgnoreCase(smsNoticeSenderConfig.getType())) {
+                    tencentSmsClient = new TencentSmsClient(smsNoticeSenderConfig.getTencent());
+                    useDatabase = true;
+                }
+            }
+        }
+        if (!useDatabase) {
+            tencentSmsClient = new TencentSmsClient(commonProperties);
         }
     }
     
