@@ -17,9 +17,7 @@
  * under the License.
  */
 
-import { SmsNoticeSender } from './SmsNoticeSender';
-
-export class TencentSmsSender extends SmsNoticeSender {
+export class AlibabaSmsConfig {
   secretId!: string;
   secretKey!: string;
   signName!: string;

@@ -335,6 +335,7 @@
   "alert.notice.sender.mail.port": "Email Port",
   "alert.notice.sender.mail.ssl": "Enable SSL",
   "alert.notice.sender.mail.enable": "Enable Email Configuration",
+  "alert.notice.sender.sms.type": "Sms Type",
   "alert.notice.sender.sms.tencent.secretId": "Tencent Sms SecretId",
   "alert.notice.sender.sms.tencent.secretKey": "Tencent Sms SecretKey",
   "alert.notice.sender.sms.tencent.signName": "Tencent Sms SignName",

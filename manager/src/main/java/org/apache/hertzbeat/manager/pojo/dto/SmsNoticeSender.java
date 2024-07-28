@@ -23,27 +23,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Tencent Sms Sender configuration dto
+ * Sms Sender configuration dto
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TencentSmsNoticeSender {
-
-    @NotBlank(message = "SecretId cannot be empty")
-    private String secretId;
-
-    @NotBlank(message = "SecretKey cannot be empty")
-    private String secretKey;
-
-    @NotBlank(message = "SignName cannot be empty")
-    private String signName;
-
-    @NotBlank(message = "AppId cannot be null")
-    private String appId;
-
-    @NotBlank(message = "templateId cannot be null")
-    private String templateId;
+public class SmsNoticeSender {
+    
+    @NotBlank(message = "Type cannot be empty")
+    private String type;
+    
+    private SmsTencentConfig tencent;
 
     private boolean enable = true;
 }

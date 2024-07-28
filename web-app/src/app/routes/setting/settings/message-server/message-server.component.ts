@@ -24,9 +24,11 @@ import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
+import { AlibabaSmsConfig } from 'src/app/pojo/AlibabaSmsConfig';
+import { SmsNoticeSender } from 'src/app/pojo/SmsNoticeSender';
+import { TencentSmsConfig } from 'src/app/pojo/TencentSmsConfig';
 
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
-import { TencentSmsSender } from '../../../../pojo/TencentSmsSender';
 import { GeneralConfigService } from '../../../../service/general-config.service';
 
 @Component({
@@ -47,14 +49,16 @@ export class MessageServerComponent implements OnInit {
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
   isSmsServerModalVisible: boolean = false;
+  smsType: string = 'tencent';
   emailSender = new EmailNoticeSender();
-  smsNoticeSender = new TencentSmsSender();
+  smsNoticeSender = new SmsNoticeSender();
 
   ngOnInit(): void {
-    this.loadSenderServer();
+    this.loadEmailSenderServer();
+    this.loadSmsSenderServer();
   }
 
-  loadSenderServer() {
+  loadEmailSenderServer() {
     this.senderServerLoading = true;
     let senderInit$ = this.noticeSenderSvc.getGeneralConfig('email').subscribe(
       message => {
@@ -120,12 +124,54 @@ export class MessageServerComponent implements OnInit {
       );
   }
 
+  loadSmsSenderServer() {
+    this.senderServerLoading = true;
+    let senderInit$ = this.noticeSenderSvc.getGeneralConfig('sms').subscribe(
+      message => {
+        this.senderServerLoading = false;
+        if (message.code === 0) {
+          if (message.data) {
+            this.smsNoticeSender = message.data;
+            this.smsType = message.data.type;
+          } else {
+            this.smsNoticeSender = new SmsNoticeSender();
+            this.smsNoticeSender.type = 'tencent';
+            this.smsNoticeSender.tencent = new TencentSmsConfig();
+          }
+        } else {
+          console.warn(message.msg);
+        }
+        senderInit$.unsubscribe();
+      },
+      error => {
+        console.error(error.msg);
+        this.senderServerLoading = false;
+        senderInit$.unsubscribe();
+      }
+    );
+  }
+
   onConfigSmsServer() {
     this.isSmsServerModalVisible = true;
   }
 
   onCancelSmsServer() {
     this.isSmsServerModalVisible = false;
+  }
+
+  onSmsTypeChange(value: string) {
+    console.log(value);
+    if (value === 'tencent') {
+      // tencent sms sender
+      this.smsType = 'tencent';
+      // this.smsNoticeSender.type = 'tencent';
+      // this.smsNoticeSender.tencent = new TencentSmsConfig();
+    } else if (value === 'alibaba') {
+      // alibaba sms sender
+      this.smsType = 'alibaba';
+      // this.smsNoticeSender.type = 'alibaba';
+      // this.smsNoticeSender.tencent = new AlibabaSmsConfig();
+    }
   }
 
   onSaveSmsServer() {
@@ -138,6 +184,7 @@ export class MessageServerComponent implements OnInit {
       });
       return;
     }
+    console.log(this.smsNoticeSender);
     const modalOk$ = this.noticeSenderSvc
       .saveGeneralConfig(this.smsNoticeSender, 'sms')
       .pipe(

@@ -17,15 +17,10 @@
  * under the License.
  */
 
-import { TencentSmsConfig } from './TencentSmsConfig';
-
-export class SmsNoticeSender {
-  id!: number;
-  type!: string;
-  tencent!: TencentSmsConfig;
-  enable!: boolean;
-  creator!: string;
-  modifier!: string;
-  gmtCreate!: number;
-  gmtUpdate!: number;
+export class TencentSmsConfig {
+  secretId!: string;
+  secretKey!: string;
+  signName!: string;
+  appId!: string;
+  templateId!: string;
 }
