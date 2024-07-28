@@ -26,15 +26,15 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class PrometheusParseCreater implements InitializingBean {
-    private static AbstractPrometheusParse PROMETHEUSPARSE = new PrometheusVectorParser();
+public class PrometheusParseCreator implements InitializingBean {
+    private static final AbstractPrometheusParse PROMETHEUS_PARSE = new PrometheusVectorParser();
 
     private static void create() {
-        PROMETHEUSPARSE.setInstance(new PrometheusMatrixParser().setInstance(new PrometheusLastParser()));
+        PROMETHEUS_PARSE.setInstance(new PrometheusMatrixParser().setInstance(new PrometheusLastParser()));
     }
 
     public static AbstractPrometheusParse getPrometheusParse(){
-        return PROMETHEUSPARSE;
+        return PROMETHEUS_PARSE;
     }
 
     @Override

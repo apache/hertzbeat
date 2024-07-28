@@ -137,9 +137,7 @@ public class AlertServiceImpl implements AlertService {
         StringBuilder sb = new StringBuilder();
         if (alertReport.getContent() == null || alertReport.getContent().length() <= 0){
             StringBuilder finalSb = sb;
-            annotations.forEach((k, v) -> {
-                finalSb.append(k).append(":").append(v).append("\n");
-            });
+            annotations.forEach((k, v) -> finalSb.append(k).append(":").append(v).append("\n"));
         } else {
             sb = new StringBuilder(alertReport.getContent());
         }

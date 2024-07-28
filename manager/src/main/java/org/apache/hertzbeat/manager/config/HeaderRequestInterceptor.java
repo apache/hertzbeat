@@ -24,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.lang.NonNull;
 
 /**
  * Rest Template interceptor adds request header information
@@ -31,7 +32,7 @@ import org.springframework.http.client.ClientHttpResponse;
 public class HeaderRequestInterceptor implements ClientHttpRequestInterceptor {
     
     @Override
-    public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution)
+    public ClientHttpResponse intercept(HttpRequest request, @NonNull byte[] body, @NonNull ClientHttpRequestExecution execution)
             throws IOException {
         // Send json by default
         if (request.getHeaders().getContentType() == null) {
