@@ -22,17 +22,23 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineYamlImExportServiceImpl;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.yaml.snakeyaml.Yaml;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -97,17 +103,18 @@ class AlertDefineYamlImExportServiceTest {
 	}
 
 	@Test
-	void testParseImport() {
+	void testParseImport() throws IllegalAccessException {
 
 		List<ExportAlertDefineDTO> result = service.parseImport(inputStream);
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
 
-		// yaml load data to string result and alertDefineList are not equal. why?
-		// System.out.println(alertDefineList.toString());
-		// System.out.println(result.toString());
-		// assertEquals(alertDefineList, result);
+		InputStream inputStream = new ByteArrayInputStream(JsonUtil.toJson(alertDefineList)
+				.getBytes(StandardCharsets.UTF_8));
+		Yaml yaml = new Yaml();
+
+		assertEquals(yaml.load(inputStream), result);
 	}
 
 	@Test
