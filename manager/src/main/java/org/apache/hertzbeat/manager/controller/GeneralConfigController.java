@@ -47,7 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Alert sender Configuration API")
 @Slf4j
 public class GeneralConfigController {
-    private Map<String, GeneralConfigService> configServiceMap;
+    private final Map<String, GeneralConfigService> configServiceMap;
 
     public GeneralConfigController(List<GeneralConfigService> generalConfigServices) {
         configServiceMap = new HashMap<>(8);

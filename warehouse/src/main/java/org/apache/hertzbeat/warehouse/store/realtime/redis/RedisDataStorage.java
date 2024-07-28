@@ -65,15 +65,13 @@ public class RedisDataStorage extends AbstractRealTimeDataStorage {
             return;
         }
 
-        redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> {
-            future.thenAccept(response -> {
-                if (response) {
-                    log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
-                } else {
-                    log.debug("[warehouse] redis replace data {}:{}.", key, hashKey);
-                }
-            });
-        });
+        redisCommandDelegate.operate().hset(key, hashKey, metricsData, future -> future.thenAccept(response -> {
+            if (response) {
+                log.debug("[warehouse] redis add new data {}:{}.", key, hashKey);
+            } else {
+                log.debug("[warehouse] redis replace data {}:{}.", key, hashKey);
+            }
+        }));
     }
 
     @Override
