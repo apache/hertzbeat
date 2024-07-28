@@ -336,6 +336,8 @@
   "alert.notice.sender.mail.ssl": "是否啟用SSL",
   "alert.notice.sender.mail.enable": "啟用郵件設定",
   "alert.notice.sender.sms.type": "騰訊類型",
+  "alert.notice.sender.sms.type.tencent": "騰訊短訊",
+  "alert.notice.sender.sms.type.alibaba": "阿裏短訊",
   "alert.notice.sender.sms.tencent.secretId": "騰訊短訊SecretId",
   "alert.notice.sender.sms.tencent.secretKey": "騰訊短訊SecretKey",
   "alert.notice.sender.sms.tencent.signName": "騰訊短訊SignName",

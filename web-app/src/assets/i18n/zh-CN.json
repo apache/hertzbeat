@@ -337,6 +337,8 @@
   "alert.notice.sender.mail.ssl": "是否启用SSL",
   "alert.notice.sender.mail.enable": "是否启用邮箱配置",
   "alert.notice.sender.sms.type": "短信类型",
+  "alert.notice.sender.sms.type.tencent": "腾讯短信",
+  "alert.notice.sender.sms.type.alibaba": "阿里短信",
   "alert.notice.sender.sms.tencent.secretId": "腾讯短信SecretId",
   "alert.notice.sender.sms.tencent.secretKey": "腾讯短信SecretKey",
   "alert.notice.sender.sms.tencent.signName": "腾讯短信SignName",

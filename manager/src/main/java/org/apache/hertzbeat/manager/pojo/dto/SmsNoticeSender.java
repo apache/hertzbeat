@@ -34,6 +34,8 @@ public class SmsNoticeSender {
     private String type;
     
     private SmsTencentConfig tencent;
+    
+    private SmsAlibabaConfig alibaba;
 
     private boolean enable = true;
 }

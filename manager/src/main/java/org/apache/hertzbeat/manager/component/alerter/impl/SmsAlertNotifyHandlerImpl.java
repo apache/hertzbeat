@@ -20,14 +20,19 @@ package org.apache.hertzbeat.manager.component.alerter.impl;
 import java.util.ResourceBundle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.SmsTypeEnum;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
+import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
+import org.apache.hertzbeat.manager.pojo.dto.SmsNoticeSender;
 import org.apache.hertzbeat.manager.service.TencentSmsClient;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
@@ -36,17 +41,38 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@ConditionalOnProperty("common.sms.tencent.app-id")
 final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
-
-    private final TencentSmsClient tencentSmsClient;
-
+    
+    private static final String TYPE = "sms";
+    
+    private final GeneralConfigDao generalConfigDao;
+    
+    private final CommonProperties commonProperties;
+    
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
-
+    
+    private TencentSmsClient tencentSmsClient;
+    
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         // SMS notification
         try {
+            boolean useDatabase = false;
+            GeneralConfig smsConfig = generalConfigDao.findByType(TYPE);
+            if (smsConfig != null && smsConfig.getContent() != null) {
+                // enable database configuration
+                String content = smsConfig.getContent();
+                SmsNoticeSender smsNoticeSenderConfig = JsonUtil.fromJson(content, SmsNoticeSender.class);
+                if (smsNoticeSenderConfig.isEnable()) {
+                    if (SmsTypeEnum.tencent.name().equalsIgnoreCase(smsNoticeSenderConfig.getType())) {
+                        tencentSmsClient = new TencentSmsClient(smsNoticeSenderConfig.getTencent());
+                        useDatabase = true;
+                    }
+                }
+            }
+            if (!useDatabase) {
+                tencentSmsClient = new TencentSmsClient(commonProperties);
+            }
             String monitorName = null;
             if (alert.getTags() != null) {
                 monitorName = alert.getTags().get(CommonConstants.TAG_MONITOR_NAME);
@@ -60,7 +86,7 @@ final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
             throw new AlertNoticeException("[Sms Notify Error] " + e.getMessage());
         }
     }
-
+    
     @Override
     public byte type() {
         return 0;

@@ -17,12 +17,14 @@
  * under the License.
  */
 
+import { AlibabaSmsConfig } from './AlibabaSmsConfig';
 import { TencentSmsConfig } from './TencentSmsConfig';
 
 export class SmsNoticeSender {
   id!: number;
   type!: string;
   tencent!: TencentSmsConfig;
+  alibaba!: AlibabaSmsConfig;
   enable!: boolean;
   creator!: string;
   modifier!: string;

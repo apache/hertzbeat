@@ -15,34 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.manager.pojo.dto;
+
+import lombok.Data;
 
 /**
- * Sms type Enum
+ * Alibaba Sms Sender configuration dto
  */
-public enum SmsTypeEnum {
-
-    /**
-     * tencent sms
-     */
-    tencent,
-    
-    /**
-     * alibaba sms
-     */
-    alibaba;
-    
-    /**
-     * get type
-     */
-    public static SmsTypeEnum getTypeByName(String type) {
-        for (SmsTypeEnum smsTypeEnum : values()) {
-            if (smsTypeEnum.name().equals(type)) {
-                return smsTypeEnum;
-            }
-
-        }
-        return null;
-    }
+@Data
+public class SmsAlibabaConfig {
 
 }

@@ -43,7 +43,7 @@
       </ng-template>
       <nz-list-item-meta [nzTitle]="'settings.server.sms' | i18n" [nzDescription]="smsDesc">
         <ng-template #smsDesc>
-          {{ 'alert.notice.sender.sms.type' | i18n }}: {{ smsNoticeSender.type }}
+          {{ 'alert.notice.sender.sms.type' | i18n }}: {{ 'alert.notice.sender.sms.type.' + smsNoticeSender.type | i18n }}
           <br />
           <ng-container *ngIf="smsNoticeSender.type === 'tencent'">
             {{ 'alert.notice.sender.sms.tencent.secretId' | i18n }}: {{ smsNoticeSender.tencent.secretId }}
@@ -138,8 +138,8 @@
         <nz-form-label nzSpan="7" nzRequired="true">{{ 'alert.notice.sender.sms.type' | i18n }}</nz-form-label>
         <nz-form-control nzSpan="12">
           <nz-select [(ngModel)]="smsType" name="type" id="type" (ngModelChange)="onSmsTypeChange(smsType)">
-            <nz-option nzValue="tencent" nzLabel="腾讯短信"></nz-option>
-            <nz-option nzValue="alibaba" nzLabel="阿里云短信"></nz-option>
+            <nz-option nzValue="tencent" nzLabel="{{ 'alert.notice.sender.sms.type.tencent' | i18n }}"></nz-option>
+            <nz-option nzValue="alibaba" nzLabel="{{ 'alert.notice.sender.sms.type.alibaba' | i18n }}"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>

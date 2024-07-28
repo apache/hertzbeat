@@ -25,14 +25,11 @@ import com.tencentcloudapi.sms.v20210111.models.SendStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.support.exception.SendMessageException;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
+import org.apache.hertzbeat.manager.pojo.dto.SmsTencentConfig;
 
 /**
  * sms service client for tencent cloud
  */
-@Component
-@ConditionalOnProperty("common.sms.tencent.app-id")
 @Slf4j
 public class TencentSmsClient {
 
@@ -50,6 +47,14 @@ public class TencentSmsClient {
             throw new IllegalArgumentException("please config TencentSmsClient props");
         }
         initSmsClient(properties.getSms().getTencent());
+    }
+    
+    public TencentSmsClient(SmsTencentConfig tencent) {
+        this.appId = tencent.getAppId();
+        this.signName = tencent.getSignName();
+        this.templateId = tencent.getTemplateId();
+        Credential cred = new Credential(tencent.getSecretId(), tencent.getSecretKey());
+        smsClient = new SmsClient(cred, REGION);
     }
 
     private void initSmsClient(CommonProperties.TencentSmsProperties tencent) {

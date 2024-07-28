@@ -160,17 +160,14 @@ export class MessageServerComponent implements OnInit {
   }
 
   onSmsTypeChange(value: string) {
-    console.log(value);
     if (value === 'tencent') {
       // tencent sms sender
       this.smsType = 'tencent';
-      // this.smsNoticeSender.type = 'tencent';
-      // this.smsNoticeSender.tencent = new TencentSmsConfig();
+      this.smsNoticeSender.type = 'tencent';
     } else if (value === 'alibaba') {
       // alibaba sms sender
       this.smsType = 'alibaba';
-      // this.smsNoticeSender.type = 'alibaba';
-      // this.smsNoticeSender.tencent = new AlibabaSmsConfig();
+      this.smsNoticeSender.type = 'alibaba';
     }
   }
 
@@ -184,7 +181,12 @@ export class MessageServerComponent implements OnInit {
       });
       return;
     }
-    console.log(this.smsNoticeSender);
+    if (this.smsNoticeSender.type === 'tencent') {
+      this.smsNoticeSender.alibaba = new AlibabaSmsConfig();
+    }
+    if (this.smsNoticeSender.type === 'alibaba') {
+      this.smsNoticeSender.tencent = new TencentSmsConfig();
+    }
     const modalOk$ = this.noticeSenderSvc
       .saveGeneralConfig(this.smsNoticeSender, 'sms')
       .pipe(
