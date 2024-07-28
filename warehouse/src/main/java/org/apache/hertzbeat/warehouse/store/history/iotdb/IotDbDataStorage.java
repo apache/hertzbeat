@@ -107,16 +107,16 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
         boolean available = checkConnection();
         if (!available) {
             log.error("IotDB session pool init error with check connection");
-            return available;
+            return false;
         }
         available = this.createDatabase();
         if (!available) {
             log.error("IotDB session pool init error with create database");
-            return available;
+            return false;
         }
         this.initTtl(properties.expireTime());
         log.info("IotDB session pool init success");
-        return available;
+        return true;
     }
 
     private boolean checkConnection() {
