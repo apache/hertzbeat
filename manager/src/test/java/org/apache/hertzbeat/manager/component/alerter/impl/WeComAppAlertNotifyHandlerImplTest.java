@@ -22,6 +22,7 @@ import java.net.URI;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.pojo.model.WeChatAppReq;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -87,37 +88,37 @@ class WeComAppAlertNotifyHandlerImplTest {
 	@Test
 	void testSendSuccess() throws AlertNoticeException {
 
-		WeComAppAlertNotifyHandlerImpl.WeChatAppReq tokenResponse = new WeComAppAlertNotifyHandlerImpl.WeChatAppReq();
+		WeChatAppReq tokenResponse = new WeChatAppReq();
 		tokenResponse.setAccessToken("testAccessToken");
 		when(restTemplate.getForEntity(
 				anyString(),
-				eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class)
+				eq(WeChatAppReq.class)
 		)).thenReturn(ResponseEntity.ok(tokenResponse));
 
-		WeComAppAlertNotifyHandlerImpl.WeChatAppReq sendResponse = new WeComAppAlertNotifyHandlerImpl.WeChatAppReq();
+		WeChatAppReq sendResponse = new WeChatAppReq();
 		sendResponse.setErrCode(0);
 		sendResponse.setErrMsg("ok");
 		when(restTemplate.postForEntity(
 				anyString(),
 				any(HttpEntity.class),
-				eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class)
+				eq(WeChatAppReq.class)
 		)).thenReturn(ResponseEntity.ok(sendResponse));
 
 		weComAppAlertNotifyHandler.send(receiver, noticeTemplate, alert);
 
-		verify(restTemplate, times(1)).getForEntity(anyString(), eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class));
-		verify(restTemplate, times(1)).postForEntity(anyString(), any(HttpEntity.class), eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class));
+		verify(restTemplate, times(1)).getForEntity(anyString(), eq(WeChatAppReq.class));
+		verify(restTemplate, times(1)).postForEntity(anyString(), any(HttpEntity.class), eq(WeChatAppReq.class));
 	}
 
 	@Test
 	void testSendFail() {
 
-		WeComAppAlertNotifyHandlerImpl.WeChatAppReq tokenResponse = new WeComAppAlertNotifyHandlerImpl.WeChatAppReq();
+		WeChatAppReq tokenResponse = new WeChatAppReq();
 		tokenResponse.setErrCode(40013);
 		tokenResponse.setErrMsg("invalid corpid");
 		when(restTemplate.getForEntity(
 				anyString(),
-				eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class)
+				eq(WeChatAppReq.class)
 		)).thenReturn(ResponseEntity.ok(tokenResponse));
 
 		Assertions.assertThrows(
@@ -128,7 +129,7 @@ class WeComAppAlertNotifyHandlerImplTest {
 		verify(restTemplate, never()).postForEntity(
 				any(URI.class),
 				any(HttpEntity.class),
-				eq(WeComAppAlertNotifyHandlerImpl.WeChatAppReq.class)
+				eq(WeChatAppReq.class)
 		);
 	}
 

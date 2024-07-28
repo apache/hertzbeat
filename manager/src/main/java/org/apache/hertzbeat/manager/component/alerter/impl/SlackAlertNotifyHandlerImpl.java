@@ -18,13 +18,12 @@
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import java.util.Objects;
-import lombok.Builder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.pojo.dto.SlackNotifyDTO;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -73,12 +72,6 @@ final class SlackAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     @Override
     public byte type() {
         return 8;
-    }
-
-    @Data
-    @Builder
-    private static class SlackNotifyDTO {
-        private String text;
     }
 
 }

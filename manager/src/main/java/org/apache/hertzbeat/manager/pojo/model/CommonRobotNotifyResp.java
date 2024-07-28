@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.component.alerter.impl;
+package org.apache.hertzbeat.manager.pojo.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 /**
  * common robot http response entity
  */
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

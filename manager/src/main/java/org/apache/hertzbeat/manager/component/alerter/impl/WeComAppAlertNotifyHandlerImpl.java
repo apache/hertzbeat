@@ -17,17 +17,14 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.pojo.dto.WeChatAppDTO;
+import org.apache.hertzbeat.manager.pojo.model.WeChatAppReq;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -107,10 +104,12 @@ public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerIm
                 ResponseEntity<WeChatAppReq> response = restTemplate.postForEntity(String.format(APP_MESSAGE_URL, accessToken), weChatAppEntity, WeChatAppReq.class);
                 if (Objects.nonNull(response.getBody()) && !Objects.equals(response.getBody().getErrCode(), 0)) {
                     log.warn("Send Enterprise WeChat App Error: {}", response.getBody().getErrMsg());
-                    throw new AlertNoticeException("Http StatusCode " + response.getStatusCode() + " Error: " + response.getBody().getErrMsg());
+                    throw new AlertNoticeException("Http StatusCode " + response.getStatusCode() + " Error: " + response.getBody()
+                            .getErrMsg());
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new AlertNoticeException("[Enterprise WeChat Notify Error] " + e.getMessage());
         }
     }
@@ -120,72 +119,4 @@ public class WeComAppAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerIm
         return 10;
     }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    protected static class WeChatAppReq {
-
-        @JsonProperty(value = "errcode")
-        private Integer errCode;
-
-        @JsonProperty(value = "errmsg")
-        private String errMsg;
-
-        @JsonProperty(value = "access_token")
-        private String accessToken;
-    }
-
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    protected static class WeChatAppDTO {
-
-        /**
-         * markdown format
-         */
-        public static final String MARKDOWN = "markdown";
-
-        @JsonProperty(value = "touser")
-        private String toUser;
-
-        @JsonProperty(value = "toparty")
-        private String toParty;
-
-        @JsonProperty(value = "totag")
-        private String toTag;
-
-        @JsonProperty(value = "msgtype")
-        private String msgType;
-
-        @JsonProperty(value = "agentid")
-        private Integer agentId;
-
-        /**
-         * text message
-         */
-        private TextDTO text;
-
-        /**
-         * markdown message
-         */
-        private MarkdownDTO markdown;
-
-        @Data
-        protected static class MarkdownDTO {
-            /**
-             * message content
-             */
-            private String content;
-        }
-
-        @Data
-        protected static class TextDTO {
-            /**
-             * message content
-             */
-            private String content;
-        }
-
-    }
 }

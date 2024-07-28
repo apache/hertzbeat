@@ -17,9 +17,6 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -27,6 +24,8 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.util.StrUtil;
+import org.apache.hertzbeat.manager.pojo.dto.DingTalkWebHookDto;
+import org.apache.hertzbeat.manager.pojo.model.CommonRobotNotifyResp;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -106,86 +105,5 @@ final class DingTalkRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandl
     public byte type() {
         return 5;
     }
-
-    /**
-     * DingTalk robot request body
-     * @version 1.0
-     */
-    @Data
-    private static class DingTalkWebHookDto {
-
-        private static final String DEFAULT_MSG_TYPE = "markdown";
-
-        /**
-         * text format
-         */
-        private static final String TEXT_MSG_TYPE = "text";
-
-        /**
-         * Message type
-         */
-        @JsonProperty(value = "msgtype")
-        private String msgType = DEFAULT_MSG_TYPE;
-
-        /**
-         * markdown message
-         */
-        private MarkdownDTO markdown;
-
-        /**
-         * @ UserId list
-         */
-        private AtDTO at;
-
-        /**
-         * text message
-         */
-        private TextDTO text;
-
-        @Data
-        private static class TextDTO {
-            /**
-             * Message content
-             */
-            private String content;
-
-        }
-
-        @Data
-        private static class MarkdownDTO {
-            /**
-             * Message content
-             */
-            private String text;
-
-            /**
-             * Message title
-             */
-            private String title;
-        }
-
-
-        @Data
-        private static class AtDTO {
-            /**
-             * Message content
-             */
-            private Boolean isAtAll;
-
-            /**
-             * @ UserId list
-             */
-            private List<String> atUserIds;
-
-            /**
-             * @ Mobiles list
-             */
-            private List<String> atMobiles;
-
-        }
-
-    }
-
-
 
 }

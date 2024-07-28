@@ -17,15 +17,12 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.pojo.dto.TelegramBotNotifyDTO;
+import org.apache.hertzbeat.manager.pojo.model.CommonRobotNotifyResp;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -39,8 +36,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
-
+final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl { 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         try {
@@ -53,20 +49,29 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<TelegramBotNotifyDTO> telegramEntity = new HttpEntity<>(notifyBody, headers);
-            ResponseEntity<TelegramBotNotifyResponse> entity = restTemplate.postForEntity(url, telegramEntity, TelegramBotNotifyResponse.class);
-            if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
-                TelegramBotNotifyResponse body = entity.getBody();
-                if (body.ok) {
-                    log.debug("Send Telegram Bot Success");
-                } else {
-                    log.warn("Send Telegram Bot Failed: {}, error_code: {}", body.description, body.errorCode);
-                    throw new AlertNoticeException(body.description);
+            ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(
+                    url,
+                    telegramEntity,
+                    CommonRobotNotifyResp.class);
+            if (responseEntity.getStatusCode() == HttpStatus.OK && responseEntity.getBody() != null) {
+                if (responseEntity.getStatusCode() == HttpStatus.OK) {
+                    assert responseEntity.getBody() != null;
+                    if (responseEntity.getBody().getErrCode() == 0) {
+                        log.debug("Send Telegram Bot Success");
+                    }
+                    else {
+                        log.warn("Send Telegram Bot Failed: {}, error_code: {}", responseEntity.getBody()
+                                .getErrMsg(), responseEntity.getBody().getCode());
+                        throw new AlertNoticeException(responseEntity.getBody().getMsg());
+                    }
                 }
-            } else {
-                log.warn("Send Telegram Bot Failed {}", entity.getBody());
-                throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
+                else {
+                    log.warn("Send Telegram Bot Failed {}", responseEntity.getBody());
+                    throw new AlertNoticeException("Http StatusCode " + responseEntity.getStatusCode());
+                }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new AlertNoticeException("[Telegram Bot Notify Error] " + e.getMessage());
         }
     }
@@ -74,26 +79,6 @@ final class TelegramBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @Override
     public byte type() {
         return 7;
-    }
-
-    @Data
-    @Builder
-    private static class TelegramBotNotifyDTO {
-        @JsonProperty("chat_id")
-        private String chatId;
-        private String text;
-        @JsonProperty("disable_web_page_preview")
-        private Boolean disableWebPagePreview;
-    }
-
-    @NoArgsConstructor
-    @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class TelegramBotNotifyResponse {
-        private boolean ok;
-        @JsonProperty("error_code")
-        private Integer errorCode;
-        private String description;
     }
 
 }

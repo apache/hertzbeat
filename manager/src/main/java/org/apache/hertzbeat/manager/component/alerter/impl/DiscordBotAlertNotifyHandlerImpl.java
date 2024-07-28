@@ -17,15 +17,13 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
-import lombok.Builder;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.pojo.dto.DiscordDTO;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -44,8 +42,8 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         try {
-            var notifyBody = DiscordNotifyDTO.builder()
-                    .embeds(List.of(EmbedDTO.builder()
+            var notifyBody = DiscordDTO.DiscordNotifyDTO.builder()
+                    .embeds(List.of(DiscordDTO.EmbedDTO.builder()
                             .title("[" + bundle.getString("alerter.notify.title") + "]")
                             .description(renderContent(noticeTemplate, alert))
                             .build()))
@@ -55,14 +53,14 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
             headers.add("Authorization", "Bot " + receiver.getDiscordBotToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
             var request = new HttpEntity<>(notifyBody, headers);
-            var entity = restTemplate.postForEntity(url, request, DiscordResponseDTO.class);
+            var entity = restTemplate.postForEntity(url, request, DiscordDTO.DiscordResponseDTO.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 var body = entity.getBody();
-                if (body.id != null) {
+                if (body.getId() != null) {
                     log.debug("Send Discord Bot Success");
                 } else {
-                    log.warn("Send Discord Bot Failed: {}, error_code: {}", body.code, body.message);
-                    throw new AlertNoticeException(body.message);
+                    log.warn("Send Discord Bot Failed: {}, error_code: {}", body.getCode(), body.getMessage());
+                    throw new AlertNoticeException(body.getMessage());
                 }
             } else {
                 log.warn("Send Discord Bot Failed {}", entity.getBody());
@@ -76,29 +74,6 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
     @Override
     public byte type() {
         return 9;
-    }
-
-    @Data
-    @Builder
-    private static class DiscordNotifyDTO {
-        private List<EmbedDTO> embeds;
-    }
-
-    @Data
-    @Builder
-    private static class EmbedDTO {
-        private String title;
-        private String description;
-    }
-
-    @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class DiscordResponseDTO {
-        private String id;
-        private Integer type;
-        private String content;
-        private String message;
-        private Integer code;
     }
 
 }

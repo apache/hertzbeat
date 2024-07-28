@@ -17,13 +17,13 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.pojo.dto.GotifyWebHookDto;
+import org.apache.hertzbeat.manager.pojo.model.CommonRobotNotifyResp;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -86,22 +86,4 @@ public class GotifyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         return 13;
     }
 
-    @Data
-    protected static class GotifyWebHookDto {
-        private String title;
-        private String message;
-        private Extras extras;
-
-        @Data
-        public static class Extras {
-            @JsonProperty("client::display")
-            private ClientDisplay clientDisplay;
-        }
-
-        @Data
-        public static class ClientDisplay {
-            private String contentType;
-        }
-
-    }
 }

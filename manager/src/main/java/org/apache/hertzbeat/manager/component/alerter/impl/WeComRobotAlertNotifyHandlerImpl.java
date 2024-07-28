@@ -17,13 +17,7 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
 import java.util.Objects;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -31,6 +25,8 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.util.StrUtil;
+import org.apache.hertzbeat.manager.pojo.dto.WeWorkWebHookDto;
+import org.apache.hertzbeat.manager.pojo.model.CommonRobotNotifyResp;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -63,26 +59,29 @@ final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
                 assert entity.getBody() != null;
                 if (entity.getBody().getErrCode() == 0) {
                     log.debug("Send WeWork webHook: {} Success", webHookUrl);
-                    WeWorkWebHookDto weWorkWebHookTextDto = checkNeedAtNominator(receiver, alert);
+                    WeWorkWebHookDto weWorkWebHookTextDto = checkNeedAtNominator(receiver);
                     if (!Objects.isNull(weWorkWebHookTextDto)) {
                         HttpEntity<WeWorkWebHookDto> httpEntityText = new HttpEntity<>(weWorkWebHookTextDto, headers);
                         restTemplate.postForEntity(webHookUrl, httpEntityText, CommonRobotNotifyResp.class);
                     }
 
-                } else {
+                }
+                else {
                     log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody().getErrMsg());
                     throw new AlertNoticeException(entity.getBody().getErrMsg());
                 }
-            } else {
+            }
+            else {
                 log.warn("Send WeWork webHook: {} Failed: {}", webHookUrl, entity.getBody());
                 throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             throw new AlertNoticeException("[WeWork Notify Error] " + e.getMessage());
         }
     }
 
-    private WeWorkWebHookDto checkNeedAtNominator(NoticeReceiver receiver, Alert alert) {
+    private WeWorkWebHookDto checkNeedAtNominator(NoticeReceiver receiver) {
         if (StringUtils.isBlank(receiver.getPhone()) && StringUtils.isBlank(receiver.getUserId())) {
             return null;
         }
@@ -101,73 +100,9 @@ final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
 
     }
 
-
     @Override
     public byte type() {
         return 4;
     }
 
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    private static class WeWorkWebHookDto {
-
-        public static final String WEBHOOK_URL = "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=";
-
-        /**
-         * default msg type : markdown format
-         */
-        private static final String DEFAULT_MSG_TYPE = "markdown";
-
-        /**
-         * text format
-         */
-        private static final String TEXT_MSG_TYPE = "text";
-
-        /**
-         * message type
-         */
-        @Builder.Default
-        private String msgtype = DEFAULT_MSG_TYPE;
-
-        /**
-         * markdown message
-         */
-        private MarkdownDTO markdown;
-
-        /**
-         * text message
-         */
-        private TextDTO text;
-
-        @Data
-        private static class MarkdownDTO {
-
-            /**
-             * message content
-             */
-            private String content;
-        }
-
-        @Data
-        private static class TextDTO {
-
-            /**
-             * message content
-             */
-            private String content;
-            /**
-             * @ userId
-             */
-            @JsonProperty(value = "mentioned_list")
-            private List<String> mentionedList;
-            /**
-             * @ phone
-             */
-            @JsonProperty(value = "mentioned_mobile_list")
-            private List<String> mentionedMobileList;
-        }
-
-    }
 }

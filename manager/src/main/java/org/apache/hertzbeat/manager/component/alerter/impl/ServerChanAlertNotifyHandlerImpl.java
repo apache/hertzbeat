@@ -17,12 +17,13 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.pojo.dto.ServerChanWebHookDto;
+import org.apache.hertzbeat.manager.pojo.model.CommonRobotNotifyResp;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -48,12 +49,12 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) throws AlertNoticeException {
         try {
-            ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto serverChanWebHookDto = new ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto();
+            ServerChanWebHookDto serverChanWebHookDto = new ServerChanWebHookDto();
             serverChanWebHookDto.setTitle(bundle.getString("alerter.notify.title"));
             serverChanWebHookDto.setDesp(renderContent(noticeTemplate, alert));
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<ServerChanAlertNotifyHandlerImpl.ServerChanWebHookDto> httpEntity = new HttpEntity<>(serverChanWebHookDto, headers);
+            HttpEntity<ServerChanWebHookDto> httpEntity = new HttpEntity<>(serverChanWebHookDto, headers);
             String webHookUrl = String.format(alerterProperties.getServerChanWebhookUrl(), receiver.getServerChanToken());
             ResponseEntity<CommonRobotNotifyResp> responseEntity = restTemplate.postForEntity(webHookUrl,
                     httpEntity, CommonRobotNotifyResp.class);
@@ -76,22 +77,6 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     @Override
     public byte type() {
         return 12;
-    }
-
-    @Data
-    protected static class ServerChanWebHookDto {
-        private static final String MARKDOWN = "markdown";
-
-        /**
-         * title
-         */
-        private String title;
-
-        /**
-         * markdown message content
-         */
-        private String desp;
-
     }
 
 }
