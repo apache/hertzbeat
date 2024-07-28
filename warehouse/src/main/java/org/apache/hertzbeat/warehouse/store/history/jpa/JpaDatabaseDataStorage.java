@@ -146,34 +146,22 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
 
                     if (CommonConstants.NULL_VALUE.equals(columnValue)) {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER -> {
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                        .dou(null);
-                            }
-                            case CommonConstants.TYPE_STRING -> {
-                                historyBuilder.metricType(CommonConstants.TYPE_STRING)
-                                        .str(null);
-                            }
-                            case CommonConstants.TYPE_TIME -> {
-                                historyBuilder.metricType(CommonConstants.TYPE_TIME)
-                                        .int32(null);
-                            }
+                            case CommonConstants.TYPE_NUMBER -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                                    .dou(null);
+                            case CommonConstants.TYPE_STRING -> historyBuilder.metricType(CommonConstants.TYPE_STRING)
+                                    .str(null);
+                            case CommonConstants.TYPE_TIME -> historyBuilder.metricType(CommonConstants.TYPE_TIME)
+                                    .int32(null);
                             default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER);
                         }
                     } else {
                         switch (fieldType) {
-                            case CommonConstants.TYPE_NUMBER -> {
-                                historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
-                                        .dou(Double.parseDouble(columnValue));
-                            }
-                            case CommonConstants.TYPE_STRING -> {
-                                historyBuilder.metricType(CommonConstants.TYPE_STRING)
-                                        .str(formatStrValue(columnValue));
-                            }
-                            case CommonConstants.TYPE_TIME -> {
-                                historyBuilder.metricType(CommonConstants.TYPE_TIME)
-                                        .int32(Integer.parseInt(columnValue));
-                            }
+                            case CommonConstants.TYPE_NUMBER -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
+                                    .dou(Double.parseDouble(columnValue));
+                            case CommonConstants.TYPE_STRING -> historyBuilder.metricType(CommonConstants.TYPE_STRING)
+                                    .str(formatStrValue(columnValue));
+                            case CommonConstants.TYPE_TIME -> historyBuilder.metricType(CommonConstants.TYPE_TIME)
+                                    .int32(Integer.parseInt(columnValue));
                             default -> historyBuilder.metricType(CommonConstants.TYPE_NUMBER)
                                     .dou(Double.parseDouble(columnValue));
                         }

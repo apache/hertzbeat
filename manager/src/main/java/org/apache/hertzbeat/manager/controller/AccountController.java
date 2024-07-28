@@ -48,6 +48,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/account/auth", produces = {APPLICATION_JSON_VALUE})
 @Slf4j
 public class AccountController {
+
     @Autowired
     private AccountService accountService;
 

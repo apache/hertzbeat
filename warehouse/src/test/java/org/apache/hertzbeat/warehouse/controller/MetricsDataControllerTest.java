@@ -153,13 +153,11 @@ class MetricsDataControllerTest {
                 .andReturn();
 
         when(historyDataReader.isServerAvailable()).thenReturn(true);
-        ServletException exception = assertThrows(ServletException.class, () -> {
-            this.mockMvc.perform(MockMvcRequestBuilders.get(getUrlFail).params(params))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-                    .andExpect(jsonPath("$.data").isEmpty())
-                    .andReturn();
-        });
+        ServletException exception = assertThrows(ServletException.class, () -> this.mockMvc.perform(MockMvcRequestBuilders.get(getUrlFail).params(params))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.data").isEmpty())
+                .andReturn());
         assertTrue(exception.getMessage().contains("IllegalArgumentException"));
 
         final Map<String, List<Value>> instanceValuesMap = new HashMap<>();
