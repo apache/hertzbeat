@@ -53,7 +53,7 @@ import org.apache.http.util.EntityUtils;
 @Slf4j
 public class PushCollectImpl extends AbstractCollect {
 
-    private static Map<Long, Long> timeMap = new ConcurrentHashMap<>();
+    private static final Map<Long, Long> timeMap = new ConcurrentHashMap<>();
 
     // ms
     private static final Integer timeout = 3000;

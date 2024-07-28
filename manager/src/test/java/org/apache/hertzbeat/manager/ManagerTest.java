@@ -30,7 +30,7 @@ import org.apache.hertzbeat.alert.controller.AlertsController;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineServiceImpl;
 import org.apache.hertzbeat.alert.service.impl.AlertServiceImpl;
 import org.apache.hertzbeat.collector.collect.database.JdbcSpiLoader;
-import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreater;
+import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreator;
 import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.apache.hertzbeat.collector.dispatch.CommonDispatcher;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
@@ -83,7 +83,7 @@ class ManagerTest extends AbstractSpringIntegrationTest {
         assertNotNull(ctx.getBean(WorkerPool.class));
         assertNotNull(ctx.getBean(CollectJobService.class));
         assertNotNull(ctx.getBean(JdbcSpiLoader.class));
-        assertNotNull(ctx.getBean(PrometheusParseCreater.class));
+        assertNotNull(ctx.getBean(PrometheusParseCreator.class));
         assertNotNull(ctx.getBean(DataSizeConvert.class));
         assertNotNull(ctx.getBean(CollectStrategyFactory.class));
 
