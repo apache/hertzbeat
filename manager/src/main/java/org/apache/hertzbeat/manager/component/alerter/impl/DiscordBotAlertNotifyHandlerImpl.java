@@ -24,6 +24,7 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.pojo.dto.DiscordDTO;
+import org.apache.hertzbeat.manager.pojo.model.DiscordResp;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -53,14 +54,14 @@ final class DiscordBotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerI
             headers.add("Authorization", "Bot " + receiver.getDiscordBotToken());
             headers.setContentType(MediaType.APPLICATION_JSON);
             var request = new HttpEntity<>(notifyBody, headers);
-            var entity = restTemplate.postForEntity(url, request, DiscordDTO.DiscordResponseDTO.class);
+            var entity = restTemplate.postForEntity(url, request, DiscordResp.class);
             if (entity.getStatusCode() == HttpStatus.OK && entity.getBody() != null) {
                 var body = entity.getBody();
                 if (body.getId() != null) {
                     log.debug("Send Discord Bot Success");
                 } else {
-                    log.warn("Send Discord Bot Failed: {}, error_code: {}", body.getCode(), body.getMessage());
-                    throw new AlertNoticeException(body.getMessage());
+                    log.warn("Send Discord Bot Failed: {}, error_code: {}", body.getCode(), body.getMsg());
+                    throw new AlertNoticeException(body.getMsg());
                 }
             } else {
                 log.warn("Send Discord Bot Failed {}", entity.getBody());
