@@ -51,7 +51,7 @@ public class AlertDefineJsonImExportServiceImpl extends AlertDefineAbstractImExp
     }
 
     @Override
-    List<ExportAlertDefineDTO> parseImport(InputStream is) {
+    public List<ExportAlertDefineDTO> parseImport(InputStream is) {
         try {
             return objectMapper.readValue(is, new TypeReference<>() {
             });
@@ -62,7 +62,7 @@ public class AlertDefineJsonImExportServiceImpl extends AlertDefineAbstractImExp
     }
 
     @Override
-    void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
+    public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
         try {
             objectMapper.writeValue(os, exportAlertDefineList);
         } catch (IOException ex) {
