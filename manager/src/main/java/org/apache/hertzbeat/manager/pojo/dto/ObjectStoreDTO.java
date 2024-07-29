@@ -52,6 +52,11 @@ public class ObjectStoreDTO<T> {
         FILE,
 
         /**
+         * local database
+         */
+        DATABASE,
+
+        /**
          * <a href="https://support.huaweicloud.com/obs/index.html">Huawei Cloud OBS</a>
          */
         OBS
