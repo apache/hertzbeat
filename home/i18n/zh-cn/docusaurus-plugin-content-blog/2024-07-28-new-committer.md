@@ -3,7 +3,7 @@ title: 热烈欢迎 HertzBeat 小伙伴新晋社区 Committer!
 author: linDong
 author_title: linDong
 author_url: https://github.com/Yanshuming1
-author_image_url: https://avatars.githubusercontent.com/u/131688897?v=4
+author_image_url: https://avatars.githubusercontent.com/u/118667222?v=4
 tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
