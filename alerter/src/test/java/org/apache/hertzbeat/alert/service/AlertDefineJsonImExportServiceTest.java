@@ -51,7 +51,7 @@ import static org.mockito.Mockito.when;
  */
 
 @ExtendWith(MockitoExtension.class)
-class AlertDefineJsonImExportServiceImplTest {
+class AlertDefineJsonImExportServiceTest {
 
 	@Mock
 	private ObjectMapper objectMapper;
