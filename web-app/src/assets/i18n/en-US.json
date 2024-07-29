@@ -575,6 +575,7 @@
   "settings.object-store": "File Server Configuration",
   "settings.object-store.type": "File Server Provider",
   "settings.object-store.type.file": "Local file (default)",
+  "settings.object-store.type.database": "Local database",
   "settings.object-store.type.obs": "HUAWEI CLOUD OBS",
   "settings.object-store.obs.accessKey": "AccessKey",
   "settings.object-store.obs.accessKey.placeholder": "Access Key ID of HUAWEI CLOUD",
