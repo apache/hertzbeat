@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -24,5 +25,11 @@ import lombok.Data;
  */
 @Data
 public class SmsAlibabaConfig {
+    
+    @NotBlank(message = "SecretId cannot be empty")
+    private String secretId;
+    
+    @NotBlank(message = "SecretKey cannot be empty")
+    private String secretKey;
 
 }
