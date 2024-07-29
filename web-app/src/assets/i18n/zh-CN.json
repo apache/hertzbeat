@@ -575,6 +575,7 @@
   "settings.object-store": "文件服务配置",
   "settings.object-store.type": "文件服务提供商",
   "settings.object-store.type.file": "本地文件（默认）",
+  "settings.object-store.type.database": "本地数据库",
   "settings.object-store.type.obs": "华为云OBS",
   "settings.object-store.obs.accessKey": "AccessKey",
   "settings.object-store.obs.accessKey.placeholder": "华为云的AccessKeyId",
