@@ -362,7 +362,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 	    List<Value> values = instanceValuesMap.computeIfAbsent(instanceValue, k -> new LinkedList<>());
 	    try (Connection connection = hikariDataSource.getConnection();
 		    Statement statement = connection.createStatement();
-		    ResultSet resultSet = statement.executeQuery(selectSql);) {
+		    ResultSet resultSet = statement.executeQuery(selectSql)) {
 		while (resultSet.next()) {
 		    long ts = resultSet.getLong(1);
 		    if (ts == 0) {

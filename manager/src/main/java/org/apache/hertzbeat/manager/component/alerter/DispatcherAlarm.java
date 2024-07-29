@@ -143,21 +143,19 @@ public class DispatcherAlarm implements InitializingBean {
         }
 
         private void sendNotify(Alert alert) {
-            matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> {
-                noticeRules.forEach(rule -> {
-                    workerPool.executeNotify(() -> {
-                        rule.getReceiverId()
-                            .forEach(receiverId -> {
-                                try {
-                                    sendNoticeMsg(getOneReceiverById(receiverId),
-                                        getOneTemplateById(rule.getTemplateId()), alert);
-                                } catch (AlertNoticeException e) {
-                                    log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
-                                }
-                            });
-                    });
+            matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> {
+                workerPool.executeNotify(() -> {
+                    rule.getReceiverId()
+                        .forEach(receiverId -> {
+                            try {
+                                sendNoticeMsg(getOneReceiverById(receiverId),
+                                    getOneTemplateById(rule.getTemplateId()), alert);
+                            } catch (AlertNoticeException e) {
+                                log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                            }
+                        });
                 });
-            });
+            }));
         }
     }
 
