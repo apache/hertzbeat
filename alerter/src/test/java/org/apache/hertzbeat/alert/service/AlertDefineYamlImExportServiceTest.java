@@ -22,44 +22,54 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
-import org.apache.hertzbeat.alert.service.impl.AlertDefineJsonImExportServiceImpl;
+import org.apache.hertzbeat.alert.service.impl.AlertDefineYamlImExportServiceImpl;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.yaml.snakeyaml.Yaml;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
- * test case for {@link AlertDefineJsonImExportServiceImpl}
+ * test case for {@link AlertDefineYamlImExportServiceImpl}
  */
 
 @ExtendWith(MockitoExtension.class)
-class AlertDefineJsonImExportServiceTest {
-
-	@Mock
-	private ObjectMapper objectMapper;
+class AlertDefineYamlImExportServiceTest {
 
 	@InjectMocks
-	private AlertDefineJsonImExportServiceImpl service;
+	private AlertDefineYamlImExportServiceImpl service;
 
-	private static final String JSON_DATA = "[{\"alertDefine\":{\"app\":\"App1\",\"metric\":\"Metric1\",\"field\":\"Field1\",\"preset\":true,\"expr\":\"Expr1\",\"priority\":1,\"times\":1,\"tags\":[],\"enable\":true,\"recoverNotice\":true,\"template\":\"Template1\"}}]";
+	private static final String YAML_DATA =
+			"- alertDefine:\n" +
+					"    app: App1\n" +
+					"    metric: Metric1\n" +
+					"    field: Field1\n" +
+					"    preset: true\n" +
+					"    expr: Expr1\n" +
+					"    priority: 1\n" +
+					"    times: 1\n" +
+					"    tags: []\n" +
+					"    enable: true\n" +
+					"    recoverNotice: true\n" +
+					"    template: Template1\n";
 
 	private InputStream inputStream;
 	private List<ExportAlertDefineDTO> alertDefineList;
@@ -67,7 +77,7 @@ class AlertDefineJsonImExportServiceTest {
 	@BeforeEach
 	public void setup() {
 
-		inputStream = new ByteArrayInputStream(JSON_DATA.getBytes());
+		inputStream = new ByteArrayInputStream(YAML_DATA.getBytes(StandardCharsets.UTF_8));
 
 		AlertDefineDTO alertDefine = new AlertDefineDTO();
 		alertDefine.setApp("App1");
@@ -89,59 +99,66 @@ class AlertDefineJsonImExportServiceTest {
 	}
 
 	@Test
-	void testParseImport() throws IOException {
-
-		when(objectMapper.readValue(
-				any(InputStream.class),
-				any(TypeReference.class))
-		).thenReturn(alertDefineList);
+	void testParseImport() throws IllegalAccessException {
 
 		List<ExportAlertDefineDTO> result = service.parseImport(inputStream);
 
 		assertNotNull(result);
 		assertEquals(1, result.size());
-		assertEquals(alertDefineList, result);
-		verify(objectMapper, times(1)).readValue(any(InputStream.class), any(TypeReference.class));
+
+		InputStream inputStream = new ByteArrayInputStream(JsonUtil.toJson(alertDefineList)
+				.getBytes(StandardCharsets.UTF_8));
+		Yaml yaml = new Yaml();
+
+		assertEquals(yaml.load(inputStream), result);
 	}
 
 	@Test
-	void testParseImportFailed() throws IOException {
+	void testParseImportFailed() {
 
-		when(objectMapper.readValue(
-				any(InputStream.class),
-				any(TypeReference.class))
-		).thenThrow(new IOException("Test Exception"));
+		InputStream faultyInputStream = mock(InputStream.class);
+		try {
+			when(faultyInputStream.read(
+					any(byte[].class),
+					anyInt(), anyInt())
+			).thenThrow(new IOException("Test Exception"));
 
-		RuntimeException exception = assertThrows(RuntimeException.class, () -> service.parseImport(inputStream));
+			RuntimeException exception = assertThrows(
+					RuntimeException.class,
+					() -> service.parseImport(faultyInputStream)
+			);
+			assertEquals("java.io.IOException: Test Exception", exception.getMessage());
+		} catch (IOException e) {
 
-		assertEquals("import alertDefine failed", exception.getMessage());
-		verify(objectMapper, times(1)).readValue(any(InputStream.class), any(TypeReference.class));
+			fail("Mocking IOException failed");
+		}
 	}
 
 	@Test
-	void testWriteOs() throws IOException {
+	void testWriteOs() {
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-
 		service.writeOs(alertDefineList, outputStream);
+		String yamlOutput = outputStream.toString(StandardCharsets.UTF_8);
 
-		verify(objectMapper, times(1)).writeValue(any(OutputStream.class), eq(alertDefineList));
+		assertTrue(yamlOutput.contains("app: App1"));
+		assertTrue(yamlOutput.contains("metric: Metric1"));
 	}
 
 	@Test
-	void testWriteOsFailed() throws IOException {
+	void testWriteOsFailed() {
 
-		doThrow(new IOException("Test Exception")).when(objectMapper).writeValue(any(OutputStream.class), any());
+		OutputStream faultyOutputStream = mock(OutputStream.class);
 
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		try {
+			doThrow(new IOException("Test Exception")).when(faultyOutputStream).write(any(byte[].class), anyInt(), anyInt());
 
-		RuntimeException exception = assertThrows(
-				RuntimeException.class,
-				() -> service.writeOs(alertDefineList, outputStream)
-		);
+			RuntimeException exception = assertThrows(RuntimeException.class, () -> service.writeOs(alertDefineList, faultyOutputStream));
+			assertEquals("java.io.IOException: Test Exception", exception.getMessage());
+		} catch (IOException e) {
 
-		assertEquals("export alertDefine failed", exception.getMessage());
-		verify(objectMapper, times(1)).writeValue(any(OutputStream.class), eq(alertDefineList));
+			fail("Mocking IOException failed");
+		}
 	}
 
 }
