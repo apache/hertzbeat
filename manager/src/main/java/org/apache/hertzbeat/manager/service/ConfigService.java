@@ -17,34 +17,31 @@
 
 package org.apache.hertzbeat.manager.service;
 
-/**
- * <p>GeneralConfigService interface provides CRUD operations for configurations.</p>
- * @param <T> configuration type.
- * @version 1.0
- */
-public interface GeneralConfigService<T> {
+import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 
-    /**
-     * config type: email, sms
-     * @return type string
-     */
-    String type();
-    
+/**
+ * Provides operations for the GeneralConfigService
+ */
+public interface ConfigService {
+
     /**
      * save config
-     * @param config need save configuration
+     * @param type      config type
+     * @param config    need save configuration
      */
-    void saveConfig(T config);
+    void saveConfig(String type, Object config);
 
     /**
-     * get config
-     * @return query The configuration is queried
+     *  get config
+     * @param type config type
+     * @return config
      */
-    T getConfig();
-    
+    Object getConfig(String type);
+
     /**
-     * handler after save config
-     * @param config config
+     * Update the app template config
+     * @param app       monitoring type
+     * @param template  template config
      */
-    default void handler(T config) {}
+    void updateTemplateAppConfig(String app, TemplateConfig.AppTemplate template);
 }
