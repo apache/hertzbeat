@@ -46,7 +46,7 @@ public interface HistoryDao extends JpaRepository<History, Long>, JpaSpecificati
      */
     @Modifying
     @Transactional(rollbackFor = Exception.class)
-    @Query(value = "delete from hzb_history limit :delNum", nativeQuery = true)
+    @Query(value = "delete from hzb_history limit ?1", nativeQuery = true)
     int deleteOlderHistoriesRecord(@Param(value = "delNum") int delNum);
 
     /**
