@@ -17,33 +17,10 @@
  * under the License.
  */
 
-export class ObjectStore<T> {
-  type: ObjectStoreType = ObjectStoreType.FILE;
-  config!: T;
-  appDefineStoreType!: ObjectStoreType;
-}
-
-export enum ObjectStoreType {
-  /**
-   * Local file
-   */
-  FILE = 'FILE',
-
-  /**
-   * Local database
-   */
-  DATABASE = 'DATABASE',
-
-  /**
-   * <a href="https://support.huaweicloud.com/obs/index.html">Huawei cloud OBS</a>
-   */
-  OBS = 'OBS'
-}
-
-export class ObsConfig {
-  accessKey!: string;
+export class AlibabaSmsConfig {
+  secretId!: string;
   secretKey!: string;
-  bucketName!: string;
-  endpoint!: string;
-  savePath: string = 'hertzbeat';
+  signName!: string;
+  appId!: string;
+  templateId!: string;
 }

@@ -17,65 +17,25 @@
 
 package org.apache.hertzbeat.manager.pojo.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * file storage container
+ * Sms Sender configuration dto
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ObjectStoreDTO<T> {
+public class SmsNoticeSender {
+    
+    @NotBlank(message = "Type cannot be empty")
+    private String type;
+    
+    private SmsTencentConfig tencent;
+    
+    private SmsAlibabaConfig alibaba;
 
-    /**
-     * file storage service type
-     */
-    private Type type;
-
-    /**
-     * Configuration item
-     */
-    private T config;
-
-    /**
-     * file storage service type
-     */
-    public enum Type {
-
-        /**
-         * local file
-         */
-        FILE,
-
-        /**
-         * local database
-         */
-        DATABASE,
-
-        /**
-         * <a href="https://support.huaweicloud.com/obs/index.html">Huawei Cloud OBS</a>
-         */
-        OBS
-    }
-
-    /**
-     * file storage configuration
-     */
-    @Data
-    public static class ObsConfig {
-        private String accessKey;
-        private String secretKey;
-        private String bucketName;
-        private String endpoint;
-
-        /**
-         * Save path
-         */
-        private String savePath = "hertzbeat";
-    }
-
+    private boolean enable = true;
 }
