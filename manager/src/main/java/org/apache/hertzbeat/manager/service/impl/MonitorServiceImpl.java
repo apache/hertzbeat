@@ -711,6 +711,8 @@ public class MonitorServiceImpl implements MonitorService {
             }
         };
         // Pagination is a must
+        order = order == null ? "desc" : order;
+        sort = sort == null ? "gmtCreate" : sort;
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return monitorDao.findAll(specification, pageRequest);
