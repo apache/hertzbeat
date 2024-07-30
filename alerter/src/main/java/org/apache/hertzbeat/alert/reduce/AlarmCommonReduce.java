@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,7 @@ public class AlarmCommonReduce {
                 }
             }
         }
+        System.out.println(tags);
         // converge -> silence
         if (alarmConvergeReduce.filterConverge(alert) && alarmSilenceReduce.filterSilence(alert)) {
             dataQueue.sendAlertsData(alert);
