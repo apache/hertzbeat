@@ -74,6 +74,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/bulletin", produces = {APPLICATION_JSON_VALUE})
 public class BulletinController {
 
+    public static final String NO_DATA = "No Data";
+    public static final String EMPTY_STRING = "";
+
     @Autowired
     private BulletinService bulletinService;
 
@@ -164,7 +167,7 @@ public class BulletinController {
         List<Bulletin> bulletinList = bulletinService.listBulletin();
         List<BulletinMetricsData> dataList = bulletinList.stream()
                 .map(this::buildBulletinMetricsData)
-                .collect(Collectors.toList());
+                .toList();
 
         return ResponseEntity.ok(Message.success(dataList));
     }
@@ -194,7 +197,7 @@ public class BulletinController {
         List<Pair<String, String>> metricFieldList = bulletin.getMetrics().stream()
                 .map(metric -> metric.split("\\$\\$\\$"))
                 .map(arr -> new Pair<>(arr[0], arr[1]))
-                .collect(Collectors.toList());
+                .toList();
 
         return metricSet.stream()
                 .map(metric -> buildMetric(bulletin.getMonitorId(), metric, metricFieldList))
@@ -208,7 +211,7 @@ public class BulletinController {
         CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(monitorId, metric);
         List<List<BulletinMetricsData.Field>> fieldsList = (currentMetricsData != null) ?
                 buildFieldsListFromCurrentData(currentMetricsData) :
-                buildFieldsListFromMetricFieldList(metricFieldList);
+                buildFieldsListFromMetricFieldList(metric, metricFieldList);
 
         metricBuilder.fields(fieldsList);
         return metricBuilder.build();
@@ -222,22 +225,23 @@ public class BulletinController {
                                     .key(field.getName())
                                     .unit(field.getUnit())
                                     .build())
-                            .collect(Collectors.toList());
+                            .toList();
 
                     for (int i = 0; i < fields.size(); i++) {
                         fields.get(i).setValue(valueRow.getColumns(i));
                     }
                     return fields;
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
 
-    private List<List<BulletinMetricsData.Field>> buildFieldsListFromMetricFieldList(List<Pair<String, String>> metricFieldList) {
+    private List<List<BulletinMetricsData.Field>> buildFieldsListFromMetricFieldList(String metric, List<Pair<String, String>> metricFieldList) {
         List<BulletinMetricsData.Field> fields = metricFieldList.stream()
+                .filter(pair -> pair.getLeft().equals(metric))
                 .map(pair -> BulletinMetricsData.Field.builder()
-                        .key(pair.getLeft())
-                        .unit("")
-                        .value(pair.getRight())
+                        .key(pair.getRight())
+                        .unit(NO_DATA)
+                        .value(EMPTY_STRING)
                         .build())
                 .toList();
 
