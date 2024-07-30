@@ -1,0 +1,41 @@
+image:
+    file: .gitpod.Dockerfile
+tasks:
+    - name: Setup
+      init: |
+          cp -r contrib/ide/vscode .vscode
+          mvn clean install
+          cd web-app
+          yarn install
+      command: |
+          gp sync-done setup
+          exit 0
+    - name: Run backend
+      command: |
+          gp sync-await setup
+
+          cd manager
+          mvn spring-boot:run
+    - name: Run frontend
+      command: |
+          gp sync-await setup
+
+          cd web-app
+          yarn start
+      openMode: split-right
+
+vscode:
+    extensions:
+        - vscjava.vscode-java-pack
+        - editorconfig.editorconfig
+        - dbaeumer.vscode-eslint
+        - stylelint.vscode-stylelint
+        - DavidAnson.vscode-markdownlint
+        - ms-azuretools.vscode-docker
+        - cweijan.vscode-database-client2
+        - GitHub.vscode-pull-request-github
+
+ports:
+    - port: 4200
+      name: Hertzbeat
+      onOpen: open-browser
