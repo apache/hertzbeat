@@ -15,36 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.pojo.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * <p>GeneralConfigService interface provides CRUD operations for configurations.</p>
- * @param <T> configuration type.
- * @version 1.0
+ * Sms Sender configuration dto
  */
-public interface GeneralConfigService<T> {
-
-    /**
-     * config type: email, sms
-     * @return type string
-     */
-    String type();
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class SmsNoticeSender {
     
-    /**
-     * save config
-     * @param config need save configuration
-     */
-    void saveConfig(T config);
-
-    /**
-     * get config
-     * @return query The configuration is queried
-     */
-    T getConfig();
+    @NotBlank(message = "Type cannot be empty")
+    private String type;
     
-    /**
-     * handler after save config
-     * @param config config
-     */
-    default void handler(T config) {}
+    private SmsTencentConfig tencent;
+    
+    private SmsAlibabaConfig alibaba;
+
+    private boolean enable = true;
 }

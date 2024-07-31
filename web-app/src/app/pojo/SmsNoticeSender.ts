@@ -17,33 +17,17 @@
  * under the License.
  */
 
-export class ObjectStore<T> {
-  type: ObjectStoreType = ObjectStoreType.FILE;
-  config!: T;
-  appDefineStoreType!: ObjectStoreType;
-}
+import { AlibabaSmsConfig } from './AlibabaSmsConfig';
+import { TencentSmsConfig } from './TencentSmsConfig';
 
-export enum ObjectStoreType {
-  /**
-   * Local file
-   */
-  FILE = 'FILE',
-
-  /**
-   * Local database
-   */
-  DATABASE = 'DATABASE',
-
-  /**
-   * <a href="https://support.huaweicloud.com/obs/index.html">Huawei cloud OBS</a>
-   */
-  OBS = 'OBS'
-}
-
-export class ObsConfig {
-  accessKey!: string;
-  secretKey!: string;
-  bucketName!: string;
-  endpoint!: string;
-  savePath: string = 'hertzbeat';
+export class SmsNoticeSender {
+  id!: number;
+  type!: string;
+  tencent!: TencentSmsConfig;
+  alibaba!: AlibabaSmsConfig;
+  enable!: boolean;
+  creator!: string;
+  modifier!: string;
+  gmtCreate!: number;
+  gmtUpdate!: number;
 }

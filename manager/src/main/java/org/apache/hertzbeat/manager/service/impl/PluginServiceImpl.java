@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.persistence.criteria.Predicate;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -221,7 +222,24 @@ public class PluginServiceImpl implements PluginService {
     }
 
     @Override
-    public Page<PluginMetadata> getPlugins(Specification<PluginMetadata> specification, PageRequest pageRequest) {
+    public Page<PluginMetadata> getPlugins(String search, int pageIndex, int pageSize) {
+        // Get tag information
+        Specification<PluginMetadata> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (search != null && !search.isEmpty()) {
+                Predicate predicateApp = criteriaBuilder.like(root.get("name"), "%" + search + "%");
+                andList.add(predicateApp);
+            }
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+
+            if (andPredicates.length == 0) {
+                return query.where().getRestriction();
+            } else {
+                return andPredicate;
+            }
+        };
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
         return metadataDao.findAll(specification, pageRequest);
     }
 

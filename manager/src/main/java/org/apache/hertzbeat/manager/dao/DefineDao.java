@@ -15,36 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.dao;
+
+import org.apache.hertzbeat.common.entity.manager.Define;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * <p>GeneralConfigService interface provides CRUD operations for configurations.</p>
- * @param <T> configuration type.
- * @version 1.0
+ * monitor define repository
  */
-public interface GeneralConfigService<T> {
-
-    /**
-     * config type: email, sms
-     * @return type string
-     */
-    String type();
-    
-    /**
-     * save config
-     * @param config need save configuration
-     */
-    void saveConfig(T config);
-
-    /**
-     * get config
-     * @return query The configuration is queried
-     */
-    T getConfig();
-    
-    /**
-     * handler after save config
-     * @param config config
-     */
-    default void handler(T config) {}
+public interface DefineDao extends JpaRepository<Define, String>, JpaSpecificationExecutor<Define> {
 }

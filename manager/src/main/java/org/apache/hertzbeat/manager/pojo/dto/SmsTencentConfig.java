@@ -15,36 +15,34 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.pojo.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * <p>GeneralConfigService interface provides CRUD operations for configurations.</p>
- * @param <T> configuration type.
- * @version 1.0
+ * Tencent Sms Sender configuration dto
  */
-public interface GeneralConfigService<T> {
-
-    /**
-     * config type: email, sms
-     * @return type string
-     */
-    String type();
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class SmsTencentConfig {
     
-    /**
-     * save config
-     * @param config need save configuration
-     */
-    void saveConfig(T config);
+    @NotBlank(message = "SecretId cannot be empty")
+    private String secretId;
 
-    /**
-     * get config
-     * @return query The configuration is queried
-     */
-    T getConfig();
-    
-    /**
-     * handler after save config
-     * @param config config
-     */
-    default void handler(T config) {}
+    @NotBlank(message = "SecretKey cannot be empty")
+    private String secretKey;
+
+    @NotBlank(message = "SignName cannot be empty")
+    private String signName;
+
+    @NotBlank(message = "AppId cannot be null")
+    private String appId;
+
+    @NotBlank(message = "templateId cannot be null")
+    private String templateId;
+
 }
