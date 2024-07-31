@@ -1,27 +1,33 @@
-image:
-    file: .gitpod.Dockerfile
 tasks:
-    - name: Setup
-      init: |
-          cp -r contrib/ide/vscode .vscode
-          mvn clean install
-          cd web-app
-          yarn install
-      command: |
-          gp sync-done setup
-          exit 0
+
     - name: Run backend
+      before: cd manager
       command: |
-          gp sync-await setup
-
-          cd manager
+          gp sync-await setup-backend
           mvn spring-boot:run
-    - name: Run frontend
-      command: |
-          gp sync-await setup
 
-          cd web-app
-          yarn start
+    - name: Run frontend
+      before: cd web-app
+      command: |
+          gp sync-await setup-frontend
+          yarn start --public-host "`gp url 4200`"
+      openMode: split-right
+
+    - name: Setup backend
+      init: |
+          sdk install java 17.0.11.fx-zulu < /dev/null
+          sdk default java 17.0.11.fx-zulu < /dev/null
+          mvn clean install -DskipTests
+      command: |
+          gp sync-done setup-backend
+          exit 0
+
+    - name: Setup frontend
+      init: |
+          cd web-app && yarn install
+      command: |
+          gp sync-done setup-frontend
+          exit 0
       openMode: split-right
 
 vscode:
@@ -39,3 +45,9 @@ ports:
     - port: 4200
       name: Hertzbeat
       onOpen: open-browser
+
+    - port: 1157
+      onOpen: ignore
+
+    - port: 1158
+      onOpen: ignore
