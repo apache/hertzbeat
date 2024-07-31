@@ -69,16 +69,10 @@ public class MemcachedCollectImplTest {
 
     @Test
     void testPreCheck() {
-        assertDoesNotThrow(() -> {
-            memcachedCollect.preCheck(metrics);
-        });
-        assertThrows(IllegalArgumentException.class, () -> {
-            memcachedCollect.preCheck(null);
-        });
+        assertDoesNotThrow(() -> memcachedCollect.preCheck(metrics));
+        assertThrows(IllegalArgumentException.class, () -> memcachedCollect.preCheck(null));
         metrics.setIcmp(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            memcachedCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> memcachedCollect.preCheck(null));
     }
 
     @Test

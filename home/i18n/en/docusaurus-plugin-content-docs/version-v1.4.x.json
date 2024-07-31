@@ -86,17 +86,5 @@
   "sidebar.docs.category.Others": {
     "message": "Others",
     "description": "The label for category Others in sidebar docs"
-  },
-  "sidebar.docs.link.Cloud Service": {
-    "message": "Cloud Service",
-    "description": "The label for link Cloud Service in sidebar docs, linking to https://console.tancloud.cn"
-  },
-  "sidebar.docs.link.Install via HuaweiCloud": {
-    "message": "Install via HuaweiCloud",
-    "description": "The label for link Install via HuaweiCloud in sidebar docs, linking to https://marketplace.huaweicloud.com/contents/0477015c-ad63-4522-a308-816861769f0a#productid=OFFI863735781612109824"
-  },
-  "sidebar.docs.link.Install via Helm": {
-    "message": "Install via Helm",
-    "description": "The label for link Install via Helm in sidebar docs, linking to https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
   }
 }

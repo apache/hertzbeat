@@ -95,10 +95,8 @@ class UdpCollectImplTest {
                 .build();
 
         MockedConstruction<DatagramSocket> socketMockedConstruction =
-                Mockito.mockConstruction(DatagramSocket.class, (socket, context) -> {
-                    Mockito.doThrow(new SocketTimeoutException("test exception"))
-                            .when(socket).send(Mockito.any(DatagramPacket.class));
-                });
+                Mockito.mockConstruction(DatagramSocket.class, (socket, context) -> Mockito.doThrow(new SocketTimeoutException("test exception"))
+                        .when(socket).send(Mockito.any(DatagramPacket.class)));
 
 
         List<String> aliasField = new ArrayList<>();
@@ -123,10 +121,8 @@ class UdpCollectImplTest {
                 .build();
 
         MockedConstruction<DatagramSocket> socketMockedConstruction =
-                Mockito.mockConstruction(DatagramSocket.class, (socket, context) -> {
-                    Mockito.doThrow(new PortUnreachableException("test exception"))
-                            .when(socket).send(Mockito.any(DatagramPacket.class));
-                });
+                Mockito.mockConstruction(DatagramSocket.class, (socket, context) -> Mockito.doThrow(new PortUnreachableException("test exception"))
+                        .when(socket).send(Mockito.any(DatagramPacket.class)));
 
 
         List<String> aliasField = new ArrayList<>();

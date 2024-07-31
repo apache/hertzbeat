@@ -68,16 +68,10 @@ public class ImapCollectImplTest {
 
     @Test
     void preCheck() {
-        assertDoesNotThrow(() -> {
-            imapCollect.preCheck(metrics);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            imapCollect.preCheck(null);
-        });
+        assertDoesNotThrow(() -> imapCollect.preCheck(metrics));
+        assertThrows(NullPointerException.class, () -> imapCollect.preCheck(null));
         metrics.setImap(null);
-        assertThrows(NullPointerException.class, () -> {
-            imapCollect.preCheck(null);
-        });
+        assertThrows(NullPointerException.class, () -> imapCollect.preCheck(null));
     }
 
     @Test

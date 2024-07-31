@@ -56,6 +56,18 @@ public class ObsObjectStoreServiceImpl implements ObjectStoreService {
     }
 
     @Override
+    public void remove(String filePath) {
+        var objectKey = getObjectKey(filePath);
+        obsClient.deleteObject(bucketName, objectKey);
+    }
+
+    @Override
+    public boolean isExist(String filePath) {
+        var objectKey = getObjectKey(filePath);
+        return obsClient.doesObjectExist(bucketName, objectKey);
+    }
+
+    @Override
     public FileDTO download(String filePath) {
         var objectKey = getObjectKey(filePath);
         try {

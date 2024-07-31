@@ -23,6 +23,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -48,13 +49,13 @@ public class AlertDefineYamlImExportServiceImpl extends AlertDefineAbstractImExp
     }
 
     @Override
-    List<ExportAlertDefineDTO> parseImport(InputStream is) {
+    public List<ExportAlertDefineDTO> parseImport(InputStream is) {
         Yaml yaml = new Yaml();
         return yaml.load(is);
     }
 
     @Override
-    void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
+    public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setIndent(2);
