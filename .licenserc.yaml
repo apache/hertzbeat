@@ -62,6 +62,8 @@ header:
     - '.stylelintrc'
     - '.prettierignore'
     - '.prettierrc.js'
+    - '.gitpod.Dockerfile'
+    - '.gitpod.yml'
     - 'karma.conf.js'
     - 'proxy.conf.js'
     - '.helmignore'
@@ -92,12 +94,12 @@ header:
     - 'web-app/src/style.less'
     - 'web-app/src/test.ts'
     - 'web-app/src/typings.d.ts'
-    
+
   comment: on-failure
 
 dependency:
   files:
     - pom.xml
     - web-app/package.json
-    
+
 

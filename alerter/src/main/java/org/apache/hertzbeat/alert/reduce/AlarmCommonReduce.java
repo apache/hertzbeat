@@ -64,7 +64,6 @@ public class AlarmCommonReduce {
                 }
             }
         }
-        System.out.println(tags);
         // converge -> silence
         if (alarmConvergeReduce.filterConverge(alert) && alarmSilenceReduce.filterSilence(alert)) {
             dataQueue.sendAlertsData(alert);
