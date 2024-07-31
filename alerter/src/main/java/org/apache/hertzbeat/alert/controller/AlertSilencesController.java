@@ -24,13 +24,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
+import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -87,9 +91,14 @@ public class AlertSilencesController {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
+
+        // Impl obj copy to solved Could not write JSON: (was java.lang.UnsupportedOperationException)]
         Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(specification, pageRequest);
-        Message<Page<AlertSilence>> message = Message.success(alertSilencePage);
-        return ResponseEntity.ok(message);
+        Page<AlertSilence> alertSilencePages = new PageImpl<>(
+                alertSilencePage.getContent(),
+                pageRequest, alertSilencePage.getTotalElements());
+
+        return ResponseEntity.ok(Message.success(alertSilencePages));
     }
 
     @DeleteMapping

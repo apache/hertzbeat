@@ -32,6 +32,7 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -111,8 +112,11 @@ public class AlertDefinesController {
         };
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
+
         Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification, pageRequest);
-        return ResponseEntity.ok(Message.success(alertDefinePage));
+        Page<AlertDefine> alertDefinePages = new PageImpl<>(alertDefinePage.getContent(), pageRequest, alertDefinePage.getTotalElements());
+
+        return ResponseEntity.ok(Message.success(alertDefinePages));
     }
 
     @DeleteMapping
