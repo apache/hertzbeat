@@ -24,6 +24,7 @@ import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -41,6 +42,10 @@ public interface BulletinService {
      */
     List<Bulletin> listBulletin();
 
+    /**
+     * Pageable query Bulletin
+     */
+    Page<Bulletin> listBulletin(Pageable pageable);
     /**
      * Get Bulletin by id
      */

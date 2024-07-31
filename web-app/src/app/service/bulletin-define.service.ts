@@ -22,6 +22,8 @@ import {HttpClient, HttpParams} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {Message} from "../pojo/Message";
 import {BulletinDefine} from "../pojo/BulletinDefine";
+import {Page} from "../pojo/Page";
+import {Monitor} from "../pojo/Monitor";
 
 const bulletin_define_uri = '/bulletin';
 
@@ -48,10 +50,30 @@ export class BulletinDefineService {
 
     return this.http.delete<Message<any>>(bulletin_define_uri, { params });
   }
-
-  public getAllMonitorMetricsData(): Observable<Message<any>> {
-    return this.http.get<Message<any>>(`${bulletin_define_uri}/metrics`);
+  public getMonitorMetricsData(
+    pageIndex: number,
+    pageSize: number,
+    sortField?: string | null,
+    sortOrder?: string | null
+  ): Observable<Message<Page<Monitor>>> {
+    pageIndex = pageIndex ? pageIndex : 0;
+    pageSize = pageSize ? pageSize : 8;
+    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      pageIndex: pageIndex,
+      pageSize: pageSize
+    });
+    if (sortField != null && sortOrder != null) {
+      httpParams = httpParams.appendAll({
+        sort: sortField,
+        order: sortOrder == 'ascend' ? 'asc' : 'desc'
+      });
+    }
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(`${bulletin_define_uri}/metrics`, options);
   }
+
 
 
 }

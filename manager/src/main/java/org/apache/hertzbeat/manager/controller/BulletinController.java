@@ -52,7 +52,9 @@ import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
@@ -159,17 +161,22 @@ public class BulletinController {
 
     @GetMapping("/metrics")
     @Operation(summary = "Query All Bulletin Real Time Metrics Data", description = "Query All Bulletin real-time metrics data of monitoring indicators")
-    public ResponseEntity<Message<List<BulletinMetricsData>>> getAllMetricsData() {
+    public ResponseEntity<Message<Page<BulletinMetricsData>>> getAllMetricsData(
+            @RequestParam(defaultValue = "0", name = "pageIndex") int pageIndex,
+            @RequestParam(defaultValue = "10", name = "pageSize") int pageSize) {
         if (!realTimeDataReader.isServerAvailable()) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "real time store not available"));
         }
 
-        List<Bulletin> bulletinList = bulletinService.listBulletin();
-        List<BulletinMetricsData> dataList = bulletinList.stream()
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
+        Page<Bulletin> bulletinPage = bulletinService.listBulletin(pageable);
+        List<BulletinMetricsData> dataList = bulletinPage.stream()
                 .map(this::buildBulletinMetricsData)
                 .toList();
 
-        return ResponseEntity.ok(Message.success(dataList));
+        Page<BulletinMetricsData> metricsDataPage = new PageImpl<>(dataList, pageable, bulletinPage.getTotalElements());
+
+        return ResponseEntity.ok(Message.success(metricsDataPage));
     }
 
     private BulletinMetricsData buildBulletinMetricsData(Bulletin bulletin) {
@@ -247,5 +254,4 @@ public class BulletinController {
 
         return Collections.singletonList(fields);
     }
-
 }

@@ -31,6 +31,7 @@ import { Monitor } from '../../pojo/Monitor';
 import { AppDefineService } from '../../service/app-define.service';
 import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
+import {HttpParams} from "@angular/common/http";
 
 @Component({
   selector: 'app-bulletin',
@@ -59,13 +60,16 @@ export class BulletinComponent implements OnInit {
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
   rawData: any[] = [];
+  pageIndex: number = 1;
+  pageSize: number = 8;
+  total: number = 0;
 
   ngOnInit(): void {
-    this.loadData();
+    this.loadData(this.pageIndex - 1, this.pageSize);
   }
 
   sync() {
-    this.loadData();
+    this.loadData(this.pageIndex - 1, this.pageSize);
   }
 
   onNewBulletinDefine() {
@@ -89,7 +93,7 @@ export class BulletinComponent implements OnInit {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.loadData();
+          this.loadData(this.pageIndex - 1, this.pageSize);
         } else {
           this.tableLoading = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
@@ -134,7 +138,7 @@ export class BulletinComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-              this.loadData();
+              this.loadData(this.pageIndex - 1, this.pageSize);
               this.resetManageModalData();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
@@ -158,7 +162,7 @@ export class BulletinComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-              this.loadData();
+              this.loadData(this.pageIndex - 1, this.pageSize);
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
@@ -303,7 +307,13 @@ export class BulletinComponent implements OnInit {
   treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     this.checkBoxChange(event.node!, onItemSelect);
   }
-
+  toggleSelectAll() {
+    if (this.define.monitorIds.length === this.monitors.length) {
+      this.define.monitorIds = [];
+    } else {
+      this.define.monitorIds = this.monitors.map(monitor => monitor.id);
+    }
+  }
   checkBoxChange(node: NzTreeNode, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     if (node.isDisabled) {
       return;
@@ -330,13 +340,14 @@ export class BulletinComponent implements OnInit {
     });
   }
 
-  loadData() {
-    const metricData$ = this.bulletinDefineSvc.getAllMonitorMetricsData().subscribe(
+  loadData(page: number = 0, size: number = 10) {
+    const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(page, size).subscribe(
       message => {
         metricData$.unsubscribe();
         if (message.code === 0 && message.data) {
           this.tableLoading = false;
-          this.rawData = message.data;
+          this.rawData = message.data.content; // 假设返回的数据中包含分页内容的字段为 'content'
+          this.total = message.data.totalElements; // 假设返回的数据中包含总元素数量的字段为 'totalElements'
           this.updateTabDefines();
         } else if (message.code !== 0) {
           this.notifySvc.warning(`${message.msg}`, '');
@@ -414,7 +425,38 @@ export class BulletinComponent implements OnInit {
     }
     return maxRowSpan;
   }
-
+  onTablePageChange(params: NzTableQueryParams) {
+    const { pageSize, pageIndex, sort, filter } = params;
+    this.pageIndex = pageIndex;
+    this.pageSize = pageSize;
+    const currentSort = sort.find(item => item.value !== null);
+    const sortField = (currentSort && currentSort.key) || null;
+    const sortOrder = (currentSort && currentSort.value) || null;
+    this.changeBulletinTable(sortField, sortOrder);
+  }
+  changeBulletinTable(sortField?: string | null, sortOrder?: string | null) {
+    this.tableLoading = true;
+    let monitorInit$ = this.bulletinDefineSvc
+      .getMonitorMetricsData(this.pageIndex - 1, this.pageSize, sortField, sortOrder)
+      .subscribe(
+        message => {
+          this.tableLoading = false;
+          if (message.code === 0) {
+            let page = message.data;
+            this.monitors = page.content;
+            this.pageIndex = page.number + 1;
+            this.total = page.totalElements;
+          } else {
+            console.warn(message.msg);
+          }
+          monitorInit$.unsubscribe();
+        },
+        error => {
+          this.tableLoading = false;
+          monitorInit$.unsubscribe();
+        }
+      );
+  }
   getRowIndexes(data: { [x: string]: string | any[] }, bulletinTab: { bulletinColumn: { [x: string]: any } }) {
     const maxRowSpan = this.getMaxRowSpan(data, bulletinTab);
     return Array.from({ length: maxRowSpan }, (_, index) => index);

@@ -45,13 +45,17 @@
 <nz-tabset nzType="card">
   <nz-tab *ngFor="let bulletinTab of tabDefines" [nzTitle]="bulletinTab.name">
     <nz-table
-      *ngIf="bulletinTab.data.length"
       #fixedTable
       [nzData]="bulletinTab.data"
+      [nzPageIndex]="pageIndex"
+      [nzPageSize]="pageSize"
+      [nzTotal]="total"
       nzFrontPagination="false"
       [nzLoading]="tableLoading"
       nzShowSizeChanger
       [nzShowTotal]="rangeTemplate"
+      [nzPageSizeOptions]="[8, 15, 25]"
+      (nzQueryParams)="onTablePageChange($event)"
       nzShowPagination="true"
       [nzScroll]="{ x: 'auto' }"
       nzBordered
@@ -149,11 +153,17 @@
             [(ngModel)]="define.monitorIds"
             (nzOnSearch)="onSearchMonitorsByApp(define.app)"
             nzMode="multiple"
+            [nzDropdownRender]="dropdownRenderTemplate"
           >
             <ng-container *ngFor="let monitor of monitors">
               <nz-option *ngIf="isMonitorListLoading" [nzValue]="monitor.id" [nzLabel]="monitor.name"></nz-option>
             </ng-container>
           </nz-select>
+          <ng-template #dropdownRenderTemplate>
+            <div class="custom-dropdown">
+              <button nz-button (click)="toggleSelectAll()">Toggle Select All</button>
+            </div>
+          </ng-template>
         </nz-form-control>
       </nz-form-item>
 
@@ -193,6 +203,7 @@
     </form>
   </div>
 </nz-modal>
+
 
 <!-- delete bulletin modal -->
 <nz-modal

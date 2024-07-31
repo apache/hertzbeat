@@ -79,6 +79,14 @@ public class BulletinServiceImpl implements BulletinService {
     }
 
     /**
+     * Pageable query Bulletin
+     */
+    @Override
+    public Page<Bulletin> listBulletin(Pageable pageable) {
+        return bulletinDao.findAll(pageable);
+    }
+
+    /**
      * Save Bulletin
      */
     @Override
