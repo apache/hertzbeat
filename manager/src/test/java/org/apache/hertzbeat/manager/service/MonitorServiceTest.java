@@ -654,7 +654,7 @@ class MonitorServiceTest {
     @Test
     void getMonitors() {
         doReturn(Page.empty()).when(monitorDao).findAll(any(Specification.class), any(PageRequest.class));
-        assertNotNull(monitorService.getMonitors(null, null, null, null, null, null, null, 1, 1, null));
+        assertNotNull(monitorService.getMonitors(null, null, null, null, null, "gmtCreate", "desc", 1, 1, null));
     }
 
     @Test
