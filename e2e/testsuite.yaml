@@ -70,7 +70,7 @@ items:
       Authorization: Bearer {{.login.data.token}}
   expect:
     bodyFieldsExpect:
-      code: 0
+      code: "0"
 
 - name: createSitemapMonitor
   request:

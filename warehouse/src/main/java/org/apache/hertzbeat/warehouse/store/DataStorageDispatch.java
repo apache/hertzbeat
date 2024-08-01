@@ -78,9 +78,8 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
-                    if (historyDataWriter.isPresent()) {
-                        historyDataWriter.get().saveData(metricsData);
-                    }
+
+                    historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }

@@ -19,11 +19,16 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.collect.Sets;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.ListJoin;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -78,6 +83,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -100,6 +106,10 @@ public class MonitorServiceImpl implements MonitorService {
     public static final String BLANK = "";
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
+
+    private static final byte ALL_MONITOR_STATUS = 9;
+
+    private static final int TAG_LENGTH = 2;
 
     @Autowired
     private AppService appService;
@@ -621,7 +631,67 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public Page<Monitor> getMonitors(Specification<Monitor> specification, PageRequest pageRequest) {
+    public Page<Monitor> getMonitors(List<Long> monitorIds, String app, String name, String host, Byte status, String sort, String order, int pageIndex, int pageSize, String tag) {
+        Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (monitorIds != null && !monitorIds.isEmpty()) {
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
+                for (long id : monitorIds) {
+                    inPredicate.value(id);
+                }
+                andList.add(inPredicate);
+            }
+            if (StringUtils.hasText(app)) {
+                Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
+                andList.add(predicateApp);
+            }
+            if (status != null && status >= 0 && status < ALL_MONITOR_STATUS) {
+                Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
+                andList.add(predicateStatus);
+            }
+
+            if (StringUtils.hasText(tag)) {
+                String[] tagArr = tag.split(":");
+                String tagName = tagArr[0];
+                ListJoin<Monitor, Tag> tagJoin = root
+                        .join(root.getModel()
+                                .getList("tags", org.apache.hertzbeat.common.entity.manager.Tag.class), JoinType.LEFT);
+                if (tagArr.length == TAG_LENGTH) {
+                    String tagValue = tagArr[1];
+                    andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
+                    andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagValue));
+                } else {
+                    andList.add(criteriaBuilder.equal(tagJoin.get("name"), tag));
+                }
+            }
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+
+            List<Predicate> orList = new ArrayList<>();
+            if (StringUtils.hasText(host)) {
+                Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
+                orList.add(predicateHost);
+            }
+            if (StringUtils.hasText(name)) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                orList.add(predicateName);
+            }
+            Predicate[] orPredicates = new Predicate[orList.size()];
+            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
+
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
+                return query.where().getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
+            } else {
+                return query.where(andPredicate, orPredicate).getRestriction();
+            }
+        };
+        // Pagination is a must
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return monitorDao.findAll(specification, pageRequest);
     }
 

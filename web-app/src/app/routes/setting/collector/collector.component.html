@@ -181,13 +181,12 @@
   [nzTitle]="'collector.deploy' | i18n"
   (nzOnCancel)="onDeployCollectorClose()"
   nzMaskClosable="false"
-  [nzFooter]="null"
   nzWidth="45%"
   [nzOkLoading]="isDeployCollectorModalOkLoading"
 >
   <div *nzModalContent class="-inner-content">
     <form nz-form #deployForm="ngForm">
-      <nz-form-item>
+      <nz-form-item [ngStyle]="{ marginBottom: 0 }">
         <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">{{ 'collector.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input
@@ -203,20 +202,9 @@
         </nz-form-control>
       </nz-form-item>
     </form>
-    <div style="text-align: center">
-      <button
-        (click)="onDeployCollectorModalOk()"
-        [disabled]="identity != ''"
-        [nzLoading]="isDeployCollectorModalOkLoading"
-        nz-button
-        nzType="primary"
-      >
-        {{ 'collector.deploy.ok' | i18n }}
-      </button>
-    </div>
-    <nz-divider></nz-divider>
     <div *ngIf="identity != ''">
-      <div style="margin-top: 10px; text-align: center; font-weight: bold; font-size: medium">
+      <nz-divider></nz-divider>
+      <div style="text-align: center; font-weight: bold; font-size: medium">
         {{ 'collector.deploy.identity' | i18n }}
       </div>
       <div style="text-align: center; font-weight: lighter; font-size: small">
@@ -261,12 +249,21 @@
           [nzEditorOption]="{ language: 'yaml', theme: 'vs-dark', folding: true }"
         ></nz-code-editor>
       </div>
-      <nz-divider></nz-divider>
-      <div style="text-align: center; margin-top: 10px">
-        <button nz-button nzDanger (click)="onDeployCollectorClose()">
-          {{ 'collector.deploy.close' | i18n }}
-        </button>
-      </div>
     </div>
+  </div>
+  <div *nzModalFooter>
+    <button
+      *ngIf="!identity"
+      (click)="onDeployCollectorModalOk()"
+      [disabled]="identity != ''"
+      [nzLoading]="isDeployCollectorModalOkLoading"
+      nz-button
+      nzType="primary"
+    >
+      {{ 'collector.deploy.ok' | i18n }}
+    </button>
+    <button *ngIf="identity" nz-button nzDanger (click)="onDeployCollectorClose()">
+      {{ 'collector.deploy.close' | i18n }}
+    </button>
   </div>
 </nz-modal>

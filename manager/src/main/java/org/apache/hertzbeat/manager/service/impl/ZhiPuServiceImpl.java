@@ -23,11 +23,12 @@ import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.AiConstants;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
+import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
 import org.apache.hertzbeat.manager.service.AiService;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -44,23 +45,21 @@ import reactor.core.publisher.Flux;
  * ZhiPu AI
  */
 @Service("ZhiPuServiceImpl")
-@ConditionalOnProperty(prefix = "ai", name = "api-key", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "ai", name = "type", havingValue = "zhiPu")
 @Slf4j
 public class ZhiPuServiceImpl implements AiService {
-    @Value("${ai.model:glm-4}")
-    private String model;
-    @Value("${ai.api-key}")
-    private String apiKey;
+
+    @Autowired
+    private AiProperties aiProperties;
 
     private WebClient webClient;
-
 
     @PostConstruct
     private void init() {
         this.webClient = WebClient.builder()
                 .baseUrl(AiConstants.ZhiPuConstants.URL)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + aiProperties.getApiKey())
                 .exchangeStrategies(ExchangeStrategies.builder()
                         .codecs(item -> item.defaultCodecs().maxInMemorySize(16 * 1024 * 1024))
                         .build())
@@ -75,9 +74,9 @@ public class ZhiPuServiceImpl implements AiService {
     @Override
     public Flux<ServerSentEvent<String>> requestAi(String text) {
         try {
-            checkParam(text, model, apiKey);
+            checkParam(text, aiProperties.getModel(), aiProperties.getApiKey());
             OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
-                    .model(model)
+                    .model(aiProperties.getModel())
                     //sse
                     .stream(Boolean.TRUE)
                     .maxTokens(AiConstants.ZhiPuConstants.MAX_TOKENS)

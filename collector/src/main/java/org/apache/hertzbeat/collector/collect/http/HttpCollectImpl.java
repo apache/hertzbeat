@@ -45,7 +45,7 @@ import org.apache.commons.net.util.Base64;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
-import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreater;
+import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreator;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.ExporterParser;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.MetricFamily;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -375,7 +375,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByPromQl(String resp, List<String> aliasFields, HttpProtocol http,
                                        CollectRep.MetricsData.Builder builder) {
-        AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
+        AbstractPrometheusParse prometheusParser = PrometheusParseCreator.getPrometheusParse();
         prometheusParser.handle(resp, aliasFields, http, builder);
     }
 
@@ -549,7 +549,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // if it has payload, would override post params
-        if (StringUtils.hasLength(httpProtocol.getPayload())) {
+        if (StringUtils.hasLength(httpProtocol.getPayload()) && (HttpMethod.POST.matches(httpMethod) || HttpMethod.PUT.matches(httpMethod))) {
             requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }
 

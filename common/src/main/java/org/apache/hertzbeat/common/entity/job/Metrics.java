@@ -48,6 +48,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
@@ -225,6 +226,10 @@ public class Metrics {
      * Monitoring configuration information using the public imap protocol
      */
     private ImapProtocol imap;
+    /**
+     * Monitoring configuration information using the public script protocol
+     */
+    private ScriptProtocol script;
 
     /**
      * collector use - Temporarily store subTask metrics response data

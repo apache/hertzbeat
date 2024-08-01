@@ -373,10 +373,13 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
         return mapList;
     }
-    
+
+    /**
+     * Metrics times.
+     */
     @Data
     @AllArgsConstructor
-    private static class MetricsTime {
+    protected static class MetricsTime {
         private long startTime;
         private Metrics metrics;
         private Timeout timeout;

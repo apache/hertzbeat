@@ -18,6 +18,7 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
+[![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod&color=green)](https://gitpod.io/#https://github.com/apache/hertzbeat)
 
 **Home: [hertzbeat.apache.org](https://hertzbeat.apache.org)**   
 **Email: <a href="mailto:dev-subscribe@hertzbeat.apache.org">Mail to `dev-subscribe@hertzbeat.apache.org`</a> to subscribe mailing lists**
@@ -109,21 +110,25 @@
 
 ##### 1：Install quickly via docker   
 
-1. Just one command to get started:
+1. Just one command to get started
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+   ```shell
+   docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
+   ```
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`  
 
 3. Deploy collector clusters (Optional)
 
-```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
-- `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
-- `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
-- `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
-- `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
+   ```shell
+   docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+   ```
+
+   - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
+   - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
+   - `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
+   - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
+
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache.org/docs/start/docker-deploy)   
 
@@ -167,7 +172,7 @@ Install the postgresql/mysql database, victoria-metrics/iotdb/tdengine database 
 
 Detailed steps refer to [Install via Docker-Compose](script/docker-compose/README.md)      
 
-##### 5. Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
+##### 5: Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
 
 Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 
@@ -438,7 +443,7 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/Aias00"><img src="https://avatars.githubusercontent.com/u/25810623?v=4?s=100" width="100px;" alt="aias00"/><br /><sub><b>aias00</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Aias00" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/westboy"><img src="https://avatars.githubusercontent.com/u/6385565?v=4?s=100" width="100px;" alt="Jin"/><br /><sub><b>Jin</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=westboy" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://blog.csdn.net/qq_52397471"><img src="https://avatars.githubusercontent.com/u/77964041?v=4?s=100" width="100px;" alt="YuLuo"/><br /><sub><b>YuLuo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=yuluo-yx" title="Code">💻</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Yanshuming1"><img src="https://avatars.githubusercontent.com/u/118667222?v=4?s=100" width="100px;" alt="xiaoming student"/><br /><sub><b>xiaoming student</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Yanshuming1" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/Yanshuming1"><img src="https://avatars.githubusercontent.com/u/118667222?v=4?s=100" width="100px;" alt="linDong"/><br /><sub><b>linDong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=Yanshuming1" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lwjxy"><img src="https://avatars.githubusercontent.com/u/52726400?v=4?s=100" width="100px;" alt="lwjxy"/><br /><sub><b>lwjxy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lwjxy" title="Code">💻</a></td>
     </tr>
     <tr>
@@ -461,6 +466,9 @@ Thanks to these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/asd108908382"><img src="https://avatars.githubusercontent.com/u/77717999?v=4?s=100" width="100px;" alt="jiawei.guo"/><br /><sub><b>jiawei.guo</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=asd108908382" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/QBH-insist"><img src="https://avatars.githubusercontent.com/u/39401478?v=4?s=100" width="100px;" alt="QBH-insist"/><br /><sub><b>QBH-insist</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=QBH-insist" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jiangsh-ui"><img src="https://avatars.githubusercontent.com/u/86990361?v=4?s=100" width="100px;" alt="jiangsh"/><br /><sub><b>jiangsh</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jiangsh-ui" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/keaifafafa"><img src="https://avatars.githubusercontent.com/u/83876361?v=4?s=100" width="100px;" alt="Keaifa"/><br /><sub><b>Keaifa</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=keaifafafa" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -478,7 +486,7 @@ Thanks to these wonderful people, welcome to join us:
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 
-WeChat Group : Add friend `tan-cloud` and invite to the group.
+WeChat Group : Add friend `ahertzbeat` and invite to the group.
 
 WeChat Public : Search ID `usthecom`.
 

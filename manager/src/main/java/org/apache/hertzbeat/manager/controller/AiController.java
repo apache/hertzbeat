@@ -21,11 +21,12 @@ import static org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.service.AiService;
 import org.apache.hertzbeat.manager.service.impl.AiServiceFactoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,28 +45,24 @@ public class AiController {
     /**
      * AI beanFactory
      */
-    @Autowired
+    @Autowired(required = false)
     private AiServiceFactoryImpl aiServiceFactory;
 
-    /**
-     * Types of artificial intelligence
-     */
-    @Value("${ai.type:zhiPu}")
-    private String type;
+    @Autowired
+    private AiProperties aiProperties;
 
     /**
      * request AI
      * @param text                  request text
-     * @param currentlyDisabledType Currently disabled, later released
      * @return                      AI response
      */
     @GetMapping(path = "/get", produces = {TEXT_EVENT_STREAM_VALUE})
     @Operation(summary = "Artificial intelligence questions and Answers",
             description = "Artificial intelligence questions and Answers")
-    public Flux<ServerSentEvent<String>> requestAi(@Parameter(description = "Request text", example = "Who are you") @RequestParam("text") String text,
-                                  @Parameter(description = "Types of artificial intelligence", example = "zhiPu") @RequestParam(value = "type", required = false) String currentlyDisabledType)  {
+    public Flux<ServerSentEvent<String>> requestAi(@Parameter(description = "Request text", example = "Who are you") @RequestParam("text") String text)  {
 
-        AiService aiServiceImplBean = aiServiceFactory.getAiServiceImplBean(type);
+        Assert.notNull(aiServiceFactory, "please check that your type value is consistent with the documentation on the website");
+        AiService aiServiceImplBean = aiServiceFactory.getAiServiceImplBean(aiProperties.getType());
 
         return aiServiceImplBean.requestAi(text);
     }

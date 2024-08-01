@@ -52,6 +52,11 @@ public class NginxProtocol implements CommonRequestProtocol {
     private String url;
 
     /**
+     * Whether nginx uses link encryption ssl/tls, i.e. http or https
+     */
+    private String ssl = "false";
+
+    /**
      * Validates the relevant parameters
      * @return is invalid true or false
      */
