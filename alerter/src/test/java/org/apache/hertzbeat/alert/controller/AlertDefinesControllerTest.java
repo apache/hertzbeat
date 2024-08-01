@@ -17,16 +17,11 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -40,7 +35,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -59,83 +54,50 @@ class AlertDefinesControllerTest {
     private AlertDefinesController alertDefinesController;
 
     @Mock
-    AlertDefineService alertDefineService;
+    private AlertDefineService alertDefineService;
 
-    // Parameters to avoid default values interference, default values have been replaced
-    List<Long> ids = Stream.of(6565463543L, 6565463544L).collect(Collectors.toList());
-    Byte priority = Byte.parseByte("1");
-    String sort = "gmtCreate";
-    String order = "asc";
-    Integer pageIndex = 1;
-    Integer pageSize = 7;
-  
-    // Parameter collection
-    Map<String, Object> content = new HashMap<>();
-
-    // Object for mock
-    PageRequest pageRequest;
-
-    // Since the specification is used in dynamic proxy, it cannot be mocked
-    // Missing debugging parameters are ids, priority
-    // The missing part has been manually output for testing
+    private AlertDefine alertDefine;
 
     @BeforeEach
     void setUp() {
+
         this.mockMvc = MockMvcBuilders.standaloneSetup(alertDefinesController).build();
-        content.put("ids", ids);
-        content.put("priority", priority);
-        content.put("sort", sort);
-        content.put("order", order);
-        content.put("pageIndex", pageIndex);
-        content.put("pageSize", pageSize);
-        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(content.get("order").toString()), content.get("sort").toString()));
-        pageRequest = PageRequest.of((Integer) content.get("pageIndex"), (Integer) content.get("pageSize"), sortExp);
+
+        alertDefine = AlertDefine.builder()
+                .id(9L)
+                .app("linux")
+                .metric("disk")
+                .field("usage")
+                .expr("x")
+                .times(1)
+                .tags(new LinkedList<>())
+                .build();
+
     }
 
-    //    @Test
-    // todo: fix this test
+    @Test
     void getAlertDefines() throws Exception {
 
-        // Test the correctness of the mock
-        // Although objects cannot be mocked, stubs can be stored using class files
-//        Mockito.when(alertDefineService.getAlertDefines(Mockito.any(Specification.class), Mockito.argThat(new ArgumentMatcher<PageRequest>() {
-//            @Override
-//            public boolean matches(PageRequest pageRequestMidden) {
-//                // There are three methods in the source code that need to be compared, namely getPageNumber(), getPageSize(), getSort()
-//                if(pageRequestMidden.getPageSize() == pageRequest.getPageSize() &&
-//                        pageRequestMidden.getPageNumber() == pageRequest.getPageNumber() &&
-//                        pageRequestMidden.getSort().equals(pageRequest.getSort())) {
-//                    return true;
-//                }
-//                return false;
-//            }
-//        }))).thenReturn(new PageImpl<AlertDefine>(new ArrayList<AlertDefine>()));
-        AlertDefine define = AlertDefine.builder().id(9L).app("linux").metric("disk").field("usage").expr("x").times(1).tags(new LinkedList<>()).build();
-        Mockito.when(alertDefineService.getAlertDefines(Mockito.any(), Mockito.any())).thenReturn(new PageImpl<>(Collections.singletonList(define)));
+        PageImpl<AlertDefine> alertDefines = new PageImpl<>(Collections.singletonList(alertDefine));
+        Mockito.when(alertDefineService.getAlertDefines(
+                        any(Specification.class),
+                        any(PageRequest.class))
+        ).thenReturn(alertDefines);
+
 
         mockMvc.perform(MockMvcRequestBuilders.get(
                 "/api/alert/defines")
-                .param("ids", ids.toString().substring(1, ids.toString().length() - 1))
-                .param("priority", priority.toString())
-                .param("sort", sort)
-                .param("order", order)
-                .param("pageIndex", pageIndex.toString())
-                .param("pageSize", pageSize.toString()))
+                .param("ids", "1")
+                .param("search", "Test")
+                .param("sort", "id")
+                .param("order", "desc")
+                .param("pageIndex", "0")
+                .param("pageSize", "8"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.data.content").value(new ArrayList<>()))
-                .andExpect(jsonPath("$.data.pageable").value("INSTANCE"))
-                .andExpect(jsonPath("$.data.totalPages").value(1))
-                .andExpect(jsonPath("$.data.totalElements").value(0))
-                .andExpect(jsonPath("$.data.last").value(true))
-                .andExpect(jsonPath("$.data.number").value(0))
-                .andExpect(jsonPath("$.data.size").value(0))
-                .andExpect(jsonPath("$.data.first").value(true))
-                .andExpect(jsonPath("$.data.numberOfElements").value(0))
-                .andExpect(jsonPath("$.data.empty").value(true))
-                .andExpect(jsonPath("$.data.sort.empty").value(true))
-                .andExpect(jsonPath("$.data.sort.sorted").value(false))
-                .andExpect(jsonPath("$.data.sort.unsorted").value(true))
+                .andExpect(jsonPath("$.data.content[0].app").value("linux"))
+                .andExpect(jsonPath("$.data.content[0].id").value("9"))
+                .andExpect(jsonPath("$.data.content[0].metric").value("disk"))
                 .andReturn();
     }
 
@@ -143,9 +105,10 @@ class AlertDefinesControllerTest {
     void deleteAlertDefines() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/alert/defines")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(ids)))
+                .content(JsonUtil.toJson(Collections.singletonList(1))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
     }
+
 }

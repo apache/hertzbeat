@@ -35,6 +35,18 @@ public interface ObjectStoreService {
     boolean upload(String filePath, InputStream is);
 
     /**
+     * remove file
+     * @param filePath file path，eg：hertzbeat/111.json
+     */
+    void remove(String filePath);
+
+    /**
+     * whether the file exists
+     * @param filePath file path，eg：hertzbeat/111.json
+     */
+    boolean isExist(String filePath);
+
+    /**
      * read file
      * @param filePath file path，eg：hertzbeat/111.json
      * @return file

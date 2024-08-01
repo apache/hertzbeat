@@ -36,7 +36,7 @@ common:
 ```yaml
 alerter:
    # Custom console address
-   console-url: https://console.tancloud.cn
+   console-url: https://console.tancloud.io
 ```
 
 3. Use external redis instead of memory to store real-time metric data

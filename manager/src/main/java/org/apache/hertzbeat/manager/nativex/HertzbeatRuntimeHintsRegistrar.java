@@ -33,6 +33,7 @@ import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.aot.hint.RuntimeHintsRegistrar;
 import org.springframework.aot.hint.TypeReference;
+import org.springframework.lang.NonNull;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -44,7 +45,7 @@ public class HertzbeatRuntimeHintsRegistrar implements RuntimeHintsRegistrar {
     private static final String SshConstantsClassName = "org.apache.sshd.common.SshConstants";
 
     @Override
-    public void registerHints(RuntimeHints hints, ClassLoader classLoader) {
+    public void registerHints(@NonNull RuntimeHints hints, ClassLoader classLoader) {
         // see: https://github.com/spring-cloud/spring-cloud-config/blob/main/spring-cloud-config-server/src/main/java/org/springframework/cloud/config/server/config/ConfigServerRuntimeHints.java
         // TODO: move over to GraalVM reachability metadata
         if (ClassUtils.isPresent(SshConstantsClassName, classLoader)) {

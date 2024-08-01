@@ -21,8 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -652,9 +653,8 @@ class MonitorServiceTest {
 
     @Test
     void getMonitors() {
-        Specification<Monitor> specification = mock(Specification.class);
-        when(monitorDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
-        assertNotNull(monitorService.getMonitors(specification, PageRequest.of(1, 1)));
+        doReturn(Page.empty()).when(monitorDao).findAll(any(Specification.class), any(PageRequest.class));
+        assertNotNull(monitorService.getMonitors(null, null, null, null, null, "gmtCreate", "desc", 1, 1, null));
     }
 
     @Test

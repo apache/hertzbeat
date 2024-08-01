@@ -98,9 +98,7 @@ class TimePeriodUtilTest {
 		assertNull(result);
 
 		// invalid format (non-numeric)
-		Exception exception = assertThrows(DateTimeParseException.class, () -> {
-			TimePeriodUtil.parseTokenTime("abc");
-		});
+		Exception exception = assertThrows(DateTimeParseException.class, () -> TimePeriodUtil.parseTokenTime("abc"));
 		assertNotNull(exception.getMessage());
 	}
 

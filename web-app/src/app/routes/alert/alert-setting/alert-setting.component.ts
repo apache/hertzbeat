@@ -18,7 +18,7 @@
  */
 
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, NgForm } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { Rule, RuleSet, QueryBuilderConfig, QueryBuilderClassNames } from '@kerwin612/ngx-query-builder';
@@ -56,9 +56,9 @@ export class AlertSettingComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private formBuilder: FormBuilder
   ) {
-    this.qbFormCtrl = this.formBuilder.control(this.qbData);
+    this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
   }
-  @ViewChild('defineForm', { static: false }) defineForm: NgForm | undefined;
+  @ViewChild('defineForm', { static: false }) defineForm!: NgForm;
   search!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -76,6 +76,7 @@ export class AlertSettingComponent implements OnInit {
   ];
   qbClassNames: QueryBuilderClassNames = {
     row: 'row',
+    tree: 'tree',
     rule: 'br-4 rule',
     ruleSet: 'br-4 ruleset',
     invalidRuleSet: 'br-4 ruleset-invalid'
@@ -89,6 +90,12 @@ export class AlertSettingComponent implements OnInit {
   qbData: RuleSet = {
     condition: 'and',
     rules: []
+  };
+  qbValidator = (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value || !control.value.rules || control.value.rules.length === 0) {
+      return { required: true };
+    }
+    return null;
   };
   qbFormCtrl: FormControl;
 
@@ -651,8 +658,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   resetQbData(qbData: RuleSet) {
-    this.qbData = qbData;
-    this.qbFormCtrl = this.formBuilder.control(this.qbData);
+    this.qbFormCtrl.reset((this.qbData = qbData));
   }
 
   resetManageModalData() {
@@ -663,6 +669,7 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalOk() {
+    this.defineForm.form.addControl('ruleset', this.qbFormCtrl);
     if (this.defineForm?.invalid) {
       Object.values(this.defineForm.controls).forEach(control => {
         if (control.invalid) {

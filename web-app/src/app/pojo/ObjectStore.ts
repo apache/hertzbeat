@@ -30,6 +30,11 @@ export enum ObjectStoreType {
   FILE = 'FILE',
 
   /**
+   * Local database
+   */
+  DATABASE = 'DATABASE',
+
+  /**
    * <a href="https://support.huaweicloud.com/obs/index.html">Huawei cloud OBS</a>
    */
   OBS = 'OBS'
