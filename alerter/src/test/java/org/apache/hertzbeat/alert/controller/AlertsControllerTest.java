@@ -39,7 +39,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -77,13 +76,7 @@ class AlertsControllerTest {
         Page<Alert> alertPage = new PageImpl<>(Collections.singletonList(Alert.builder().build()));
         Mockito.when(
                         alertService.getAlerts(
-                                Mockito.any(Specification.class)
-                                , Mockito.argThat(
-                                        argument ->
-                                                argument.getPageNumber() == pageRequest.getPageNumber()
-                                                        && argument.getPageSize() == pageRequest.getPageSize()
-                                                        && argument.getSort().equals(pageRequest.getSort())
-                                )
+                                ids, 1L, (byte) 1, (byte) 1, "test", sortField, orderType, pageIndex, pageSize
                         )
                 )
                 .thenReturn(alertPage);
