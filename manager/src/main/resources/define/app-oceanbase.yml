@@ -15,7 +15,7 @@
 
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: db
-# The monitoring type eg: linux windows tomcat mysql aws...
+# The monitoring type
 app: OceanBase
 # The monitoring i18n name
 name:
