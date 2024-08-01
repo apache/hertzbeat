@@ -29,6 +29,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.manager.service.CollectorService;
@@ -56,9 +57,6 @@ public class CollectorController {
 
     @Autowired
     private CollectorService collectorService;
-    
-    @Autowired(required = false)
-    private ManageServer manageServer;
 
     @GetMapping
     @Operation(summary = "Get a list of collectors based on query filter items",
@@ -67,21 +65,8 @@ public class CollectorController {
             @Parameter(description = "collector name", example = "tom") @RequestParam(required = false) final String name,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(required = false) Integer pageSize) {
-        if (pageSize == null) {
-            pageSize = Integer.MAX_VALUE;
-        }
-        Specification<Collector> specification = (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !name.isEmpty()) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                predicate = criteriaBuilder.and(predicateName);
-            }
-            return predicate;
-        };
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
-        Page<CollectorSummary> receivers = collectorService.getCollectors(specification, pageRequest);
-        Message<Page<CollectorSummary>> message = Message.success(receivers);
-        return ResponseEntity.ok(message);
+        Page<CollectorSummary> receivers = collectorService.getCollectors(name, pageIndex, pageSize);
+        return ResponseEntity.ok(Message.success(receivers));
     }
 
     @PutMapping("/online")
@@ -89,10 +74,7 @@ public class CollectorController {
     public ResponseEntity<Message<Void>> onlineCollector(
             @Parameter(description = "collector name", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
-        if (collectors != null) {
-            collectors.forEach(collector ->
-                                       this.manageServer.getCollectorAndJobScheduler().onlineCollector(collector));
-        }
+        collectorService.makeCollectorsOnline(collectors);
         return ResponseEntity.ok(Message.success("Online success"));
     }
 
@@ -101,9 +83,7 @@ public class CollectorController {
     public ResponseEntity<Message<Void>> offlineCollector(
             @Parameter(description = "collector name", example = "demo-collector") 
             @RequestParam(required = false) List<String> collectors) {
-        if (collectors != null) {
-            collectors.forEach(collector -> this.manageServer.getCollectorAndJobScheduler().offlineCollector(collector));
-        }
+        collectorService.makeCollectorsOffline(collectors);
         return ResponseEntity.ok(Message.success("Offline success"));
     }
 
@@ -112,8 +92,12 @@ public class CollectorController {
     public ResponseEntity<Message<Void>> deleteCollector(
             @Parameter(description = "collector name", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
-        this.collectorService.deleteRegisteredCollector(collectors);
-        return ResponseEntity.ok(Message.success("Delete success"));
+        try {
+            this.collectorService.deleteRegisteredCollector(collectors);
+            return ResponseEntity.ok(Message.success("Delete success"));
+        } catch (CommonException ex) {
+            return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, ex.getMessage()));
+        }
     }
 
     @PostMapping("/generate/{collector}")
@@ -121,14 +105,12 @@ public class CollectorController {
     public ResponseEntity<Message<Map<String, String>>> generateCollectorDeployInfo(
             @Parameter(description = "collector name", example = "demo-collector")
             @PathVariable() String collector) {
-        if (this.collectorService.hasCollector(collector)) {
-            return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, "There already has same collector name."));
+        try {
+            return ResponseEntity.ok(Message.success(collectorService.generateCollectorDeployInfo(collector)));
+        } catch (CommonException ex) {
+            return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, ex.getMessage()));
         }
-        String host = IpDomainUtil.getLocalhostIp();
-        Map<String, String> maps = new HashMap<>(6);
-        maps.put("identity", collector);
-        maps.put("host", host);
-        return ResponseEntity.ok(Message.success(maps));
+
     }
 
 }

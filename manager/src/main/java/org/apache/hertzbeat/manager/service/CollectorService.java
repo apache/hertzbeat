@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.manager.service;
 
 import java.util.List;
+import java.util.Map;
+
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.springframework.data.domain.Page;
@@ -31,11 +33,13 @@ public interface CollectorService {
     
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
-     * @param pageRequest pageIndex pageSize
+     * @param name Collector Name
+     * @param pageIndex current pageIndex
+     * @param pageSize Number of list pagination
+     *
      * @return Search result
      */
-    Page<CollectorSummary> getCollectors(Specification<Collector> specification, PageRequest pageRequest);
+    Page<CollectorSummary> getCollectors(String name, int pageIndex, Integer pageSize);
     
     /**
      * delete registered collectors
@@ -49,4 +53,23 @@ public interface CollectorService {
      * @return return true if it has
      */
     boolean hasCollector(String collector);
+
+    /**
+     * Generate Collector Deploy Info
+     * @param collector collector name
+     */
+    Map<String, String> generateCollectorDeployInfo(String collector);
+
+    /**
+     * Makes Collectors Offline
+     * @param collectors collector names
+     */
+    void makeCollectorsOffline(List<String> collectors);
+
+    /**
+     * Makes Collectors Online
+     * @param collectors collector names
+     */
+    void makeCollectorsOnline(List<String> collectors);
+
 }
