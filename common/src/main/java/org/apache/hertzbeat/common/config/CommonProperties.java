@@ -149,6 +149,11 @@ public class CommonProperties {
         private String metricsDataQueueNameToRealTimeStorage;
 
         /**
+         * Queue name for service discovery
+         */
+        private String metricsDataQueueNameForServiceDiscovery;
+
+        /**
          * Queue name for alerts data
          */
         private String alertsDataQueueName;
@@ -213,6 +218,13 @@ public class CommonProperties {
             this.alertsDataQueueName = alertsDataQueueName;
         }
 
+        public String getMetricsDataQueueNameForServiceDiscovery() {
+            return metricsDataQueueNameForServiceDiscovery;
+        }
+
+        public void setMetricsDataQueueNameForServiceDiscovery(String metricsDataQueueNameForServiceDiscovery) {
+            this.metricsDataQueueNameForServiceDiscovery = metricsDataQueueNameForServiceDiscovery;
+        }
     }
 
     /**
