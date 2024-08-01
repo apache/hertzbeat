@@ -23,8 +23,6 @@ import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * tag service
@@ -45,11 +43,13 @@ public interface TagService {
 
     /**
      * get tag page list
-     * @param specification Query condition
-     * @param pageRequest   Paging condition
+     * @param search        Tag content search
+     * @param type          Tag type
+     * @param pageIndex     List current page
+     * @param pageSize      Number of list pagination
      * @return Tags
      */
-    Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest);
+    Page<Tag> getTags(String search, Byte type, int pageIndex, int pageSize);
 
     /**
      * delete tags
