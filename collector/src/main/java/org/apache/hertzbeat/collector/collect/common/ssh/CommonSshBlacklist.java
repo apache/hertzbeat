@@ -21,6 +21,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Command blacklist
+ */
 public class CommonSshBlacklist {
 
     private static final Set<String> BLACKLIST;
