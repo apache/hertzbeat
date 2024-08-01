@@ -43,41 +43,49 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 我们直接复用 app-hertzbeat.yml 里面的定义内容,修改为我们当前的监控类型`hertzbeat_auth`配置参数, 比如 `app, category等`。
 
 ```yaml
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# The monitoring type eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
+# The monitoring i18n name
 name:
-  zh-CN: HertzBeat监控(Token)
-  en-US: HertzBeat Monitor(Token) 
+  zh-CN: HertzBeat(Token)
+  en-US: HertzBeat(Token)
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 HertzBeat监控(Token)进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控(Token)</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor(Token). You could click the "<i>New HertzBeat Monitor(Token)</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對HertzBeat監控（Token）進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控（Token）</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat_token
+  en-US: https://hertzbeat.apache.org/docs/help/hertzbeat_token
+# Input params define for monitoring(render web ui by the definition)
 params:
-  # field-字段名称标识符
+  # field-param field key
   - field: host
-    # name-参数字段显示名称
+    # name-param field display i18n name
     name:
-      zh-CN: 主机Host
-      en-US: Host
-    # type-字段类型,样式(大部分映射input标签type属性)
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
     type: host
-    # 是否是必输项 true-必填 false-可选
+    # required-true or false
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
     type: number
-    # 当type为number时,用range表示范围
+    # when type is number, range is required
     range: '[0,65535]'
     required: true
-    # 端口默认值
     defaultValue: 1157
-    # 参数输入框提示信息
-    placeholder: '请输入端口'
+    placeholder: 'Please input port'
   - field: ssl
     name:
       zh-CN: 启动SSL
       en-US: SSL
-    # 当type为boolean时,前端用switch展示开关
+    # type-param field type(boolean mapping the html switch tag)
     type: boolean
     required: false
   - field: contentType
@@ -94,9 +102,6 @@ params:
     type: textarea
     placeholder: 'Available When POST PUT'
     required: false
-# 采集指标配置列表 todo 下方配置
-metrics: ......
-
 ```
 
 ### 定义监控指标`auth`登录请求获取`token`  
@@ -105,41 +110,49 @@ metrics: ......
 
 ```yaml
 
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# The monitoring type eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
+# The monitoring i18n name
 name:
-  zh-CN: HertzBeat监控(Token)
-  en-US: HertzBeat Monitor(Token) 
+  zh-CN: HertzBeat(Token)
+  en-US: HertzBeat(Token)
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 HertzBeat监控(Token)进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控(Token)</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor(Token). You could click the "<i>New HertzBeat Monitor(Token)</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對HertzBeat監控（Token）進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控（Token）</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat_token
+  en-US: https://hertzbeat.apache.org/docs/help/hertzbeat_token
+# Input params define for monitoring(render web ui by the definition)
 params:
-  # field-字段名称标识符
+  # field-param field key
   - field: host
-    # name-参数字段显示名称
+    # name-param field display i18n name
     name:
-      zh-CN: 主机Host
-      en-US: Host
-    # type-字段类型,样式(大部分映射input标签type属性)
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
     type: host
-    # 是否是必输项 true-必填 false-可选
+    # required-true or false
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
     type: number
-    # 当type为number时,用range表示范围
+    # when type is number, range is required
     range: '[0,65535]'
     required: true
-    # 端口默认值
     defaultValue: 1157
-    # 参数输入框提示信息
-    placeholder: '请输入端口'
+    placeholder: 'Please input port'
   - field: ssl
     name:
       zh-CN: 启动SSL
       en-US: SSL
-    # 当type为boolean时,前端用switch展示开关
+    # type-param field type(boolean mapping the html switch tag)
     type: boolean
     required: false
   - field: contentType
@@ -156,40 +169,43 @@ params:
     type: textarea
     placeholder: 'Available When POST PUT'
     required: false
-# 采集指标配置列表
+# collect metrics config list
 metrics:
-  # 第一个监控指标 auth
-  # 注意：内置监控指标有 (responseTime - 响应时间)
+  # metrics - auth
   - name: auth
-    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
-    # 具体监控指标列表
+    # collect metrics content
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: token
         type: 1
       - field: refreshToken
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # http port
       port: ^_^port^_^
-      # url请求接口路径
+      # http url
       url: /api/account/auth/form
-      # 请求方式 GET POST PUT DELETE PATCH
+      # http method: GET POST PUT DELETE PATCH
       method: POST
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # if enabled https
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
-      # 请求头内容
+      # http request header content
       headers:
         content-type: ^_^contentType^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
+        ^_^headers^_^: ^_^headers^_^
+      # http request params
+      params:
+        ^_^params^_^: ^_^params^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       parseScript: '$.data'
 
@@ -235,41 +251,49 @@ metrics:
 
 ```yaml
 
-# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
 category: custom
-# 监控应用类型(与文件名保持一致) eg: linux windows tomcat mysql aws...
+# The monitoring type eg: linux windows tomcat mysql aws...
 app: hertzbeat_token
+# The monitoring i18n name
 name:
-  zh-CN: HertzBeat监控(Token)
-  en-US: HertzBeat Monitor(Token)
+  zh-CN: HertzBeat(Token)
+  en-US: HertzBeat(Token)
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 HertzBeat监控(Token)进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控(Token)</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor(Token). You could click the "<i>New HertzBeat Monitor(Token)</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對HertzBeat監控（Token）進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控（Token）</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat_token
+  en-US: https://hertzbeat.apache.org/docs/help/hertzbeat_token
+# Input params define for monitoring(render web ui by the definition)
 params:
-  # field-字段名称标识符
+  # field-param field key
   - field: host
-    # name-参数字段显示名称
+    # name-param field display i18n name
     name:
-      zh-CN: 主机Host
-      en-US: Host
-    # type-字段类型,样式(大部分映射input标签type属性)
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
     type: host
-    # 是否是必输项 true-必填 false-可选
+    # required-true or false
     required: true
   - field: port
     name:
       zh-CN: 端口
       en-US: Port
+    # type-param field type(most mapping the html input type)
     type: number
-    # 当type为number时,用range表示范围
+    # when type is number, range is required
     range: '[0,65535]'
     required: true
-    # 端口默认值
     defaultValue: 1157
-    # 参数输入框提示信息
-    placeholder: '请输入端口'
+    placeholder: 'Please input port'
   - field: ssl
     name:
       zh-CN: 启动SSL
       en-US: SSL
-    # 当type为boolean时,前端用switch展示开关
+    # type-param field type(boolean mapping the html switch tag)
     type: boolean
     required: false
   - field: contentType
@@ -286,83 +310,72 @@ params:
     type: textarea
     placeholder: 'Available When POST PUT'
     required: false
-# 采集指标配置列表
+# collect metrics config list
 metrics:
-# 第一个监控指标 cpu
-# 注意：内置监控指标有 (responseTime - 响应时间)
+  # metrics - auth
   - name: auth
-    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
-    # 具体监控指标列表
+    # collect metrics content
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: token
         type: 1
       - field: refreshToken
         type: 1
-    # 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
-    # 当protocol为http协议时具体的采集配置
+    # the config content when protocol is http
     http:
-      # 主机host: ipv4 ipv6 域名
+      # http host: ipv4 ipv6 domain
       host: ^_^host^_^
-      # 端口
+      # http port
       port: ^_^port^_^
-      # url请求接口路径
+      # http url
       url: /api/account/auth/form
-      # 请求方式 GET POST PUT DELETE PATCH
+      # http method: GET POST PUT DELETE PATCH
       method: POST
-      # 是否启用ssl/tls,即是http还是https,默认false
+      # if enabled https
       ssl: ^_^ssl^_^
       payload: ^_^payload^_^
-      # 请求头内容
+      # http request header content
       headers:
         content-type: ^_^contentType^_^
         ^_^headers^_^: ^_^headers^_^
-      # 请求参数内容
+      # http request params
       params:
         ^_^params^_^: ^_^params^_^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       parseScript: '$.data'
 
 
   - name: summary
-    # 指标调度优先级(0-127)越小优先级越高,优先级低的指标会等优先级高的指标采集完成后才会被调度,相同优先级的指标会并行调度采集
-    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 1
-    # 具体监控指标列表
     fields:
-      # 指标信息 包括 field名称   type字段类型:0-number数字,1-string字符串   label是否为标签   unit:指标单位
-      - field: category
-        type: 1
       - field: app
         type: 1
-      - field: size
-        type: 0
+        label: true
+      - field: category
+        type: 1
       - field: status
         type: 0
-# 监控采集使用协议 eg: sql, ssh, http, telnet, wmi, snmp, sdk
+      - field: size
+        type: 0
+      - field: availableSize
+        type: 0
     protocol: http
-# 当protocol为http协议时具体的采集配置
     http:
-      # 主机host: ipv4 ipv6 域名
       host: ^_^host^_^
-      # 端口
       port: ^_^port^_^
-      # url请求接口路径
       url: /api/summary
-      # 请求方式 GET POST PUT DELETE PATCH
       method: GET
-      # 是否启用ssl/tls,即是http还是https,默认false
       ssl: ^_^ssl^_^
-      # 认证
       authorization:
-        # 认证方式: Basic Auth, Digest Auth, Bearer Token
         type: Bearer Token
+        # ^o^xxx^o^ ^o^ substitution represents the value of the acquisition metric xxx of the previous priority
         bearerTokenToken: ^o^token^o^
-      # 响应数据解析方式: default-系统规则,jsonPath-jsonPath脚本,website-网站可用性指标监控
       parseType: jsonPath
       parseScript: '$.data.apps.*'
 

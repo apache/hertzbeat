@@ -12,21 +12,21 @@
       {
         "field": "host",
         "type": 1,
-        "value": "127.0.0.1"
+        "paramValue": "127.0.0.1"
       },
       {
         "field": "port",
         "type": 0,
-        "value": 80
+        "paramValue": 80
       },
       {
         "field": "uri",
-        "type": 1
+        "paramValue": 1
       },
       {
         "field": "ssl",
         "type": 1,
-        "value": false
+        "paramValue": false
       },
       {
         "field": "timeout",

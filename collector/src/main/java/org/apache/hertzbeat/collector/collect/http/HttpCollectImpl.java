@@ -45,7 +45,7 @@ import org.apache.commons.net.util.Base64;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
-import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreater;
+import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreator;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.ExporterParser;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.MetricFamily;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
@@ -59,6 +59,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
@@ -133,7 +134,7 @@ public class HttpCollectImpl extends AbstractCollect {
             // Option 1: Parse using InputStream, but this requires significant code changes;
             // Option 2: Manually trigger garbage collection, similar to how it's done in Dubbo for large inputs.
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            if (StringUtils.hasText(resp)) {
+            if (!StringUtils.hasText(resp)) {
                 log.info("http response entity is empty, status: {}.", statusCode);
             }
             Long responseTime = System.currentTimeMillis() - startTime;
@@ -149,7 +150,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     case DispatchConstants.PARSE_XML_PATH ->
                             parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     case DispatchConstants.PARSE_WEBSITE ->
-                            parseResponseByWebsite(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
+                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, response);
                     case DispatchConstants.PARSE_SITE_MAP ->
                             parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                     default ->
@@ -197,20 +198,44 @@ public class HttpCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_HTTP;
     }
 
-    private void parseResponseByWebsite(String resp, List<String> aliasFields, HttpProtocol http,
-                                        CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void parseResponseByWebsite(String resp, Metrics metrics, HttpProtocol http,
+                                        CollectRep.MetricsData.Builder builder, Long responseTime,
+                                        CloseableHttpResponse response) {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
-        for (String alias : aliasFields) {
-            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                valueRowBuilder.addColumns(responseTime.toString());
-            } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-                valueRowBuilder.addColumns(Integer.toString(keywordNum));
-            } else {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+        for (String alias : metrics.getAliasFields()) {
+            if ("summary".equalsIgnoreCase(metrics.getName())) {
+                addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
+            } else if ("header".equalsIgnoreCase(metrics.getName())) {
+                addColumnFromHeader(valueRowBuilder, alias, response);
             }
         }
         builder.addValues(valueRowBuilder.build());
+    }
+
+    private void addColumnFromHeader(CollectRep.ValueRow.Builder valueRowBuilder, String alias, CloseableHttpResponse response) {
+        if (!StringUtils.hasText(alias)) {
+            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+            return;
+        }
+
+        final Header firstHeader = response.getFirstHeader(alias);
+        if (Objects.isNull(firstHeader)) {
+            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+            return;
+        }
+
+        valueRowBuilder.addColumns(firstHeader.getValue());
+    }
+
+    private void addColumnForSummary(Long responseTime, CollectRep.ValueRow.Builder valueRowBuilder, int keywordNum, String alias) {
+        if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+            valueRowBuilder.addColumns(responseTime.toString());
+        } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
+            valueRowBuilder.addColumns(Integer.toString(keywordNum));
+        } else {
+            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+        }
     }
 
     private void parseResponseBySiteMap(String resp, List<String> aliasFields,
@@ -326,12 +351,8 @@ public class HttpCollectImpl extends AbstractCollect {
                             } else {
                                 valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
                             }
-                        } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                            valueRowBuilder.addColumns(responseTime.toString());
-                        } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-                            valueRowBuilder.addColumns(Integer.toString(keywordNum));
                         } else {
-                            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                            addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                         }
                     }
                 }
@@ -354,7 +375,7 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByPromQl(String resp, List<String> aliasFields, HttpProtocol http,
                                        CollectRep.MetricsData.Builder builder) {
-        AbstractPrometheusParse prometheusParser = PrometheusParseCreater.getPrometheusParse();
+        AbstractPrometheusParse prometheusParser = PrometheusParseCreator.getPrometheusParse();
         prometheusParser.handle(resp, aliasFields, http, builder);
     }
 
@@ -422,13 +443,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     String value = valueElement.getAsString();
                     valueRowBuilder.addColumns(value);
                 } else {
-                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(responseTime.toString());
-                    } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Integer.toString(keywordNum));
-                    } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                    }
+                    addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                 }
             }
             builder.addValues(valueRowBuilder.build());
@@ -534,7 +549,7 @@ public class HttpCollectImpl extends AbstractCollect {
         }
 
         // if it has payload, would override post params
-        if (StringUtils.hasLength(httpProtocol.getPayload())) {
+        if (StringUtils.hasLength(httpProtocol.getPayload()) && (HttpMethod.POST.matches(httpMethod) || HttpMethod.PUT.matches(httpMethod))) {
             requestBuilder.setEntity(new StringEntity(httpProtocol.getPayload(), StandardCharsets.UTF_8));
         }
 

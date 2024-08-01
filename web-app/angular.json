@@ -20,6 +20,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
+            "preserveSymlinks": true,
             "outputPath": "dist",
             "index": "src/index.html",
             "main": "src/main.ts",
@@ -99,14 +100,15 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "hertzbeat-web-app:build"
+            "proxyConfig": "proxy.conf.json",
+            "buildTarget": "hertzbeat-web-app:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "hertzbeat-web-app:build:production"
+              "buildTarget": "hertzbeat-web-app:build:production"
             },
             "development": {
-              "browserTarget": "hertzbeat-web-app:build:development"
+              "buildTarget": "hertzbeat-web-app:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -114,7 +116,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "hertzbeat-web-app:build"
+            "buildTarget": "hertzbeat-web-app:build"
           }
         },
         "test": {

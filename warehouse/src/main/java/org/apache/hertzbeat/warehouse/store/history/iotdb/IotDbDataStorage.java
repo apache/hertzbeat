@@ -55,7 +55,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     private static final String NEVER_EXPIRE = "-1";
 
     /**
-     * storage group (存储组)
+     * storage group
      */
     private static final String STORAGE_GROUP = "root.hertzbeat";
 
@@ -107,16 +107,16 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
         boolean available = checkConnection();
         if (!available) {
             log.error("IotDB session pool init error with check connection");
-            return available;
+            return false;
         }
         available = this.createDatabase();
         if (!available) {
             log.error("IotDB session pool init error with create database");
-            return available;
+            return false;
         }
         this.initTtl(properties.expireTime());
         log.info("IotDB session pool init success");
-        return available;
+        return true;
     }
 
     private boolean checkConnection() {
@@ -379,9 +379,9 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * 获取deviceId下的所有设备
+     * Query all devices by deviceId
      *
-     * @param deviceId 设备/实体
+     * @param deviceId deviceId
      */
     private List<String> queryAllDevices(String deviceId) {
         String showDevicesSql = String.format(SHOW_DEVICES, deviceId + ".*");
@@ -406,10 +406,10 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * gets the device ID
-     * 有instanceId的使用 ${group}.${app}.${metrics}.${monitor}.${labels} 的方式
-     * 否则使用 ${group}.${app}.${metrics}.${monitor} 的方式
-     * 查询时可以通过 ${group}.${app}.${metrics}.${monitor}.* 的方式获取所有instance数据
+     * use ${group}.${app}.${metrics}.${monitor}.${labels} to get device id if there is a way to get instanceId
+     * otherwise use  ${group}.${app}.${metrics}.${monitor}
+     *
+     * Use  ${group}.${app}.${metrics}.${monitor}.*  to get all instance data when you tend to query
      */
     private String getDeviceId(String app, String metrics, Long monitorId, String labels, boolean useQuote) {
         String deviceId = STORAGE_GROUP + "."

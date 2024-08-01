@@ -16,16 +16,15 @@
 # under the License.
 
 apiVersion: v2
-name: HertzBeat
+name: hertzbeat
 description: An open-source, real-time monitoring system with custom monitoring, high performance cluster and agentless capabilities.
 type: application
 home: https://hertzbeat.apache.org/
 sources:
   - https://github.com/apache/hertzbeat
-  - https://charts.hertzbeat.com
 maintainers:
-  - name: tom
-    email: tomsun28@outlook.com
+  - name: hertzbeat-dev
+    email: dev@hertzbeat.apache.org
 icon: https://raw.githubusercontent.com/apache/hertzbeat/master/home/static/img/hertzbeat-logo.png
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.

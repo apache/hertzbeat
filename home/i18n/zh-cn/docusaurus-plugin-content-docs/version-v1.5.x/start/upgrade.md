@@ -7,7 +7,7 @@ sidebar_label: 版本更新指引
 **Apache HertzBeat (incubating) 的发布版本列表**
 
 - [下载页面](/docs/download)
-- [Github Release](https://github.com/apache/hertzbeat/releases)
+- [Download](https://hertzbeat.apache.org/docs/download)
 - [DockerHub Release](https://hub.docker.com/r/apache/hertzbeat/tags)
 
 HertzBeat 的元数据信息保存在 H2 或 Mysql, PostgreSQL 关系型数据库内, 采集指标数据存储在 TDengine, IotDB 等时序数据库内。

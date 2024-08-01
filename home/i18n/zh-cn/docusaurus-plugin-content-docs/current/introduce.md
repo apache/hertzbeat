@@ -11,7 +11,7 @@ slug: /
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/apache/hertzbeat/general)
+[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
@@ -145,7 +145,7 @@ HertzBeat 使用这些已有的标准协议或规范，将他们抽象规范可�
 - Apache 基金会孵化器下开源项目，Gitee GVP，使用`Apache2`协议，由自由开放的开源社区主导维护的开源协作产品。
 - 无监控数量`License`，监控类型等伪开源限制。
 - 基于`Java+SpringBoot+TypeScript+Angular`主流技术栈构建，方便的二次开发。
-- 开源不等同于免费，基于HertzBeat二次开发需保留页面脚注，版权等。
+- 开源不等同于免费，基于HertzBeat二次开发需保留版权等。
 
 **HertzBeat 已被 [CNCF云原生全景图](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category) 收录**
 

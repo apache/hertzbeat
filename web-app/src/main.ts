@@ -1,12 +1,27 @@
-import { enableProdMode, ViewEncapsulation } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { enableProdMode, EnvironmentInjector, ViewEncapsulation, Injector, PLATFORM_ID, runInInjectionContext } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
-import { preloaderFinished } from '@delon/theme';
+import { stepPreloader } from '@delon/theme';
 import { NzSafeAny } from 'ng-zorro-antd/core/types';
 
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 
-preloaderFinished();
+const injector = Injector.create({
+  providers: [
+    { provide: PLATFORM_ID, useValue: 'browser' },
+    {
+      provide: DOCUMENT,
+      useFactory: () => {
+        return document;
+      }
+    }
+  ]
+}) as EnvironmentInjector;
+
+let preloaderDone!: () => void;
+runInInjectionContext(injector, () => (preloaderDone = stepPreloader()));
+preloaderDone();
 
 if (environment.production) {
   enableProdMode();

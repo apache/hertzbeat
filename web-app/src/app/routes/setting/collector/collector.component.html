@@ -17,53 +17,51 @@
   ~ under the License.
 -->
 
-<app-help-massage-show
-  [help_massage_content]="'collector.help' | i18n"
+<app-help-message-show
+  [help_message_content]="'collector.help' | i18n"
   [guild_link]="'collector.help.link' | i18n"
   [module_name]="'menu.advanced.collector'"
   [icon_name]="'cluster'"
-></app-help-massage-show>
+></app-help-message-show>
+
 <nz-divider></nz-divider>
 
-<div style="margin-bottom: 20px">
-  <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
-    <i nz-icon nzType="sync" nzTheme="outline"></i>
-  </button>
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" nz-tooltip (click)="sync()" [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
 
-  <button nz-button nzType="primary" nzDanger (click)="onDeployCollector()">
-    <i nz-icon nzType="deployment-unit" nzTheme="outline"></i>
-    {{ 'collector.deploy' | i18n }}
-  </button>
+    <button nz-button nzType="primary" nzDanger (click)="onDeployCollector()">
+      <i nz-icon nzType="deployment-unit" nzTheme="outline"></i>
+      {{ 'collector.deploy' | i18n }}
+    </button>
 
-  <button nz-button nzType="primary" (click)="onGoOnlineCollectors()">
-    <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-    {{ 'collector.online' | i18n }}
-  </button>
+    <button nz-button nzType="primary" (click)="onGoOnlineCollectors()">
+      <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+      {{ 'collector.online' | i18n }}
+    </button>
 
-  <button nz-button nzType="primary" (click)="onGoOfflineCollectors()">
-    <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-    {{ 'collector.offline' | i18n }}
-  </button>
+    <button nz-button nzType="primary" (click)="onGoOfflineCollectors()">
+      <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+      {{ 'collector.offline' | i18n }}
+    </button>
 
-  <button nz-button nzType="primary" nzDanger (click)="onDeleteCollectors()">
-    <i nz-icon nzType="delete" nzTheme="outline"></i>
-    {{ 'collector.delete' | i18n }}
-  </button>
-
-  <button style="margin-right: 25px; float: right" nz-button nzType="primary" (click)="loadCollectorsTable()" class="mobile-hide">
-    {{ 'common.search' | i18n }}
-  </button>
-  <input
-    class="mobile-hide"
-    style="margin-right: 5px; float: right; width: 300px; border-radius: 9px; text-align: center"
-    nz-input
-    type="text"
-    [placeholder]="'collector.name' | i18n"
-    nzSize="default"
-    (keyup.enter)="loadCollectorsTable()"
-    [(ngModel)]="search"
-  />
-</div>
+    <button nz-button nzType="primary" nzDanger (click)="onDeleteCollectors()">
+      <i nz-icon nzType="delete" nzTheme="outline"></i>
+      {{ 'collector.delete' | i18n }}
+    </button>
+  </ng-template>
+  <ng-template #right>
+    <app-multi-func-input
+      class="mobile-hide"
+      groupStyle="width: 250px;"
+      [placeholder]="'collector.name' | i18n"
+      [(value)]="search"
+      (valueChange)="loadCollectorsTable()"
+    />
+  </ng-template>
+</app-toolbar>
 
 <nz-table
   #fixedTable
@@ -78,7 +76,7 @@
   [nzPageSizeOptions]="[8, 15, 25]"
   (nzQueryParams)="onTablePageChange($event)"
   nzShowPagination="true"
-  [nzScroll]="{ x: '1240px', y: '100%' }"
+  [nzScroll]="{ x: '1240px' }"
 >
   <thead>
     <tr>
@@ -90,6 +88,7 @@
       <th nzAlign="center" nzWidth="9%">{{ 'collector.pinned' | i18n }}</th>
       <th nzAlign="center" nzWidth="9%">{{ 'collector.dispatched' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.ip' | i18n }}</th>
+      <th nzAlign="center" nzWidth="12%">{{ 'collector.version' | i18n }}</th>
       <th nzAlign="center" nzWidth="12%">{{ 'collector.start-time' | i18n }}</th>
       <th nzAlign="center" nzWidth="13%">{{ 'common.edit' | i18n }}</th>
     </tr>
@@ -130,43 +129,46 @@
         </nz-tag>
       </td>
       <td nzAlign="center">{{ data.collector.ip }}</td>
+      <td nzAlign="center">{{ data.collector.version }}</td>
       <td nzAlign="center">
         {{ (data.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim() }}
       </td>
       <td nzAlign="center">
-        <button
-          *ngIf="data.collector.status == 1"
-          [disabled]="data.collector.name == 'main-default-collector'"
-          nz-button
-          nzType="primary"
-          (click)="onGoOnlineOneCollector(data.collector.name)"
-          nz-tooltip
-          [nzTooltipTitle]="'collector.online' | i18n"
-        >
-          <i nz-icon nzType="up-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          *ngIf="data.collector.status == 0"
-          [disabled]="data.collector.name == 'main-default-collector'"
-          nz-button
-          nzType="primary"
-          (click)="onGoOfflineOneCollector(data.collector.name)"
-          nz-tooltip
-          [nzTooltipTitle]="'collector.offline' | i18n"
-        >
-          <i nz-icon nzType="down-circle" nzTheme="outline"></i>
-        </button>
-        <button
-          [disabled]="data.collector.name == 'main-default-collector'"
-          nz-button
-          nzType="primary"
-          nzDanger
-          (click)="onDeleteOneCollector(data.collector.name)"
-          nz-tooltip
-          [nzTooltipTitle]="'collector.delete' | i18n"
-        >
-          <i nz-icon nzType="delete" nzTheme="outline"></i>
-        </button>
+        <div class="actions">
+          <button
+            *ngIf="data.collector.status == 1"
+            [disabled]="data.collector.name == 'main-default-collector'"
+            nz-button
+            nzType="primary"
+            (click)="onGoOnlineOneCollector(data.collector.name)"
+            nz-tooltip
+            [nzTooltipTitle]="'collector.online' | i18n"
+          >
+            <i nz-icon nzType="up-circle" nzTheme="outline"></i>
+          </button>
+          <button
+            *ngIf="data.collector.status == 0"
+            [disabled]="data.collector.name == 'main-default-collector'"
+            nz-button
+            nzType="primary"
+            (click)="onGoOfflineOneCollector(data.collector.name)"
+            nz-tooltip
+            [nzTooltipTitle]="'collector.offline' | i18n"
+          >
+            <i nz-icon nzType="down-circle" nzTheme="outline"></i>
+          </button>
+          <button
+            [disabled]="data.collector.name == 'main-default-collector'"
+            nz-button
+            nzType="primary"
+            nzDanger
+            (click)="onDeleteOneCollector(data.collector.name)"
+            nz-tooltip
+            [nzTooltipTitle]="'collector.delete' | i18n"
+          >
+            <i nz-icon nzType="delete" nzTheme="outline"></i>
+          </button>
+        </div>
       </td>
     </tr>
   </tbody>
@@ -179,13 +181,12 @@
   [nzTitle]="'collector.deploy' | i18n"
   (nzOnCancel)="onDeployCollectorClose()"
   nzMaskClosable="false"
-  [nzFooter]="null"
   nzWidth="45%"
   [nzOkLoading]="isDeployCollectorModalOkLoading"
 >
   <div *nzModalContent class="-inner-content">
     <form nz-form #deployForm="ngForm">
-      <nz-form-item>
+      <nz-form-item [ngStyle]="{ marginBottom: 0 }">
         <nz-form-label [nzSpan]="7" nzFor="name" nzRequired="true">{{ 'collector.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
           <input
@@ -201,20 +202,9 @@
         </nz-form-control>
       </nz-form-item>
     </form>
-    <div style="text-align: center">
-      <button
-        (click)="onDeployCollectorModalOk()"
-        [disabled]="identity != ''"
-        [nzLoading]="isDeployCollectorModalOkLoading"
-        nz-button
-        nzType="primary"
-      >
-        {{ 'collector.deploy.ok' | i18n }}
-      </button>
-    </div>
-    <nz-divider></nz-divider>
     <div *ngIf="identity != ''">
-      <div style="margin-top: 10px; text-align: center; font-weight: bold; font-size: medium">
+      <nz-divider></nz-divider>
+      <div style="text-align: center; font-weight: bold; font-size: medium">
         {{ 'collector.deploy.identity' | i18n }}
       </div>
       <div style="text-align: center; font-weight: lighter; font-size: small">
@@ -240,7 +230,7 @@
       </div>
       <nz-divider></nz-divider>
       <nz-badge nzStatus="processing" style="font-weight: bold" [nzText]="'collector.deploy.docker' | i18n"></nz-badge>
-      <div style="margin: 4px 10px 4px 4px; height: 240px; width: 100%; border-radius: 10px">
+      <div class="br-8" style="margin: 4px 10px 4px 4px; height: 240px; width: 100%">
         <nz-code-editor
           [ngModel]="dockerShell"
           [nzEditorMode]="'normal'"
@@ -252,19 +242,28 @@
       <a style="margin-left: 20px" href="https://github.com/apache/hertzbeat/releases" target="_blank">
         <span>{{ 'collector.deploy.package.github' | i18n }}</span>
       </a>
-      <div style="margin: 4px 10px 4px 4px; height: 260px; width: 100%; border-radius: 10px">
+      <div class="br-8" style="margin: 4px 10px 4px 4px; height: 260px; width: 100%">
         <nz-code-editor
           [ngModel]="packageShell"
           [nzEditorMode]="'normal'"
           [nzEditorOption]="{ language: 'yaml', theme: 'vs-dark', folding: true }"
         ></nz-code-editor>
       </div>
-      <nz-divider></nz-divider>
-      <div style="text-align: center; margin-top: 10px">
-        <button nz-button nzDanger (click)="onDeployCollectorClose()">
-          {{ 'collector.deploy.close' | i18n }}
-        </button>
-      </div>
     </div>
+  </div>
+  <div *nzModalFooter>
+    <button
+      *ngIf="!identity"
+      (click)="onDeployCollectorModalOk()"
+      [disabled]="identity != ''"
+      [nzLoading]="isDeployCollectorModalOkLoading"
+      nz-button
+      nzType="primary"
+    >
+      {{ 'collector.deploy.ok' | i18n }}
+    </button>
+    <button *ngIf="identity" nz-button nzDanger (click)="onDeployCollectorClose()">
+      {{ 'collector.deploy.close' | i18n }}
+    </button>
   </div>
 </nz-modal>

@@ -1,7 +1,7 @@
 ---
 id: ssl-cert-practice  
 title: SSL证书过期监控使用案例    
-sidebar_label: 使用案例
+sidebar_label: SSL证书过期监控使用案例
 ---
 
 

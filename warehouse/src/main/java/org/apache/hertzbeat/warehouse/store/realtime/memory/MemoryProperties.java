@@ -25,7 +25,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param enabled Whether memory data storage is enabled
  * @param initSize Memory storage map initialization size
  */
-@ConfigurationProperties(prefix = "warehouse.store.memory")
+@ConfigurationProperties(prefix = "warehouse.real-time.memory")
 public record MemoryProperties(@DefaultValue("true") boolean enabled,
                                @DefaultValue("1024") Integer initSize) {
 }

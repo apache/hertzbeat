@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -101,6 +102,10 @@ public class SshCollectImpl extends AbstractCollect {
             list.add(ClientChannelEvent.CLOSED);
             Collection<ClientChannelEvent> waitEvents = channel.waitFor(list, timeout);
             if (waitEvents.contains(ClientChannelEvent.TIMEOUT)) {
+                //  A cancel signal needs to be sent if the execution times out, otherwise the session cannot be closed promptly
+                int cancelSignal = 3;
+                channel.getInvertedIn().write(cancelSignal);
+                channel.getInvertedIn().flush();
                 throw new SocketTimeoutException("Failed to retrieve command result in time: " + sshProtocol.getScript());
             }
             Long responseTime = System.currentTimeMillis() - startTime;
@@ -146,7 +151,10 @@ public class SshCollectImpl extends AbstractCollect {
         } finally {
             if (channel != null && channel.isOpen()) {
                 try {
-                    channel.close();
+                    // Close the SSH channel with the 'false' parameter to ensure the session is not kept alive.
+                    long st = System.currentTimeMillis();
+                    channel.close(false).addListener(future ->
+                            log.debug("channel is closed in {} ms", System.currentTimeMillis() - st));
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -206,11 +214,7 @@ public class SshCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = mapValue.get(field);
-            if (fieldValue == null) {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            } else {
-                valueRowBuilder.addColumns(fieldValue);
-            }
+            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
         }
         builder.addValues(valueRowBuilder.build());
     }

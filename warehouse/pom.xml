@@ -29,7 +29,8 @@
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
-        <greptimedb.version>0.4.0</greptimedb.version>
+        <greptimedb.version>0.7.3</greptimedb.version>
+        <mysql-jdbcdriver.version>8.0.33</mysql-jdbcdriver.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
 
@@ -81,10 +82,10 @@
             <artifactId>influxdb-java</artifactId>
             <version>${influxdb.version}</version>
         </dependency>
-
+        <!-- greptimedb -->
         <dependency>
             <groupId>io.greptime</groupId>
-            <artifactId>greptimedb-protocol</artifactId>
+            <artifactId>ingester-all</artifactId>
             <version>${greptimedb.version}</version>
             <exclusions>
                 <exclusion>
@@ -105,28 +106,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- mysql -->
         <dependency>
-            <groupId>io.greptime</groupId>
-            <artifactId>greptimedb-grpc</artifactId>
-            <version>${greptimedb.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.grpc</groupId>
-                    <artifactId>grpc-all</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.google.code.gson</groupId>
-                    <artifactId>gson</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-            </exclusions>
+             <groupId>mysql</groupId>
+             <artifactId>mysql-connector-java</artifactId>
+             <version>${mysql-jdbcdriver.version}</version>
         </dependency>
         <!-- kafka -->
         <dependency>

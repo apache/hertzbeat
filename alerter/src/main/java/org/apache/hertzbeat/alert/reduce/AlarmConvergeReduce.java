@@ -55,25 +55,33 @@ public class AlarmConvergeReduce {
     @SuppressWarnings("unchecked")
     public boolean filterConverge(Alert currentAlert) {
         // ignore monitor status auto recover notice
-        if (currentAlert.getTags() != null && currentAlert.getTags().containsKey(CommonConstants.IGNORE)) {
-            return true;
-        }
-        if (currentAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
+        if ((currentAlert.getTags() != null && currentAlert.getTags().containsKey(CommonConstants.IGNORE))
+                || currentAlert.getStatus() == CommonConstants.ALERT_STATUS_CODE_RESTORED) {
             // restored alert
+            boolean isHasIgnore = false;
+            Map<String, String> tags = currentAlert.getTags();
+            if (tags.containsKey(CommonConstants.IGNORE)) {
+                isHasIgnore = true;
+                tags.remove(CommonConstants.IGNORE);
+            }
             int alertHash = Objects.hash(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL)
-                    + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
-                    + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
+                    + Arrays.hashCode(tags.keySet().toArray(new String[0]))
+                    + Arrays.hashCode(tags.values().toArray(new String[0]));
             converageAlertMap.remove(alertHash);
             alertHash = Objects.hash(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
-                    + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
-                    + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
+                    + Arrays.hashCode(tags.keySet().toArray(new String[0]))
+                    + Arrays.hashCode(tags.values().toArray(new String[0]));
             converageAlertMap.remove(alertHash);
             alertHash = Objects.hash(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
-                    + Arrays.hashCode(currentAlert.getTags().keySet().toArray(new String[0]))
-                    + Arrays.hashCode(currentAlert.getTags().values().toArray(new String[0]));
+                    + Arrays.hashCode(tags.keySet().toArray(new String[0]))
+                    + Arrays.hashCode(tags.values().toArray(new String[0]));
             converageAlertMap.remove(alertHash);
+            if (isHasIgnore) {
+                tags.put(CommonConstants.IGNORE, CommonConstants.IGNORE);
+            }
             return true;
         }
+
         CommonCacheService<String, Object> convergeCache = CacheFactory.getAlertConvergeCache();
         List<AlertConverge> alertConvergeList = (List<AlertConverge>) convergeCache.get(CommonConstants.CACHE_ALERT_CONVERGE);
         if (alertConvergeList == null) {
