@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.common.serialize;
 
 import java.util.Map;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.serialization.Serializer;
@@ -25,6 +27,8 @@ import org.apache.kafka.common.serialization.Serializer;
 /**
  * kafka metrics data serializer
  */
+
+@Slf4j
 public class KafkaMetricsDataSerializer implements Serializer<CollectRep.MetricsData> {
 
     @Override
@@ -34,6 +38,12 @@ public class KafkaMetricsDataSerializer implements Serializer<CollectRep.Metrics
 
     @Override
     public byte[] serialize(String s, CollectRep.MetricsData metricsData) {
+
+        if (metricsData == null) {
+            log.error("metricsData is null");
+            return null;
+        }
+
         return metricsData.toByteArray();
     }
 
