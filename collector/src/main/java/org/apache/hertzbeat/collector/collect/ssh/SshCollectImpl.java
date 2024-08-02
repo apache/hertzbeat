@@ -38,6 +38,7 @@ import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.SshConnect;
+import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshBlacklist;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
@@ -85,6 +86,7 @@ public class SshCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+
         long startTime = System.currentTimeMillis();
         SshProtocol sshProtocol = metrics.getSsh();
         boolean reuseConnection = Boolean.parseBoolean(sshProtocol.getReuseConnection());
@@ -93,6 +95,12 @@ public class SshCollectImpl extends AbstractCollect {
         ClientSession clientSession = null;
         try {
             clientSession = getConnectSession(sshProtocol, timeout, reuseConnection);
+            if (CommonSshBlacklist.isCommandBlacklisted(sshProtocol.getScript())) {
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("The command is blacklisted: " + sshProtocol.getScript());
+                log.warn("The command is blacklisted: {}", sshProtocol.getScript());
+                return;
+            }
             channel = clientSession.createExecChannel(sshProtocol.getScript());
             ByteArrayOutputStream response = new ByteArrayOutputStream();
             channel.setOut(response);
