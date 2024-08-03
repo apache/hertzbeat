@@ -96,6 +96,9 @@ params:
 metrics:
   # metrics - basic
   - name: basic
+  - i18n:
+      zh-CN: 基本信息
+      en-US: Basic Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -105,14 +108,29 @@ metrics:
       - field: server_version
         type: 1
         label: true
+        i18n:
+          zh-CN: 服务器版本
+          en-US: Server Version
       - field: port
         type: 1
+        i18n:
+          zh-CN: 端口
+          en-US: Port
       - field: server_encoding
         type: 1
+        i18n:
+          zh-CN: 服务器编码
+          en-US: Server Encoding
       - field: data_directory
         type: 1
+        i18n:
+          zh-CN: 数据目录
+          en-US: Data Directory
       - field: max_connections
         type: 0
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Max Connections
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jdbc
     # the config content when protocol is jdbc
@@ -134,31 +152,58 @@ metrics:
       url: ^_^url^_^
 
   - name: state
+  - i18n:
+      zh-CN: 状态信息
+      en-US: State Info
     priority: 1
     fields:
       - field: db_name
         type: 1
         label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
       - field: conflicts
         type: 0
         unit: times
+        i18n:
+          zh-CN: 冲突次数
+          en-US: Conflicts
       - field: deadlocks
         type: 0
         unit: times
+        i18n:
+          zh-CN: 死锁次数
+          en-US: Deadlocks
       - field: blks_read
         type: 0
         unit: blocks per second
+        i18n:
+          zh-CN: 读取块
+          en-US: Blocks Read
       - field: blks_hit
         type: 0
         unit: blocks per second
+        i18n:
+          zh-CN: 命中块
+          en-US: Blocks Hit
       - field: blk_read_time
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 读取时间
+          en-US: Read Time
       - field: blk_write_time
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 写入时间
+          en-US: Write Time
       - field: stats_reset
         type: 1
+        i18n:
+          zh-CN: 统计重置
+          en-US: Stats Reset
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -173,11 +218,17 @@ metrics:
       url: ^_^url^_^
 
   - name: activity
+  - i18n:
+      zh-CN: 活动信息
+      en-US: Activity Info
     priority: 2
     fields:
       - field: running
         type: 0
         unit: sbc
+        i18n:
+          zh-CN: 运行中
+          en-US: Running
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -192,24 +243,45 @@ metrics:
       url: ^_^url^_^
 
   - name: resource_config
+  - i18n:
+      zh-CN: 资源配置
+      en-US: Resource Config
     priority: 1
     fields:
       - field: work_mem
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 工作内存
+          en-US: Work Memory
       - field: shared_buffers
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 共享缓冲区
+          en-US: Shared Buffers
       - field: autovacuum
         type: 1
+        i18n:
+          zh-CN: 自动清理
+          en-US: Auto Vacuum
       - field: max_connections
         type: 0
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Max Connections
       - field: effective_cache_size
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 有效缓存大小
+          en-US: Effective Cache Size
       - field: wal_buffers
         type: 0
         unit: MB
+        i18n:
+          zh-CN: WAL缓冲区
+          en-US: WAL Buffers
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -224,10 +296,16 @@ metrics:
       url: ^_^url^_^
 
   - name: connection
+  - i18n:
+      zh-CN: 连接信息
+      en-US: Connection Info
     priority: 1
     fields:
       - field: active
         type: 0
+        i18n:
+          zh-CN: 活动连接
+          en-US: Active Connection
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -242,13 +320,22 @@ metrics:
       url: ^_^url^_^
 
   - name: connection_state
+  - i18n:
+      zh-CN: 连接状态
+      en-US: Connection State
     priority: 1
     fields:
       - field: state
         type: 1
         label: true
+        i18n:
+          zh-CN: 状态
+          en-US: State
       - field: num
         type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: Num
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -263,13 +350,22 @@ metrics:
       url: ^_^url^_^
 
   - name: connection_db
+  - i18n:
+      zh-CN: 连接数据库
+      en-US: Connection Db
     priority: 1
     fields:
       - field: db_name
         type: 1
         label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
       - field: active
         type: 0
+        i18n:
+          zh-CN: 活动连接
+          en-US: Active Connection
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -284,18 +380,36 @@ metrics:
       url: ^_^url^_^
 
   - name: tuple
+  - i18n:
+      zh-CN: 元组信息
+      en-US: Tuple Info
     priority: 1
     fields:
       - field: fetched
         type: 0
+        i18n:
+          zh-CN: 获取次数
+          en-US: Fetched
       - field: returned
         type: 0
+        i18n:
+          zh-CN: 返回次数
+          en-US: Returned
       - field: inserted
         type: 0
+        i18n:
+          zh-CN: 插入次数
+          en-US: Inserted
       - field: updated
         type: 0
+        i18n:
+          zh-CN: 更新次数
+          en-US: Updated
       - field: deleted
         type: 0
+        i18n:
+          zh-CN: 删除次数
+          en-US: Deleted
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -310,16 +424,28 @@ metrics:
       url: ^_^url^_^
 
   - name: temp_file
+  - i18n:
+      zh-CN: 临时文件
+      en-US: Temp File
     priority: 1
     fields:
       - field: db_name
         type: 1
         label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
       - field: num
         type: 0
+        i18n:
+          zh-CN: 次数
+          en-US: Num
       - field: size
         type: 0
         unit: B
+        i18n:
+          zh-CN: 大小
+          en-US: Size
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -334,17 +460,29 @@ metrics:
       url: ^_^url^_^
 
   - name: lock
+  - i18n:
+      zh-CN: 锁信息
+      en-US: Lock Info
     priority: 1
     fields:
       - field: db_name
         type: 1
         label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
       - field: conflicts
         type: 0
         unit: times
+        i18n:
+          zh-CN: 冲突次数
+          en-US: Conflicts
       - field: deadlocks
         type: 0
         unit: times
+        i18n:
+          zh-CN: 死锁次数
+          en-US: Deadlocks
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -359,21 +497,39 @@ metrics:
       url: ^_^url^_^
 
   - name: slow_sql
+  - i18n:
+      zh-CN: 慢查询
+      en-US: Slow Sql
     priority: 1
     fields:
       - field: sql_text
         type: 1
         label: true
+        i18n:
+          zh-CN: SQL语句
+          en-US: SQL Text
       - field: calls
         type: 0
+        i18n:
+          zh-CN: 调用次数
+          en-US: Calls
       - field: rows
         type: 0
+        i18n:
+          zh-CN: 行数
+          en-US: Rows
       - field: avg_time
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 平均时间
+          en-US: Avg Time
       - field: total_time
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 总时间
+          en-US: Total Time
     aliasFields:
       - query
       - calls
@@ -398,17 +554,29 @@ metrics:
       url: ^_^url^_^
 
   - name: transaction
+  - i18n:
+      zh-CN: 事务信息
+      en-US: Transaction Info
     priority: 2
     fields:
       - field: db_name
         type: 1
         label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
       - field: commits
         type: 0
         unit: times
+        i18n:
+          zh-CN: 提交次数
+          en-US: Commits
       - field: rollbacks
         type: 0
         unit: times
+        i18n:
+          zh-CN: 回滚次数
+          en-US: Rollbacks
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -423,21 +591,42 @@ metrics:
       url: ^_^url^_^
 
   - name: conflicts
+  - i18n:
+      zh-CN: 冲突信息
+      en-US: Conflicts Info
     priority: 2
     fields:
       - field: db_name
         type: 1
         label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
       - field: tablespace
         type: 0
+        i18n:
+          zh-CN: 表空间
+          en-US: Tablespace
       - field: lock
         type: 0
+        i18n:
+          zh-CN: 锁
+          en-US: Lock
       - field: snapshot
         type: 0
+        i18n:
+          zh-CN: 快照
+          en-US: Snapshot
       - field: bufferpin
         type: 0
+        i18n:
+          zh-CN: 缓冲区
+          en-US: Bufferpin
       - field: deadlock
         type: 0
+        i18n:
+          zh-CN: 死锁
+          en-US: Deadlock
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -452,14 +641,23 @@ metrics:
       url: ^_^url^_^
 
   - name: cache_hit_ratio
+  - i18n:
+      zh-CN: 缓存命中率
+      en-US: Cache Hit Ratio
     priority: 2
     fields:
       - field: db_name
         type: 1
         label: true
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
       - field: ratio
         type: 0
         unit: '%'
+        i18n:
+          zh-CN: 命中率
+          en-US: Hit Ratio
     aliasFields:
       - blks_hit
       - blks_read
@@ -480,14 +678,23 @@ metrics:
       url: ^_^url^_^
 
   - name: checkpoint
+  - i18n:
+      zh-CN: Checkpoint信息
+      en-US: Checkpoint Info
     priority: 2
     fields:
       - field: checkpoint_sync_time
         type: 0
         unit: ms
+        i18n:
+          zh-CN: Checkpoint同步时间
+          en-US: Checkpoint Sync Time
       - field: checkpoint_write_time
         type: 0
         unit: ms
+        i18n:
+          zh-CN: Checkpoint写入时间
+          en-US: Checkpoint Write Time
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
@@ -502,18 +709,33 @@ metrics:
       url: ^_^url^_^
 
   - name: buffer
+  - i18n:
+      zh-CN: Buffer信息
+      en-US: Buffer Info
     priority: 2
     fields:
       - field: allocated
         type: 0
       - field: fsync_calls_by_backend
         type: 0
+        i18n:
+          zh-CN: 后端进程直接执行的文件同步调用次数
+          en-US: Fsync Calls By Backend
       - field: written_directly_by_backend
         type: 0
+        i18n:
+          zh-CN: 后台写入到数据文件
+          en-US: Written Directly By Backend
       - field: written_by_background_writer
         type: 0
+        i18n:
+          zh-CN: 后台写入
+          en-US: Written By Background Writer
       - field: written_during_checkpoints
         type: 0
+        i18n:
+          zh-CN: 检查点期间写入
+          en-US: Written During Checkpoints
     protocol: jdbc
     jdbc:
       host: ^_^host^_^
