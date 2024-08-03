@@ -17,12 +17,6 @@
 
 package org.apache.hertzbeat.common.queue.impl;
 
-import java.time.Duration;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -45,6 +39,13 @@ import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * common data queue implement kafka
  */
@@ -53,22 +54,22 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
+    private final ReentrantLock alertLock = new ReentrantLock();
+    private final ReentrantLock metricDataToAlertLock = new ReentrantLock();
+    private final ReentrantLock metricDataToPersistentLock = new ReentrantLock();
+    private final ReentrantLock metricDataToRealTimeStorageLock = new ReentrantLock();
+    private final LinkedBlockingQueue<Alert> alertDataQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
+    private final CommonProperties.KafkaProperties kafka;
     private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
     private KafkaProducer<Long, Alert> alertDataProducer;
     private KafkaConsumer<Long, Alert> alertDataConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToPersistentStorageConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToRealTimeStorageConsumer;
-    private final ReentrantLock lock1 = new ReentrantLock();
-    private final ReentrantLock lock2 = new ReentrantLock();
-    private final ReentrantLock lock3 = new ReentrantLock();
-    private final ReentrantLock lock4 = new ReentrantLock();
-    private final LinkedBlockingQueue<Alert> alertDataQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
-    private final CommonProperties.KafkaProperties kafka;
-    
+
     public KafkaCommonDataQueue(CommonProperties properties) {
         if (properties == null || properties.getQueue() == null || properties.getQueue().getKafka() == null) {
             log.error("init error, please config common.queue.kafka props in application.yml");
@@ -81,8 +82,8 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         metricsDataToRealTimeStorageQueue = new LinkedBlockingQueue<>();
         initDataQueue();
     }
-    
-    private void initDataQueue(){
+
+    private void initDataQueue() {
         try {
             Map<String, Object> producerConfig = new HashMap<>(3);
             producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getServers());
@@ -103,22 +104,20 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             alertConsumerConfig.put("group.id", "alert-consumer");
             alertDataConsumer = new KafkaConsumer<>(alertConsumerConfig, new LongDeserializer(), new AlertDeserializer());
             alertDataConsumer.subscribe(Collections.singletonList(kafka.getAlertsDataTopic()));
-            
+
             Map<String, Object> metricsToAlertConsumerConfig = new HashMap<>(consumerConfig);
             metricsToAlertConsumerConfig.put("group.id", "metrics-alert-consumer");
             metricsDataToAlertConsumer = new KafkaConsumer<>(metricsToAlertConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
             metricsDataToAlertConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
-            
+
             Map<String, Object> metricsToPersistentConsumerConfig = new HashMap<>(consumerConfig);
             metricsToPersistentConsumerConfig.put("group.id", "metrics-persistent-consumer");
-            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(),
-                    new KafkaMetricsDataDeserializer());
+            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
             metricsDataToPersistentStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
-            
+
             Map<String, Object> metricsToRealTimeConsumerConfig = new HashMap<>(consumerConfig);
             metricsToRealTimeConsumerConfig.put("group.id", "metrics-memory-consumer");
-            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(),
-                    new KafkaMetricsDataDeserializer());
+            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
             metricsDataToRealTimeStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);
@@ -137,110 +136,52 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public Alert pollAlertsData() throws InterruptedException {
-        Alert alert = alertDataQueue.poll();
-        if (alert != null) {
-            return alert;
-        }
-        lock1.lockInterruptibly();
-        try {
-            ConsumerRecords<Long, Alert> records = alertDataConsumer.poll(Duration.ofSeconds(1));
-            int index = 0;
-            for (ConsumerRecord<Long, Alert> record : records) {
-                if (index == 0) {
-                    alert = record.value();
-                } else {
-                    alertDataQueue.offer(record.value());
-                }
-                index++;
-            }
-            alertDataConsumer.commitAsync();
-        } catch (Exception e){
-            log.error(e.getMessage());
-        } finally {
-            lock1.unlock();
-        }
-        return alert;
+        return genericalPollDataFunction(alertDataQueue, alertDataConsumer, alertLock);
+
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
-        CollectRep.MetricsData metricsData = metricsDataToAlertQueue.poll();
-        if (metricsData != null) {
-            return metricsData;
-        }
-        lock2.lockInterruptibly();
-        try {
-            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToAlertConsumer.poll(Duration.ofSeconds(1));
-            int index = 0;
-            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
-                if (index == 0) {
-                    metricsData = record.value();
-                } else {
-                    metricsDataToAlertQueue.offer(record.value());
-                }
-                index++;
-            }
-            metricsDataToAlertConsumer.commitAsync();
-        } catch (Exception e){
-            log.error(e.getMessage());
-        } finally {
-            lock2.unlock();
-        }
-        return metricsData;
+        return genericalPollDataFunction(metricsDataToAlertQueue, metricsDataToAlertConsumer, metricDataToAlertLock);
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        CollectRep.MetricsData persistentStorageMetricsData = metricsDataToPersistentStorageQueue.poll();
-        if (persistentStorageMetricsData != null) {
-            return persistentStorageMetricsData;
-        }
-        lock3.lockInterruptibly();
-        try {
-            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToPersistentStorageConsumer.poll(Duration.ofSeconds(1));
-            int index = 0;
-            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
-                if (index == 0) {
-                    persistentStorageMetricsData = record.value();
-                } else {
-                    metricsDataToPersistentStorageQueue.offer(record.value());
-                }
-                index++;
-            }
-            metricsDataToPersistentStorageConsumer.commitAsync();
-        } catch (Exception e){
-            log.error(e.getMessage());
-        } finally {
-            lock3.unlock();
-        }
-        return persistentStorageMetricsData;
+        return genericalPollDataFunction(metricsDataToPersistentStorageQueue, metricsDataToPersistentStorageConsumer, metricDataToPersistentLock);
     }
+
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        CollectRep.MetricsData realTimeMetricsData = metricsDataToRealTimeStorageQueue.poll();
-        if (realTimeMetricsData != null) {
-            return realTimeMetricsData;
+        return genericalPollDataFunction(metricsDataToRealTimeStorageQueue, metricsDataToRealTimeStorageConsumer, metricDataToRealTimeStorageLock);
+    }
+
+
+    public <T> T genericalPollDataFunction(LinkedBlockingQueue<T> dataQueue, KafkaConsumer<Long, T> dataConsumer, ReentrantLock lock) throws InterruptedException {
+
+        T pollData = dataQueue.poll();
+        if (pollData != null) {
+            return pollData;
         }
-        lock4.lockInterruptibly();
+        lock.lockInterruptibly();
         try {
-            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToRealTimeStorageConsumer.poll(Duration.ofSeconds(1));
+            ConsumerRecords<Long, T> records = dataConsumer.poll(Duration.ofSeconds(1));
             int index = 0;
-            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
+            for (ConsumerRecord<Long, T> record : records) {
                 if (index == 0) {
-                    realTimeMetricsData = record.value();
+                    pollData = record.value();
                 } else {
-                    metricsDataToRealTimeStorageQueue.offer(record.value());
+                    dataQueue.offer(record.value());
                 }
                 index++;
             }
-            metricsDataToRealTimeStorageConsumer.commitAsync();
-        } catch (Exception e){
+            dataConsumer.commitAsync();
+        } catch (Exception e) {
             log.error(e.getMessage());
         } finally {
-            lock4.unlock();
+            lock.unlock();
         }
-        return realTimeMetricsData;
+        return pollData;
     }
 
     @Override

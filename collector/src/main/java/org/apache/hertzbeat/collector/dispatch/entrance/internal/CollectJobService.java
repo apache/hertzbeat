@@ -22,7 +22,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
@@ -109,13 +112,12 @@ public class CollectJobService {
     public void collectSyncOneTimeJobData(Job oneTimeJob) {
         workerPool.executeJob(() -> {
             List<CollectRep.MetricsData> metricsDataList = this.collectSyncJobData(oneTimeJob);
-            List<String> jsons = new ArrayList<>(metricsDataList.size());
-            for (CollectRep.MetricsData metricsData : metricsDataList) {
-                String json = ProtoJsonUtil.toJsonStr(metricsData);
-                if (json != null) {
-                    jsons.add(json);
-                }
-            }
+            List<String> jsons = CollectionUtils.emptyIfNull(metricsDataList)
+                    .stream()
+                    .map(ProtoJsonUtil::toJsonStr)
+                    .filter(StringUtils::hasText)
+                    .collect(Collectors.toList());
+
             String response = JsonUtil.toJson(jsons);
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setMsg(response)
