@@ -24,6 +24,6 @@ then
     file=compose.yaml
 fi
 
-docker-compose version
-docker-compose -f "$file" down
-docker-compose -f "$file" up --build testing --exit-code-from testing --remove-orphans
+sudo docker-compose version
+sudo docker-compose -f "$file" down
+sudo docker-compose -f "$file" up --build testing --exit-code-from testing --remove-orphans

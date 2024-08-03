@@ -30,7 +30,7 @@ services:
   hertzbeat:
     image: apache/hertzbeat
     ports:
-      - "1157:1157"
+      - "11570:1157"
     environment:
       ALLOW_NONE_AUTHENTICATION: "yes"
     healthcheck:
