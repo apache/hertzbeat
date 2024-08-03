@@ -19,24 +19,27 @@ version: '3.8'
 services:
   testing:
     image: ghcr.io/linuxsuren/api-testing:v0.0.17
-    command:
-      - atest run -p workspace/testsuite.yaml --report md
     environment:
       SERVER: http://hertzbeat:1157
     container_name: e2e-testing
     volumes:
-      - ./data/:/workspace/data
-      - ./testsuite.yaml:/workspace/testsuite.yaml
+      - ./data/:/work/data/
+      - ./testsuite.yaml:/work/testsuite.yaml
+    command: >
+      sh -c "cat /work/testsuite.yaml && atest run -p /work/testsuite.yaml --report md"
     depends_on:
       hertzbeat:
         condition: service_healthy
     links:
       - hertzbeat
+
   hertzbeat:
     image: apache/hertzbeat
     container_name: e2e-hertzbeat
+    #    volumes:
+    #      -
     ports:
-      - "1157:1157"
+      - "11570:1157"
     environment:
       ALLOW_NONE_AUTHENTICATION: "yes"
     healthcheck:
