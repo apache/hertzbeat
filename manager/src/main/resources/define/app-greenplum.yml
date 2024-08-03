@@ -152,7 +152,7 @@ metrics:
       url: ^_^url^_^
 
   - name: state
-  - i18n:
+    i18n:
       zh-CN: 状态信息
       en-US: State Info
     priority: 1
