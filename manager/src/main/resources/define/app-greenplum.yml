@@ -96,7 +96,7 @@ params:
 metrics:
   # metrics - basic
   - name: basic
-  - i18n:
+    i18n:
       zh-CN: 基本信息
       en-US: Basic Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
@@ -218,7 +218,7 @@ metrics:
       url: ^_^url^_^
 
   - name: activity
-  - i18n:
+    i18n:
       zh-CN: 活动信息
       en-US: Activity Info
     priority: 2
@@ -243,7 +243,7 @@ metrics:
       url: ^_^url^_^
 
   - name: resource_config
-  - i18n:
+    i18n:
       zh-CN: 资源配置
       en-US: Resource Config
     priority: 1
@@ -296,7 +296,7 @@ metrics:
       url: ^_^url^_^
 
   - name: connection
-  - i18n:
+    i18n:
       zh-CN: 连接信息
       en-US: Connection Info
     priority: 1
@@ -320,7 +320,7 @@ metrics:
       url: ^_^url^_^
 
   - name: connection_state
-  - i18n:
+    i18n:
       zh-CN: 连接状态
       en-US: Connection State
     priority: 1
@@ -350,7 +350,7 @@ metrics:
       url: ^_^url^_^
 
   - name: connection_db
-  - i18n:
+    i18n:
       zh-CN: 连接数据库
       en-US: Connection Db
     priority: 1
@@ -380,7 +380,7 @@ metrics:
       url: ^_^url^_^
 
   - name: tuple
-  - i18n:
+    i18n:
       zh-CN: 元组信息
       en-US: Tuple Info
     priority: 1
@@ -424,7 +424,7 @@ metrics:
       url: ^_^url^_^
 
   - name: temp_file
-  - i18n:
+    i18n:
       zh-CN: 临时文件
       en-US: Temp File
     priority: 1
@@ -460,7 +460,7 @@ metrics:
       url: ^_^url^_^
 
   - name: lock
-  - i18n:
+    i18n:
       zh-CN: 锁信息
       en-US: Lock Info
     priority: 1
@@ -497,7 +497,7 @@ metrics:
       url: ^_^url^_^
 
   - name: slow_sql
-  - i18n:
+    i18n:
       zh-CN: 慢查询
       en-US: Slow Sql
     priority: 1
@@ -554,7 +554,7 @@ metrics:
       url: ^_^url^_^
 
   - name: transaction
-  - i18n:
+    i18n:
       zh-CN: 事务信息
       en-US: Transaction Info
     priority: 2
@@ -591,7 +591,7 @@ metrics:
       url: ^_^url^_^
 
   - name: conflicts
-  - i18n:
+    i18n:
       zh-CN: 冲突信息
       en-US: Conflicts Info
     priority: 2
@@ -641,7 +641,7 @@ metrics:
       url: ^_^url^_^
 
   - name: cache_hit_ratio
-  - i18n:
+    i18n:
       zh-CN: 缓存命中率
       en-US: Cache Hit Ratio
     priority: 2
@@ -678,7 +678,7 @@ metrics:
       url: ^_^url^_^
 
   - name: checkpoint
-  - i18n:
+    i18n:
       zh-CN: Checkpoint信息
       en-US: Checkpoint Info
     priority: 2
@@ -709,7 +709,7 @@ metrics:
       url: ^_^url^_^
 
   - name: buffer
-  - i18n:
+    i18n:
       zh-CN: Buffer信息
       en-US: Buffer Info
     priority: 2
