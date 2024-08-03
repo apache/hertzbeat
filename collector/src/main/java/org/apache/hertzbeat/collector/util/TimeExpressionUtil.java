@@ -36,7 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * time expression deal util
  */
-public class TimeExpressionUtil {
+public final class TimeExpressionUtil {
 
     private TimeExpressionUtil() {
     }
