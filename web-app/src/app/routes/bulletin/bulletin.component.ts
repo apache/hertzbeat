@@ -17,6 +17,7 @@
  * under the License.
  */
 
+import { HttpParams } from '@angular/common/http';
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -26,12 +27,12 @@ import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange } from 'ng-zorro-antd/transfer';
 import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/tree';
 import { finalize } from 'rxjs/operators';
+
 import { BulletinDefine } from '../../pojo/BulletinDefine';
 import { Monitor } from '../../pojo/Monitor';
 import { AppDefineService } from '../../service/app-define.service';
 import { BulletinDefineService } from '../../service/bulletin-define.service';
 import { MonitorService } from '../../service/monitor.service';
-import {HttpParams} from "@angular/common/http";
 
 @Component({
   selector: 'app-bulletin',
@@ -59,7 +60,6 @@ export class BulletinComponent implements OnInit {
   appEntries: Array<{ value: any; key: string }> = [];
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
-  rawData: any[] = [];
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -80,7 +80,6 @@ export class BulletinComponent implements OnInit {
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
   }
-
 
   deleteBulletinDefines(defineNames: string[]) {
     if (defineNames == null || defineNames.length == 0) {
@@ -107,12 +106,10 @@ export class BulletinComponent implements OnInit {
     );
   }
 
-
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
   define: BulletinDefine = new BulletinDefine();
-
 
   onManageModalCancel() {
     this.isManageModalVisible = false;
@@ -173,7 +170,6 @@ export class BulletinComponent implements OnInit {
         );
     }
   }
-
 
   onSearchAppDefines(): void {
     this.appDefineSvc
@@ -341,14 +337,13 @@ export class BulletinComponent implements OnInit {
   }
 
   loadData(page: number = 0, size: number = 10) {
+    this.tableLoading = true;
     const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(page, size).subscribe(
       message => {
         metricData$.unsubscribe();
         if (message.code === 0 && message.data) {
-          this.tableLoading = false;
-          this.rawData = message.data.content; // 假设返回的数据中包含分页内容的字段为 'content'
-          this.total = message.data.totalElements; // 假设返回的数据中包含总元素数量的字段为 'totalElements'
-          this.updateTabDefines();
+          this.total = message.data.totalElements;
+          this.updateTabDefines(message.data.content);
         } else if (message.code !== 0) {
           this.notifySvc.warning(`${message.msg}`, '');
           console.info(`${message.msg}`);
@@ -359,12 +354,12 @@ export class BulletinComponent implements OnInit {
         metricData$.unsubscribe();
       }
     );
+    this.tableLoading = false;
   }
 
-  updateTabDefines() {
+  updateTabDefines(rawData: any[]) {
     const groupedData: any = {};
-
-    this.rawData.forEach(item => {
+    rawData.forEach(item => {
       const name = item.name;
       if (!groupedData[name]) {
         groupedData[name] = {
@@ -406,7 +401,7 @@ export class BulletinComponent implements OnInit {
       name,
       id: groupedData[name].id,
       bulletinColumn: groupedData[name].bulletinColumn,
-      data: groupedData[name].data,
+      data: groupedData[name].data
     }));
   }
 
@@ -425,38 +420,19 @@ export class BulletinComponent implements OnInit {
     }
     return maxRowSpan;
   }
-  onTablePageChange(params: NzTableQueryParams) {
-    const { pageSize, pageIndex, sort, filter } = params;
-    this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
-    const currentSort = sort.find(item => item.value !== null);
-    const sortField = (currentSort && currentSort.key) || null;
-    const sortOrder = (currentSort && currentSort.value) || null;
-    this.changeBulletinTable(sortField, sortOrder);
+
+  onTablePageChange(params: NzTableQueryParams): void {
+    const { pageSize, pageIndex } = params;
+
+    // 只有当页码或每页条数变化时才获取数据
+    console.log(pageIndex, pageSize, this.pageIndex, this.pageSize)
+    if (pageIndex !== this.pageIndex || pageSize !== this.pageSize) {
+      this.pageIndex = pageIndex;
+      this.pageSize = pageSize;
+      this.loadData(pageIndex - 1, pageSize);
+    }
   }
-  changeBulletinTable(sortField?: string | null, sortOrder?: string | null) {
-    this.tableLoading = true;
-    let monitorInit$ = this.bulletinDefineSvc
-      .getMonitorMetricsData(this.pageIndex - 1, this.pageSize, sortField, sortOrder)
-      .subscribe(
-        message => {
-          this.tableLoading = false;
-          if (message.code === 0) {
-            let page = message.data;
-            this.monitors = page.content;
-            this.pageIndex = page.number + 1;
-            this.total = page.totalElements;
-          } else {
-            console.warn(message.msg);
-          }
-          monitorInit$.unsubscribe();
-        },
-        error => {
-          this.tableLoading = false;
-          monitorInit$.unsubscribe();
-        }
-      );
-  }
+
   getRowIndexes(data: { [x: string]: string | any[] }, bulletinTab: { bulletinColumn: { [x: string]: any } }) {
     const maxRowSpan = this.getMaxRowSpan(data, bulletinTab);
     return Array.from({ length: maxRowSpan }, (_, index) => index);
@@ -476,7 +452,6 @@ export class BulletinComponent implements OnInit {
     this.deleteBulletinDefines(this.bulletinNames);
     this.isDeleteModalOkLoading = false;
     this.isDeleteModalVisible = false;
-
   }
 
   protected readonly Array = Array;

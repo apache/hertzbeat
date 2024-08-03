@@ -87,7 +87,7 @@
               </ng-container>
               <ng-container *ngFor="let metricName of getMetricNames(bulletinTab)">
                 <ng-container *ngFor="let field of bulletinTab.bulletinColumn[metricName]">
-                  <td *ngIf= "data[field] !== null">
+                  <td *ngIf="data[field] !== null">
                     {{ data[field][rowIndex].split('$$$')[0] }}
                     <nz-tag *ngIf="data[field][rowIndex] == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
                     <nz-tag *ngIf="data[field][rowIndex].split('$$$')[1]" nzColor="success">{{
@@ -204,7 +204,6 @@
   </div>
 </nz-modal>
 
-
 <!-- delete bulletin modal -->
 <nz-modal
   [(nzVisible)]="isDeleteModalVisible"
@@ -219,13 +218,7 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="7" nzFor="textInput" nzRequired="true">{{ 'bulletin.name' | i18n }}</nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
-          <nz-select
-            nzMode="multiple"
-            nzPlaceHolder="Please select"
-            [(ngModel)]="this.bulletinNames"
-            [nzShowSearch]="true"
-            name="delete"
-          >
+          <nz-select nzMode="multiple" nzPlaceHolder="Please select" [(ngModel)]="this.bulletinNames" [nzShowSearch]="true" name="delete">
             <nz-option *ngFor="let bulletinTab of tabDefines" [nzLabel]="bulletinTab.name" [nzValue]="bulletinTab.name"></nz-option>
           </nz-select>
         </nz-form-control>
