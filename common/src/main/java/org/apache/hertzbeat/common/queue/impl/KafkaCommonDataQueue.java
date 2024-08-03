@@ -136,28 +136,28 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public Alert pollAlertsData() throws InterruptedException {
-        return genericalPollDataFunction(alertDataQueue, alertDataConsumer, alertLock);
+        return genericPollDataFunction(alertDataQueue, alertDataConsumer, alertLock);
 
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
-        return genericalPollDataFunction(metricsDataToAlertQueue, metricsDataToAlertConsumer, metricDataToAlertLock);
+        return genericPollDataFunction(metricsDataToAlertQueue, metricsDataToAlertConsumer, metricDataToAlertLock);
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        return genericalPollDataFunction(metricsDataToPersistentStorageQueue, metricsDataToPersistentStorageConsumer, metricDataToPersistentLock);
+        return genericPollDataFunction(metricsDataToPersistentStorageQueue, metricsDataToPersistentStorageConsumer, metricDataToPersistentLock);
     }
 
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        return genericalPollDataFunction(metricsDataToRealTimeStorageQueue, metricsDataToRealTimeStorageConsumer, metricDataToRealTimeStorageLock);
+        return genericPollDataFunction(metricsDataToRealTimeStorageQueue, metricsDataToRealTimeStorageConsumer, metricDataToRealTimeStorageLock);
     }
 
 
-    public <T> T genericalPollDataFunction(LinkedBlockingQueue<T> dataQueue, KafkaConsumer<Long, T> dataConsumer, ReentrantLock lock) throws InterruptedException {
+    public <T> T genericPollDataFunction(LinkedBlockingQueue<T> dataQueue, KafkaConsumer<Long, T> dataConsumer, ReentrantLock lock) throws InterruptedException {
 
         T pollData = dataQueue.poll();
         if (pollData != null) {
