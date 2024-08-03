@@ -36,8 +36,8 @@ services:
   hertzbeat:
     image: apache/hertzbeat
     container_name: e2e-hertzbeat
-    #    volumes:
-    #      -
+    volumes:
+      - ./logs/:/opt/hertzbeat/logs/
     ports:
       - "11570:1157"
     environment:
