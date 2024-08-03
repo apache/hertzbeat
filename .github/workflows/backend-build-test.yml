@@ -53,6 +53,7 @@ jobs:
       uses: codecov/codecov-action@v4.0.1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+
     - name: Build Image
       env:
         IMAGE_PUSH: false
@@ -63,6 +64,7 @@ jobs:
         docker buildx use myBuilder
         
         ./script/docker/server/build.sh
+
     - name: Run E2E
       run: |
         sudo curl -L https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
@@ -71,3 +73,10 @@ jobs:
         cd e2e
         sudo docker-compose version
         sudo docker-compose up --exit-code-from testing --remove-orphans
+
+    # upload application logs
+    - name: Upload logs
+      uses: actions/upload-artifact@v3
+      with:
+        name: hz-logs-${{ github.run_id }}
+        path: logs/
