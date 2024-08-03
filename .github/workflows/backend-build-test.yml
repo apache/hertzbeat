@@ -68,4 +68,6 @@ jobs:
         sudo curl -L https://github.com/docker/compose/releases/download/v2.23.0/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose
         sudo chmod u+x /usr/local/bin/docker-compose
         
-        cd e2e && chmod +x ./script/*.sh && ./script/start.sh
+        cd e2e
+        sudo docker-compose version
+        sudo docker-compose up --exit-code-from testing --remove-orphans
