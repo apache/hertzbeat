@@ -18,17 +18,25 @@
 version: '3.8'
 services:
   testing:
-    build:
-      context: .
+    image: ghcr.io/linuxsuren/api-testing:v0.0.17
     environment:
       SERVER: http://hertzbeat:1157
+    container_name: e2e-testing
+    volumes:
+      - ./data/:/work/data/
+      - ./testsuite.yaml:/work/testsuite.yaml
+    command: atest run -p /work/testsuite.yaml --report md
     depends_on:
       hertzbeat:
         condition: service_healthy
     links:
       - hertzbeat
+
   hertzbeat:
     image: apache/hertzbeat
+    container_name: e2e-hertzbeat
+    volumes:
+      - ./logs/:/opt/hertzbeat/logs/
     ports:
       - "1157:1157"
     environment:
