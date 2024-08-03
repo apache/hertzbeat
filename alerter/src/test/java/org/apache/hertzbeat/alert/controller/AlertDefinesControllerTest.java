@@ -98,20 +98,20 @@ class AlertDefinesControllerTest {
 
         // Test the correctness of the mock
         // Although objects cannot be mocked, stubs can be stored using class files
-//        Mockito.when(alertDefineService.getAlertDefines(Mockito.any(Specification.class), Mockito.argThat(new ArgumentMatcher<PageRequest>() {
-//            @Override
-//            public boolean matches(PageRequest pageRequestMidden) {
-//                // There are three methods in the source code that need to be compared, namely getPageNumber(), getPageSize(), getSort()
-//                if(pageRequestMidden.getPageSize() == pageRequest.getPageSize() &&
-//                        pageRequestMidden.getPageNumber() == pageRequest.getPageNumber() &&
-//                        pageRequestMidden.getSort().equals(pageRequest.getSort())) {
-//                    return true;
-//                }
-//                return false;
-//            }
-//        }))).thenReturn(new PageImpl<AlertDefine>(new ArrayList<AlertDefine>()));
+        //        Mockito.when(alertDefineService.getAlertDefines(Mockito.any(Specification.class), Mockito.argThat(new ArgumentMatcher<PageRequest>() {
+        //            @Override
+        //            public boolean matches(PageRequest pageRequestMidden) {
+        //                // There are three methods in the source code that need to be compared, namely getPageNumber(), getPageSize(), getSort()
+        //                if(pageRequestMidden.getPageSize() == pageRequest.getPageSize() &&
+        //                        pageRequestMidden.getPageNumber() == pageRequest.getPageNumber() &&
+        //                        pageRequestMidden.getSort().equals(pageRequest.getSort())) {
+        //                    return true;
+        //                }
+        //                return false;
+        //            }
+        //        }))).thenReturn(new PageImpl<AlertDefine>(new ArrayList<AlertDefine>()));
         AlertDefine define = AlertDefine.builder().id(9L).app("linux").metric("disk").field("usage").expr("x").times(1).tags(new LinkedList<>()).build();
-        Mockito.when(alertDefineService.getAlertDefines(Mockito.any(), Mockito.any())).thenReturn(new PageImpl<>(Collections.singletonList(define)));
+        Mockito.when(alertDefineService.getAlertDefines(null, null, null, "id", "desc", 1, 10)).thenReturn(new PageImpl<>(Collections.singletonList(define)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(
                 "/api/alert/defines")
