@@ -79,4 +79,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: hz-logs-${{ github.run_id }}
-        path: logs/
+        path: e2e/logs/

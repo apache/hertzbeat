@@ -25,8 +25,7 @@ services:
     volumes:
       - ./data/:/work/data/
       - ./testsuite.yaml:/work/testsuite.yaml
-    command: >
-      sh -c "cat /work/testsuite.yaml && atest run -p /work/testsuite.yaml --report md"
+    command: atest run -p /work/testsuite.yaml --report md
     depends_on:
       hertzbeat:
         condition: service_healthy
