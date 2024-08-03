@@ -20,7 +20,6 @@
 package org.apache.hertzbeat.push.controller;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.push.PushMetricsDto;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.push.service.PushService;
@@ -30,7 +29,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
