@@ -113,11 +113,16 @@ public interface AlertDefineService {
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions 
-     * @param pageRequest Paging parameters
+     * @param defineIds     Alarm Definition ID List
+     * @param search        Search-Target Expr Template
+     * @param priority      Alarm Definition Severity
+     * @param sort          Sort field
+     * @param order         Sort mode: asc: ascending, desc: descending
+     * @param pageIndex     List current page
+     * @param pageSize      Number of list pages
      * @return The query results 
      */
-    Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest);
+    Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, Byte priority, String sort, String order, int pageIndex, int pageSize);
 
     /**
      * Query the associated monitoring list information based on the alarm definition ID
