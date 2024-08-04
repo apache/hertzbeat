@@ -1,7 +1,7 @@
 ---
 id: mysql-change  
-title: 关系型数据库使用 Mysql 替换依赖的 H2 存储系统元数据            
-sidebar_label: 元数据使用Mysql存储(可选)      
+title: 关系型数据库使用 Mysql 替换依赖的 H2 存储系统元数据(可选)            
+sidebar_label: 元数据存储Mysql      
 ---
 MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 除了支持使用默认内置的H2数据库外，还可以切换为使用MYSQL存储监控信息，告警信息，配置信息等结构化关系数据。  
 
@@ -39,7 +39,7 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 
 ### 添加 MYSQL jdbc 驱动 jar
 
-- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
 - 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
 
 ### 修改hertzbeat的配置文件application.yml切换数据源   
@@ -51,29 +51,45 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
   ⚠️注意`application.yml`文件内容需完整，除下方修改内容外其他参数需保留，完整内容见[/script/application.yml](https://github.com/hertzbeat/hertzbeat/raw/master/script/application.yml)  
 
   需修改部分原参数: 
-  ```yaml
-  spring:
-    datasource:
-      driver-class-name: org.h2.Driver
-      username: sa
-      password: 123456
-      url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
-    jpa:
-      database: h2
-  ```
-  具体替换参数如下,需根据mysql环境配置账户密码IP:   
-  ```yaml
-  spring:
-    datasource:
-      driver-class-name: com.mysql.cj.jdbc.Driver
-      username: root
-      password: 123456
-      url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
-      platform: mysql
-  jpa:
-    database: mysql
-  ```
+```yaml
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 123456
+    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    hikari:
+      max-lifetime: 120000
 
-- 通过docker启动时，建议修改host为宿主机的外网IP地址，包括mysql连接字符串和redis。  
+  jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: h2
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
+```
+  具体替换参数如下,需根据mysql环境配置账户密码IP:   
+```yaml
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+    url: jdbc:mysql://mysql:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+    hikari:
+      max-lifetime: 120000
+  jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: mysql
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
+```
+
+- 通过docker启动时，建议修改host为宿主机的外网IP地址，包括mysql连接字符串。  
 
 **启动 HertzBeat 浏览器访问 http://ip:1157/ 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**

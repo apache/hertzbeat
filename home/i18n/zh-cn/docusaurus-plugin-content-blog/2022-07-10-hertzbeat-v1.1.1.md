@@ -23,7 +23,7 @@ Feature：
 1. [[script] feature 升级docker的基础镜像为 openjdk:11.0.15-jre-slim #205](https://github.com/apache/hertzbeat/pull/205)
 2. [[monitor] 支持前置采集指标数据作为变量赋值给下一采集流程 #206](https://github.com/apache/hertzbeat/pull/206).
 3. [[collector] 使用基本的http headers头实现basic auth替换前置模式 #212](https://github.com/apache/hertzbeat/pull/212)
-4. [[manager,alerter] 支持告警通知设置丁丁微信飞书自定义 webhook url  #213](https://github.com/apache/hertzbeat/pull/213)
+4. [[manager,alerter] 支持告警通知设置钉钉机器人微信飞书自定义 webhook url  #213](https://github.com/apache/hertzbeat/pull/213)
 5.  [[monitor] feature 更新数值指标数据不带末尾为0的小数点 #217](https://github.com/apache/hertzbeat/pull/217)
 6. [[web-app]feature:toggle [enable and cancel] button #218](https://github.com/apache/hertzbeat/pull/218)
 7. [[manager] 更新监控define yml文件前缀名称 "app" or "param"，便于自定义监控区别 #221](https://github.com/apache/hertzbeat/pull/221)

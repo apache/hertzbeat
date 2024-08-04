@@ -22,7 +22,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.criteria.Predicate;
 import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
@@ -32,7 +31,6 @@ import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -86,17 +84,8 @@ public class NoticeConfigController {
             description = "Get a list of message notification recipients based on query filter items")
     public ResponseEntity<Message<List<NoticeReceiver>>> getReceivers(
             @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name) {
-        Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !name.isEmpty()) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                predicate = criteriaBuilder.and(predicateName);
-            }
-            return predicate;
-        };
-        List<NoticeReceiver> receivers = noticeConfigService.getNoticeReceivers(specification);
-        Message<List<NoticeReceiver>> message = Message.success(receivers);
-        return ResponseEntity.ok(message);
+        List<NoticeReceiver> receivers = noticeConfigService.getNoticeReceivers(name);
+        return ResponseEntity.ok(Message.success(receivers));
     }
 
     @PostMapping(path = "/rule")
@@ -131,17 +120,8 @@ public class NoticeConfigController {
             description = "Get a list of message notification policies based on query filter items")
     public ResponseEntity<Message<List<NoticeRule>>> getRules(
             @Parameter(description = "en: Recipient name", example = "rule1") @RequestParam(required = false) final String name) {
-        Specification<NoticeRule> specification = (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !name.isEmpty()) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                predicate = criteriaBuilder.and(predicateName);
-            }
-            return predicate;
-        };
-        List<NoticeRule> receiverPage = noticeConfigService.getNoticeRules(specification);
-        Message<List<NoticeRule>> message = Message.success(receiverPage);
-        return ResponseEntity.ok(message);
+        List<NoticeRule> receiverPage = noticeConfigService.getNoticeRules(name);
+        return ResponseEntity.ok(Message.success(receiverPage));
     }
 
 
@@ -177,18 +157,8 @@ public class NoticeConfigController {
             description = "Get a list of message notification templates based on query filter items")
     public ResponseEntity<Message<List<NoticeTemplate>>> getTemplates(
             @Parameter(description = "Template name,support fuzzy query", example = "rule1") @RequestParam(required = false) final String name) {
-
-        Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
-            Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !"".equals(name)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                predicate = criteriaBuilder.and(predicateName);
-            }
-            return predicate;
-        };
-        List<NoticeTemplate> templatePage = noticeConfigService.getNoticeTemplates(specification);
-        Message<List<NoticeTemplate>> message = Message.success(templatePage);
-        return ResponseEntity.ok(message);
+        List<NoticeTemplate> templatePage = noticeConfigService.getNoticeTemplates(name);
+        return ResponseEntity.ok(Message.success(templatePage));
     }
 
     @PostMapping(path = "/receiver/send-test-msg")

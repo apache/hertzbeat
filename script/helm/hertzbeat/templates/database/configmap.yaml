@@ -23,8 +23,14 @@ metadata:
     {{- include "hertzbeat.labels" . | nindent 4 }}
 data:
   TZ: "{{ .Values.database.timezone }}"
-  MYSQL_ROOT_PASSWORD: "{{ .Values.database.rootPassword }}"
+  POSTGRES_PASSWORD: "{{ .Values.database.rootPassword }}"
+  POSTGRES_USER: "root"
   schema.sql: |+
-    set names utf8mb4;
-    create database if not exists hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;
-    commit;
+    CREATE EXTENSION IF NOT EXISTS dblink;
+
+    DO $$
+    BEGIN
+    PERFORM dblink_exec('', 'CREATE DATABASE hertzbeat');
+    EXCEPTION WHEN duplicate_database THEN RAISE NOTICE '%, skipping', SQLERRM USING ERRCODE = SQLSTATE;
+    END
+    $$;

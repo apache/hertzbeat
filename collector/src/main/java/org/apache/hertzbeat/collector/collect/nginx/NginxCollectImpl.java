@@ -149,7 +149,12 @@ public class NginxCollectImpl extends AbstractCollect {
                     ? String.format("[%s]:%s", host, portWithUri)
                     : String.format("%s:%s", host, portWithUri);
 
-            requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+            boolean ssl = Boolean.parseBoolean(nginxProtocol.getSsl());
+            if (ssl){
+                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
+            } else {
+                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+            }
         }
 
         requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");

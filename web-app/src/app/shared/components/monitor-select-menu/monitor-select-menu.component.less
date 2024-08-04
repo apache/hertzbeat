@@ -1,0 +1,31 @@
+:host ::ng-deep {
+
+  .item{
+    padding-left: 32px!important;
+
+    .ant-menu-title-content {
+      gap: 8px;
+      display: flex;
+      align-items: center;
+
+      :first-child {
+        flex-shrink: 0;
+      }
+
+      .label {
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .ant-spin-container {
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+}

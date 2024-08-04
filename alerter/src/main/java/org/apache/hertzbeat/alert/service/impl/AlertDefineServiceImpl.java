@@ -17,27 +17,34 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
+import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -58,6 +65,9 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Autowired
     private AlertDefineBindDao alertDefineBindDao;
+
+    @Autowired
+    private AlertMonitorDao alertMonitorDao;
 
     private final Map<String, AlertDefineImExportService> alertDefineImExportServiceMap = new HashMap<>();
 
@@ -141,13 +151,73 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest) {
+    public Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, Byte priority, String sort, String order, int pageIndex, int pageSize) {
+        Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (defineIds != null && !defineIds.isEmpty()) {
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
+                for (long id : defineIds) {
+                    inPredicate.value(id);
+                }
+                andList.add(inPredicate);
+            }
+            if (StringUtils.hasText(search)) {
+                Predicate predicate = criteriaBuilder.or(
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("app")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("metric")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("field")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("expr")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("template")),
+                                "%" + search.toLowerCase() + "%"
+                        )
+                );
+                andList.add(predicate);
+            }
+            if (priority != null) {
+                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
+                andList.add(predicate);
+            }
+            Predicate[] predicates = new Predicate[andList.size()];
+            return criteriaBuilder.and(andList.toArray(predicates));
+        };
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return alertDefineDao.findAll(specification, pageRequest);
     }
 
     @Override
     public List<AlertDefineMonitorBind> getBindAlertDefineMonitors(long alertDefineId) {
-        return alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertDefineId);
+        List<AlertDefineMonitorBind> defineMonitorBinds = alertDefineBindDao.getAlertDefineBindsByAlertDefineIdEquals(alertDefineId);
+        if (defineMonitorBinds == null || defineMonitorBinds.isEmpty()) {
+            return defineMonitorBinds;
+        }
+        List<Long> needLoadMonitorIds = defineMonitorBinds.stream()
+                .filter(bind -> bind.getMonitor() == null)
+                .map(AlertDefineMonitorBind::getMonitorId).toList();
+        if (needLoadMonitorIds.isEmpty()) {
+            return defineMonitorBinds;
+        }
+        Map<Long, Monitor> monitorMap = alertMonitorDao.findAllById(needLoadMonitorIds)
+                .stream().collect(Collectors.toMap(Monitor::getId, Function.identity()));
+        for (AlertDefineMonitorBind bind : defineMonitorBinds) {
+            if (bind.getMonitor() == null) {
+                bind.setMonitor(monitorMap.get(bind.getMonitorId()));
+            }
+        }
+        return defineMonitorBinds;
     }
 
     @Override

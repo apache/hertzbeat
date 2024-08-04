@@ -56,6 +56,17 @@ params:
     # default value
     defaultValue: 443
   # field-param field key
+  - field: verify
+    # name-param field display i18n name
+    name:
+      zh-CN: 校验证书
+      en-US: verify
+    # When the type is boolean, the frontend will display a switch for it.
+    type: boolean
+    defaultValue: true
+    # required-true or false
+    required: false
+  # field-param field key
   - field: uri
     # name-param field display i18n name
     name:
@@ -140,3 +151,4 @@ metrics:
       host: ^_^host^_^
       port: ^_^port^_^
       url: ^_^uri^_^
+      ssl: ^_^verify^_^

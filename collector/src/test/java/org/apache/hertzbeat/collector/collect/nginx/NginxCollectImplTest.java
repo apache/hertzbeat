@@ -81,7 +81,7 @@ public class NginxCollectImplTest {
                 .build();
 
         try (MockedStatic<CommonHttpClient> mockStatic = Mockito.mockStatic(CommonHttpClient.class)) {
-            mockStatic.when(() -> CommonHttpClient.getHttpClient()).thenReturn(client);
+            mockStatic.when(CommonHttpClient::getHttpClient).thenReturn(client);
             Mockito.when(client.execute(Mockito.any(HttpUriRequest.class), Mockito.any(HttpContext.class)))
                     .thenReturn(mockHttpResponse);
 
@@ -111,7 +111,7 @@ public class NginxCollectImplTest {
                 .build();
 
         try (MockedStatic<CommonHttpClient> mockedStatic = Mockito.mockStatic(CommonHttpClient.class)) {
-            mockedStatic.when(() -> CommonHttpClient.getHttpClient()).thenReturn(client);
+            mockedStatic.when(CommonHttpClient::getHttpClient).thenReturn(client);
 
             Mockito.when(client.execute(Mockito.any(HttpUriRequest.class), Mockito.any(HttpContext.class)))
                     .thenReturn(mockHttpResponse);
@@ -176,7 +176,7 @@ public class NginxCollectImplTest {
                 .build();
 
         try (MockedStatic<CommonHttpClient> mockedStatic = Mockito.mockStatic(CommonHttpClient.class)) {
-            mockedStatic.when(() -> CommonHttpClient.getHttpClient()).thenReturn(client);
+            mockedStatic.when(CommonHttpClient::getHttpClient).thenReturn(client);
 
             Mockito.when(client.execute(Mockito.any(HttpUriRequest.class), Mockito.any(HttpContext.class)))
                     .thenReturn(mockHttpResponse);

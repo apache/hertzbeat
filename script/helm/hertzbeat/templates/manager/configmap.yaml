@@ -58,6 +58,7 @@ data:
         enabled-by-default: on
     
     sureness:
+      container: jakarta_servlet
       auths:
         - digest
         - basic
@@ -72,17 +73,27 @@ data:
           on-profile: prod
     
       datasource:
-        driver-class-name: com.mysql.cj.jdbc.Driver
+        driver-class-name: org.postgresql.Driver
         username: root
         password: {{ .Values.database.rootPassword }}
-        url: jdbc:mysql://{{ include "hertzbeat.database" . }}:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+        url: jdbc:postgresql://{{ include "hertzbeat.database" . }}:5432/hertzbeat
         hikari:
           max-lifetime: 120000
-    
       jpa:
-        hibernate:
-          ddl-auto: update
-    
+        show-sql: false
+        database-platform: org.eclipse.persistence.platform.database.PostgreSQLPlatform
+        database: postgresql
+        properties:
+          eclipselink:
+            logging:
+              level: SEVERE
+      flyway:
+        enabled: true
+        clean-disabled: true
+        baseline-on-migrate: true
+        baseline-version: 1
+        locations:
+          - classpath:db/migration/{vendor}    
       mail:
         # Attention: this is mail server address.
         # 请注意此为邮件服务器地址：qq邮箱为 smtp.qq.com qq 企业邮箱为 smtp.exmail.qq.com
@@ -165,14 +176,28 @@ data:
     
     alerter:
       # custom console url
-      console-url: https://console.tancloud.cn
+      console-url: https://console.tancloud.io
+      # we work
+      we-work-webhook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
+      # ding ding talk
+      ding-talk-webhook-url: https://oapi.dingtalk.com/robot/send?access_token=
+      # fei shu fly book
+      fly-book-webhook-url: https://open.feishu.cn/open-apis/bot/v2/hook/
+      # telegram
+      telegram-webhook-url: https://api.telegram.org/bot%s/sendMessage
+      # discord
+      discord-webhook-url: https://discord.com/api/v9/channels/%s/messages
+      # server酱
+      server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
+      # gotify
+      gotify-webhook-url: http://127.0.0.1/message?token=%s
     
     scheduler:
       server:
         enabled: true
         port: 1158
 
-
+        
   sureness.yml: |+
     resourceRole:
       - /api/account/auth/refresh===post===[admin,user,guest]
@@ -213,7 +238,10 @@ data:
       - /api/status/page/**===post===[admin,user]
       - /api/status/page/**===put===[admin,user]
       - /api/status/page/**===delete===[admin]
-
+    
+    # config the resource restful api that need bypass auth protection
+    # rule: api===method 
+    # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
     excludedResource:
       - /api/alerts/report/**===*
       - /api/account/auth/**===*
@@ -221,6 +249,7 @@ data:
       - /api/apps/hierarchy===get
       - /api/push/**===*
       - /api/status/page/public/**===*
+      # web ui resource
       - /===get
       - /dashboard/**===get
       - /monitors/**===get
@@ -241,9 +270,11 @@ data:
       - /**/*.json===get
       - /**/*.woff===get
       - /**/*.eot===get
+      # swagger ui resource
       - /swagger-resources/**===get
       - /v2/api-docs===get
       - /v3/api-docs===get
+      # h2 database
       - /h2-console/**===*
 
     # account info config

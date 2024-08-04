@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.doNothing;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
@@ -29,11 +33,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Test case for {@link MonitorsController}
@@ -114,5 +120,42 @@ class MonitorsControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
+    }
+
+    @Test
+    void export() throws Exception {
+        List<Long> ids = Arrays.asList(6565463543L, 6565463544L);
+        String type = "JSON";
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/export")
+                        .param("ids", String.join(",", ids.stream().map(String::valueOf).collect(Collectors.toList())))
+                        .param("type", type))
+                .andExpect(status().isOk())
+                .andReturn();
+    }
+
+    @Test
+    void export2() throws Exception {
+        // Mock the behavior of monitorService.importConfig
+        doNothing().when(monitorService).importConfig((MultipartFile) Mockito.any());
+
+        // Perform the request and verify the response
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitors/import")
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .param("file", "testFileContent"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("0"))
+                .andExpect(jsonPath("$.msg").value("Import success"));
+    }
+
+    @Test
+    void duplicateMonitors() throws Exception {
+        // Mock the behavior of monitorService.copyMonitors
+        doNothing().when(monitorService).copyMonitors(List.of(6565463543L));
+
+        // Perform the POST request and verify the response
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitors/copy")
+                        .param("ids", "6565463543"))
+                .andExpect(status().isOk());
     }
 }
