@@ -27,8 +27,13 @@ import java.util.List;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.dto.Message;
+
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,7 +66,13 @@ public class AlertDefinesController {
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
         Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(ids, search, priority, sort, order, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(alertDefinePage));
+
+        return  ResponseEntity.ok(Message.success(
+                new PageImpl<>(
+                        alertDefinePage.getContent(),
+                        PageRequest.of(pageIndex, pageSize, Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort))),
+                        alertDefinePage.getTotalElements()))
+        );
     }
 
     @DeleteMapping
@@ -79,9 +90,9 @@ public class AlertDefinesController {
     @GetMapping("/export")
     @Operation(summary = "export alertDefine config", description = "export alarm definition configuration")
     public void export(
-        @Parameter(description = "AlertDefine ID List", example = "656937901") @RequestParam List<Long> ids,
-        @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
-        HttpServletResponse res) throws Exception {
+            @Parameter(description = "AlertDefine ID List", example = "656937901") @RequestParam List<Long> ids,
+            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
+            HttpServletResponse res) throws Exception {
         alertDefineService.export(ids, type, res);
     }
 
