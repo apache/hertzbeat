@@ -97,4 +97,23 @@ Complete!
 | zk_ephemerals_count         | 个 | 临时节点数 |
 | zk_min_latency | ms | 最小延时 |
 
+#### 指标集合：envi
+
+| 指标名称      | 指标单位 | 指标帮助描述 |
+| ----------- |-----| ----------- |
+| zk_version | 无   | ZooKeeper版本 |
+| hostname |  无   | 主机名 |
+| java_version | 无    | Java版本 |
+| java_vendor |  无   | Java供应商 |
+| java_home |   无  | Java主目录 |
+| java_class_path |   无  | Java类路径 |
+| java_library_path | 无    | Java库路径 |
+| java_io_tmpdir |  无   | Java临时目录 |
+| java_compiler | 无    | Java编译器 |
+| os_name | 无    | 操作系统名称 |
+| os_arch |  无   | 操作系统架构 |
+| os_version |  无   | 操作系统版本 |
+| user_name |   无  | 用户名 |
+| user_home |  无   | 用户主目录 |
+| user_dir |   无  | 用户当前目录 |
 
