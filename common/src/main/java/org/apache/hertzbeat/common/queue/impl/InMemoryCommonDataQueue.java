@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.DataQueueConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
@@ -34,7 +35,12 @@ import org.springframework.context.annotation.Primary;
  * common data queue implement memory
  */
 @Configuration
-@ConditionalOnProperty(prefix = "common.queue", name = "type", havingValue = "memory", matchIfMissing = true)
+@ConditionalOnProperty(
+        prefix = DataQueueConstants.PREFIX,
+        name = DataQueueConstants.NAME,
+        havingValue = DataQueueConstants.IN_MEMORY,
+        matchIfMissing = true
+)
 @Slf4j
 @Primary
 public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean {
