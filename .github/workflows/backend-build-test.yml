@@ -76,6 +76,7 @@ jobs:
 
     # upload application logs
     - name: Upload logs
+      if: always()
       uses: actions/upload-artifact@v3
       with:
         name: hz-logs-${{ github.run_id }}

@@ -33,7 +33,7 @@ param:
 items:
 - name: login
   request:
-    api: /api/account/auth/form
+    api: /api/account/auth/for
     method: POST
     header:
       Content-type: application/json
