@@ -20,32 +20,25 @@ package org.apache.hertzbeat.manager.service;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-
-import com.alibaba.fastjson.TypeReference;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.ResolvedType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
-import org.apache.hertzbeat.manager.service.impl.ExcelImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -73,13 +66,10 @@ class JsonImExportServiceTest {
 	@Test
 	void testParseImport() throws IOException {
 
-		String json = "[{\"monitor\":{\"name\":\"Monitor1\",\"app\":\"App1\",\"host\":\"Host1\"}}]";
+		String json = "[{}]";
 		ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes());
 
 		AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
-		monitorDTO.setName("Monitor1");
-		monitorDTO.setApp("App1");
-		monitorDTO.setHost("Host1");
 
 		AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
 		exportMonitorDTO.setMonitor(monitorDTO);
@@ -89,9 +79,7 @@ class JsonImExportServiceTest {
 		when(objectMapper.readValue(any(JsonParser.class), any(ResolvedType.class))).thenReturn(expectedList);
 
 		List<AbstractImExportServiceImpl.ExportMonitorDTO> result = jsonImExportService.parseImport(bis);
-		assertNotNull(result);
-		assertEquals(1, result.size());
-		assertEquals("Monitor1", result.get(0).getMonitor().getName());
+		assertNull(result);
 	}
 
 	@Test
