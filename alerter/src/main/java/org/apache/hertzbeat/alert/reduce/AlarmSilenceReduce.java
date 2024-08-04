@@ -84,13 +84,12 @@ public class AlarmSilenceReduce {
                 }
             }
             if (match) {
-                LocalDateTime nowDate = LocalDateTime.now();
                 if (alertSilence.getType() == 0) {
                     // once time
-                    return checkAndSave(nowDate, alertSilence);
+                    return checkAndSave(LocalDateTime.now(), alertSilence);
                 } else if (alertSilence.getType() == 1) {
                     // cyc time
-                    int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
+                    int currentDayOfWeek = LocalDateTime.now().toLocalDate().getDayOfWeek().getValue();
                     if (alertSilence.getDays() != null && !alertSilence.getDays().isEmpty()) {
                         boolean dayMatch = alertSilence.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
                         if (dayMatch) {
