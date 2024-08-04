@@ -20,16 +20,10 @@ package org.apache.hertzbeat.alert.controller;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Date;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.alert.dto.CloudAlertReportAbstract;
 import org.apache.hertzbeat.alert.dto.GeneralCloudAlertReport;
-import org.apache.hertzbeat.alert.enums.CloudServiceAlarmInformationEnum;
 import org.apache.hertzbeat.alert.service.AlertService;
-import org.apache.hertzbeat.common.entity.dto.AlertReport;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,40 +48,7 @@ public class AlertReportController {
     @Operation(summary = "Interface for reporting external alarm information of cloud service")
     public ResponseEntity<Message<Void>> addNewAlertReportFromCloud(@PathVariable("cloud") String cloudServiceName,
                                                                     @RequestBody String alertReport) {
-        CloudServiceAlarmInformationEnum cloudService = CloudServiceAlarmInformationEnum
-                .getEnumFromCloudServiceName(cloudServiceName);
-
-        AlertReport alert = null;
-        if (cloudService != null) {
-            try {
-                CloudAlertReportAbstract cloudAlertReport = JsonUtil
-                        .fromJson(alertReport, cloudService.getCloudServiceAlarmInformationEntity());
-                assert cloudAlertReport != null;
-                alert = AlertReport.builder()
-                        .content(cloudAlertReport.getContent())
-                        .alertName(cloudAlertReport.getAlertName())
-                        .alertTime(cloudAlertReport.getAlertTime())
-                        .alertDuration(cloudAlertReport.getAlertDuration())
-                        .priority(cloudAlertReport.getPriority())
-                        .reportType(cloudAlertReport.getReportType())
-                        .labels(cloudAlertReport.getLabels())
-                        .annotations(cloudAlertReport.getAnnotations())
-                        .build();
-            } catch (Exception e) {
-                log.error("[alert report] parse cloud service alarm content failed! cloud service: {} conrent: {}",
-                        cloudService.name(), alertReport);
-            }
-        } else {
-            alert = AlertReport.builder()
-                    .content("error do not has cloud service api")
-                    .alertName("/api/alerts/report/" + cloudServiceName)
-                    .alertTime(new Date().getTime())
-                    .priority(1)
-                    .reportType(1)
-                    .build();
-        }
-        Optional.ofNullable(alert).ifPresent(alertReportPresent ->
-                alertService.addNewAlertReport(alertReportPresent));
+        alertService.addNewAlertReportFromCloud(cloudServiceName, alertReport);
         return ResponseEntity.ok(Message.success("Add report success"));
     }
     
