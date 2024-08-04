@@ -122,7 +122,7 @@ public class AlibabaAiServiceImpl implements AiService {
 
     private void checkParam(String param, String apiKey, String model) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(param, "model is null");
+        Assert.notNull(model, "model is null");
         Assert.notNull(apiKey, "ai.api-key is null");
     }
 }
