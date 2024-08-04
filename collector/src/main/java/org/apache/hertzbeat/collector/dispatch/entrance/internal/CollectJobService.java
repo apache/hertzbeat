@@ -17,13 +17,11 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.internal;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
