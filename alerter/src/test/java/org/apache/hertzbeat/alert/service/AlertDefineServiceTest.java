@@ -20,10 +20,13 @@ package org.apache.hertzbeat.alert.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -176,9 +179,9 @@ class AlertDefineServiceTest {
 
     @Test
     void getAlertDefines() {
-        Specification<AlertDefine> specification = mock(Specification.class);
-        when(alertDefineDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
-        assertNotNull(alertDefineService.getAlertDefines(specification, PageRequest.of(1, 1)));
+        when(alertDefineDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
+        assertNotNull(alertDefineService.getAlertDefines(null, null, null, "id", "desc", 1, 10));
+        verify(alertDefineDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
     }
 
     @Test

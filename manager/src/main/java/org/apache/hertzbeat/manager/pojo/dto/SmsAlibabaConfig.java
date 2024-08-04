@@ -15,30 +15,21 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.http.promethus;
+package org.apache.hertzbeat.manager.pojo.dto;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.stereotype.Component;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
 /**
- * prometheus parse creater
+ * Alibaba Sms Sender configuration dto
  */
-@Slf4j
-@Component
-public class PrometheusParseCreater implements InitializingBean {
-    private static AbstractPrometheusParse PROMETHEUSPARSE = new PrometheusVectorParser();
+@Data
+public class SmsAlibabaConfig {
+    
+    @NotBlank(message = "SecretId cannot be empty")
+    private String secretId;
+    
+    @NotBlank(message = "SecretKey cannot be empty")
+    private String secretKey;
 
-    private static void create() {
-        PROMETHEUSPARSE.setInstance(new PrometheusMatrixParser().setInstance(new PrometheusLastParser()));
-    }
-
-    public static AbstractPrometheusParse getPrometheusParse(){
-        return PROMETHEUSPARSE;
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        create();
-    }
 }

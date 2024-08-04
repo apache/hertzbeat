@@ -22,8 +22,6 @@ import java.util.function.Consumer;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * plugin service
@@ -47,11 +45,12 @@ public interface PluginService {
     /**
      * get plugin page list
      *
-     * @param specification Query condition
-     * @param pageRequest   Paging condition
+     * @param search        plugin name search
+     * @param pageIndex     List current page
+     * @param pageSize      Number of list pagination
      * @return Plugins
      */
-    Page<PluginMetadata> getPlugins(Specification<PluginMetadata> specification, PageRequest pageRequest);
+    Page<PluginMetadata> getPlugins(String search, int pageIndex, int pageSize);
 
     /**
      * execute plugin

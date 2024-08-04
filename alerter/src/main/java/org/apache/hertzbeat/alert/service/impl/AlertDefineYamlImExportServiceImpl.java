@@ -49,13 +49,13 @@ public class AlertDefineYamlImExportServiceImpl extends AlertDefineAbstractImExp
     }
 
     @Override
-    List<ExportAlertDefineDTO> parseImport(InputStream is) {
+    public List<ExportAlertDefineDTO> parseImport(InputStream is) {
         Yaml yaml = new Yaml();
         return yaml.load(is);
     }
 
     @Override
-    void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
+    public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setIndent(2);
