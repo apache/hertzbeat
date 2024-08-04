@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.persistence.criteria.Predicate;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -83,19 +84,43 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
 
     @Override
-    public List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification) {
+    public List<NoticeReceiver> getNoticeReceivers(String name) {
+        Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction();
+            if (name != null && !name.isEmpty()) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                predicate = criteriaBuilder.and(predicateName);
+            }
+            return predicate;
+        };
         return noticeReceiverDao.findAll(specification);
     }
 
     @Override
-    public List<NoticeTemplate> getNoticeTemplates(Specification<NoticeTemplate> specification) {
+    public List<NoticeTemplate> getNoticeTemplates(String name) {
+        Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction();
+            if (name != null && !"".equals(name)) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                predicate = criteriaBuilder.and(predicateName);
+            }
+            return predicate;
+        };
         List<NoticeTemplate> defaultTemplates = new LinkedList<>(PRESET_TEMPLATE.values());
         defaultTemplates.addAll(noticeTemplateDao.findAll(specification));
         return defaultTemplates;
     }
 
     @Override
-    public List<NoticeRule> getNoticeRules(Specification<NoticeRule> specification) {
+    public List<NoticeRule> getNoticeRules(String name) {
+        Specification<NoticeRule> specification = (root, query, criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction();
+            if (name != null && !name.isEmpty()) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                predicate = criteriaBuilder.and(predicateName);
+            }
+            return predicate;
+        };
         return noticeRuleDao.findAll(specification);
     }
 
