@@ -98,3 +98,22 @@ Complete!
 | zk_min_latency | ms | Min latency |
 
 
+#### Metric set：envi
+
+| Metric Name         | Metric Unit | Metric help description      |
+| ------------------- |-------------|-------------------------------|
+| zk_version          | none        | ZooKeeper version             |
+| hostname            | none        | Hostname                      |
+| java_version        | none        | Java version                  |
+| java_vendor         | none        | Java vendor                   |
+| java_home           | none        | Java home directory           |
+| java_class_path     | none        | Java class path               |
+| java_library_path   | none        | Java library path             |
+| java_io_tmpdir      | none        | Java temporary directory      |
+| java_compiler       | none        | Java compiler                 |
+| os_name             | none        | Operating system name         |
+| os_arch             | none        | Operating system architecture |
+| os_version          | none        | Operating system version      |
+| user_name           | none        | Username                      |
+| user_home           | none        | User home directory           |
+| user_dir            | none        | User current directory        |
