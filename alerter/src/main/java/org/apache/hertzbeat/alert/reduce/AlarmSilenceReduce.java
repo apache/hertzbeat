@@ -87,34 +87,41 @@ public class AlarmSilenceReduce {
                 LocalDateTime nowDate = LocalDateTime.now();
                 if (alertSilence.getType() == 0) {
                     // once time
-                    boolean startMatch = alertSilence.getPeriodStart() == null || nowDate.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
-                    boolean endMatch = alertSilence.getPeriodEnd() == null || nowDate.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
-                    if (startMatch && endMatch) {
-                        int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
-                        alertSilence.setTimes(times + 1);
-                        alertSilenceDao.save(alertSilence);
-                        return false;
-                    }
+                    return checkAndSave(nowDate, alertSilence);
                 } else if (alertSilence.getType() == 1) {
                     // cyc time
                     int currentDayOfWeek = nowDate.toLocalDate().getDayOfWeek().getValue();
                     if (alertSilence.getDays() != null && !alertSilence.getDays().isEmpty()) {
                         boolean dayMatch = alertSilence.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
                         if (dayMatch) {
-                            LocalTime nowTime = nowDate.toLocalTime();
-                            boolean startMatch = alertSilence.getPeriodStart() == null || nowTime.isAfter(alertSilence.getPeriodStart().toLocalTime());
-                            boolean endMatch = alertSilence.getPeriodEnd() == null || nowTime.isBefore(alertSilence.getPeriodEnd().toLocalTime());
-                            if (startMatch && endMatch) {
-                                int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
-                                alertSilence.setTimes(times + 1);
-                                alertSilenceDao.save(alertSilence);
-                                return false;
-                            }
+                            return checkAndSave(LocalDateTime.now(), alertSilence);
                         }
                     }
                 }
             }
         }
+        return true;
+    }
+
+    /**
+     * Check AlertSilence start and end match, to save alertSilence obj.
+     * @param times         LocalDateTime.
+     * @param alertSilence  {@link AlertSilence}
+     * @return boolean
+     */
+    private boolean checkAndSave(LocalDateTime times, AlertSilence alertSilence) {
+
+        boolean startMatch = alertSilence.getPeriodStart() == null || times.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
+        boolean endMatch = alertSilence.getPeriodEnd() == null || times.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+
+        if (startMatch && endMatch) {
+
+            int time = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
+            alertSilence.setTimes(time + 1);
+            alertSilenceDao.save(alertSilence);
+            return false;
+        }
+
         return true;
     }
 }
