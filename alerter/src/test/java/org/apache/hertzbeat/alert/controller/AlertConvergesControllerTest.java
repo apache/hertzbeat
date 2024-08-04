@@ -17,10 +17,18 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-
 import org.apache.hertzbeat.alert.service.AlertConvergeService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
@@ -30,23 +38,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 
 /**
  * test case for {@link AlertConvergesController}
@@ -92,7 +90,7 @@ class AlertConvergesControllerTest {
 				alertConvergeList.size()
 		);
 
-		when(alertConvergeService.getAlertConverges(any(), any(PageRequest.class))).thenReturn(alertConvergePage);
+		when(alertConvergeService.getAlertConverges(null, null, "id", "desc", 0, 8)).thenReturn(alertConvergePage);
 
 		mockMvc.perform(get("/api/alert/converges")
 						.param("pageIndex", "0")
