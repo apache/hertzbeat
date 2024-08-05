@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.alert.service;
 
+import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * management interface service for alert converge
@@ -67,9 +66,13 @@ public interface AlertConvergeService {
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
-     * @param pageRequest   Paging parameters
+     * @param convergeIds   Alarm Converge ID List
+     * @param search        Search Name
+     * @param sort          Sort field
+     * @param order         Sort mode: asc: ascending, desc: descending
+     * @param pageIndex     List current page
+     * @param pageSize      Number of list pages
      * @return The query results
      */
-    Page<AlertConverge> getAlertConverges(Specification<AlertConverge> specification, PageRequest pageRequest);
+    Page<AlertConverge> getAlertConverges(List<Long> convergeIds, String search, String sort, String order, int pageIndex, int pageSize);
 }
