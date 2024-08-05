@@ -19,7 +19,6 @@ package org.apache.hertzbeat.common.entity.alerter;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
-
 import com.google.common.base.Objects;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;

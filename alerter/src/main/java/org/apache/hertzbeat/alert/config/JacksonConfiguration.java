@@ -25,17 +25,17 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 /**
  * Jackson2Object configuration.
  * Fix: Resolved [org.springframework.http.converter.HttpMessageNotWritableException:
- * 		Could not write JSON: (was java.lang.UnsupportedOperationException)]
+ *         Could not write JSON: (was java.lang.UnsupportedOperationException)]
  * From: <a href="https://github.com/spring-projects/spring-data-commons/issues/2987#issuecomment-2072480592">...</a>
  */
 
 @Configuration
 public class JacksonConfiguration {
 
-	@Bean
-	public Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder(SpringDataJacksonConfiguration.PageModule pageModule) {
+    @Bean
+    public Jackson2ObjectMapperBuilder jackson2ObjectMapperBuilder(SpringDataJacksonConfiguration.PageModule pageModule) {
 
-		return new Jackson2ObjectMapperBuilder().modules(pageModule);
-	}
+        return new Jackson2ObjectMapperBuilder().modules(pageModule);
+    }
 
 }
