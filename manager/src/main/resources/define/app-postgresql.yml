@@ -716,6 +716,9 @@ metrics:
     fields:
       - field: allocated
         type: 0
+        i18n:
+          zh-CN: 已分配
+          en-US: Allocated
       - field: fsync_calls_by_backend
         type: 0
         i18n:
