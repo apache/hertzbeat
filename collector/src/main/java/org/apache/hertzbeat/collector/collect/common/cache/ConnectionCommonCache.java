@@ -60,6 +60,7 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
     private void initCache() {
         cacheMap = new ConcurrentLinkedHashMap
                 .Builder<T, C>()
+                .maximumWeightedCapacity(Integer.MAX_VALUE)
                 .listener((key, value) -> {
                     timeoutMap.remove(key);
                     try {
