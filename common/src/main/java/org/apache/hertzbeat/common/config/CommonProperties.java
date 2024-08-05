@@ -149,6 +149,11 @@ public class CommonProperties {
         private String metricsDataQueueNameToRealTimeStorage;
 
         /**
+         * Queue name for service discovery
+         */
+        private String metricsDataQueueNameForServiceDiscovery;
+
+        /**
          * Queue name for alerts data
          */
         private String alertsDataQueueName;
@@ -213,6 +218,13 @@ public class CommonProperties {
             this.alertsDataQueueName = alertsDataQueueName;
         }
 
+        public String getMetricsDataQueueNameForServiceDiscovery() {
+            return metricsDataQueueNameForServiceDiscovery;
+        }
+
+        public void setMetricsDataQueueNameForServiceDiscovery(String metricsDataQueueNameForServiceDiscovery) {
+            this.metricsDataQueueNameForServiceDiscovery = metricsDataQueueNameForServiceDiscovery;
+        }
     }
 
     /**
@@ -227,6 +239,10 @@ public class CommonProperties {
          * metrics data topic
          */
         private String metricsDataTopic;
+        /**
+         * service discovery data topic
+         */
+        private String serviceDiscoveryDataTopic;
         /**
          * alerts data topic
          */
@@ -254,6 +270,14 @@ public class CommonProperties {
 
         public void setAlertsDataTopic(String alertsDataTopic) {
             this.alertsDataTopic = alertsDataTopic;
+        }
+
+        public String getServiceDiscoveryDataTopic() {
+            return serviceDiscoveryDataTopic;
+        }
+
+        public void setServiceDiscoveryDataTopic(String serviceDiscoveryDataTopic) {
+            this.serviceDiscoveryDataTopic = serviceDiscoveryDataTopic;
         }
     }
 

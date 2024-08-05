@@ -59,14 +59,17 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToPersistentStorageConsumer;
     private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToRealTimeStorageConsumer;
+    private KafkaConsumer<Long, CollectRep.MetricsData> serviceDiscoveryDataConsumer;
     private final ReentrantLock lock1 = new ReentrantLock();
     private final ReentrantLock lock2 = new ReentrantLock();
     private final ReentrantLock lock3 = new ReentrantLock();
     private final ReentrantLock lock4 = new ReentrantLock();
+    private final ReentrantLock lock5 = new ReentrantLock();
     private final LinkedBlockingQueue<Alert> alertDataQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
     private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
+    private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
     private final CommonProperties.KafkaProperties kafka;
     
     public KafkaCommonDataQueue(CommonProperties properties) {
@@ -79,6 +82,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         metricsDataToAlertQueue = new LinkedBlockingQueue<>();
         metricsDataToPersistentStorageQueue = new LinkedBlockingQueue<>();
         metricsDataToRealTimeStorageQueue = new LinkedBlockingQueue<>();
+        serviceDiscoveryDataQueue = new LinkedBlockingQueue<>();
         initDataQueue();
     }
     
@@ -120,6 +124,12 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(),
                     new KafkaMetricsDataDeserializer());
             metricsDataToRealTimeStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
+
+            Map<String, Object> serviceDiscoveryDataConsumerConfig = new HashMap<>(consumerConfig);
+            serviceDiscoveryDataConsumerConfig.put("group.id", "service-discovery-data-consumer");
+            serviceDiscoveryDataConsumer = new KafkaConsumer<>(serviceDiscoveryDataConsumerConfig, new LongDeserializer(),
+                    new KafkaMetricsDataDeserializer());
+            serviceDiscoveryDataConsumer.subscribe(Collections.singletonList(kafka.getServiceDiscoveryDataTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);
             throw e;
@@ -164,89 +174,37 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
-        CollectRep.MetricsData metricsData = metricsDataToAlertQueue.poll();
-        if (metricsData != null) {
-            return metricsData;
-        }
-        lock2.lockInterruptibly();
-        try {
-            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToAlertConsumer.poll(Duration.ofSeconds(1));
-            int index = 0;
-            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
-                if (index == 0) {
-                    metricsData = record.value();
-                } else {
-                    metricsDataToAlertQueue.offer(record.value());
-                }
-                index++;
-            }
-            metricsDataToAlertConsumer.commitAsync();
-        } catch (Exception e){
-            log.error(e.getMessage());
-        } finally {
-            lock2.unlock();
-        }
-        return metricsData;
+        return pollMetricsData(metricsDataToAlertQueue, lock2, metricsDataToAlertConsumer);
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        CollectRep.MetricsData persistentStorageMetricsData = metricsDataToPersistentStorageQueue.poll();
-        if (persistentStorageMetricsData != null) {
-            return persistentStorageMetricsData;
-        }
-        lock3.lockInterruptibly();
-        try {
-            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToPersistentStorageConsumer.poll(Duration.ofSeconds(1));
-            int index = 0;
-            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
-                if (index == 0) {
-                    persistentStorageMetricsData = record.value();
-                } else {
-                    metricsDataToPersistentStorageQueue.offer(record.value());
-                }
-                index++;
-            }
-            metricsDataToPersistentStorageConsumer.commitAsync();
-        } catch (Exception e){
-            log.error(e.getMessage());
-        } finally {
-            lock3.unlock();
-        }
-        return persistentStorageMetricsData;
+        return pollMetricsData(metricsDataToPersistentStorageQueue, lock3, metricsDataToPersistentStorageConsumer);
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        CollectRep.MetricsData realTimeMetricsData = metricsDataToRealTimeStorageQueue.poll();
-        if (realTimeMetricsData != null) {
-            return realTimeMetricsData;
-        }
-        lock4.lockInterruptibly();
-        try {
-            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToRealTimeStorageConsumer.poll(Duration.ofSeconds(1));
-            int index = 0;
-            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
-                if (index == 0) {
-                    realTimeMetricsData = record.value();
-                } else {
-                    metricsDataToRealTimeStorageQueue.offer(record.value());
-                }
-                index++;
-            }
-            metricsDataToRealTimeStorageConsumer.commitAsync();
-        } catch (Exception e){
-            log.error(e.getMessage());
-        } finally {
-            lock4.unlock();
-        }
-        return realTimeMetricsData;
+        return pollMetricsData(metricsDataToRealTimeStorageQueue, lock4, metricsDataToRealTimeStorageConsumer);
+    }
+
+    @Override
+    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
+        return pollMetricsData(serviceDiscoveryDataQueue, lock5, serviceDiscoveryDataConsumer);
     }
 
     @Override
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
         if (metricsDataProducer != null) {
             metricsDataProducer.send(new ProducerRecord<>(kafka.getMetricsDataTopic(), metricsData));
+        } else {
+            log.error("metricsDataProducer is not enabled");
+        }
+    }
+
+    @Override
+    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+        if (metricsDataProducer != null) {
+            metricsDataProducer.send(new ProducerRecord<>(kafka.getServiceDiscoveryDataTopic(), metricsData));
         } else {
             log.error("metricsDataProducer is not enabled");
         }
@@ -272,5 +230,36 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
         if (metricsDataToRealTimeStorageConsumer != null) {
             metricsDataToRealTimeStorageConsumer.close();
         }
+        if (serviceDiscoveryDataConsumer != null) {
+            serviceDiscoveryDataConsumer.close();
+        }
+    }
+
+    private CollectRep.MetricsData pollMetricsData(LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue,
+                                                   ReentrantLock lock,
+                                                   KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer) throws InterruptedException {
+        CollectRep.MetricsData metricsData = metricsDataToAlertQueue.poll();
+        if (metricsData != null) {
+            return metricsData;
+        }
+        lock.lockInterruptibly();
+        try {
+            ConsumerRecords<Long, CollectRep.MetricsData> records = metricsDataToAlertConsumer.poll(Duration.ofSeconds(1));
+            int index = 0;
+            for (ConsumerRecord<Long, CollectRep.MetricsData> record : records) {
+                if (index == 0) {
+                    metricsData = record.value();
+                } else {
+                    metricsDataToAlertQueue.offer(record.value());
+                }
+                index++;
+            }
+            metricsDataToAlertConsumer.commitAsync();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        } finally {
+            lock.unlock();
+        }
+        return metricsData;
     }
 }

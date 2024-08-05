@@ -42,6 +42,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.support.valid.HostValid;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -166,4 +167,9 @@ public class Monitor {
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
         inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
     private List<Tag> tags;
+
+    @Override
+    public Monitor clone() {
+        return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
+    }
 }

@@ -31,7 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
@@ -47,6 +46,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
@@ -56,6 +56,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 
 /**
  * Details of the monitoring metrics collected
@@ -208,7 +209,7 @@ public class Metrics {
     /**
      * Monitoring configuration information using the public http_sd protocol
      */
-    private HttpsdProtocol httpsd;
+    private RegistryProtocol registry;
     /**
      * Monitoring configuration information using the public redfish protocol
      */
@@ -217,6 +218,10 @@ public class Metrics {
      * Monitoring configuration information using the public ngql protocol
      */
     private NgqlProtocol ngql;
+    /**
+     * Collect sd data protocol
+     */
+    private ServiceDiscoveryProtocol sdProtocol;
     /**
      * Monitoring configuration information using the public imap protocol
      */

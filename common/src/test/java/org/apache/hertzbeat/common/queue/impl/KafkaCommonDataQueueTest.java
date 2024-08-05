@@ -51,6 +51,7 @@ class KafkaCommonDataQueueTest {
 	private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
 	private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToPersistentStorageConsumer;
 	private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToRealTimeStorageConsumer;
+	private KafkaConsumer<Long, CollectRep.MetricsData> serviceDiscoveryDataConsumer;
 	private CommonProperties.KafkaProperties kafkaProperties;
 	private KafkaCommonDataQueue kafkaCommonDataQueue;
 
@@ -60,6 +61,7 @@ class KafkaCommonDataQueueTest {
 		when(kafkaProperties.getServers()).thenReturn("localhost:9092");
 		when(kafkaProperties.getAlertsDataTopic()).thenReturn("alerts");
 		when(kafkaProperties.getMetricsDataTopic()).thenReturn("metrics");
+		when(kafkaProperties.getServiceDiscoveryDataTopic()).thenReturn("serviceDiscovery");
 
 		CommonProperties properties = mock(CommonProperties.class);
 		CommonProperties.DataQueueProperties queueProperties = mock(CommonProperties.DataQueueProperties.class);
@@ -72,6 +74,7 @@ class KafkaCommonDataQueueTest {
 		metricsDataToAlertConsumer = mock(KafkaConsumer.class);
 		metricsDataToPersistentStorageConsumer = mock(KafkaConsumer.class);
 		metricsDataToRealTimeStorageConsumer = mock(KafkaConsumer.class);
+		serviceDiscoveryDataConsumer = mock(KafkaConsumer.class);
 
 		kafkaCommonDataQueue = new KafkaCommonDataQueue(properties);
 
@@ -81,6 +84,7 @@ class KafkaCommonDataQueueTest {
 		setPrivateField(kafkaCommonDataQueue, "metricsDataToAlertConsumer", metricsDataToAlertConsumer);
 		setPrivateField(kafkaCommonDataQueue, "metricsDataToPersistentStorageConsumer", metricsDataToPersistentStorageConsumer);
 		setPrivateField(kafkaCommonDataQueue, "metricsDataToRealTimeStorageConsumer", metricsDataToRealTimeStorageConsumer);
+		setPrivateField(kafkaCommonDataQueue, "serviceDiscoveryDataConsumer", serviceDiscoveryDataConsumer);
 	}
 
 	// Test use, set private field.

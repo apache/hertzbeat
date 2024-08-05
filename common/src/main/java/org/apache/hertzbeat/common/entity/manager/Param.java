@@ -37,6 +37,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -107,4 +108,9 @@ public class Param {
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 
+    @Override
+    public Param clone() {
+        // deep clone
+        return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
+    }
 }

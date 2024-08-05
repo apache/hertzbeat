@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RedisProtocol {
+public class RedisProtocol implements CommonRequestProtocol {
 
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
