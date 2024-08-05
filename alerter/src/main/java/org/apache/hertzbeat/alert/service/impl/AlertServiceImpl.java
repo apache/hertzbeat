@@ -25,18 +25,23 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDao;
 import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.dto.CloudAlertReportAbstract;
+import org.apache.hertzbeat.alert.enums.CloudServiceAlarmInformationEnum;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.dto.AlertReport;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -154,6 +159,43 @@ public class AlertServiceImpl implements AlertService {
     @Override
     public void addNewAlertReport(AlertReport alertReport) {
         alarmCommonReduce.reduceAndSendAlarm(buildAlertData(alertReport));
+    }
+
+    @Override
+    public void addNewAlertReportFromCloud(String cloudServiceName, String alertReport) {
+        CloudServiceAlarmInformationEnum cloudService = CloudServiceAlarmInformationEnum
+                .getEnumFromCloudServiceName(cloudServiceName);
+
+        AlertReport alert = null;
+        if (cloudService != null) {
+            try {
+                CloudAlertReportAbstract cloudAlertReport = JsonUtil
+                        .fromJson(alertReport, cloudService.getCloudServiceAlarmInformationEntity());
+                assert cloudAlertReport != null;
+                alert = AlertReport.builder()
+                        .content(cloudAlertReport.getContent())
+                        .alertName(cloudAlertReport.getAlertName())
+                        .alertTime(cloudAlertReport.getAlertTime())
+                        .alertDuration(cloudAlertReport.getAlertDuration())
+                        .priority(cloudAlertReport.getPriority())
+                        .reportType(cloudAlertReport.getReportType())
+                        .labels(cloudAlertReport.getLabels())
+                        .annotations(cloudAlertReport.getAnnotations())
+                        .build();
+            } catch (Exception e) {
+                log.error("[alert report] parse cloud service alarm content failed! cloud service: {} conrent: {}",
+                        cloudService.name(), alertReport);
+            }
+        } else {
+            alert = AlertReport.builder()
+                    .content("error do not has cloud service api")
+                    .alertName("/api/alerts/report/" + cloudServiceName)
+                    .alertTime(new Date().getTime())
+                    .priority(1)
+                    .reportType(1)
+                    .build();
+        }
+        Optional.ofNullable(alert).ifPresent(this::addNewAlertReport);
     }
 
     @Override

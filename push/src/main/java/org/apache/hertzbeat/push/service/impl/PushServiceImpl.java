@@ -60,7 +60,7 @@ public class PushServiceImpl implements PushService {
 
     private static final long deleteBeforeTime = deleteMetricsPeriod / 2;
 
-    PushServiceImpl(){
+    public PushServiceImpl(){
         monitorIdCache = new HashMap<>();
         lastPushMetrics = new HashMap<>();
 
