@@ -17,10 +17,14 @@
 
 package org.apache.hertzbeat.alert.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.util.Collections;
-import java.util.Set;
 import java.util.Optional;
-
+import java.util.Set;
 import org.apache.hertzbeat.alert.dao.AlertConvergeDao;
 import org.apache.hertzbeat.alert.service.impl.AlertConvergeServiceImpl;
 import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
@@ -34,13 +38,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * test case for {@link org.apache.hertzbeat.alert.service.impl.AlertConvergeServiceImpl}
@@ -97,17 +94,18 @@ class AlertConvergeServiceTest {
 	@Test
 	public void testGetAlertConverges() {
 
-		Specification<AlertConverge> specification = mock(Specification.class);
-		PageRequest pageRequest = PageRequest.of(0, 10);
 		Page<AlertConverge> page = new PageImpl<>(Collections.emptyList());
 		when(alertConvergeDao.findAll(
 				any(Specification.class),
 				any(Pageable.class))
 		).thenReturn(page);
 
-		Page<AlertConverge> result = alertConvergeService.getAlertConverges(specification, pageRequest);
+		Page<AlertConverge> result = alertConvergeService.getAlertConverges(null, null, "id", "desc", 1, 10);
 
-		verify(alertConvergeDao, times(1)).findAll(specification, pageRequest);
+		verify(alertConvergeDao, times(1)).findAll(
+				any(Specification.class),
+				any(PageRequest.class)
+		);
 		assertEquals(page, result);
 	}
 
