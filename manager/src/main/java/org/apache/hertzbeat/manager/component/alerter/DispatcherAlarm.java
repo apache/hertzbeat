@@ -135,6 +135,7 @@ public class DispatcherAlarm implements InitializingBean {
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     log.error(e.getMessage());
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);
