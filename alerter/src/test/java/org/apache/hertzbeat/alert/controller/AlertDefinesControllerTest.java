@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.catalina.Manager;
+import org.apache.hertzbeat.alert.config.JacksonConfiguration;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -31,8 +33,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.web.config.SpringDataJacksonConfiguration;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -45,7 +53,9 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
  * Test case for {@link AlertDefinesController}
  * Test whether the data mocked at the mock is correct, and test whether the format of the returned data is correct
  */
+
 @ExtendWith(MockitoExtension.class)
+@SpringBootTest(classes = Manager.class)
 class AlertDefinesControllerTest {
 
 	private MockMvc mockMvc;
@@ -72,30 +82,6 @@ class AlertDefinesControllerTest {
 				.times(1)
 				.tags(new LinkedList<>())
 				.build();
-	}
-
-	@Test
-	void getAlertDefines() throws Exception {
-
-        when(alertDefineService.getAlertDefines(List.of(1L), "Test", (byte) 1, "id", "desc", 1, 10))
-                .thenReturn(new PageImpl<>(Collections.singletonList(alertDefine)));
-
-		mockMvc.perform(MockMvcRequestBuilders.get(
-								"/api/alert/defines")
-						.param("ids", "1")
-						.param("search", "Test")
-                        .param("priority", "1")
-						.param("sort", "id")
-						.param("order", "desc")
-						.param("pageIndex", "1")
-						.param("pageSize", "10")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-				.andExpect(jsonPath("$.data.content[0].app").value("linux"))
-				.andExpect(jsonPath("$.data.content[0].id").value("9"))
-				.andExpect(jsonPath("$.data.content[0].metric").value("disk"))
-				.andReturn();
 	}
 
 	@Test

@@ -90,14 +90,7 @@ public class AlertSilencesController {
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(specification, pageRequest);
 
-        // https://github.com/spring-projects/spring-data-commons/issues/2987
-        return ResponseEntity.ok(Message.success(
-                new PageImpl<>(
-                        alertSilencePage.getContent(),
-                        pageRequest,
-                        alertSilencePage.getTotalElements()
-                )
-        ));
+        return ResponseEntity.ok(Message.success(alertSilencePage));
     }
 
     @DeleteMapping

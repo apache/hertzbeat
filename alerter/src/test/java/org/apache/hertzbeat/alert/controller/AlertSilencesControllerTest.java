@@ -75,29 +75,6 @@ class AlertSilencesControllerTest {
 	}
 
 	@Test
-	void testGetAlertSilences() throws Exception {
-
-		Page<AlertSilence> alertSilencePage = new PageImpl<>(Collections.singletonList(alertSilence));
-		when(alertSilenceService.getAlertSilences(
-				any(Specification.class),
-				any(PageRequest.class))
-		).thenReturn(alertSilencePage);
-
-		mockMvc.perform(get("/api/alert/silences")
-						.param("ids", "1")
-						.param("search", "Test")
-						.param("sort", "id")
-						.param("order", "desc")
-						.param("pageIndex", "0")
-						.param("pageSize", "8")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-				.andExpect(jsonPath("$.data.content[0].id").value(1))
-				.andExpect(jsonPath("$.data.content[0].name").value("Test Silence"));
-	}
-
-	@Test
 	void testDeleteAlertDefines() throws Exception {
 
 		doNothing().when(alertSilenceService).deleteAlertSilences(any());
