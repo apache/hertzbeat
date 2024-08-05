@@ -17,12 +17,14 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.internal;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
@@ -51,7 +53,7 @@ public class CollectJobService {
     private final WorkerPool workerPool;
 
     private final String collectorIdentity;
-    
+
     private String mode = null;
 
     private CollectServer collectServer;
@@ -59,18 +61,24 @@ public class CollectJobService {
     public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
         this.timerDispatch = timerDispatch;
         this.workerPool = workerPool;
-        if (properties != null && properties.getEntrance() != null && properties.getEntrance().getNetty() != null
-                && properties.getEntrance().getNetty().isEnabled()) {
-            mode = properties.getEntrance().getNetty().getMode();
-            String collectorName = properties.getEntrance().getNetty().getIdentity();
-            if (StringUtils.hasText(collectorName)) {
-                collectorIdentity = collectorName;
-            } else {
-                collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
-                log.info("user not config this collector identity, use [host name - host ip] default: {}.", collectorIdentity);
-            }
-        } else {
+
+        Optional<DispatchProperties.EntranceProperties.NettyProperties> nettyPropertiesOptional = Optional.ofNullable(properties)
+                .map(DispatchProperties::getEntrance)
+                .map(DispatchProperties.EntranceProperties::getNetty)
+                .filter(DispatchProperties.EntranceProperties.NettyProperties::isEnabled);
+
+        if (nettyPropertiesOptional.isEmpty()) {
             collectorIdentity = CommonConstants.MAIN_COLLECTOR_NODE;
+            return;
+        }
+
+        DispatchProperties.EntranceProperties.NettyProperties nettyProperties = nettyPropertiesOptional.get();
+        mode = nettyProperties.getMode();
+        if (StringUtils.hasText(nettyProperties.getIdentity())) {
+            collectorIdentity = nettyProperties.getIdentity();
+        } else {
+            collectorIdentity = IpDomainUtil.getCurrentHostName() + COLLECTOR_STR;
+            log.info("user not config this collector identity, use [host name - host ip] default: {}.", collectorIdentity);
         }
     }
 
@@ -109,13 +117,12 @@ public class CollectJobService {
     public void collectSyncOneTimeJobData(Job oneTimeJob) {
         workerPool.executeJob(() -> {
             List<CollectRep.MetricsData> metricsDataList = this.collectSyncJobData(oneTimeJob);
-            List<String> jsons = new ArrayList<>(metricsDataList.size());
-            for (CollectRep.MetricsData metricsData : metricsDataList) {
-                String json = ProtoJsonUtil.toJsonStr(metricsData);
-                if (json != null) {
-                    jsons.add(json);
-                }
-            }
+            List<String> jsons = CollectionUtils.emptyIfNull(metricsDataList)
+                    .stream()
+                    .map(ProtoJsonUtil::toJsonStr)
+                    .filter(StringUtils::hasText)
+                    .collect(Collectors.toList());
+
             String response = JsonUtil.toJson(jsons);
             ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                     .setMsg(response)
@@ -165,7 +172,7 @@ public class CollectJobService {
     public String getCollectorIdentity() {
         return collectorIdentity;
     }
-    
+
     public String getCollectorMode() {
         return mode;
     }

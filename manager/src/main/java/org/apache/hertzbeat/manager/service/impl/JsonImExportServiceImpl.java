@@ -38,10 +38,9 @@ public class JsonImExportServiceImpl extends AbstractImExportServiceImpl {
     private final ObjectMapper objectMapper;
 
     @Override
-    List<ExportMonitorDTO> parseImport(InputStream is) {
+    public List<ExportMonitorDTO> parseImport(InputStream is) {
         try {
-            return objectMapper.readValue(is, new TypeReference<>() {
-            });
+            return objectMapper.readValue(is, new TypeReference<>(){});
         } catch (IOException ex) {
             log.error("import monitor failed.", ex);
             throw new RuntimeException("import monitor failed");
@@ -49,7 +48,7 @@ public class JsonImExportServiceImpl extends AbstractImExportServiceImpl {
     }
 
     @Override
-    void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
+    public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
         try {
             objectMapper.writeValue(os, monitorList);
         } catch (IOException ex) {
