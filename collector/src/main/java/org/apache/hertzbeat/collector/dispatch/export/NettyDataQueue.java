@@ -33,8 +33,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConditionalOnProperty(
         prefix = NettyDataQueue.NETTY_DATA_QUEUE_PREFIX,
-        name = "type",
-        havingValue = "netty"
+        name = NettyDataQueue.NAME,
+        havingValue = NettyDataQueue.NETTY
 )
 public class NettyDataQueue implements CommonDataQueue {
 
@@ -42,7 +42,17 @@ public class NettyDataQueue implements CommonDataQueue {
      * netty data queue prefix.
      */
     protected static final String NETTY_DATA_QUEUE_PREFIX = "common.queue";
-    
+
+    /**
+     * name constants
+     */
+    protected static final String NAME = "type";
+
+    /**
+     * havingValue constants
+     */
+    protected static final String NETTY = "netty";
+
     private final CollectJobService collectJobService;
     
     public NettyDataQueue(CollectJobService collectJobService) {
