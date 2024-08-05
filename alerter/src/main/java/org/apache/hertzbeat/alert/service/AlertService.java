@@ -77,6 +77,13 @@ public interface AlertService {
     void addNewAlertReport(AlertReport alertReport);
 
     /**
+     * Save external alarms of cloud services
+     * @param cloudServiceName cloud service name,Such as tencloud
+     * @param alertReport alert report json string
+     */
+    void addNewAlertReportFromCloud(String cloudServiceName, String alertReport);
+
+    /**
      * Dynamic conditional query
      * @param specification Query conditions        
      * @return search result    
