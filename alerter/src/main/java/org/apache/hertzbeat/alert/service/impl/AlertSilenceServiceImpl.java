@@ -17,7 +17,11 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
@@ -29,9 +33,11 @@ import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * management interface service implement for alert silence
@@ -77,7 +83,30 @@ public class AlertSilenceServiceImpl implements AlertSilenceService {
     }
 
     @Override
-    public Page<AlertSilence> getAlertSilences(Specification<AlertSilence> specification, PageRequest pageRequest) {
+    public Page<AlertSilence> getAlertSilences(List<Long> silenceIds, String search, String sort, String order, int pageIndex, int pageSize) {
+        Specification<AlertSilence> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (silenceIds != null && !silenceIds.isEmpty()) {
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
+                for (long id : silenceIds) {
+                    inPredicate.value(id);
+                }
+                andList.add(inPredicate);
+            }
+            if (StringUtils.hasText(search)) {
+                Predicate predicate = criteriaBuilder.or(
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("name")),
+                                "%" + search.toLowerCase() + "%"
+                        )
+                );
+                andList.add(predicate);
+            }
+            Predicate[] predicates = new Predicate[andList.size()];
+            return criteriaBuilder.and(andList.toArray(predicates));
+        };
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return alertSilenceDao.findAll(specification, pageRequest);
     }
 
