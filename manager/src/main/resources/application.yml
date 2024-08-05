@@ -23,6 +23,7 @@ spring:
     static-path-pattern: /**
   jackson:
     default-property-inclusion: ALWAYS
+    time-zone: ${TZ:Asia/Shanghai}
   web:
     resources:
       static-locations:

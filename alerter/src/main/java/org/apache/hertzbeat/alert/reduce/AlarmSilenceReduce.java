@@ -17,12 +17,14 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
@@ -36,6 +38,7 @@ import org.springframework.stereotype.Service;
  * silence alarm
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AlarmSilenceReduce {
 
@@ -84,11 +87,11 @@ public class AlarmSilenceReduce {
                 }
             }
             if (match) {
-                LocalDateTime nowDate = LocalDateTime.now();
+                ZonedDateTime nowDate = ZonedDateTime.now();
                 if (alertSilence.getType() == 0) {
                     // once time
-                    boolean startMatch = alertSilence.getPeriodStart() == null || nowDate.isAfter(alertSilence.getPeriodStart().toLocalDateTime());
-                    boolean endMatch = alertSilence.getPeriodEnd() == null || nowDate.isBefore(alertSilence.getPeriodEnd().toLocalDateTime());
+                    boolean startMatch = alertSilence.getPeriodStart() == null || nowDate.isAfter(alertSilence.getPeriodStart());
+                    boolean endMatch = alertSilence.getPeriodEnd() == null || nowDate.isBefore(alertSilence.getPeriodEnd());
                     if (startMatch && endMatch) {
                         int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
                         alertSilence.setTimes(times + 1);
@@ -101,10 +104,13 @@ public class AlarmSilenceReduce {
                     if (alertSilence.getDays() != null && !alertSilence.getDays().isEmpty()) {
                         boolean dayMatch = alertSilence.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
                         if (dayMatch) {
-                            LocalTime nowTime = nowDate.toLocalTime();
-                            boolean startMatch = alertSilence.getPeriodStart() == null || nowTime.isAfter(alertSilence.getPeriodStart().toLocalTime());
-                            boolean endMatch = alertSilence.getPeriodEnd() == null || nowTime.isBefore(alertSilence.getPeriodEnd().toLocalTime());
-                            if (startMatch && endMatch) {
+                            if (alertSilence.getPeriodStart() == null || alertSilence.getPeriodEnd() == null) {
+                                continue;
+                            }
+                            LocalTime silentStart = alertSilence.getPeriodStart().toLocalTime();
+                            LocalTime silentEnd = alertSilence.getPeriodEnd().toLocalTime();
+                            // 判断是否为静默时间段
+                            if (isSilentPeriod(silentStart, silentEnd)) {
                                 int times = Optional.ofNullable(alertSilence.getTimes()).orElse(0);
                                 alertSilence.setTimes(times + 1);
                                 alertSilenceDao.save(alertSilence);
@@ -116,5 +122,28 @@ public class AlarmSilenceReduce {
             }
         }
         return true;
+    }
+
+    /**
+     * 是否为静默时间段
+     *
+     * @param silentStart 静默开始时间
+     * @param silentEnd 静默结束时间
+     * @return 是/否
+     */
+    private boolean isSilentPeriod(LocalTime silentStart, LocalTime silentEnd) {
+        if (null == silentStart || null == silentEnd) {
+            return false;
+        }
+        LocalTime nowLocalTime = ZonedDateTime.now().toLocalTime();
+        log.info("nowLocalTime:{}, silentStart:{}, silentEnd:{}, SystemDefaultTimeZoneId:{}", nowLocalTime, silentStart, silentEnd, ZoneId.systemDefault());
+        // 如果静默结束时间小于静默开始时间，意味着静默期跨越了午夜
+        if (silentEnd.isBefore(silentStart)) {
+            // 当前时间在午夜之前且大于等于静默开始时间，或者在午夜之后且小于静默结束时间
+            return nowLocalTime.isAfter(silentStart) || nowLocalTime.isBefore(silentEnd);
+        } else {
+            // 当前时间在静默开始和结束时间之间
+            return nowLocalTime.isAfter(silentStart) && nowLocalTime.isBefore(silentEnd);
+        }
     }
 }
