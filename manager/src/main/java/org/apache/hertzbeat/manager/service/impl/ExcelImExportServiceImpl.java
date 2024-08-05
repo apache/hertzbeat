@@ -75,7 +75,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
      * @param is input stream
      * @return form
      */
-
     @Override
     public List<ExportMonitorDTO> parseImport(InputStream is) {
         try (Workbook workbook = WorkbookFactory.create(is)) {
@@ -210,14 +209,13 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         return null;
     }
 
-
     /**
      * Export Configuration to Output Stream
      * @param monitorList config list
      * @param os          output stream
      */
     @Override
-    void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
+    public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
         try {
             Workbook workbook = WorkbookFactory.create(true);
             String sheetName = "Export Monitor";
@@ -317,6 +315,5 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             throw new RuntimeException(e);
         }
     }
-
 
 }
