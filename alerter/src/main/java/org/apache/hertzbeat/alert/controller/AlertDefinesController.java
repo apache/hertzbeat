@@ -65,11 +65,13 @@ public class AlertDefinesController {
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
         Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(ids, search, priority, sort, order, pageIndex, pageSize);
 
+        // https://github.com/spring-projects/spring-data-commons/issues/2987
         return  ResponseEntity.ok(Message.success(
                 new PageImpl<>(
                         alertDefinePage.getContent(),
                         PageRequest.of(pageIndex, pageSize, Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort))),
-                        alertDefinePage.getTotalElements()))
+                        alertDefinePage.getTotalElements())
+                )
         );
     }
 

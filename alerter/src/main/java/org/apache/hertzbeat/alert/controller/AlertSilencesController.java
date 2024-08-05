@@ -31,6 +31,7 @@ import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -88,8 +89,15 @@ public class AlertSilencesController {
         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(specification, pageRequest);
-        Message<Page<AlertSilence>> message = Message.success(alertSilencePage);
-        return ResponseEntity.ok(message);
+
+        // https://github.com/spring-projects/spring-data-commons/issues/2987
+        return ResponseEntity.ok(Message.success(
+                new PageImpl<>(
+                        alertSilencePage.getContent(),
+                        pageRequest,
+                        alertSilencePage.getTotalElements()
+                )
+        ));
     }
 
     @DeleteMapping
