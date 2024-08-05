@@ -20,7 +20,6 @@ package org.apache.hertzbeat.common.queue.impl;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -67,22 +66,22 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
 
     @Override
     public Alert pollAlertsData() throws InterruptedException {
-        return alertDataQueue.poll(2, TimeUnit.SECONDS);
+        return alertDataQueue.take();
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
-        return metricsDataToAlertQueue.poll(2, TimeUnit.SECONDS);
+        return metricsDataToAlertQueue.take();
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        return metricsDataToPersistentStorageQueue.poll(2, TimeUnit.SECONDS);
+        return metricsDataToPersistentStorageQueue.take();
     }
 
     @Override
     public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        return metricsDataToRealTimeStorageQueue.poll(2, TimeUnit.SECONDS);
+        return metricsDataToRealTimeStorageQueue.take();
     }
 
     @Override
