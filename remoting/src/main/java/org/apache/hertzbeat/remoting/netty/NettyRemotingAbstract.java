@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.util.NetworkUtil;
 import org.apache.hertzbeat.remoting.RemotingService;
@@ -77,7 +78,7 @@ public abstract class NettyRemotingAbstract implements RemotingService {
     }
 
     private void doBeforeRequest(ChannelHandlerContext ctx, ClusterMsg.Message request) {
-        if (this.nettyHookList == null || this.nettyHookList.isEmpty()) {
+        if (CollectionUtils.isEmpty(this.nettyHookList)) {
             return;
         }
         for (NettyHook nettyHook : this.nettyHookList) {
