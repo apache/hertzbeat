@@ -17,18 +17,16 @@
 
 package org.apache.hertzbeat.common.util;
 
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
+import lombok.extern.slf4j.Slf4j;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import lombok.extern.slf4j.Slf4j;
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 
 /**
  * AES Decode Encode Util
@@ -130,7 +128,7 @@ public final class AesUtil {
         return content;
     }
     
-    private static byte[] getBytes(final String content, final String decryptKey) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException {
+    private static byte[] getBytes(final String content, final String decryptKey) throws Exception {
         SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
         // cipher based on the algorithm AES
         Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
