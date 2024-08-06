@@ -28,7 +28,7 @@ Feature：
 4. [[collector] support trigger and grading multiple subtasks through -_- placeholder expression #418](https://github.com/apache/hertzbeat/pull/418)
 5.  [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
 6.  [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
-6. [[#406][warehose] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
+7. [[#406][warehose] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
 8. [[#358][manager] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
 9. [[#356][manager] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
 10. [[manager,collector] support docker metrics monitor #438](https://github.com/apache/hertzbeat/pull/438) @TJxiaobao
@@ -75,9 +75,9 @@ Feature：
 2. [[home] add DM db document supplement #411](https://github.com/apache/hertzbeat/pull/411) @TJxiaobao
 3. [[home] support algolia search #416](https://github.com/apache/hertzbeat/pull/416)
 4. [[collector] support trigger and grading multiple subtasks through -_- placeholder expression #418](https://github.com/apache/hertzbeat/pull/418)
-5.  [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
-6.  [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
-6. [[#406][warehose] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
+5. [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
+6. [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
+7. [[#406][warehose] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
 8. [[#358][manager] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
 9. [[#356][manager] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
 10. [[manager,collector] support docker metrics monitor #438](https://github.com/apache/hertzbeat/pull/438) @TJxiaobao

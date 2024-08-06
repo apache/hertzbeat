@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.warehouse.service;
+package org.apache.hertzbeat.warehouse.service.impl;
 
 import java.util.Collections;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
 import org.springframework.stereotype.Service;
 
