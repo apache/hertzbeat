@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile.TYPE;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -33,8 +35,6 @@ import org.yaml.snakeyaml.Yaml;
 @Slf4j
 @Service
 public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
-    public static final String TYPE = "YAML";
-    public static final String FILE_SUFFIX = ".yaml";
 
     /**
      * Export file type
