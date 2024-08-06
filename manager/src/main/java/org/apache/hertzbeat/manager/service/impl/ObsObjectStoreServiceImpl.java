@@ -22,7 +22,6 @@ import com.obs.services.model.ListObjectsRequest;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.manager.pojo.dto.FileDTO;
