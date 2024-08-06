@@ -31,6 +31,7 @@ import java.util.List;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,7 +63,11 @@ public class RedisClusterCollectImplTest {
     void setUp() {
     }
 
-
+    @AfterEach
+    void setDown() {
+        connection.close();
+        client.shutdown();
+    }
 
     @Test
     void testCollect(){

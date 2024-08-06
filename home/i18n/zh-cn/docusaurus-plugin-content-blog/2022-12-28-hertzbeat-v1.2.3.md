@@ -28,9 +28,9 @@ Feature：
 2. [[doc] fix up:update the environment of hertzbeat to Java version 11 #473](https://github.com/apache/hertzbeat/pull/473) @BKing2020
 3. [[docs] update kubernetes.md #478](https://github.com/apache/hertzbeat/pull/478) @wangke6666
 4. [[web-app] enable alert define preset true by default #485](https://github.com/apache/hertzbeat/pull/485)
-5.  [[web-app] support friendly tip when add notice receiver #486](https://github.com/apache/hertzbeat/pull/486)
-6.  [[web-app] update dashboard category card ui #487](https://github.com/apache/hertzbeat/pull/487)
-6. [[collector] limit trigger sub task max num #488](https://github.com/apache/hertzbeat/pull/488)
+5. [[web-app] support friendly tip when add notice receiver #486](https://github.com/apache/hertzbeat/pull/486)
+6. [[web-app] update dashboard category card ui #487](https://github.com/apache/hertzbeat/pull/487)
+7. [[collector] limit trigger sub task max num #488](https://github.com/apache/hertzbeat/pull/488)
 8. [[script] support service restart shell #489](https://github.com/apache/hertzbeat/pull/489) @zanglikun
 9. [[docs] use rainbond deploy hertzbeat #495](https://github.com/apache/hertzbeat/pull/495) @zzzhangqi
 10. [[webapp] upgrade web base angular version to 14 #501](https://github.com/apache/hertzbeat/pull/501)
@@ -74,9 +74,9 @@ Feature：
 2. [[doc] fix up:update the environment of hertzbeat to Java version 11 #473](https://github.com/apache/hertzbeat/pull/473) @BKing2020
 3. [[docs] update kubernetes.md #478](https://github.com/apache/hertzbeat/pull/478) @wangke6666
 4. [[web-app] enable alert define preset true by default #485](https://github.com/apache/hertzbeat/pull/485)
-5.  [[web-app] support friendly tip when add notice receiver #486](https://github.com/apache/hertzbeat/pull/486)
-6.  [[web-app] update dashboard category card ui #487](https://github.com/apache/hertzbeat/pull/487)
-6. [[collector] limit trigger sub task max num #488](https://github.com/apache/hertzbeat/pull/488)
+5. [[web-app] support friendly tip when add notice receiver #486](https://github.com/apache/hertzbeat/pull/486)
+6. [[web-app] update dashboard category card ui #487](https://github.com/apache/hertzbeat/pull/487)
+7. [[collector] limit trigger sub task max num #488](https://github.com/apache/hertzbeat/pull/488)
 8. [[script] support service restart shell #489](https://github.com/apache/hertzbeat/pull/489) @zanglikun
 9. [[docs] use rainbond deploy hertzbeat #495](https://github.com/apache/hertzbeat/pull/495) @zzzhangqi
 10. [[webapp] upgrade web base angular version to 14 #501](https://github.com/apache/hertzbeat/pull/501)
