@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -50,8 +52,6 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 @Service
 public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
-    public static final String TYPE = "EXCEL";
-    public static final String FILE_SUFFIX = ".xlsx";
 
     /**
      * Export file type
