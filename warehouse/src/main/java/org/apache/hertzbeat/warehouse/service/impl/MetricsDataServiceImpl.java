@@ -37,7 +37,7 @@ import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.stereotype.Service;
 
 /**
- *
+ * Metrics Data Service impl
  */
 @Service
 public class MetricsDataServiceImpl implements MetricsDataService {
