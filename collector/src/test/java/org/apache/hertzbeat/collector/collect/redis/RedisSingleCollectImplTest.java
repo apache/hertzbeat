@@ -29,6 +29,7 @@ import java.util.List;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,6 +69,12 @@ class RedisSingleCollectImplTest {
                 .port("26379")
                 .pattern("1")
                 .build();
+    }
+   
+    @AfterEach
+    void setDown() {
+        connection.close();
+        client.shutdown();
     }
 
     @Test
@@ -150,5 +157,6 @@ class RedisSingleCollectImplTest {
             assertEquals(row.getColumns(1), version);
         }
         clientMockedStatic.close();
+        client.shutdown();
     }
 }
