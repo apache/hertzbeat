@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,8 +50,6 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Service
 public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImExportServiceImpl {
-    public static final String TYPE = "EXCEL";
-    public static final String FILE_SUFFIX = ".xlsx";
 
     /**
      * Export file type
