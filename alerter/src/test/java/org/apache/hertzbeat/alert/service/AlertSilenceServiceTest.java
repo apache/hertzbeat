@@ -17,18 +17,6 @@
 
 package org.apache.hertzbeat.alert.service;
 
-import java.util.Optional;
-import java.util.Set;
-
-import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
-import org.apache.hertzbeat.alert.service.impl.AlertSilenceServiceImpl;
-import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -37,6 +25,19 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
+import java.util.Set;
+import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
+import org.apache.hertzbeat.alert.service.impl.AlertSilenceServiceImpl;
+import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 
 /**
  * test case for {@link AlertSilenceServiceImpl}
@@ -104,6 +105,15 @@ class AlertSilenceServiceTest {
 		AlertSilence result = alertSilenceService.getAlertSilence(1L);
 		assertNotNull(result);
 		verify(alertSilenceDao, times(1)).findById(1L);
+	}
+
+	@Test
+	void testGetAlertSilences() {
+		when(alertSilenceDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
+		assertDoesNotThrow(() -> alertSilenceService.getAlertSilences(null, null, "id", "desc", 1, 10));
+		verify(alertSilenceDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+
+		assertNotNull(alertSilenceService.getAlertSilences(null, null, "id", "desc", 1, 10));
 	}
 
 	@Test

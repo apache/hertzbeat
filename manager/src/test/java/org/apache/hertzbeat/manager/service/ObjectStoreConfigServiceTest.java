@@ -15,31 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.dispatch;
+package org.apache.hertzbeat.manager.service;
 
-import java.util.concurrent.PriorityBlockingQueue;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
+import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
 
 /**
- * queue of jobs to run
+ * test case for {@link ObjectStoreConfigServiceImpl}
  */
-@Component
-@Slf4j
-public class MetricsCollectorQueue {
 
-    private final PriorityBlockingQueue<MetricsCollect> jobQueue;
-
-    public MetricsCollectorQueue() {
-        jobQueue = new PriorityBlockingQueue<>();
-    }
-
-    public void addJob(MetricsCollect job) {
-        jobQueue.offer(job);
-    }
-
-    public MetricsCollect getJob() throws InterruptedException {
-        return jobQueue.take();
-    }
-
+class ObjectStoreConfigServiceTest {
 }

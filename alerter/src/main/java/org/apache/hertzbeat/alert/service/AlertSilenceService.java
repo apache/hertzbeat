@@ -17,11 +17,10 @@
 
 package org.apache.hertzbeat.alert.service;
 
+import java.util.List;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * management interface service for alert silence
@@ -67,9 +66,13 @@ public interface AlertSilenceService {
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
-     * @param pageRequest   Paging parameters
+     * @param silenceIds    Alarm Silence ID
+     * @param search        Search Name
+     * @param sort          Sort field
+     * @param order         Sort mode: asc: ascending, desc: descending
+     * @param pageIndex     List current page
+     * @param pageSize      Number of list pages
      * @return The query results
      */
-    Page<AlertSilence> getAlertSilences(Specification<AlertSilence> specification, PageRequest pageRequest);
+    Page<AlertSilence> getAlertSilences(List<Long> silenceIds, String search, String sort, String order, int pageIndex, int pageSize);
 }
