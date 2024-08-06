@@ -24,5 +24,4 @@ import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
  */
 
 class ObjectStoreConfigServiceTest {
-
 }
