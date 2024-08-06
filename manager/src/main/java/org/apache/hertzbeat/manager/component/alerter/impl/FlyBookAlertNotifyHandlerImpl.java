@@ -85,7 +85,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                             atContent.setUserId(userID);
                             return atContent;
                         })
-                        .collect(Collectors.toList());
+                        .toList();
                 contentList.addAll(atContents);
             }
 

@@ -128,7 +128,7 @@ class MonitorsControllerTest {
         String type = "JSON";
 
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/monitors/export")
-                        .param("ids", String.join(",", ids.stream().map(String::valueOf).collect(Collectors.toList())))
+                        .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
                         .param("type", type))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -137,7 +137,7 @@ class MonitorsControllerTest {
     @Test
     void export2() throws Exception {
         // Mock the behavior of monitorService.importConfig
-        doNothing().when(monitorService).importConfig((MultipartFile) Mockito.any());
+        doNothing().when(monitorService).importConfig(Mockito.any());
 
         // Perform the request and verify the response
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitors/import")

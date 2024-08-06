@@ -86,7 +86,7 @@ public class ObsObjectStoreServiceImpl implements ObjectStoreService {
         return obsClient.listObjects(request).getObjects()
                 .stream()
                 .map(it -> new FileDTO(it.getObjectKey(), it.getObjectContent()))
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
     }
 
     @Override

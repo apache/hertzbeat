@@ -47,6 +47,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -83,10 +84,10 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
     private static final Runnable INSTANCE_EXCEPTION_PRINT = () -> {
 	if (log.isErrorEnabled()) {
 	    log.error("""
-	    	\t---------------GreptimeDB Init Failed---------------
-	    	\t--------------Please Config GreptimeDB--------------
-	    	t-----------Can Not Use Metric History Now-----------
-	    	""");
+						\t---------------GreptimeDB Init Failed---------------
+						\t--------------Please Config GreptimeDB--------------
+						t-----------Can Not Use Metric History Now-----------
+						""");
 	}
     };
 
@@ -110,7 +111,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 	final String dbName = ObjectUtils.requireNonEmpty(properties[2].value);
 
 	String ttl = greptimeProperties.expireTime();
-	if (ttl == null || "".equals(ttl.trim())) {
+	if (ttl == null || StringUtils.isBlank(ttl.trim())) {
 	    ttl = CONSTANT_DB_TTL;
 	}
 
@@ -285,7 +286,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 		    continue;
 		}
 		String instanceValue = resultSet.getString(2);
-		if (instanceValue == null || "".equals(instanceValue)) {
+		if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
 		    instanceValue = "";
 		}
 		double value = resultSet.getDouble(3);
@@ -299,12 +300,12 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 	    String msg = sqlException.getMessage();
 	    if (msg != null && !msg.contains(TABLE_NOT_EXIST)) {
 		if (log.isWarnEnabled()) {
-		    log.warn("[warehouse greptime] failed to getHistoryMetricData: " + sqlException.getMessage());
+            log.warn("[warehouse greptime] failed to getHistoryMetricData: {}", sqlException.getMessage());
 		}
 	    }
 	} catch (Exception e) {
 	    if (log.isErrorEnabled()) {
-		log.error("[warehouse greptime] failed to getHistoryMetricData:" + e.getMessage(), e);
+            log.error("[warehouse greptime] failed to getHistoryMetricData:{}", e.getMessage(), e);
 	    }
 	}
 	return instanceValuesMap;
@@ -323,7 +324,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 	}
 	String table = getTableName(app, metrics);
 	List<String> instances = new LinkedList<>();
-	if (label != null && !"".equals(label)) {
+	if (label != null && !StringUtils.isBlank(label)) {
 	    instances.add(label);
 	}
 	if (instances.isEmpty()) {
@@ -337,7 +338,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 		    ResultSet resultSet = statement.executeQuery(selectSql)) {
 		while (resultSet.next()) {
 		    String instanceValue = resultSet.getString(1);
-		    if (instanceValue == null || "".equals(instanceValue)) {
+		    if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
 			instances.add("''");
 		    } else {
 			instances.add(instanceValue);
@@ -345,7 +346,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 		}
 	    } catch (Exception e) {
 		if (log.isErrorEnabled()) {
-		    log.error("[warehouse greptime] failed to query instances" + e.getMessage(), e);
+            log.error("[warehouse greptime] failed to query instances{}", e.getMessage(), e);
 		}
 	    }
 	}
@@ -388,7 +389,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 		resultSet.close();
 	    } catch (Exception e) {
 		if (log.isErrorEnabled()) {
-		    log.error("[warehouse greptime] failed to getHistoryIntervalMetricData: " + e.getMessage(), e);
+            log.error("[warehouse greptime] failed to getHistoryIntervalMetricData: {}", e.getMessage(), e);
 		}
 	    }
 	}

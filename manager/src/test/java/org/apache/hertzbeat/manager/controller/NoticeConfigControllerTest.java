@@ -99,13 +99,14 @@ class NoticeConfigControllerTest {
         NoticeTemplate template = new NoticeTemplate();
         template.setId(5L);
         template.setName("Dingding");
-        template.setContent("[${title}]\n"
-                + "${targetLabel} : ${target}\n"
-                + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
-                + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
-                + "${priorityLabel} : ${priority}\n"
-                + "${triggerTimeLabel} : ${triggerTime}\n"
-                + "${contentLabel} : ${content}");
+        template.setContent("""
+                [${title}]
+                ${targetLabel} : ${target}
+                <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+                <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+                ${priorityLabel} : ${priority}
+                ${triggerTimeLabel} : ${triggerTime}
+                ${contentLabel} : ${content}""");
         template.setType((byte) 5);
 
         return template;
