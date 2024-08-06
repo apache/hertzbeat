@@ -24,7 +24,7 @@ Feature：
 3. [[manager]支持监控参数的英文国际化，国际化更近一步 #184](https://github.com/apache/hertzbeat/pull/184).
 4. [[script]支持了amd64和arm64版本的docker 镜像 #189](https://github.com/apache/hertzbeat/pull/189).
 5. [[monitor]feature: 支持采集oracle多表空间指标数据 #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
-7. [[monitor]数据库表统一添加前缀 hzb_ #193](https://github.com/apache/hertzbeat/pull/193) issue from @shimingxy
+6. [[monitor]数据库表统一添加前缀 hzb_ #193](https://github.com/apache/hertzbeat/pull/193) issue from @shimingxy
 
 Bugfix.
 
