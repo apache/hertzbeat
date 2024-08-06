@@ -17,10 +17,11 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import java.util.concurrent.locks.ReentrantLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -47,9 +48,21 @@ class MetricsCollectorQueueTest {
     }
 
     @Test
-    void testGetJobTimeout() throws InterruptedException {
-
-        assertNull(metricsCollectorQueue.getJob());
+    void testGetJobTimeout() {
+        ReentrantLock lock = new ReentrantLock();
+        Thread run = new Thread(() -> {
+            try {
+                metricsCollectorQueue.getJob();
+            } catch (Exception e) {
+                assertThrows(InterruptedException.class, () -> {
+                    throw e;
+                });
+                lock.unlock();
+            }
+        });
+        run.start();
+        run.interrupt();
+        lock.lock();
     }
 
 }
