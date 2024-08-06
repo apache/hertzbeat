@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.alert.reduce;
 
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
