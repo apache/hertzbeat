@@ -366,17 +366,14 @@ export class BulletinComponent implements OnInit {
   }
 
   updateTabDefines(rawData: any[]) {
-    const groupedData: any = {};
+    let groupedData: any = {};
     rawData.forEach(item => {
-      const name = item.name;
-      if (!groupedData[name]) {
-        groupedData[name] = {
-          id: item.id,
-          bulletinColumn: {},
-          data: []
-        };
-      }
-
+      groupedData = {
+        id: item.id,
+        name: item.name,
+        bulletinColumn: {},
+        data: []
+      };
       let transformedItem: any = {
         app: item.app,
         monitorId: item.content.monitorId,
@@ -384,8 +381,8 @@ export class BulletinComponent implements OnInit {
       };
 
       item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
-        if (!groupedData[name].bulletinColumn[metric.name]) {
-          groupedData[name].bulletinColumn[metric.name] = new Set<string>();
+        if (!groupedData.bulletinColumn[metric.name]) {
+          groupedData.bulletinColumn[metric.name] = new Set<string>();
         }
         metric.fields.forEach((field: any[]) => {
           field.forEach((fieldItem: any) => {
@@ -398,25 +395,27 @@ export class BulletinComponent implements OnInit {
             }
             transformedItem[key].push(`${value}$$$${unit}`);
 
-            groupedData[name].bulletinColumn[metric.name].add(key);
+            groupedData.bulletinColumn[metric.name].add(key);
           });
         });
       });
-      groupedData[name].data.push(transformedItem);
+      groupedData.data.push(transformedItem);
     });
 
-    this.tabDefines = Object.keys(groupedData).map(name => ({
-      name,
-      id: groupedData[name].id,
-      bulletinColumn: groupedData[name].bulletinColumn,
-      data: groupedData[name].data
-    }));
-    // this.tabDefines = groupedData;
-    console.info(this.tabDefines);
+    // this.tabDefines = Object.keys(groupedData).map(name => ({
+    //   name,
+    //   id: groupedData.id,
+    //   bulletinColumn: groupedData.bulletinColumn,
+    //   data: groupedData.data
+    // }));
+    this.tabDefines = groupedData;
+    console.info('!!!!!!!!!!!!', groupedData);
+    console.info('!!!!!!!!!!!!', this.getMetricNames(groupedData));
+
   }
 
-  getMetricNames(bulletinTab: any): string[] {
-    return Object.keys(bulletinTab.bulletinColumn);
+  getMetricNames(tab: any): string[] {
+    return Object.keys(tab.bulletinColumn);
   }
 
   getMaxRowSpan(data: { [x: string]: string | any[] }, bulletinTab: { bulletinColumn: { [x: string]: any } }) {

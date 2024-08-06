@@ -54,7 +54,7 @@
       [nzLoading]="tableLoading"
       nzShowSizeChanger
       [nzShowTotal]="rangeTemplate"
-      [nzPageSizeOptions]="[8, 15, 25]"
+      [nzPageSizeOptions]="[10, 20, 50]"
       (nzQueryParams)="onTablePageChange($event)"
       nzShowPagination="true"
       [nzScroll]="{ x: 'auto' }"
@@ -86,7 +86,7 @@
                 <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, tabDefines)">{{ data.host }}</td>
               </ng-container>
               <ng-container *ngFor="let metricName of getMetricNames(tabDefines)">
-                <ng-container *ngFor="let field of tabDefines[tab].bulletinColumn[metricName]">
+                <ng-container *ngFor="let field of tabDefines.bulletinColumn[metricName]">
                   <td *ngIf="data[field] !== null">
                     {{ data[field][rowIndex].split('$$$')[0] }}
                     <nz-tag *ngIf="data[field][rowIndex] == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
