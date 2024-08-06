@@ -50,7 +50,7 @@ Bug fix.
 3. [[monitor]bugfix: fix only one filter label can be set when notification #140](https://github.com/apache/hertzbeat/pull/140).  issue by @daqianxiaoyao
 4. [[td-engine store]bugfix: fix log #150](https://github.com/apache/hertzbeat/pull/150). contribute by @ChineseTony
 5. [[collector]bugfix: fix warehouse data queue consume error #153](https://github.com/apache/hertzbeat/pull/153).  issue by @daqianxiaoyao
-7. [[web-app]bugfix:fix input blocking when input error in dark theme #157](https://github.com/apache/hertzbeat/pull/157). issue by @ConradWen
+6. [[web-app]bugfix:fix input blocking when input error in dark theme #157](https://github.com/apache/hertzbeat/pull/157). issue by @ConradWen
 
 **Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.0-beta.8...v1.0
 
@@ -65,7 +65,7 @@ Redis monitor is coming：
 <img width="959" alt="2022-05-29 20 24 21" src="https://user-images.githubusercontent.com/24788200/170868094-3c4de70f-934a-4a13-ae1a-0744c30f14f3.png"/>
 
 > [HertzBeat](https://github.com/apache/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project with a user-friendly visual interface that supports monitoring types such as websites, APIs, PING, ports, databases, operating systems, and more.
-> Of course, we also provide a corresponding [SAAS cloud monitoring version](https://console.tancloud.cn), so small and medium-sized teams and individuals no longer need to deploy a cumbersome monitoring system to monitor their website resources; you can [log in](https://console.tancloud.cn) to start monitoring for free.
+> Of course, we also provide a corresponding [SaaS cloud monitoring version](https://console.tancloud.cn), so small and medium-sized teams and individuals no longer need to deploy a cumbersome monitoring system to monitor their website resources; you can [log in](https://console.tancloud.cn) to start monitoring for free.
 
 > HertzBeat supports custom monitoring; by configuring the YML file, we can customize the required monitoring types and metrics to meet common personalized needs.
 > HertzBeat is modular, with manager, collector, scheduler, warehouse, alerter modules decoupled, making it easy to understand and customize for development.
