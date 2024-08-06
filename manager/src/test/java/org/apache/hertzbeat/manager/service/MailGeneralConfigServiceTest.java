@@ -17,11 +17,53 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
+import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.apache.hertzbeat.manager.service.impl.MailGeneralConfigServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 /**
  * test case for {@link MailGeneralConfigServiceImpl}
  */
 
+@ExtendWith(MockitoExtension.class)
 class MailGeneralConfigServiceTest {
+
+	@Mock
+	private GeneralConfigDao generalConfigDao;
+
+	@Mock
+	private ObjectMapper objectMapper;
+
+	private MailGeneralConfigServiceImpl mailGeneralConfigService;
+
+	@BeforeEach
+	void setUp() {
+
+		mailGeneralConfigService = new MailGeneralConfigServiceImpl(generalConfigDao, objectMapper);
+	}
+
+	@Test
+	void testType() {
+
+		assertEquals("email", mailGeneralConfigService.type());
+	}
+
+	@Test
+	void testGetTypeReference() {
+
+		TypeReference<EmailNoticeSender> typeReference = mailGeneralConfigService.getTypeReference();
+
+		assertEquals(EmailNoticeSender.class, typeReference.getType());
+	}
+
 }
