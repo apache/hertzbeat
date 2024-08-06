@@ -27,20 +27,11 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.dto.Field;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.entity.dto.MetricsData;
-import org.apache.hertzbeat.common.entity.dto.Value;
-import org.apache.hertzbeat.common.entity.dto.ValueRow;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
@@ -61,7 +52,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -97,6 +87,15 @@ public class BulletinController {
         }else {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed"));
         }
+    }
+
+    /**
+     * get All Names
+     */
+    @GetMapping("/names")
+    public ResponseEntity<Message<List<String>>> getAllNames() {
+        List<String> names = bulletinService.getAllNames();
+        return ResponseEntity.ok(Message.success(names));
     }
 
 
@@ -162,6 +161,7 @@ public class BulletinController {
     @GetMapping("/metrics")
     @Operation(summary = "Query All Bulletin Real Time Metrics Data", description = "Query All Bulletin real-time metrics data of monitoring indicators")
     public ResponseEntity<Message<Page<BulletinMetricsData>>> getAllMetricsData(
+            @RequestParam(name = "name") String name,
             @RequestParam(defaultValue = "0", name = "pageIndex") int pageIndex,
             @RequestParam(defaultValue = "10", name = "pageSize") int pageSize) {
         if (!realTimeDataReader.isServerAvailable()) {
@@ -169,7 +169,7 @@ public class BulletinController {
         }
 
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<Bulletin> bulletinPage = bulletinService.listBulletin(pageable);
+        Page<Bulletin> bulletinPage = bulletinService.getBulletinsByName(name, pageable);
         List<BulletinMetricsData> dataList = bulletinPage.stream()
                 .map(this::buildBulletinMetricsData)
                 .toList();

@@ -23,6 +23,8 @@ package org.apache.hertzbeat.manager.dao;
 
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -31,5 +33,15 @@ public interface BulletinDao extends JpaRepository<Bulletin, Long>, JpaSpecifica
      * Delete Bulletin by name
      */
     void deleteByNameIn(List<String> names);
+
+    /**
+     * Get Bulletin by name
+     */
+    List<Bulletin> findByName(String name);
+
+    /**
+     * Get Bulletin by name
+     */
+    Page<Bulletin> findByName(String name, Pageable pageable);
 
 }

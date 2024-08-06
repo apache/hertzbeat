@@ -49,9 +49,11 @@ export class BulletinComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
   search!: string;
-  tabDefines!: any[];
+  tabs: string[] = [];
+  tabDefines!: any;
   tableLoading: boolean = true;
-  bulletinNames: string[] = [];
+  bulletinName!: string;
+  deleteBulletinNames: string[] = [];
   isAppListLoading = false;
   isMonitorListLoading = false;
   treeNodes!: NzTreeNodeOptions[];
@@ -64,7 +66,11 @@ export class BulletinComponent implements OnInit {
   pageSize: number = 8;
   total: number = 0;
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
+    await this.getAllNames();
+    if (this.tabs != null && this.tabs.length > 0) {
+      this.bulletinName = this.tabs[0];
+    }
     this.loadData(this.pageIndex - 1, this.pageSize);
   }
 
@@ -336,25 +342,27 @@ export class BulletinComponent implements OnInit {
     });
   }
 
-  loadData(page: number = 0, size: number = 10) {
+  loadData(page: number = 0, size: number = 8) {
     this.tableLoading = true;
-    const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(page, size).subscribe(
-      message => {
-        metricData$.unsubscribe();
-        if (message.code === 0 && message.data) {
-          this.total = message.data.totalElements;
-          this.updateTabDefines(message.data.content);
-        } else if (message.code !== 0) {
-          this.notifySvc.warning(`${message.msg}`, '');
-          console.info(`${message.msg}`);
+    if (this.bulletinName != null) {
+      const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(this.bulletinName, page, size).subscribe(
+        message => {
+          metricData$.unsubscribe();
+          if (message.code === 0 && message.data) {
+            this.total = message.data.totalElements;
+            this.updateTabDefines(message.data.content);
+          } else if (message.code !== 0) {
+            this.notifySvc.warning(`${message.msg}`, '');
+            console.info(`${message.msg}`);
+          }
+        },
+        error => {
+          console.error(error.msg);
+          metricData$.unsubscribe();
         }
-      },
-      error => {
-        console.error(error.msg);
-        metricData$.unsubscribe();
-      }
-    );
-    this.tableLoading = false;
+      );
+      this.tableLoading = false;
+    }
   }
 
   updateTabDefines(rawData: any[]) {
@@ -403,6 +411,8 @@ export class BulletinComponent implements OnInit {
       bulletinColumn: groupedData[name].bulletinColumn,
       data: groupedData[name].data
     }));
+    // this.tabDefines = groupedData;
+    console.info(this.tabDefines);
   }
 
   getMetricNames(bulletinTab: any): string[] {
@@ -425,7 +435,6 @@ export class BulletinComponent implements OnInit {
     const { pageSize, pageIndex } = params;
 
     // 只有当页码或每页条数变化时才获取数据
-    console.log(pageIndex, pageSize, this.pageIndex, this.pageSize)
     if (pageIndex !== this.pageIndex || pageSize !== this.pageSize) {
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
@@ -449,10 +458,33 @@ export class BulletinComponent implements OnInit {
   }
 
   onDeleteModalOk() {
-    this.deleteBulletinDefines(this.bulletinNames);
+    this.deleteBulletinDefines(this.deleteBulletinNames);
     this.isDeleteModalOkLoading = false;
     this.isDeleteModalVisible = false;
   }
+
+  getAllNames(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const allNames$ = this.bulletinDefineSvc.getAllNames().subscribe(
+        message => {
+          allNames$.unsubscribe();
+          if (message.code === 0) {
+            this.tabs = message.data;
+            resolve();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), message.msg);
+            reject(message.msg);
+          }
+        },
+        error => {
+          allNames$.unsubscribe();
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), error.msg);
+          reject(error.msg);
+        }
+      );
+    });
+  }
+
 
   protected readonly Array = Array;
 }

@@ -74,7 +74,7 @@ public class BulletinServiceImpl implements BulletinService {
      * List Bulletin
      */
     @Override
-    public List<Bulletin> listBulletin() {
+    public List<Bulletin> getBulletinsByName() {
         return bulletinDao.findAll();
     }
 
@@ -82,8 +82,16 @@ public class BulletinServiceImpl implements BulletinService {
      * Pageable query Bulletin
      */
     @Override
-    public Page<Bulletin> listBulletin(Pageable pageable) {
-        return bulletinDao.findAll(pageable);
+    public Page<Bulletin> getBulletinsByName(String name, Pageable pageable) {
+        return bulletinDao.findByName(name, pageable);
+    }
+
+    /**
+     * Get all names
+     */
+    @Override
+    public List<String> getAllNames() {
+        return bulletinDao.findAll().stream().map(Bulletin::getName).distinct().collect(Collectors.toList());
     }
 
     /**

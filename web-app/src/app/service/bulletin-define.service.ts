@@ -17,13 +17,14 @@
  * under the License.
  */
 
-import {Injectable} from "@angular/core";
-import {HttpClient, HttpParams} from "@angular/common/http";
-import {Observable} from "rxjs";
-import {Message} from "../pojo/Message";
-import {BulletinDefine} from "../pojo/BulletinDefine";
-import {Page} from "../pojo/Page";
-import {Monitor} from "../pojo/Monitor";
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { BulletinDefine } from '../pojo/BulletinDefine';
+import { Message } from '../pojo/Message';
+import { Monitor } from '../pojo/Monitor';
+import { Page } from '../pojo/Page';
 
 const bulletin_define_uri = '/bulletin';
 
@@ -31,7 +32,6 @@ const bulletin_define_uri = '/bulletin';
   providedIn: 'root'
 })
 export class BulletinDefineService {
-
   constructor(private http: HttpClient) {}
 
   public newBulletinDefine(body: BulletinDefine) {
@@ -51,6 +51,7 @@ export class BulletinDefineService {
     return this.http.delete<Message<any>>(bulletin_define_uri, { params });
   }
   public getMonitorMetricsData(
+    name: string,
     pageIndex: number,
     pageSize: number,
     sortField?: string | null,
@@ -61,6 +62,7 @@ export class BulletinDefineService {
     // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
+      name: name,
       pageIndex: pageIndex,
       pageSize: pageSize
     });
@@ -74,6 +76,7 @@ export class BulletinDefineService {
     return this.http.get<Message<any>>(`${bulletin_define_uri}/metrics`, options);
   }
 
-
-
+  public getAllNames(): Observable<Message<string[]>> {
+    return this.http.get<Message<string[]>>(`${bulletin_define_uri}/names`);
+  }
 }

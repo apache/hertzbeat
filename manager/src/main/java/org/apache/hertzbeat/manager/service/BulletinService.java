@@ -40,16 +40,21 @@ public interface BulletinService {
     /**
      * List Bulletin
      */
-    List<Bulletin> listBulletin();
+    List<Bulletin> getBulletinsByName();
 
     /**
      * Pageable query Bulletin
      */
-    Page<Bulletin> listBulletin(Pageable pageable);
+    Page<Bulletin> getBulletinsByName(String name, Pageable pageable);
     /**
      * Get Bulletin by id
      */
     Optional<Bulletin> getBulletinById(Long id);
+
+    /**
+     * Get all names
+     */
+    List<String> getAllNames();
 
     /**
      * delete Bulletin by id
