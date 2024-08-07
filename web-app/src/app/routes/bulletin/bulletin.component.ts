@@ -80,7 +80,7 @@ export class BulletinComponent implements OnInit {
 
   onNewBulletinDefine() {
     this.define = new BulletinDefine();
-    this.define.metrics = [];
+    this.define.metrics = new Set<string>();
     this.define.monitorIds = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
@@ -128,6 +128,7 @@ export class BulletinComponent implements OnInit {
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     if (this.isManageModalAdd) {
+      console.info('newBulletinDefine:', this.define);
       const modalOk$ = this.bulletinDefineSvc
         .newBulletinDefine(this.define)
         .pipe(
@@ -255,11 +256,12 @@ export class BulletinComponent implements OnInit {
 
     const traverse = (nodes: any[], parentKey: string | null = null, parentId: number | null = null) => {
       nodes.forEach(node => {
-        const key = parentKey ? `${parentKey}$$$${node.value}` : node.value;
+        const key = parentKey ? `${parentKey}` : node.value;
         const isRootNode = parentId === null;
         const item: NzTreeNodeOptions = {
           id: currentId++,
           key,
+          value: node.value,
           title: node.label,
           isLeaf: node.isLeaf,
           parentId,
@@ -283,23 +285,23 @@ export class BulletinComponent implements OnInit {
 
   private generateTree(arr: NzTreeNodeOptions[]): NzTreeNodeOptions[] {
     const tree: NzTreeNodeOptions[] = [];
-    const mappedArr: any = {};
-    let arrElem: NzTreeNodeOptions;
-    let mappedElem: NzTreeNodeOptions;
+    const treeNodes: any = {};
+    let leftElem: NzTreeNodeOptions;
+    let rightElem: NzTreeNodeOptions;
 
     for (let i = 0, len = arr.length; i < len; i++) {
-      arrElem = arr[i];
-      mappedArr[arrElem.id] = { ...arrElem };
-      mappedArr[arrElem.id].children = [];
+      leftElem = arr[i];
+      treeNodes[leftElem.id] = { ...leftElem };
+      treeNodes[leftElem.id].children = [];
     }
 
-    for (const id in mappedArr) {
-      if (mappedArr.hasOwnProperty(id)) {
-        mappedElem = mappedArr[id];
-        if (mappedElem.parentId) {
-          mappedArr[mappedElem.parentId].children.push(mappedElem);
+    for (const id in treeNodes) {
+      if (treeNodes.hasOwnProperty(id)) {
+        rightElem = treeNodes[id];
+        if (rightElem.parentId) {
+          treeNodes[rightElem.parentId].children.push(rightElem);
         } else {
-          tree.push(mappedElem);
+          tree.push(rightElem);
         }
       }
     }
@@ -308,13 +310,6 @@ export class BulletinComponent implements OnInit {
 
   treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     this.checkBoxChange(event.node!, onItemSelect);
-  }
-  toggleSelectAll() {
-    if (this.define.monitorIds.length === this.monitors.length) {
-      this.define.monitorIds = [];
-    } else {
-      this.define.monitorIds = this.monitors.map(monitor => monitor.id);
-    }
   }
   checkBoxChange(node: NzTreeNode, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     if (node.isDisabled) {
@@ -334,13 +329,24 @@ export class BulletinComponent implements OnInit {
   }
 
   transferChange(ret: TransferChange): void {
-    const isDisabled = ret.to === 'right';
-    this.checkedNodeList.forEach(node => {
-      node.isDisabled = isDisabled;
-      node.isChecked = isDisabled;
-      this.define.metrics.push(node.key);
-    });
+    // add
+    if (ret.to === 'right') {
+      this.checkedNodeList.forEach(node => {
+        node.isDisabled = true;
+        node.isChecked = true;
+        this.define.metrics.add(node.key);
+      });
+    }
+    // delete
+    else if (ret.to === 'left') {
+      this.checkedNodeList.forEach(node => {
+        node.isDisabled = false;
+        node.isChecked = false;
+        this.define.metrics.delete(node.key);
+      });
+    }
   }
+
 
   loadData(page: number = 0, size: number = 8) {
     this.tableLoading = true;
@@ -366,14 +372,17 @@ export class BulletinComponent implements OnInit {
   }
 
   updateTabDefines(rawData: any[]) {
-    let groupedData: any = {};
+    const groupedData: any = {};
     rawData.forEach(item => {
-      groupedData = {
-        id: item.id,
-        name: item.name,
-        bulletinColumn: {},
-        data: []
-      };
+      const name = item.name;
+      if (!groupedData[name]) {
+        groupedData[name] = {
+          id: item.id,
+          column: {},
+          data: []
+        };
+      }
+
       let transformedItem: any = {
         app: item.app,
         monitorId: item.content.monitorId,
@@ -381,8 +390,8 @@ export class BulletinComponent implements OnInit {
       };
 
       item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
-        if (!groupedData.bulletinColumn[metric.name]) {
-          groupedData.bulletinColumn[metric.name] = new Set<string>();
+        if (!groupedData[name].column[metric.name]) {
+          groupedData[name].column[metric.name] = new Set<string>();
         }
         metric.fields.forEach((field: any[]) => {
           field.forEach((fieldItem: any) => {
@@ -395,23 +404,20 @@ export class BulletinComponent implements OnInit {
             }
             transformedItem[key].push(`${value}$$$${unit}`);
 
-            groupedData.bulletinColumn[metric.name].add(key);
+            groupedData[name].column[metric.name].add(key);
           });
         });
       });
-      groupedData.data.push(transformedItem);
+      groupedData[name].data.push(transformedItem);
     });
 
-    // this.tabDefines = Object.keys(groupedData).map(name => ({
-    //   name,
-    //   id: groupedData.id,
-    //   bulletinColumn: groupedData.bulletinColumn,
-    //   data: groupedData.data
-    // }));
-    this.tabDefines = groupedData;
-    console.info('!!!!!!!!!!!!', groupedData);
-    console.info('!!!!!!!!!!!!', this.getMetricNames(groupedData));
-
+    this.tabDefines = Object.keys(groupedData).map(name => ({
+      name,
+      id: groupedData[name].id,
+      column: groupedData[name].column,
+      data: groupedData[name].data
+    }));
+    console.info('tabDefines:', this.tabDefines);
   }
 
   getMetricNames(tab: any): string[] {
@@ -483,7 +489,6 @@ export class BulletinComponent implements OnInit {
       );
     });
   }
-
 
   protected readonly Array = Array;
 }

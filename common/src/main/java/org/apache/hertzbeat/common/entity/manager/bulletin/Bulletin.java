@@ -34,6 +34,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.manager.JsonLongListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.JsonStringListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
@@ -63,17 +64,22 @@ public class Bulletin {
     @Schema(description = "Bulletin Name", example = "Bulletin1", accessMode = READ_WRITE)
     private String name;
 
-    @Schema(description = "Monitor ID", example = "1")
-    @Column(name = "monitor_id")
-    private Long monitorId;
+    @Schema(description = "Monitor IDs", example = "1")
+    @Column(name = "monitor_ids")
+    @Convert(converter = JsonLongListAttributeConverter.class)
+    private List<Long> monitorIds;
 
     @Schema(description = "Monitor Type eg: jvm, tomcat", example = "jvm", accessMode = READ_WRITE)
     private String app;
 
-    @Schema(description = "Monitor Metrics", example = "[\"cpu\", \"memory\"]")
-    @Convert(converter = JsonStringListAttributeConverter.class)
+    @Schema(description = "Monitor Metrics", example = "cpu, memory")
     @Column(length = 4096)
+    @Convert(converter = JsonStringListAttributeConverter.class)
     private List<String> metrics;
+
+    @Schema(description = "Monitor Fields")
+    @Column(length = 4096, columnDefinition = "json")
+    private String fields;
 
     @Schema(description = "Tags(status:success,env:prod)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
@@ -81,19 +87,19 @@ public class Bulletin {
     @Column(length = 2048)
     private List<TagItem> tags;
 
-    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The creator of this record", example = "tom", accessMode = READ_WRITE)
     @CreatedBy
     private String creator;
 
-    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_ONLY)
+    @Schema(title = "The modifier of this record", example = "tom", accessMode = READ_WRITE)
     @LastModifiedBy
     private String modifier;
 
-    @Schema(title = "Record create time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
+    @Schema(title = "Record create time", example = "2024-07-02T20:09:34.903217", accessMode = READ_WRITE)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    @Schema(title = "Record modify time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
+    @Schema(title = "Record modify time", example = "2024-07-02T20:09:34.903217", accessMode = READ_WRITE)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 }

@@ -57,9 +57,14 @@ public interface BulletinService {
     List<String> getAllNames();
 
     /**
+     * Get metrics by name
+     */
+    List<String> getMetricsByName(String name);
+
+    /**
      * delete Bulletin by id
      */
-    boolean deleteBulletinByName(List<String> names);
+    void deleteBulletinByName(List<String> names);
 
 
     /**
@@ -70,7 +75,7 @@ public interface BulletinService {
     /**
      * Add Bulletin
      */
-    boolean addBulletin(BulletinDto bulletinDto);
+    void addBulletin(BulletinDto bulletinDto);
 
     /**
      * Dynamic conditional query

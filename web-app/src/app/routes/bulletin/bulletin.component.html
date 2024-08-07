@@ -153,17 +153,11 @@
             [(ngModel)]="define.monitorIds"
             (nzOnSearch)="onSearchMonitorsByApp(define.app)"
             nzMode="multiple"
-            [nzDropdownRender]="dropdownRenderTemplate"
           >
             <ng-container *ngFor="let monitor of monitors">
               <nz-option *ngIf="isMonitorListLoading" [nzValue]="monitor.id" [nzLabel]="monitor.name"></nz-option>
             </ng-container>
           </nz-select>
-          <ng-template #dropdownRenderTemplate>
-            <div class="custom-dropdown">
-              <button nz-button (click)="toggleSelectAll()">Toggle Select All</button>
-            </div>
-          </ng-template>
         </nz-form-control>
       </nz-form-item>
 

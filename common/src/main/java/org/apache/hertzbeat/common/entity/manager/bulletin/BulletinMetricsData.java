@@ -37,23 +37,23 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Bulletin Metrics Data")
 public class BulletinMetricsData {
 
-    @Schema(title = "Bulletin ID")
-    private Long id;
-
     @Schema(title = "Bulletin Name")
     private String name;
 
-    @Schema(title = "Monitor Type")
-    private String app;
+    @Schema(title = "Bulletin Column")
+    private String column;
 
     @Schema(description = "Content Data")
-    private Content content;
+    private List<Data> data;
 
-    @Data
+    @lombok.Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class Content{
+    public static class Data {
+        @Schema(title = "Monitor Type")
+        private String app;
+
         @Schema(title = "Monitor ID")
         private Long monitorId;
 
@@ -64,7 +64,7 @@ public class BulletinMetricsData {
         private List<Metric> metrics;
     }
 
-    @Data
+    @lombok.Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
@@ -78,7 +78,7 @@ public class BulletinMetricsData {
         private List<List<Field>> fields;
     }
 
-    @Data
+    @lombok.Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor

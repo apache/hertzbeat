@@ -17,11 +17,10 @@
  * under the License.
  */
 
-
 export class BulletinDefine {
   id!: number;
   name!: string;
   monitorIds!: number[];
   app!: string;
-  metrics!: string[];
+  metrics = new Set<string>();
 }

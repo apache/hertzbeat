@@ -55,7 +55,7 @@ public class BulletinVo {
     /**
      * Bulletin monitor ID
      */
-    private Long monitorId;
+    private List<Long> monitorId;
 
     /**
      * Bulletin monitor name

@@ -28,6 +28,7 @@ import jakarta.validation.Valid;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -82,65 +83,22 @@ public class BulletinController {
      */
     @PostMapping
     public ResponseEntity<Message<Void>> addNewBulletin(@Valid @RequestBody BulletinDto bulletinDto) {
-        if (bulletinService.addBulletin(bulletinDto)) {
-            return ResponseEntity.ok(Message.success("Add success"));
-        }else {
+        try {
+            bulletinService.addBulletin(bulletinDto);
+        } catch (Exception e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed"));
         }
+        return ResponseEntity.ok(Message.success("Add success"));
     }
 
     /**
      * get All Names
      */
+    @Operation(summary = "Get All Bulletin Names", description = "Get All Bulletin Names")
     @GetMapping("/names")
     public ResponseEntity<Message<List<String>>> getAllNames() {
         List<String> names = bulletinService.getAllNames();
         return ResponseEntity.ok(Message.success(names));
-    }
-
-
-    /**
-     * page query bulletin
-     */
-    @GetMapping
-    public ResponseEntity<Message<Page<BulletinVo>>> pageQueryBulletin(
-            @Parameter(description = "Bulletin Definition ID", example = "6565463543") @RequestParam(required = false) List<Long> ids,
-            @Parameter(description = "Search-Target Expr Template", example = "x") @RequestParam(required = false) String search,
-            @Parameter(description = "Sort field, default id", example = "id") @RequestParam(defaultValue = "id") String sort,
-            @Parameter(description = "Sort mode: asc: ascending, desc: descending", example = "desc") @RequestParam(defaultValue = "desc") String order,
-            @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
-            @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize)
-     {
-         Specification<Bulletin> specification = (root, query, criteriaBuilder) -> {
-             List<Predicate> andList = new ArrayList<>();
-             if (ids != null && !ids.isEmpty()) {
-                 CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
-                 for (long id : ids) {
-                     inPredicate.value(id);
-                 }
-                 andList.add(inPredicate);
-             }
-             if (StringUtils.hasText(search)) {
-                 Predicate predicate = criteriaBuilder.or(
-                         criteriaBuilder.like(
-                                 criteriaBuilder.lower(root.get("app")),
-                                 "%" + search.toLowerCase() + "%"
-                         ),
-                         criteriaBuilder.like(
-                                 criteriaBuilder.lower(root.get("metric")),
-                                 "%" + search.toLowerCase() + "%"
-                         )
-                 );
-                 andList.add(predicate);
-             }
-
-             Predicate[] predicates = new Predicate[andList.size()];
-             return criteriaBuilder.and(andList.toArray(predicates));
-         };
-         Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
-         PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-         Page<BulletinVo> bulletinsPage = bulletinService.getBulletins(specification, pageRequest);
-         return ResponseEntity.ok(Message.success(bulletinsPage));
     }
 
     /**
@@ -151,16 +109,17 @@ public class BulletinController {
     public ResponseEntity<Message<Void>> deleteBulletin(
             @Parameter(description = "Bulletin Name", example = "402372614668544")
             @RequestParam List<String> names) {
-        if (bulletinService.deleteBulletinByName(names)) {
-            return ResponseEntity.ok(Message.success("Delete success"));
-        } else {
+        try {
+            bulletinService.deleteBulletinByName(names);
+        }catch (Exception e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Delete failed"));
         }
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
     @GetMapping("/metrics")
     @Operation(summary = "Query All Bulletin Real Time Metrics Data", description = "Query All Bulletin real-time metrics data of monitoring indicators")
-    public ResponseEntity<Message<Page<BulletinMetricsData>>> getAllMetricsData(
+    public ResponseEntity<Message<?>> getAllMetricsData(
             @RequestParam(name = "name") String name,
             @RequestParam(defaultValue = "0", name = "pageIndex") int pageIndex,
             @RequestParam(defaultValue = "10", name = "pageSize") int pageSize) {
@@ -170,45 +129,55 @@ public class BulletinController {
 
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
         Page<Bulletin> bulletinPage = bulletinService.getBulletinsByName(name, pageable);
-        List<BulletinMetricsData> dataList = bulletinPage.stream()
-                .map(this::buildBulletinMetricsData)
-                .toList();
+        Map<String, List<Bulletin>> bulletinMap = bulletinPage.stream().collect(Collectors.groupingBy(Bulletin::getName));
+        System.out.println(bulletinMap);
+        for (Map.Entry<String, List<Bulletin>> entry : bulletinMap.entrySet()) {
+            List<Bulletin> bulletins = entry.getValue();
+//            BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder = BulletinMetricsData.builder()
+//                    .name(entry.getKey())
+//                    .column(bulletin.getMetrics().stream()
+//                            .map(metric -> metric.split("\\$\\$\\$")[0])
+//                            .collect(Collectors.toSet()).toString());
+//
+//        }
+//        List<BulletinMetricsData> dataList = bulletinPage.stream()
+//                .map(this::buildBulletinMetricsData)
+//                .toList();
 
-        Page<BulletinMetricsData> metricsDataPage = new PageImpl<>(dataList, pageable, bulletinPage.getTotalElements());
+//        Page<BulletinMetricsData> metricsDataPage = new PageImpl<>(dataList, pageable, bulletinPage.getTotalElements());
 
-        return ResponseEntity.ok(Message.success(metricsDataPage));
+        return ResponseEntity.ok(Message.success(bulletinMap));
     }
 
-    private BulletinMetricsData buildBulletinMetricsData(Bulletin bulletin) {
-        BulletinMetricsData.BulletinMetricsDataBuilder dataBuilder = BulletinMetricsData.builder()
-                .id(bulletin.getId())
-                .name(bulletin.getName())
-                .app(bulletin.getApp());
+//    private BulletinMetricsData buildBulletinMetricsData(Bulletin bulletin) {
+//
+//
+//        BulletinMetricsData.Data.DataBuilder dataBuilder = BulletinMetricsData.Data.builder()
+//                .monitorId(bulletin.getMonitorId())
+//                .app(bulletin.getApp())
+//                .host(monitorService.getMonitor(bulletin.getMonitorId()).getHost());
+//
+//        List<BulletinMetricsData.Metric> metrics = buildMetrics(bulletin);
+//        dataBuilder.metrics(metrics);
+//        contentBuilder.data(dataBuilder.build());
+//
+//        return contentBuilder.build();
+//    }
 
-        BulletinMetricsData.Content.ContentBuilder contentBuilder = BulletinMetricsData.Content.builder()
-                .monitorId(bulletin.getMonitorId())
-                .host(monitorService.getMonitor(bulletin.getMonitorId()).getHost());
-
-        List<BulletinMetricsData.Metric> metrics = buildMetrics(bulletin);
-        contentBuilder.metrics(metrics);
-        dataBuilder.content(contentBuilder.build());
-
-        return dataBuilder.build();
-    }
-
-    private List<BulletinMetricsData.Metric> buildMetrics(Bulletin bulletin) {
-        Set<String> metricSet = bulletin.getMetrics().stream()
-                .map(metric -> metric.split("\\$\\$\\$")[0])
-                .collect(Collectors.toSet());
-
-        List<Pair<String, String>> metricFieldList = bulletin.getMetrics().stream()
-                .map(metric -> metric.split("\\$\\$\\$"))
-                .map(arr -> new Pair<>(arr[0], arr[1]))
-                .toList();
-
-        return metricSet.stream()
-                .map(metric -> buildMetric(bulletin.getMonitorId(), metric, metricFieldList))
-                .collect(Collectors.toList());
+//    private List<BulletinMetricsData.Metric> buildMetrics(Bulletin bulletin) {
+//        Set<String> metricSet = bulletin.getMetrics().stream()
+//                .map(metric -> metric.split("\\$\\$\\$")[0])
+//                .collect(Collectors.toSet());
+//
+//        List<Pair<String, String>> metricFieldList = bulletin.getMetrics().stream()
+//                .map(metric -> metric.split("\\$\\$\\$"))
+//                .map(arr -> new Pair<>(arr[0], arr[1]))
+//                .toList();
+//
+//        return metricSet.stream()
+//                .map(metric -> buildMetric(bulletin.getMonitorId(), metric, metricFieldList))
+//                .collect(Collectors.toList());
+        return null;
     }
 
     private BulletinMetricsData.Metric buildMetric(Long monitorId, String metric, List<Pair<String, String>> metricFieldList) {

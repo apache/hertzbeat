@@ -91,13 +91,24 @@ public class BulletinServiceImpl implements BulletinService {
      */
     @Override
     public List<String> getAllNames() {
-        return bulletinDao.findAll().stream().map(Bulletin::getName).distinct().collect(Collectors.toList());
+        return bulletinDao.findAll().stream().map(Bulletin::getName).distinct().toList();
+    }
+
+    /**
+     * Get metrics by name
+     *
+     * @param name
+     */
+    @Override
+    public List<String> getMetricsByName(String name) {
+        return bulletinDao.findByName(name).getMetrics();
     }
 
     /**
      * Save Bulletin
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void saveBulletin(Bulletin bulletin) {
         bulletinDao.save(bulletin);
     }
@@ -106,19 +117,16 @@ public class BulletinServiceImpl implements BulletinService {
      * Add Bulletin
      */
     @Override
-    public boolean addBulletin(BulletinDto bulletinDto) {
+    @Transactional(rollbackFor = Exception.class)
+    public void addBulletin(BulletinDto bulletinDto) {
         try {
-            List<Bulletin> bulletins = bulletinDto.getMonitorIds().stream().map(monitorId -> {
-                Bulletin bulletin = new Bulletin();
-                bulletin.setName(bulletinDto.getName());
-                bulletin.setId(SnowFlakeIdGenerator.generateId());
-                bulletin.setMetrics(bulletinDto.getMetrics());
-                bulletin.setMonitorId(monitorId);
-                bulletin.setApp(bulletinDto.getApp());
-                return bulletin;
-            }).collect(Collectors.toList());
-            bulletinDao.saveAll(bulletins);
-            return true;
+            Bulletin bulletin = new Bulletin();
+            bulletin.setName(bulletinDto.getName());
+            bulletin.setId(SnowFlakeIdGenerator.generateId());
+            bulletin.setMetrics(bulletinDto.getMetrics());
+            bulletin.setMonitorIds(bulletinDto.getMonitorIds());
+            bulletin.setApp(bulletinDto.getApp());
+            bulletinDao.save(bulletin);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -143,7 +151,7 @@ public class BulletinServiceImpl implements BulletinService {
                 vo.setName(bulletin.getName());
                 vo.setTags(bulletin.getTags());
                 vo.setMetrics(bulletin.getMetrics());
-                vo.setMonitorId(bulletin.getMonitorId());
+                vo.setMonitorId(bulletin.getMonitorIds());
                 vo.setApp(bulletin.getApp());
                 return vo;
             }).collect(Collectors.toList());
@@ -169,10 +177,9 @@ public class BulletinServiceImpl implements BulletinService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean deleteBulletinByName(List<String> names) {
+    public void deleteBulletinByName(List<String> names) {
         try {
             bulletinDao.deleteByNameIn(names);
-            return true;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
