@@ -62,6 +62,8 @@ export class BulletinComponent implements OnInit {
   appEntries: Array<{ value: any; key: string }> = [];
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
+  metrics = new Set<string>;
+  fields: any[] = [];
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -80,7 +82,7 @@ export class BulletinComponent implements OnInit {
 
   onNewBulletinDefine() {
     this.define = new BulletinDefine();
-    this.define.metrics = new Set<string>();
+    this.define.metrics = [];
     this.define.monitorIds = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
@@ -127,8 +129,8 @@ export class BulletinComponent implements OnInit {
 
   onManageModalOk() {
     this.isManageModalOkLoading = true;
+    this.define.metrics = Array.from(this.metrics);
     if (this.isManageModalAdd) {
-      console.info('newBulletinDefine:', this.define);
       const modalOk$ = this.bulletinDefineSvc
         .newBulletinDefine(this.define)
         .pipe(
@@ -334,7 +336,20 @@ export class BulletinComponent implements OnInit {
       this.checkedNodeList.forEach(node => {
         node.isDisabled = true;
         node.isChecked = true;
-        this.define.metrics.add(node.key);
+        this.metrics.add(node.key);
+
+        // 更新 fields，确保 value 是数组且不重复
+        let existingField = this.fields.find(field => field[node.key]);
+        if (existingField) {
+          if (!existingField[node.key].includes(node.origin.value)) {
+            existingField[node.key].push(node.origin.value);
+          }
+        } else {
+          let fields = { [node.key]: [node.origin.value] };
+          this.fields.push(fields);
+        }
+
+        console.info('node:', this.fields);
       });
     }
     // delete
@@ -342,10 +357,22 @@ export class BulletinComponent implements OnInit {
       this.checkedNodeList.forEach(node => {
         node.isDisabled = false;
         node.isChecked = false;
-        this.define.metrics.delete(node.key);
+        this.metrics.delete(node.key);
+
+        // 从 fields 中移除相应的值
+        let existingField = this.fields.find(field => field[node.key]);
+        if (existingField) {
+          const index = existingField[node.key].indexOf(node.origin.value);
+          if (index > -1) {
+            existingField[node.key].splice(index, 1);
+          }
+        }
       });
     }
   }
+
+
+
 
 
   loadData(page: number = 0, size: number = 8) {

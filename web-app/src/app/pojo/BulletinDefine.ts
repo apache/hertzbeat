@@ -22,5 +22,6 @@ export class BulletinDefine {
   name!: string;
   monitorIds!: number[];
   app!: string;
-  metrics = new Set<string>();
+  metrics!: string[];
+  fields!: string[];
 }
