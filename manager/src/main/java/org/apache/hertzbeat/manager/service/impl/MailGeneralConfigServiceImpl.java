@@ -54,7 +54,7 @@ public class MailGeneralConfigServiceImpl extends AbstractGeneralConfigServiceIm
      * a TypeReference of NoticeSender type
      */
     @Override
-    protected TypeReference<EmailNoticeSender> getTypeReference() {
+    public TypeReference<EmailNoticeSender> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {
