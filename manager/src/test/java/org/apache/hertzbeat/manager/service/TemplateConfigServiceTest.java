@@ -17,25 +17,30 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
-import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
-import org.apache.hertzbeat.manager.service.impl.MailGeneralConfigServiceImpl;
+import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
+import org.apache.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
- * test case for {@link MailGeneralConfigServiceImpl}
+ * test case for {@link TemplateConfigServiceImpl}
  */
 
 @ExtendWith(MockitoExtension.class)
-class MailGeneralConfigServiceTest {
+class TemplateConfigServiceTest {
 
 	@Mock
 	private GeneralConfigDao generalConfigDao;
@@ -43,26 +48,47 @@ class MailGeneralConfigServiceTest {
 	@Mock
 	private ObjectMapper objectMapper;
 
-	private MailGeneralConfigServiceImpl mailGeneralConfigService;
+	@Mock
+	private AppService appService;
+
+	@InjectMocks
+	private TemplateConfigServiceImpl templateConfigServiceImpl;
 
 	@BeforeEach
 	void setUp() {
 
-		mailGeneralConfigService = new MailGeneralConfigServiceImpl(generalConfigDao, objectMapper);
+		templateConfigServiceImpl = new TemplateConfigServiceImpl(generalConfigDao, objectMapper);
+		ReflectionTestUtils.setField(templateConfigServiceImpl, "appService", appService);
+	}
+
+	@Test
+	void testHandlerValidTemplateConfig() {
+
+		TemplateConfig templateConfig = mock(TemplateConfig.class);
+		templateConfigServiceImpl.handler(templateConfig);
+
+		verify(
+				appService,
+				times(1)
+		).updateCustomTemplateConfig(templateConfig);
+	}
+
+	@Test
+	void testHandlerNullTemplateConfig() {
+
+		templateConfigServiceImpl.handler(null);
+
+		verify(
+				appService,
+				times(0)
+		).updateCustomTemplateConfig(any());
 	}
 
 	@Test
 	void testType() {
 
-		assertEquals("email", mailGeneralConfigService.type());
-	}
-
-	@Test
-	void testGetTypeReference() {
-
-		TypeReference<EmailNoticeSender> typeReference = mailGeneralConfigService.getTypeReference();
-
-		assertEquals(EmailNoticeSender.class, typeReference.getType());
+		String type = templateConfigServiceImpl.type();
+		assertEquals("template", type);
 	}
 
 }

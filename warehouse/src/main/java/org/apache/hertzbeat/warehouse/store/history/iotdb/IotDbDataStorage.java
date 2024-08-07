@@ -248,9 +248,12 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                                                          String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------IotDb Init Failed---------------\n"
-                    + "\t--------------Please Config IotDb--------------\n"
-                    + "\t----------Can Not Use Metric History Now----------\n");
+            log.error("""
+                    
+                    \t---------------IotDb Init Failed---------------
+                    \t--------------Please Config IotDb--------------
+                    \t----------Can Not Use Metric History Now----------
+                    """);
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, label, true);
@@ -309,9 +312,12 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                                                                  String metric, String label, String history) {
         Map<String, List<Value>> instanceValuesMap = new HashMap<>(8);
         if (!isServerAvailable()) {
-            log.error("\n\t---------------IotDb Init Failed---------------\n"
-                    + "\t--------------Please Config IotDb--------------\n"
-                    + "\t----------Can Not Use Metric History Now----------\n");
+            log.error("""
+                    
+                    \t---------------IotDb Init Failed---------------
+                    \t--------------Please Config IotDb--------------
+                    \t----------Can Not Use Metric History Now----------
+                    """);
             return instanceValuesMap;
         }
         String deviceId = getDeviceId(app, metrics, monitorId, label, true);
@@ -408,7 +414,6 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
     /**
      * use ${group}.${app}.${metrics}.${monitor}.${labels} to get device id if there is a way to get instanceId
      * otherwise use  ${group}.${app}.${metrics}.${monitor}
-     *
      * Use  ${group}.${app}.${metrics}.${monitor}.*  to get all instance data when you tend to query
      */
     private String getDeviceId(String app, String metrics, Long monitorId, String labels, boolean useQuote) {

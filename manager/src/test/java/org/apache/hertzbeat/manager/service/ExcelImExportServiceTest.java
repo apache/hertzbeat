@@ -38,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  * Test case for {@link ExcelImExportServiceImpl}
  */
 
-class ExcelImExportServiceImplTest {
+class ExcelImExportServiceTest {
 
 	@InjectMocks
 	private ExcelImExportServiceImpl excelImExportService;

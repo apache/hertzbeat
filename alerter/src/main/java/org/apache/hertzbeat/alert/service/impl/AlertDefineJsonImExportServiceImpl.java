@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.JsonFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.JsonFile.TYPE;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -35,8 +37,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class AlertDefineJsonImExportServiceImpl extends AlertDefineAbstractImExportServiceImpl {
-    public static final String TYPE = "JSON";
-    public static final String FILE_SUFFIX = ".json";
 
     private final ObjectMapper objectMapper;
 

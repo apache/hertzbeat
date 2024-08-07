@@ -58,18 +58,20 @@ class AlertDefineYamlImExportServiceTest {
 	private AlertDefineYamlImExportServiceImpl service;
 
 	private static final String YAML_DATA =
-			"- alertDefine:\n" +
-					"    app: App1\n" +
-					"    metric: Metric1\n" +
-					"    field: Field1\n" +
-					"    preset: true\n" +
-					"    expr: Expr1\n" +
-					"    priority: 1\n" +
-					"    times: 1\n" +
-					"    tags: []\n" +
-					"    enable: true\n" +
-					"    recoverNotice: true\n" +
-					"    template: Template1\n";
+            """
+                    - alertDefine:
+                        app: App1
+                        metric: Metric1
+                        field: Field1
+                        preset: true
+                        expr: Expr1
+                        priority: 1
+                        times: 1
+                        tags: []
+                        enable: true
+                        recoverNotice: true
+                        template: Template1
+                    """;
 
 	private InputStream inputStream;
 	private List<ExportAlertDefineDTO> alertDefineList;
@@ -99,7 +101,7 @@ class AlertDefineYamlImExportServiceTest {
 	}
 
 	@Test
-	void testParseImport() throws IllegalAccessException {
+	void testParseImport() {
 
 		List<ExportAlertDefineDTO> result = service.parseImport(inputStream);
 

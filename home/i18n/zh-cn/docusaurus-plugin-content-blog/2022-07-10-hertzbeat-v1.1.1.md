@@ -36,9 +36,9 @@ Bugfix.
 4. [[common] bugfix 告警状态无法页面手动更新问题 #203](https://github.com/apache/hertzbeat/pull/203)
 5. [[manager] bugfix windows监控类型名称错误问题 #204](https://github.com/apache/hertzbeat/pull/204)
 6. [fix time zone todo issue #210](https://github.com/apache/hertzbeat/pull/210) contribute by @djzeng
-8. [[common] bugfix 雪花算法生成ID大小超出 0x1FFFFFFFFFFFFFF 导致前端不识别问题 #211](https://github.com/apache/hertzbeat/pull/211)
-9. [[manager] 修改监控页面取消监控功能再启动监控导致多生成jobId，原有监控项目并没有真实取消 #215](https://github.com/apache/hertzbeat/pull/215) contribute by @yangshihui
-10. [[warehouse] 修复tdengine对特殊字段建表失败导致数据无法入库问题 #220](https://github.com/apache/hertzbeat/pull/220)
+7. [[common] bugfix 雪花算法生成ID大小超出 0x1FFFFFFFFFFFFFF 导致前端不识别问题 #211](https://github.com/apache/hertzbeat/pull/211)
+8. [[manager] 修改监控页面取消监控功能再启动监控导致多生成jobId，原有监控项目并没有真实取消 #215](https://github.com/apache/hertzbeat/pull/215) contribute by @yangshihui
+9. [[warehouse] 修复tdengine对特殊字段建表失败导致数据无法入库问题 #220](https://github.com/apache/hertzbeat/pull/220)
 
 Online https://console.tancloud.cn.
 
