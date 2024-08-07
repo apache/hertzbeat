@@ -53,7 +53,7 @@ public final class IpDomainUtil {
      * @return true-yes false-no
      */
     public static boolean validateIpDomain(String ipDomain) {
-        if (ipDomain == null || "".equals(ipDomain)) {
+        if (ipDomain == null || !StringUtils.hasText(ipDomain)) {
             return false;
         }
         ipDomain = ipDomain.trim();
@@ -75,7 +75,7 @@ public final class IpDomainUtil {
      * @return true or false
      */
     public static boolean isHasSchema(String domainIp) {
-        if (domainIp == null || "".equals(domainIp)) {
+        if (domainIp == null || !StringUtils.hasText(domainIp)) {
             return false;
         }
         return DOMAIN_SCHEMA.matcher(domainIp).matches();

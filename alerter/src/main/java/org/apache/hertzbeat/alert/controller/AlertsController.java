@@ -21,9 +21,6 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.Predicate;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
@@ -32,9 +29,6 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -67,41 +61,8 @@ public class AlertsController {
             @Parameter(description = "Sort Type", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-
-        Specification<Alert> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> andList = new ArrayList<>();
-
-            if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
-                for (long id : ids) {
-                    inPredicate.value(id);
-                }
-                andList.add(inPredicate);
-            }
-            if (monitorId != null) {
-                Predicate predicate = criteriaBuilder.like(root.get("tags").as(String.class), "%" + monitorId + "%");
-                andList.add(predicate);
-            }
-            if (priority != null) {
-                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
-                andList.add(predicate);
-            }
-            if (status != null) {
-                Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
-                andList.add(predicate);
-            }
-            if (content != null && !content.isEmpty()) {
-                Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + content + "%");
-                andList.add(predicateContent);
-            }
-            Predicate[] predicates = new Predicate[andList.size()];
-            return criteriaBuilder.and(andList.toArray(predicates));
-        };
-        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<Alert> alertPage = alertService.getAlerts(specification, pageRequest);
-        Message<Page<Alert>> message = Message.success(alertPage);
-        return ResponseEntity.ok(message);
+        Page<Alert> alertPage = alertService.getAlerts(ids, monitorId, priority, status, content, sort, order, pageIndex, pageSize);
+        return ResponseEntity.ok(Message.success(alertPage));
     }
 
     @DeleteMapping

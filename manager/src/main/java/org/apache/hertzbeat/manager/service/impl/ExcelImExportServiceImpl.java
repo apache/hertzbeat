@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,6 +29,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -49,8 +52,6 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 @Service
 public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
-    public static final String TYPE = "EXCEL";
-    public static final String FILE_SUFFIX = ".xlsx";
 
     /**
      * Export file type
@@ -302,7 +303,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         valueCell.setCellStyle(cellStyle);
                     }
                 }
-                if (paramList.size() > 0) {
+                if (CollectionUtils.isNotEmpty(paramList)) {
                     RegionUtil.setBorderTop(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
                     RegionUtil.setBorderBottom(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
                     RegionUtil.setBorderLeft(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);

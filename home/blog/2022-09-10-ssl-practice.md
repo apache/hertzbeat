@@ -15,7 +15,7 @@ Today's article describes how to use hertzbeat monitoring system to detect the v
 
 #### What is HertzBeat?
 
-HertzBeat is a real-time monitoring tool with powerful customizable monitoring capabilities without the need for an agent. Website monitoring, PING connectivity, port availability, database, OS, middleware, API monitoring, threshold alerts, alert notifications (email wechat pinning flybook).
+HertzBeat is a real-time monitoring tool with powerful customizable monitoring capabilities without the need for an agent. Website monitoring, PING connectivity, port availability, database, OS, middleware, API monitoring, threshold alerts, alert notifications (email weChat pinning flybook).
 
 **Official website: https://hertzbeat.com | https://tancloud.cn**
 

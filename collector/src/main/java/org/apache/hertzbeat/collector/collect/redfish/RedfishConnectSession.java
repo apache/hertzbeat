@@ -88,8 +88,7 @@ public class RedfishConnectSession implements ConnectSession {
             if (statusCode != HttpStatus.SC_OK) {
                 throw new Exception("Http State code: " + statusCode);
             }
-            String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-            return resp;
+            return EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new Exception("Redfish session get resource error:" + e.getMessage());
         } finally {

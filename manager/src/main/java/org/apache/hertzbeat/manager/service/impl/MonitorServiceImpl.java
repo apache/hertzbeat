@@ -40,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -52,6 +53,7 @@ import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -310,22 +312,11 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     public void importConfig(MultipartFile file) throws Exception {
-        var fileName = file.getOriginalFilename();
-        if (!StringUtils.hasText(fileName)) {
-            return;
-        }
-        var type = "";
-        if (fileName.toLowerCase().endsWith(JsonImExportServiceImpl.FILE_SUFFIX)) {
-            type = JsonImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(ExcelImExportServiceImpl.FILE_SUFFIX)) {
-            type = ExcelImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(YamlImExportServiceImpl.FILE_SUFFIX)) {
-            type = YamlImExportServiceImpl.TYPE;
-        }
+
+        var fileName = FileUtil.getFileName(file);
+        var type = FileUtil.getFileType(file);
         if (!imExportServiceMap.containsKey(type)) {
-            throw new RuntimeException("file " + fileName + " is not supported.");
+            throw new RuntimeException(ExportFileConstants.FILE + " " + fileName + " is not supported.");
         }
         var imExportService = imExportServiceMap.get(type);
         imExportService.importConfig(file.getInputStream());
@@ -386,7 +377,7 @@ public class MonitorServiceImpl implements MonitorService {
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
-                if (param != null && param.getParamValue() != null && !"".equals(param.getParamValue())) {
+                if (param != null && param.getParamValue() != null && StringUtils.hasText(param.getParamValue())) {
                     switch (paramDefine.getType()) {
                         case "number":
                             double doubleValue;
@@ -757,7 +748,7 @@ public class MonitorServiceImpl implements MonitorService {
                         new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                        .collect(Collectors.toList());
+                        .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
