@@ -16,7 +16,7 @@
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: db
 # The monitoring type eg: linux windows tomcat mysql aws...
-app: Vastbase
+app: vastbase
 # The monitoring i18n name
 name:
   zh-CN: Vastbase数据库
