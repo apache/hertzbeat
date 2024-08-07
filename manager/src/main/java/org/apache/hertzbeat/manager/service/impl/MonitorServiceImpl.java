@@ -377,7 +377,7 @@ public class MonitorServiceImpl implements MonitorService {
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
-                if (param != null && param.getParamValue() != null && !"".equals(param.getParamValue())) {
+                if (param != null && param.getParamValue() != null && StringUtils.hasText(param.getParamValue())) {
                     switch (paramDefine.getType()) {
                         case "number":
                             double doubleValue;
@@ -748,7 +748,7 @@ public class MonitorServiceImpl implements MonitorService {
                         new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                        .collect(Collectors.toList());
+                        .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
