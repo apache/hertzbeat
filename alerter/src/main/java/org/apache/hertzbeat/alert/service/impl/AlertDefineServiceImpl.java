@@ -37,9 +37,11 @@ import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -236,22 +238,11 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void importConfig(MultipartFile file) throws Exception {
-        var fileName = file.getOriginalFilename();
-        if (!StringUtils.hasText(fileName)) {
-            return;
-        }
-        var type = "";
-        if (fileName.toLowerCase().endsWith(AlertDefineJsonImExportServiceImpl.FILE_SUFFIX)) {
-            type = AlertDefineJsonImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(AlertDefineExcelImExportServiceImpl.FILE_SUFFIX)) {
-            type = AlertDefineExcelImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(AlertDefineYamlImExportServiceImpl.FILE_SUFFIX)) {
-            type = AlertDefineYamlImExportServiceImpl.TYPE;
-        }
+
+        var type = FileUtil.getFileType(file);
+        var fileName = FileUtil.getFileName(file);
         if (!alertDefineImExportServiceMap.containsKey(type)) {
-            throw new RuntimeException("file " + fileName + " is not supported.");
+            throw new RuntimeException(ExportFileConstants.FILE + " " + fileName + " is not supported.");
         }
         var imExportService = alertDefineImExportServiceMap.get(type);
         imExportService.importConfig(file.getInputStream());
