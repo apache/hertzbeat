@@ -62,7 +62,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var formList = parseImport(is)
                 .stream()
                 .map(this::convert)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         if (!CollectionUtils.isEmpty(formList)) {
             formList.forEach(monitorDto -> {
                 monitorService.validate(monitorDto, false);
@@ -80,7 +80,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 .map(it -> monitorService.getMonitorDto(it))
                 .filter(Objects::nonNull)
                 .map(this::convert)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         writeOs(monitorList, os);
     }
 

@@ -37,6 +37,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -337,7 +338,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     continue;
                 }
                 String instanceValue = resultSet.getString(2);
-                if (instanceValue == null || "".equals(instanceValue)) {
+                if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
                     instanceValue = "";
                 }
                 double value = resultSet.getDouble(3);
@@ -385,7 +386,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 ResultSet resultSet = statement.executeQuery(queryInstanceSql);
                 while (resultSet.next()) {
                     String instanceValue = resultSet.getString(1);
-                    if (instanceValue == null || "".equals(instanceValue)) {
+                    if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
                         instances.add("''");
                     } else {
                         instances.add(instanceValue);
