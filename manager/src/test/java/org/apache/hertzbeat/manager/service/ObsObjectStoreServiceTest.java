@@ -28,7 +28,6 @@ import org.apache.hertzbeat.manager.pojo.dto.FileDTO;
 import org.apache.hertzbeat.manager.service.impl.ObsObjectStoreServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
