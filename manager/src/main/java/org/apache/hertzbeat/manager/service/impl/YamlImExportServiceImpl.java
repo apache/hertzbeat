@@ -60,7 +60,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      * @return form
      */
     @Override
-    List<ExportMonitorDTO> parseImport(InputStream is) {
+    public List<ExportMonitorDTO> parseImport(InputStream is) {
         // todo now disable this, will enable it in the future.
         // upgrade to snakeyaml 2.2 and springboot3.x to fix the issue
         Yaml yaml = new Yaml();
@@ -73,7 +73,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      * @param os          output stream
      */
     @Override
-    void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
+    public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setIndent(2);
