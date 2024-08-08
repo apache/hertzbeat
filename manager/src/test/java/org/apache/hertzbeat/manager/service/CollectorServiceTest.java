@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.service;
 
-
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
@@ -40,7 +39,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-
 
 /**
  * Test case for {@link CollectorService}

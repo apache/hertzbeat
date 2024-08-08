@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -34,13 +37,16 @@ import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
+import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -147,7 +153,50 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     }
 
     @Override
-    public Page<AlertDefine> getAlertDefines(Specification<AlertDefine> specification, PageRequest pageRequest) {
+    public Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, Byte priority, String sort, String order, int pageIndex, int pageSize) {
+        Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (defineIds != null && !defineIds.isEmpty()) {
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
+                for (long id : defineIds) {
+                    inPredicate.value(id);
+                }
+                andList.add(inPredicate);
+            }
+            if (StringUtils.hasText(search)) {
+                Predicate predicate = criteriaBuilder.or(
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("app")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("metric")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("field")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("expr")),
+                                "%" + search.toLowerCase() + "%"
+                        ),
+                        criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("template")),
+                                "%" + search.toLowerCase() + "%"
+                        )
+                );
+                andList.add(predicate);
+            }
+            if (priority != null) {
+                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
+                andList.add(predicate);
+            }
+            Predicate[] predicates = new Predicate[andList.size()];
+            return criteriaBuilder.and(andList.toArray(predicates));
+        };
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return alertDefineDao.findAll(specification, pageRequest);
     }
 
@@ -189,22 +238,11 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void importConfig(MultipartFile file) throws Exception {
-        var fileName = file.getOriginalFilename();
-        if (!StringUtils.hasText(fileName)) {
-            return;
-        }
-        var type = "";
-        if (fileName.toLowerCase().endsWith(AlertDefineJsonImExportServiceImpl.FILE_SUFFIX)) {
-            type = AlertDefineJsonImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(AlertDefineExcelImExportServiceImpl.FILE_SUFFIX)) {
-            type = AlertDefineExcelImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(AlertDefineYamlImExportServiceImpl.FILE_SUFFIX)) {
-            type = AlertDefineYamlImExportServiceImpl.TYPE;
-        }
+
+        var type = FileUtil.getFileType(file);
+        var fileName = FileUtil.getFileName(file);
         if (!alertDefineImExportServiceMap.containsKey(type)) {
-            throw new RuntimeException("file " + fileName + " is not supported.");
+            throw new RuntimeException(ExportFileConstants.FILE + " " + fileName + " is not supported.");
         }
         var imExportService = alertDefineImExportServiceMap.get(type);
         imExportService.importConfig(file.getInputStream());
