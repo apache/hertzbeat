@@ -45,6 +45,10 @@ class CommonCacheTest {
             @Override
             public void closeConnection() throws Exception {
             }
+
+            @Override
+            public void check() throws Exception {
+            }
         };
     }
 

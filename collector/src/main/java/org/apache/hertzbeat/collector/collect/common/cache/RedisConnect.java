@@ -40,7 +40,23 @@ public class RedisConnect extends AbstractConnection<StatefulConnection<String, 
     }
 
     @Override
+    public void check() throws Exception {
+
+        if (!connection.isOpen()) {
+            throw new RuntimeException("Connection is closed");
+        }
+    }
+
+    @Override
     public StatefulConnection<String, String> getConnection() {
+
+        try {
+            this.check();
+        }
+        catch (Exception e) {
+            log.error(e.getMessage());
+            return null;
+        }
         return connection;
     }
 }

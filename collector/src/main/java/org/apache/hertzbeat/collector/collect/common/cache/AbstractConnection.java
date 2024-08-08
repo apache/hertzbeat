@@ -17,13 +17,11 @@
 
 package org.apache.hertzbeat.collector.collect.common.cache;
 
-import lombok.extern.slf4j.Slf4j;
-
 /**
  * AbstractConnection
  */
-@Slf4j
-public abstract class AbstractConnection<T> implements AutoCloseable {
+
+public abstract class AbstractConnection<T> implements AutoCloseable  {
 
     /**
      * @return Returns the connection.
@@ -35,8 +33,15 @@ public abstract class AbstractConnection<T> implements AutoCloseable {
      */
     public abstract void closeConnection() throws Exception;
 
+    /**
+     * Check connection when get connection.
+     */
+    public abstract void check() throws Exception;
+
     @Override
     public void close() throws Exception{
-        closeConnection();
+
+        this.closeConnection();
     }
+
 }
