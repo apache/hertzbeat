@@ -17,15 +17,12 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.persistence.criteria.Predicate;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.persistence.criteria.Predicate;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
-import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.support.exception.CommonException;
@@ -41,7 +38,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

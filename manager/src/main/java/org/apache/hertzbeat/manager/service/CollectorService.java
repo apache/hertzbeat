@@ -19,12 +19,8 @@ package org.apache.hertzbeat.manager.service;
 
 import java.util.List;
 import java.util.Map;
-
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
-import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * collector service
