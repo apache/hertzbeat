@@ -44,7 +44,7 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
      * @param generalConfigDao ConfigDao object
      * @param objectMapper     JSON tool object
      */
-    protected SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
+    public SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
     }
     
@@ -64,7 +64,7 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
     }
     
     @Override
-    protected TypeReference<SystemConfig> getTypeReference() {
+    public TypeReference<SystemConfig> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {
