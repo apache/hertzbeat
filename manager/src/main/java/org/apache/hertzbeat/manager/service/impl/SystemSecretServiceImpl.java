@@ -37,7 +37,7 @@ public class SystemSecretServiceImpl extends AbstractGeneralConfigServiceImpl<Sy
      * @param generalConfigDao ConfigDao object
      * @param objectMapper     JSON tool object
      */
-    protected SystemSecretServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
+    public SystemSecretServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
     }
     
@@ -47,7 +47,7 @@ public class SystemSecretServiceImpl extends AbstractGeneralConfigServiceImpl<Sy
     }
     
     @Override
-    protected TypeReference<SystemSecret> getTypeReference() {
+    public TypeReference<SystemSecret> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {
