@@ -83,6 +83,7 @@ public class WheelTimerTask implements TimerTask {
             metricsTmp.add(metric);
         }
         job.setMetrics(metricsTmp);
+        job.initIntervals();
     }
 
 
