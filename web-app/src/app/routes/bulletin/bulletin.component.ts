@@ -62,7 +62,7 @@ export class BulletinComponent implements OnInit {
   appEntries: Array<{ value: any; key: string }> = [];
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
-  metrics = new Set<string>;
+  metrics = new Set<string>();
   fields: any[] = [];
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -130,6 +130,7 @@ export class BulletinComponent implements OnInit {
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.define.metrics = Array.from(this.metrics);
+    this.define.fields = this.fields;
     if (this.isManageModalAdd) {
       const modalOk$ = this.bulletinDefineSvc
         .newBulletinDefine(this.define)
@@ -338,7 +339,6 @@ export class BulletinComponent implements OnInit {
         node.isChecked = true;
         this.metrics.add(node.key);
 
-        // 更新 fields，确保 value 是数组且不重复
         let existingField = this.fields.find(field => field[node.key]);
         if (existingField) {
           if (!existingField[node.key].includes(node.origin.value)) {
@@ -348,8 +348,6 @@ export class BulletinComponent implements OnInit {
           let fields = { [node.key]: [node.origin.value] };
           this.fields.push(fields);
         }
-
-        console.info('node:', this.fields);
       });
     }
     // delete
@@ -359,7 +357,6 @@ export class BulletinComponent implements OnInit {
         node.isChecked = false;
         this.metrics.delete(node.key);
 
-        // 从 fields 中移除相应的值
         let existingField = this.fields.find(field => field[node.key]);
         if (existingField) {
           const index = existingField[node.key].indexOf(node.origin.value);
@@ -370,10 +367,6 @@ export class BulletinComponent implements OnInit {
       });
     }
   }
-
-
-
-
 
   loadData(page: number = 0, size: number = 8) {
     this.tableLoading = true;
@@ -444,7 +437,6 @@ export class BulletinComponent implements OnInit {
       column: groupedData[name].column,
       data: groupedData[name].data
     }));
-    console.info('tabDefines:', this.tabDefines);
   }
 
   getMetricNames(tab: any): string[] {

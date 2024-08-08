@@ -28,6 +28,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.manager.dao.BulletinDao;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
@@ -57,16 +58,24 @@ public class BulletinServiceImpl implements BulletinService {
     /**
      * validate Bulletin
      *
-     * @param bulletin
-     * @param isModify
+     * @param bulletinDto
      */
     @Override
-    public void validate(Bulletin bulletin, Boolean isModify) throws IllegalArgumentException {
-        if (bulletin == null) {
+    public void validate(BulletinDto bulletinDto) throws IllegalArgumentException {
+        if (bulletinDto == null) {
             throw new IllegalArgumentException("Bulletin cannot be null");
         }
-        if (isModify && bulletin.getId() == null) {
-            throw new IllegalArgumentException("Bulletin id cannot be null");
+        if (bulletinDto.getApp() == null || bulletinDto.getApp().isEmpty()) {
+            throw new IllegalArgumentException("Bulletin app cannot be null or empty");
+        }
+        if (bulletinDto.getMetrics() == null || bulletinDto.getMetrics().isEmpty()) {
+            throw new IllegalArgumentException("Bulletin metrics cannot be null or empty");
+        }
+        if (bulletinDto.getFields() == null || bulletinDto.getFields().isEmpty()) {
+            throw new IllegalArgumentException("Bulletin fields cannot be null or empty");
+        }
+        if (bulletinDto.getMonitorIds() == null || bulletinDto.getMonitorIds().isEmpty()) {
+            throw new IllegalArgumentException("Bulletin monitorIds cannot be null or empty");
         }
     }
 
@@ -123,6 +132,8 @@ public class BulletinServiceImpl implements BulletinService {
             Bulletin bulletin = new Bulletin();
             bulletin.setName(bulletinDto.getName());
             bulletin.setId(SnowFlakeIdGenerator.generateId());
+            String fields = JsonUtil.toJson(bulletinDto.getFields());
+            bulletin.setFields(fields);
             bulletin.setMetrics(bulletinDto.getMetrics());
             bulletin.setMonitorIds(bulletinDto.getMonitorIds());
             bulletin.setApp(bulletinDto.getApp());

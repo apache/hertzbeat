@@ -35,7 +35,7 @@ public interface BulletinService {
     /**
      * validate Bulletin
      */
-    void validate(Bulletin bulletin, Boolean isModify) throws IllegalArgumentException;
+    void validate(BulletinDto bulletindto) throws IllegalArgumentException;
 
     /**
      * List Bulletin

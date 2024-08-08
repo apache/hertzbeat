@@ -19,6 +19,7 @@
 package org.apache.hertzbeat.common.entity.manager.bulletin;
 
 import java.util.List;
+import java.util.Map;
 import lombok.Data;
 
 @Data
@@ -38,6 +39,11 @@ public class BulletinDto {
      * Monitor metrics
      */
     private List<String> metrics;
+
+    /**
+     * Monitor fields
+     */
+    private List<Map<String, List<String>>> fields;
 
     /**
      * Monitor ids

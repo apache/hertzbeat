@@ -135,6 +135,7 @@
             [(ngModel)]="define.app"
             (nzOnSearch)="onSearchAppDefines()"
             (ngModelChange)="onAppChange($event)"
+            required
           >
             <ng-container *ngFor="let app of appEntries">
               <nz-option *ngIf="isAppListLoading" [nzValue]="app.key" [nzLabel]="app.key + '/' + app.value"></nz-option>
@@ -153,6 +154,7 @@
             [(ngModel)]="define.monitorIds"
             (nzOnSearch)="onSearchMonitorsByApp(define.app)"
             nzMode="multiple"
+            required
           >
             <ng-container *ngFor="let monitor of monitors">
               <nz-option *ngIf="isMonitorListLoading" [nzValue]="monitor.id" [nzLabel]="monitor.name"></nz-option>
@@ -169,6 +171,7 @@
             [nzShowSelectAll]="false"
             [nzRenderList]="[leftRenderList, null]"
             (nzChange)="transferChange($event)"
+            required
           >
             <ng-template #leftRenderList let-items let-onItemSelect="onItemSelect">
               <nz-tree

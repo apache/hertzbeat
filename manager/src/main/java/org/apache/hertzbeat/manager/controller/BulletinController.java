@@ -84,11 +84,12 @@ public class BulletinController {
     @PostMapping
     public ResponseEntity<Message<Void>> addNewBulletin(@Valid @RequestBody BulletinDto bulletinDto) {
         try {
+            bulletinService.validate(bulletinDto);
             bulletinService.addBulletin(bulletinDto);
         } catch (Exception e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed"));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
         }
-        return ResponseEntity.ok(Message.success("Add success"));
+        return ResponseEntity.ok(Message.success("Add success!"));
     }
 
     /**
@@ -112,9 +113,9 @@ public class BulletinController {
         try {
             bulletinService.deleteBulletinByName(names);
         }catch (Exception e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Delete failed"));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Delete failed!" + e.getMessage()));
         }
-        return ResponseEntity.ok(Message.success("Delete success"));
+        return ResponseEntity.ok(Message.success("Delete success!"));
     }
 
     @GetMapping("/metrics")
