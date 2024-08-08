@@ -669,7 +669,9 @@ export class AlertSettingComponent implements OnInit {
   }
 
   onManageModalOk() {
-    this.defineForm.form.addControl('ruleset', this.qbFormCtrl);
+    if (this.cascadeValues.length == 3) {
+      this.defineForm.form.addControl('ruleset', this.qbFormCtrl);
+    }
     if (this.defineForm?.invalid) {
       Object.values(this.defineForm.controls).forEach(control => {
         if (control.invalid) {
