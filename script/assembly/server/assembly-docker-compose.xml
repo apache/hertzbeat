@@ -35,6 +35,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>conf/**</include>
                 <include>*.yaml</include>
                 <include>*.md</include>
+                <include>ext-lib/README</include>
             </includes>
             <outputDirectory>hertzbeat-mysql-iotdb</outputDirectory>
         </fileSet>
@@ -45,6 +46,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>conf/**</include>
                 <include>*.yaml</include>
                 <include>*.md</include>
+                <include>ext-lib/README</include>
             </includes>
             <outputDirectory>hertzbeat-mysql-tdengine</outputDirectory>
         </fileSet>
@@ -55,18 +57,20 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>conf/**</include>
                 <include>*.yaml</include>
                 <include>*.md</include>
+                <include>ext-lib/README</include>
             </includes>
             <outputDirectory>hertzbeat-mysql-victoria-metrics</outputDirectory>
         </fileSet>
         <fileSet>
-            <directory>../script/docker-compose/hertzbeat-postgresql-iotdb</directory>
+            <directory>../script/docker-compose/hertzbeat-postgresql-victoria-metrics</directory>
             <filtered>true</filtered>
             <includes>
                 <include>conf/**</include>
                 <include>*.yaml</include>
                 <include>*.md</include>
+                <include>ext-lib/README</include>
             </includes>
-            <outputDirectory>hertzbeat-postgresql-iotdb</outputDirectory>
+            <outputDirectory>hertzbeat-postgresql-victoria-metrics</outputDirectory>
         </fileSet>
         <fileSet>
             <directory>../script/docker-compose</directory>
