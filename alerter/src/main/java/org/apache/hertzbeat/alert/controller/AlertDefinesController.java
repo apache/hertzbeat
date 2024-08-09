@@ -61,7 +61,8 @@ public class AlertDefinesController {
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
         Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(ids, search, priority, sort, order, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(alertDefinePage));
+
+        return  ResponseEntity.ok(Message.success(alertDefinePage));
     }
 
     @DeleteMapping
@@ -79,9 +80,9 @@ public class AlertDefinesController {
     @GetMapping("/export")
     @Operation(summary = "export alertDefine config", description = "export alarm definition configuration")
     public void export(
-        @Parameter(description = "AlertDefine ID List", example = "656937901") @RequestParam List<Long> ids,
-        @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
-        HttpServletResponse res) throws Exception {
+            @Parameter(description = "AlertDefine ID List", example = "656937901") @RequestParam List<Long> ids,
+            @Parameter(description = "Export Type:JSON,EXCEL,YAML") @RequestParam(defaultValue = "JSON") String type,
+            HttpServletResponse res) throws Exception {
         alertDefineService.export(ids, type, res);
     }
 
