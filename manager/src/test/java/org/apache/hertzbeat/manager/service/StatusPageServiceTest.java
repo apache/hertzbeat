@@ -45,7 +45,7 @@ import static org.mockito.Mockito.when;
  * test case for {@link StatusPageServiceImpl}
  */
 
-class StatusPageServiceImplTest {
+class StatusPageServiceTest {
 
 	@Mock
 	private StatusPageOrgDao statusPageOrgDao;
