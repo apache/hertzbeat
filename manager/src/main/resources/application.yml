@@ -18,7 +18,7 @@ spring:
   application:
     name: ${HOSTNAME:@hertzbeat@}${PID}
   profiles:
-    active: prod
+    active: dev
   mvc:
     static-path-pattern: /**
   jackson:
@@ -63,20 +63,20 @@ sureness:
 spring:
   config:
     activate:
-      on-profile: prod
+      on-profile: dev
 
   datasource:
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 123456
-    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 1qw23e
+    url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
     hikari:
       max-lifetime: 120000
 
   jpa:
     show-sql: false
     database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
-    database: h2
+    database: mysql
     properties:
       eclipselink:
         logging:

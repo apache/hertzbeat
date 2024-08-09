@@ -35,6 +35,8 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.mock;
@@ -67,7 +69,7 @@ public class CollectorServiceTest {
     public void getCollectors() {
         Specification<Collector> specification = mock(Specification.class);
         when(collectorDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
-        assertDoesNotThrow(() -> collectorService.getCollectors(specification, PageRequest.of(1, 1)));
+        assertDoesNotThrow(() -> collectorService.getCollectors(1,1,""));
     }
 
     @Test
@@ -80,5 +82,20 @@ public class CollectorServiceTest {
     @Test
     public void hasCollector() {
         collectorService.hasCollector("test");
+    }
+
+    @Test
+    public void online() {
+        collectorService.online(Stream.of("test").collect(Collectors.toList()));
+    }
+
+    @Test
+    public void offline() {
+        collectorService.offline(Stream.of("test").collect(Collectors.toList()));
+    }
+
+    @Test
+    public void generateCollectorDeployInfo() {
+        collectorService.generateCollectorDeployInfo("test");
     }
 }

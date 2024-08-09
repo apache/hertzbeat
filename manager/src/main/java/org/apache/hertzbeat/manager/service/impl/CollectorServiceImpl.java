@@ -17,12 +17,19 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+
+import jakarta.persistence.criteria.Predicate;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
+import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.support.exception.CommonException;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.scheduler.AssignJobs;
@@ -34,6 +41,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +66,19 @@ public class CollectorServiceImpl implements CollectorService {
     
     @Override
     @Transactional(readOnly = true)
-    public Page<CollectorSummary> getCollectors(Specification<Collector> specification, PageRequest pageRequest) {
+    public Page<CollectorSummary> getCollectors(int pageIndex,Integer pageSize,final String name) {
+        if (pageSize == null) {
+            pageSize = Integer.MAX_VALUE;
+        }
+        Specification<Collector> specification = (root, query, criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction();
+            if (name != null && !name.isEmpty()) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                predicate = criteriaBuilder.and(predicateName);
+            }
+            return predicate;
+        };
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
         Page<Collector> collectors = collectorDao.findAll(specification, pageRequest);
         List<CollectorSummary> collectorSummaryList = new LinkedList<>();
         for (Collector collector : collectors.getContent()) {
@@ -96,5 +116,32 @@ public class CollectorServiceImpl implements CollectorService {
     @Override
     public boolean hasCollector(String collector) {
         return this.collectorDao.findCollectorByName(collector).isPresent();
+    }
+
+    @Override
+    public void online(List<String> collectors) {
+        if (collectors != null) {
+            collectors.forEach(collector ->
+                    this.manageServer.getCollectorAndJobScheduler().onlineCollector(collector));
+        }
+    }
+
+    @Override
+    public void offline(List<String> collectors) {
+        if (collectors != null) {
+            collectors.forEach(collector -> this.manageServer.getCollectorAndJobScheduler().offlineCollector(collector));
+        }
+    }
+
+    @Override
+    public Map<String, String> generateCollectorDeployInfo(String collector) {
+        if (this.hasCollector(collector)) {
+            throw new IllegalArgumentException("There already has same collector name.");
+        }
+        String host = IpDomainUtil.getLocalhostIp();
+        Map<String, String> maps = new HashMap<>(6);
+        maps.put("identity", collector);
+        maps.put("host", host);
+        return maps;
     }
 }
