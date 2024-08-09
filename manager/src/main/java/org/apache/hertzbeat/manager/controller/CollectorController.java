@@ -23,10 +23,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.dto.Message;
-import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -85,12 +83,8 @@ public class CollectorController {
     public ResponseEntity<Message<Void>> deleteCollector(
             @Parameter(description = "collector name", example = "demo-collector")
             @RequestParam(required = false) List<String> collectors) {
-        try {
-            this.collectorService.deleteRegisteredCollector(collectors);
-            return ResponseEntity.ok(Message.success("Delete success"));
-        } catch (CommonException ex) {
-            return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, ex.getMessage()));
-        }
+        this.collectorService.deleteRegisteredCollector(collectors);
+        return ResponseEntity.ok(Message.success("Delete success"));
     }
 
     @PostMapping("/generate/{collector}")
@@ -98,12 +92,7 @@ public class CollectorController {
     public ResponseEntity<Message<Map<String, String>>> generateCollectorDeployInfo(
             @Parameter(description = "collector name", example = "demo-collector")
             @PathVariable() String collector) {
-        try {
-            return ResponseEntity.ok(Message.success(collectorService.generateCollectorDeployInfo(collector)));
-        } catch (CommonException ex) {
-            return ResponseEntity.ok(Message.fail(CommonConstants.FAIL_CODE, ex.getMessage()));
-        }
-
+        return ResponseEntity.ok(Message.success(collectorService.generateCollectorDeployInfo(collector)));
     }
 
 }
