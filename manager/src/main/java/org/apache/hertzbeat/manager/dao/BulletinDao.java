@@ -39,9 +39,5 @@ public interface BulletinDao extends JpaRepository<Bulletin, Long>, JpaSpecifica
      */
     Bulletin findByName(String name);
 
-    /**
-     * Get Bulletin by name
-     */
-    Page<Bulletin> findByName(String name, Pageable pageable);
 
 }

@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.controller;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -38,6 +39,7 @@ import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.Pair;
 import org.apache.hertzbeat.manager.service.BulletinService;
 import org.apache.hertzbeat.manager.service.MonitorService;
@@ -47,10 +49,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -67,8 +66,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/bulletin", produces = {APPLICATION_JSON_VALUE})
 public class BulletinController {
 
-    public static final String NO_DATA = "No Data";
-    public static final String EMPTY_STRING = "";
+    private static final String NO_DATA = "No Data";
+    private static final String EMPTY_STRING = "";
 
     @Autowired
     private BulletinService bulletinService;
@@ -129,70 +128,59 @@ public class BulletinController {
         }
 
         Pageable pageable = PageRequest.of(pageIndex, pageSize);
-        Page<Bulletin> bulletinPage = bulletinService.getBulletinsByName(name, pageable);
-        Map<String, List<Bulletin>> bulletinMap = bulletinPage.stream().collect(Collectors.groupingBy(Bulletin::getName));
-        System.out.println(bulletinMap);
-        for (Map.Entry<String, List<Bulletin>> entry : bulletinMap.entrySet()) {
-            List<Bulletin> bulletins = entry.getValue();
-//            BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder = BulletinMetricsData.builder()
-//                    .name(entry.getKey())
-//                    .column(bulletin.getMetrics().stream()
-//                            .map(metric -> metric.split("\\$\\$\\$")[0])
-//                            .collect(Collectors.toSet()).toString());
-//
-//        }
-//        List<BulletinMetricsData> dataList = bulletinPage.stream()
-//                .map(this::buildBulletinMetricsData)
-//                .toList();
+        Bulletin bulletin = bulletinService.getBulletinByName(name);
+
+        BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder = BulletinMetricsData.builder()
+                .name(bulletin.getName())
+                .column(bulletin.getMetrics().toString());
+
+
+        BulletinMetricsData data = buildBulletinMetricsData(contentBuilder, bulletin);
+
+
 
 //        Page<BulletinMetricsData> metricsDataPage = new PageImpl<>(dataList, pageable, bulletinPage.getTotalElements());
 
-        return ResponseEntity.ok(Message.success(bulletinMap));
+        return ResponseEntity.ok(Message.success(contentBuilder));
     }
 
-//    private BulletinMetricsData buildBulletinMetricsData(Bulletin bulletin) {
-//
-//
-//        BulletinMetricsData.Data.DataBuilder dataBuilder = BulletinMetricsData.Data.builder()
-//                .monitorId(bulletin.getMonitorId())
-//                .app(bulletin.getApp())
-//                .host(monitorService.getMonitor(bulletin.getMonitorId()).getHost());
-//
-//        List<BulletinMetricsData.Metric> metrics = buildMetrics(bulletin);
-//        dataBuilder.metrics(metrics);
-//        contentBuilder.data(dataBuilder.build());
-//
-//        return contentBuilder.build();
-//    }
+    private BulletinMetricsData buildBulletinMetricsData(BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder, Bulletin bulletin) {
+        List<BulletinMetricsData.Data> dataList = new ArrayList<>();
+        for (Long monitorId : bulletin.getMonitorIds()) {
+            BulletinMetricsData.Data.DataBuilder dataBuilder = BulletinMetricsData.Data.builder()
+                    .monitorId(monitorId)
+                    .app(bulletin.getApp())
+                    .host(monitorService.getMonitor(monitorId).getHost());
 
-//    private List<BulletinMetricsData.Metric> buildMetrics(Bulletin bulletin) {
-//        Set<String> metricSet = bulletin.getMetrics().stream()
-//                .map(metric -> metric.split("\\$\\$\\$")[0])
-//                .collect(Collectors.toSet());
-//
-//        List<Pair<String, String>> metricFieldList = bulletin.getMetrics().stream()
-//                .map(metric -> metric.split("\\$\\$\\$"))
-//                .map(arr -> new Pair<>(arr[0], arr[1]))
-//                .toList();
-//
-//        return metricSet.stream()
-//                .map(metric -> buildMetric(bulletin.getMonitorId(), metric, metricFieldList))
-//                .collect(Collectors.toList());
-        return null;
+            List<String> metricList = bulletin.getMetrics();
+
+            List<Map<String, List<String>>> fields = JsonUtil.fromJson(bulletin.getFields(), new TypeReference<>() {});
+            for (Map<String, List<String>> metrics : fields) {
+                for (Map.Entry<String, List<String>> entry : metrics.entrySet()) {
+                    String metric = entry.getKey();
+
+                }
+            }
+            BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
+                    .name(null);
+            System.out.println(metricList);
+            System.out.println(fields);
+            CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(monitorId, null);
+            List<List<BulletinMetricsData.Field>> fieldsList = (currentMetricsData != null) ?
+                    buildFieldsListFromCurrentData(currentMetricsData) :
+                    buildFieldsListFromMetricFieldList(null, null);
+
+            metricBuilder.fields(fieldsList);
+            dataBuilder.metrics(null);
+            dataList.add(dataBuilder.build());
+        }
+
+        contentBuilder.data(dataList);
+        return contentBuilder.build();
     }
 
-    private BulletinMetricsData.Metric buildMetric(Long monitorId, String metric, List<Pair<String, String>> metricFieldList) {
-        BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
-                .name(metric);
 
-        CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(monitorId, metric);
-        List<List<BulletinMetricsData.Field>> fieldsList = (currentMetricsData != null) ?
-                buildFieldsListFromCurrentData(currentMetricsData) :
-                buildFieldsListFromMetricFieldList(metric, metricFieldList);
 
-        metricBuilder.fields(fieldsList);
-        return metricBuilder.build();
-    }
 
     private List<List<BulletinMetricsData.Field>> buildFieldsListFromCurrentData(CollectRep.MetricsData currentMetricsData) {
         return currentMetricsData.getValuesList().stream()
@@ -212,16 +200,16 @@ public class BulletinController {
                 .toList();
     }
 
-    private List<List<BulletinMetricsData.Field>> buildFieldsListFromMetricFieldList(String metric, List<Pair<String, String>> metricFieldList) {
-        List<BulletinMetricsData.Field> fields = metricFieldList.stream()
-                .filter(pair -> pair.getLeft().equals(metric))
-                .map(pair -> BulletinMetricsData.Field.builder()
-                        .key(pair.getRight())
-                        .unit(NO_DATA)
-                        .value(EMPTY_STRING)
-                        .build())
-                .toList();
+    private List<List<BulletinMetricsData.Field>> buildFieldsListFromMetricFieldList(String metric, List<Map<String, List<String>>> fieldList) {
+//        List<BulletinMetricsData.Field> fields = fieldList.stream()
+//                .filter(map -> pair.getLeft().equals(metric))
+//                .map(pair -> BulletinMetricsData.Field.builder()
+//                        .key(pair.getRight())
+//                        .unit(NO_DATA)
+//                        .value(EMPTY_STRING)
+//                        .build())
+//                .toList();
 
-        return Collections.singletonList(fields);
+        return Collections.singletonList(null);
     }
 }

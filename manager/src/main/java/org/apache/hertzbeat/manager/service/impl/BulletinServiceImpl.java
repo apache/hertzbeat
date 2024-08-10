@@ -79,20 +79,13 @@ public class BulletinServiceImpl implements BulletinService {
         }
     }
 
-    /**
-     * List Bulletin
-     */
-    @Override
-    public List<Bulletin> getBulletinsByName() {
-        return bulletinDao.findAll();
-    }
 
     /**
      * Pageable query Bulletin
      */
     @Override
-    public Page<Bulletin> getBulletinsByName(String name, Pageable pageable) {
-        return bulletinDao.findByName(name, pageable);
+    public Bulletin getBulletinByName(String name) {
+        return bulletinDao.findByName(name);
     }
 
     /**

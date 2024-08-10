@@ -38,14 +38,9 @@ public interface BulletinService {
     void validate(BulletinDto bulletindto) throws IllegalArgumentException;
 
     /**
-     * List Bulletin
+     * Get Bulletin by name
      */
-    List<Bulletin> getBulletinsByName();
-
-    /**
-     * Pageable query Bulletin
-     */
-    Page<Bulletin> getBulletinsByName(String name, Pageable pageable);
+    Bulletin getBulletinByName(String name);
     /**
      * Get Bulletin by id
      */
