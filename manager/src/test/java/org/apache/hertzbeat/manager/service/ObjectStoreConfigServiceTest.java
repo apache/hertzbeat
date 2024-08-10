@@ -17,11 +17,88 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
+import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.service.impl.ObjectStoreConfigServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.MockBeans;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * test case for {@link ObjectStoreConfigServiceImpl}
  */
 
+@ExtendWith(SpringExtension.class)
 class ObjectStoreConfigServiceTest {
+
+	private final DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+
+	@Mock
+	private ApplicationContext ctx;
+
+	@Spy
+	private ObjectMapper objectMapper = new ObjectMapper();
+
+	@InjectMocks
+	private ObjectStoreConfigServiceImpl objectStoreConfigService;
+
+	@BeforeEach
+	void setUp() {
+
+		ReflectionTestUtils.setField(objectStoreConfigService, "beanFactory", beanFactory);
+		ReflectionTestUtils.setField(objectStoreConfigService, "ctx", ctx);
+	}
+
+	@Test
+	void testGetType() {
+
+		String type = objectStoreConfigService.type();
+		assertEquals("oss", type);
+	}
+
+	@Test
+	void testHandlerNullConfig() {
+
+		objectStoreConfigService.handler(null);
+		verify(ctx, never()).publishEvent(any());
+	}
+
+	@Test
+	void testHandlerObsConfig() {
+
+		ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config = new ObjectStoreDTO<>();
+		config.setType(ObjectStoreDTO.Type.OBS);
+		ObjectStoreDTO.ObsConfig obsConfig = new ObjectStoreDTO.ObsConfig();
+		obsConfig.setAccessKey("access-key");
+		obsConfig.setSecretKey("secret-key");
+		obsConfig.setEndpoint("endpoint");
+		obsConfig.setBucketName("bucket-name");
+		config.setConfig(obsConfig);
+
+		objectStoreConfigService.handler(config);
+
+		verify(ctx).publishEvent(any(ObjectStoreConfigChangeEvent.class));
+	}
+
 }
