@@ -22,28 +22,12 @@ package org.apache.hertzbeat.common.constants;
  */
 public interface CollectorConstants {
 
-    String RESPONSE_TIME = "responseTime";
-
     String KEYWORD = "keyword";
-
-    String STATUS_CODE = "statusCode";
-
-    String ERROR_MSG = "errorMsg";
-
-    String URL = "url";
-
-    String HTTP_HEADER = "http://";
-
-    String HTTPS_HEADER = "https://";
 
     /**
      * POSTGRESQL un reachable status code
      */
     String POSTGRESQL_UN_REACHABLE_CODE = "08001";
-
-    String IPV6 = "ipv6";
-
-    String IPV4 = "ipv4";
 
     /**
      * MongoDB Atlas model

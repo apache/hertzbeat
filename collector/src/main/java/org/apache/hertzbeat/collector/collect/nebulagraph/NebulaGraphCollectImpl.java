@@ -30,8 +30,8 @@ import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -109,7 +109,7 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
             }
             resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             responseTime = System.currentTimeMillis() - startTime;
-            resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
+            resultMap.put(NetworkConstants.RESPONSE_TIME, Long.toString(responseTime));
             // Parse the response differently depending on the API
             if (GRAPH_API.equals(nebulaGraph.getUrl())) {
                 parseStatsResponse(resp, nebulaGraph.getTimePeriod(), resultMap);
@@ -131,7 +131,6 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
         }
     }
 
-
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_NEBULAGRAPH;
@@ -152,11 +151,11 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
             requestBuilder.setUri(host + ":" + port + uri);
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(host);
-            String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
+            String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
                     ? String.format("[%s]:%s", host, port + uri)
                     : String.format("%s:%s", host, port + uri);
 
-            requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+            requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
         }
 
         requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");

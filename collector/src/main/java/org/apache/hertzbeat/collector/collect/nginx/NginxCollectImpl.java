@@ -37,8 +37,8 @@ import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -53,6 +53,7 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.springframework.http.MediaType;
 
 /**
  * nginx collect
@@ -99,7 +100,7 @@ public class NginxCollectImpl extends AbstractCollect {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("StatusCode " + statusCode);
+                builder.setMsg(NetworkConstants.STATUS_CODE + statusCode);
                 return;
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
@@ -145,21 +146,21 @@ public class NginxCollectImpl extends AbstractCollect {
             requestBuilder.setUri(host + ":" + portWithUri);
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(host);
-            String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
+            String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
                     ? String.format("[%s]:%s", host, portWithUri)
                     : String.format("%s:%s", host, portWithUri);
 
             boolean ssl = Boolean.parseBoolean(nginxProtocol.getSsl());
             if (ssl){
-                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
+                requestBuilder.setUri(NetworkConstants.HTTPS_HEADER + baseUri);
             } else {
-                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+                requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
             }
         }
 
-        requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
-        requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
-        requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/plain");
+        requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
+        requestBuilder.addHeader(HttpHeaders.USER_AGENT, NetworkConstants.USER_AGENT);
+        requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN_VALUE);
 
         int timeout = Integer.parseInt(nginxProtocol.getTimeout());
         if (timeout > 0) {
@@ -197,7 +198,7 @@ public class NginxCollectImpl extends AbstractCollect {
             if (value != null) {
                 valueRowBuilder.addColumns(String.valueOf(value));
             } else {
-                if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(responseTime.toString());
                 } else {
                     valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
@@ -235,7 +236,7 @@ public class NginxCollectImpl extends AbstractCollect {
         for (ReqStatusResponse reqStatusResponse : reqStatusResponses) {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
-                if (CollectorConstants.RESPONSE_TIME.equals(alias)) {
+                if (NetworkConstants.RESPONSE_TIME.equals(alias)) {
                     valueRowBuilder.addColumns(String.valueOf(responseTime));
                 } else {
                     try {

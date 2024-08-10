@@ -18,23 +18,33 @@
 package org.apache.hertzbeat.common.constants;
 
 /**
- * Sign Constants
+ * Http Constants.
  */
-public interface SignConstants {
 
-    String DOUBLE_MARK = ":";
+public interface NetworkConstants {
 
-    String SINGLE_MARK = ";";
+    String KEEP_ALIVE = "Keep-Alive";
 
-    String WELL_NO = "#";
+    String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36\")";
 
-    String LINE_FEED = "\n";
+    String IPV6 = "ipv6";
 
-    String CARRIAGE_RETURN = "\r";
+    String IPV4 = "ipv4";
 
-    String RIGHT_DASH = "/";
+    String ERROR_MSG = "errorMsg";
 
-    String COMMA = ",";
+    String URL = "url";
 
-    String BLANK = " ";
+    String HTTP_HEADER = "http://";
+
+    String HTTPS_HEADER = "https://";
+
+    String RESPONSE_TIME = "responseTime";
+
+    String STATUS_CODE = "StatusCode";
+
+    String X_AUTH_TOKEN = "X-Auth-Token";
+
+    String LOCATION = "Location";
+
 }
