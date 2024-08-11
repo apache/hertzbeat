@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.collector.constants;
 
 /**
- * collector constant
+ * collector module constant.
  */
 public interface CollectorConstants {
 
@@ -37,4 +37,29 @@ public interface CollectorConstants {
     String ZOOKEEPER_APP = "zookeeper";
 
     String ZOOKEEPER_ENVI_HEAD = "Environment:";
+
+    String KEEP_ALIVE = "Keep-Alive";
+
+    String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36\")";
+
+    String IPV6 = "ipv6";
+
+    String IPV4 = "ipv4";
+
+    String ERROR_MSG = "errorMsg";
+
+    String URL = "url";
+
+    String HTTP_HEADER = "http://";
+
+    String HTTPS_HEADER = "https://";
+
+    String RESPONSE_TIME = "responseTime";
+
+    String STATUS_CODE = "StatusCode";
+
+    String X_AUTH_TOKEN = "X-Auth-Token";
+
+    String LOCATION = "Location";
+    
 }

@@ -46,6 +46,7 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -61,7 +62,6 @@ import org.springframework.http.MediaType;
 @Slf4j
 public class NginxCollectImpl extends AbstractCollect {
 
-    private static final int SUCCESS_CODE = 200;
     private static final String NGINX_STATUS_NAME = "nginx_status";
     private static final String REQ_STATUS_NAME = "req_status";
     private static final String AVAILABLE = "available";
@@ -98,7 +98,7 @@ public class NginxCollectImpl extends AbstractCollect {
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext)){
             // send an HTTP request and get the response data
             int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != SUCCESS_CODE) {
+            if (statusCode != HttpStatus.SC_OK) {
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg(NetworkConstants.STATUS_CODE + statusCode);
                 return;

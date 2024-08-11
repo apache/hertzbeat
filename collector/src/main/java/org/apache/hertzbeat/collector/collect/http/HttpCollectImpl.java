@@ -48,11 +48,11 @@ import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusP
 import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreator;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.ExporterParser;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.MetricFamily;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
 import org.apache.hertzbeat.collector.util.TimeExpressionUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
