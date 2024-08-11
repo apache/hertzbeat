@@ -162,6 +162,9 @@ metrics:
       parseScript: '$'
       
   - name: metrics
+    i18n:
+      zh-CN: 指标
+      en-US: Metrics
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -170,30 +173,69 @@ metrics:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
       - field: client_connected
         type: 0
+        i18n:
+          zh-CN: 客户端连接
+          en-US: Client Connected
       - field: client_disconnected
         type: 0
+        i18n:
+          zh-CN: 客户端断开
+          en-US: Client Disconnected
       - field: packets_sent
         type: 0
+        i18n:
+          zh-CN: 发送数据包
+          en-US: Packets Sent
       - field: packets_received
         type: 0
+        i18n:
+          zh-CN: 接收数据包
+          en-US: Packets Received
       - field: bytes_sent
         type: 0
+        i18n:
+          zh-CN: 发送字节
+          en-US: Bytes Sent
       - field: bytes_received
         type: 0
+        i18n:
+          zh-CN: 接收字节
+          en-US: Bytes Received
       - field: messages_sent
         type: 0
+        i18n:
+          zh-CN: 发送消息
+          en-US: Messages Sent
       - field: messages_acked
         type: 0
+        i18n:
+          zh-CN: 消息确认
+          en-US: Messages Acked
       - field: messages_delayed
         type: 0
+        i18n:
+          zh-CN: 延迟消息
+          en-US: Messages Delayed
       - field: authorization_deny
         type: 0
+        i18n:
+          zh-CN: 授权拒绝
+          en-US: Authorization Deny
       - field: client_authorize
         type: 0
+        i18n:
+          zh-CN: 客户端授权
+          en-US: Client Authorize
       - field: session_created
         type: 0
+        i18n:
+          zh-CN: 会话创建
+          en-US: Session Created
       - field: session_discarded
         type: 0
+        i18n:
+          zh-CN: 会话丢弃
+          en-US: Session Discarded
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - client.connected
@@ -251,53 +293,122 @@ metrics:
       parseScript: '$'
 
   - name: stats
+    i18n:
+      zh-CN: 统计
+      en-US: Stats
     priority: 2
     fields:
       # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
       - field: channels_count
         type: 0
+        i18n:
+          zh-CN: 通道数
+          en-US: Channels Count
       - field: channels_max
         type: 0
+        i18n:
+          zh-CN: 通道最大数
+          en-US: Channels Max
       - field: connections_count
         type: 0
+        i18n:
+          zh-CN: 连接数
+          en-US: Connections Count
       - field: connections_max
         type: 0
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Connections Max
       - field: delayed_count
         type: 0
+        i18n:
+          zh-CN: 延迟数
+          en-US: Delayed Count
       - field: delayed_max
         type: 0
+        i18n:
+          zh-CN: 最大延迟数
+          en-US: Delayed Max
       - field: live_connections_count
         type: 0
+        i18n:
+          zh-CN: 活动连接数
+          en-US: Live Connections Count
       - field: live_connections_max
         type: 0
+        i18n:
+          zh-CN: 最大活动连接数
+          en-US: Live Connections Max
       - field: retained_count
         type: 0
+        i18n:
+          zh-CN: 保留数
+          en-US: Retained Count
       - field: retained_max
         type: 0
+        i18n:
+          zh-CN: 最大保留数
+          en-US: Retained Max
       - field: sessions_count
         type: 0
+        i18n:
+          zh-CN: 会话数
+          en-US: Sessions Count
       - field: sessions_max
         type: 0
+        i18n:
+          zh-CN: 最大会话数
+          en-US: Sessions Max
       - field: suboptions_count
         type: 0
+        i18n:
+          zh-CN: 订阅选项数
+          en-US: Suboptions Count
       - field: suboptions_max
         type: 0
+        i18n:
+          zh-CN: 最大订阅选项数
+          en-US: Suboptions Max
       - field: subscribers_count
         type: 0
+        i18n:
+          zh-CN: 订阅者数
+          en-US: Subscribers Count
       - field: subscribers_max
         type: 0
+        i18n:
+          zh-CN: 最大订阅者数
+          en-US: Subscribers Max
       - field: subscriptions_count
         type: 0
+        i18n:
+          zh-CN: 订阅数
+          en-US: Subscriptions Count
       - field: subscriptions_max
         type: 0
+        i18n:
+          zh-CN: 最大订阅数
+          en-US: Subscriptions Max
       - field: subscriptions_shared_count
         type: 0
+        i18n:
+          zh-CN: 共享订阅数
+          en-US: Subscriptions Shared Count
       - field: subscriptions_shared_max
         type: 0
+        i18n:
+          zh-CN: 最大共享订阅数
+          en-US: Subscriptions Shared Max
       - field: topics_count
         type: 0
+        i18n:
+          zh-CN: 主题数
+          en-US: Topics Count
       - field: topics_max
         type: 0
+        i18n:
+          zh-CN: 最大主题数
+          en-US: Topics Max
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - channels.count
