@@ -90,6 +90,9 @@ metrics:
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: responseTime
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
         type: 0
         unit: ms
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
@@ -110,15 +113,30 @@ metrics:
       parseType: default
 
   - name: basic
+    i18n:
+      zh-CN: 基本信息
+      en-US: Basic
     priority: 1
     fields:
       - field: vm_name
+        i18n:
+          zh-CN: 虚拟机名称
+          en-US: VM Name
         type: 1
       - field: vm_vendor
+        i18n:
+          zh-CN: 虚拟机供应商
+          en-US: VM Vendor
         type: 1
       - field: vm_version
+        i18n:
+          zh-CN: 虚拟机版本
+          en-US: VM Version
         type: 1
       - field: up_time
+        i18n:
+          zh-CN: 运行时间
+          en-US: Uptime
         type: 0
         unit: ms
     aliasFields:
@@ -143,21 +161,42 @@ metrics:
 
   # metrics - environment
   - name: environment
+    i18n:
+      zh-CN: 环境信息
+      en-US: Environment
     priority: 2
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: https_proxyPort
+        i18n:
+          zh-CN: https 代理端口
+          en-US: https Proxy Port
         type: 0
       - field: os_name
+        i18n:
+          zh-CN: os 名称
+          en-US: OS Name
         type: 1
       - field: os_version
+        i18n:
+          zh-CN: os 版本
+          en-US: OS Version
         type: 1
       - field: os_arch
+        i18n:
+          zh-CN: os 架构
+          en-US: OS Arch
         type: 1
       - field: java_runtime_name
+        i18n:
+          zh-CN: java 运行时名称
+          en-US: Java Runtime Name
         type: 1
       - field: java_runtime_version
+        i18n:
+          zh-CN: java 运行时版本
+          en-US: Java Runtime Version
         type: 1
     # metric alias list, used to identify metrics in query results
     aliasFields:
@@ -195,15 +234,30 @@ metrics:
       parseScript: '$'
 
   - name: thread
+    i18n:
+      zh-CN: 线程
+      en-US: Thread
     priority: 4
     fields:
       - field: thread_count
+        i18n:
+          zh-CN: 线程数
+          en-US: Thread Count
         type: 0
       - field: total_started_thread
+        i18n:
+          zh-CN: 启动线程数
+          en-US: Total Started Thread
         type: 0
       - field: peak_thread_count
+        i18n:
+          zh-CN: 峰值线程数
+          en-US: Peak Thread Count
         type: 0
       - field: daemon_thread_count
+        i18n:
+          zh-CN: 守护线程数
+          en-US: Daemon Thread Count
         type: 0
     aliasFields:
       - $.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount
@@ -226,18 +280,33 @@ metrics:
       parseScript: '$'
 
   - name: code_cache
+    i18n:
+      zh-CN: 代码缓存
+      en-US: Code Cache
     priority: 5
     fields:
       - field: committed
+        i18n:
+          zh-CN: 已提交
+          en-US: Committed
         type: 1
         unit: MB
       - field: init
+        i18n:
+          zh-CN: 初始化
+          en-US: Init
         type: 0
         unit: MB
       - field: max
+        i18n:
+          zh-CN: 最大
+          en-US: Max
         type: 0
         unit: MB
       - field: used
+        i18n:
+          zh-CN: 已使用
+          en-US: Used
         type: 0
         unit: MB
     aliasFields:
