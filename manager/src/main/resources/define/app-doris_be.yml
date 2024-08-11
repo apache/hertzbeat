@@ -34,7 +34,7 @@ params:
   - field: host
     # name-param field display i18n name
     name:
-      zh-CN: 目标Host
+      zh-CN: 目标 Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
     type: host
@@ -62,6 +62,9 @@ params:
     defaultValue: 6000
 metrics:
   - name: doris_be_load_channel_count
+    i18n:
+      zh-CN: 加载通道数
+      en-US: Load Channel Count
     priority: 0
     fields:
       - field: value
@@ -76,6 +79,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_memtable_flush_total
+    i18n:
+      zh-CN: Memtable 刷新总数
+      en-US: Memtable Flush Total
     priority: 0
     fields:
       - field: value
@@ -90,6 +96,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_plan_fragment_count
+    i18n:
+      zh-CN: Plan Fragment 数量
+      en-US: Plan Fragment Count
     priority: 0
     fields:
       - field: value
@@ -104,6 +113,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_process_thread_num
+    i18n:
+      zh-CN: 进程线程数
+      en-US: Process Thread Num
     priority: 0
     fields:
       - field: value
@@ -118,6 +130,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_query_scan_rows
+    i18n:
+      zh-CN: 查询扫描行数
+      en-US: Query Scan Rows
     priority: 0
     fields:
       - field: value
@@ -132,6 +147,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_result_buffer_block_count
+    i18n:
+      zh-CN: 结果缓冲区块数
+      en-US: Result Buffer Block Count
     priority: 0
     fields:
       - field: value
@@ -146,6 +164,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_send_batch_thread_pool_queue_size
+    i18n:
+      zh-CN: 批量发送线程池队列大小
+      en-US: Send Batch Thread Pool Queue Size
     priority: 0
     fields:
       - field: value
@@ -160,6 +181,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_tablet_base_max_compaction_score
+    i18n:
+      zh-CN: Tablet Base 最大压缩分数
+      en-US: Tablet Base Max Compaction Score
     priority: 0
     fields:
       - field: value
@@ -174,6 +198,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_timeout_canceled_fragment_count
+    i18n:
+      zh-CN: 超时取消的 Fragment 数量
+      en-US: Timeout Canceled Fragment Count
     priority: 0
     fields:
       - field: value
@@ -188,6 +215,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_load_rows
+    i18n:
+      zh-CN: 加载行数
+      en-US: Load Rows
     priority: 0
     fields:
       - field: value
@@ -202,6 +232,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_all_rowsets_num
+    i18n:
+      zh-CN: Rowset 总数
+      en-US: All Rowsets Num
     priority: 0
     fields:
       - field: value
@@ -216,6 +249,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_all_segments_num
+    i18n:
+      zh-CN: Segment 总数
+      en-US: All Segments Num
     priority: 0
     fields:
       - field: value
@@ -230,6 +266,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_heavy_work_max_threads
+    i18n:
+      zh-CN: 繁重工作最大线程数
+      en-US: Heavy Work Max Threads
     priority: 0
     fields:
       - field: value
@@ -244,6 +283,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_light_work_max_threads
+    i18n:
+      zh-CN: 轻量工作最大线程数
+      en-US: Light Work Max Threads
     priority: 0
     fields:
       - field: value
@@ -258,6 +300,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_heavy_work_pool_queue_size
+    i18n:
+      zh-CN: 繁重工作池队列大小
+      en-US: Heavy Work Pool Queue Size
     priority: 0
     fields:
       - field: value
@@ -272,6 +317,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_light_work_pool_queue_size
+    i18n:
+      zh-CN: 轻量工作池队列大小
+      en-US: Light Work Pool Queue Size
     priority: 0
     fields:
       - field: value
@@ -286,6 +334,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_heavy_work_active_threads
+    i18n:
+      zh-CN: 繁重工作活跃线程数
+      en-US: Heavy Work Active Threads
     priority: 0
     fields:
       - field: value
@@ -300,6 +351,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_light_work_active_threads
+    i18n:
+      zh-CN: 轻量工作活跃线程数
+      en-US: Light Work Active Threads
     priority: 0
     fields:
       - field: value
@@ -314,6 +368,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_compaction_bytes_total
+    i18n:
+      zh-CN: 压缩字节总数
+      en-US: Compaction Bytes Total
     priority: 0
     fields:
       - field: type
@@ -331,6 +388,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_disks_avail_capacity
+    i18n:
+      zh-CN: 磁盘可用容量
+      en-US: Disks Avail Capacity
     priority: 0
     fields:
       - field: path
@@ -348,6 +408,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_disks_total_capacity
+    i18n:
+      zh-CN: 磁盘总容量
+      en-US: Disks Total Capacity
     priority: 0
     fields:
       - field: path
@@ -365,6 +428,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_local_bytes_read_total
+    i18n:
+      zh-CN: 本地读取字节总数
+      en-US: Local Bytes Read Total
     priority: 0
     fields:
       - field: value
@@ -380,6 +446,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_local_bytes_written_total
+    i18n:
+      zh-CN: 本地写入字节总数
+      en-US: Local Bytes Written Total
     priority: 0
     fields:
       - field: value
@@ -395,6 +464,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: doris_be_memory_allocated_bytes
+    i18n:
+      zh-CN: 内存分配字节
+      en-US: Memory Allocated Bytes
     priority: 0
     fields:
       - field: value
