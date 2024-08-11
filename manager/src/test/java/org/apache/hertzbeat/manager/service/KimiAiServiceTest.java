@@ -15,26 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.plugin.impl;
+package org.apache.hertzbeat.manager.service;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.plugin.Plugin;
+
+import org.apache.hertzbeat.manager.service.impl.KimiAiServiceImpl;
 
 /**
- * DemoPlugin
+ * test case for {@link KimiAiServiceImpl}
  */
-@Slf4j
-public class DemoPluginImpl implements Plugin {
 
-    /**
-     * execute when alert
-     */
-    @Override
-    public void alert(Alert alert) {
-        if (log.isDebugEnabled()) {
-            log.debug("DemoPluginImpl alert: {}", alert);   
-        }
-    }
-
+class KimiAiServiceTest {
 }

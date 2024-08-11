@@ -48,7 +48,7 @@ public class AliAiResponse {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public class AliAiOutput {
+    public static class AliAiOutput {
 
         /**
          * response message
