@@ -86,6 +86,7 @@ public class ObjectStoreConfigServiceImpl extends
             }
             ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
         }
+        log.warn("object store config is null, please check the configuration file.");
     }
 
     /**
