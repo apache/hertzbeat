@@ -35,7 +35,7 @@ params:
   - field: host
     # name-param field display i18n name
     name:
-      zh-CN: 目标Host
+      zh-CN: 目标 Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
     type: host
