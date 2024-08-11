@@ -19,7 +19,7 @@ category: os
 app: euleros
 # The monitoring i18n name
 name:
-  zh-CN: EulerOS操作系统
+  zh-CN: EulerOS 操作系统
   en-US: EulerOS
 # The description and help of this monitoring type
 help:
