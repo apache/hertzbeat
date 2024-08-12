@@ -43,7 +43,7 @@ public class BulletinDto {
     /**
      * Monitor fields
      */
-    private List<Map<String, List<String>>> fields;
+    private Map<String, List<String>> fields;
 
     /**
      * Monitor ids

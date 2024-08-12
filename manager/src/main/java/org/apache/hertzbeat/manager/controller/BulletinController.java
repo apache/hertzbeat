@@ -154,13 +154,13 @@ public class BulletinController {
 
             List<String> metricList = bulletin.getMetrics();
 
-            List<Map<String, List<String>>> fields = JsonUtil.fromJson(bulletin.getFields(), new TypeReference<>() {});
-            for (Map<String, List<String>> metrics : fields) {
-                for (Map.Entry<String, List<String>> entry : metrics.entrySet()) {
-                    String metric = entry.getKey();
-
-                }
-            }
+            Map<String, List<String>> fields; fields = JsonUtil.fromJson(bulletin.getFields(), new TypeReference<>() {});
+//            for (Map<String, List<String>> metrics : fields) {
+//                for (Map.Entry<String, List<String>> entry : metrics.entrySet()) {
+//                    String metric = entry.getKey();
+//
+//                }
+//            }
             BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
                     .name(null);
             System.out.println(metricList);
@@ -200,7 +200,7 @@ public class BulletinController {
                 .toList();
     }
 
-    private List<List<BulletinMetricsData.Field>> buildFieldsListFromMetricFieldList(String metric, List<Map<String, List<String>>> fieldList) {
+    private List<List<BulletinMetricsData.Field>> buildFieldsListFromMetricFieldList(String metric, Map<String, List<String>> fields) {
 //        List<BulletinMetricsData.Field> fields = fieldList.stream()
 //                .filter(map -> pair.getLeft().equals(metric))
 //                .map(pair -> BulletinMetricsData.Field.builder()

@@ -29,6 +29,7 @@ import { NzFormatEmitEvent, NzTreeNode, NzTreeNodeOptions } from 'ng-zorro-antd/
 import { finalize } from 'rxjs/operators';
 
 import { BulletinDefine } from '../../pojo/BulletinDefine';
+import { Fields } from '../../pojo/Fields';
 import { Monitor } from '../../pojo/Monitor';
 import { AppDefineService } from '../../service/app-define.service';
 import { BulletinDefineService } from '../../service/bulletin-define.service';
@@ -63,7 +64,7 @@ export class BulletinComponent implements OnInit {
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
   metrics = new Set<string>();
-  fields: any[] = [];
+  fields: Fields = {};
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -339,14 +340,11 @@ export class BulletinComponent implements OnInit {
         node.isChecked = true;
         this.metrics.add(node.key);
 
-        let existingField = this.fields.find(field => field[node.key]);
-        if (existingField) {
-          if (!existingField[node.key].includes(node.origin.value)) {
-            existingField[node.key].push(node.origin.value);
-          }
-        } else {
-          let fields = { [node.key]: [node.origin.value] };
-          this.fields.push(fields);
+        if (!this.fields[node.key]) {
+          this.fields[node.key] = [];
+        }
+        if (!this.fields[node.key].includes(node.origin.value)) {
+          this.fields[node.key].push(node.origin.value);
         }
       });
     }
@@ -357,18 +355,21 @@ export class BulletinComponent implements OnInit {
         node.isChecked = false;
         this.metrics.delete(node.key);
 
-        let existingField = this.fields.find(field => field[node.key]);
-        if (existingField) {
-          const index = existingField[node.key].indexOf(node.origin.value);
+        if (this.fields[node.key]) {
+          const index = this.fields[node.key].indexOf(node.origin.value);
           if (index > -1) {
-            existingField[node.key].splice(index, 1);
+            this.fields[node.key].splice(index, 1);
+          }
+          // 如果该 key 下的数组为空，则删除该 key
+          if (this.fields[node.key].length === 0) {
+            delete this.fields[node.key];
           }
         }
       });
     }
   }
 
-  loadData(page: number = 0, size: number = 8) {
+  loadData(page: number, size: number) {
     this.tableLoading = true;
     if (this.bulletinName != null) {
       const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(this.bulletinName, page, size).subscribe(

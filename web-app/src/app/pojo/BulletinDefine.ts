@@ -17,11 +17,13 @@
  * under the License.
  */
 
+import {Fields} from "./Fields";
+
 export class BulletinDefine {
   id!: number;
   name!: string;
   monitorIds!: number[];
   app!: string;
   metrics!: string[];
-  fields!: string[];
+  fields: Fields = {};
 }
