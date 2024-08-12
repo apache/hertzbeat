@@ -64,6 +64,9 @@ public class Collector {
     @NotNull
     private String ip;
 
+    @Schema(title = "collector version", description = "collector version")
+    private String version;
+
     @Schema(title = "collector status: 0-online 1-offline")
     @Min(0)
     private byte status;

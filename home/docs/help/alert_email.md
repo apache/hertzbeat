@@ -28,11 +28,7 @@ keywords: [open source monitoring tool, open source alerter, open source email n
 ### Email notification common issues    
 
 1. Hertzbeat deployed on its own intranet cannot receive email notifications   
-> Hertzbeat needs to configure its own mail server, not tancloud. Please confirm whether you have configured its own mail server in application.yml     
+> Hertzbeat needs to configure its own mail server. Please confirm whether you have configured its own mail server in application.yml     
 
-2. Cloud environment tancloud cannot receive email notification  
-> Please check whether there is any triggered alarm information in the alarm center.   
-> Please check whether the mailbox is configured correctly and whether the alarm strategy association is configured.  
-> Please check whether the warning email is blocked in the trash can of the mailbox.     
 
 Other issues can be fed back through the communication group ISSUE!

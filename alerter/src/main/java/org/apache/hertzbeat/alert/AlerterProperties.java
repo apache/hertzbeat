@@ -34,7 +34,7 @@ public class AlerterProperties {
     /**
      * Alarm content console link
      */
-    private String consoleUrl = "https://console.tancloud.cn";
+    private String consoleUrl = "https://console.tancloud.io";
 
     /**
      * WeWork webhook url

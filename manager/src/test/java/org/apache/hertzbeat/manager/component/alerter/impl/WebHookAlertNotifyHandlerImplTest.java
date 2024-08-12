@@ -17,26 +17,121 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
+import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
+import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.web.client.RestTemplate;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link WebHookAlertNotifyHandlerImpl}
  */
+
 @Slf4j
-class WebHookAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
+class WebHookAlertNotifyHandlerImplTest {
+
+    @Mock
+    private RestTemplate restTemplate;
+
+    private WebHookAlertNotifyHandlerImpl notifyHandler;
+
+    private NoticeTemplate noticeTemplate;
+
+    private NoticeReceiver receiver;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
+
+        MockitoAnnotations.openMocks(this);
+
+        noticeTemplate = mock(NoticeTemplate.class);
+        when(noticeTemplate.getContent()).thenReturn("This is a test notice template.");
+
+        receiver = mock(NoticeReceiver.class);
+        when(receiver.getHookUrl()).thenReturn("http://localhost:8080/hook/");
+
+        notifyHandler = new WebHookAlertNotifyHandlerImpl();
+        ReflectionTestUtils.setField(notifyHandler, "restTemplate", restTemplate);
     }
 
     @Test
-    void send() {
+    public void testSendSuccess() throws AlertNoticeException {
+
+        Alert alert = Alert.builder()
+                .content("Alert Content")
+                .lastAlarmTime(System.currentTimeMillis())
+                .id(1L)
+                .build();
+
+        when(restTemplate.postForEntity(
+                anyString(),
+                any(HttpEntity.class),
+                eq(String.class))
+        ).thenReturn(new ResponseEntity<>("", HttpStatus.OK));
+
+        assertDoesNotThrow(() -> notifyHandler.send(receiver, noticeTemplate, alert));
+
+        verify(restTemplate).postForEntity(
+                anyString(),
+                any(HttpEntity.class),
+                eq(String.class)
+        );
+        verify(restTemplate, times(1)).postForEntity(
+                anyString(),
+                any(HttpEntity.class),
+                eq(String.class)
+        );
+        verifyNoMoreInteractions(restTemplate);
     }
 
     @Test
-    void type() {
+    public void testSendFailed() {
+
+        Alert alert = Alert.builder()
+                .content("Alert Content")
+                .lastAlarmTime(System.currentTimeMillis())
+                .id(1L)
+                .build();
+
+        when(restTemplate.postForEntity(
+                anyString(),
+                any(HttpEntity.class),
+                eq(String.class))
+        ).thenReturn(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        AlertNoticeException exception = assertThrows(
+                AlertNoticeException.class,
+                () -> notifyHandler.send(receiver, noticeTemplate, alert)
+        );
+
+        assertEquals("[WebHook Notify Error] Http StatusCode 500 INTERNAL_SERVER_ERROR", exception.getMessage());
+        verify(restTemplate).postForEntity(
+                anyString(),
+                any(HttpEntity.class),
+                eq(String.class));
+        verifyNoMoreInteractions(restTemplate);
     }
+
 }

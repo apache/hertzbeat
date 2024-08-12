@@ -38,7 +38,7 @@ const CODE_MESSAGE: { [key: number]: string } = {
 @Injectable()
 export class DefaultInterceptor implements HttpInterceptor {
   private notified = false;
-  // 是否正在刷新TOKEN过程
+  // Whether token is refreshing
   private refreshToking = false;
   private refreshToken$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
@@ -70,7 +70,7 @@ export class DefaultInterceptor implements HttpInterceptor {
   }
 
   /**
-   * 刷新 Token 请求
+   * refresh Token request
    */
   private refreshTokenRequest(): Observable<Message<any>> {
     const refreshToken = this.storageSvc.getRefreshToken();
@@ -83,12 +83,13 @@ export class DefaultInterceptor implements HttpInterceptor {
   // #region 刷新Token方式一：使用 401 重新刷新 Token
 
   private tryRefreshToken(ev: HttpResponseBase, req: HttpRequest<any>, next: HttpHandler): Observable<any> {
-    // 1、若请求为刷新Token请求，表示来自刷新Token可以直接跳转登录页
+    // 1, redirect to login page if this request is used for refreshing token
     if ([`/account/auth/refresh`].some(url => req.url.includes(url))) {
       this.toLogin();
       return throwError(ev);
     }
-    // 2、如果 `refreshToking` 为 `true` 表示已经在请求刷新 Token 中，后续所有请求转入等待状态，直至结果返回后再重新发起请求
+    // 2, if `refreshToking` is true, means that the refreshing token request is in progress
+    // All requests will be suspended and wait for the refreshing token request to complete
     if (this.refreshToking) {
       return this.refreshToken$.pipe(
         filter(v => !!v),
@@ -96,12 +97,12 @@ export class DefaultInterceptor implements HttpInterceptor {
         switchMap(() => next.handle(this.reAttachToken(req)))
       );
     }
-    // 3、尝试调用刷新 Token
+    // 3、try refreshing Token
     this.refreshToking = true;
     this.refreshToken$.next(null);
     return this.refreshTokenRequest().pipe(
       switchMap(res => {
-        // 判断刷新TOKEN是否正确
+        // Check whether the TOKEN is correct
         this.refreshToking = false;
         if (res.code === 0 && res.data != undefined) {
           let token = res.data.token;
@@ -109,9 +110,8 @@ export class DefaultInterceptor implements HttpInterceptor {
           if (token != undefined) {
             this.storageSvc.storageAuthorizationToken(token);
             this.storageSvc.storageRefreshToken(refreshToken);
-            // 通知后续请求继续执行
+            // notifies subsequent requests to continue
             this.refreshToken$.next(token);
-            // 重新发起请求
             return next.handle(this.reAttachToken(req));
           } else {
             console.warn(`flush new token failed. ${res.msg}`);
@@ -123,7 +123,7 @@ export class DefaultInterceptor implements HttpInterceptor {
         }
       }),
       catchError(err => {
-        // token 刷新失败
+        // refreshing token is failed, redirect to login page
         console.warn(`flush new token failed. ${err.msg}`);
         this.refreshToking = false;
         this.toLogin();
@@ -176,7 +176,7 @@ export class DefaultInterceptor implements HttpInterceptor {
         }
       }),
       catchError((err: HttpErrorResponse) => {
-        // 处理失败响应，处理token过期自动刷新
+        // handle failed response and token expired
         switch (err.status) {
           case 401:
             return this.tryRefreshToken(err, newReq, next);

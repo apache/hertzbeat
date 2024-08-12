@@ -7,6 +7,12 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 
 > 对MYSQL数据库的通用性能指标进行采集监控。支持MYSQL5+。
 
+### 注意，必须添加 MYSQL jdbc 驱动 jar
+
+- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.1.0.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
+- 重启 HertzBeat 服务。
+
 ### 配置参数
 
 | 参数名称      | 参数帮助描述 |

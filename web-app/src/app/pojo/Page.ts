@@ -19,14 +19,12 @@
 
 export class Page<T> {
   content!: T[];
-  // 集合总页数
   totalPages!: number;
-  // 集合总数
   totalElements!: number;
-  // 查询的pageSize
+  // page size
   size!: number;
-  // 查询的pageIndex,从0开始
+  // page index, start from 0
   number!: number;
-  // 当前页的集合数量
+  // the number of elements in this page
   numberOfElements!: number;
 }

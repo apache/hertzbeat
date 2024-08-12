@@ -61,7 +61,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-
 /**
  * Calculate alarms based on the alarm definition rules and collected data
  */
@@ -124,7 +123,7 @@ public class CalculateAlarm {
                         calculate(metricsData);
                     }
                 } catch (InterruptedException ignored) {
-
+                    Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     log.error("calculate alarm error: {}.", e.getMessage(), e);
                 }

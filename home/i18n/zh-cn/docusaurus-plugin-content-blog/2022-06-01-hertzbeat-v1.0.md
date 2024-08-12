@@ -50,7 +50,7 @@ Bug修复.
 3. [[monitor]bugfix: 修复通知策略过滤标签时只能选择一个 #140](https://github.com/apache/hertzbeat/pull/140).  issue by @daqianxiaoyao
 4. [[td-engine store]bugfix: 修复tdengine入库指标数据时无table报错日志#150](https://github.com/apache/hertzbeat/pull/150). contribute by @ChineseTony
 5. [[collector]bugfix: 修复 warehouse data queue 未消费异常 #153](https://github.com/apache/hertzbeat/pull/153).  issue by @daqianxiaoyao
-7. [[web-app]bugfix: 修复黑暗主题时页面输入框校验出错时不可见 #157](https://github.com/apache/hertzbeat/pull/157). issue by @ConradWen
+6. [[web-app]bugfix: 修复黑暗主题时页面输入框校验出错时不可见 #157](https://github.com/apache/hertzbeat/pull/157). issue by @ConradWen
 
 **Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.0-beta.8...v1.0
 

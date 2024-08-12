@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 /**
- * <p>ConfigService interface provides CRUD operations for configurations.</p>
+ * <p>GeneralConfigService interface provides CRUD operations for configurations.</p>
  * @param <T> configuration type.
  * @version 1.0
  */

@@ -34,9 +34,11 @@ import org.springframework.stereotype.Component;
 public class AlerterWorkerPool {
 
     private ThreadPoolExecutor workerExecutor;
+    private ThreadPoolExecutor notifyExecutor;
 
     public AlerterWorkerPool() {
         initWorkExecutor();
+        initNotifyExecutor();
     }
 
     private void initWorkExecutor() {
@@ -57,6 +59,24 @@ public class AlerterWorkerPool {
                 new ThreadPoolExecutor.AbortPolicy());
     }
 
+    private void initNotifyExecutor() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setUncaughtExceptionHandler((thread, throwable) -> {
+                    log.error("notifyExecutor has uncaughtException.");
+                    log.error(throwable.getMessage(), throwable);
+                })
+                .setDaemon(true)
+                .setNameFormat("notify-worker-%d")
+                .build();
+        notifyExecutor = new ThreadPoolExecutor(6,
+                10,
+                10,
+                TimeUnit.SECONDS,
+                new SynchronousQueue<>(),
+                threadFactory,
+                new ThreadPoolExecutor.AbortPolicy());
+    }
+
     /**
      * Run the alerter task
      * @param runnable task
@@ -65,4 +85,15 @@ public class AlerterWorkerPool {
     public void executeJob(Runnable runnable) throws RejectedExecutionException {
         workerExecutor.execute(runnable);
     }
+
+    /**
+     * Executes the given runnable task using the notifyExecutor.
+     *
+     * @param runnable the task to be executed
+     * @throws RejectedExecutionException if the task cannot be accepted for execution
+     */
+    public void executeNotify(Runnable runnable) throws RejectedExecutionException {
+        notifyExecutor.execute(runnable);
+    }
+
 }

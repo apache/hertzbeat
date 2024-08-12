@@ -37,6 +37,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -100,9 +101,9 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
     }
 
     /**
-     * {@code TdEngine} 初始化数据库
+     * {@code TdEngine} init TdEngineDatabase
      *
-     * @param tdEngineProperties {@link TdEngineProperties} 对象实例
+     * @param tdEngineProperties {@link TdEngineProperties}
      */
     private void initTdEngineDatabase(final TdEngineProperties tdEngineProperties) throws SQLException {
         final Properties parseResultProperties = com.taosdata.jdbc.utils.StringUtils.parseUrl(tdEngineProperties.url(), null);
@@ -337,7 +338,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     continue;
                 }
                 String instanceValue = resultSet.getString(2);
-                if (instanceValue == null || "".equals(instanceValue)) {
+                if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
                     instanceValue = "";
                 }
                 double value = resultSet.getDouble(3);
@@ -376,7 +377,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
             instances.add(label);
         }
         if (instances.isEmpty()) {
-            // 若未指定instance，需查询当前指标数据前1周有多少个instance
+            // need to confirm that how many instances of current metrics one week ago
             String queryInstanceSql = String.format(QUERY_INSTANCE_SQL, table);
             Connection connection = null;
             try {
@@ -385,7 +386,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                 ResultSet resultSet = statement.executeQuery(queryInstanceSql);
                 while (resultSet.next()) {
                     String instanceValue = resultSet.getString(1);
-                    if (instanceValue == null || "".equals(instanceValue)) {
+                    if (instanceValue == null || StringUtils.isBlank(instanceValue)) {
                         instances.add("''");
                     } else {
                         instances.add(instanceValue);

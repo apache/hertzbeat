@@ -60,7 +60,7 @@ public class PushServiceImpl implements PushService {
 
     private static final long deleteBeforeTime = deleteMetricsPeriod / 2;
 
-    PushServiceImpl(){
+    public PushServiceImpl(){
         monitorIdCache = new HashMap<>();
         lastPushMetrics = new HashMap<>();
 
@@ -128,7 +128,7 @@ public class PushServiceImpl implements PushService {
                 lastPushMetrics.put(monitorId, metrics);
             }
             catch (Exception e) {
-                log.error("no metrics found, monitor id: {}, {}, {}", monitorId, e.getMessage(), e);
+                log.error("no metrics found, monitor id: {}, {}", monitorId, e.getMessage(), e);
                 return pushMetricsDto;
             }
         }

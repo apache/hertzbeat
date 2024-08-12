@@ -19,7 +19,7 @@ category: program
 app: dynamic_tp
 # The monitoring i18n name
 name:
-  zh-CN: DynamicTp线程池
+  zh-CN: DynamicTp 线程池
   en-US: DynamicTp Pool
 # The description and help of this monitoring type
 help:

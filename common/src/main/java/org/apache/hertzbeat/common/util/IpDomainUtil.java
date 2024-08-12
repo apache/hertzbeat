@@ -24,12 +24,12 @@ import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.http.conn.util.InetAddressUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * ipv4 ipv6 domain util
+ * ipv4 ipv6 domain util.
  */
 @Slf4j
 public final class IpDomainUtil {
@@ -40,7 +40,7 @@ public final class IpDomainUtil {
     private static final String LOCALHOST = "localhost";
 
     /**
-     * HTTP header schema
+     * HTTP header schema.
      */
     private static final Pattern DOMAIN_SCHEMA = Pattern.compile("^([hH][tT]{2}[pP]://|[hH][tT]{2}[pP][sS]://){1}[^\\s]*");
 
@@ -48,12 +48,12 @@ public final class IpDomainUtil {
     }
 
     /**
-     * whether it is ip or domain
+     * whether it is ip or domain.
      * @param ipDomain ip domain string
      * @return true-yes false-no
      */
     public static boolean validateIpDomain(String ipDomain) {
-        if (ipDomain == null || "".equals(ipDomain)) {
+        if (ipDomain == null || !StringUtils.hasText(ipDomain)) {
             return false;
         }
         ipDomain = ipDomain.trim();
@@ -70,19 +70,19 @@ public final class IpDomainUtil {
     }
 
     /**
-     * if domain or ip has http / https schema
+     * if domain or ip has http / https schema.
      * @param domainIp host
      * @return true or false
      */
     public static boolean isHasSchema(String domainIp) {
-        if (domainIp == null || "".equals(domainIp)) {
+        if (domainIp == null || !StringUtils.hasText(domainIp)) {
             return false;
         }
         return DOMAIN_SCHEMA.matcher(domainIp).matches();
     }
 
     /**
-     * get localhost IP
+     * get localhost IP.
      * @return ip
      */
     public static String getLocalhostIp() {
@@ -106,21 +106,21 @@ public final class IpDomainUtil {
         }
         return null;
     }
-
+    
     /**
-     *
+     * check IP address type.
      * @param ipDomain ip domain
      * @return IP address type
      */
     public static String checkIpAddressType(String ipDomain){
         if (StringUtils.hasText(ipDomain) && InetAddressUtils.isIPv6Address(ipDomain)) {
-            return CollectorConstants.IPV6;
+            return NetworkConstants.IPV6;
         }
-        return CollectorConstants.IPV4;
+        return NetworkConstants.IPV4;
     }
     
     /**
-     * get current local host name
+     * get current local host name.
      * @return hostname
      */
     public static String getCurrentHostName() {
