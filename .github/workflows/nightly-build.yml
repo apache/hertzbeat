@@ -39,8 +39,7 @@ jobs:
       env:
         IMAGE_PUSH: false
         IMAGE_LOAD: true
-        IMAGE_PLATFORM: linux/amd64
-        $IMAGE_VERSION: nightly
+        IMAGE_VERSION: nightly
       run: |
         docker buildx create --use --name myBuilder --driver docker-container
         docker buildx use myBuilder
