@@ -595,7 +595,7 @@ metrics:
       - field: current_fork_perc
         type: 0
         i18n:
-          zh-CN: 当前分叉百分比
+          zh-CN: 当前 Fork 百分比
           en-US: Current Fork Perc
       - field: current_save_keys_processed
         type: 0
@@ -685,12 +685,12 @@ metrics:
       - field: module_fork_in_progress
         type: 0
         i18n:
-          zh-CN: 模块分叉中
+          zh-CN: 模块 Fork 中
           en-US: Module Fork In Progress
       - field: module_fork_last_cow_size
         type: 0
         i18n:
-          zh-CN: 模块分叉上次 COW 大小
+          zh-CN: 模块 Fork 上次 COW 大小
           en-US: Module Fork Last Cow Size
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redis
@@ -825,12 +825,12 @@ metrics:
       - field: latest_fork_usec
         type: 0
         i18n:
-          zh-CN: 最新分叉微秒
+          zh-CN: 最新 Fork 微秒
           en-US: Latest Fork Usec
       - field: total_forks
         type: 0
         i18n:
-          zh-CN: 总分叉数
+          zh-CN: 总 Fork 数
           en-US: Total Forks
       - field: migrate_cached_sockets
         type: 0
