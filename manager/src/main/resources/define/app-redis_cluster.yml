@@ -750,12 +750,12 @@ metrics:
       - field: instantaneous_input_kbps
         type: 0
         i18n:
-          zh-CN: 每秒输入 KB
+          zh-CN: 瞬时的每秒输入 KB
           en-US: Instantaneous Input KB
       - field: instantaneous_output_kbps
         type: 0
         i18n:
-          zh-CN: 每秒输出 KB
+          zh-CN: 瞬时的每秒输出 KB
           en-US: Instantaneous Output KB
       - field: rejected_connections
         type: 0
