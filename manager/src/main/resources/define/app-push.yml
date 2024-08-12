@@ -62,6 +62,9 @@ params:
 metrics:
   # metrics - all
   - name: metrics
+    i18n:
+      zh-CN: 指标
+      en-US: Metrics
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
