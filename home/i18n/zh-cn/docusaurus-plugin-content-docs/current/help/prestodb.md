@@ -33,6 +33,19 @@ keywords: [ 开源监控系统, 开源数据库监控, Presto数据库监控 ]
 | runningDrivers | 无       | 运行中的驱动数 |
 | runningTasks | 无       | 运行中的任务数 |
 
+#### 指标集合：节点信息
+
+| 指标名称 | 指标单位 | 指标帮助描述                       |
+|------|------| ---------------------------------- |
+| uri  | 无    | 节点链接 |
+| recentRequests  | 无    | 最近一段时间内的请求数量 |
+| recentFailures  | 无    | 最近一段时间内的失败请求数量 |
+| recentSuccesses  | 无    | 最近一段时间内的成功请求数量 |
+| lastRequestTime  | 无    | 最近一次请求的时间 |
+| lastResponseTime  | 无    | 最近一次响应的时间 |
+| age  | 无    | 持续时间 |
+| recentFailureRatio  | 无    | 最近一段时间内的失败 |
+
 
 #### 指标集合：节点状态
 
