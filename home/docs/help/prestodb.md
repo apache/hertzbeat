@@ -33,6 +33,20 @@ keywords: [ open source monitoring system, open source database monitoring, pres
 | runningDrivers | None | Running Drivers|
 | runningTasks | None | Running Tasks |
 
+### Metrics Collection: Node Information
+
+| Metric Name       | Unit | Metric Description                                 |
+|-------------------|------|----------------------------------------------------|
+| `uri`             | None | Node link                                          |
+| `recentRequests`  | None | Number of requests in the recent period            |
+| `recentFailures`  | None | Number of failed requests in the recent period     |
+| `recentSuccesses` | None | Number of successful requests in the recent period |
+| `lastRequestTime` | None | Time of the most recent request                    |
+| `lastResponseTime`| None | Time of the most recent response                   |
+| `age`             | None | Duration of operation                              |
+| `recentFailureRatio` | None | Failure rate in the recent period                  |
+
+
 #### Metric Set:  Node Status
 
 
