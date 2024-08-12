@@ -19,7 +19,8 @@ package org.apache.hertzbeat.collector.collect.redfish;
 
 import java.nio.charset.StandardCharsets;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -51,12 +52,12 @@ public class RedfishConnectSession implements ConnectSession {
         this.active = false;
         String url = RedfishClient.REDFISH_SESSION_SERVICE + session.location();
         HttpDelete httpDelete = new HttpDelete(url);
-        httpDelete.setHeader("X-Auth-Token", session.token());
-        httpDelete.setHeader("Location", session.location());
+        httpDelete.setHeader(NetworkConstants.X_AUTH_TOKEN, session.token());
+        httpDelete.setHeader(NetworkConstants.LOCATION, session.location());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpDelete)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("Http State code: " + statusCode);
+                throw new Exception(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
             }
         } catch (Exception e) {
             throw new Exception("Redfish session close error:" + e.getMessage());
@@ -75,18 +76,18 @@ public class RedfishConnectSession implements ConnectSession {
             url = this.session.host() + ":" + this.session.port() + uri;
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(this.session.host());
-            String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
+            String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
                     ? String.format("[%s]:%s", this.session.host(), this.session.port() + uri)
                     : String.format("%s:%s", this.session.host(), this.session.port() + uri);
-            url = CollectorConstants.HTTPS_HEADER + baseUri;
+            url = NetworkConstants.HTTPS_HEADER + baseUri;
         }
         HttpGet httpGet = new HttpGet(url);
-        httpGet.setHeader("X-Auth-Token", session.token());
-        httpGet.setHeader("Location", session.location());
+        httpGet.setHeader(NetworkConstants.X_AUTH_TOKEN, session.token());
+        httpGet.setHeader(NetworkConstants.LOCATION, session.location());
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(httpGet)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK) {
-                throw new Exception("Http State code: " + statusCode);
+                throw new Exception(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
             }
             return EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
         } catch (Exception e) {

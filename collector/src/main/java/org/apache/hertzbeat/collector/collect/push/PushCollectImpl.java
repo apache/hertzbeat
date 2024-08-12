@@ -28,7 +28,8 @@ import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
@@ -46,6 +47,7 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.springframework.http.MediaType;
 
 /**
  * push style collect
@@ -86,7 +88,7 @@ public class PushCollectImpl extends AbstractCollect {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("StatusCode " + statusCode);
+                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return;
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
@@ -124,19 +126,19 @@ public class PushCollectImpl extends AbstractCollect {
             requestBuilder.setUri(pushProtocol.getHost() + ":" + pushProtocol.getPort() + uri);
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(pushProtocol.getHost());
-            String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
+            String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
                     ? String.format("[%s]:%s", pushProtocol.getHost(), pushProtocol.getPort() + uri)
                     : String.format("%s:%s", pushProtocol.getHost(), pushProtocol.getPort() + uri);
 
-            requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+            requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
         }
 
-        requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
-        requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
+        requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
+        requestBuilder.addHeader(HttpHeaders.USER_AGENT, NetworkConstants.USER_AGENT);
 
         requestBuilder.addParameter("id", String.valueOf(monitorId));
         requestBuilder.addParameter("time", String.valueOf(startTime));
-        requestBuilder.addHeader(HttpHeaders.ACCEPT, "application/json");
+        requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
 
 
         //requestBuilder.setUri(pushProtocol.getUri());

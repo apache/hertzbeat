@@ -17,8 +17,10 @@
 
 package org.apache.hertzbeat.collector.collect.redfish;
 
+import java.nio.charset.StandardCharsets;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpHeaders;
@@ -30,6 +32,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.StringEntity;
+import org.springframework.http.MediaType;
 
 /**
  * redfish client impl
@@ -66,20 +69,20 @@ public class RedfishClient {
             requestBuilder.setUri(this.host + ":" + this.port + uri);
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(this.host);
-            String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
+            String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
                     ? String.format("[%s]:%s", this.host, this.port + uri)
                     : String.format("%s:%s", this.host, this.port + uri);
 
-            requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+            requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
         }
 
-        requestBuilder.addHeader(HttpHeaders.CONNECTION, "Keep-Alive");
-        requestBuilder.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-        requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
-        requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, "UTF-8");
+        requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
+        requestBuilder.addHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        requestBuilder.addHeader(HttpHeaders.USER_AGENT, NetworkConstants.USER_AGENT);
+        requestBuilder.addHeader(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8 + "");
 
         final String json = "{\"UserName\": \"" + this.username + "\", \"Password\": \"" + this.password + "\"}";
-        StringEntity entity = new StringEntity(json, "UTF-8");
+        StringEntity entity = new StringEntity(json, StandardCharsets.UTF_8);
         requestBuilder.setEntity(entity);
 
         if (this.timeout > 0) {
@@ -97,10 +100,10 @@ public class RedfishClient {
         try (CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpClientContext)) {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_CREATED) {
-                throw new Exception("Http Status Code: " + statusCode);
+                throw new Exception(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
             }
-            String location = response.getFirstHeader("Location").getValue();
-            String auth = response.getFirstHeader("X-Auth-Token").getValue();
+            String location = response.getFirstHeader(NetworkConstants.LOCATION).getValue();
+            String auth = response.getFirstHeader(NetworkConstants.X_AUTH_TOKEN).getValue();
             session = new Session(auth, location, this.host, this.port);
         } catch (Exception e) {
             throw new Exception("Redfish session create error: " + e.getMessage());
