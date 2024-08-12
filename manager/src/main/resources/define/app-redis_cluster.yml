@@ -865,17 +865,17 @@ metrics:
       - field: tracking_total_keys
         type: 0
         i18n:
-          zh-CN: 跟踪总键数
+          zh-CN: 跟踪键总数
           en-US: Tracking Total Keys
       - field: tracking_total_items
         type: 0
         i18n:
-          zh-CN: 跟踪总项数
+          zh-CN: 跟踪项总数
           en-US: Tracking Total Items
       - field: tracking_total_prefixes
         type: 0
         i18n:
-          zh-CN: 跟踪总前缀数
+          zh-CN: 跟踪前缀总数
           en-US: Tracking Total Prefixes
       - field: unexpected_error_replies
         type: 0
