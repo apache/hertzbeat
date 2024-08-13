@@ -23,9 +23,10 @@ CURRENT_DIR=`pwd`
 cd ../../../dist
 # auto detect hertzbeat version
 VERSION=`ls apache-hertzbeat-*-incubating-docker-compose.tar.gz| awk -F"-" '{print $3}'`
-# use the version param
-if [ -n "$1" ]; then
-    VERSION="$1";
+
+# when env IMAGE_VERSION is set, use it as version 
+if [ -n "$IMAGE_VERSION" ]; then
+    VERSION="$IMAGE_VERSION";
 fi
 
 # compile context dir
