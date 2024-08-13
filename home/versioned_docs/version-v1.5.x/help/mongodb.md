@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 
 ### Configuration parameter
 
-| Parameter name         | Parameter help description                                                                                              |
+|     Parameter name     |                                               Parameter help description                                                |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------|
 | Target Host            | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://).                             |
 | Monitoring name        | Identify the name of this monitoring. The name needs to be unique.                                                      |
@@ -27,7 +27,7 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 
 #### Metric set:Build Info
 
-| Metric name      | Metric unit | Metric help description                                                                 |
+|   Metric name    | Metric unit |                                 Metric help description                                 |
 |------------------|-------------|-----------------------------------------------------------------------------------------|
 | version          | none        | The version number of the MongoDB server.                                               |
 | gitVersion       | none        | The Git version of the MongoDB codebase.                                                |
@@ -39,7 +39,7 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 
 #### Metric set:Server Document
 
-| Metric name | Metric unit | Metric help description           |
+| Metric name | Metric unit |      Metric help description      |
 |-------------|-------------|-----------------------------------|
 | deleted     | none        | The number of documents deleted.  |
 | inserted    | none        | The number of documents inserted. |
@@ -48,21 +48,21 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 
 #### Metric set:Server Operation
 
-| Metric name    | Metric unit | Metric help description                                          |
+|  Metric name   | Metric unit |                     Metric help description                      |
 |----------------|-------------|------------------------------------------------------------------|
 | scanAndOrder   | none        | The number of times a query required both scanning and ordering. |
 | writeConflicts | none        | The number of write conflicts that occurred.                     |
 
 #### Metric set: Max Connections
 
-| Metric name      | Metric unit | Metric help description                    |
+|   Metric name    | Metric unit |          Metric help description           |
 |------------------|-------------|--------------------------------------------|
 | deletedDocuments | none        | Number of deleted documents.               |
 | passes           | none        | Total number of passes for TTL operations. |
 
 #### Metric set:System Info
 
-| Metric name | Metric unit | Metric help description                              |
+| Metric name | Metric unit |               Metric help description                |
 |-------------|-------------|------------------------------------------------------|
 | currentTime | none        | Current system time.                                 |
 | hostname    | none        | Hostname of the server.                              |
@@ -75,7 +75,7 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 
 #### Metric set:OS Info
 
-| Metric name | Metric unit | Metric help description          |
+| Metric name | Metric unit |     Metric help description      |
 |-------------|-------------|----------------------------------|
 | type        | none        | Type of the operating system.    |
 | name        | none        | Name of the operating system.    |
@@ -83,7 +83,7 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 
 #### Metric set：Extra Info
 
-| Metric name     | Metric unit | Metric help description                                |
+|   Metric name   | Metric unit |                Metric help description                 |
 |-----------------|-------------|--------------------------------------------------------|
 | versionString   | none        | String describing the version of the operating system. |
 | libcVersion     | none        | Version of the C standard library (libc).              |

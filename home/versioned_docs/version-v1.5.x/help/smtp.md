@@ -13,12 +13,11 @@ Determine whether the server is available through the hello command in SMTP
 
 > see https://datatracker.ietf.org/doc/html/rfc821#page-13
 
-
 **Protocol Use：SMTP**
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -33,7 +32,7 @@ Determine whether the server is available through the hello command in SMTP
 
 #### Metrics Set：summary
 
-| Metric name  | Metric unit | Metric help description                                        |
+| Metric name  | Metric unit |                    Metric help description                     |
 |--------------|-------------|----------------------------------------------------------------|
 | responseTime | ms          | The time it takes for the SMTP server to respond to a request. |
 | response     |             | Response Status.                                               |

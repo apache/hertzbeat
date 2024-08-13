@@ -4,12 +4,12 @@ author: tom
 author_title: tom   
 author_url: https://github.com/tomsun28  
 author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
-tags: [opensource]  
+tags: [opensource]
 ---
 
 > Friendly Cloud Monitoring Tool. | 易用友好的实时监控工具, 无需Agent, 强大自定义监控能力.
 
-**Home: [hertzbeat.com](https://hertzbeat.com)**  
+**Home: [hertzbeat.com](https://hertzbeat.com)**
 
 Hi guys! HertzBeat v1.1.1 is coming. This version brings custom monitoring enhancements, and the collected metric data can be assigned as a variable to the next collection. Fixed several bugs and improved the overall stable usability.
 
@@ -24,7 +24,7 @@ Feature：
 2. [[monitor] support use pre collect metrics data to replace next metrics config params #206](https://github.com/apache/hertzbeat/pull/206).
 3. [[collector] use basic auth with raw HTTP headers instead of preemptive #212](https://github.com/apache/hertzbeat/pull/212)
 4. [[manager,alerter] support wework, dingDing, flyBook webhook url config #213](https://github.com/apache/hertzbeat/pull/213)
-5.  [[monitor] feature update numeric metrics all contain decimal points #217](https://github.com/apache/hertzbeat/pull/217)
+5. [[monitor] feature update numeric metrics all contain decimal points #217](https://github.com/apache/hertzbeat/pull/217)
 6. [[web-app]feature:toggle [enable and cancel] button #218](https://github.com/apache/hertzbeat/pull/218)
 7. [[manager] update define yml file name add prefix "app" or "param" #221](https://github.com/apache/hertzbeat/pull/221)
 
@@ -53,7 +53,7 @@ Have Fun!
 > HertzBeat is modular, `manager, collector, scheduler, warehouse, alerter` modules are decoupled for easy understanding and custom development.  
 > Welcome to HertzBeat's [Cloud Environment TanCloud](https://console.tancloud.cn) to try and discover more.    
 > Welcome to join us to build hertzbeat together.
-
+>
 > `HertzBeat`'s multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring tool.
 
 **If you like HertzBeat, star us on GitHub**

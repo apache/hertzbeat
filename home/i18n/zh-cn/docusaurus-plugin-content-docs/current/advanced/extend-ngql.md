@@ -20,11 +20,11 @@ NGQL查询回来的数据字段和我们需要的指标映射，就能获取对�
 > `filterName`: 过滤属性名称（可选）  
 > `filterValue`: 过滤属性值（可选）
 
-例如： 
+例如：
 - online_meta_count#SHOW HOSTS META#Status#ONLINE  
-    对 `SHOW HOSTS META` 返回的结果中统计滤Status==ONLINE的数量
+对 `SHOW HOSTS META` 返回的结果中统计滤Status==ONLINE的数量
 - online_meta_count#SHOW HOSTS META##  
-    统计 `SHOW HOSTS META` 返回的行数 
+统计 `SHOW HOSTS META` 返回的行数
 
 #### **oneRow**
 
@@ -72,6 +72,7 @@ NGQL查询回来的数据字段和我们需要的指标映射，就能获取对�
 ![](/img/docs/advanced/extend-point-1.png)
 
 ------- 
+
 下面详细介绍下文件的配置用法，请注意看使用注释。
 
 ### 监控模版YML
@@ -169,3 +170,4 @@ metrics:
         - match (v:tag2) return "tag2" as name ,count(v) as cnt
       timeout: ^_^timeout^_^
 ```
+

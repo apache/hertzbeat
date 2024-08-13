@@ -5,25 +5,25 @@ sidebar_label: Help Center
 ---
 
 > Hertzbeat - An open source, real-time monitoring tool with custom-monitor and agentLess.  
-> Help documents and auxiliary information during use 
+> Help documents and auxiliary information during use
 
 ## 🔬 Monitoring services
 
 > Regularly collect and monitor the performance Metrics exposed by end-to-end services, provide visual interfaces, and process data for alarm and other service scheduling.      
 > Planned monitoring type：application service, database, operating system, cloud native, open source middleware.
 
-### Application service monitoring 
+### Application service monitoring
 
-&emsp;&#x1F449;&emsp;[Website monitoring](website) <br /> 
-&emsp;&#x1F449;&emsp;[HTTP API](api) <br /> 
-&emsp;&#x1F449;&emsp;[PING Connectivity](ping) <br /> 
-&emsp;&#x1F449;&emsp;[Port availability](port) <br /> 
+&emsp;&#x1F449;&emsp;[Website monitoring](website) <br />
+&emsp;&#x1F449;&emsp;[HTTP API](api) <br />
+&emsp;&#x1F449;&emsp;[PING Connectivity](ping) <br />
+&emsp;&#x1F449;&emsp;[Port availability](port) <br />
 &emsp;&#x1F449;&emsp;[Full site monitoring](fullsite) <br />
 &emsp;&#x1F449;&emsp;[SSL Cert monitoring](ssl_cert) <br />
 &emsp;&#x1F449;&emsp;[JVM monitoring](jvm) <br />
 &emsp;&#x1F449;&emsp;[SpringBoot2.0](springboot2) <br />
 
-### Database monitoring  
+### Database monitoring
 
 &emsp;&#x1F449;&emsp;[MYSQL database monitoring](mysql) <br />
 &emsp;&#x1F449;&emsp;[MariaDB database monitoring](mariadb) <br />
@@ -34,7 +34,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[OpenGauss database monitoring](opengauss) <br />
 &emsp;&#x1F449;&emsp;[IoTDB database monitoring](iotdb) <br />
 
-### Operating system monitoring     
+### Operating system monitoring
 
 &emsp;&#x1F449;&emsp;[Linux operating system monitoring](linux) <br />
 &emsp;&#x1F449;&emsp;[Windows operating system monitoring](windows) <br />
@@ -59,34 +59,33 @@ sidebar_label: Help Center
 
 ***
 
-## 💡 Alarm service  
+## 💡 Alarm service
 
 > More liberal threshold alarm configuration (calculation expression), supports email, SMS, WebHook, DingDing, WeChat and FeiShu for alarm notification.
 > The positioning of alarm service is to trigger the threshold accurately and timely, and the alarm notification can be reached in time.
 
-### Alarm center  
+### Alarm center
 
 > The triggered alarm information center provides query and filtering of alarm deletion, alarm processing, mark unprocessed, alarm level status, etc.
 
-### Alarm configuration 
+### Alarm configuration
 
 > The Metric threshold configuration provides the Metric threshold configuration in the form of expression, which can set the alarm level, trigger times, alarm notification template and whether it is enabled, correlation monitoring and other functions.
 
-More details see&emsp;&#x1F449;&emsp;[threshold alarm](alert_threshold) <br /> 
-&emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert_threshold_expr)   
+More details see&emsp;&#x1F449;&emsp;[threshold alarm](alert_threshold) <br />
+&emsp;&emsp;&emsp;&#x1F449;&emsp;[Threshold expression](alert_threshold_expr)
 
-### Alarm notification  
+### Alarm notification
 
 > After triggering the alarm information, in addition to being displayed in the alarm center list, it can also be notified to the designated recipient in a specified way (e-mail, wechat and FeiShu etc.)   
 > Alarm notification provides different types of notification methods, such as email recipient, enterprise wechat robot notification, DingDing robot notification, and FeiShu robot notification.   
-> After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.   
-
+> After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.
 
 &emsp;&#x1F449;&emsp;[Configure Email Notification](alert_email) <br />
 &emsp;&#x1F449;&emsp;[Configure Discord Notification](alert_webhook) <br />
 &emsp;&#x1F449;&emsp;[Configure Slack Notification](alert_webhook) <br />
 &emsp;&#x1F449;&emsp;[Configure Telegram Notification](alert_webhook) <br />
-&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br /> 
+&emsp;&#x1F449;&emsp;[Configure WebHook Notification](alert_webhook) <br />
 &emsp;&#x1F449;&emsp;[Configure enterprise WeChat Robot Notification](alert_wework) <br />    
-&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br /> 
-&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />   
+&emsp;&#x1F449;&emsp;[Configure DingDing Robot Notification](alert_dingtalk) <br />
+&emsp;&#x1F449;&emsp;[Configure FeiShu Robot Notification](alert_feishu) <br />

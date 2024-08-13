@@ -12,7 +12,6 @@ This article introduces how to use the hertzbeat monitoring tool to detect the v
 
 Apache HertzBeat (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
 
-
 github: https://github.com/apache/hertzbeat
 
 #### Install HertzBeat
@@ -29,7 +28,6 @@ github: https://github.com/apache/hertzbeat
 
 > System Page -> Monitor Menu -> SSL Certificate -> Add SSL Certificate
 
-
 ![](/img/docs/start/ssl_1.png)
 
 2. Configure the monitoring website
@@ -43,9 +41,7 @@ github: https://github.com/apache/hertzbeat
 
 > In the monitoring list, you can view the monitoring status, and in the monitoring details, you can view the metric data chart, etc.
 
-
 ![](/img/docs/start/ssl_3.png)
-
 
 ![](/img/docs/start/ssl_11.png)
 
@@ -53,37 +49,29 @@ github: https://github.com/apache/hertzbeat
 
 > System Page -> Alarms -> Alarm Thresholds -> New Thresholds
 
-
 ![](/img/docs/start/ssl_4.png)
 
 > Configure the threshold, select the SSL certificate metric object, configure the alarm expression-triggered when the metric `expired` is `true`, that is, `equals(expired,"true")`, set the alarm level notification template information, etc.
-
 
 ![](/img/docs/start/ssl_5.png)
 
 > Associating thresholds with monitoring, in the threshold list, set which monitoring this threshold applies to.
 
-
 ![](/img/docs/start/ssl_6.png)
-
 
 5. Set the threshold (triggered one week before the certificate expires)
 
 > In the same way, add a new configuration threshold and configure an alarm expression - when the metric expires timestamp `end_timestamp`, the `now()` function is the current timestamp, if the configuration triggers an alarm one week in advance: `end_timestamp <= (now( ) + 604800000)` , where `604800000` is the 7-day total time difference in milliseconds.
 
-
 ![](/img/docs/start/ssl_7.png)
 
 > Finally, you can see the triggered alarm in the alarm center.
 
-
 ![](/img/docs/start/ssl_8.png)
-
 
 6. Alarm notification (in time notification via Dingding WeChat Feishu, etc.)
 
 > Monitoring Tool -> Alarm Notification -> New Receiver
-
 
 ![](/img/docs/start/ssl_10.png)
 
@@ -92,7 +80,6 @@ For token configuration such as Dingding WeChat Feishu, please refer to the help
 https://hertzbeat.apache.org/docs/help/alert_dingtalk
 
 > Alarm Notification -> New Alarm Notification Policy -> Enable Notification for the Recipient Just Configured
-
 
 ![](/img/docs/start/ssl_11.png)
 

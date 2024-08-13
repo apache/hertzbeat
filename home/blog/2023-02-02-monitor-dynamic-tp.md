@@ -17,7 +17,6 @@ tags: [opensource, practice]
 - Real-time monitoring of the running status of the thread pool, alarms are triggered when the alarm policy is set, and alarm information is pushed to the office platform.
 - Collect thread pool metrics data regularly, and use grafana as a visual monitoring platform to monitor the overall situation.
 
-
 ### HertzBeat Introduction
 
 > HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool with powerful customizable monitoring capabilities.
@@ -130,7 +129,6 @@ Path: Menu -> Alert Thresholds -> Add Thresholds
 
 ![hertzbeat](/img/blog/monitor-dynamic-tp-6.png)
 
-
 2. Add message notification recipients
 
 > Configure recipients to let alert message know who to send to and in what way.
@@ -151,7 +149,6 @@ Message notification methods support **Email, Dingtalk, WeChat, Flybook, WebHook
 > Configure the alert notification policy to bind alert messages to recipients so that you can decide which alerts go to which person.
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
-
 
 ### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding.
 
