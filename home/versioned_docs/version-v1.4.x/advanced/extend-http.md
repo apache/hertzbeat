@@ -1,35 +1,33 @@
 ---
 id: extend-http  
 title: HTTP Protocol Custom Monitoring  
-sidebar_label: HTTP Protocol Custom Monitoring    
+sidebar_label: HTTP Protocol Custom Monitoring
 ---
 
-> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use HTTP protocol to customize Metric monitoring   
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use HTTP protocol to customize Metric monitoring
 
-### HTTP protocol collection process     
+### HTTP protocol collection process
 
 【**Call HTTP API**】->【**Response Verification**】->【**Parse Response Data**】->【**Default method parsing｜JsonPath script parsing | XmlPath parsing(todo) | Prometheus parsing**】->【**Metric data extraction**】
 
 It can be seen from the process that we define a monitoring type of HTTP protocol. We need to configure HTTP request parameters, configure which Metrics to obtain, and configure the parsing method and parsing script for response data.
-HTTP protocol supports us to customize HTTP request path, request header, request parameters, request method, request body, etc.   
+HTTP protocol supports us to customize HTTP request path, request header, request parameters, request method, request body, etc.
 
 **System default parsing method**：HTTP interface returns the JSON data structure specified by hertzbeat, that is, the default parsing method can be used to parse the data and extract the corresponding Metric data. For details, refer to [**System Default Parsing**](extend-http-default)    
-**JsonPath script parsing method**：Use JsonPath script to parse the response JSON data, return the data structure specified by the system, and then provide the corresponding Metric data. For details, refer to [**JsonPath Script Parsing**](extend-http-jsonpath)    
-  
+**JsonPath script parsing method**：Use JsonPath script to parse the response JSON data, return the data structure specified by the system, and then provide the corresponding Metric data. For details, refer to [**JsonPath Script Parsing**](extend-http-jsonpath)
 
-### Custom Steps  
+### Custom Steps
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 ------- 
 
-Configuration usages of the monitoring templates yml are detailed below. Please pay attention to usage annotation.   
+Configuration usages of the monitoring templates yml are detailed below. Please pay attention to usage annotation.
 
 ### Monitoring Templates YML
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
-
-
+>
 > Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
 
 eg：Define a custom monitoring type `app` named `example_http` which use the HTTP protocol to collect data.
@@ -204,3 +202,4 @@ metrics:
         basicAuthPassword: ^_^password^_^
       parseType: default
 ```
+

@@ -1,6 +1,6 @@
 # HertzBeat Website
 
-This website is built with [Docusaurus](https://docusaurus.io/).     
+This website is built with [Docusaurus](https://docusaurus.io/).
 
 ## Installation
 
@@ -55,7 +55,6 @@ GITHUB_HOST=gitee.com USE_SSH=true yarn deploy
 yarn docusaurus docs:version v1.5.x
 ```
 
-
 ## Directory Structure
 
 ```html
@@ -85,3 +84,4 @@ yarn docusaurus docs:version v1.5.x
 |-- docusaurus.config.js
 |-- sidebars.js // document sidebar menu configuration
 ```
+

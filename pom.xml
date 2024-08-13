@@ -490,7 +490,7 @@
                     <skip>false</skip>
                     <markdown>
                         <includes>
-                            <include>home/docs/**/*.md</include>
+                            <include>home/**/*.md</include>
                         </includes>
                         <flexmark />
                         <replaceRegex>
