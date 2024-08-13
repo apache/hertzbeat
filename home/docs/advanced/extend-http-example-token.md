@@ -22,6 +22,7 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
    "identifier": "admin"
 }
 ```
+
 **The response structure data is as follows**:
 
 ```json
@@ -40,10 +41,8 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
-
-
+>
 > Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
-
 
 1. The custom monitoring type needs to add a new configuration monitoring template yml. We directly reuse the `hertzbeat` monitoring type in Tutorial 1 and modify it based on it
 
@@ -218,8 +217,7 @@ metrics:
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       parseScript: '$.data'
-
-
+---
 ```
 
 **At this time, save and apply, add `hertzbeat_token` type monitoring on the system page, configure input parameters, `content-type` fill in `application/json`, `request Body` fill in the account password json as follows: **
@@ -233,14 +231,11 @@ metrics:
 
 ![](/img/docs/advanced/extend-http-example-5.png)
 
-
 ** After the addition is successful, we can see the `token`, `refreshToken` metric data we collected on the details page. **
 
 ![](/img/docs/advanced/extend-http-example-6.png)
 
 ![](/img/docs/advanced/extend-http-example-7.png)
-
-
 
 ### Use `token` as a variable parameter to collect and use the following metricss
 
@@ -361,8 +356,7 @@ metrics:
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       parseScript: '$.data'
-
-
+---
   - name: summary
     priority: 1
     fields:
@@ -403,12 +397,12 @@ metrics:
 
 > Next, we can set the threshold normally. After the alarm is triggered, we can view it in the alarm center, add a new recipient, set alarm notification, etc. Have Fun!!!
 
-----
+---
 
 #### over!
 
 This is the end of the practice of custom monitoring of the HTTP protocol. The HTTP protocol also has other parameters such as headers and params. We can define it like postman, and the playability is also very high!
 
-If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.  
+If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.
 
 **github: https://github.com/apache/hertzbeat**

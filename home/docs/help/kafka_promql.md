@@ -16,7 +16,7 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, Ka
 
 ### Configuration Parameters
 
-| Parameter Name      | Parameter Description                                                                                                      |
+|   Parameter Name    |                                                   Parameter Description                                                    |
 |---------------------|----------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | IP, IPv6, or domain name of the target being monitored. Note ⚠️: Do not include protocol header (e.g., https://, http://). |
 | Monitoring name     | Name to identify this monitoring, ensuring uniqueness of names.                                                            |
@@ -35,7 +35,7 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, Ka
 
 #### Metric Set: kafka_brokers
 
-| Metric Name | Metric Unit | Metric help description              |
+| Metric Name | Metric Unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | \_\_name__  | None        | Metric name                          |
 | instance    | None        | Instance to which the metric belongs |
@@ -44,7 +44,7 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, Ka
 
 #### Metric Set: kafka_topic_partitions
 
-| Metric Name | Metric Unit | Metric help description              |
+| Metric Name | Metric Unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | \_\_name__  | None        | Metric name                          |
 | instance    | None        | Instance to which the metric belongs |
@@ -53,7 +53,7 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, Ka
 
 #### Metric Set: kafka_server_brokertopicmetrics_bytesinpersec
 
-| Metric Name | Metric Unit | Metric help description              |
+| Metric Name | Metric Unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | \_\_name__  | None        | Metric name                          |
 | instance    | None        | Instance to which the metric belongs |
@@ -64,3 +64,4 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, Ka
 
 1. If Kafka is enabled with JMX monitoring, you can use [Kafka](kafka) Monitoring.
 2. If Kafka cluster deploys kafka_exporter to expose monitoring metrics, you can refer to [Prometheus task](prometheus) to configure the Prometheus collection task to monitor kafka.
+

@@ -1,7 +1,7 @@
 ---
 id: docker-compose-deploy
 title: Install HertzBeat via Docker Compose 
-sidebar_label: Install via Docker Compose    
+sidebar_label: Install via Docker Compose
 ---
 
 :::tip
@@ -26,7 +26,7 @@ Download the installation script package `apache-hertzbeat-xxx-incubating-docker
 
 - Unzip the script package
 
-``` 
+```
 $ tar zxvf apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
 ```
 
@@ -49,7 +49,7 @@ docker-compose up -d
 
 > View the running status of each container, up is the normal running status
 
-``` 
+```
 docker-compose ps
 ```
 
@@ -57,7 +57,6 @@ docker-compose ps
    Access http://ip:1157/ in the browser to start exploring and using it. The default account password is admin/hertzbeat.
 
 **HAVE FUN**
-
 
 ---- 
 

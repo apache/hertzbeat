@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
  */
 
 @ExtendWith(SpringExtension.class)
-class WarehouseServiceImplTest {
+class WarehouseServiceTest {
 
 	@Mock
 	private AbstractRealTimeDataStorage realTimeDataStorage;

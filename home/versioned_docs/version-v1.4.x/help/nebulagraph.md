@@ -14,7 +14,7 @@ The monitoring has two parts,nebulaGraph_stats and rocksdb_stats.
 nebulaGraph_stats is nebulaGraph's statistics, and rocksdb_stats is rocksdb's statistics.
 ```
 
-###           
+### 
 
 **1、Obtain available parameters through the stats and rocksdb stats interfaces.**
 
@@ -36,7 +36,7 @@ The default port is 19779 and the access address is:http://ip:19779/rocksdb_stat
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -55,7 +55,7 @@ The default port is 19779 and the access address is:http://ip:19779/rocksdb_stat
 Too many indicators, related links are as follows
 **https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/1.query-performance-metrics/**
 
-| Metric name                           | Metric unit | Metric help description                                      |
+|              Metric name              | Metric unit |                   Metric help description                    |
 |---------------------------------------|-------------|--------------------------------------------------------------|
 | num_queries_hit_memory_watermark_rate |             | The rate of statements that reached the memory watermark.    |
 | num_queries_hit_memory_watermark_sum  |             | The sum of statements that reached the memory watermark.     |
@@ -67,8 +67,9 @@ Too many indicators, related links are as follows
 Too many indicators, related links are as follows
 **https://docs.nebula-graph.com.cn/3.4.3/6.monitor-and-metrics/2.rocksdb-statistics/**
 
-| Metric name                | Metric unit | Metric help description                                     |
+|        Metric name         | Metric unit |                   Metric help description                   |
 |----------------------------|-------------|-------------------------------------------------------------|
 | rocksdb.backup.read.bytes  |             | Number of bytes read during the RocksDB database backup.    |
 | rocksdb.backup.write.bytes |             | Number of bytes written during the RocksDB database backup. |
 | ...                        |             | ...                                                         |
+

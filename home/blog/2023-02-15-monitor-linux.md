@@ -81,7 +81,6 @@ Path: Menu -> Threshold Rules -> Add Threshold
 
 ![hertzbeat](/img/blog/monitor-linux-9.png)
 
-
 2. Add message notification recipients
 
 > Configure the receiver to let the alarm message know who to send and how to send it.
@@ -102,7 +101,6 @@ Message notification methods support **email, DingTalk, WeChat Work, Feishu, Web
 > Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
-
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
@@ -129,10 +127,10 @@ This practical article took us to experience how to use the open source real-tim
 ## What is Hertz Beat?
 
 > [HertzBeat Hertz Beat](https://github.com/apache/hertzbeat) is a real-time monitoring and alarm system with powerful custom monitoring capabilities and no Agent required. Monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, and alarm notifications (email, WeChat, Dingding, Feishu, SMS, Discord, Slack, Telegram).
-
+>
 > We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure YML to use these protocols to customize and collect any metrics you want to collect.
 > Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
-
+>
 > The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.
 
 **Github: https://github.com/apache/hertzbeat**
@@ -147,3 +145,4 @@ This practical article took us to experience how to use the open source real-tim
   -Kubernetes, Docker
 - and more for your custom monitoring.
 - Notification support `Discord` `Slack` `Telegram` `Mail` `DingTalk` `WeChat` `Feishu` `SMS` `Webhook`.
+

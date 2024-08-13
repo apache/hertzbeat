@@ -15,35 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.collector.constants;
+
+import org.apache.hertzbeat.common.constants.NetworkConstants;
 
 /**
- * collector constant
+ * collector module constant.
+ * Extends {@link NetworkConstants}
  */
-public interface CollectorConstants {
 
-    String RESPONSE_TIME = "responseTime";
+public interface CollectorConstants extends NetworkConstants {
 
     String KEYWORD = "keyword";
-
-    String STATUS_CODE = "statusCode";
-
-    String ERROR_MSG = "errorMsg";
-
-    String URL = "url";
-
-    String HTTP_HEADER = "http://";
-
-    String HTTPS_HEADER = "https://";
 
     /**
      * POSTGRESQL un reachable status code
      */
     String POSTGRESQL_UN_REACHABLE_CODE = "08001";
-
-    String IPV6 = "ipv6";
-
-    String IPV4 = "ipv4";
 
     /**
      * MongoDB Atlas model
@@ -53,4 +41,12 @@ public interface CollectorConstants {
     String ZOOKEEPER_APP = "zookeeper";
 
     String ZOOKEEPER_ENVI_HEAD = "Environment:";
+
+    String ERROR_MSG = "errorMsg";
+
+
+    String RESPONSE_TIME = "responseTime";
+
+    String STATUS_CODE = "StatusCode";
+
 }

@@ -3,6 +3,7 @@ id: iotdb-init
 title: 依赖时序数据库服务IoTDB安装初始化  
 sidebar_label: 使用IoTDB存储指标数据(可选)
 ---
+
 Apache HertzBeat (incubating) 的历史数据存储依赖时序数据库，任选其一安装初始化即可，也可不安装(注意⚠️但强烈建议生产环境配置)
 
 > 我们推荐使用并长期支持 VictoriaMetrics 作为存储。
@@ -89,16 +90,15 @@ warehouse:
 
 参数说明：
 
-
-| 参数名称            | 参数说明                                      |
-| ------------------- |-------------------------------------------|
+|        参数名称         |                   参数说明                    |
+|---------------------|-------------------------------------------|
 | enabled             | 是否启用                                      |
 | host                | IoTDB数据库地址                                |
 | rpc-port            | IoTDB数据库端口                                |
 | node-urls           | IoTDB集群地址                                 |
 | username            | IoTDB数据库账户                                |
 | password            | IoTDB数据库密码                                |
-| version             | IoTDB数据库版本，已废弃，仅支持V1.*               |
+| version             | IoTDB数据库版本，已废弃，仅支持V1.*                    |
 | query-timeout-in-ms | 查询超时时间                                    |
 | expire-time         | 数据存储时间，默认'7776000000'（90天,单位为毫秒,-1代表永不过期） |
 
@@ -122,3 +122,4 @@ warehouse:
 > iot-db enable是否设置为true
 > 注意⚠️若hertzbeat和IotDB都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
 > 可根据logs目录下启动日志排查
+

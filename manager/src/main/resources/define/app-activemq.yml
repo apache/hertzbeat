@@ -35,7 +35,7 @@ params:
   - field: host
     # name-param field display i18n name
     name:
-      zh-CN: 目标Host
+      zh-CN: 目标 Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
     type: host
@@ -45,7 +45,7 @@ params:
   - field: port
     # name-param field display i18n name
     name:
-      zh-CN: JMX端口
+      zh-CN: JMX 端口
       en-US: JMX Port
     # type-param field type(most mapping the html input type)
     type: number
@@ -148,50 +148,110 @@ metrics:
       url: ^_^url^_^
 
   - name: broker
+    i18n:
+      zh-CN: Broker 信息
+      en-US: Broker Info
     priority: 1
     fields:
       - field: BrokerName
         type: 1
         label: true
+        i18n:
+          zh-CN: Broker 名称
+          en-US: Broker Name
       - field: BrokerVersion
+        i18n:
+          zh-CN: Broker 版本
+          en-US: Broker Version
         type: 1
       - field: Uptime
+        i18n:
+          zh-CN: 启动时长
+          en-US: Uptime
         type: 1
       - field: UptimeMillis
+        i18n:
+          zh-CN: 启动时长（毫秒）
+          en-US: Uptime Millis
         type: 0
         unit: ms
       - field: Persistent
+        i18n:
+          zh-CN: 持久化
+          en-US: Persistent
         type: 1
       - field: DataDirectory
+        i18n:
+          zh-CN: 数据目录
+          en-US: Data Directory
         type: 1
       - field: MemoryPercentUsage
+        i18n:
+          zh-CN: 内存使用率
+          en-US: Memory Percent Usage
         type: 0
         unit: '%'
       - field: StorePercentUsage
+        i18n:
+          zh-CN: 存储使用率
+          en-US: Store Percent Usage
         type: 0
         unit: '%'
       - field: TempPercentUsage
+        i18n:
+          zh-CN: 临时使用率
+          en-US: Temp Percent Usage
         type: 0
         unit: '%'
       - field: CurrentConnectionsCount
+        i18n:
+          zh-CN: 当前连接数
+          en-US: Current Connections Count
         type: 0
       - field: TotalConnectionsCount
+        i18n:
+          zh-CN: 总连接数
+          en-US: Total Connections Count
         type: 0
       - field: TotalEnqueueCount
+        i18n:
+          zh-CN: 总入队数
+          en-US: Total Enqueue Count
         type: 0
       - field: TotalDequeueCount
+        i18n:
+          zh-CN: 总出队数
+          en-US: Total Dequeue Count
         type: 0
       - field: TotalConsumerCount
+        i18n:
+          zh-CN: 消费者总数
+          en-US: Total Consumer Count
         type: 0
       - field: TotalProducerCount
+        i18n:
+          zh-CN: 生产者总数
+          en-US: Total Producer Count
         type: 0
       - field: TotalMessageCount
+        i18n:
+          zh-CN: 总消息数
+          en-US: Total Message Count
         type: 0
       - field: AverageMessageSize
+        i18n:
+          zh-CN: 平均消息大小
+          en-US: Average Message Size
         type: 0
       - field: MaxMessageSize
+        i18n:
+          zh-CN: 最大消息大小
+          en-US: Max Message Size
         type: 0
       - field: MinMessageSize
+        i18n:
+          zh-CN: 最小消息大小
+          en-US: Min Message Size
         type: 0
     protocol: jmx
     jmx:
@@ -208,52 +268,109 @@ metrics:
       - field: Name
         type: 1
         label: true
+        i18n:
+          zh-CN: Topic 名称
+          en-US: Topic Name
       - field: MemoryLimit
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 内存限制
+          en-US: Memory Limit
       - field: MemoryPercentUsage
         type: 0
         unit: '%'
+        i18n:
+          zh-CN: 内存使用率
+          en-US: Memory Percent Usage
       - field: ProducerCount
         type: 0
+        i18n:
+          zh-CN: 生产者数量
+          en-US: Producer Count
       - field: ConsumerCount
         type: 0
+        i18n:
+          zh-CN: 消费者数量
+          en-US: Consumer Count
       - field: EnqueueCount
         type: 0
+        i18n:
+          zh-CN: 入队数量
+          en-US: Enqueue Count
       - field: DequeueCount
         type: 0
+        i18n:
+          zh-CN: 出队数量
+          en-US: Dequeue Count
       - field: ForwardCount
         type: 0
+        i18n:
+          zh-CN: 转发数量
+          en-US: Forward Count
       - field: InFlightCount
         type: 0
+        i18n:
+          zh-CN: 进行中数量
+          en-US: In Flight Count
       - field: DispatchCount
         type: 0
+        i18n:
+          zh-CN: 分发数量
+          en-US: Dispatch Count
       - field: ExpiredCount
         type: 0
+        i18n:
+          zh-CN: 过期数量
+          en-US: Expired Count
       - field: StoreMessageSize
         type: 0
         unit: B
+        i18n:
+          zh-CN: 存储消息大小
+          en-US: Store Message Size
       - field: AverageEnqueueTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 平均入队时间
+          en-US: Average Enqueue Time
       - field: MaxEnqueueTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 最大入队时间
+          en-US: Max Enqueue Time
       - field: MinEnqueueTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 最小入队时间
+          en-US: Min Enqueue Time
       - field: TotalBlockedTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 总阻塞时间
+          en-US: Total Blocked Time
       - field: AverageMessageSize
         type: 0
         unit: B
+        i18n:
+          zh-CN: 平均消息大小
+          en-US: Average Message Size
       - field: MaxMessageSize
         type: 0
         unit: B
+        i18n:
+          zh-CN: 最大消息大小
+          en-US: Max Message Size
       - field: MinMessageSize
         type: 0
         unit: B
+        i18n:
+          zh-CN: 最小消息大小
+          en-US: Min Message Size
     units:
       - MemoryLimit=B->MB
     protocol: jmx

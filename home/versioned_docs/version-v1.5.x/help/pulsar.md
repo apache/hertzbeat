@@ -4,52 +4,48 @@ title: Monitoring Pulsar Monitoring
 sidebar_label: Apache Pulsar
 keywords: [open-source monitoring system, open-source database monitoring, HbaseMaster monitoring]
 ---
+
 > Collecting and monitoring general performance metrics of Pulsar
 
 **Protocol Used: HTTP**
 
 ## Configuration Parameters
 
-
-| Parameter Name      | Description                                                                                                                  |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+|   Parameter Name    |                                                        Description                                                         |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------|
 | Target Host         | The monitored endpoint's IPV4, IPV6, or domain name. Note⚠️: Do not include the protocol header (e.g., https://, http://). |
-| Port                | The webServicePort value of Pulsar, default is 8080.                                                                         |
-| Task Name           | The name identifying this monitoring task, must be unique.                                                                   |
-| Query Timeout       | Set the connection timeout in milliseconds, default is 3000 milliseconds.                                                    |
-| Monitoring Interval | Interval time for periodic data collection, in seconds, minimum interval is 30 seconds.                                      |
-| Binding Tags        | Used for categorizing monitoring resources.                                                                                  |
-| Description/Remarks | Additional notes and descriptions for this monitoring task. Users can add more information here.                             |
+| Port                | The webServicePort value of Pulsar, default is 8080.                                                                       |
+| Task Name           | The name identifying this monitoring task, must be unique.                                                                 |
+| Query Timeout       | Set the connection timeout in milliseconds, default is 3000 milliseconds.                                                  |
+| Monitoring Interval | Interval time for periodic data collection, in seconds, minimum interval is 30 seconds.                                    |
+| Binding Tags        | Used for categorizing monitoring resources.                                                                                |
+| Description/Remarks | Additional notes and descriptions for this monitoring task. Users can add more information here.                           |
 
 ### Collected Metrics
 
 #### Metric Set: Version Information
 
-
-| Metric Name  | Unit | Description         |
-| ------------ | ---- | ------------------- |
-| Version Info | NONE  | Version Information |
+| Metric Name  | Unit |     Description     |
+|--------------|------|---------------------|
+| Version Info | NONE | Version Information |
 
 #### Metric Set: process_start_time_seconds
 
-
-| Metric Name        | Unit | Description        |
-| ------------------ | ---- | ------------------ |
-| Process Start Time | NONE  | Process Start Time |
+|    Metric Name     | Unit |    Description     |
+|--------------------|------|--------------------|
+| Process Start Time | NONE | Process Start Time |
 
 #### Metric Set: process_open_fds
 
-
-| Metric Name           | Unit | Description                     |
-| --------------------- | ---- | ------------------------------- |
-| Open File Descriptors | NONE  | Number of Open File Descriptors |
+|      Metric Name      | Unit |           Description           |
+|-----------------------|------|---------------------------------|
+| Open File Descriptors | NONE | Number of Open File Descriptors |
 
 #### Metric Set: process_max_fds
 
-
-| Metric Name          | Unit | Description                        |
-| -------------------- | ---- | ---------------------------------- |
-| Max File Descriptors | NONE  | Maximum Number of File Descriptors |
+|     Metric Name      | Unit |            Description             |
+|----------------------|------|------------------------------------|
+| Max File Descriptors | NONE | Maximum Number of File Descriptors |
 
 #### Metric Set: jvm_memory_pool_allocated_bytes
 

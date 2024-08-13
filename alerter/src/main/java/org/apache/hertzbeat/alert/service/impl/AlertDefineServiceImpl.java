@@ -38,6 +38,7 @@ import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.alert.service.AlertDefineImExportService;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefineMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -49,6 +50,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -72,6 +74,8 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     private AlertMonitorDao alertMonitorDao;
 
     private final Map<String, AlertDefineImExportService> alertDefineImExportServiceMap = new HashMap<>();
+
+    private static final String CONTENT_TYPE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
 
     public AlertDefineServiceImpl(List<AlertDefineImExportService> alertDefineImExportServiceList) {
         alertDefineImExportServiceList.forEach(it -> alertDefineImExportServiceMap.put(it.type(), it));
@@ -229,10 +233,10 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             throw new IllegalArgumentException("not support export type: " + type);
         }
         var fileName = imExportService.getFileName();
-        res.setHeader("content-type", "application/octet-stream;charset=UTF-8");
-        res.setContentType("application/octet-stream;charset=UTF-8");
+        res.setHeader(HttpHeaders.CONTENT_TYPE, CONTENT_TYPE);
+        res.setContentType(CONTENT_TYPE);
         res.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        res.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION);
         imExportService.exportConfig(res.getOutputStream(), ids);
     }
 

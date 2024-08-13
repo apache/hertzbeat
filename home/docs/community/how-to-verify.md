@@ -40,7 +40,6 @@ The package uploaded to dist must include the source code package, and the binar
 3. Whether to include the sha512 of the source code package
 4. If the binary package is uploaded, also check the contents listed in (2)-(4)
 
-
 ### 2.2 Check gpg signature
 
 First import the publisher's public key. Import KEYS from the svn repository to the local environment. (The person who releases the version does not need to import it again, the person who helps to do the verification needs to import it, and the user name is enough for the person who issued the version)
@@ -51,6 +50,7 @@ First import the publisher's public key. Import KEYS from the svn repository to 
 $ curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # Download KEYS
 $ gpg --import KEYS # Import KEYS to local
 ```
+
 #### 2.2.2 Trust the public key
 
 Trust the KEY used in this version:
@@ -123,8 +123,6 @@ check as follows:
 - [ ] Able to compile correctly
 - [ ] .....
 
-
-
 ### 2.5 Check the source package
 
 > If the binary/web-binary package is uploaded, check the binary package.
@@ -151,7 +149,6 @@ and check as follows:
 
 You can refer to this article: [ASF Third Party License Policy](https://apache.org/legal/resolved.html)
 
-
 ## 3. Email reply
 
 If you initiate a posting vote, you can refer to this response example to reply to the email after verification
@@ -170,9 +167,9 @@ If you have already voted on dev@hertzbeat.apache.org, you can take it directly 
 //Incubator community voting, only IPMC members have binding binding，PPMC needs to be aware of binding changes
 Forward my +1 from dev@listhertzbeatnkis (non-binding)
 Copy my +1 from hertzbeat DEV ML (non-binding)
-````
-:::
+```
 
+:::
 
 Non-PPMC/Non-IPMC member:
 
@@ -184,7 +181,7 @@ I checked:
      3. LICENSE and NOTICE are exist
      4. Build successfully on macOS(Big Sur)
      5. 
-````
+```
 
 PPMC/IPMC member:
 
@@ -197,10 +194,8 @@ I checked:
      3. LICENSE and NOTICE are exist
      4. Build successfully on macOS(Big Sur)
      5. 
-````
-
-
+```
 
 --- 
 
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
+This doc refer from [Apache StreamPark](https://streampark.apache.org/)

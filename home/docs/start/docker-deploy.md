@@ -1,7 +1,7 @@
 ---
 id: docker-deploy  
 title: Install HertzBeat via Docker   
-sidebar_label: Install via Docker      
+sidebar_label: Install via Docker
 ---
 
 :::tip
@@ -17,7 +17,7 @@ It is necessary to have Docker environment in your environment. If not installed
 
 1. Execute the following command
 
-```shell 
+```shell
 $ docker run -d -p 1157:1157 -p 1158:1158 \
     -v $(pwd)/data:/opt/hertzbeat/data \
     -v $(pwd)/logs:/opt/hertzbeat/logs \
@@ -46,7 +46,7 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
 - This maps the 1157,1158 ports of the container to the 1157,1158 ports of the host. If the port on the host is already occupied, you need to modify the host mapping port.
 - When mounting files, the first parameter is your custom local file address, and the second parameter is the container file address. Make sure you have this file locally when mounting.
 - You can execute `docker update --restart=always hertzbeat` to configure the container to restart automatically.
-- If you want to use the host network mode to start Docker, you can use `docker run -d --network host .....` 
+- If you want to use the host network mode to start Docker, you can use `docker run -d --network host .....`
 :::
 
 2. Start to explore HertzBeat  
@@ -63,7 +63,7 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
 
 1. Execute the following command
 
-```shell 
+```shell
 $ docker run -d \
     -e IDENTITY=custom-collector-name \
     -e MODE=public \
@@ -89,7 +89,7 @@ $ docker run -d \
 - The `127.0.0.1` in `MANAGER_HOST` needs to be replaced with the external IP address of the HertzBeat Server.
 - When mounting files, the first parameter is your custom local file address, and the second parameter is the container file address. Make sure you have this file locally when mounting.
 - You can execute `docker update --restart=always hertzbeat-collector` to configure the container to restart automatically.
-- If you want to use the host network mode to start Docker, you can use `docker run -d --network host .....` 
+- If you want to use the host network mode to start Docker, you can use `docker run -d --network host .....`
 :::
 
 2. Access `http://localhost:1157` and you will see the registered new collector in dashboard.
@@ -98,30 +98,35 @@ $ docker run -d \
 
 ----
 
-### FAQ  
+### FAQ
 
 **The most common problem is network problems, please check in advance**
 
 1. MYSQL, TDENGINE, IoTDB and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail     
-The problems lies in Docker container failed to visit and connect localhost port. Because the docker default network mode is Bridge mode which can't access local machine through localhost.
+   The problems lies in Docker container failed to visit and connect localhost port. Because the docker default network mode is Bridge mode which can't access local machine through localhost.
+
 > Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.     
-> Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`   
+> Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`
 
 2. According to the process deploy，visit http://ip:1157/ no interface   
-Please refer to the following points to troubleshoot issues：  
+   Please refer to the following points to troubleshoot issues：
+
 > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
 > 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 > 3：`docker logs hertzbeat` Check whether the container log has errors. If you haven't solved the issue, report it to the communication group or community.
 
-3. Historical monitoring charts have been missing data for a long time  
+3. Historical monitoring charts have been missing data for a long time
+
 > 1：Check whether you configure victoria-metrics or Tdengine or IoTDB. No configuration means no historical chart data.
 > 2: Check whether IP account and password configuration is correct in HertzBeat's configuration file `application.yml`.
 
 4. If the history chart on the monitoring page is not displayed，popup [please configure time series database]
+
 > As shown in the popup window，the premise of history chart display is that you need install and configure hertzbeat's dependency service database.
 > Installation and initialization this database, please refer to [Using victoria-metrics to store metrics data](victoria-metrics-init)
 
 5. The time series database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure dependent time series database]
+
 > Please check if the configuration parameters are correct
 > Is time-series database enable set to true
 > Note⚠️If both hertzbeat and time-series database are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
@@ -132,10 +137,10 @@ Please refer to the following points to troubleshoot issues：
 > This file is the configuration file of HertzBeat, used to configure various parameters of HertzBeat, such as database connection information, time series database configuration, etc.
 > Download `application.yml` file to the host directory, for example: $(pwd)/application.yml
 > Download source [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)   
-You can modify the configuration yml file according to your needs.
-- If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`
-- **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)
-- **Recommended** If you need to use the time series database victoria-metrics to store metric data, you need to replace the `warehouse.store.victoria-metrics` parameter in `application.yml` for specific steps, see [Using victoria-metrics to store metrics data](victoria-metrics-init)   
+> You can modify the configuration yml file according to your needs.
+> - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`
+> - **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)
+> - **Recommended** If you need to use the time series database victoria-metrics to store metric data, you need to replace the `warehouse.store.victoria-metrics` parameter in `application.yml` for specific steps, see [Using victoria-metrics to store metrics data](victoria-metrics-init)
 
 7. What is the purpose of sureness.yml
 
@@ -145,3 +150,4 @@ You can modify the configuration yml file according to your needs.
 > Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`
 > Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
 > For detail steps, please refer to [Configure Account Password](account-modify)
+
