@@ -1,7 +1,7 @@
 ---
 id: developer
 title: 开发者们
-sidebar_label: 开发者们     
+sidebar_label: 开发者们
 ---
 
 ## ✨ HertzBeat的成员们
@@ -26,7 +26,7 @@ sidebar_label: 开发者们
   </tbody>
 </table>
 
-<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>  
+<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>
 
 ## ✨ HertzBeat的开发者们
 
@@ -259,5 +259,4 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->  
+<!-- ALL-CONTRIBUTORS-LIST:END -->
