@@ -44,15 +44,15 @@ public class BulletinMetricsData {
     private String column;
 
     @Schema(description = "Content Data")
-    private List<Data> data;
+    private List<Data> content;
 
     @lombok.Data
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Data {
-        @Schema(title = "Monitor Type")
-        private String app;
+        @Schema(title = "Monitor name")
+        private String monitorName;
 
         @Schema(title = "Monitor ID")
         private Long monitorId;

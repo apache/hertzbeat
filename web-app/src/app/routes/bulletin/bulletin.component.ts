@@ -393,30 +393,30 @@ export class BulletinComponent implements OnInit {
   }
 
   updateTabDefines(rawData: any[]) {
+    console.info('rawData:', rawData);
     const groupedData: any = {};
     rawData.forEach(item => {
-      const name = item.name;
+      const name = item.monitorId;
       if (!groupedData[name]) {
         groupedData[name] = {
-          id: item.id,
           column: {},
           data: []
         };
       }
 
       let transformedItem: any = {
-        app: item.app,
-        monitorId: item.content.monitorId,
-        host: item.content.host
+        app: item.monitorName,
+        monitorId: item.monitorId,
+        host: item.host
       };
 
-      item.content.metrics.forEach((metric: { name: string | number; fields: any }) => {
+      item.metrics.forEach((metric: { name: string | number; fields: any }) => {
         if (!groupedData[name].column[metric.name]) {
           groupedData[name].column[metric.name] = new Set<string>();
         }
         metric.fields.forEach((field: any[]) => {
           field.forEach((fieldItem: any) => {
-            const key = `${metric.name}$$$${fieldItem.key}`;
+            const key = fieldItem.key;
             const value = fieldItem.value;
             const unit = fieldItem.unit;
 
