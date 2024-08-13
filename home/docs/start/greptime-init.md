@@ -8,22 +8,25 @@ Apache HertzBeat (incubating)'s historical data storage relies on the time serie
 
 > It is recommended to use VictoriaMetrics as metrics storage.
 
-GreptimeDB is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.   
+GreptimeDB is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.
 
 It's designed to work on infrastructure of the cloud era, and users benefit from its elasticity and commodity storage.
 
-**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**  
+**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
-### Install GreptimeDB via Docker   
+### Install GreptimeDB via Docker
+
 > Refer to the official website [installation tutorial](https://docs.greptime.com/getting-started/overview)  
-1. Download and install Docker environment     
-   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).     
-   After the installation you can check if the Docker version normally output at the terminal.
-   ```
-   $ docker -v
-   Docker version 20.10.12, build e91ed57
-   ```
-2. Install GreptimeDB with Docker   
+> 1. Download and install Docker environment     
+> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).     
+> After the installation you can check if the Docker version normally output at the terminal.
+>
+> ```
+> $ docker -v
+> Docker version 20.10.12, build e91ed57
+> ```
+>
+> 2. Install GreptimeDB with Docker
 
 ```shell
 $ docker run -p 4000-4004:4000-4004 \
@@ -33,10 +36,11 @@ $ docker run -p 4000-4004:4000-4004 \
     --http-addr 0.0.0.0:4000 \
     --rpc-addr 0.0.0.0:4001 \
 ```
-   `-v /opt/greptimedb:/tmp/greptimedb` is local persistent mount of greptimedb data directory. `/opt/greptimedb` should be replaced with the actual local directory.
-   use```$ docker ps``` to check if the database started successfully
 
-### Configure the database connection in hertzbeat `application.yml` configuration file  
+`-v /opt/greptimedb:/tmp/greptimedb` is local persistent mount of greptimedb data directory. `/opt/greptimedb` should be replaced with the actual local directory.
+use```$ docker ps``` to check if the database started successfully
+
+### Configure the database connection in hertzbeat `application.yml` configuration file
 
 1. Configure HertzBeat's configuration file   
    Modify `hertzbeat/config/application.yml` configuration file         

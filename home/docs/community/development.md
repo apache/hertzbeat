@@ -1,7 +1,7 @@
 ---
 id: development  
 title: How to Run or Build HertzBeat?    
-sidebar_label: Development    
+sidebar_label: Development
 ---
 
 ## Getting HertzBeat code up and running
@@ -9,7 +9,6 @@ sidebar_label: Development
 > To get HertzBeat code running on your development tools, and able to debug with breakpoints.     
 > This is a front-end and back-end separation project.    
 > To start the local code, the back-end [manager](https://github.com/apache/hertzbeat/tree/master/manager) and the front-end [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) must be started separately.
-
 
 ### Backend start
 
@@ -37,9 +36,9 @@ sidebar_label: Development
 
 7. Browser access to localhost:4200 to start, default account/password is *admin/hertzbeat*
 
-## Build HertzBeat binary package 
+## Build HertzBeat binary package
 
-> Requires `maven3+`, `java17`, `node` and `yarn` environments. 
+> Requires `maven3+`, `java17`, `node` and `yarn` environments.
 
 ### Frontend build
 
@@ -52,7 +51,6 @@ sidebar_label: Development
 4. Install Dependencies: `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`
 
 5. Build web-app: `yarn package`
-
 
 ### Backend build
 

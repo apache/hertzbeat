@@ -3,6 +3,7 @@ id: iotdb-init
 title: Use Time Series Database IoTDB to Store Metrics Data (Optional)  
 sidebar_label: Use IoTDB Store Metrics
 ---
+
 Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
 
 > It is recommended to use VictoriaMetrics as metrics storage.
@@ -87,9 +88,8 @@ warehouse:
 
 Configuration parameters:
 
-
-| Parameter Name      | Description                                                                               |
-| ------------------- |-------------------------------------------------------------------------------------------|
+|   Parameter Name    |                                        Description                                        |
+|---------------------|-------------------------------------------------------------------------------------------|
 | enabled             | Whether to enable                                                                         |
 | host                | IoTDB database address                                                                    |
 | rpc-port            | IoTDB database port                                                                       |
@@ -120,3 +120,4 @@ Configuration parameters:
 > Is td-engine enable set to true
 > Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
 > You can check the startup logs according to the logs directory
+
