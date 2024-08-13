@@ -7,6 +7,12 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of MySQL database. Support MYSQL5+.
 
+### Attention, Need Add MYSQL jdbc driver jar
+
+- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.1.0.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- Copy the jar package to the `hertzbeat/ext-lib` directory.
+- Restart the HertzBeat service.
+
 ### Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |

@@ -1,7 +1,7 @@
 ---
 id: ssl-cert-practice  
 title: SSL Certificate Monitor Practice      
-sidebar_label: Practice Example
+sidebar_label: SSL Certificate Monitor Practice
 ---
 
 Most websites now support HTTPS by default. The certificate we apply for is usually 3 months or 1 year. It is easy to expire the SSL certificate over time, but we did not find it the first time, or did not update the certificate in time before it expired.

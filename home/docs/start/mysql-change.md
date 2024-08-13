@@ -1,7 +1,7 @@
 ---
 id: mysql-change  
 title: Use MYSQL Replace H2 Database to Store Metadata(Optional)     
-sidebar_label: Use MYSQL Instead of H2
+sidebar_label: Meta Store MYSQL
 ---
 
 MYSQL is a reliable relational database. In addition to default built-in H2 database, Apache HertzBeat (incubating) allow you to use MYSQL to store structured relational data such as monitoring information, alarm information and configuration information.
@@ -43,7 +43,7 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 
 ### Add MYSQL jdbc driver jar
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 
 ### Modify hertzbeat's configuration file application.yml and switch data source
@@ -55,30 +55,47 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 
   For example:
 
-  ```yaml
-  spring:
-    datasource:
-      driver-class-name: org.h2.Driver
-      username: sa
-      password: 123456
-      url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
-    jpa:
-      database: h2
-  ```
+```yaml
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 123456
+    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    hikari:
+      max-lifetime: 120000
 
-  Specific replacement parameters are as follows and you need to configure account according to the mysql environment:
-
-  ```yaml
-  spring:
-    datasource:
-      driver-class-name: com.mysql.cj.jdbc.Driver
-      username: root
-      password: 123456
-      url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
-      platform: mysql
   jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
+    database: h2
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
+```
+
+Specific replacement parameters are as follows and you need to configure account according to the mysql environment:
+
+```yaml
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+    url: jdbc:mysql://mysql:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&allowPublicKeyRetrieval=true&useSSL=false
+    hikari:
+      max-lifetime: 120000
+  jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: mysql
-  ```
-- It is recommended to set the host field in the MySQL URL or Redis URL to the public IP address when using Hertzbeat in docker.
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
+```
+
+- It is recommended to set the host field in the MySQL URL to the public IP address when using Hertzbeat in docker.
 
 **Start HertzBeat  visit http://ip:1157/ on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**

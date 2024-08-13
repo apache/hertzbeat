@@ -110,6 +110,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
      * preCheck params
      * @param metrics metrics config
      */
+    @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
         Assert.isTrue(metrics != null && metrics.getRocketmq() != null, "Mongodb collect must has rocketmq params");
         RocketmqProtocol rocketmq = metrics.getRocketmq();

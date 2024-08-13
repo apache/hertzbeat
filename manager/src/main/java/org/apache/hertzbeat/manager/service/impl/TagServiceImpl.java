@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +29,9 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.TagDao;
+import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.apache.hertzbeat.manager.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -47,6 +51,9 @@ public class TagServiceImpl implements TagService {
     @Autowired
     private TagDao tagDao;
 
+    @Autowired
+    private TagMonitorBindDao tagMonitorBindDao;
+
     @Override
     public void addTags(List<Tag> tags) {
         tagDao.saveAll(tags);
@@ -64,12 +71,46 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest) {
+    public Page<Tag> getTags(String search, Byte type, int pageIndex, int pageSize) {
+        // Get tag information
+        Specification<Tag> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (type != null) {
+                Predicate predicateApp = criteriaBuilder.equal(root.get("type"), type);
+                andList.add(predicateApp);
+            }
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+
+            List<Predicate> orList = new ArrayList<>();
+            if (search != null && !search.isEmpty()) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
+                orList.add(predicateName);
+                Predicate predicateValue = criteriaBuilder.like(root.get("tagValue"), "%" + search + "%");
+                orList.add(predicateValue);
+            }
+            Predicate[] orPredicates = new Predicate[orList.size()];
+            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
+
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
+                return query.where().getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
+            } else {
+                return query.where(andPredicate, orPredicate).getRestriction();
+            }
+        };
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
         return tagDao.findAll(specification, pageRequest);
     }
 
     @Override
     public void deleteTags(HashSet<Long> ids) {
+        if (tagMonitorBindDao.countByTagIdIn(ids) != 0) {
+            throw new CommonException("The tag is in use and cannot be deleted.");
+        }
         tagDao.deleteTagsByIdIn(ids);
     }
 

@@ -155,7 +155,7 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 [Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
-Add WeChat account `tan-cloud` to pull you into the WeChat group.
+Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 ## 🥐 Architecture
 

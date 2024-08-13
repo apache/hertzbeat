@@ -18,10 +18,6 @@ sidebar_label: Quick Start
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-```or use quay.io (if dockerhub network connect timeout)```
-
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
-
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 
 3. Deploy collector clusters(Optional)
@@ -72,13 +68,13 @@ Detailed config refer to [Install HertzBeat via Package](package-deploy)
 
 Detailed steps refer to [CONTRIBUTING](../community/contribution)
 
-##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose
+##### 4：Install All(hertzbeat+postgresql+tsdb) via Docker-compose
 
-Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose).
+Install and deploy the postgresql/mysql database, victoria-metrics/iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose).
 
 Detailed steps refer to [Install via Docker-Compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose)
 
-##### 5. Install All(hertzbeat+collector+mysql+iotdb) via kubernetes helm charts
+##### 5. Install All(hertzbeat+collector+postgresql+tsdb) via kubernetes helm charts
 
 Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 

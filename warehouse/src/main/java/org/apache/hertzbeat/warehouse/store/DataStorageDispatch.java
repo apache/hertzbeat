@@ -61,6 +61,8 @@ public class DataStorageDispatch {
                         continue;
                     }
                     realTimeDataWriter.saveData(metricsData);
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -78,9 +80,9 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
-                    if (historyDataWriter.isPresent()) {
-                        historyDataWriter.get().saveData(metricsData);
-                    }
+                    historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }

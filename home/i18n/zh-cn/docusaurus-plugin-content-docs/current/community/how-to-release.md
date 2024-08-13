@@ -580,19 +580,25 @@ release note: xxx
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org <br />
-> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 1.6.0 <br />
+> `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
 ```
-Hi Incubator Community,
+Hi Community,
 
 We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
-Once again I would like to express my thanks to your help.
+Thanks again for your help. 
 
-Apache HertzBeat(https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-Download Links: https://hertzbeat.apache.org/download/
-Release Notes: https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+Download Link: 
+https://hertzbeat.apache.org/docs/download/
+
+Release Note: 
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+
+Website: 
+https://hertzbeat.apache.org/
 
 HertzBeat Resources:
 - Issue: https://github.com/apache/hertzbeat/issues

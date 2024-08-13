@@ -127,6 +127,15 @@ public interface DispatchConstants {
      * protocol redfish
      */
     String PROTOCOL_REDFISH = "redfish";
+    /**
+     * protocol imap
+     */
+    String PROTOCOL_IMAP = "imap";
+
+    /**
+     * protocol script
+     */
+    String PROTOCOL_SCRIPT = "script";
 
     // Protocol type related - end
 

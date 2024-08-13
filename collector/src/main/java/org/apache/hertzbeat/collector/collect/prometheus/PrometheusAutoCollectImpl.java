@@ -38,8 +38,9 @@ import org.apache.hertzbeat.collector.collect.prometheus.parser.MetricFamily;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.TextParser;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -64,6 +65,7 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
+import org.springframework.http.MediaType;
 import org.springframework.util.StringUtils;
 
 /**
@@ -95,7 +97,7 @@ public class PrometheusAutoCollectImpl {
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("StatusCode " + statusCode);
+                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return null;
             }
             // todo: The InputStream is directly converted to a String here
@@ -105,7 +107,7 @@ public class PrometheusAutoCollectImpl {
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             long collectTime = System.currentTimeMillis();
             builder.setTime(collectTime);
-            if (resp == null || "".equals(resp)) {
+            if (resp == null || !StringUtils.hasText(resp)) {
                 log.error("http response content is empty, status: {}.", statusCode);
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("http response content is empty");
@@ -161,7 +163,7 @@ public class PrometheusAutoCollectImpl {
         }
         PrometheusProtocol protocol = metrics.getPrometheus();
         if (protocol.getPath() == null
-                    || "".equals(protocol.getPath())
+                    || !StringUtils.hasText(protocol.getPath())
                     || !protocol.getPath().startsWith(RIGHT_DASH)) {
             protocol.setPath(protocol.getPath() == null ? RIGHT_DASH : RIGHT_DASH + protocol.getPath().trim());
         }
@@ -252,8 +254,8 @@ public class PrometheusAutoCollectImpl {
         }
         // The default request header can be overridden if customized
         // keep-alive
-        requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
-        requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
+        requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
+        requestBuilder.addHeader(HttpHeaders.USER_AGENT, NetworkConstants.USER_AGENT);
         // headers  The custom request header is overwritten here
         Map<String, String> headers = protocol.getHeaders();
         if (headers != null && !headers.isEmpty()) {
@@ -265,7 +267,7 @@ public class PrometheusAutoCollectImpl {
             }
         }
         // add accept
-        requestBuilder.addHeader(HttpHeaders.ACCEPT, "*/*");
+        requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.TEXT_PLAIN_VALUE);
         
         if (protocol.getAuthorization() != null) {
             PrometheusProtocol.Authorization authorization = protocol.getAuthorization();
@@ -291,17 +293,17 @@ public class PrometheusAutoCollectImpl {
         String uri = CollectUtil.replaceUriSpecialChar(protocol.getPath());
         if (IpDomainUtil.isHasSchema(protocol.getHost())) {
             
-            requestBuilder.setUri(protocol.getHost() + ":" + protocol.getPort() + uri);
+            requestBuilder.setUri(protocol.getHost() + SignConstants.DOUBLE_MARK + protocol.getPort() + uri);
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(protocol.getHost());
-            String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
+            String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
                                      ? String.format("[%s]:%s%s", protocol.getHost(), protocol.getPort(), uri)
                                      : String.format("%s:%s%s", protocol.getHost(), protocol.getPort(), uri);
             boolean ssl = Boolean.parseBoolean(protocol.getSsl());
             if (ssl) {
-                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
+                requestBuilder.setUri(NetworkConstants.HTTPS_HEADER + baseUri);
             } else {
-                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+                requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
             }
         }
         

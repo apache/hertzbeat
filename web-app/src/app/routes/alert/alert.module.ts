@@ -18,6 +18,7 @@
  */
 
 import { NgModule, Type } from '@angular/core';
+import { QueryBuilderModule } from '@kerwin612/ngx-query-builder';
 import { SharedModule } from '@shared';
 import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
@@ -64,7 +65,8 @@ const COMPONENTS: Array<Type<void>> = [
     NzTimePickerModule,
     NzDatePickerModule,
     NzBadgeModule,
-    NzUploadModule
+    NzUploadModule,
+    QueryBuilderModule
   ],
   declarations: COMPONENTS
 })

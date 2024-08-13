@@ -1,7 +1,7 @@
 ---
 id: influxdb-init  
 title: Use Time Series Database InfluxDB to Store Metrics Data (Optional)     
-sidebar_label: Use InfluxDB Store Metrics
+sidebar_label: Metrics Store InfluxDB
 ---
 
 Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)

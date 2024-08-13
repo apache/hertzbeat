@@ -70,39 +70,34 @@ Here we define a custom monitoring type `app` named `hertzbeat` which use the HT
 **Monitoring Templates** -> **Config New Monitoring Template Yml** -> **Save and Apply**
 
 ```yaml
-# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: custom
 # The monitoring type eg: linux windows tomcat mysql aws...
 app: hertzbeat
-# The monitoring i18n name
 name:
-  zh-CN: HertzBeat监控系统
-  en-US: HertzBeat Monitor
-# Input params define for monitoring(render web ui by the definition)
+  zh-CN: HertzBeat
+  en-US: HertzBeat
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Hertzbeat 监控系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控系统</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor through general performance metric. You could click the "<i>New HertzBeat Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對Hertzbeat監控系統的通用名額進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat
+  en-US: https://hertzbeat.apache.org/docs/help/hertzbeat
 params:
-  # field-param field key
   - field: host
-    # name-param field display i18n name
     name:
-      zh-CN: 主机Host
-      en-US: Host
-    # type-param field type(most mapping the html input type)
+      zh-CN: 目标Host
+      en-US: Target Host
     type: host
-    # required-true or false
     required: true
-  # field-param field key
   - field: port
-    # name-param field display i18n name
     name:
       zh-CN: 端口
       en-US: Port
-    # type-param field type(most mapping the html input type)
     type: number
-    # when type is number, range is required
     range: '[0,65535]'
-    # required-true or false
     required: true
-    # default value
     defaultValue: 1157
   - field: ssl
     name:
@@ -153,7 +148,7 @@ metrics:
     priority: 0
     # collect metrics content
     fields:
-      # metrics content contains field-metric name, type-metric type:0-number,1-string, label-if is metrics label, unit-metric unit('%','ms','MB')
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
       - field: app
         type: 1
         label: true
@@ -169,7 +164,7 @@ metrics:
     protocol: http
     # the config content when protocol is http
     http:
-      # http host: ipv4 ipv6 domain
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
       # http port
       port: ^_^port^_^

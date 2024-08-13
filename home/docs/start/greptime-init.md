@@ -1,14 +1,14 @@
 ---
 id: greptime-init  
 title: Use Time Series Database GreptimeDB to Store Metrics Data (Optional)       
-sidebar_label: Use GreptimeDB Store Metrics
+sidebar_label: Metrics Store GreptimeDB
 ---
 
 Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
 
 > It is recommended to use VictoriaMetrics as metrics storage.
 
-GreptimeDB is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.
+[GreptimeDB](https://github.com/GreptimeTeam/greptimedb) is an open-source time-series database with a special focus on scalability, analytical capabilities and efficiency.
 
 It's designed to work on infrastructure of the cloud era, and users benefit from its elasticity and commodity storage.
 
@@ -29,22 +29,24 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 > 2. Install GreptimeDB with Docker
 
 ```shell
-$ docker run -p 4000-4004:4000-4004 \
-    -p 4242:4242 -v /opt/greptimedb:/tmp/greptimedb \
-    --name greptime \
-    greptime/greptimedb standalone start \
-    --http-addr 0.0.0.0:4000 \
-    --rpc-addr 0.0.0.0:4001 \
+$ docker run -p 127.0.0.1:4000-4003:4000-4003 \
+  -v "$(pwd)/greptimedb:/tmp/greptimedb" \
+  --name greptime --rm \
+  greptime/greptimedb:latest standalone start \
+  --http-addr 0.0.0.0:4000 \
+  --rpc-addr 0.0.0.0:4001 \
+  --mysql-addr 0.0.0.0:4002 \
+  --postgres-addr 0.0.0.0:4003
 ```
 
-`-v /opt/greptimedb:/tmp/greptimedb` is local persistent mount of greptimedb data directory. `/opt/greptimedb` should be replaced with the actual local directory.
+`-v "$(pwd)/greptimedb:/tmp/greptimedb"` is local persistent mount of greptimedb data directory. `$(pwd)/greptimedb` should be replaced with the actual local directory, default is the `greptimedb` directory under the current directory.
 use```$ docker ps``` to check if the database started successfully
 
 ### Configure the database connection in hertzbeat `application.yml` configuration file
 
 1. Configure HertzBeat's configuration file   
-   Modify `hertzbeat/config/application.yml` configuration file         
-   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
+   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
+   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
    Replace `warehouse.store.greptime` data source parameters, URL account and password.
 
 ```yaml
@@ -56,8 +58,15 @@ warehouse:
       # enable greptime   
       greptime:
          enabled: true
-         endpoint: localhost:4001
+         grpc-endpoints: localhost:4001
+         url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
+         driver-class-name: com.mysql.cj.jdbc.Driver
+         username: greptime
+         password: greptime
+         expire-time: 30d
 ```
+
+The default database is `hertzbeat` in the `url`, and it will be created automatically. The `expire-time` specifies the TTL(time-to-live) of the auto-created database, it's 30 days by default.
 
 2. Restart HertzBeat
 

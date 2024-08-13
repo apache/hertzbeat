@@ -48,21 +48,24 @@ limitations under the License.
   see **Committer Account Creation**
 
   - Wait until root says it is done
-  - PMC Chair enables svn and other access
-  - Add committer to the appropriate groups in JIRA and CWiki
-- Notify the committer of completion
+  - [Roster](https://whimsy.apache.org/roster/ppmc/hertzbeat) add the new committer
+- Announce the new committer
 
-  see **Committer Done Template**
+  see **Announce New Committer Template**
 
 ## Template
 
 Note that, there are three placeholder in template should be replaced before using
 
-- NEW_COMMITTER_NAME
+- NEW_COMMITTER_NAME This Must Be Public Name, Not Github Name Or Id.
 - NEW_COMMITTER_EMAIL
 - NEW_COMMITTER_APACHE_NAME
 
 ### Committer Vote Template
+
+:::note
+NEW_COMMITTER_NAME This Must Be Public Name, Not Github Name Or Id.
+:::
 
 ```text
 To: private@hertzbeat.apache.org
@@ -72,11 +75,38 @@ Subject: [VOTE] New committer: ${NEW_COMMITTER_NAME}
 ```text
 Hi HertzBeat PPMC,
 
-This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our new committer.
+This is a formal vote about inviting ${NEW_COMMITTER_NAME} as our community new committer.
 
-${Work list}[1]
+Work list: https://github.com/apache/hertzbeat/commits?author=${NEW_COMMITTER_NAME}
 
-[1] https://github.com/apache/hertzbeat/commits?author=${NEW_COMMITTER_NAME}
+Here is the list of ${NEW_COMMITTER_NAME}'s contributions in HertzBeat Community:
+
+> [27 commits](https://github.com/apache/hertzbeat/commits?author=xxx)
+>
+> 7,495 ++    627 --
+
+Submitted PR (27 commits)
+- [ISSUE #4534] [feature] add new feature in hertzbeat #3445
+- xxx
+
+Submitted Issues (18 commits)
+
+- [bug] find some bugs in hertzbeat nodes #6565
+- xxx
+
+Please vote:
+
++1: I support this proposal and will welcome ${NEW_COMMITTER_NAME} as a committer.
++0: I don't care.
+-1: I object to this proposal and here are my reasons.
+
+This vote will be open for at least 7 days.
+
+See voting guidelines at
+https://community.apache.org/newcommitter.html
+
+Best Wishes,
+ttt
 ```
 
 Note that, Voting ends one week from today, i.e.
@@ -117,6 +147,7 @@ Hello ${NEW_COMMITTER_NAME},
 
 The HertzBeat Project Management Committee (PMC) 
 hereby offers you committer privileges to the project.
+
 These privileges are offered on the understanding that
 you'll use them reasonably and with common sense.
 We like to work on trust rather than unnecessary constraints. 
@@ -133,30 +164,53 @@ probably find that you spend more time here.
 Of course, you can decline and instead remain as a 
 contributor, participating as you do now.
 
-A. This personal invitation is a chance for you to 
-accept or decline in private.  Either way, please 
-let us know in reply to the private@hertzbeat.apache.org
-address only.
+This personal invitation is a chance for you to accept or decline in private.
+Please let us know in reply to this message whether you accept or decline.
 
-B. If you accept, the next step is to register an iCLA:
-    1. Details of the iCLA and the forms are found 
+If you accept, you will need an Apache account (id) with privileges.
+Please follow these instructions.
+
+A. If you already have an ICLA on file:
+
+    1. If you already have an Apache account, let us know your id and we
+will grant you privileges on the project repositories.
+
+    2. If you have previously sent an ICLA, let us know the email address
+and public name used on the ICLA and your preferred Apache id, and
+we will request your account.
+
+    3. If the email address on the previously submitted ICLA is no longer
+valid, let us know the email address and public name used on the new ICLA,
+and your preferred Apache id. Continue to step B below and file your new ICLA.
+
+Look to see if your preferred ID is already taken at
+https://people.apache.org/committer-index.html
+
+B. If there is not already an ICLA on file, you need to submit an ICLA:
+
+    1. Details of the ICLA and the forms are found
     through this link: https://www.apache.org/licenses/#clas
 
-    2. Instructions for its completion and return to 
+    2. Instructions for its completion and return to
     the Secretary of the ASF are found at
-    https://www.apache.org/licenses/#submitting
+    https://www.apache.org/licenses/contributor-agreements.html#submitting
 
-    3. When you transmit the completed iCLA, request 
-    to notify the Apache HertzBeat and choose a 
-    unique Apache ID. Look to see if your preferred 
-    ID is already taken at 
+    Do not copy the project or any other individual on your message
+    to Secretary, as the form contains Personally Identifiable Information
+    that should be kept private.
+
+    3. When you complete the ICLA form, be sure to include in the form
+    the Apache [Project] project and choose a
+    unique Apache ID. Look to see if your preferred
+    ID is already taken at
     https://people.apache.org/committer-index.html
-    This will allow the Secretary to notify the PMC 
-    when your iCLA has been recorded.
+    This will allow the Secretary to notify the PMC
+    when your ICLA has been recorded.
 
-When recording of your iCLA is noted, you will 
-receive a follow-up message with the next steps for 
+When recording of your ICLA is noted, you will
+receive a follow-up message with the next steps for
 establishing you as a committer.
+
 ```
 
 ### Committer Accept Template
@@ -209,37 +263,24 @@ Yours,
 The Apache HertzBeat PPMC
 ```
 
-### Committer Done Template
+### Announce New Committer Template
 
 ```text
-To: private@hertzbeat.apache.org, ${NEW_COMMITTER_EMAIL}
-Subject: account request: ${NEW_COMMITTER_NAME}
+To: dev@hertzbeat.apache.org, ${NEW_COMMITTER_EMAIL}
+Subject: [ANNOUNCE] New committer: ${NEW_COMMITTER_NAME}
 ```
 
 ```text
-${NEW_COMMITTER_NAME}, as you know, the ASF Infrastructure has set up your
-committer account with the username '${NEW_COMMITTER_APACHE_NAME}'.
+Hello Community,
 
-Please follow the instructions to set up your SSH,
-svn password, svn configuration, email forwarding, etc.
-https://www.apache.org/dev/#committers
+The Podling Project Management Committee (PPMC) for Apache HertzBeat (incubating)
+has invited ${NEW_COMMITTER_NAME} to become a committer and we are pleased to
+announce that he has accepted.
 
-You have commit access to specific sections of the
-ASF repository, as follows:
+${NEW_COMMITTER_NAME} is active in the Apache HertzBeat community, hope to see your
+further interactions with the community!
+Thanks for your contributions.
 
-The general "committers" at:
-  https://svn.apache.org/repos/private/committers
-
-If you have any questions during this phase, then please
-see the following resources:
-
-Apache developer's pages: https://www.apache.org/dev/
-Incubator committer guide: https://incubator.apache.org/guides/committer.html
-
-Naturally, if you don't understand anything be sure to ask us on the dev@hertzbeat.apache.org mailing list. 
-Documentation is maintained by volunteers and hence can be out-of-date and incomplete - of course
-you can now help fix that.
-
-A PPMC member will announce your election to the dev list soon.
+Best Wishes!
 ```
 

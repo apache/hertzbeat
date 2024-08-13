@@ -7,6 +7,12 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of ORACLE database.
 
+### Attention, Need Add ORACLE jdbc driver jar
+
+- Download the ORACLE jdbc driver jar package, such as ojdbc8.jar. [Download](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
+- Copy the jar package to the `hertzbeat/ext-lib` directory.
+- Restart the HertzBeat service.
+
 ### Configuration parameter
 
 |   Parameter name    |                                                                        Parameter help description                                                                         |

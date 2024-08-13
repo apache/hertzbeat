@@ -101,7 +101,7 @@
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <maven-pmd-plugin.version>3.21.0</maven-pmd-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <!--hertzbeat related modules-->
+        <!-- hertzbeat related modules -->
         <hertzbeat.version>2.0-SNAPSHOT</hertzbeat.version>
 
         <springdoc.version>2.3.0</springdoc.version>
@@ -138,6 +138,8 @@
         <commons-collections4.version>4.4</commons-collections4.version>
         <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
+        <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <spotless.version>2.40.0</spotless.version>
     </properties>
 
     <dependencyManagement>
@@ -324,14 +326,14 @@
                 <artifactId>iotdb-session</artifactId>
                 <version>${iotdb-session.version}</version>
             </dependency>
-            <!-- h2 database-->
+            <!-- h2 database -->
             <dependency>
                 <groupId>com.h2database</groupId>
                 <artifactId>h2</artifactId>
                 <version>${h2.version}</version>
                 <scope>provided</scope>
             </dependency>
-            <!--sureness-->
+            <!-- sureness -->
             <dependency>
                 <groupId>com.usthe.sureness</groupId>
                 <artifactId>spring-boot3-starter-sureness</artifactId>
@@ -342,7 +344,7 @@
                 <artifactId>nekohtml</artifactId>
                 <version>${nekohtml.version}</version>
             </dependency>
-            <!--json path parser-->
+            <!-- json path parser-->
             <dependency>
                 <groupId>com.jayway.jsonpath</groupId>
                 <artifactId>json-path</artifactId>
@@ -381,10 +383,10 @@
             <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
-                <!-- 3.x版本支持Java11及以上, 因此这边还是使用2.x的版本-->
+                <!-- The 3.x version supports Java 11 and above, so the 2.x version is still used -->
                 <version>${caffeine.version}</version>
             </dependency>
-            <!--  通用集合操作  -->
+            <!--  Generic collection operations  -->
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-collections4</artifactId>
@@ -460,10 +462,30 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.40.0</version>
+                <version>${spotless.version}</version>
                 <configuration>
                     <skip>false</skip>
                     <markdown>

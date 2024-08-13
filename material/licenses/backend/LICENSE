@@ -392,6 +392,9 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-logging/3.2.3 Apache-2.0
     https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-mail/3.2.3 Apache-2.0
     https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-thymeleaf/3.2.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-webflux/3.2.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-reactor-netty/3.2.3 Apache-2.0
+    https://mvnrepository.com/artifact/org.springframework/spring-webflux/6.1.4 Apache-2.0
     https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-tomcat/3.2.3 Apache-2.0
     https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-validation/3.2.3 Apache-2.0
     https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-web/3.2.3 Apache-2.0
@@ -528,6 +531,7 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://mvnrepository.com/artifact/org.slf4j/slf4j-api/2.0.9 MIT
     https://mvnrepository.com/artifact/org.java-websocket/Java-WebSocket/1.5.2
     https://mvnrepository.com/artifact/com.taosdata.jdbc/taos-jdbcdriver/3.0.0
+    https://mvnrepository.com/artifact/com.beetstra.jutf7/jutf7/1.0.0
 
 ========================================================================
 MPL-1.1 licenses

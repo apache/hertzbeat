@@ -19,7 +19,7 @@ Refer to the official website document [Sending messages using Incoming Webhooks
 
 ![email](/img/docs/help/slack-bot-1.png)
 
-4. **Configure the associated alarm notification strategy⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]**
+2. **Configure the associated alarm notification strategy⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]**
 
 > **Note ⚠️ Adding a new recipient does not mean that it has taken effect and can receive alarm information. It is also necessary to configure the associated alarm notification strategy, that is, specify which messages are sent to which recipients**.
 

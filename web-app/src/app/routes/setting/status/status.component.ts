@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { FormGroup, NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -48,7 +48,10 @@ export class StatusComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  @ViewChild('incidentForm') incidentForm!: NgForm;
+  @ViewChild('componentForm') componentForm!: NgForm;
   statusOrg: StatusPageOrg = new StatusPageOrg();
+  statusOrgForEdit: StatusPageOrg = new StatusPageOrg();
   statusComponents!: StatusPageComponent[];
   statusIncidences!: StatusPageIncident[];
   loading: boolean = false;
@@ -80,25 +83,6 @@ export class StatusComponent implements OnInit {
 
   syncIncidence() {
     this.loadIncidenceInfo();
-  }
-
-  loadOrgInfo() {
-    this.orgLoading = true;
-    let orgLoad$ = this.statusPageService.getStatusPageOrg().subscribe(
-      message => {
-        if (message.code === 0) {
-          this.statusOrg = message.data;
-        } else {
-          console.log(message.msg);
-        }
-        this.orgLoading = false;
-        orgLoad$.unsubscribe();
-      },
-      error => {
-        this.orgLoading = false;
-        orgLoad$.unsubscribe();
-      }
-    );
   }
 
   loadComponentInfo() {
@@ -151,6 +135,7 @@ export class StatusComponent implements OnInit {
             this.statusOrg = new StatusPageOrg();
             console.log(message.msg);
           }
+          this.statusOrgForEdit = { ...this.statusOrg };
           return this.statusPageService.getStatusPageComponents();
         })
       )
@@ -177,7 +162,7 @@ export class StatusComponent implements OnInit {
       });
       return;
     }
-    let saveStatus$ = this.statusPageService.saveStatusPageOrg(this.statusOrg).subscribe(
+    let saveStatus$ = this.statusPageService.saveStatusPageOrg(this.statusOrgForEdit).subscribe(
       (message: Message<StatusPageOrg>) => {
         if (message.code === 0) {
           this.statusOrg = message.data;
@@ -234,7 +219,7 @@ export class StatusComponent implements OnInit {
 
   onEditOneComponent(data: StatusPageComponent) {
     this.isComponentModalAdd = false;
-    this.currentStatusComponent = data;
+    this.currentStatusComponent = { ...data };
     if (this.currentStatusComponent.tag != undefined) {
       this.matchTag = this.sliceTagName(this.currentStatusComponent.tag);
       this.tagsOption.push({
@@ -310,6 +295,15 @@ export class StatusComponent implements OnInit {
   }
 
   onComponentModalOk() {
+    if (this.componentForm.invalid) {
+      Object.values(this.componentForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     if (this.matchTag != undefined && this.matchTag.trim() != '') {
       let tmp: string[] = this.matchTag.split(':');
       let tagItem = new TagItem();
@@ -362,6 +356,15 @@ export class StatusComponent implements OnInit {
   onIncidentModalOk() {
     if (this.statusOrg.id == undefined) {
       this.notifySvc.warning(this.i18nSvc.fanyi('status.component.notify.need-org'), '');
+      return;
+    }
+    if (this.incidentForm.invalid) {
+      Object.values(this.incidentForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
       return;
     }
     // incident message content

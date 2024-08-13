@@ -23,7 +23,6 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Message notification configuration interface
@@ -32,24 +31,24 @@ public interface NoticeConfigService {
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
+     * @param name Recipient name,support fuzzy query
      * @return Search result
      */
-    List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification);
+    List<NoticeReceiver> getNoticeReceivers(String name);
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
+     * @param name Template name,support fuzzy query
      * @return Search result
      */
-    List<NoticeTemplate> getNoticeTemplates(Specification<NoticeTemplate> specification);
+    List<NoticeTemplate> getNoticeTemplates(String name);
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
+     * @param name Recipient name
      * @return Search result
      */
-    List<NoticeRule> getNoticeRules(Specification<NoticeRule> specification);
+    List<NoticeRule> getNoticeRules(String name);
 
     /**
      * Add a notification recipient

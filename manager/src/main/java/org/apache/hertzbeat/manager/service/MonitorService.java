@@ -28,8 +28,6 @@ import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -96,11 +94,19 @@ public interface MonitorService {
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
-     * @param pageRequest   Pagination parameters
+     * @param monitorIds Monitor ID List
+     * @param app       Monitor Type
+     * @param name      Monitor Name support fuzzy query
+     * @param host      Monitor Host support fuzzy query
+     * @param status    Monitor Status 0:no monitor,1:usable,2:disabled,9:all status
+     * @param sort      Sort Field
+     * @param order     Sort mode eg:asc desc
+     * @param pageIndex List current page
+     * @param pageSize  Number of list pagination
+     * @param tag       Monitor tag
      * @return Search Result
      */
-    Page<Monitor> getMonitors(Specification<Monitor> specification, PageRequest pageRequest);
+    Page<Monitor> getMonitors(List<Long> monitorIds, String app, String name, String host, Byte status, String sort, String order, int pageIndex, int pageSize, String tag);
 
     /**
      * Unmanaged monitoring items in batches according to the monitoring ID list
