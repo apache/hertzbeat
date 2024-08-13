@@ -1,0 +1,4 @@
+[submodule "script/helm/hertzbeat-helm-chart"]
+	path = script/helm/hertzbeat-helm-chart
+	url = git@github.com:apache/hertzbeat-helm-chart.git
+	branch = main
