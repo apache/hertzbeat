@@ -5,20 +5,20 @@ sidebar_position: 4
 ---
 
 <!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
 
-       https://www.apache.org/licenses/LICENSE-2.0
+https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 
 [官方指南](https://community.apache.org/newcommitter.html#new-committer-process)
@@ -49,7 +49,6 @@ sidebar_position: 4
 
   - 等待root告诉我们已经完成
   - [Roster](https://whimsy.apache.org/roster/ppmc/hertzbeat) 添加新的 committer
-
 - Announce New Committer
 
   参见 **Announce New Committer Template**
@@ -285,7 +284,9 @@ Best Wishes!
 ## 详细步骤
 
 ### 接受邀请
+
 当通过PMC内部投票后，PMC会向您索要个人邮箱，之后您会收到一封邮件，邮件会指引您进行下一步操作，内容为:
+
 ```
 Hello xxxx,
 
@@ -371,14 +372,14 @@ hi, i accept. Thanks for invitaion.
 ![](/img/docs/community/icla-content-2.png)
 
 在PDF中需要填写的字段：
- - `Full name`
- - `Public name`
- - `Postal Address`
- - `Country`
- - `E-Mail`
- - `(optional) preferred Apache id(s)`
- - `(optional) notify project`
- - `Date`
+- `Full name`
+- `Public name`
+- `Postal Address`
+- `Country`
+- `E-Mail`
+- `(optional) preferred Apache id(s)`
+- `(optional) notify project`
+- `Date`
 
 > 填写样例
 > ![](/img/docs/community/icla-content-3.png)
@@ -450,6 +451,7 @@ Thanks !
 ![](/img/docs/community/account-6.png)
 
 邮箱中会收到一封邮件，点击`Join @apache`
+
 > 这里邮箱指的是您提供给PMC的那个邮箱地址
 
 ![](/img/docs/community/account-7.png)
@@ -460,6 +462,7 @@ Thanks !
 ![](/img/docs/community/account-9.png)
 
 回到Apache页面，提示GitHub启用多重身份认证，在GitHub页面启用双重身份认证
+
 > GitHub双重身份认证介绍，[点击跳转官方文档](https://docs.github.com/zh/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication)
 
 ![](/img/docs/community/account-10.png)
@@ -471,7 +474,6 @@ Thanks !
 至此您的GitHub账号与Apache账号就绑定完成了。
 
 最后一步，联系PMC主席开启svn和其他访问权限。
-
 
 ## 邮箱绑定
 

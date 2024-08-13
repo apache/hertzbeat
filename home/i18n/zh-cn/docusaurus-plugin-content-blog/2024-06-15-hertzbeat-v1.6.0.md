@@ -13,7 +13,7 @@ keywords: [open source, monitoring, alerting]
 经过近五个月的社区开发迭代贡献和两个月的Apache Incubator孵化过程，Apache HertzBeat (incubating) v1.6.0 终于出来了。   
 这个版本我们增加了对OpenAi监控，Redfish协议服务器，插件机制，支持了NebulaGraph, Apache Yarn, HDFS, Hbase, Storm等更多功能特性。   
 由于License兼容问题，我们在底层替换了ORM框架，计算框架等多个依赖，Hibernate -> EclipseLink, 这也算是JPA生态下为数不多的迁移踩坑实践。   
-同时修复了一些bug和优化了一些功能，更完善的文档。欢迎大家尝试使用，提出宝贵意见和建议，共同推动HertzBeat的发展。🎉   
+同时修复了一些bug和优化了一些功能，更完善的文档。欢迎大家尝试使用，提出宝贵意见和建议，共同推动HertzBeat的发展。🎉
 
 **当然，最重要的是给在社区的贡献者们致以最好的感谢！**
 
@@ -34,7 +34,6 @@ keywords: [open source, monitoring, alerting]
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 - 提供强大的状态页构建能力，轻松向用户传达您产品服务的实时状态。
-
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助用户快速搭建自有监控系统。
 
@@ -367,7 +366,6 @@ keywords: [open source, monitoring, alerting]
 * @lw-yang made their first contribution in https://github.com/apache/hertzbeat/pull/2047
 * @xfl12345 made their first contribution in https://github.com/apache/hertzbeat/pull/2048
 
-
 ## 一条命令即可开始
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
@@ -376,12 +374,9 @@ keywords: [open source, monitoring, alerting]
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
-
 详细参考 HertzBeat 官网文档 https://hertzbeat.com/docs
 
-
-----
-
+---
 **Github: https://github.com/apache/hertzbeat**
 
 下载页面: https://hertzbeat.apache.org/docs/download/
@@ -390,7 +385,7 @@ keywords: [open source, monitoring, alerting]
 
 Have Fun!
 
-----
+---
 
 HertzBeat, Make Monitoring Easier!
 

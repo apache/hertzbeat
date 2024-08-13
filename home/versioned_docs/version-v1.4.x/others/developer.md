@@ -1,10 +1,10 @@
 ---
-id: developer  
-title: Contributors    
-sidebar_label: Contributors     
+id: developer
+title: Contributors
+sidebar_label: Contributors
 ---
 
-## ✨ HertzBeat Members  
+## ✨ HertzBeat Members
 
 <table>
   <tbody>
@@ -26,18 +26,18 @@ sidebar_label: Contributors
   </tbody>
 </table>
 
-<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>  
-
+<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>
 
 ## ✨ HertzBeat Contributors
 
-Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contributing)  
+Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contributing)
 
-<img alt="cert" src="/img/docs/cert-contributor.png" width="400"/>  
+<img alt="cert" src="/img/docs/cert-contributor.png" width="400"/>
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+
 <table>
   <tbody>
     <tr>
@@ -259,5 +259,4 @@ Thanks to these wonderful people, welcome to join us:  [Contributor Guide](contr
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
-
 <!-- ALL-CONTRIBUTORS-LIST:END -->

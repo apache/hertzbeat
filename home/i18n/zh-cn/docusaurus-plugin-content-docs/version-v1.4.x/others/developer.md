@@ -1,10 +1,10 @@
 ---
-id: developer  
-title: 开发者们    
+id: developer
+title: 开发者们
 sidebar_label: 开发者们     
 ---
 
-## ✨ HertzBeat的成员们   
+## ✨ HertzBeat的成员们
 
 <table>
   <tbody>
@@ -30,13 +30,14 @@ sidebar_label: 开发者们
 
 ## ✨ HertzBeat的开发者们
 
-Thanks these wonderful people, welcome to join us: [贡献者指南](contributing)   
+Thanks these wonderful people, welcome to join us: [贡献者指南](contributing)
 
 <img alt="cert" src="/img/docs/cert-contributor.png" width="400"/>
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+
 <table>
   <tbody>
     <tr>
@@ -260,4 +261,3 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
 <!-- prettier-ignore-end -->
 
 <!-- ALL-CONTRIBUTORS-LIST:END -->  
-

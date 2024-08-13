@@ -22,8 +22,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 * High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
 * Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.      
+> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
@@ -44,7 +43,6 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 <img width="1943" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/ba79f743-a450-4b01-adf0-5f15f3722c19"/>
 
 <img width="1901" alt="image" src="https://github.com/apache/hertzbeat/assets/24788200/b090ec18-5aae-444e-9ef6-e62fd1d8d239"/>
-
 
 - new help moudle
 
@@ -73,15 +71,14 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
+
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
 - `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
 - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
 
-
-----
-
+---
 ### What's Changed
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
@@ -139,7 +136,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * [hertzbeat] release hertzbeat version v1.4.1 by @tomsun28 in https://github.com/apache/hertzbeat/pull/1261
 * auto split webhook token when user input hook url by @tomsun28 in https://github.com/apache/hertzbeat/pull/1262
 
-----
+---
 
 ## ⛄ Supported
 
@@ -155,5 +152,5 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 ----
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 

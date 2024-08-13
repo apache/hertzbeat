@@ -8,7 +8,6 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-
 ![hertzBeat](/img/blog/new-committer.png)
 
 > 🎉 I am very pleased to become a Committer for the Apache HertzBeat project, and I have been invited by the community to introduce myself 🥰.
@@ -40,7 +39,4 @@ Similarly, the community's response was swift 🏎, which greatly encouraged my 
 During this process, I also incorporated some excellent experiences from other communities (Pulsar, OpenTelemetry) into HertzBeat. Everyone learned from each other, which is undoubtedly the charm of open source.
 
 Lastly, I want to thank the community's logicz for inviting me to become a Committer and tom for reviewing my PRs. I wish HertzBeat a successful graduation from the incubator and becoming a star project 🎊.
-
-
-
 

@@ -1,8 +1,9 @@
 ---
 id: contact
 title: 交流联系
-sidebar_label: 交流联系     
+sidebar_label: 交流联系
 ---
+
 > 如果您在使用过程有任何需要帮助或者想交流建议，可以通过 群 ISSUE 讨论交流。
 
 [GITHUB ISSUES](https://github.com/apache/hertzbeat/issues)

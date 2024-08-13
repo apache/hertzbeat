@@ -4,9 +4,11 @@ author: tom
 author_title: tom   
 author_url: https://github.com/tomsun28  
 author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4  
-tags: [opensource]  
+tags: [opensource]
 ---
+
 ## V1.1.3
+
 Home: hertzbeat.com | tancloud.cn
 
 Hi guys! HertzBeat v1.1.3 is coming. This version supports kafka monitor, ssl certificate expired monitor and more. Fixed several bugs and improved the overall stable usability.
@@ -22,9 +24,9 @@ Feature：
 2. [[monitor] feature: support apache kafka monitor #263](https://github.com/apache/hertzbeat/pull/263) contribute by @wang1027-wqh
 3. [[webapp] support history chart query 3 mouth time range #265](https://github.com/apache/hertzbeat/pull/265) issue by @ericfrol
 4. [[monitor] support ssl certificate expired monitor #266](https://github.com/apache/hertzbeat/pull/266) suggest by @noear
-5.  [[web-app] update default interval 600s to 120s #268](https://github.com/apache/hertzbeat/pull/268)
-6.  [[web-app] update layout ui - help button, nav menu #272](https://github.com/apache/hertzbeat/pull/272)
-7.  [[alert,webapp] support delete all alerts at once. #273](https://github.com/apache/hertzbeat/pull/273) issue by @ericfrol
+5. [[web-app] update default interval 600s to 120s #268](https://github.com/apache/hertzbeat/pull/268)
+6. [[web-app] update layout ui - help button, nav menu #272](https://github.com/apache/hertzbeat/pull/272)
+7. [[alert,webapp] support delete all alerts at once. #273](https://github.com/apache/hertzbeat/pull/273) issue by @ericfrol
 8. [[web-app] update home background image #276](https://github.com/apache/hertzbeat/pull/276)
 
 Bugfix.
@@ -37,4 +39,5 @@ Bugfix.
 Online https://console.tancloud.cn.
 
 Have Fun!
-----     
+---------
+
