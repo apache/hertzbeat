@@ -43,7 +43,8 @@ jobs:
         
     - name: Build the Backend
       run: |
-        mvn clean package -Prelease
+        mvn clean install
+        mvn clean package -Prelease -DskipTests
         cd collector
         mvn clean package -Pcluster -DskipTests
 
