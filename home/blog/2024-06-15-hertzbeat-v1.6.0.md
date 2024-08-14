@@ -15,7 +15,6 @@ In this version, we added monitoring for OpenAi, Redfish protocol servers, plugi
 Due to license compatibility issues, we replaced multiple dependencies at the bottom layer, Hibernate -> EclipseLink, which is also a rare migration pitfall practice in the JPA ecosystem.  
 At the same time, some bugs were fixed and some functions were optimized, and more complete documents. Welcome everyone to try to use, put forward valuable opinions and suggestions, and promote the development of HertzBeat together.
 
-
 **Of course, the most important thing is to give the best thanks to the contributors in the community!**
 
 Download Page: https://hertzbeat.apache.org/docs/download/
@@ -45,6 +44,7 @@ Upgrade Guide: https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-upd
 ## HertzBeat's 1.6.0 Version Release!
 
 ## Highlights
+
 - HertzBeat is donated to the Apache Incubator.
 - migrate repo, clean up code, license, add more help doc and more
 - add dependency license doc
@@ -78,6 +78,7 @@ Upgrade Guide: https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-upd
 - and more bugfix, doc, features power by our contributors, thanks to them.
 
 ## What's Changed
+
 * bugfix collector can not startup alone by @tomsun28 in https://github.com/apache/hertzbeat/pull/1633
 * translate some hertzbeat blog by @TJxiaobao in https://github.com/apache/hertzbeat/pull/1635
 * Check class description by @ZY945 in https://github.com/apache/hertzbeat/pull/1638
@@ -365,7 +366,6 @@ Upgrade Guide: https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-upd
 * @lw-yang made their first contribution in https://github.com/apache/hertzbeat/pull/2047
 * @xfl12345 made their first contribution in https://github.com/apache/hertzbeat/pull/2048
 
-
 ## Just one command to get started
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
@@ -374,12 +374,9 @@ Upgrade Guide: https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-upd
 
 ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
-
 Detailed refer to HertzBeat Document https://hertzbeat.com/docs
 
-
-----
-
+---
 **Github: https://github.com/apache/hertzbeat**
 
 Download Page: https://hertzbeat.apache.org/docs/download/
@@ -388,7 +385,7 @@ Upgrade Guide: https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-upd
 
 Have Fun!
 
-----
+---
 
 HertzBeat, Make Monitoring Easier!
 

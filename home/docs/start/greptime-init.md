@@ -12,18 +12,21 @@ Apache HertzBeat (incubating)'s historical data storage relies on the time serie
 
 It's designed to work on infrastructure of the cloud era, and users benefit from its elasticity and commodity storage.
 
-**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**  
+**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
-### Install GreptimeDB via Docker   
+### Install GreptimeDB via Docker
+
 > Refer to the official website [installation tutorial](https://docs.greptime.com/getting-started/overview)  
-1. Download and install Docker environment     
-   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).     
-   After the installation you can check if the Docker version normally output at the terminal.
-   ```
-   $ docker -v
-   Docker version 20.10.12, build e91ed57
-   ```
-2. Install GreptimeDB with Docker   
+> 1. Download and install Docker environment     
+> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).     
+> After the installation you can check if the Docker version normally output at the terminal.
+>
+> ```
+> $ docker -v
+> Docker version 20.10.12, build e91ed57
+> ```
+>
+> 2. Install GreptimeDB with Docker
 
 ```shell
 $ docker run -p 127.0.0.1:4000-4003:4000-4003 \
@@ -36,10 +39,10 @@ $ docker run -p 127.0.0.1:4000-4003:4000-4003 \
   --postgres-addr 0.0.0.0:4003
 ```
 
-   `-v "$(pwd)/greptimedb:/tmp/greptimedb"` is local persistent mount of greptimedb data directory. `$(pwd)/greptimedb` should be replaced with the actual local directory, default is the `greptimedb` directory under the current directory.
-   use```$ docker ps``` to check if the database started successfully
+`-v "$(pwd)/greptimedb:/tmp/greptimedb"` is local persistent mount of greptimedb data directory. `$(pwd)/greptimedb` should be replaced with the actual local directory, default is the `greptimedb` directory under the current directory.
+use```$ docker ps``` to check if the database started successfully
 
-### Configure the database connection in hertzbeat `application.yml` configuration file  
+### Configure the database connection in hertzbeat `application.yml` configuration file
 
 1. Configure HertzBeat's configuration file   
    Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)

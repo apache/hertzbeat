@@ -8,7 +8,6 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-
 ![hertzBeat](/img/blog/new-committer.png)
 
 > 🎉非常高兴成为 Apache HertzBeat 项目的 Committer，受社区邀请来做一个自我介绍🥰。
@@ -42,7 +41,4 @@ keywords: [open source monitoring system, alerting system]
 在这个过程中我也把在其他社区（Pulsar、OpenTelemetry）的优秀经验借鉴到 HertzBeat，大家取长补短，想必这也是开源的魅力所在吧。
 
 最后要感谢社区的 logicz 邀请我成为 Committer，tom 对我 PR 的 review，预祝 HertzBeat 从孵化器毕业成为明星项目🎊。
-
-
-
 

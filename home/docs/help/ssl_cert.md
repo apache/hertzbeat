@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source ssl cert monitoring tool, mo
 
 ### Configuration parameters
 
-| Parameter name       | Parameter help description                                                                                                                                                     |
+|    Parameter name    |                                                                           Parameter help description                                                                           |
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host      | The peer IPV4, IPV6 or domain name to be monitored. Note ⚠️Without protocol header (eg: https://, http://).                                                                    |
 | Monitoring name      | The name that identifies this monitoring, and the name needs to be unique.                                                                                                     |
@@ -23,11 +23,12 @@ keywords: [open source monitoring tool, open source ssl cert monitoring tool, mo
 
 #### Metric collection: certificate
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|----------|
-| subject | none | certificate name |
-| expired | no | expired or not |
-| start_time | None | Validity start time |
-| start_timestamp | ms millisecond | Validity start timestamp |
-| end_time | None | Expiration time |
-| end_timestamp | ms milliseconds | expiration timestamp |
+|   Metric Name   |   Metric Unit   | Metric Help Description  |
+|-----------------|-----------------|--------------------------|
+| subject         | none            | certificate name         |
+| expired         | no              | expired or not           |
+| start_time      | None            | Validity start time      |
+| start_timestamp | ms millisecond  | Validity start timestamp |
+| end_time        | None            | Expiration time          |
+| end_timestamp   | ms milliseconds | expiration timestamp     |
+

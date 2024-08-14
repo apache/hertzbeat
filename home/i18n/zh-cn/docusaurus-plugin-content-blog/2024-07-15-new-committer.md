@@ -8,11 +8,9 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-
 ![hertzBeat](/img/blog/new-committer.png)
 
 大家好，非常荣幸可以收到社区邀请被提名为 Apache HertzBeat 的 Committer。我先做一个简单的自我介绍，从2019年工作开始，一直从事后端开发工作，主要使用Java语言，目前在一家网络安全公司从事网络安全相关产品后端开发工作。
-
 
 ### 遇见
 

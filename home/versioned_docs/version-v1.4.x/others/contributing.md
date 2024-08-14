@@ -1,7 +1,7 @@
 ---
 id: contributing  
 title: Contributing Guide    
-sidebar_label: Contributing Guide    
+sidebar_label: Contributing Guide
 ---
 
 > We are committed to maintaining a happy community that helps each other, welcome every contributor to join us!
@@ -33,7 +33,6 @@ Even small corrections to typos are very welcome :)
 > To get HertzBeat code running on your development tools, and able to debug with breakpoints.
 > This is a front-end and back-end separation project. To start the local code, the back-end [manager](https://github.com/apache/hertzbeat/tree/master/manager) and the front-end [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) must be started separately.
 
-
 - Backend start
 
 1. Requires `maven3+`, `java11` and `lombok` environments
@@ -60,23 +59,31 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
 
 1. First you need to fork your target [hertzbeat repository](https://github.com/apache/hertzbeat).
 2. Then download the code locally with git command:
+
 ```shell
 git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
 ```
+
 3. After the download is complete, please refer to the getting started guide or README file of the target repository to initialize the project.
 4. Then, you can refer to the following command to submit the code:
+
 ```shell
 git checkout -b a-feature-branch #Recommended  
 ```
+
 5. Submit the coed as a commit, the commit message format specification required: [module name or type name] feature or bugfix or doc: custom message.
+
 ```shell
 git add <modified file/path> 
 git commit -m '[docs]feature: necessary instructions' #Recommended 
 ```
+
 6. Push to the remote repository
+
 ```shell
 git push origin a-feature-branch   
 ```
+
 7. Then you can initiate a new PR (Pull Request) on GitHub.
 
 Please note that the title of the PR needs to conform to our spec, and write the necessary description in the PR to facilitate code review by Committers and other contributors.
@@ -125,14 +132,15 @@ Public WeChat: `tancloudtech`
 ## 🥐 Architecture
 
 - **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
+
 > Provides monitoring management, monitoring configuration management, system user management, etc.
-- **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
+> - **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
-- **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
+> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
 > Metrics data management, data query, calculation and statistics.
-- **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** Provide alert service.
+> - **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** Provide alert service.
 > Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
-- **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
+> - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
 
-![hertzBeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)   
+![hertzBeat](https://cdn.jsdelivr.net/gh/apache/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)

@@ -1,29 +1,34 @@
 ---
 id: extend-jdbc  
 title: JDBC协议自定义监控  
-sidebar_label: JDBC协议自定义监控    
+sidebar_label: JDBC协议自定义监控
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JDBC(目前支持mysql,mariadb,postgresql,sqlserver)自定义指标监控。 
-> JDBC协议自定义监控可以让我们很方便的通过写SQL查询语句就能监控到我们想监控的指标     
 
-### JDBC协议采集流程    
-【**系统直连MYSQL**】->【**运行SQL查询语句**】->【**响应数据解析:oneRow, multiRow, columns**】->【**指标数据提取**】   
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JDBC(目前支持mysql,mariadb,postgresql,sqlserver)自定义指标监控。
+> JDBC协议自定义监控可以让我们很方便的通过写SQL查询语句就能监控到我们想监控的指标
+
+### JDBC协议采集流程
+
+【**系统直连MYSQL**】->【**运行SQL查询语句**】->【**响应数据解析:oneRow, multiRow, columns**】->【**指标数据提取**】
 
 由流程可见，我们自定义一个JDBC协议的监控类型，需要配置JDBC请求参数，配置获取哪些指标，配置查询SQL语句。
 
-### 数据解析方式   
+### 数据解析方式
+
 SQL查询回来的数据字段和我们需要的指标映射，就能获取对应的指标数据，目前映射解析方式有三种：oneRow, multiRow, columns
 
-#### **oneRow**  
-> 查询一行数据, 通过查询返回结果集的列名称，和查询的字段映射  
+#### **oneRow**
+
+> 查询一行数据, 通过查询返回结果集的列名称，和查询的字段映射
 
 例如：   
 查询的指标字段为：one tow three four
 查询SQL：select one, tow, three, four from book limit 1;
-这里指标字段就能和响应数据一一映射为一行采集数据。   
+这里指标字段就能和响应数据一一映射为一行采集数据。
 
 #### **multiRow**
-> 查询多行数据, 通过查询返回结果集的列名称，和查询的字段映射  
+
+> 查询多行数据, 通过查询返回结果集的列名称，和查询的字段映射
 
 例如：   
 查询的指标字段为：one tow three four
@@ -31,33 +36,34 @@ SQL查询回来的数据字段和我们需要的指标映射，就能获取对�
 这里指标字段就能和响应数据一一映射为多行采集数据。
 
 #### **columns**
-> 采集一行指标数据, 通过查询的两列数据(key-value)，key和查询的字段匹配，value为查询字段的值  
+
+> 采集一行指标数据, 通过查询的两列数据(key-value)，key和查询的字段匹配，value为查询字段的值
 
 例如：   
 查询字段：one tow three four   
 查询SQL：select key, value from book;   
-SQL响应数据：   
+SQL响应数据：
 
-| key      | value |
-|----------|-------|
-| one      | 243   |
-| two      | 435   |
-| three    | 332   |
-| four     | 643   |
+|  key  | value |
+|-------|-------|
+| one   | 243   |
+| two   | 435   |
+| three | 332   |
+| four  | 643   |
 
-这里指标字段就能和响应数据的key映射,获取对应的value为其采集监控数据。     
+这里指标字段就能和响应数据的key映射,获取对应的value为其采集监控数据。
 
-### 自定义步骤  
+### 自定义步骤
 
 **HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
 ![](/img/docs/advanced/extend-point-1.png)
 
-
 ------- 
-下面详细介绍下文件的配置用法，请注意看使用注释。   
 
-### 监控模版YML   
+下面详细介绍下文件的配置用法，请注意看使用注释。
+
+### 监控模版YML
 
 > 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
 > 即我们通过自定义这个YML，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
@@ -237,3 +243,4 @@ metrics:
       sql: show global status where Variable_name like 'innodb%';
       url: ^_^url^_^
 ```
+

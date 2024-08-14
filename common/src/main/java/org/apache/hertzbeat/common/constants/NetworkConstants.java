@@ -18,15 +18,18 @@
 package org.apache.hertzbeat.common.constants;
 
 /**
- * collector constant
+ * Http Constants.
  */
-public interface CollectorConstants {
 
-    String RESPONSE_TIME = "responseTime";
+public interface NetworkConstants {
 
-    String KEYWORD = "keyword";
+    String KEEP_ALIVE = "Keep-Alive";
 
-    String STATUS_CODE = "statusCode";
+    String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36\")";
+
+    String IPV6 = "ipv6";
+
+    String IPV4 = "ipv4";
 
     String ERROR_MSG = "errorMsg";
 
@@ -36,21 +39,12 @@ public interface CollectorConstants {
 
     String HTTPS_HEADER = "https://";
 
-    /**
-     * POSTGRESQL un reachable status code
-     */
-    String POSTGRESQL_UN_REACHABLE_CODE = "08001";
+    String RESPONSE_TIME = "responseTime";
 
-    String IPV6 = "ipv6";
+    String STATUS_CODE = "StatusCode";
 
-    String IPV4 = "ipv4";
+    String X_AUTH_TOKEN = "X-Auth-Token";
 
-    /**
-     * MongoDB Atlas model
-     */
-    String MONGO_DB_ATLAS_MODEL = "mongodb-atlas";
+    String LOCATION = "Location";
 
-    String ZOOKEEPER_APP = "zookeeper";
-
-    String ZOOKEEPER_ENVI_HEAD = "Environment:";
 }

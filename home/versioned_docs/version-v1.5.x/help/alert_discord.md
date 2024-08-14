@@ -45,7 +45,6 @@ keywords: [open source monitoring tool, open source alerter, open source Discord
 
 ![bot](/img/docs/help/discord-bot-7.png)
 
-
 ### Add an alarm notification person in HertzBeat, the notification method is Discord Bot
 
 1. **[Alarm notification] -> [Add recipient] -> [Select Discord robot notification method] -> [Set robot Token and ChannelId] -> [OK]**
@@ -58,13 +57,12 @@ keywords: [open source monitoring tool, open source alerter, open source Discord
 
 ![email](/img/docs/help/alert-notice-policy.png)
 
+### Discord Bot Notification FAQ
 
-### Discord Bot Notification FAQ   
-
-1. Discord doesn't receive bot alert notifications   
+1. Discord doesn't receive bot alert notifications
 
 > Please check whether the alarm information has been triggered in the alarm center   
 > Please check whether the robot Token and ChannelId are configured correctly, and whether the alarm policy association has been configured   
-> Please check whether the bot is properly authorized by the Discord chat server   
+> Please check whether the bot is properly authorized by the Discord chat server
 
 Other questions can be fed back through the communication group ISSUE!

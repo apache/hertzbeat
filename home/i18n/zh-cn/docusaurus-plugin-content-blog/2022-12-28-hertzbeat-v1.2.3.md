@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]
 ---
 
-## v1.2.3   
+## v1.2.3
 
 Home: hertzbeat.com | tancloud.cn
 
@@ -38,7 +38,6 @@ Feature：
 12. [add Prometheus exporter metrics parser and IoTDB monitor #505](https://github.com/apache/hertzbeat/pull/505) @Ceilzcx
 13. [support apache shenyu metrics monitoring #507](https://github.com/apache/hertzbeat/pull/507)
 
-
 Bugfix.
 
 1. [[manager] fix cross domain problem in SecurityCorsConfiguration #469](https://github.com/apache/hertzbeat/pull/469)  @zenan08
@@ -57,6 +56,7 @@ Have Fun!
 ----     
 
 ## V1.2.3
+
 官网: hertzbeat.com | tancloud.cn
 
 大家好，HertzBeat v1.2.3发布啦！这个版本带来了重大更新，我们支持了对prometheus exporter协议监控，用户可以很方便的使用hertzbeat来适配监控prometheus exporter. 基于这个能力，这个版本我们也支持了对apache shenyu, apache iotdb的指标监控。我们更新了UI布局，修复了多个BUG，也支持了短信通知。快来体验下吧!
@@ -84,7 +84,6 @@ Feature：
 12. [add Prometheus exporter metrics parser and IoTDB monitor #505](https://github.com/apache/hertzbeat/pull/505) @Ceilzcx
 13. [support apache shenyu metrics monitoring #507](https://github.com/apache/hertzbeat/pull/507)
 
-
 Bugfix.
 
 1. [[manager] fix cross domain problem in SecurityCorsConfiguration #469](https://github.com/apache/hertzbeat/pull/469)  @zenan08
@@ -97,3 +96,4 @@ Bugfix.
 8. [[manager] springboot2 monitor support base path config #515](https://github.com/apache/hertzbeat/pull/515)
 
 ----     
+

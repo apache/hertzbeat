@@ -3,6 +3,7 @@ id: alert_threshold
 title: Threshold Alert Configuration
 sidebar_label: Threshold Alert Configuration
 ---
+
 > Configure alert thresholds for monitoring metrics (warning alert, critical alert, emergency alert). The system triggers alerts based on threshold configuration and collected metric data.
 
 ## Operational Steps

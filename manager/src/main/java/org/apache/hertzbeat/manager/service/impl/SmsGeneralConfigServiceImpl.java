@@ -54,7 +54,7 @@ public class SmsGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImp
      * a TypeReference of NoticeSender type
      */
     @Override
-    protected TypeReference<SmsNoticeSender> getTypeReference() {
+    public TypeReference<SmsNoticeSender> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {

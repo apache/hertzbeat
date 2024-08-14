@@ -7,6 +7,7 @@ sidebar_label: 1.6.0升级指南
 # HertzBeat 1.6.0 升级指南
 
 ### 注意：该指南适用于1.5.0向1.6.0版本升级
+
 ### 如果你使用更老的版本，建议使用导出功能重新安装，或先升级到1.5.0再按本指南升级到1.6.0
 
 ### 二进制安装包升级
@@ -18,6 +19,7 @@ sidebar_label: 1.6.0升级指南
 - 当你的服务器中默认环境变量为Java17时，这一步你无需任何操作。
 - 当你的服务器中默认环境变量不为Java17时，如Java8、Java11，若你服务器中**没有**其他应用需要低版本Java，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并在搜索引擎搜索如何设置新的环境变量指向新的Java17。
 - 当你的服务器中默认环境变量不为Java17时，如Java8、Java11，若你服务器中**有**其他应用需要低版本Java，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并将解压后的文件夹重命名为java，复制到Hertzbeat的解压目录下。
+
 2. 升级数据库
 
 打开[https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration)，
@@ -30,6 +32,7 @@ sidebar_label: 1.6.0升级指南
 - `application.yml`一般需要修改以下部分
 
   默认为：
+
 ```yaml
   datasource:
     driver-class-name: org.h2.Driver
@@ -48,7 +51,9 @@ sidebar_label: 1.6.0升级指南
         logging:
           level: SEVERE
 ```
+
 如若修改为mysql数据库，给出一个示例：
+
 ```yaml
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -69,6 +74,7 @@ sidebar_label: 1.6.0升级指南
 ```
 
 - `sureness.yml`修改是可选的，一般在你需要修改账号密码时
+
 ```yaml
 # account info config
 # eg: admin has role [admin,user], password is hertzbeat
@@ -93,10 +99,10 @@ account:
     role: [user]
 ```
 
-
 4. 添加相应的数据库驱动
 
-       由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动，复制到安装目录下`ext-lib`中。
+           由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动，复制到安装目录下`ext-lib`中。
+
 mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)
 oracle（如果你要监控oracle，这两个驱动是必须的）
 [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)
@@ -106,6 +112,7 @@ oracle（如果你要监控oracle，这两个驱动是必须的）
 ### Docker 方式升级 - Mysql数据库
 
 1. 关闭 HertzBeat 容器
+
 ```
 docker stop hertzbeat
 ```
@@ -122,6 +129,7 @@ docker stop hertzbeat
 - `application.yml`一般需要修改以下部分
 
   默认为：
+
 ```yaml
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -142,6 +150,7 @@ docker stop hertzbeat
 ```
 
 - `sureness.yml`修改是可选的，一般在你需要修改账号密码时
+
 ```yaml
 # account info config
 # eg: admin has role [admin,user], password is hertzbeat
@@ -168,7 +177,8 @@ account:
 
 4. 添加相应的数据库驱动
 
-       由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
+           由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
+
 mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)
 oracle（如果你要监控oracle，这两个驱动是必须的）
 [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)
@@ -178,6 +188,7 @@ oracle（如果你要监控oracle，这两个驱动是必须的）
 ### Docker安装升级 - H2内置数据库(生产环境不推荐使用H2)
 
 1. 关闭 HertzBeat 容器
+
 ```
 docker stop hertzbeat
 ```
@@ -187,9 +198,11 @@ docker stop hertzbeat
    前题你已经将 H2 数据库文件 data 目录挂载到本地，或者启动老容器手动将 /opt/hertzbeat/data 目录拷贝出来。
    下载 h2 驱动 jar [https://mvnrepository.com/artifact/com.h2database/h2/2.2.220](https://mvnrepository.com/artifact/com.h2database/h2/2.2.220)
    使用 h2 驱动 jar 本地启动数据库
+
 ```
 java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
 ```
+
 打开[https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration)，
 选择你使用的数据库的目录下相应的 `V160__update_column.sql`文件在 H2 执行升级sql。
 
@@ -200,6 +213,7 @@ java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
 - `application.yml`一般需要修改以下部分
 
   默认为：
+
 ```yaml
   datasource:
     driver-class-name: org.h2.Driver
@@ -220,6 +234,7 @@ java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
 ```
 
 - `sureness.yml`修改是可选的，一般在你需要修改账号密码时
+
 ```yaml
 # account info config
 # eg: admin has role [admin,user], password is hertzbeat
@@ -244,10 +259,10 @@ account:
     role: [user]
 ```
 
-
 4. 添加相应的数据库驱动
 
-       由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
+           由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
+
 mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)
 oracle（如果你要监控oracle，这两个驱动是必须的）
 [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)
@@ -255,8 +270,8 @@ oracle（如果你要监控oracle，这两个驱动是必须的）
 接下来，像之前那样 Docker 运行启动，即可体验最新的HertzBeat1.6.0！
 
 ### 通过导出导入升级
-> 若不想如上繁琐的脚本升级方式，可以直接将老环境的监控任务和阈值信息导出导入
 
+> 若不想如上繁琐的脚本升级方式，可以直接将老环境的监控任务和阈值信息导出导入
 
 1. 部署一套最新版本的新环境
 2. 在页面上将老环境的监控任务和阈值信息导出。
