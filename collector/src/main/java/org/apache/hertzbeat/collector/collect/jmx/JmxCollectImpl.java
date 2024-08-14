@@ -126,13 +126,11 @@ public class JmxCollectImpl extends AbstractCollect {
                 builder.addValues(valueRowBuilder.build());
             }
         } catch (IOException exception) {
-            exception.printStackTrace();
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.error("JMX IOException :{}", errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (Exception e) {
-            e.printStackTrace();
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error("JMX Error :{}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
