@@ -27,17 +27,17 @@ VERSION=`ls apache-hertzbeat-*-incubating-docker-compose.tar.gz| awk -F"-" '{pri
 # compile context dir
 CONTEXT_DIR=`pwd`
 
-COMMAND="docker buildx build --platform ${IMAGE_PLATFORM:-linux/arm64,linux/amd64} -t apache/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg  --push=${IMAGE_PUSH:-true} --load=${IMAGE_LOAD:-false}"
+COMMAND="docker buildx build --platform ${IMAGE_PLATFORM:-linux/arm64,linux/amd64} -t apache/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR  --push=${IMAGE_PUSH:-true} --load=${IMAGE_LOAD:-false}"
 
-#COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg  --push"
+#COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t apache/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR  --push"
 
-#COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg  --push"
+#COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:v$VERSION -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR  --push"
 
-#COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg  --push"
+#COMMAND="docker buildx build --platform linux/arm64,linux/amd64 -t quay.io/tancloud/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR  --push"
 
 # Build Local
 
-#COMMAND="docker build -t apache/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg "
+#COMMAND="docker build -t apache/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR "
 
 echo "$COMMAND"
 
@@ -49,4 +49,4 @@ echo "$COMMAND"
 
 $COMMAND
 
-#docker build -t apache/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR --build-arg 
+#docker build -t apache/hertzbeat:latest -f $CURRENT_DIR/Dockerfile $CONTEXT_DIR 
