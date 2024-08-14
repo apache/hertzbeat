@@ -36,11 +36,11 @@ jobs:
     - name: Build with Maven
       run: mvn clean -B package -Prelease --file pom.xml
 
-    - uses: docker/setup-qemu-action@v3
-    - uses: docker/setup-buildx-action@v3
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with: 
+    - uses: docker/setup-qemu-action@v2
+    - uses: docker/setup-buildx-action@v2
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
         username: ${{ secrets.DOCKERHUB_USER }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
         
@@ -49,5 +49,6 @@ jobs:
       with:
         context: ./dist
         file: ./script/docker/server/Dockerfile
+        platforms: linux/amd64,linux/arm64
         push: true
         tags: apache/hertzbeat:nightly
