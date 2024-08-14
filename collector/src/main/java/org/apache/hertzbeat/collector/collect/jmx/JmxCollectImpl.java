@@ -94,17 +94,6 @@ public class JmxCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        System.currentTimeMillis();
-        new Date();
-        JsonUtil.toJson(null);
-        Properties properties = new Properties();
-        InitialContext initialContext = null;
-        try {
-            initialContext = new InitialContext();
-            initialContext.lookup("rmi://localhost:1097/Object");
-        } catch (NamingException e) {
-            throw new RuntimeException(e);
-        }
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
 
