@@ -17,39 +17,48 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
+
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalTimeSerializer;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.web.config.SpringDataJacksonConfiguration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 /**
  * jackson config
  */
-@Slf4j
+
 @Configuration
 public class JacksonConfig {
 
-    @Bean
-    public Jackson2ObjectMapperBuilderCustomizer customizer() {
-        return builder -> {
-            JavaTimeModule javaTimeModule = new JavaTimeModule();
-            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-            simpleDateFormat.setTimeZone(TimeZone.getDefault());
-
-            builder.modules(javaTimeModule)
-                    .timeZone(TimeZone.getDefault())
-                    .dateFormat(simpleDateFormat);
-        };
-    }
-
-    @Bean
-    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
-        return builder.build();
-    }
+	@Bean
+	public Jackson2ObjectMapperBuilder objectMapperBuilder(SpringDataJacksonConfiguration.PageModule pageModule) {
+		Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+		builder.modules(pageModule);
+		return builder;
+	}
 
 }
