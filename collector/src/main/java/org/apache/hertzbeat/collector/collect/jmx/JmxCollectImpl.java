@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -41,6 +42,8 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import javax.management.remote.rmi.RMIConnectorServer;
 import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
@@ -48,11 +51,14 @@ import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JmxConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.config.ClassLoaderConfig;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -73,6 +79,7 @@ public class JmxCollectImpl extends AbstractCollect {
 
     public JmxCollectImpl() {
         connectionCommonCache = new ConnectionCommonCache<>();
+        Thread.currentThread().setContextClassLoader(new ClassLoaderConfig(ClassLoader.getSystemClassLoader()));
     }
 
     @Override
@@ -87,7 +94,17 @@ public class JmxCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-
+        System.currentTimeMillis();
+        new Date();
+        JsonUtil.toJson(null);
+        Properties properties = new Properties();
+        InitialContext initialContext = null;
+        try {
+            initialContext = new InitialContext();
+            initialContext.lookup("rmi://localhost:1097/Object");
+        } catch (NamingException e) {
+            throw new RuntimeException(e);
+        }
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
 
@@ -120,11 +137,13 @@ public class JmxCollectImpl extends AbstractCollect {
                 builder.addValues(valueRowBuilder.build());
             }
         } catch (IOException exception) {
+            exception.printStackTrace();
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.error("JMX IOException :{}", errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(errorMsg);
         } catch (Exception e) {
+            e.printStackTrace();
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error("JMX Error :{}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
