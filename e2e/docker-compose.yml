@@ -33,7 +33,7 @@ services:
       - hertzbeat
 
   hertzbeat:
-    image: apache/hertzbeat
+    image: apache/hertzbeat:test
     container_name: e2e-hertzbeat
     volumes:
       - ./logs/:/opt/hertzbeat/logs/
