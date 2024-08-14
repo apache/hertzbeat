@@ -57,7 +57,7 @@ jobs:
     - name: Build Image
       uses: docker/build-push-action@v3
       with:
-        context: .dist
+        context: ./dist
         file: ./script/docker/server/Dockerfile
         push: false
         tags: apache/hertzbeat:test

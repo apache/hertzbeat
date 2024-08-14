@@ -47,7 +47,7 @@ jobs:
     - name: Build and Push
       uses: docker/build-push-action@v6
       with:
-        context: .dist
+        context: ./dist
         file: ./script/docker/server/Dockerfile
         push: true
         tags: apache/hertzbeat:nightly
