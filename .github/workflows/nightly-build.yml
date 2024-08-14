@@ -38,6 +38,7 @@ jobs:
     - name: Build the Frontend
       run: |
         cd web-app
+        yarn install
         yarn package
         
     - name: Build the Backend
