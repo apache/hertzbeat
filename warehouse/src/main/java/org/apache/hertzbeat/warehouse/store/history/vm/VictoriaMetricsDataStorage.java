@@ -281,9 +281,12 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     public Map<String, List<Value>> getHistoryIntervalMetricData(Long monitorId, String app, String metrics,
                                                                  String metric, String label, String history) {
         if (!serverAvailable) {
-            log.error("\n\t---------------VictoriaMetrics Init Failed---------------\n"
-                    + "\t--------------Please Config VictoriaMetrics--------------\n"
-                    + "\t----------Can Not Use Metric History Now----------\n");
+            log.error("""
+                    
+                    \t---------------VictoriaMetrics Init Failed---------------
+                    \t--------------Please Config VictoriaMetrics--------------
+                    \t----------Can Not Use Metric History Now----------
+                    """);
             return Collections.emptyMap();
         }
         long endTime = ZonedDateTime.now().toEpochSecond();

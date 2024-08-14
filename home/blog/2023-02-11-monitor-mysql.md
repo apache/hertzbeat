@@ -14,7 +14,6 @@ Keywords: [Open source monitoring tool, open source database monitoring, Mysql d
 
 > MySQL is an open source relational database management system developed by the Swedish company MySQL AB and a product of Oracle. MySQL is one of the most popular open source relational database management systems. In terms of WEB applications, MySQL is one of the best RDBMS (Relational Database Management System, relational database management system) application software.
 
-
 ### Introduction to HertzBeat
 
 > HertzBeat is an open source, easy-to-use and friendly real-time monitoring tool that does not require Agent and has powerful custom monitoring capabilities.
@@ -80,7 +79,6 @@ Path: Menu -> Threshold Rules -> Add Threshold
 
 ![hertzbeat](/img/blog/monitor-mysql-6.png)
 
-
 2. Add message notification recipients
 
 > Configure the receiver to let the alarm message know who to send and how to send it.
@@ -89,7 +87,7 @@ Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
 
 Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk to configure the robot on DingTalk and set the security custom keyword `HertzBeat `, get the corresponding `access_token` value.   
+- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk to configure the robot on DingTalk and set the security custom keyword `HertzBeat `, get the corresponding `access_token` value.
 - Configure the receiver parameters in HertzBeat as follows.
 
 【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
@@ -101,7 +99,6 @@ Message notification methods support **email, DingTalk, WeChat Work, Feishu, Web
 > Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
-
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
@@ -120,11 +117,11 @@ Content details: mysql db query_cache_hit_rate is too low, now is 20.
 :::tip
 This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Mysql database metric data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click on the page The Mysql database can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
 :::
- 
+
 Mysql Github: https://github.com/mysql/mysql-server    
 HertzBeat Github: https://github.com/apache/hertzbeat
 
-**Welcome to learn, use and star! **  
+**Welcome to learn, use and star! **
 
 > Only one docker command is needed to install and experience heartbeat:
 

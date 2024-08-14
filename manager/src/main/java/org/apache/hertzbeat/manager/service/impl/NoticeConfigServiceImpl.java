@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -100,7 +101,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     public List<NoticeTemplate> getNoticeTemplates(String name) {
         Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !"".equals(name)) {
+            if (name != null && StringUtils.isNoneBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }

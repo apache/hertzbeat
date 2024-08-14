@@ -56,14 +56,13 @@ $ docker run -p 4000-4004:4000-4004 \
 
 2. Use ``$ docker ps | grep greptime`` to see if GreptimeDB started successfully.
 
-
 #### Installing and Deploying HertzBeat
 
 See the [official documentation](https://hertzbeat.com/zh-cn/docs/start/docker-deploy) for details.
 
 1. Docker installs HertzBeat.
 
-```shell 
+```shell
 $ docker run -d -p 1157:1157 \
     -e LANG=zh_CN.UTF-8 \
     -e TZ=Asia/Shanghai \
@@ -72,8 +71,6 @@ $ docker run -d -p 1157:1157 \
     --restart=always \
     --name hertzbeat apache/hertzbeat
 ```
-
-
 
 - `-v /opt/data:/opt/hertzbeat/data` : (Optional, data persistence) Important ⚠️ Mount the H2 database files to the local host to ensure that the data will not be lost due to the creation and deletion of the container
 

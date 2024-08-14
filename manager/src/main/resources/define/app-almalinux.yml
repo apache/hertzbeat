@@ -35,7 +35,7 @@ params:
   - field: host
     # name-param field display i18n name
     name:
-      zh-CN: 目标Host
+      zh-CN: 目标 Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
     type: host
@@ -444,7 +444,7 @@ metrics:
         type: 0
         unit: '%'
         i18n:
-          zh-CN: CPU占用率
+          zh-CN: CPU 占用率
           en-US: CPU Usage
       - field: mem_usage
         type: 0
@@ -491,7 +491,7 @@ metrics:
         type: 0
         unit: '%'
         i18n:
-          zh-CN: CPU占用率
+          zh-CN: CPU 占用率
           en-US: CPU Usage
       - field: command
         type: 1

@@ -6,15 +6,15 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
 
 通过此教程我们一步一步描述如何在教程一的基础上改造，新增一个监控指标，先调用认证接口获取TOKEN后，使用TOKEN作为参数供后面的监控指标采集认证使用。
 
-阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http)了解熟悉了怎么自定义类型，指标，协议等。   
+阅读此教程前我们希望您已经从[自定义监控](extend-point)和[http协议自定义](extend-http)了解熟悉了怎么自定义类型，指标，协议等。
 
-### 请求流程   
+### 请求流程
 
-【**认证信息监控指标(优先级最高)**】【**HTTP接口携带账户密码调用**】->【**响应数据解析**】->【**解析签发TOKEN-accessToken作为指标**】->【**将accessToken作为变量参数赋值给其他采集监控指标**】 
+【**认证信息监控指标(优先级最高)**】【**HTTP接口携带账户密码调用**】->【**响应数据解析**】->【**解析签发TOKEN-accessToken作为指标**】->【**将accessToken作为变量参数赋值给其他采集监控指标**】
 
 > 这里我们依然用教程一的hertzbeat监控举例！hertzbeat后台接口不仅仅支持教程一使用的basic直接账户密码认证，也支持token认证。
 
-**我们需要`POST`调用登录接口`/api/account/auth/form`获取`accessToken`,请求body(json格式)如下**: 
+**我们需要`POST`调用登录接口`/api/account/auth/form`获取`accessToken`,请求body(json格式)如下**:
 
 ```json
 {
@@ -22,7 +22,8 @@ sidebar_label: 教程二:获取TOKEN后续认证使用
   "identifier": "admin"
 }
 ```
-**响应结构数据如下**:   
+
+**响应结构数据如下**:
 
 ```json
 {
@@ -99,9 +100,9 @@ metrics: ......
 
 ```
 
-### 定义监控指标`auth`登录请求获取`token`  
+### 定义监控指标`auth`登录请求获取`token`
 
-1. 在`app-hertzbeat_token.yml`新增一个监控指标定义 `auth`, 设置采集优先级为最高0，采集指标 `token`.  
+1. 在`app-hertzbeat_token.yml`新增一个监控指标定义 `auth`, 设置采集优先级为最高0，采集指标 `token`.
 
 ```yaml
 
@@ -206,16 +207,13 @@ metrics:
 
 ![](/img/docs/advanced/extend-http-example-5.png)
 
-
 **新增成功后我们就可以在详情页面看到我们采集的 `token`, `refreshToken`指标数据。**
 
 ![](/img/docs/advanced/extend-http-example-6.png)
 
 ![](/img/docs/advanced/extend-http-example-7.png)
 
-
-
-### 将`token`作为变量参数给后面的监控指标采集使用   
+### 将`token`作为变量参数给后面的监控指标采集使用
 
 **在`app-hertzbeat_token.yml`新增一个监控指标定义 `summary` 同教程一中的`summary`相同, 设置采集优先级为1**
 **设置此监控指标的HTTP协议配置中认证方式为 `Bearer Token` 将上一个监控指标`auth`采集的指标`token`作为参数给其赋值，使用`^o^`作为内部替换符标识，即`^o^token^o^`。如下:**
@@ -231,7 +229,7 @@ metrics:
         bearerTokenToken: ^o^token^o^
 ```
 
-**最终`app-hertzbeat_token.yml`定义如下:**   
+**最终`app-hertzbeat_token.yml`定义如下:**
 
 ```yaml
 
@@ -368,9 +366,9 @@ metrics:
 
 ```
 
-**配置完成后，再次重启 `hertzbeat` 系统，查看监控详情页面**   
+**配置完成后，再次重启 `hertzbeat` 系统，查看监控详情页面**
 
-![](/img/docs/advanced/extend-http-example-8.png)  
+![](/img/docs/advanced/extend-http-example-8.png)
 
 ![](/img/docs/advanced/extend-http-example-9.png)
 

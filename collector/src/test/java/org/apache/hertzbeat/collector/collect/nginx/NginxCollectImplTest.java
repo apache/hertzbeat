@@ -307,7 +307,7 @@ public class NginxCollectImplTest {
                 4 4 2
                 Reading: 0 Writing: 1 Waiting: 1""";
 
-        // 使用正则表达式匹配并提取所需的键和对应的值
+        // Use regular expressions to match and extract the required keys and corresponding values
         Pattern keyValuePattern = Pattern.compile("(\\w+): (\\d+)");
         Matcher keyValueMatcher = keyValuePattern.matcher(status);
 
@@ -318,7 +318,7 @@ public class NginxCollectImplTest {
             System.out.println(key + ": " + value);
         }
 
-        // 使用正则表达式匹配并提取"accepts"、"handled"和"requests"的键和对应的值
+        // Use regular expressions to match and extract the keys and corresponding values for "accepts", "handled", and "requests".
         Pattern valuesPattern = Pattern.compile("server\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)");
         Matcher valuesMatcher = valuesPattern.matcher(status);
 
@@ -346,13 +346,14 @@ public class NginxCollectImplTest {
 
     @Test
     public void testReqStatusMatch() {
-        String urlContent = "zone_name\tkey\tmax_active\tmax_bw\ttraffic\trequests\tactive\tbandwidth\n" +
-                "server_addr\t172.17.0.3\t2\t 440\t68K\t23\t1\t 0\n" +
-                "server_name\tlocalhost\t2\t 440\t68K\t23\t1\t 0\n" +
-                "server_url\tlocalhost/\t1\t 0\t 0\t4\t0\t 0\n" +
-                "server_url\tlocalhost/index.html\t1\t 104\t27K\t4\t0\t 0\n" +
-                "server_url\tlocalhost/nginx-status\t1\t 32\t 9896\t5\t0\t 0\n" +
-                "server_url\tlocalhost/req-status\t1\t 0\t31K\t10\t1\t 0";
+        String urlContent = """
+                zone_name\tkey\tmax_active\tmax_bw\ttraffic\trequests\tactive\tbandwidth
+                server_addr\t172.17.0.3\t2\t 440\t68K\t23\t1\t 0
+                server_name\tlocalhost\t2\t 440\t68K\t23\t1\t 0
+                server_url\tlocalhost/\t1\t 0\t 0\t4\t0\t 0
+                server_url\tlocalhost/index.html\t1\t 104\t27K\t4\t0\t 0
+                server_url\tlocalhost/nginx-status\t1\t 32\t 9896\t5\t0\t 0
+                server_url\tlocalhost/req-status\t1\t 0\t31K\t10\t1\t 0""";
 
         String[] lines = urlContent.split("\\r?\\n");
         List<String> zoneNames = new ArrayList<>();

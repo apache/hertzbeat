@@ -1,13 +1,13 @@
 ---
 id: design  
 title: Design Document     
-sidebar_label: Design Document     
+sidebar_label: Design Document
 ---
 
-### HertzBeat Architecture     
+### HertzBeat Architecture
 
-![architecture](https://cdn.jsdelivr.net/gh/apache/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)     
+![architecture](https://cdn.jsdelivr.net/gh/apache/hertzbeat/home/static/img/docs/hertzbeat-arch.svg)
 
-### TanCloud Architecture  
+### TanCloud Architecture
 
-TanCloud is a SAAS cluster version based on HertzBeat, which adopts a multi-cluster and multi-tenant architecture model.   
+TanCloud is a SAAS cluster version based on HertzBeat, which adopts a multi-cluster and multi-tenant architecture model.

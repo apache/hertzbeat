@@ -78,6 +78,9 @@ params:
 metrics:
   # metrics - auth
   - name: auth
+    i18n:
+      zh-CN: 认证
+      en-US: Auth
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -86,8 +89,14 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: token
         type: 1
+        i18n:
+          zh-CN: 令牌
+          en-US: Token
       - field: refreshToken
         type: 1
+        i18n:
+          zh-CN: 刷新令牌
+          en-US: Refresh Token
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # the config content when protocol is http
@@ -116,19 +125,37 @@ metrics:
 
 
   - name: summary
+    i18n:
+      zh-CN: 概要信息
+      en-US: Summary
     priority: 1
     fields:
       - field: app
         type: 1
         label: true
+        i18n:
+          zh-CN: 应用
+          en-US: App
       - field: category
         type: 1
+        i18n:
+          zh-CN: 类别
+          en-US: Category
       - field: status
         type: 0
+        i18n:
+          zh-CN: 状态
+          en-US: Status
       - field: size
         type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: Size
       - field: availableSize
         type: 0
+        i18n:
+          zh-CN: 可用数量
+          en-US: Available Size
     protocol: http
     http:
       host: ^_^host^_^
@@ -144,19 +171,37 @@ metrics:
       parseScript: '$.data.apps.*'
 
   - name: inner_queue
+    i18n:
+      zh-CN: 内部队列
+      en-US: Inner Queue
     priority: 1
     fields:
       - field: responseTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
       - field: alertDataQueue
         type: 0
+        i18n:
+          zh-CN: 变更数据队列
+          en-US: Alert Data Queue
       - field: metricsDataToAlertQueue
         type: 0
+        i18n:
+          zh-CN: 指标数据到变更队列
+          en-US: Metrics Data to Alert Queue
       - field: metricsDataToPersistentStorageQueue
         type: 0
+        i18n:
+          zh-CN: 指标数据到持久化队列
+          en-US: Metrics Data to Persistent Storage Queue
       - field: metricsDataToMemoryStorageQueue
         type: 0
+        i18n:
+          zh-CN: 指标数据到内存存储队列
+          en-US: Metrics Data to Memory Storage Queue
     protocol: http
     http:
       host: ^_^host^_^
@@ -173,11 +218,17 @@ metrics:
       parseScript: '$.data'
 
   - name: thread_state
+    i18n:
+      zh-CN: 指标数据到内存存储队列
+      en-US: Metrics Data to Memory Storage Queue
     visible: false
     priority: 2
     fields:
       - field: state
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: State
     protocol: http
     http:
       host: ^_^host^_^
@@ -193,12 +244,21 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
+    i18n:
+      zh-CN: 线程
+      en-US: Threads
     priority: 3
     fields:
       - field: state
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: State
       - field: number
         type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: Number
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
@@ -219,11 +279,17 @@ metrics:
       parseScript: '$'
 
   - name: space_name
+    i18n:
+      zh-CN: 空间名称
+      en-US: Space Name
     visible: false
     priority: 4
     fields:
       - field: id
         type: 1
+        i18n:
+          zh-CN: ID
+          en-US: ID
     protocol: http
     http:
       host: ^_^host^_^
@@ -239,13 +305,22 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
+    i18n:
+      zh-CN: 内存使用
+      en-US: Memory Used
     priority: 5
     fields:
       - field: space
         type: 1
+        i18n:
+          zh-CN: 空间
+          en-US: Space
       - field: mem_used
         type: 0
         unit: MB
+        i18n:
+          zh-CN: 内存使用量
+          en-US: Memory Used
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:

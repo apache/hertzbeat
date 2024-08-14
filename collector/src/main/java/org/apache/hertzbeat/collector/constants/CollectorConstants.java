@@ -15,26 +15,38 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.plugin.impl;
+package org.apache.hertzbeat.collector.constants;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.plugin.Plugin;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
 
 /**
- * DemoPlugin
+ * collector module constant.
+ * Extends {@link NetworkConstants}
  */
-@Slf4j
-public class DemoPluginImpl implements Plugin {
+
+public interface CollectorConstants extends NetworkConstants {
+
+    String KEYWORD = "keyword";
 
     /**
-     * execute when alert
+     * POSTGRESQL un reachable status code
      */
-    @Override
-    public void alert(Alert alert) {
-        if (log.isDebugEnabled()) {
-            log.debug("DemoPluginImpl alert: {}", alert);   
-        }
-    }
+    String POSTGRESQL_UN_REACHABLE_CODE = "08001";
+
+    /**
+     * MongoDB Atlas model
+     */
+    String MONGO_DB_ATLAS_MODEL = "mongodb-atlas";
+
+    String ZOOKEEPER_APP = "zookeeper";
+
+    String ZOOKEEPER_ENVI_HEAD = "Environment:";
+
+    String ERROR_MSG = "errorMsg";
+
+
+    String RESPONSE_TIME = "responseTime";
+
+    String STATUS_CODE = "StatusCode";
 
 }

@@ -4,13 +4,13 @@ title: Monitoring Debian System Monitoring
 sidebar_label: Debian
 keywords: [Open Source Monitoring System, Operating System Monitoring, Debian Monitoring]
 ---
+
 > Collect and monitor general performance metrics of the Debian system.
 
 ## Configuration Parameters
 
-
-| Parameter Name          | Metric help description                                                                                           |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
+|     Parameter Name      |                                              Metric help description                                              |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------|
 | Target Host             | The monitored destination IPV4, IPV6, or domain name. Note: no protocol header (e.g., https://, http://).         |
 | Task Name               | A unique name to identify this monitoring task.                                                                   |
 | Port                    | SSH port of the Debian system, default: 22                                                                        |
@@ -28,18 +28,16 @@ keywords: [Open Source Monitoring System, Operating System Monitoring, Debian Mo
 
 #### Metric Set: Basic System Information
 
-
-| Metric Name    | Metric Unit | Metric help description  |
-| -------------- | ----------- | ------------------------ |
+|  Metric Name   | Metric Unit | Metric help description  |
+|----------------|-------------|--------------------------|
 | Host Name      | N/A         | Host name                |
 | System Version | N/A         | Operating system version |
 | Uptime         | N/A         | Boot time                |
 
 #### Metric Set: CPU Information
 
-
-| Metric Name    | Metric Unit | Metric help description |
-| -------------- | ----------- | ----------------------- |
+|  Metric Name   | Metric Unit | Metric help description |
+|----------------|-------------|-------------------------|
 | Info           | N/A         | Model                   |
 | Cores          | N/A         | Number of cores         |
 | Interrupt      | N/A         | Number of interrupts    |
@@ -49,9 +47,8 @@ keywords: [Open Source Monitoring System, Operating System Monitoring, Debian Mo
 
 #### Metric Set: Memory Information
 
-
-| Metric Name         | Metric Unit | Metric help description      |
-| ------------------- | ----------- | ---------------------------- |
+|     Metric Name     | Metric Unit |   Metric help description    |
+|---------------------|-------------|------------------------------|
 | Total Memory        | Mb          | Total memory capacity        |
 | User Program Memory | Mb          | Memory used by user programs |
 | Free Memory         | Mb          | Free memory capacity         |
@@ -61,9 +58,8 @@ keywords: [Open Source Monitoring System, Operating System Monitoring, Debian Mo
 
 #### Metric Set: Disk Information
 
-
-| Metric Name   | Metric Unit | Metric help description       |
-| ------------- | ----------- | ----------------------------- |
+|  Metric Name  | Metric Unit |    Metric help description    |
+|---------------|-------------|-------------------------------|
 | Disk Num      | N/A         | Total number of disks         |
 | Partition Num | N/A         | Total number of partitions    |
 | Block Write   | N/A         | Number of disk blocks written |
@@ -99,3 +95,4 @@ Metric Unit:
 
 - Memory Usage Rate: %
 - CPU Usage Rate: %
+

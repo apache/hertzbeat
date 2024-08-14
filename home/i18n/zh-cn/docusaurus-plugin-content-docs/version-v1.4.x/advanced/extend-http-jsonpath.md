@@ -3,16 +3,18 @@ id: extend-http-jsonpath
 title: HTTP协议JsonPath解析方式  
 sidebar_label: JsonPath解析方式
 ---
+
 > HTTP接口调用获取响应数据后，用JsonPath脚本解析的解析方式去解析响应数据。
 
 注意⚠️ 响应数据为JSON格式
 
-**使用JsonPath脚本将响应数据解析成符合HertzBeat指定的数据结构规则的数据**  
+**使用JsonPath脚本将响应数据解析成符合HertzBeat指定的数据结构规则的数据**
 
-#### JsonPath操作符   
-[JSONPath在线验证](https://www.jsonpath.cn)     
+#### JsonPath操作符
 
-| JSONPATH         | 帮助描述                              |
+[JSONPath在线验证](https://www.jsonpath.cn)
+
+|     JSONPATH     |               帮助描述                |
 |------------------|-----------------------------------|
 | $                | 根对象或元素                            |
 | @                | 当前对象或元素                           |
@@ -25,8 +27,10 @@ sidebar_label: JsonPath解析方式
 | ?()              | 过滤器（脚本）表达式.                       |
 | ()               | 脚本表达式.                            |
 
-#### HertzBeat数据格式规范    
+#### HertzBeat数据格式规范
+
 单层格式：key-value
+
 ```json
 {
   "metricName1": "metricValue",
@@ -35,7 +39,9 @@ sidebar_label: JsonPath解析方式
   "metricName4": "metricValue"
 }
 ```
+
 多层格式：数组里面套key-value
+
 ```json
 [
   {
@@ -53,10 +59,11 @@ sidebar_label: JsonPath解析方式
 ]
 ```
 
-#### 样例   
+#### 样例
 
 查询自定义系统的数值信息，其暴露接口为 `/metrics/person`，我们需要其中的`type,num`指标      
-接口返回的原始数据如下：  
+接口返回的原始数据如下：
+
 ```json
 {
   "firstName": "John",
@@ -80,7 +87,8 @@ sidebar_label: JsonPath解析方式
 }
 ```
 
-我们使用JsonPath脚本解析，对应的脚本为: `$.number[*]` ，解析后的数据结构如下：  
+我们使用JsonPath脚本解析，对应的脚本为: `$.number[*]` ，解析后的数据结构如下：
+
 ```json
 [
   {
@@ -93,9 +101,10 @@ sidebar_label: JsonPath解析方式
   }
 ]
 ```
-此数据结构符合HertzBeat的数据格式规范，成功提取指标`type,num`值。   
 
-**对应的监控模版YML可以配置为如下**   
+此数据结构符合HertzBeat的数据格式规范，成功提取指标`type,num`值。
+
+**对应的监控模版YML可以配置为如下**
 
 ```yaml
 # 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
@@ -166,3 +175,4 @@ metrics:
       parseType: jsonPath
       parseScript: '$.number[*]' 
 ```
+

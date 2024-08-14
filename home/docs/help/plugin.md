@@ -1,10 +1,11 @@
 ---
 id: plugin  
 title: Custom plugin      
-sidebar_label: Custom plugin 
+sidebar_label: Custom plugin
 ---
 
 ## Custom plugins
+
 ### Introduction
 
 Currently, `Hertzbeat` relies on the `alert` module to notify the user, and then the user can take actions such as sending requests, executing `sql`, executing `shell` scripts, etc. However, this can only be automated manually or by `webhook` to receive the alert message.
@@ -13,6 +14,7 @@ After adding the customized code, you only need to package the `plugin` module, 
 Currently, `HertzBeat` only set up the trigger `alert` method after alarm, if you need to set up the trigger method at the time of acquisition, startup program, etc., please mention `Task` in `https://github.com/apache/hertzbeat/issues/new/choose`.
 
 ### Specific uses
+
 1. Pull the master branch code `git clone https://github.com/apache/hertzbeat.git` and locate the `plugin` module's
    `Plugin` interface.
    ![plugin-1.png](/img/docs/help/plugin-1.png)
@@ -22,6 +24,9 @@ Currently, `HertzBeat` only set up the trigger `alert` method after alarm, if yo
 4. Package the `hertzbeat-plugin` module.
 
    ![plugin-3.png](/img/docs/help/plugin-3.png)
+
 5. Copy the packaged `jar` package to the `ext-lib` directory under the installation directory (for `docker` installations, mount the `ext-lib` directory first, then copy it there).
    ![plugin-4.png](/img/docs/help/plugin-4.png)
+
 6. Then restart `HertzBeat` to enable the customized post-alert handling policy.
+

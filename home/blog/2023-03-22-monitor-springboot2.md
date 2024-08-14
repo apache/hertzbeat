@@ -13,18 +13,18 @@ keywords: [opensource monitoring, SpringBoot monitoring, alert]
 ### HertzBeat Intro
 
 > HertzBeat is an open source, real-time monitoring tool with custom-monitor and agentLess. | 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力.
-
+>
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
-
+>
 > We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
-
-> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
+>
+> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.
 
 Github: https://github.com/apache/hertzbeat
 
-### Monitoring SpringBoot2 Metrics with HertzBeat in 5 minutes 
+### Monitoring SpringBoot2 Metrics with HertzBeat in 5 minutes
 
 #### Prerequisite, you already have SpringBoot2 application environment and HertzBeat environment.
 
@@ -114,13 +114,12 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 
 - **Just one step to configure the IP port on the HertzBeat monitoring page and add SpringBoot2 application monitoring**
 
-
 :::tip
 Through the above, we have completed the monitoring of the SpringBoot2 application. We can check the status and availability of various metrics of the SpringBoot2 application at any time in HertzBeat.  
 Of course, it is impossible to manually check the metrics in real time. Monitoring is often accompanied by alarm thresholds. When the performance metrics of the SpringBoot2 application exceed our threshold or the SpringBoot2 application itself is abnormal, we can promptly notify our corresponding person in charge. The person in charge receives the notification and handles it. , this is a complete monitoring and alarm process.
 :::
 
-**Next, we will demonstrate step by step how to configure the threshold alarm notification in the HertzBeat system. When the metrics of the SpringBoot2 application are abnormal, we will be notified in time**  
+**Next, we will demonstrate step by step how to configure the threshold alarm notification in the HertzBeat system. When the metrics of the SpringBoot2 application are abnormal, we will be notified in time**
 
 #### 3. Add SpringBoot2 application metric threshold alarm in HertzBeat system
 
@@ -134,7 +133,6 @@ Path: Menu -> Threshold Rules -> Add Threshold
 ![hertzbeat](/img/blog/monitor-springboot2-6.png)
 
 ![hertzbeat](/img/blog/monitor-springboot2-7.png)
-
 
 2. Add message notification recipients
 
@@ -156,7 +154,6 @@ Message notification methods support **email, DingTalk, WeChat Work, Feishu, Web
 > Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
-
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
@@ -191,11 +188,11 @@ This practical article took us to experience how to use the open source real-tim
 > [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless.       
 > **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
-
+>
 > We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
-
-> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.     
+>
+> `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.
 
 ----   
 

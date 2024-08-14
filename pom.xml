@@ -139,6 +139,7 @@
         <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <spotless.version>2.40.0</spotless.version>
     </properties>
 
     <dependencyManagement>
@@ -378,7 +379,7 @@
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
             </dependency>
-            <!-- caffeine -->
+            <!-- caffeine-->
             <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>
@@ -478,6 +479,37 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>${spotless.version}</version>
+                <configuration>
+                    <skip>false</skip>
+                    <markdown>
+                        <includes>
+                            <include>home/**/*.md</include>
+                        </includes>
+                        <flexmark />
+                        <replaceRegex>
+                            <name>Markdown Formatter</name>
+                            <searchRegex>(^-*\n$)([\s\S]*?)(-+$)</searchRegex>
+                            <replacement>---$2---</replacement>
+                        </replaceRegex>
+                    </markdown>
+                    <upToDateChecking>
+                        <enabled>true</enabled>
+                    </upToDateChecking>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotless-check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <phase>validate</phase>
                     </execution>
                 </executions>
             </plugin>

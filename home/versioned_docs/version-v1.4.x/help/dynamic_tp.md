@@ -24,6 +24,7 @@ management:
        exposure:
          include: '*'
 ```
+
 Test whether the access Metric interface `ip:port/actuator/dynamic-tp` has response json data as follows:
 
 ```json
@@ -60,7 +61,6 @@ Test whether the access Metric interface `ip:port/actuator/dynamic-tp` has respo
 
 3. Add DynamicTp monitoring under HertzBeat middleware monitoring
 
-
 ### Configuration parameters
 
 | Parameter name | Parameter help description |
@@ -78,24 +78,25 @@ Test whether the access Metric interface `ip:port/actuator/dynamic-tp` has respo
 
 #### Metric collection: thread_pool
 
-| Metric Name | Metric Unit | Metric Help Description |
-|---------|------|------------------------|
-| pool_name | None | Thread pool name |
-| core_pool_size | None | Number of core threads |
-| maximum_pool_size | None | Maximum number of threads |
-| queue_type | None | Task queue type |
-| queue_capacity | MB | task queue capacity |
-| queue_size | None | The current occupied size of the task queue |
-| fair | None | Queue mode, SynchronousQueue will be used |
-| queue_remaining_capacity | MB | task queue remaining size |
-| active_count | None | Number of active threads |
-| task_count | None | Total number of tasks |
-| completed_task_count | None | Number of completed tasks |
-| largest_pool_size | None | The largest number of threads in history |
-| pool_size | none | current number of threads |
-| wait_task_count | None | Number of tasks waiting to be executed |
-| reject_count | None | Number of rejected tasks |
-| reject_handler_name | None | Reject policy type |
-| dynamic | None | Dynamic thread pool or not |
-| run_timeout_count | None | Number of running timeout tasks |
-| queue_timeout_count | None | Number of tasks waiting for timeout |
+|       Metric Name        | Metric Unit |           Metric Help Description           |
+|--------------------------|-------------|---------------------------------------------|
+| pool_name                | None        | Thread pool name                            |
+| core_pool_size           | None        | Number of core threads                      |
+| maximum_pool_size        | None        | Maximum number of threads                   |
+| queue_type               | None        | Task queue type                             |
+| queue_capacity           | MB          | task queue capacity                         |
+| queue_size               | None        | The current occupied size of the task queue |
+| fair                     | None        | Queue mode, SynchronousQueue will be used   |
+| queue_remaining_capacity | MB          | task queue remaining size                   |
+| active_count             | None        | Number of active threads                    |
+| task_count               | None        | Total number of tasks                       |
+| completed_task_count     | None        | Number of completed tasks                   |
+| largest_pool_size        | None        | The largest number of threads in history    |
+| pool_size                | none        | current number of threads                   |
+| wait_task_count          | None        | Number of tasks waiting to be executed      |
+| reject_count             | None        | Number of rejected tasks                    |
+| reject_handler_name      | None        | Reject policy type                          |
+| dynamic                  | None        | Dynamic thread pool or not                  |
+| run_timeout_count        | None        | Number of running timeout tasks             |
+| queue_timeout_count      | None        | Number of tasks waiting for timeout         |
+
