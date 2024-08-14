@@ -54,8 +54,6 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -91,6 +89,7 @@ public class JmxCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
 
