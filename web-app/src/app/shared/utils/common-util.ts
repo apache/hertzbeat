@@ -43,3 +43,77 @@ export function findDeepestSelected(nodes: any): any {
   }
   return deepestSelectedNode;
 }
+
+export function generateReadableRandomString(length: number): string {
+  const adjectives = [
+    'quick',
+    'bright',
+    'calm',
+    'brave',
+    'cool',
+    'eager',
+    'fancy',
+    'gentle',
+    'happy',
+    'jolly',
+    'kind',
+    'lively',
+    'merry',
+    'nice',
+    'proud',
+    'witty',
+    'zesty',
+    'nifty',
+    'quirky',
+    'unique',
+    'vivid',
+    'zany',
+    'zealous',
+    'yummy'
+  ];
+
+  const nouns = [
+    'fox',
+    'lion',
+    'eagle',
+    'shark',
+    'whale',
+    'falcon',
+    'panda',
+    'tiger',
+    'wolf',
+    'otter',
+    'lynx',
+    'moose',
+    'dolphin',
+    'bear',
+    'hawk',
+    'zebra',
+    'giraffe',
+    'koala',
+    'lemur',
+    'lemming'
+  ];
+
+  const digits = '0123456789';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+
+  // Randomly select an adjective and a noun
+  let adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  let noun = nouns[Math.floor(Math.random() * nouns.length)];
+
+  // Randomly generate a sequence of numbers and characters
+  const randomDigits = Array.from({ length: Math.floor(length / 4) }, () => digits.charAt(Math.floor(Math.random() * digits.length))).join(
+    ''
+  );
+
+  const randomChars = Array.from({ length: Math.floor(length / 4) }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+  adjective = capitalizeFirstLetter(adjective);
+  noun = capitalizeFirstLetter(noun);
+  // Combine the parts to form the final string
+  return `${adjective}_${noun}_${randomDigits}${randomChars}`;
+}
+
+function capitalizeFirstLetter(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
