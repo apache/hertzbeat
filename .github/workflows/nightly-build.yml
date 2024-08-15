@@ -21,40 +21,55 @@ on:
   schedule:
     # trigger at 00:00 everyday
     - cron: '0 0 * * *'
+  push:
+    branches: [ action* ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: ${{ github.repository == 'apache/hertzbeat' }}
     steps:
     - uses: actions/checkout@v4
-    - uses: docker/setup-qemu-action@v3
     - name: Set up JDK 17
       uses: actions/setup-java@v1
       with:
         java-version: 17
-    - name: Build with Maven
-      run: mvn clean -B package -Prelease --file pom.xml
-
-    - name: Build Image
-      env:
-        IMAGE_PUSH: false
-        IMAGE_LOAD: true
-        IMAGE_VERSION: nightly
-      run: |
-        docker buildx create --use --name myBuilder --driver docker-container
-        docker buildx use myBuilder
         
-        ./script/docker/server/build.sh
+    - name: Build the Frontend
+      run: |
+        cd web-app
+        yarn install
+        yarn package
+        
+    - name: Build the Backend
+      run: |
+        mvn clean install
+        mvn clean package -Prelease -DskipTests
+        cd collector
+        mvn clean package -Pcluster -DskipTests
 
-    - name: Login to Docker Hub
+    - uses: docker/setup-qemu-action@v3
+    - uses: docker/setup-buildx-action@v3
+    - name: Log in to Docker Hub
       uses: docker/login-action@v3
-      with: 
+      with:
         username: ${{ secrets.DOCKERHUB_USER }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
         
-    - name: Build and Push
+    - name: Build and Push Server
       uses: docker/build-push-action@v6
       with:
-        context: .
+        context: ./dist
+        file: ./script/docker/server/Dockerfile
+        platforms: linux/amd64,linux/arm64
         push: true
         tags: apache/hertzbeat:nightly
+        
+    - name: Build and Push Collector
+      uses: docker/build-push-action@v6
+      with:
+        context: ./dist
+        file: ./script/docker/collector/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: apache/hertzbeat-collector:nightly
