@@ -106,7 +106,7 @@ public class NoticeConfigController {
     public ResponseEntity<Message<Void>> deleteNoticeRule(
             @Parameter(description = "en: Notification Policy ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
         // Returns success if it does not exist or if the deletion is successful
-        NoticeRule noticeRule = noticeConfigService.getOneNoticeRulesById(ruleId);
+        NoticeRule noticeRule = noticeConfigService.getNoticeRulesById(ruleId);
         if (noticeRule == null) {
             return ResponseEntity.ok(Message.success("The specified notification rule could not be queried, please check whether the parameters are correct"));
         }

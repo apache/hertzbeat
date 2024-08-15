@@ -235,13 +235,9 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public NoticeRule getNoticeRulesById(Long ruleId) {
-        return noticeRuleDao.getReferenceById(ruleId);
+        return noticeRuleDao.findById(ruleId).orElse(null);
     }
 
-    @Override
-    public NoticeRule getOneNoticeRulesById(Long id) {
-        return noticeRuleDao.findById(id).orElse(null);
-    }
 
     @Override
     public void addNoticeTemplate(NoticeTemplate noticeTemplate) {

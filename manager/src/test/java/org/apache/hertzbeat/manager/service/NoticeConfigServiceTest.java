@@ -209,7 +209,7 @@ class NoticeConfigServiceTest {
     void getNoticeRulesById() {
         final Long receiverId = 343432325L;
         noticeConfigService.getNoticeRulesById(receiverId);
-        verify(noticeRuleDao, times(1)).getReferenceById(receiverId);
+        verify(noticeRuleDao, times(1)).findById(receiverId);
     }
 
     @Test

@@ -123,14 +123,6 @@ public interface NoticeConfigService {
 
 
     /**
-     * Query specific notification rules according to the rule ID
-     * @param id rule ID
-     * @return NoticeRule
-     */
-    NoticeRule getOneNoticeRulesById(Long id);
-
-
-    /**
      * Add a notification template
      * @param noticeTemplate template information 
      */
