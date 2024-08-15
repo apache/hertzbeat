@@ -56,7 +56,7 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USER }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
         
-    - name: Build and Push
+    - name: Build and Push Server
       uses: docker/build-push-action@v6
       with:
         context: ./dist
@@ -64,3 +64,12 @@ jobs:
         platforms: linux/amd64,linux/arm64
         push: true
         tags: apache/hertzbeat:nightly
+        
+    - name: Build and Push Collector
+      uses: docker/build-push-action@v6
+      with:
+        context: ./dist
+        file: ./script/docker/collector/Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: apache/hertzbeat-collector:nightly
