@@ -125,7 +125,7 @@ public class BulletinController {
 
         BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder = BulletinMetricsData.builder()
                 .name(bulletin.getName())
-                .column(bulletin.getMetrics().toString());
+                .column(bulletin.getMetrics());
 
 
         BulletinMetricsData data = buildBulletinMetricsData(contentBuilder, bulletin);

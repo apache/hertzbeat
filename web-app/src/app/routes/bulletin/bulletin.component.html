@@ -65,12 +65,12 @@
         <tr>
           <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
           <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
-          <ng-container *ngFor="let metricName of getMetricNames(tabDefines)">
+          <ng-container *ngFor="let metricName of tabDefines.column">
             <th nzAlign="center" [colSpan]="tabDefines.bulletinColumn[metricName].size">{{ metricName }}</th>
           </ng-container>
         </tr>
         <tr>
-          <ng-container *ngFor="let metricName of getMetricNames(tabDefines)">
+          <ng-container *ngFor="let metricName of tabDefines.column">
             <ng-container *ngFor="let field of tabDefines.bulletinColumn[metricName]">
               <th nzAlign="center">{{ field.split('$$$')[1] }}</th>
             </ng-container>
@@ -79,13 +79,13 @@
       </thead>
       <tbody>
         <ng-container *ngFor="let data of fixedTable.data">
-          <ng-container *ngFor="let rowIndex of getRowIndexes(data, tabDefines)">
+          <ng-container *ngFor="let rowIndex of getRowIndexes(data)">
             <tr>
               <ng-container *ngIf="rowIndex === 0">
-                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, tabDefines)">{{ data.app }}</td>
-                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data, tabDefines)">{{ data.host }}</td>
+                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.app }}</td>
+                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.host }}</td>
               </ng-container>
-              <ng-container *ngFor="let metricName of getMetricNames(tabDefines)">
+              <ng-container *ngFor="let metricName of tabDefines.column">
                 <ng-container *ngFor="let field of tabDefines.bulletinColumn[metricName]">
                   <td *ngIf="data[field] !== null">
                     {{ data[field][rowIndex].split('$$$')[0] }}

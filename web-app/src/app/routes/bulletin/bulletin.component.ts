@@ -376,8 +376,9 @@ export class BulletinComponent implements OnInit {
         message => {
           metricData$.unsubscribe();
           if (message.code === 0 && message.data) {
-            this.total = message.data.totalElements;
-            this.updateTabDefines(message.data.content);
+            // this.total = message.data.totalElements;
+            this.tabDefines = message.data;
+            console.info('tab:', this.tabDefines);
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
@@ -440,20 +441,21 @@ export class BulletinComponent implements OnInit {
     }));
   }
 
-  getMetricNames(tab: any): string[] {
-    return Object.keys(tab.bulletinColumn);
-  }
-
-  getMaxRowSpan(data: { [x: string]: string | any[] }, bulletinTab: { bulletinColumn: { [x: string]: any } }) {
+  getMaxRowSpan(data: { [x: string]: string | any[] }) {
     let maxRowSpan = 1;
-    for (let metricName of this.getMetricNames(bulletinTab)) {
-      for (let field of bulletinTab.bulletinColumn[metricName]) {
+    for (let metricName of this.tabDefines.column) {
+      console.info('field', metricName, this.tabDefines.content.metrics[metricName]);
+      for (let field of this.tabDefines.content.metrics[metricName]) {
         if (Array.isArray(data[field])) {
           maxRowSpan = Math.max(maxRowSpan, data[field].length);
         }
       }
     }
     return maxRowSpan;
+  }
+  getFields() : string[] {
+    
+
   }
 
   onTablePageChange(params: NzTableQueryParams): void {
@@ -467,8 +469,8 @@ export class BulletinComponent implements OnInit {
     }
   }
 
-  getRowIndexes(data: { [x: string]: string | any[] }, bulletinTab: { bulletinColumn: { [x: string]: any } }) {
-    const maxRowSpan = this.getMaxRowSpan(data, bulletinTab);
+  getRowIndexes(data: { [x: string]: string | any[] }) {
+    const maxRowSpan = this.getMaxRowSpan(data);
     return Array.from({ length: maxRowSpan }, (_, index) => index);
   }
 

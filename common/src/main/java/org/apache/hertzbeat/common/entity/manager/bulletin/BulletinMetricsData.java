@@ -41,7 +41,10 @@ public class BulletinMetricsData {
     private String name;
 
     @Schema(title = "Bulletin Column")
-    private String column;
+    private List<String> column;
+
+    @Schema(title = "Bulletin Fields")
+    private List<String> fields;
 
     @Schema(description = "Content Data")
     private List<Data> content;
