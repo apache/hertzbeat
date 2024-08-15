@@ -44,7 +44,7 @@ export function findDeepestSelected(nodes: any): any {
   return deepestSelectedNode;
 }
 
-export function generateReadableRandomString(length: number): string {
+export function generateReadableRandomString(): string {
   const adjectives = [
     'quick',
     'bright',
@@ -69,7 +69,31 @@ export function generateReadableRandomString(length: number): string {
     'vivid',
     'zany',
     'zealous',
-    'yummy'
+    'yummy',
+    'agile',
+    'bold',
+    'daring',
+    'fearless',
+    'gleeful',
+    'humble',
+    'jumpy',
+    'keen',
+    'loyal',
+    'majestic',
+    'noble',
+    'playful',
+    'radiant',
+    'spirited',
+    'tenacious',
+    'vibrant',
+    'wise',
+    'youthful',
+    'zippy',
+    'serene',
+    'bubbly',
+    'dreamy',
+    'fierce',
+    'graceful'
   ];
 
   const nouns = [
@@ -92,22 +116,43 @@ export function generateReadableRandomString(length: number): string {
     'giraffe',
     'koala',
     'lemur',
-    'lemming'
+    'lemming',
+    'cheetah',
+    'dragon',
+    'owl',
+    'rhino',
+    'stingray',
+    'jaguar',
+    'panther',
+    'elk',
+    'ocelot',
+    'beaver',
+    'walrus',
+    'gazelle',
+    'coyote',
+    'vulture',
+    'iguana',
+    'porcupine',
+    'raccoon',
+    'sloth',
+    'armadillo',
+    'chameleon',
+    'kestrel',
+    'weasel',
+    'hedgehog'
   ];
 
-  const digits = '0123456789';
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const digits = '23456789';
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz';
 
   // Randomly select an adjective and a noun
   let adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
   let noun = nouns[Math.floor(Math.random() * nouns.length)];
 
   // Randomly generate a sequence of numbers and characters
-  const randomDigits = Array.from({ length: Math.floor(length / 4) }, () => digits.charAt(Math.floor(Math.random() * digits.length))).join(
-    ''
-  );
+  const randomDigits = Array.from({ length: 2 }, () => digits.charAt(Math.floor(Math.random() * digits.length))).join('');
 
-  const randomChars = Array.from({ length: Math.floor(length / 4) }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+  const randomChars = Array.from({ length: 2 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
   adjective = capitalizeFirstLetter(adjective);
   noun = capitalizeFirstLetter(noun);
   // Combine the parts to form the final string

@@ -156,7 +156,7 @@ export class MonitorNewComponent implements OnInit {
     if (this.monitor.app != 'prometheus') {
       let autoName = `${this.monitor.app.toUpperCase()}_${hostValue}`;
       if (this.monitor.name == undefined || this.monitor.name == '') {
-        this.monitor.name = generateReadableRandomString(6);
+        this.monitor.name = generateReadableRandomString();
       }
     }
   }
