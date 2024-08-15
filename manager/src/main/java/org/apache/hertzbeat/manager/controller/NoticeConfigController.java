@@ -71,7 +71,7 @@ public class NoticeConfigController {
     @Operation(summary = "Delete existing recipient information", description = "Delete existing recipient information")
     public ResponseEntity<Message<Void>> deleteNoticeReceiver(
             @Parameter(description = "en: Recipient ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
-        NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
+        NoticeReceiver noticeReceiver = noticeConfigService.getOneReceiverById(receiverId);
         if (noticeReceiver == null) {
             return ResponseEntity.ok(Message.success("The relevant information of the recipient could not be found, please check whether the parameters are correct"));
         }
@@ -84,8 +84,7 @@ public class NoticeConfigController {
             description = "Get a list of message notification recipients based on query filter items")
     public ResponseEntity<Message<List<NoticeReceiver>>> getReceivers(
             @Parameter(description = "en: Recipient name,support fuzzy query", example = "tom") @RequestParam(required = false) final String name) {
-        List<NoticeReceiver> receivers = noticeConfigService.getNoticeReceivers(name);
-        return ResponseEntity.ok(Message.success(receivers));
+        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeReceivers(name)));
     }
 
     @PostMapping(path = "/rule")
@@ -107,7 +106,7 @@ public class NoticeConfigController {
     public ResponseEntity<Message<Void>> deleteNoticeRule(
             @Parameter(description = "en: Notification Policy ID", example = "6565463543") @PathVariable("id") final Long ruleId) {
         // Returns success if it does not exist or if the deletion is successful
-        NoticeRule noticeRule = noticeConfigService.getNoticeRulesById(ruleId);
+        NoticeRule noticeRule = noticeConfigService.getOneNoticeRulesById(ruleId);
         if (noticeRule == null) {
             return ResponseEntity.ok(Message.success("The specified notification rule could not be queried, please check whether the parameters are correct"));
         }
@@ -120,8 +119,7 @@ public class NoticeConfigController {
             description = "Get a list of message notification policies based on query filter items")
     public ResponseEntity<Message<List<NoticeRule>>> getRules(
             @Parameter(description = "en: Recipient name", example = "rule1") @RequestParam(required = false) final String name) {
-        List<NoticeRule> receiverPage = noticeConfigService.getNoticeRules(name);
-        return ResponseEntity.ok(Message.success(receiverPage));
+        return ResponseEntity.ok(Message.success(noticeConfigService.getNoticeRules(name)));
     }
 
 

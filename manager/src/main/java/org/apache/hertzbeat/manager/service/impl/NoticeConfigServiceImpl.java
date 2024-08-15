@@ -36,9 +36,11 @@ import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.component.alerter.DispatcherAlarm;
 import org.apache.hertzbeat.manager.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.manager.dao.NoticeRuleDao;
@@ -239,6 +241,11 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     }
 
     @Override
+    public NoticeRule getOneNoticeRulesById(Long id) {
+        return noticeRuleDao.findById(id).orElse(null);
+    }
+
+    @Override
     public void addNoticeTemplate(NoticeTemplate noticeTemplate) {
         noticeTemplateDao.save(noticeTemplate);
         clearNoticeRulesCache();
@@ -276,17 +283,17 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         tags.put(CommonConstants.TAG_MONITOR_NAME, "100Name");
         tags.put(CommonConstants.TAG_MONITOR_HOST, "127.0.0.1");
         tags.put(CommonConstants.TAG_THRESHOLD_ID, "200");
-        Alert alert = new Alert();
-        alert.setTags(tags);
-        alert.setId(1003445L);
-        alert.setTarget(ALERT_TEST_TARGET);
-        alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
-        alert.setContent(ALERT_TEST_CONTENT);
-        alert.setAlertDefineId(200L);
-        alert.setTimes(2);
-        alert.setStatus((byte) 0);
-        alert.setFirstAlarmTime(System.currentTimeMillis());
-        alert.setLastAlarmTime(System.currentTimeMillis());
+        Alert alert = Alert.builder()
+                .tags(tags)
+                .id(1003445L)
+                .target(ALERT_TEST_TARGET)
+                .priority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL)
+                .content(ALERT_TEST_CONTENT)
+                .alertDefineId(200L)
+                .times(2)
+                .status((byte) 0)
+                .firstAlarmTime(System.currentTimeMillis())
+                .lastAlarmTime(System.currentTimeMillis()).build();
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, alert);
     }
 
