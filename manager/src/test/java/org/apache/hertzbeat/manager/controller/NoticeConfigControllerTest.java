@@ -84,16 +84,12 @@ class NoticeConfigControllerTest {
     public NoticeReceiver getNoticeReceiver(){
 
         NoticeReceiver noticeReceiver = new NoticeReceiver();
-//        noticeReceiver.setName("tom");
-//        noticeReceiver.setId(5L);
-//        noticeReceiver.setAccessToken("c03a568a306f8fd84dab51ff03cf6af6ba676a3be940c904e1df2de34853739d");
-//        noticeReceiver.setEmail("2762242004@qq.com");
-//        noticeReceiver.setHookUrl("https://www.tancloud.cn");
-//        noticeReceiver.setType((byte) 5);
-
-        noticeReceiver.setType((byte)1);
-        noticeReceiver.setEmail("810899686@qq.com");
-        noticeReceiver.setName("1");
+        noticeReceiver.setName("tom");
+        noticeReceiver.setId(5L);
+        noticeReceiver.setAccessToken("c03a568a306f8fd84dab51ff03cf6af6ba676a3be940c904e1df2de34853739d");
+        noticeReceiver.setEmail("2762242004@qq.com");
+        noticeReceiver.setHookUrl("https://www.tancloud.cn");
+        noticeReceiver.setType((byte) 5);
         return noticeReceiver;
 
     }
