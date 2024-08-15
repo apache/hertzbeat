@@ -153,11 +153,8 @@ export class MonitorNewComponent implements OnInit {
   }
 
   onHostChange(hostValue: string) {
-    if (this.monitor.app != 'prometheus') {
-      let autoName = `${this.monitor.app.toUpperCase()}_${hostValue}`;
-      if (this.monitor.name == undefined || this.monitor.name == '') {
-        this.monitor.name = generateReadableRandomString();
-      }
+    if (this.monitor.name == undefined || this.monitor.name == '') {
+      this.monitor.name = generateReadableRandomString();
     }
   }
 
