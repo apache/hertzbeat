@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -76,11 +77,10 @@ public class AlertDefineController {
             @Parameter(description = "Alarm Definition ID", example = "6565463543") @PathVariable("id") long id) {
         // Obtaining Monitoring Information
         AlertDefine alertDefine = alertDefineService.getAlertDefine(id);
-        if (alertDefine == null) {
-            return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertDefine not exist."));
-        } else {
-            return ResponseEntity.ok(Message.success(alertDefine));
-        }
+
+        return Objects.isNull(alertDefine)
+                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertDefine not exist."))
+                : ResponseEntity.ok(Message.success(alertDefine));
     }
 
     @DeleteMapping(path = "/{id}")
