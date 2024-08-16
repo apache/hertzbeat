@@ -22,7 +22,7 @@ name: Backend CI
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ master, dev, action* ]
     paths-ignore:
       - '**.md'
       - 'home/**'
@@ -55,15 +55,12 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Build Image
-      env:
-        IMAGE_PUSH: false
-        IMAGE_LOAD: true
-        IMAGE_PLATFORM: linux/amd64
-      run: |
-        docker buildx create --use --name myBuilder --driver docker-container
-        docker buildx use myBuilder
-        
-        ./script/docker/server/build.sh
+      uses: docker/build-push-action@v3
+      with:
+        context: ./dist
+        file: ./script/docker/server/Dockerfile
+        push: false
+        tags: apache/hertzbeat:test
 
     - name: Run E2E
       run: |

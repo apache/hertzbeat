@@ -38,7 +38,6 @@ import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.manager.component.alerter.AlertNotifyHandler;
-import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.context.event.EventListener;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
@@ -56,8 +55,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
     protected RestTemplate restTemplate;
     @Resource
     protected AlerterProperties alerterProperties;
-    @Resource
-    protected NoticeConfigService noticeConfigService;
 
 
     protected String renderContent(NoticeTemplate noticeTemplate, Alert alert) throws TemplateException, IOException {
@@ -116,6 +113,42 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         templateRes = cfg.getTemplate(templateName, Locale.CHINESE);
         String template = FreeMarkerTemplateUtils.processTemplateIntoString(templateRes, model);
         return template.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1");
+    }
+
+    protected String escapeJsonStr(String jsonStr){
+        if (jsonStr == null) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (char c : jsonStr.toCharArray()) {
+            switch (c) {
+                case '"':
+                    sb.append("\\\"");
+                    break;
+                case '\\':
+                    sb.append("\\\\");
+                    break;
+                case '\b':
+                    sb.append("\\b");
+                    break;
+                case '\f':
+                    sb.append("\\f");
+                    break;
+                case '\n':
+                    sb.append("\\n");
+                    break;
+                case '\r':
+                    sb.append("\\r");
+                    break;
+                case '\t':
+                    sb.append("\\t");
+                    break;
+                default:
+                    sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     @EventListener(SystemConfigChangeEvent.class)

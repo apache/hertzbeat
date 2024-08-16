@@ -104,7 +104,7 @@ public class DispatcherAlarm implements InitializingBean {
     }
 
     private NoticeReceiver getOneReceiverById(Long id) {
-        return noticeConfigService.getOneReceiverById(id);
+        return noticeConfigService.getReceiverById(id);
     }
 
     private NoticeTemplate getOneTemplateById(Long id) {
