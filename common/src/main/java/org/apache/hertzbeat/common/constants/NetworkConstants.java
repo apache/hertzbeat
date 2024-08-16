@@ -47,4 +47,22 @@ public interface NetworkConstants {
 
     String LOCATION = "Location";
 
+    /**
+     * HttpClient Configuration Constants.
+     */
+    interface HttpClientConstants {
+
+        int READ_TIME_OUT = 6 * 1000;
+        int WRITE_TIME_OUT = 6 * 1000;
+        int CONNECT_TIME_OUT = 6 * 1000;
+        int CHUNK_SIZE = 8196;
+        int MAX_IDLE_CONNECTIONS = 20;
+        int KEEP_ALIVE_TIMEOUT = 30 * 1000;
+        int HTTP_CLIENT_CONNECTION_MANAGER_MAX_PER_ROUTE = 20;
+        int HTTP_CLIENT_CONNECTION_MANAGER_MAX_TOTAL = 20;
+        int HTTPCLIENT_KEEP_ALIVE_DURATION = 30 * 1000;
+        int HTTP_CLIENT_CONNECTION_MANAGER_CLOSE_WAIT_TIME_MS = 1000;
+        int HTTP_CLIENT_CONNECTION_MANAGER_CLOSE_IDLE_TIME_S = 30;
+    }
+
 }
