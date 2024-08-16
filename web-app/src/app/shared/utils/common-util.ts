@@ -26,3 +26,20 @@ export function formatTagName(tag: Tag): string {
     return tag.name;
   }
 }
+
+export function findDeepestSelected(nodes: any): any {
+  let deepestSelectedNode = null;
+  for (let node of nodes) {
+    if (node._selected && (!node.children || node.children.length === 0)) {
+      return node;
+    }
+
+    if (node.children) {
+      const selectedChild = findDeepestSelected(node.children);
+      if (selectedChild) {
+        deepestSelectedNode = selectedChild;
+      }
+    }
+  }
+  return deepestSelectedNode;
+}

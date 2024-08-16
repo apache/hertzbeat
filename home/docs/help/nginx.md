@@ -20,6 +20,7 @@ If you want to monitor information in 'Nginx' with this monitoring type, you nee
 ```shell
 nginx -V
 ```
+
 View whether it contains `--with-http_stub_status_module`, if not, you need to recompile and install Nginx.
 
 2. Compile and install Nginx, add `ngx_http_stub_status_module` module
@@ -50,6 +51,7 @@ server {
         }
 }
 ```
+
 4. Reload Nginx
 
 ```shell
@@ -107,14 +109,13 @@ nginx -s reload
 
 4. Access `http://localhost/req-status` in the browser to view the Nginx monitoring status information.
 
-
 **Refer Doc: https://github.com/zls0424/ngx_req_status**
 
 **⚠️Attention: The endpoint path of the monitoring module is `/nginx-status` `/req-status`**
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -128,28 +129,27 @@ nginx -s reload
 
 #### Metrics Set：nginx_status
 
-| Metric name | Metric unit | Metric help description                  |
-|-------------|-------------|------------------------------------------|
-| accepts     |             | Accepted connections                     |
-| handled     |             | Successfully processed connections       |
-| active      |             | Currently active connections             |
-| dropped     |             | Discarded connections                    |
-| requests    |             | Client requests                          |
-| reading     |             | Connections performing read operations   |
-| writing     |             | Connections performing write operations  |
-| waiting     |             | Waiting connections                      |
+| Metric name | Metric unit |         Metric help description         |
+|-------------|-------------|-----------------------------------------|
+| accepts     |             | Accepted connections                    |
+| handled     |             | Successfully processed connections      |
+| active      |             | Currently active connections            |
+| dropped     |             | Discarded connections                   |
+| requests    |             | Client requests                         |
+| reading     |             | Connections performing read operations  |
+| writing     |             | Connections performing write operations |
+| waiting     |             | Waiting connections                     |
 
 #### Metrics Set：req_status
 
-| Metric name | Metric unit | Metric help description         |
-|-------------|-------------|---------------------------------|
-| zone_name   |             | Group category                  |
-| key         |             | Group name                      |
-| max_active  |             | Maximum concurrent connections  |
-| max_bw      | kb          | Maximum bandwidth               |
-| traffic     | kb          | Total traffic                   |
-| requests    |             | Total requests                  |
-| active      |             | Current concurrent connections  |
-| bandwidth   | kb          | Current bandwidth               |
-
+| Metric name | Metric unit |    Metric help description     |
+|-------------|-------------|--------------------------------|
+| zone_name   |             | Group category                 |
+| key         |             | Group name                     |
+| max_active  |             | Maximum concurrent connections |
+| max_bw      | kb          | Maximum bandwidth              |
+| traffic     | kb          | Total traffic                  |
+| requests    |             | Total requests                 |
+| active      |             | Current concurrent connections |
+| bandwidth   | kb          | Current bandwidth              |
 

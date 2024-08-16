@@ -1,9 +1,8 @@
 ---
 id: ssl-cert-practice  
 title: SSL证书过期监控使用案例    
-sidebar_label: 使用案例
+sidebar_label: SSL证书过期监控使用案例
 ---
-
 
 现在大部分网站都默认支持 HTTPS，我们申请的证书一般是3个月或者1年，很容易随着时间的流逝SSL证书过期了我们却没有第一时间发现，或者在过期之前没有及时更新证书。
 
@@ -12,7 +11,6 @@ sidebar_label: 使用案例
 #### HertzBeat 是什么
 
 Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Agent的实时监控工具。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
-
 
 github: https://github.com/apache/hertzbeat
 
@@ -30,9 +28,7 @@ github: https://github.com/apache/hertzbeat
 
 > 系统页面 -> 监控菜单 -> SSL证书 -> 新增SSL证书
 
-
 ![](/img/docs/start/ssl_1.png)
-
 
 2. 配置监控网站
 

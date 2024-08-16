@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.collector.dispatch;
 
 import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +39,7 @@ public class MetricsCollectorQueue {
     }
 
     public MetricsCollect getJob() throws InterruptedException {
-        return jobQueue.poll(2, TimeUnit.SECONDS);
+        return jobQueue.take();
     }
 
 }

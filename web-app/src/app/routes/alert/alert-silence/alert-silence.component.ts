@@ -17,9 +17,10 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
-import { ALAIN_I18N_TOKEN, SettingsService } from '@delon/theme';
+import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -40,11 +41,11 @@ export class AlertSilenceComponent implements OnInit {
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
     private alertSilenceService: AlertSilenceService,
-    private settingsSvc: SettingsService,
     private tagService: TagService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  @ViewChild('ruleForm', { static: false }) ruleForm: NgForm | undefined;
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -173,7 +174,7 @@ export class AlertSilenceComponent implements OnInit {
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -190,9 +191,9 @@ export class AlertSilenceComponent implements OnInit {
     }
   }
   /**
-   * 分页回调
+   * Paging callback
    *
-   * @param params 页码信息
+   * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
     const { pageSize, pageIndex, sort, filter } = params;
@@ -200,9 +201,9 @@ export class AlertSilenceComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadAlertSilenceTable();
   }
-  // end: 列表多选逻辑
+  // end: List multiple choice paging
 
-  // start 新增修改告警静默 model
+  // start -- new or update alert silence model
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
@@ -291,6 +292,15 @@ export class AlertSilenceComponent implements OnInit {
       );
   }
   onManageModalOk() {
+    if (this.ruleForm?.invalid) {
+      Object.values(this.ruleForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.silence.tags = [];
     this.matchTags.forEach(tag => {
       let tmp: string[] = tag.split(':');

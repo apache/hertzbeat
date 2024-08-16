@@ -290,131 +290,150 @@
 
 <div nz-row nzGutter="16" style="margin-top: 25px; height: 400px">
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
-    <angular-tag-cloud
-      style="border-radius: 4px"
-      (clicked)="onTagCloudClick($event)"
-      [font]="'italic bold 6px monospace'"
-      [data]="wordCloudData"
-      [width]="1"
-      [height]="1"
-      [step]="2"
-      [strict]="true"
-      [randomizeAngle]="true"
-      [realignOnResize]="true"
-      [delay]="300"
-      [zoomOnHover]="{ scale: 1.4, transitionTime: 0.6, delay: 0.4 }"
-      [overflow]="false"
-      [background]="'white no-repeat fixed center'"
-    >
-    </angular-tag-cloud>
+    <nz-spin [nzSpinning]="wordCloudDataLoading">
+      <angular-tag-cloud
+        class="br-4"
+        *ngIf="!wordCloudDataLoading"
+        (clicked)="onTagCloudClick($event)"
+        [font]="'italic bold 6px monospace'"
+        [data]="wordCloudData"
+        [width]="1"
+        [height]="1"
+        [step]="2"
+        [strict]="true"
+        [randomizeAngle]="true"
+        [realignOnResize]="true"
+        [delay]="300"
+        [zoomOnHover]="{ scale: 1.4, transitionTime: 0.6, delay: 0.4 }"
+        [overflow]="false"
+        [background]="'white no-repeat fixed center'"
+      >
+      </angular-tag-cloud>
+    </nz-spin>
   </div>
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 12 }" style="height: 100%">
-    <div
-      echarts
-      [options]="appsCountEChartOption"
-      theme="default"
-      [autoResize]="true"
-      [loading]="appsCountLoading"
-      (chartClick)="onChartClick($event)"
-      (chartInit)="onAppsCountChartInit($event)"
-      style="width: 100%; height: inherit"
-    ></div>
+    <nz-spin [nzSpinning]="appsCountLoading">
+      <div
+        echarts
+        [options]="appsCountEChartOption"
+        theme="default"
+        [autoResize]="true"
+        [loading]="appsCountLoading"
+        (chartClick)="onChartClick($event)"
+        (chartInit)="onAppsCountChartInit($event)"
+        style="width: 100%; height: inherit"
+      ></div>
+    </nz-spin>
   </div>
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
-    <div style="overflow-y: scroll; height: inherit">
-      <nz-card *ngFor="let item of collectors; let i = index" class="rounded-lg" nzBordered="false" [nzTitle]="collectorCardTitle">
-        <nz-card-tab>
-          <nz-tabset nzSize="small">
-            <nz-tab [nzTitle]="'collector.status' | i18n">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
-                  {{
-                    item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
-                  }}
-                </span>
-              </div>
-            </nz-tab>
-            <nz-tab [nzTitle]="'collector.task' | i18n">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                <span style="font-size: xxx-large; font-weight: bolder; color: white">
-                  {{ item.pinMonitorNum + item.dispatchMonitorNum }}
-                </span>
-                <br />
-                <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
-                <nz-tag style="margin-bottom: 4%; font-weight: bolder"
-                  >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
-                >
-              </div>
-            </nz-tab>
-            <nz-tab [nzTitle]="'collector.start-time' | i18n">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                <span style="font-size: x-large; font-weight: bolder; color: white">{{
-                  (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
-                }}</span>
-              </div>
-            </nz-tab>
-            <nz-tab [nzTitle]="'collector.ip' | i18n">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.ip }}</span>
-              </div>
-            </nz-tab>
-            <nz-tab [nzTitle]="'collector.node' | i18n">
-              <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.name }}</span>
-              </div>
-            </nz-tab>
-          </nz-tabset>
-        </nz-card-tab>
-        <ng-template #collectorCardTitle>
-          <span style="font-size: medium; font-weight: bold" nz-tooltip [nzTooltipTitle]="item.collector.name">
-            <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 4px"></span>
-            <span>{{ 'collector' | i18n }} : {{ item.collector.name }}</span>
-          </span>
-        </ng-template>
-      </nz-card>
-    </div>
+    <nz-spin [nzSpinning]="collectorsLoading">
+      <div style="overflow-y: auto; height: inherit">
+        <nz-card
+          *ngFor="let item of collectors; let i = index"
+          class="rounded-lg collectors"
+          nzBordered="false"
+          [nzTitle]="collectorCardTitle"
+        >
+          <ng-template #collectorCardTitle>
+            <span style="font-size: medium; font-weight: bold" nz-tooltip [nzTooltipTitle]="item.collector.name">
+              <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 4px"></span>
+              <span>{{ 'collector' | i18n }} : {{ item.collector.name }}</span>
+            </span>
+          </ng-template>
+          <nz-card-tab>
+            <nz-tabset nzSize="small" [(nzSelectedIndex)]="collectorsTabSelectedIndex">
+              <nz-tab [nzTitle]="'collector.status' | i18n" />
+              <nz-tab [nzTitle]="'collector.task' | i18n" />
+              <nz-tab [nzTitle]="'collector.start-time' | i18n" />
+              <nz-tab [nzTitle]="'collector.ip' | i18n" />
+              <nz-tab [nzTitle]="'collector.node' | i18n" />
+            </nz-tabset>
+          </nz-card-tab>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 0">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
+                {{ item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n) }}
+              </span>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 1">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span style="font-size: xxx-large; font-weight: bolder; color: white">
+                {{ item.pinMonitorNum + item.dispatchMonitorNum }}
+              </span>
+              <br />
+              <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
+              <nz-tag style="margin-bottom: 4%; font-weight: bolder"
+                >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
+              >
+            </div>
+          </ng-container>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 2">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span style="font-size: x-large; font-weight: bolder; color: white">{{
+                (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
+              }}</span>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 3">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.ip }}</span>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 4">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.name }}</span>
+            </div>
+          </ng-container>
+        </nz-card>
+      </div>
+    </nz-spin>
   </div>
 </div>
 
 <div nz-row nzGutter="16" style="margin-top: 25px; height: 320px">
-  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 15 }" class="mb-md" style="height: 100%">
-    <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow-y: scroll">
-      <nz-timeline nzMode="left">
-        <nz-timeline-item
-          *ngFor="let alert of alerts; let i = index"
-          [nzLabel]="(alert.lastAlarmTime | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
-        >
-          <p style="font-weight: 400">
-            <nz-tag *ngIf="alert.priority == 0" nzColor="red">
-              <i nz-icon nzType="bell" nzTheme="outline"></i>
-              <span>{{ 'alert.priority.0' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="alert.priority == 1" nzColor="orange">
-              <i nz-icon nzType="bell" nzTheme="outline"></i>
-              <span>{{ 'alert.priority.1' | i18n }}</span>
-            </nz-tag>
-            <nz-tag *ngIf="alert.priority == 2" nzColor="yellow">
-              <i nz-icon nzType="bell" nzTheme="outline"></i>
-              <span>{{ 'alert.priority.2' | i18n }}</span>
-            </nz-tag>
-            <span>[{{ alert.tags.monitorName }}] </span>
-            {{ alert.content }}
-          </p>
-        </nz-timeline-item>
-      </nz-timeline>
-    </nz-card>
+  <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 15 }" class="mb-md timeline-card" style="height: 100%">
+    <nz-spin [nzSpinning]="alertContentLoading">
+      <nz-card nzHoverable [nzTitle]="alertCardTitleTemplate" [nzExtra]="extraTemplate" style="height: inherit; overflow: hidden">
+        <nz-timeline nzMode="left">
+          <nz-timeline-item
+            *ngFor="let alert of alerts; let i = index"
+            [nzLabel]="(alert.lastAlarmTime | date : 'YYYY-MM-dd HH:mm:ss')?.trim()"
+          >
+            <p style="font-weight: 400">
+              <nz-tag *ngIf="alert.priority == 0" nzColor="red">
+                <i nz-icon nzType="bell" nzTheme="outline"></i>
+                <span>{{ 'alert.priority.0' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="alert.priority == 1" nzColor="orange">
+                <i nz-icon nzType="bell" nzTheme="outline"></i>
+                <span>{{ 'alert.priority.1' | i18n }}</span>
+              </nz-tag>
+              <nz-tag *ngIf="alert.priority == 2" nzColor="yellow">
+                <i nz-icon nzType="bell" nzTheme="outline"></i>
+                <span>{{ 'alert.priority.2' | i18n }}</span>
+              </nz-tag>
+              <span>[{{ alert.tags.monitorName }}] </span>
+              {{ alert.content }}
+            </p>
+          </nz-timeline-item>
+        </nz-timeline>
+      </nz-card>
+    </nz-spin>
   </div>
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 12 }" [nzMd]="{ span: 9 }" class="mb-md" style="height: 100%">
-    <div
-      echarts
-      [options]="alertsEChartOption"
-      theme="default"
-      [autoResize]="true"
-      [loading]="alertsLoading"
-      (chartInit)="onAlertNumChartInit($event)"
-      style="width: 100%; height: inherit; padding-left: 30px"
-      class="ant-card ant-card-bordered ant-card-hoverable"
-    ></div>
+    <nz-spin [nzSpinning]="alertsLoading">
+      <div
+        echarts
+        [options]="alertsEChartOption"
+        theme="default"
+        [autoResize]="true"
+        [loading]="alertsLoading"
+        (chartInit)="onAlertNumChartInit($event)"
+        style="width: 100%; height: inherit; padding-left: 30px"
+        class="ant-card ant-card-bordered ant-card-hoverable"
+      ></div>
+    </nz-spin>
   </div>
 </div>
 

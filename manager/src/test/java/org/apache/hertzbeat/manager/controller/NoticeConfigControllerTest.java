@@ -17,10 +17,15 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
@@ -94,13 +99,14 @@ class NoticeConfigControllerTest {
         NoticeTemplate template = new NoticeTemplate();
         template.setId(5L);
         template.setName("Dingding");
-        template.setContent("[${title}]\n"
-                + "${targetLabel} : ${target}\n"
-                + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
-                + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
-                + "${priorityLabel} : ${priority}\n"
-                + "${triggerTimeLabel} : ${triggerTime}\n"
-                + "${contentLabel} : ${content}");
+        template.setContent("""
+                [${title}]
+                ${targetLabel} : ${target}
+                <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+                <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+                ${priorityLabel} : ${priority}
+                ${triggerTimeLabel} : ${triggerTime}
+                ${contentLabel} : ${content}""");
         template.setType((byte) 5);
 
         return template;
@@ -117,7 +123,7 @@ class NoticeConfigControllerTest {
     void addNewNoticeReceiver() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
         System.out.println(noticeReceiver);
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/receiver")
+        this.mockMvc.perform(post("/api/notice/receiver")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
@@ -130,7 +136,7 @@ class NoticeConfigControllerTest {
     void editNoticeReceiver() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
         System.out.println(noticeReceiver);
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/api/notice/receiver")
+        this.mockMvc.perform(put("/api/notice/receiver")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
@@ -144,19 +150,19 @@ class NoticeConfigControllerTest {
     void deleteNoticeReceiver() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
 
-        Mockito.when(noticeConfigService.getReceiverById(7565463543L))
+        when(noticeConfigService.getReceiverById(7565463543L))
                 .thenReturn(noticeReceiver);
-        Mockito.when(noticeConfigService.getReceiverById(6565463543L))
+        when(noticeConfigService.getReceiverById(6565463543L))
                 .thenReturn(null);
 
 
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/notice/receiver/{id}", 6565463543L))
+        this.mockMvc.perform(delete("/api/notice/receiver/{id}", 6565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("The relevant information of the recipient could not be found, please check whether the parameters are correct"))
                 .andReturn();
 
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/notice/receiver/{id}", 7565463543L))
+        this.mockMvc.perform(delete("/api/notice/receiver/{id}", 7565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Delete success"))
@@ -177,7 +183,7 @@ class NoticeConfigControllerTest {
     @Test
     void addNewNoticeRule() throws Exception {
         NoticeRule noticeRule = getNoticeRule();
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/rule")
+        this.mockMvc.perform(post("/api/notice/rule")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(noticeRule)))
                 .andExpect(status().isOk())
@@ -189,7 +195,7 @@ class NoticeConfigControllerTest {
     @Test
     void editNoticeRule() throws Exception {
         NoticeRule noticeRule = getNoticeRule();
-        this.mockMvc.perform(MockMvcRequestBuilders.put("/api/notice/rule")
+        this.mockMvc.perform(put("/api/notice/rule")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(noticeRule)))
                 .andExpect(status().isOk())
@@ -202,19 +208,19 @@ class NoticeConfigControllerTest {
     void deleteNoticeRule() throws Exception {
         NoticeRule noticeRule = getNoticeRule();
 
-        Mockito.when(noticeConfigService.getNoticeRulesById(7565463543L))
+        when(noticeConfigService.getNoticeRulesById(7565463543L))
                 .thenReturn(noticeRule);
-        Mockito.when(noticeConfigService.getNoticeRulesById(6565463543L))
+        when(noticeConfigService.getNoticeRulesById(6565463543L))
                 .thenReturn(null);
 
 
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/notice/rule/{id}", 6565463543L))
+        this.mockMvc.perform(delete("/api/notice/rule/{id}", 6565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("The specified notification rule could not be queried, please check whether the parameters are correct"))
                 .andReturn();
 
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/notice/rule/{id}", 7565463543L))
+        this.mockMvc.perform(delete("/api/notice/rule/{id}", 7565463543L))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Delete success"))
@@ -238,10 +244,10 @@ class NoticeConfigControllerTest {
     @Test
     void sendTestMsg() throws Exception {
         NoticeReceiver noticeReceiver = getNoticeReceiver();
-        Mockito.when(noticeConfigService.sendTestMsg(noticeReceiver))
+        when(noticeConfigService.sendTestMsg(noticeReceiver))
                 .thenReturn(false);
 
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/receiver/send-test-msg")
+        this.mockMvc.perform(post("/api/notice/receiver/send-test-msg")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
@@ -250,10 +256,10 @@ class NoticeConfigControllerTest {
                 .andReturn();
 
 
-        Mockito.when(noticeConfigService.sendTestMsg(noticeReceiver))
+        when(noticeConfigService.sendTestMsg(noticeReceiver))
                 .thenReturn(true);
 
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/notice/receiver/send-test-msg")
+        this.mockMvc.perform(post("/api/notice/receiver/send-test-msg")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
@@ -261,4 +267,100 @@ class NoticeConfigControllerTest {
                 //.andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))
                 .andReturn();
     }
+
+    @Test
+    void addNewNoticeTemplate() throws Exception {
+        NoticeTemplate noticeTemplate = getNoticeTemplate();
+        doNothing().when(noticeConfigService).addNoticeTemplate(noticeTemplate);
+
+        this.mockMvc.perform(post("/api/notice/template")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Add success"))
+                .andReturn();
+
+        verify(noticeConfigService).addNoticeTemplate(noticeTemplate);
+    }
+
+    @Test
+    void editNoticeTemplate() throws Exception {
+        NoticeTemplate noticeTemplate = getNoticeTemplate();
+        doNothing().when(noticeConfigService).editNoticeTemplate(noticeTemplate);
+
+        this.mockMvc.perform(put("/api/notice/template")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeTemplate)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Edit success"))
+                .andReturn();
+
+        verify(noticeConfigService).editNoticeTemplate(noticeTemplate);
+    }
+
+    @Test
+    void deleteNoticeTemplate_Success() throws Exception {
+        Long templateId = 1L;
+        when(noticeConfigService.getNoticeTemplatesById(templateId)).thenReturn(Optional.of(new NoticeTemplate()));
+
+        mockMvc.perform(delete("/api/notice/template/{id}", templateId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Delete success"));
+
+        Mockito.verify(noticeConfigService, Mockito.times(1)).deleteNoticeTemplate(templateId);
+    }
+
+    @Test
+    void deleteNoticeTemplate_NotFound() throws Exception {
+        Long templateId = 1L;
+        when(noticeConfigService.getNoticeTemplatesById(templateId)).thenReturn(Optional.empty());
+
+        mockMvc.perform(delete("/api/notice/template/{id}", templateId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("The specified notification template could not be queried, please check whether the parameters are correct"));
+
+        Mockito.verify(noticeConfigService, Mockito.never()).deleteNoticeTemplate(templateId);
+    }
+
+    @Test
+    void testGetTemplates() throws Exception {
+        // Mock the service response
+        NoticeTemplate template1 = new NoticeTemplate();
+        template1.setName("Template1");
+        NoticeTemplate template2 = new NoticeTemplate();
+        template2.setName("Template2");
+        List<NoticeTemplate> templates = Arrays.asList(template1, template2);
+        when(noticeConfigService.getNoticeTemplates(any())).thenReturn(templates);
+
+        // Perform the GET request and verify the response
+        this.mockMvc.perform(get("/api/notice/templates")
+                        .param("name", "Template"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data[0].name").value("Template1"))
+                .andExpect(jsonPath("$.data[1].name").value("Template2"));
+    }
+
+    @Test
+    void sendTestMsg_Failure() throws Exception {
+        NoticeReceiver noticeReceiver = getNoticeReceiver();
+        when(noticeConfigService.sendTestMsg(noticeReceiver)).thenReturn(false);
+
+        this.mockMvc.perform(post("/api/notice/receiver/send-test-msg")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(noticeReceiver)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))
+                .andReturn();
+
+        verify(noticeConfigService, times(1)).sendTestMsg(noticeReceiver);
+    }
+
+
+
 }

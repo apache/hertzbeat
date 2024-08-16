@@ -22,9 +22,9 @@ Mapping the fields returned by NGQL queries to the metrics we need allows us to 
 
 For example:  
 - online_meta_count#SHOW HOSTS META#Status#ONLINE  
-  Counts the number of rows returned by `SHOW HOSTS META` where Status equals ONLINE.
+Counts the number of rows returned by `SHOW HOSTS META` where Status equals ONLINE.
 - online_meta_count#SHOW HOSTS META##  
-  Counts the number of rows returned by `SHOW HOSTS META`.
+Counts the number of rows returned by `SHOW HOSTS META`.
 
 #### **oneRow**
 
@@ -68,12 +68,13 @@ Notes:
 ![HertzBeat Page](/img/docs/advanced/extend-point-1.png)
 
 ------- 
+
 Configuration usages of the monitoring templates yml are detailed below.
 
 ### Monitoring Template YML
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.  
-> Monitoring template is used to define the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information, etc.  
+> Monitoring template is used to define the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information, etc.
 
 eg: Customize a monitoring type named example_ngql, which collects metric data using NGQL.
 
@@ -165,3 +166,4 @@ metrics:
         - match (v:tag2) return "tag2" as name ,count(v) as cnt
       timeout: ^_^timeout^_^
 ```
+

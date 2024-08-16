@@ -89,14 +89,15 @@ public class NoticeTemplate {
 
     @Schema(title = "Template content",
             description = "Template content",
-            example = "[${title}]\n"
-                    + "${targetLabel} : ${target}\n"
-                    + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
-                    + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
-                    + "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n"
-                    + "${priorityLabel} : ${priority}\n"
-                    + "${triggerTimeLabel} : ${triggerTime}\n"
-                    + "${contentLabel} : ${content}", accessMode = READ_WRITE)
+            example = """
+                    [${title}]
+                    ${targetLabel} : ${target}
+                    <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+                    <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+                    <#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>
+                    ${priorityLabel} : ${priority}
+                    ${triggerTimeLabel} : ${triggerTime}
+                    ${contentLabel} : ${content}""", accessMode = READ_WRITE)
     @Size(max = 60000)
     @Lob
     @NotBlank

@@ -17,7 +17,8 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
@@ -42,13 +43,14 @@ export class CollectorComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
+  @ViewChild('deployForm', { static: false }) deployForm: NgForm | undefined;
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
   collectors!: CollectorSummary[];
   tableLoading: boolean = false;
   checkedCollectors = new Set<string>();
-  // 搜索过滤相关属性
+  // used for filtering collector name
   search: string | undefined;
 
   ngOnInit(): void {
@@ -102,7 +104,7 @@ export class CollectorComponent implements OnInit {
 
   onGoOnlineCollectors() {
     if (this.checkedCollectors == null || this.checkedCollectors.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('collector.notify.no-select-online'), '');
       return;
     }
     this.modal.confirm({
@@ -118,7 +120,7 @@ export class CollectorComponent implements OnInit {
 
   onGoOfflineCollectors() {
     if (this.checkedCollectors == null || this.checkedCollectors.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
+      this.notifySvc.warning(this.i18nSvc.fanyi('collector.notify.no-select-offline'), '');
       return;
     }
     this.modal.confirm({
@@ -243,7 +245,7 @@ export class CollectorComponent implements OnInit {
     );
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -265,7 +267,7 @@ export class CollectorComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadCollectorsTable();
   }
-  // end: 列表多选分页逻辑
+  // end: List multiple choice paging
 
   // start deploy collector model
   isDeployCollectorModalVisible = false;
@@ -286,7 +288,13 @@ export class CollectorComponent implements OnInit {
   }
 
   onDeployCollectorModalOk() {
-    if (this.collector == '' || this.collector == undefined) {
+    if (this.deployForm?.invalid) {
+      Object.values(this.deployForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
       return;
     }
     this.isDeployCollectorModalOkLoading = true;

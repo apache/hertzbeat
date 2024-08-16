@@ -1,7 +1,7 @@
 ---
 id: account-modify  
 title: Modify Account Username Password        
-sidebar_label: Update Account        
+sidebar_label: Update Account
 ---
 
 HertzBeat default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat     
@@ -114,7 +114,6 @@ account:
 
 > This secret is the key for account security encryption management and needs to be updated to your custom key string of the same length.
 
-
 Update the `application.yml` file in the `config` directory, modify the `sureness.jwt.secret` parameter to your custom key string of the same length.
 
 ```yaml
@@ -126,4 +125,4 @@ sureness:
              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
 ```
 
-**Restart HertzBeat, access http://ip:1157/ to explore**  
+**Restart HertzBeat, access http://ip:1157/ to explore**

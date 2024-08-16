@@ -23,7 +23,6 @@ import org.apache.hertzbeat.alert.dto.AlertSummary;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.dto.AlertReport;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -40,11 +39,18 @@ public interface AlertService {
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions        
-     * @param pageRequest   pagination parameters     
+     * @param alarmIds      Alarm ID List
+     * @param monitorId     Monitor ID
+     * @param priority      Alarm level
+     * @param status        Alarm Status
+     * @param content       Alarm content fuzzy query
+     * @param sort          Sort field
+     * @param order         Sort Type
+     * @param pageIndex     List current page
+     * @param pageSize      Number of list pagination
      * @return search result    
      */
-    Page<Alert> getAlerts(Specification<Alert> specification, PageRequest pageRequest);
+    Page<Alert> getAlerts(List<Long> alarmIds, Long monitorId, Byte priority, Byte status, String content, String sort, String order, int pageIndex, int pageSize);
 
     /**
      * Delete alarms in batches according to the alarm ID list
@@ -75,6 +81,13 @@ public interface AlertService {
      * @param alertReport The alarm information 
      */
     void addNewAlertReport(AlertReport alertReport);
+
+    /**
+     * Save external alarms of cloud services
+     * @param cloudServiceName cloud service name,Such as tencloud
+     * @param alertReport alert report json string
+     */
+    void addNewAlertReportFromCloud(String cloudServiceName, String alertReport);
 
     /**
      * Dynamic conditional query

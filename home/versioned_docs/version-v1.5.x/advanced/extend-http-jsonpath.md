@@ -3,16 +3,18 @@ id: extend-http-jsonpath
 title: HTTP Protocol JsonPath Parsing Method  
 sidebar_label: JsonPath Parsing Method
 ---
+
 > After calling the HTTP api to obtain the response data, use JsonPath script parsing method to parse the response data.
 
-Note⚠️ The response data is JSON format. 
+Note⚠️ The response data is JSON format.
 
-**Use the JsonPath script to parse the response data into data that conforms to the data structure rules specified by HertzBeat**  
+**Use the JsonPath script to parse the response data into data that conforms to the data structure rules specified by HertzBeat**
 
-#### JsonPath Operator   
-[JSONPath online verification](https://www.jsonpath.cn)     
+#### JsonPath Operator
 
-| JSONPATH         | Help description                                                                       |
+[JSONPath online verification](https://www.jsonpath.cn)
+
+|     JSONPATH     |                                    Help description                                    |
 |------------------|----------------------------------------------------------------------------------------|
 | $                | Root object or element                                                                 |
 | @                | Current object or element                                                              |
@@ -25,8 +27,10 @@ Note⚠️ The response data is JSON format.
 | ?()              | Filter (script) expression                                                             |
 | ()               | Script Expression                                                                      |
 
-#### HertzBeat data format specification    
+#### HertzBeat data format specification
+
 Single layer format ：key-value
+
 ```json
 {
   "metricName1": "metricValue",
@@ -35,7 +39,9 @@ Single layer format ：key-value
   "metricName4": "metricValue"
 }
 ```
+
 Multilayer format：Set key value in the array
+
 ```json
 [
   {
@@ -56,7 +62,8 @@ Multilayer format：Set key value in the array
 #### Example
 
 Query the value information of the custom system, and its exposed interface is  `/metrics/person`. We need `type,num` Metric.      
-The raw data returned by the interface is as follows：  
+The raw data returned by the interface is as follows：
+
 ```json
 {
   "firstName": "John",
@@ -80,7 +87,8 @@ The raw data returned by the interface is as follows：
 }
 ```
 
-We use the jsonpath script to parse, and the corresponding script is: `$.number[*]`，The parsed data structure is as follows：  
+We use the jsonpath script to parse, and the corresponding script is: `$.number[*]`，The parsed data structure is as follows：
+
 ```json
 [
   {
@@ -93,9 +101,10 @@ We use the jsonpath script to parse, and the corresponding script is: `$.number[
   }
 ]
 ```
+
 This data structure conforms to the data format specification of HertzBeat, and the Metric `type,num` is successfully extracted.
 
-**The corresponding monitoring template yml can be configured as follows**   
+**The corresponding monitoring template yml can be configured as follows**
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
@@ -163,3 +172,4 @@ metrics:
       parseType: jsonPath
       parseScript: '$.number[*]' 
 ```
+

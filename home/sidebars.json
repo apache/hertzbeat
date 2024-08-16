@@ -1,30 +1,62 @@
 {
   "docs": [
     {
+      "type": "doc",
+      "id": "introduce"
+    },
+    {
       "type": "category",
       "label": "quickstart",
       "items": [
-        "introduce",
-        "start/quickstart",
-        "start/docker-deploy",
-        "start/package-deploy",
-        "start/rainbond-deploy",
         {
-          "type": "link",
-          "label": "Install via Helm",
-          "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+          "type": "category",
+          "label": "install",
+          "items": [
+            "start/docker-deploy",
+            "start/docker-compose-deploy",
+            "start/package-deploy",
+            {
+              "type": "link",
+              "label": "Install via Helm",
+              "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+            }
+          ]
         },
-        "start/account-modify",
-        "start/upgrade",
-        "start/victoria-metrics-init",
-        "start/iotdb-init",
-        "start/tdengine-init",
-        "start/greptime-init",
-        "start/influxdb-init",
-        "start/mysql-change",
-        "start/postgresql-change",
-        "start/custom-config",
-        "start/ssl-cert-practice"
+        {
+          "type": "category",
+          "label": "upgrade",
+          "items": [
+            "start/1.6.0-update",
+            "start/upgrade"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "setting",
+          "items": [
+            "start/account-modify",
+            "start/custom-config"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "change-db",
+          "items": [
+            "start/victoria-metrics-init",
+            "start/iotdb-init",
+            "start/tdengine-init",
+            "start/influxdb-init",
+            "start/postgresql-change",
+            "start/mysql-change"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "use-case",
+          "items": [
+            "start/ssl-cert-practice"
+          ]
+        }
       ]
     },
     {
@@ -77,13 +109,6 @@
           "label": "snmp",
           "items": [
             "advanced/extend-snmp"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "push",
-          "items": [
-            "advanced/extend-push"
           ]
         },
         {
@@ -154,6 +179,7 @@
             "help/fullsite",
             "help/ssl_cert",
             "help/nginx",
+            "help/imap",
             "help/pop3",
             "help/smtp",
             "help/ntp",
@@ -187,7 +213,8 @@
             "help/nebulaGraph",
             "help/nebulagraph_cluster",
             "help/tidb",
-            "help/mongodb"
+            "help/mongodb",
+            "help/mongodb_atlas"
           ]
         },
         {
@@ -236,6 +263,7 @@
           "items": [
             "help/spark",
             "help/flink",
+            "help/flink_on_yarn",
             "help/doris_be",
             "help/doris_fe",
             "help/hadoop",
@@ -250,6 +278,7 @@
             "help/clickhouse",
             "help/elasticsearch",
             "help/influxdb",
+            "help/presto",
             "help/hugegraph"
           ]
         },
@@ -274,6 +303,13 @@
           "label": "llm",
           "items": [
             "help/openai"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "aiConfig",
+          "items": [
+            "help/aiConfig"
           ]
         },
         {

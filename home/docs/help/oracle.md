@@ -7,9 +7,15 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 > Collect and monitor the general performance Metrics of ORACLE database.
 
+### Attention, Need Add ORACLE jdbc driver jar
+
+- Download the ORACLE jdbc driver jar package, such as ojdbc8.jar. [Download](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar) [oracle-i18n](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
+- Copy the jar package to the `hertzbeat/ext-lib` directory.
+- Restart the HertzBeat service.
+
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -27,37 +33,38 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 #### Metric set：basic
 
-| Metric name      | Metric unit | Metric help description |
-| ----------- | ----------- | ----------- |
-| database_version     | none | Database version |
-| database_type        | none | Database type |
-| hostname             | none | Host name |
-| instance_name        | none | Database instance name |
-| startup_time         | none | Database start time |
-| status               | none | Database status |
+|   Metric name    | Metric unit | Metric help description |
+|------------------|-------------|-------------------------|
+| database_version | none        | Database version        |
+| database_type    | none        | Database type           |
+| hostname         | none        | Host name               |
+| instance_name    | none        | Database instance name  |
+| startup_time     | none        | Database start time     |
+| status           | none        | Database status         |
 
 #### Metric set：tablespace
 
-| Metric name      | Metric unit | Metric help description |
-| ----------- | ----------- | ----------- |
-| file_id           | none | File ID |
-| file_name         | none | File name |
-| tablespace_name   | none | Table space name |
-| status            | none | Status |
-| bytes             | MB | Size |
-| blocks            | none | Number of blocks |
+|   Metric name   | Metric unit | Metric help description |
+|-----------------|-------------|-------------------------|
+| file_id         | none        | File ID                 |
+| file_name       | none        | File name               |
+| tablespace_name | none        | Table space name        |
+| status          | none        | Status                  |
+| bytes           | MB          | Size                    |
+| blocks          | none        | Number of blocks        |
 
 #### Metric set：user_connect
 
-| Metric name      | Metric unit | Metric help description |
-| ----------- | ----------- | ----------- |
-| username         | none   | Username |
-| counts           | number | Current connection counts | 
+| Metric name | Metric unit |  Metric help description  |
+|-------------|-------------|---------------------------|
+| username    | none        | Username                  |
+| counts      | number      | Current connection counts |
 
 #### Metric set：performance
 
-| Metric name      | Metric unit | Metric help description |
-| ----------- | ----------- | ----------- |
-| qps         | QPS | I/O Requests per second |
-| tps         | TPS | User transaction per second | 
-| mbps        | MBPS | I/O Megabytes per second |
+| Metric name | Metric unit |   Metric help description   |
+|-------------|-------------|-----------------------------|
+| qps         | QPS         | I/O Requests per second     |
+| tps         | TPS         | User transaction per second |
+| mbps        | MBPS        | I/O Megabytes per second    |
+

@@ -3,6 +3,7 @@ id: how_to_verify_release
 title: 版本物料的验证
 sidebar_position: 4
 ---
+
 # 验证候选版本
 
 详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
@@ -21,11 +22,9 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 
 ```
 
-
 ## 2. 验证上传的版本是否合规
 
 > 开始验证环节，验证包含但不局限于以下内容和形式
-
 
 ### 2.1 查看发布包是否完整
 
@@ -35,7 +34,6 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 2. 是否包含源码包的签名
 3. 是否包含源码包的sha512
 4. 如果上传了二进制包，则同样检查(2)-(4)所列的内容
-
 
 ### 2.2 检查gpg签名
 
@@ -47,6 +45,7 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 $ curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # 下载KEYS
 $ gpg --import KEYS # 导入KEYS到本地
 ```
+
 #### 2.2.2 信任公钥
 
 > 信任此次版本所使用的KEY
@@ -75,6 +74,7 @@ Do you really want to set this key to ultimate trust? (y/N) y #选择y
 gpg> 
      
 ```
+
 #### 2.2.3 检查签名
 
 ```shell
@@ -82,6 +82,7 @@ for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 ```
 
 检查结果
+
 > 出现类似以下内容则说明签名正确，关键字：**`Good signature`**
 
 ```shell
@@ -94,7 +95,6 @@ gpg: Good signature from "xxx @apache.org>"
 ### 2.3 检查sha512哈希
 
 > 本地计算sha512哈希后，验证是否与dist上的一致，如果上传二进制包，则同样需要检查二进制包的sha512哈希
-
 
 ```shell
 for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
@@ -123,7 +123,6 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 
 参考: https://apache.org/legal/resolved.html
 
-
 ### 2.5. 源码编译验证
 
 解压缩 `apache-hertzbeat-${release_version}-incubating-src.tar.gz`
@@ -132,7 +131,7 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 cd apache-hertzbeat-${release_version}-incubating-src
 ```
 
-编译源码: https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package 
+编译源码: https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
 
 进行如下检查:
 
@@ -147,7 +146,6 @@ cd apache-hertzbeat-${release_version}-incubating-src
 - [ ] .....
 
 参考: https://apache.org/legal/resolved.html
-
 
 ## 3. 邮件回复
 
@@ -169,11 +167,11 @@ IPMC 在 general@incubator.apache.org incubator 社区投票，请带上 binding
 Forward my +1 from dev@hertzbeat (non-binding)
 Copy my +1 from hertzbeat DEV ML (non-binding)
 ```
+
 :::
 
-
-
 非PPMC/IPMC成员
+
 ```html
 +1 (non-binding)
 I  checked:
@@ -185,6 +183,7 @@ I  checked:
 ```
 
 PPMC/IPMC成员
+
 ```html
 //incubator社区 投票时，只有IPMC成员才具有约束性 binding
 +1 (binding)
@@ -196,7 +195,6 @@ I  checked:
     5. ....
 ```
 
-
 --- 
 
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
+This doc refer from [Apache StreamPark](https://streampark.apache.org/)

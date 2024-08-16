@@ -12,11 +12,6 @@ export const features = [
         <Translate
           values={{
             docker: <code>{'docker run -d -p 1157:1157 apache/hertzbeat'}</code>,
-            console: (
-              <a href={'https://www.console.tancloud.cn'}>
-                Login Now
-              </a>
-            ),
             br: <br />,
           }}
         >
@@ -51,7 +46,7 @@ export const features = [
           values={{
             github: (
               <a href={'https://github.com/apache/hertzbeat'}>
-                Github Repo
+                Github
               </a>
             ),
             br: <br />,
@@ -62,12 +57,4 @@ export const features = [
       </>
     ),
   },
-]
-
-
-export const usersLink = [
-  {
-    img: 'tancloud-logo.svg',
-    alt: 'tancloud',
-  }
 ]

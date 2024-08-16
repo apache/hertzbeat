@@ -76,16 +76,10 @@ class IcmpCollectImplTest {
 
     @Test
     void testPreCheck() {
-        assertDoesNotThrow(() -> {
-            icmpCollect.preCheck(metrics);
-        });
-        assertThrows(IllegalArgumentException.class, () -> {
-            icmpCollect.preCheck(null);
-        });
+        assertDoesNotThrow(() -> icmpCollect.preCheck(metrics));
+        assertThrows(IllegalArgumentException.class, () -> icmpCollect.preCheck(null));
         metrics.setIcmp(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            icmpCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> icmpCollect.preCheck(null));
     }
 
     @Test

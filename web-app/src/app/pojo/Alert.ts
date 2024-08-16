@@ -22,9 +22,9 @@ export class Alert {
   target!: string;
   monitorId!: number;
   monitorName!: string;
-  // 告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色
+  // alert level -- 0:high-emergency-red 1:medium-critical-orange 2:low-warning-yellow
   priority: number = 2;
-  // 告警状态: 0-正常告警(待处理) 1-阈值触发但未达到告警次数 2-恢复告警 3-已处理
+  // alert status-- 0-to be processed 1-not reached the threshold 2-recover 3-processed
   status!: number;
   content!: string;
   // alarm times

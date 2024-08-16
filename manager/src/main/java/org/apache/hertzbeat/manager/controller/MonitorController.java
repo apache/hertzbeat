@@ -55,10 +55,6 @@ public class MonitorController {
     public ResponseEntity<Message<Void>> addNewMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // Verify request data
         monitorService.validate(monitorDto, false);
-        if (monitorDto.isDetected()) {
-            // Probe
-            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
-        }
         monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         return ResponseEntity.ok(Message.success("Add success"));
     }
@@ -68,10 +64,6 @@ public class MonitorController {
     public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // Verify request data
         monitorService.validate(monitorDto, true);
-        if (monitorDto.isDetected()) {
-            // Probe
-            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
-        }
         monitorService.modifyMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
         return ResponseEntity.ok(Message.success("Modify success"));
     }
@@ -115,9 +107,6 @@ public class MonitorController {
     @Operation(summary = "Add a monitor that can select metrics", description = "Add a monitor that can select metrics")
     public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto) {
         monitorService.validate(monitorDto, false);
-        if (monitorDto.isDetected()) {
-            monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
-        }
         monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(), monitorDto.getMonitor(), monitorDto.getParams());
         return ResponseEntity.ok(Message.success("Add success"));
     }
