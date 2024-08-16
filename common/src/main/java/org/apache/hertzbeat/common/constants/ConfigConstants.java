@@ -15,21 +15,45 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.config;
-
-import org.apache.hertzbeat.common.constants.ConfigConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
+package org.apache.hertzbeat.common.constants;
 
 /**
- * Collector Auto Configuration
- * @version 2.1
+ * Extract all public strings that the project needs to configure in yml.
  */
 
-@AutoConfiguration
-@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
-		+ SignConstants.DOT
-		+ ConfigConstants.FunctionModuleConstants.COLLECTOR)
-public class CollectorAutoConfiguration {
+public interface ConfigConstants {
+
+    /**
+     * Package name constant.
+     */
+    interface PkgConstant {
+        String PKG = "org.apache.hertzbeat.";
+    }
+
+    /**
+     * hertzbeat project module constant.
+     */
+    interface FunctionModuleConstants {
+
+        String ALERT = "alert";
+
+        String COLLECTOR = "collector";
+
+        String COMMON = "common";
+
+        String WAREHOUSE = "warehouse";
+
+        String AI = "ai";
+
+        String STATUS = "status";
+
+        String SCHEDULER = "scheduler";
+
+        String PUSH = "push";
+
+        String DISPATCH = "dispatch";
+
+        String INFO = "info";
+    }
+
 }

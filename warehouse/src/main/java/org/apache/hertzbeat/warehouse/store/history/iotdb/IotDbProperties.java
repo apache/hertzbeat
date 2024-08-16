@@ -19,10 +19,11 @@ package org.apache.hertzbeat.warehouse.store.history.iotdb;
 
 import java.time.ZoneId;
 import java.util.List;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
-
-
 
 /**
  * IotDB configuration information
@@ -34,7 +35,12 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  *                   Note: Why use String instead of Long here? Currently, IoTDB's set ttl only supports milliseconds as the unit.
  *                   Other units may be added later. In order to be compatible with the future, the String type is used.
  */
-@ConfigurationProperties(prefix = "warehouse.store.iot-db")
+
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+		+ SignConstants.DOT
+		+ WarehouseConstants.STORE
+		+ SignConstants.DOT
+		+ WarehouseConstants.HistoryName.IOTDB)
 public record IotDbProperties(@DefaultValue("false") boolean enabled,
                               @DefaultValue("127.0.0.1") String host,
                               @DefaultValue("6667") Integer rpcPort,

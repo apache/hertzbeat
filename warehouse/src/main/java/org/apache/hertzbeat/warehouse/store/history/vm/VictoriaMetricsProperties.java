@@ -17,13 +17,21 @@
 
 package org.apache.hertzbeat.warehouse.store.history.vm;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * Victoriametrics configuration information
  */
-@ConfigurationProperties(prefix = "warehouse.store.victoria-metrics")
+
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+		+ SignConstants.DOT
+		+ WarehouseConstants.STORE
+		+ SignConstants.DOT
+		+ WarehouseConstants.HistoryName.VM)
 public record VictoriaMetricsProperties(@DefaultValue("false") boolean enabled,
                                         @DefaultValue("http://localhost:8428") String url,
                                         String username,

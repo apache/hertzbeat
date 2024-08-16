@@ -18,15 +18,17 @@
 package org.apache.hertzbeat.manager.config;
 
 import lombok.Data;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 /**
  * AiProperties
  */
-@Configuration
-@ConfigurationProperties(prefix = "ai")
+
 @Data
+@Configuration
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.AI)
 public class AiProperties {
 
     /**
