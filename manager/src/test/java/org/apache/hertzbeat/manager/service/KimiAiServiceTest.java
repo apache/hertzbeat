@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 
-import org.apache.hertzbeat.manager.service.impl.KimiAiServiceImpl;
+import org.apache.hertzbeat.manager.service.ai.KimiAiServiceImpl;
 
 /**
  * test case for {@link KimiAiServiceImpl}

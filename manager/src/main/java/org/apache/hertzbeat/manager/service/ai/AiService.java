@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.service.ai;
 
 
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
