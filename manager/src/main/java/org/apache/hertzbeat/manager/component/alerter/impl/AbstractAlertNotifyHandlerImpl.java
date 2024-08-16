@@ -115,6 +115,42 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         return template.replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1");
     }
 
+    protected String escapeJsonStr(String jsonStr){
+        if (jsonStr == null) {
+            return null;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (char c : jsonStr.toCharArray()) {
+            switch (c) {
+                case '"':
+                    sb.append("\\\"");
+                    break;
+                case '\\':
+                    sb.append("\\\\");
+                    break;
+                case '\b':
+                    sb.append("\\b");
+                    break;
+                case '\f':
+                    sb.append("\\f");
+                    break;
+                case '\n':
+                    sb.append("\\n");
+                    break;
+                case '\r':
+                    sb.append("\\r");
+                    break;
+                case '\t':
+                    sb.append("\\t");
+                    break;
+                default:
+                    sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     @EventListener(SystemConfigChangeEvent.class)
     public void onEvent(SystemConfigChangeEvent event) {
         log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
