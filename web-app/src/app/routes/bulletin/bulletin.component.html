@@ -44,65 +44,66 @@
 
 <nz-tabset nzType="card">
   <nz-tab *ngFor="let tab of tabs" [nzTitle]="tab">
-    <nz-table
-      #fixedTable
-      [nzData]="tabDefines"
-      [nzPageIndex]="pageIndex"
-      [nzPageSize]="pageSize"
-      [nzTotal]="total"
-      nzFrontPagination="false"
-      [nzLoading]="tableLoading"
-      nzShowSizeChanger
-      [nzShowTotal]="rangeTemplate"
-      [nzPageSizeOptions]="[10, 20, 50]"
-      (nzQueryParams)="onTablePageChange($event)"
-      nzShowPagination="true"
-      [nzScroll]="{ x: 'auto' }"
-      nzBordered
-      class="table"
-    >
-      <thead>
-        <tr>
-          <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
-          <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
-          <ng-container *ngFor="let metricName of tabDefines.column">
-            <th nzAlign="center" [colSpan]="tabDefines.bulletinColumn[metricName].size">{{ metricName }}</th>
-          </ng-container>
-        </tr>
-        <tr>
-          <ng-container *ngFor="let metricName of tabDefines.column">
-            <ng-container *ngFor="let field of tabDefines.bulletinColumn[metricName]">
-              <th nzAlign="center">{{ field.split('$$$')[1] }}</th>
+    <ng-container *ngIf="tabDefines">
+      <nz-table
+        #fixedTable
+        [nzData]="tabDefines"
+        [nzPageIndex]="pageIndex"
+        [nzPageSize]="pageSize"
+        [nzTotal]="total"
+        nzFrontPagination="false"
+        [nzLoading]="tableLoading"
+        nzShowSizeChanger
+        [nzShowTotal]="rangeTemplate"
+        [nzPageSizeOptions]="[10, 20, 50]"
+        (nzQueryParams)="onTablePageChange($event)"
+        nzShowPagination="true"
+        [nzScroll]="{ x: 'auto' }"
+        nzBordered
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
+            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
+            <ng-container *ngFor="let nbr of tabDefines.column.size">
+              <th nzAlign="center" [colSpan]="tabDefines.content.metrics[nbr].size">{{ tabDefines.column?.[nbr] }}</th>
+            </ng-container>
+          </tr>
+          <tr>
+            <ng-container *ngFor="let nbr of tabDefines.column.size">
+              <ng-container *ngFor="let field of tabDefines.column?.[nbr]">
+                <th nzAlign="center">{{ field.value }}</th>
+              </ng-container>
+            </ng-container>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let data of fixedTable.data">
+            <ng-container *ngFor="let rowIndex of getRowIndexes(data)">
+              <tr>
+                <ng-container *ngIf="rowIndex === 0">
+                  <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.app }}</td>
+                  <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.host }}</td>
+                </ng-container>
+                <ng-container *ngFor="let metricName of tabDefines.column">
+                  <ng-container *ngFor="let field of tabDefines.bulletinColumn[metricName]">
+                    <td *ngIf="data[field] !== null">
+                      {{ data[field][rowIndex].split('$$$')[0] }}
+                      <nz-tag *ngIf="data[field][rowIndex] == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+                      <nz-tag *ngIf="data[field][rowIndex].split('$$$')[1]" nzColor="success">{{
+                        data[field][rowIndex].split('$$$')[1]
+                      }}</nz-tag>
+                    </td>
+                  </ng-container>
+                </ng-container>
+              </tr>
             </ng-container>
           </ng-container>
-        </tr>
-      </thead>
-      <tbody>
-        <ng-container *ngFor="let data of fixedTable.data">
-          <ng-container *ngFor="let rowIndex of getRowIndexes(data)">
-            <tr>
-              <ng-container *ngIf="rowIndex === 0">
-                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.app }}</td>
-                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.host }}</td>
-              </ng-container>
-              <ng-container *ngFor="let metricName of tabDefines.column">
-                <ng-container *ngFor="let field of tabDefines.bulletinColumn[metricName]">
-                  <td *ngIf="data[field] !== null">
-                    {{ data[field][rowIndex].split('$$$')[0] }}
-                    <nz-tag *ngIf="data[field][rowIndex] == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
-                    <nz-tag *ngIf="data[field][rowIndex].split('$$$')[1]" nzColor="success">{{
-                      data[field][rowIndex].split('$$$')[1]
-                    }}</nz-tag>
-                  </td>
-                </ng-container>
-              </ng-container>
-            </tr>
-          </ng-container>
-        </ng-container>
-      </tbody>
-    </nz-table>
-
-    <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ tabDefines.total }} </ng-template>
+        </tbody>
+      </nz-table>
+      <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ tabDefines.total }} </ng-template>
+    </ng-container>
   </nz-tab>
 </nz-tabset>
 

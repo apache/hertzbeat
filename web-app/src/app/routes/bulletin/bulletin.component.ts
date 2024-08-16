@@ -50,7 +50,7 @@ export class BulletinComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
   search!: string;
-  tabs: string[] = [];
+  tabs!: string[];
   tabDefines!: any;
   tableLoading: boolean = true;
   bulletinName!: string;
@@ -71,7 +71,7 @@ export class BulletinComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.getAllNames();
-    if (this.tabs != null && this.tabs.length > 0) {
+    if (this.tabs != null) {
       this.bulletinName = this.tabs[0];
     }
     this.loadData(this.pageIndex - 1, this.pageSize);
@@ -383,68 +383,22 @@ export class BulletinComponent implements OnInit {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
           }
+          this.tableLoading = false;
         },
         error => {
           console.error(error.msg);
           metricData$.unsubscribe();
+          this.tableLoading = false;
         }
       );
-      this.tableLoading = false;
     }
-  }
-
-  updateTabDefines(rawData: any[]) {
-    console.info('rawData:', rawData);
-    const groupedData: any = {};
-    rawData.forEach(item => {
-      const name = item.monitorId;
-      if (!groupedData[name]) {
-        groupedData[name] = {
-          column: {},
-          data: []
-        };
-      }
-
-      let transformedItem: any = {
-        app: item.monitorName,
-        monitorId: item.monitorId,
-        host: item.host
-      };
-
-      item.metrics.forEach((metric: { name: string | number; fields: any }) => {
-        if (!groupedData[name].column[metric.name]) {
-          groupedData[name].column[metric.name] = new Set<string>();
-        }
-        metric.fields.forEach((field: any[]) => {
-          field.forEach((fieldItem: any) => {
-            const key = fieldItem.key;
-            const value = fieldItem.value;
-            const unit = fieldItem.unit;
-
-            if (!transformedItem[key]) {
-              transformedItem[key] = [];
-            }
-            transformedItem[key].push(`${value}$$$${unit}`);
-
-            groupedData[name].column[metric.name].add(key);
-          });
-        });
-      });
-      groupedData[name].data.push(transformedItem);
-    });
-
-    this.tabDefines = Object.keys(groupedData).map(name => ({
-      name,
-      id: groupedData[name].id,
-      column: groupedData[name].column,
-      data: groupedData[name].data
-    }));
+    this.tableLoading = false;
   }
 
   getMaxRowSpan(data: { [x: string]: string | any[] }) {
     let maxRowSpan = 1;
     for (let metricName of this.tabDefines.column) {
-      console.info('field', metricName, this.tabDefines.content.metrics[metricName]);
+      console.info('field', this.tabDefines.content.metrics[metricName]);
       for (let field of this.tabDefines.content.metrics[metricName]) {
         if (Array.isArray(data[field])) {
           maxRowSpan = Math.max(maxRowSpan, data[field].length);
@@ -452,10 +406,6 @@ export class BulletinComponent implements OnInit {
       }
     }
     return maxRowSpan;
-  }
-  getFields() : string[] {
-    
-
   }
 
   onTablePageChange(params: NzTableQueryParams): void {
@@ -497,6 +447,7 @@ export class BulletinComponent implements OnInit {
           allNames$.unsubscribe();
           if (message.code === 0) {
             this.tabs = message.data;
+            console.info('tabs:', this.tabs);
             resolve();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), message.msg);
