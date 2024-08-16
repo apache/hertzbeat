@@ -19,11 +19,17 @@ package org.apache.hertzbeat.manager.config;
 
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
-import okhttp3.OkHttpClient;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -39,15 +45,30 @@ public class RestTemplateConfig {
         restTemplate.setInterceptors(Collections.singletonList(new HeaderRequestInterceptor()));
         return restTemplate;
     }
-
+    
     @Bean
-    public ClientHttpRequestFactory simpleClientHttpRequestFactory() {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .writeTimeout(20, TimeUnit.SECONDS)
+    public ClientHttpRequestFactory httpComponentsClientHttpRequestFactory() {
+        ConnectionConfig connectionConfig = ConnectionConfig
+                .custom()
+                .setConnectTimeout(Timeout.of(15, TimeUnit.SECONDS))
+                .setSocketTimeout(Timeout.of(20, TimeUnit.SECONDS))
+                .setValidateAfterInactivity(Timeout.of(20, TimeUnit.SECONDS))
                 .build();
-        return new OkHttp3ClientHttpRequestFactory(client);
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectionRequestTimeout(15, TimeUnit.SECONDS)
+                .setResponseTimeout(20, TimeUnit.SECONDS)
+                .build();
+        HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder
+                .create()
+                .setDefaultConnectionConfig(connectionConfig)
+                .setMaxConnTotal(200)
+                .setMaxConnPerRoute(20)
+                .build();
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setConnectionManager(connectionManager)
+                .setDefaultRequestConfig(requestConfig)
+                .build();
+        return new HttpComponentsClientHttpRequestFactory(httpClient);
     }
 
 }

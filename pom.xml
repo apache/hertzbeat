@@ -116,6 +116,7 @@
         <aliYun-sdk-java-sms.version>2.0.24</aliYun-sdk-java-sms.version>
         <caffeine.version>2.9.3</caffeine.version>
         <httpclient.version>4.5.14</httpclient.version>
+        <httpclient5.version>5.3.1</httpclient5.version>
 
         <lombok.version>1.18.28</lombok.version>
         <slf4j.version>2.0.9</slf4j.version>
@@ -239,6 +240,11 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${httpclient.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.httpcomponents.client5</groupId>
+                <artifactId>httpclient5</artifactId>
+                <version>${httpclient5.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
