@@ -71,7 +71,7 @@ public class NoticeConfigController {
     @Operation(summary = "Delete existing recipient information", description = "Delete existing recipient information")
     public ResponseEntity<Message<Void>> deleteNoticeReceiver(
             @Parameter(description = "en: Recipient ID", example = "6565463543") @PathVariable("id") final Long receiverId) {
-        NoticeReceiver noticeReceiver = noticeConfigService.getOneReceiverById(receiverId);
+        NoticeReceiver noticeReceiver = noticeConfigService.getReceiverById(receiverId);
         if (noticeReceiver == null) {
             return ResponseEntity.ok(Message.success("The relevant information of the recipient could not be found, please check whether the parameters are correct"));
         }

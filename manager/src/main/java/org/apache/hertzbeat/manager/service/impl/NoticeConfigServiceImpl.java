@@ -218,11 +218,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     }
 
     @Override
-    public NoticeReceiver getOneReceiverById(Long id) {
-        return noticeReceiverDao.findById(id).orElse(null);
-    }
-
-    @Override
     public NoticeTemplate getOneTemplateById(Long id) {
         return noticeTemplateDao.findById(id).orElse(null);
     }
@@ -230,7 +225,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public NoticeReceiver getReceiverById(Long receiverId) {
-        return noticeReceiverDao.getReferenceById(receiverId);
+        return noticeReceiverDao.findById(receiverId).orElse(null);
     }
 
     @Override
