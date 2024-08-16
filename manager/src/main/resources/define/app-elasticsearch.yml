@@ -297,7 +297,7 @@ metrics:
           zh-CN: 内存使用率
           en-US: Heap Used Percent
       - field: heap_total
-        type: 0
+        type: 1
         unit: 'MB'
         i18n:
           zh-CN: 总内存（MB）
@@ -309,7 +309,7 @@ metrics:
           zh-CN: 磁盘剩余容量（GB）
           en-US: Disk Free
       - field: disk_total
-        type: 0
+        type: 1
         unit: 'GB'
         i18n:
           zh-CN: 磁盘总容量
