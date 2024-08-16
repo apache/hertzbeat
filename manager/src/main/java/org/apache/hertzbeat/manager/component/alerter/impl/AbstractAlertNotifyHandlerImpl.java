@@ -38,7 +38,6 @@ import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
 import org.apache.hertzbeat.manager.component.alerter.AlertNotifyHandler;
-import org.apache.hertzbeat.manager.service.NoticeConfigService;
 import org.springframework.context.event.EventListener;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
@@ -56,8 +55,6 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
     protected RestTemplate restTemplate;
     @Resource
     protected AlerterProperties alerterProperties;
-    @Resource
-    protected NoticeConfigService noticeConfigService;
 
 
     protected String renderContent(NoticeTemplate noticeTemplate, Alert alert) throws TemplateException, IOException {
