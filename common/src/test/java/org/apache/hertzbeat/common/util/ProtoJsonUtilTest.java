@@ -17,23 +17,59 @@
 
 package org.apache.hertzbeat.common.util;
 
+import org.apache.hertzbeat.common.util.entity.PersonTest.Person;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Test case for {@link ProtoJsonUtil}
  */
 class ProtoJsonUtilTest {
 
+    private Person samplePerson;
+    private String sampleJson;
+
     @BeforeEach
     void setUp() {
+
+        samplePerson = Person.newBuilder()
+                .setName("John Doe")
+                .setId(123)
+                .setEmail("john.doe@example.com")
+                .build();
+
+        sampleJson = "{ \"name\": \"John Doe\", \"id\": 123, \"email\": \"john.doe@example.com\" }";
     }
 
     @Test
-    void toJsonStr() {
+    void toJsonStr() throws InvalidProtocolBufferException {
+
+        String json = ProtoJsonUtil.toJsonStr(samplePerson);
+        String expectedJson = JsonFormat.printer().print(samplePerson);
+        assertEquals(expectedJson, json);
+
+        json = ProtoJsonUtil.toJsonStr(null);
+        assertNull(json);
     }
 
     @Test
     void toProtobuf() {
+
+        Person.Builder builder = Person.newBuilder();
+        Person person = (Person) ProtoJsonUtil.toProtobuf(sampleJson, builder);
+        assertEquals(samplePerson, person);
+
+        String invalidJson = "{ \"name\": \"John Doe\", \"id\": \"not-a-number\" }";
+        builder = Person.newBuilder();
+        person = (Person) ProtoJsonUtil.toProtobuf(invalidJson, builder);
+
+        assertNull(person);
     }
+
 }

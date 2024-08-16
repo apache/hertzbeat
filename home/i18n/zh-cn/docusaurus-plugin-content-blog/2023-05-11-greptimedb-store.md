@@ -56,14 +56,13 @@ $ docker run -p 4000-4004:4000-4004 \
 
 2. 使用```$ docker ps | grep greptime```查看 GreptimeDB 是否启动成功
 
-
 #### 安装部署 HertzBeat
 
 具体可以参考 [官方文档](https://hertzbeat.com/zh-cn/docs/start/docker-deploy)
 
 1. Docker 安装 HertzBeat
 
-```shell 
+```shell
 $ docker run -d -p 1157:1157 \
     -e LANG=zh_CN.UTF-8 \
     -e TZ=Asia/Shanghai \

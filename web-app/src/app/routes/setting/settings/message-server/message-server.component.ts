@@ -17,12 +17,16 @@
  * under the License.
  */
 
-import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
+import { AlibabaSmsConfig } from 'src/app/pojo/AlibabaSmsConfig';
+import { SmsNoticeSender } from 'src/app/pojo/SmsNoticeSender';
+import { TencentSmsConfig } from 'src/app/pojo/TencentSmsConfig';
 
 import { EmailNoticeSender } from '../../../../pojo/EmailNoticeSender';
 import { GeneralConfigService } from '../../../../service/general-config.service';
@@ -36,22 +40,25 @@ export class MessageServerComponent implements OnInit {
   constructor(
     public msg: NzMessageService,
     private notifySvc: NzNotificationService,
-    private cdr: ChangeDetectorRef,
     private noticeSenderSvc: GeneralConfigService,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
 
-  senders!: EmailNoticeSender[];
+  @ViewChild('senderForm', { static: false }) senderForm: NgForm | undefined;
   senderServerLoading: boolean = true;
   loading: boolean = false;
   isEmailServerModalVisible: boolean = false;
+  isSmsServerModalVisible: boolean = false;
+  smsType: string = 'tencent';
   emailSender = new EmailNoticeSender();
+  smsNoticeSender = new SmsNoticeSender();
 
   ngOnInit(): void {
-    this.loadSenderServer();
+    this.loadEmailSenderServer();
+    this.loadSmsSenderServer();
   }
 
-  loadSenderServer() {
+  loadEmailSenderServer() {
     this.senderServerLoading = true;
     let senderInit$ = this.noticeSenderSvc.getGeneralConfig('email').subscribe(
       message => {
@@ -84,6 +91,15 @@ export class MessageServerComponent implements OnInit {
   }
 
   onSaveEmailServer() {
+    if (this.senderForm?.invalid) {
+      Object.values(this.senderForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     const modalOk$ = this.noticeSenderSvc
       .saveGeneralConfig(this.emailSender, 'email')
       .pipe(
@@ -103,6 +119,93 @@ export class MessageServerComponent implements OnInit {
         },
         error => {
           this.isEmailServerModalVisible = false;
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
+        }
+      );
+  }
+
+  loadSmsSenderServer() {
+    this.senderServerLoading = true;
+    let senderInit$ = this.noticeSenderSvc.getGeneralConfig('sms').subscribe(
+      message => {
+        this.senderServerLoading = false;
+        if (message.code === 0) {
+          if (message.data) {
+            this.smsNoticeSender = message.data;
+            this.smsType = message.data.type;
+          } else {
+            this.smsNoticeSender = new SmsNoticeSender();
+            this.smsNoticeSender.type = 'tencent';
+            this.smsNoticeSender.tencent = new TencentSmsConfig();
+          }
+        } else {
+          console.warn(message.msg);
+        }
+        senderInit$.unsubscribe();
+      },
+      error => {
+        console.error(error.msg);
+        this.senderServerLoading = false;
+        senderInit$.unsubscribe();
+      }
+    );
+  }
+
+  onConfigSmsServer() {
+    this.isSmsServerModalVisible = true;
+  }
+
+  onCancelSmsServer() {
+    this.isSmsServerModalVisible = false;
+  }
+
+  onSmsTypeChange(value: string) {
+    if (value === 'tencent') {
+      // tencent sms sender
+      this.smsType = 'tencent';
+      this.smsNoticeSender.type = 'tencent';
+    } else if (value === 'alibaba') {
+      // alibaba sms sender
+      this.smsType = 'alibaba';
+      this.smsNoticeSender.type = 'alibaba';
+    }
+  }
+
+  onSaveSmsServer() {
+    if (this.senderForm?.invalid) {
+      Object.values(this.senderForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
+    if (this.smsNoticeSender.type === 'tencent') {
+      this.smsNoticeSender.alibaba = new AlibabaSmsConfig();
+    }
+    if (this.smsNoticeSender.type === 'alibaba') {
+      this.smsNoticeSender.tencent = new TencentSmsConfig();
+    }
+    const modalOk$ = this.noticeSenderSvc
+      .saveGeneralConfig(this.smsNoticeSender, 'sms')
+      .pipe(
+        finalize(() => {
+          modalOk$.unsubscribe();
+          this.senderServerLoading = false;
+        })
+      )
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.isSmsServerModalVisible = false;
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.apply-success'), '');
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), message.msg);
+          }
+        },
+        error => {
+          this.isSmsServerModalVisible = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.apply-fail'), error.msg);
         }
       );

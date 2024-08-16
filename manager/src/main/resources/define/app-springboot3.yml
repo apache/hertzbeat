@@ -80,6 +80,32 @@ params:
     required: true
     # hide-true or false
     hide: true
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: Basic Auth Username
+      en-US: Basic Auth Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: Basic Auth Password
+      en-US: Basic Auth Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
 # collect metrics config list
 metrics:
   # metrics - available
@@ -113,6 +139,12 @@ metrics:
       method: GET
       # enable SSL/TLS, that is, whether it is http or https, the default is false
       ssl: ^_^ssl^_^
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
       parseType: default
 
@@ -133,6 +165,10 @@ metrics:
       url: ^_^base_path^_^/metrics/jvm.threads.states
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
@@ -165,6 +201,10 @@ metrics:
       url: ^_^base_path^_^/metrics/jvm.threads.states?tag=state:^o^state^o^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$'
 
@@ -187,6 +227,10 @@ metrics:
       url: ^_^base_path^_^/metrics/jvm.memory.used
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
@@ -222,6 +266,10 @@ metrics:
       url: ^_^base_path^_^/metrics/jvm.memory.used?tag=id:^o^id^o^
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: jsonPath
       parseScript: '$'
 
@@ -243,4 +291,8 @@ metrics:
       url: ^_^base_path^_^/health
       method: GET
       ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
       parseType: default

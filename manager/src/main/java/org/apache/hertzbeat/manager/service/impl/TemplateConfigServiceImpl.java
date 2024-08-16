@@ -42,7 +42,7 @@ public class TemplateConfigServiceImpl extends AbstractGeneralConfigServiceImpl<
      * @param generalConfigDao configDao object
      * @param objectMapper     JSON tool object
      */
-    protected TemplateConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
+    public TemplateConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
     }
     

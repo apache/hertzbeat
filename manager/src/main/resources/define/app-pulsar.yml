@@ -87,6 +87,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: process_start_time_seconds
+    i18n:
+      zh-CN: 进程启动时间
+      en-US: Process Start Time
     priority: 0
     fields:
       - field: value
@@ -109,6 +112,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: process_open_fds
+    i18n:
+      zh-CN: 打开的文件描述符
+      en-US: Open File Descriptors
     priority: 0
     fields:
       - field: value
@@ -130,6 +136,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: process_max_fds
+    i18n:
+      zh-CN: 最大文件描述符
+      en-US: Max File Descriptors
     priority: 0
     fields:
       - field: value
@@ -151,6 +160,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: jvm_memory_pool_allocated_bytes
+    i18n:
+      zh-CN: JVM 内存池已分配字节
+      en-US: JVM Memory Pool Allocated Bytes
     priority: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -158,14 +170,20 @@ metrics:
       - field: .name
         type: 1
         i18n:
-          zh-CN: 指标名称
-          en-US: Metric Name
+          zh-CN: 名称
+          en-US: Name
         label: true
       - field: pool
         type: 1
         label: true
+        i18n:
+          zh-CN: 池
+          en-US: Pool
       - field: value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -178,15 +196,24 @@ metrics:
       method: GET
       parseType: prometheus
   - name: jvm_memory_pool_bytes_used
+    i18n:
+      zh-CN: JVM 内存池已使用字节
+      en-US: JVM Memory Pool Used Bytes
     priority: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
       - field: pool
         type: 1
+        i18n:
+          zh-CN: 池
+          en-US: Pool
         label: true
       - field: value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -199,15 +226,24 @@ metrics:
       method: GET
       parseType: prometheus
   - name: jvm_memory_pool_bytes_committed
+    i18n:
+      zh-CN: JVM 内存池已提交字节
+      en-US: JVM Memory Pool Committed Bytes
     priority: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
       - field: pool
         type: 1
+        i18n:
+          zh-CN: 池
+          en-US: Pool
         label: true
       - field: value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -220,15 +256,24 @@ metrics:
       method: GET
       parseType: prometheus
   - name: jvm_memory_pool_bytes_max
+    i18n:
+      zh-CN: JVM 内存池最大字节
+      en-US: JVM Memory Pool Max Bytes
     priority: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
       - field: pool
         type: 1
+        i18n:
+          zh-CN: 池
+          en-US: Pool
         label: true
       - field: value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -241,6 +286,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: pulsar_broker_publish_latency
+    i18n:
+      zh-CN: broker 发布延迟
+      en-US: Broker Publish Latency
     priority: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -253,12 +301,21 @@ metrics:
         label: true
       - field: cluster
         type: 1
+        i18n:
+          zh-CN: 集群
+          en-US: Cluster
         label: true
       - field: quantile
         type: 1
+        i18n:
+          zh-CN: 分位数
+          en-US: Quantile
         label: true
       - field: value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
     # the config content when protocol is http
     http:
       # http host: ipv4 ipv6 domain
@@ -271,6 +328,9 @@ metrics:
       method: GET
       parseType: prometheus
   - name: pulsar_metadata_store_ops_latency_ms
+    i18n:
+      zh-CN: 元数据存储操作延迟
+      en-US: Metadata Store Ops Latency
     priority: 0
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
@@ -283,15 +343,27 @@ metrics:
         label: true
       - field: cluster
         type: 1
+        i18n:
+          zh-CN: 集群
+          en-US: Cluster
         label: true
       - field: name
         type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Name
         label: true
       - field: type
         type: 1
+        i18n:
+          zh-CN: 类型
+          en-US: Type
         label: true
       - field: status
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
         label: true
       - field: le
         type: 0

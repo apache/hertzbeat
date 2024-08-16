@@ -17,24 +17,6 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -70,6 +52,26 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 
 /**
  * newBranch feature-clickhouse#179
@@ -652,9 +654,8 @@ class MonitorServiceTest {
 
     @Test
     void getMonitors() {
-        Specification<Monitor> specification = mock(Specification.class);
-        when(monitorDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
-        assertNotNull(monitorService.getMonitors(specification, PageRequest.of(1, 1)));
+        doReturn(Page.empty()).when(monitorDao).findAll(any(Specification.class), any(PageRequest.class));
+        assertNotNull(monitorService.getMonitors(null, null, null, null, null, "gmtCreate", "desc", 1, 1, null));
     }
 
     @Test
@@ -742,7 +743,7 @@ class MonitorServiceTest {
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
 
         List<Param> params = Collections.singletonList(new Param());
-        List<String> metrics = Arrays.asList();
+        List<String> metrics = List.of();
         try {
             monitorService.addNewMonitorOptionalMetrics(metrics, monitor, params);
         } catch (MonitorMetricsException e) {
@@ -750,7 +751,7 @@ class MonitorServiceTest {
         }
         reset();
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
-        metrics = Arrays.asList("metric-001");
+        metrics = List.of("metric-001");
         List<Metrics> metricsDefine = new ArrayList<>();
         Metrics e = new Metrics();
         e.setName("metric-001");

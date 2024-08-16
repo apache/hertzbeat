@@ -43,6 +43,11 @@ public class MongodbProtocol {
     private String port;
 
     /**
+     * Mongodb model
+     */
+    private String model;
+
+    /**
      * Mongodb User name (optional)
      */
     private String username;

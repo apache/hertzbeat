@@ -38,11 +38,11 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @ConditionalOnProperty("common.sms.tencent.app-id")
 final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
-
+    
     private final TencentSmsClient tencentSmsClient;
-
+    
     private final ResourceBundle bundle = ResourceBundleUtil.getBundle("alerter");
-
+    
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         // SMS notification
@@ -60,7 +60,7 @@ final class SmsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
             throw new AlertNoticeException("[Sms Notify Error] " + e.getMessage());
         }
     }
-
+    
     @Override
     public byte type() {
         return 0;

@@ -110,7 +110,7 @@ public class JmxCollectImpl extends AbstractCollect {
                 attributes = Arrays.stream(attrInfos)
                         .filter(item -> item.isReadable() && attributeNameSet.contains(item.getName()))
                         .map(MBeanFeatureInfo::getName)
-                        .collect(Collectors.toList()).toArray(attributes);
+                        .toList().toArray(attributes);
                 AttributeList attributeList = serverConnection.getAttributes(currentObjectName, attributes);
 
                 Map<String, String> attributeValueMap = extractAttributeValue(attributeList);

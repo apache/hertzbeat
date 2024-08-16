@@ -58,7 +58,7 @@ import { CONSTANTS } from '../../shared/constants';
         <header-user></header-user>
       </layout-default-header-item>
       <ng-template #asideUserTpl>
-        <div nz-dropdown nzTrigger="click" class="alain-default__aside-user">
+        <div class="alain-default__aside-user" style="cursor: default;">
           <nz-avatar class="alain-default__aside-user-avatar" [nzSrc]="avatar"></nz-avatar>
           <div class="alain-default__aside-user-info">
             <strong>{{ user.name }}</strong>

@@ -158,8 +158,7 @@ public class RedfishCollectImpl extends AbstractCollect {
         }
         String resourceIdPath = "$.Members[*].['@odata.id']";
         List<Object> resourceIds = JsonPathParser.parseContentWithJsonPath(resp, resourceIdPath);
-        List<String> res = resourceIds.stream().filter(Objects::nonNull).map(String::valueOf).toList();
-        return res;
+        return resourceIds.stream().filter(Objects::nonNull).map(String::valueOf).toList();
     }
 
     private List<String> getCollectionResource(String uri, ConnectSession connectSession) {
