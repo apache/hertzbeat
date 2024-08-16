@@ -18,10 +18,15 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.ListJoin;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -35,6 +40,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.ExportFileConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -47,6 +55,7 @@ import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -71,8 +80,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -88,12 +99,14 @@ import org.springframework.web.multipart.MultipartFile;
 public class MonitorServiceImpl implements MonitorService {
     private static final Long MONITOR_ID_TMP = 1000000000L;
 
-    public static final String HTTP = "http://";
-    
-    public static final String HTTPS = "https://";
-    public static final String BLANK = "";
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
+
+    private static final byte ALL_MONITOR_STATUS = 9;
+
+    private static final int TAG_LENGTH = 2;
+
+    private static final String CONTENT_VALUE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
 
     @Autowired
     private AppService appService;
@@ -161,11 +174,14 @@ public class MonitorServiceImpl implements MonitorService {
         } else {
             collectRep = collectJobScheduling.collectSyncJobData(appDefine);
         }
+        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
         // If the detection result fails, a detection exception is thrown
         if (collectRep == null || collectRep.isEmpty()) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException("Collect Timeout No Response");
         }
         if (collectRep.get(0).getCode() != CollectRep.Code.SUCCESS) {
+            monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
     }
@@ -202,6 +218,10 @@ public class MonitorServiceImpl implements MonitorService {
                 collectJobScheduling.addAsyncCollectJob(appDefine, collector);
 
         try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
+
+        try {
             if (collector != null) {
                 CollectorMonitorBind collectorMonitorBind = CollectorMonitorBind.builder()
                         .collector(collector)
@@ -211,7 +231,6 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -254,11 +273,15 @@ public class MonitorServiceImpl implements MonitorService {
         appDefine.setConfigmap(configmaps);
         // Send the collection task to get the job ID
         long jobId = collectJobScheduling.addAsyncCollectJob(appDefine, null);
+
+        try {
+            detectMonitor(monitor, params, null);
+        } catch (Exception ignored) {}
+
         // Brush the library after the download is successful
         try {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
-            monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
             monitorDao.save(monitor);
             paramDao.saveAll(params);
         } catch (Exception e) {
@@ -281,31 +304,20 @@ public class MonitorServiceImpl implements MonitorService {
             throw new IllegalArgumentException("not support export type: " + type);
         }
         var fileName = imExportService.getFileName();
-        res.setHeader("content-type", "application/octet-stream;charset=UTF-8");
-        res.setContentType("application/octet-stream;charset=UTF-8");
+        res.setHeader(HttpHeaders.CONTENT_DISPOSITION, CONTENT_VALUE);
+        res.setContentType(CONTENT_VALUE);
         res.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        res.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION);
         imExportService.exportConfig(res.getOutputStream(), ids);
     }
 
     @Override
     public void importConfig(MultipartFile file) throws Exception {
-        var fileName = file.getOriginalFilename();
-        if (!StringUtils.hasText(fileName)) {
-            return;
-        }
-        var type = "";
-        if (fileName.toLowerCase().endsWith(JsonImExportServiceImpl.FILE_SUFFIX)) {
-            type = JsonImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(ExcelImExportServiceImpl.FILE_SUFFIX)) {
-            type = ExcelImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(YamlImExportServiceImpl.FILE_SUFFIX)) {
-            type = YamlImExportServiceImpl.TYPE;
-        }
+
+        var fileName = FileUtil.getFileName(file);
+        var type = FileUtil.getFileType(file);
         if (!imExportServiceMap.containsKey(type)) {
-            throw new RuntimeException("file " + fileName + " is not supported.");
+            throw new RuntimeException(ExportFileConstants.FILE + " " + fileName + " is not supported.");
         }
         var imExportService = imExportServiceMap.get(type);
         imExportService.importConfig(file.getInputStream());
@@ -366,7 +378,7 @@ public class MonitorServiceImpl implements MonitorService {
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
-                if (param != null && param.getParamValue() != null && !"".equals(param.getParamValue())) {
+                if (param != null && param.getParamValue() != null && StringUtils.hasText(param.getParamValue())) {
                     switch (paramDefine.getType()) {
                         case "number":
                             double doubleValue;
@@ -401,11 +413,11 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "host":
                             String hostValue = param.getParamValue();
-                            if (hostValue.toLowerCase().contains(HTTP)) {
-                                hostValue = hostValue.replaceAll(PATTERN_HTTP, BLANK);
+                            if (hostValue.toLowerCase().contains(NetworkConstants.HTTP_HEADER)) {
+                                hostValue = hostValue.replaceAll(PATTERN_HTTP, SignConstants.BLANK);
                             }
-                            if (hostValue.toLowerCase().contains(HTTPS)) {
-                                hostValue = hostValue.replace(PATTERN_HTTPS, BLANK);
+                            if (hostValue.toLowerCase().contains(NetworkConstants.HTTPS_HEADER)) {
+                                hostValue = hostValue.replace(PATTERN_HTTPS, SignConstants.BLANK);
                             }
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
@@ -538,6 +550,9 @@ public class MonitorServiceImpl implements MonitorService {
             }
             monitor.setJobId(newJobId);
         }
+        try {
+            detectMonitor(monitor, params, collector);
+        } catch (Exception ignored) {}
         // After the update is successfully released, refresh the database
         try {
             collectorMonitorBindDao.deleteCollectorMonitorBindsByMonitorId(monitorId);
@@ -547,7 +562,6 @@ public class MonitorServiceImpl implements MonitorService {
                         .build();
                 collectorMonitorBindDao.save(collectorMonitorBind);
             }
-            monitor.setStatus(preMonitor.getStatus());
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
             monitorDao.save(monitor);
@@ -630,7 +644,67 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public Page<Monitor> getMonitors(Specification<Monitor> specification, PageRequest pageRequest) {
+    public Page<Monitor> getMonitors(List<Long> monitorIds, String app, String name, String host, Byte status, String sort, String order, int pageIndex, int pageSize, String tag) {
+        Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (monitorIds != null && !monitorIds.isEmpty()) {
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
+                for (long id : monitorIds) {
+                    inPredicate.value(id);
+                }
+                andList.add(inPredicate);
+            }
+            if (StringUtils.hasText(app)) {
+                Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
+                andList.add(predicateApp);
+            }
+            if (status != null && status >= 0 && status < ALL_MONITOR_STATUS) {
+                Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
+                andList.add(predicateStatus);
+            }
+
+            if (StringUtils.hasText(tag)) {
+                String[] tagArr = tag.split(":");
+                String tagName = tagArr[0];
+                ListJoin<Monitor, Tag> tagJoin = root
+                        .join(root.getModel()
+                                .getList("tags", org.apache.hertzbeat.common.entity.manager.Tag.class), JoinType.LEFT);
+                if (tagArr.length == TAG_LENGTH) {
+                    String tagValue = tagArr[1];
+                    andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
+                    andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagValue));
+                } else {
+                    andList.add(criteriaBuilder.equal(tagJoin.get("name"), tag));
+                }
+            }
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+
+            List<Predicate> orList = new ArrayList<>();
+            if (StringUtils.hasText(host)) {
+                Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
+                orList.add(predicateHost);
+            }
+            if (StringUtils.hasText(name)) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
+                orList.add(predicateName);
+            }
+            Predicate[] orPredicates = new Predicate[orList.size()];
+            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
+
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
+                return query.where().getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
+            } else {
+                return query.where(andPredicate, orPredicate).getRestriction();
+            }
+        };
+        // Pagination is a must
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return monitorDao.findAll(specification, pageRequest);
     }
 
@@ -675,7 +749,7 @@ public class MonitorServiceImpl implements MonitorService {
                         new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                         .filter(item -> StringUtils.hasText(item.getDefaultValue()))
-                        .collect(Collectors.toList());
+                        .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                         Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
@@ -686,11 +760,13 @@ public class MonitorServiceImpl implements MonitorService {
                 // Issue collection tasks
                 Optional<CollectorMonitorBind> bindOptional =
                         collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
-                long newJobId = bindOptional.map(bind ->
-                                collectJobScheduling.addAsyncCollectJob(appDefine, bind.getCollector()))
-                        .orElseGet(() -> collectJobScheduling.addAsyncCollectJob(appDefine, null));
+                String collector = bindOptional.map(CollectorMonitorBind::getCollector).orElseGet(() -> null);
+                long newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
                 monitor.setJobId(newJobId);
                 applicationContext.publishEvent(new MonitorDeletedEvent(applicationContext, monitor.getId()));
+                try {
+                    detectMonitor(monitor, params, collector);
+                } catch (Exception ignored) {}
             }
             monitorDao.saveAll(unManagedMonitors);
         }

@@ -25,12 +25,17 @@ export class ObjectStore<T> {
 
 export enum ObjectStoreType {
   /**
-   * 本地文件
+   * Local file
    */
   FILE = 'FILE',
 
   /**
-   * <a href="https://support.huaweicloud.com/obs/index.html">华为云OBS</a>
+   * Local database
+   */
+  DATABASE = 'DATABASE',
+
+  /**
+   * <a href="https://support.huaweicloud.com/obs/index.html">Huawei cloud OBS</a>
    */
   OBS = 'OBS'
 }

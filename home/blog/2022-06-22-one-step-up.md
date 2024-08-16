@@ -35,7 +35,7 @@ Bugfixes:
 
 Online at [https://console.tancloud.cn](https://console.tancloud.cn).
 
------------------------
+---
 Windows Monitor is coming:
 
 ![2022-06-19 11:30:57](https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png)
@@ -54,13 +54,14 @@ ALTER  TABLE param_define RENAME TO hzb_param_define;
 ALTER  TABLE tag RENAME TO hzb_tag;
 ALTER  TABLE tag_monitor_bind RENAME TO hzb_tag_monitor_bind;
 commit;
-``` 
+```
 
 Have Fun!
 
 ---- 
 
 ## V1.1.0
+
 Home: hertzbeat.com | tancloud.cn
 
 Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.      
@@ -75,7 +76,7 @@ Feature：
 2. [[monitor]change default database mysql to h2 #191](https://github.com/apache/hertzbeat/pull/191)
 3. [[manager]support monitor params name i18n #184](https://github.com/apache/hertzbeat/pull/184).
 4. [[script]build multi cpu arch hertzbeat docker version #189](https://github.com/apache/hertzbeat/pull/189).
-5.  [[monitor]feature: support oracle multi tablespaces #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
+5. [[monitor]feature: support oracle multi tablespaces #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
 6. [[monitor]database tables append prefix hzb_ #193](https://github.com/apache/hertzbeat/pull/193) issue from @shimingxy
 
 Bugfix.
@@ -87,11 +88,11 @@ Bugfix.
 
 Online https://console.tancloud.cn.
 
------------------------
+---
+
 Windows Monitor coming：
 
 <img width="1444" alt="2022-06-19 11 30 57" src="https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png"/>
-
 
 ⚠️ ⚠️⚠️⚠️Attention other version upgrade to v1.1.0 need run sql script.  Now the tables name has hzb_ prefix.
 
@@ -107,20 +108,20 @@ ALTER  TABLE param_define RENAME TO hzb_param_define;
 ALTER  TABLE tag RENAME TO hzb_tag;
 ALTER  TABLE tag_monitor_bind RENAME TO hzb_tag_monitor_bind;
 commit;
-``` 
+```
 
 Have Fun!
 
 ---
 
 > [HertzBeat](https://github.com/apache/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source monitoring and alerting project that supports monitoring types such as websites, APIs, PING, ports, databases, operating systems, etc., with a user-friendly and easy-to-use visual interface.  
-> We also offer a [SAAS cloud monitoring version](https://console.tancloud.cn) for small and medium teams and individuals, eliminating the need to deploy a complicated monitoring system to monitor their web resources. [Sign up to start](https://console.tancloud.cn) your monitoring journey for free.  
+> We also offer a [SaaS cloud monitoring version](https://console.tancloud.cn) for small and medium teams and individuals, eliminating the need to deploy a complicated monitoring system to monitor their web resources. [Sign up to start](https://console.tancloud.cn) your monitoring journey for free.  
 > HertzBeat supports custom monitoring; by configuring the YML file, we can customize the required monitoring types and metrics to meet common personalized needs.  
 > HertzBeat is modular, with `manager, collector, scheduler, warehouse, alerter` modules decoupled, making it easy to understand and customize development.  
 > HertzBeat supports more flexible alarm configurations (calculation expressions) and alarm notifications, including alarm templates, emails, DingTalk, WeChat, Feishu, etc., for timely delivery of notifications.  
 > Welcome to log in to HertzBeat's [cloud environment TanCloud](https://console.tancloud.cn) to try and discover more.  
 > We are in rapid iteration and welcome participation in co-building the open-source ecosystem.
-
+>
 > HertzBeat's support for multiple types, easy expansion, and low coupling aims to help developers and small and medium teams quickly build their own monitoring systems.
 
 **Repository Addresses**

@@ -79,5 +79,35 @@
     }
   ],
   "committer" : [
+    {
+      "githubId": "29418975",
+      "gitUrl": "https://github.com/zhangshenghang",
+      "name": "Shenghang Zhang"
+    },
+    {
+      "githubId": "15684156",
+      "gitUrl": "https://github.com/crossoverJie",
+      "name": "crossoverJie"
+    },
+    {
+      "githubId": "30208283",
+      "gitUrl": "https://github.com/LiuTianyou",
+      "name": "LiuTianyou"
+    },
+    {
+      "githubId": "3371163",
+      "gitUrl": "https://github.com/kerwin612",
+      "name": "Kerwin Bryant"
+    },
+    {
+      "githubId": "118667222",
+      "gitUrl": "https://github.com/Yanshuming1",
+      "name": "linDong"
+    },
+    {
+      "githubId": "131688897",
+      "gitUrl": "https://github.com/Calvin979",
+      "name": "Calvin"
+    }
   ]
 }

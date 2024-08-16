@@ -44,6 +44,7 @@ public class FtpCollectImpl extends AbstractCollect {
     /**
      * preCheck params
      */
+    @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException{
         if (metrics == null || metrics.getFtp() == null) {
             throw new IllegalArgumentException("Ftp collect must has ftp params.");

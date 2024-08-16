@@ -23,16 +23,21 @@ import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
@@ -81,6 +86,14 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                 uri = "https://" + httpProtocol.getHost() + ":" + httpProtocol.getPort();
             }
             urlConnection = (HttpsURLConnection) new URL(uri).openConnection();
+
+            boolean verifySsl = Boolean.parseBoolean(httpProtocol.getSsl());
+            // ignore ssl verify
+            if (!verifySsl){
+                SSLContext ignoreSslContext = createIgnoreVerifySslContext();
+                urlConnection.setSSLSocketFactory(ignoreSslContext.getSocketFactory());
+            }
+
             urlConnection.connect();
             Certificate[] certificates = urlConnection.getServerCertificates();
             if (certificates == null || certificates.length == 0) {
@@ -159,5 +172,30 @@ public class SslCertificateCollectImpl extends AbstractCollect {
 
     private void validateParams(Metrics metrics) {
 
+    }
+
+    public SSLContext createIgnoreVerifySslContext() throws NoSuchAlgorithmException, KeyManagementException {
+        SSLContext sc = SSLContext.getInstance("TLS");
+        X509TrustManager trustManager = new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(
+                    java.security.cert.X509Certificate[] paramArrayOfX509Certificate,
+                    String paramString) {
+            }
+
+            @Override
+            public void checkServerTrusted(
+                    java.security.cert.X509Certificate[] paramArrayOfX509Certificate,
+                    String paramString) {
+            }
+
+            @Override
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        };
+
+        sc.init(null, new TrustManager[]{trustManager}, null);
+        return sc;
     }
 }

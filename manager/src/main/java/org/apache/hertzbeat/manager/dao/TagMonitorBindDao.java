@@ -32,11 +32,19 @@ public interface TagMonitorBindDao extends JpaRepository<TagMonitorBind, Long>, 
      * @param monitorId monitorId
      */
     void deleteTagMonitorBindsByMonitorId(Long monitorId);
-    
+
     /**
      * delete tags bind by monitor id
      * @param monitorIds monitor list
      */
     void deleteTagMonitorBindsByMonitorIdIn(Set<Long> monitorIds);
-    
+
+
+    /**
+     * count tags bind relation by tag id
+     * @param tagIds list of tagId
+     * @return count
+     */
+    long countByTagIdIn(Set<Long> tagIds);
+
 }

@@ -20,13 +20,19 @@ package org.apache.hertzbeat.manager.controller;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import com.usthe.sureness.util.JsonWebTokenUtil;
+import java.util.HashMap;
+import java.util.Map;
+import javax.naming.AuthenticationException;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
+import org.apache.hertzbeat.manager.service.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,6 +49,8 @@ class AccountControllerTest {
 
     @InjectMocks
     private AccountController accountController;
+    @Mock
+    private AccountService accountService;
 
     @BeforeEach
     void setUp() {
@@ -59,6 +67,12 @@ class AccountControllerTest {
                 .identifier("admin")
                 .credential("hertzbeat")
                 .build();
+        Map<String, String> resp = new HashMap<>(2);
+        resp.put("token", "token");
+        resp.put("refreshToken", "refreshToken");
+        resp.put("role", "roles");
+        Mockito.when(accountService.authGetToken(loginDto)).thenReturn(resp);
+
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/auth/form")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(loginDto)))
@@ -67,6 +81,7 @@ class AccountControllerTest {
                 .andExpect(jsonPath("$.data.token").exists())
                 .andReturn();
         loginDto.setCredential("wrong_credential");
+        Mockito.when(accountService.authGetToken(loginDto)).thenThrow(new AuthenticationException());
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/auth/form")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(loginDto)))
@@ -76,8 +91,10 @@ class AccountControllerTest {
 
     @Test
     void refreshToken() throws Exception {
+        String refreshToken = "123456";
+        Mockito.when(accountService.refreshToken(refreshToken)).thenThrow(new AuthenticationException());
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/account/auth/refresh/{refreshToken}",
-                        "123456"))
+                        refreshToken))
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_LOGIN_FAILED_CODE))
                 .andReturn();
     }

@@ -36,7 +36,7 @@ import org.springframework.util.StringUtils;
 public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
 
     @Resource
-    private WeWorkAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
+    private WeComAppAlertNotifyHandlerImpl weChatAppAlertNotifyHandler;
 
     @Test
     public void send() {

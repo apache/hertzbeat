@@ -1652,7 +1652,8 @@
       "profile": "https://github.com/gjjjj0101",
       "contributions": [
         "code",
-        "design"
+        "design",
+        "test"
       ]
     },
     {
@@ -1829,7 +1830,7 @@
     },
     {
       "login": "Yanshuming1",
-      "name": "xiaoming student",
+      "name": "linDong",
       "avatar_url": "https://avatars.githubusercontent.com/u/118667222?v=4",
       "profile": "https://github.com/Yanshuming1",
       "contributions": [
@@ -1851,7 +1852,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/119573640?v=4",
       "profile": "https://thespica.github.io/",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -1888,6 +1890,124 @@
       "profile": "https://github.com/xfl12345",
       "contributions": [
         "doc"
+      ]
+    },
+    {
+      "login": "yykaue",
+      "name": "Limbo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22905143?v=4",
+      "profile": "https://github.com/yykaue",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "irenhongyan",
+      "name": "哈哈哈哈哈哈哈哈哈",
+      "avatar_url": "https://avatars.githubusercontent.com/u/53438321?v=4",
+      "profile": "https://github.com/irenhongyan",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ileonli",
+      "name": "Leon Li",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45332412?v=4",
+      "profile": "https://github.com/ileonli",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "killme2008",
+      "name": "dennis zhuang",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14142?v=4",
+      "profile": "http://fnil.net/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "kerwin612",
+      "name": "Kerwin Bryant",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3371163?v=4",
+      "profile": "https://github.com/kerwin612",
+      "contributions": [
+        "code",
+        "design"
+      ]
+    },
+    {
+      "login": "ShineDevelopment",
+      "name": "daixianglong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/59306780?v=4",
+      "profile": "https://github.com/ShineDevelopment",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mchgood",
+      "name": "mchgood",
+      "avatar_url": "https://avatars.githubusercontent.com/u/38482005?v=4",
+      "profile": "https://github.com/mchgood",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "pwallk",
+      "name": "kangli",
+      "avatar_url": "https://avatars.githubusercontent.com/u/69385076?v=4",
+      "profile": "https://github.com/pwallk",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "cdphantom",
+      "name": "cdphantom",
+      "avatar_url": "https://avatars.githubusercontent.com/u/12674795?v=4",
+      "profile": "https://github.com/cdphantom",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "asd108908382",
+      "name": "jiawei.guo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77717999?v=4",
+      "profile": "https://github.com/asd108908382",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "QBH-insist",
+      "name": "QBH-insist",
+      "avatar_url": "https://avatars.githubusercontent.com/u/39401478?v=4",
+      "profile": "https://github.com/QBH-insist",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jiangsh-ui",
+      "name": "jiangsh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/86990361?v=4",
+      "profile": "https://github.com/jiangsh-ui",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "keaifafafa",
+      "name": "Keaifa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/83876361?v=4",
+      "profile": "https://github.com/keaifafafa",
+      "contributions": [
+        "code"
       ]
     }
   ],

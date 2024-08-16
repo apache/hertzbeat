@@ -3,14 +3,17 @@ id: extend-http-default
 title: HTTP协议系统默认解析方式  
 sidebar_label: 系统默认解析方式
 ---
-> HTTP接口调用获取响应数据后，用 Apache HertzBeat (incubating) 默认的解析方式去解析响应数据。    
 
-**此需接口响应数据结构符合HertzBeat指定的数据结构规则**   
+> HTTP接口调用获取响应数据后，用 Apache HertzBeat (incubating) 默认的解析方式去解析响应数据。
 
-### HertzBeat数据格式规范     
-注意⚠️ 响应数据为JSON   
+**此需接口响应数据结构符合HertzBeat指定的数据结构规则**
+
+### HertzBeat数据格式规范
+
+注意⚠️ 响应数据为JSON
 
 单层格式：key-value
+
 ```json
 {
   "metricName1": "metricValue",
@@ -19,7 +22,9 @@ sidebar_label: 系统默认解析方式
   "metricName4": "metricValue"
 }
 ```
+
 多层格式：数组里面套key-value
+
 ```json
 [
   {
@@ -36,9 +41,11 @@ sidebar_label: 系统默认解析方式
   }
 ]
 ```
+
 样例：
 查询自定义系统的CPU信息，其暴露接口为 `/metrics/cpu`，我们需要其中的`hostname,core,useage`指标    
-若只有一台虚拟机，其单层格式为: 
+若只有一台虚拟机，其单层格式为:
+
 ```json
 {
   "hostname": "linux-1",
@@ -48,7 +55,9 @@ sidebar_label: 系统默认解析方式
   "runningTime": 100
 }
 ```
-若有多台虚拟机，其多层格式为: 
+
+若有多台虚拟机，其多层格式为:
+
 ```json
 [
   {
@@ -75,7 +84,7 @@ sidebar_label: 系统默认解析方式
 ]
 ```
 
-**对应的监控模版YML可以配置为如下**  
+**对应的监控模版YML可以配置为如下**
 
 ```yaml
 # 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
@@ -148,3 +157,4 @@ metrics:
       # 这里使用HertzBeat默认解析
       parseType: default
 ```
+

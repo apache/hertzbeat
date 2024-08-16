@@ -8,11 +8,9 @@ Through this tutorial, we describe step by step how to add a monitoring type bas
 
 Before reading this tutorial, we hope that you are familiar with how to customize types, metrics, protocols, etc. from [Custom Monitoring](extend-point) and [http Protocol Customization](extend-http).
 
-
 ### HTTP protocol parses the general response structure to obtain metric data
 
 > In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as metric data.
-
 
 ```
 {
@@ -22,6 +20,7 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
 }
 
 ```
+
 As above, usually our background API interface will design such a general return. The same is true for the background of the hertzbeat system. Today, we will use the hertzbeat API as an example, add a new monitoring type **hertzbeat**, and monitor and collect its system summary statistics API
 `http://localhost:1157/api/summary`, the response data is:
 
@@ -63,50 +62,42 @@ As above, usually our background API interface will design such a general return
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
-
-
+>
 > Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
-
 
 Here we define a custom monitoring type `app` named `hertzbeat` which use the HTTP protocol to collect data.
 
 **Monitoring Templates** -> **Config New Monitoring Template Yml** -> **Save and Apply**
 
-
 ```yaml
-# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: custom
 # The monitoring type eg: linux windows tomcat mysql aws...
 app: hertzbeat
-# The monitoring i18n name
 name:
-  zh-CN: HertzBeat监控系统
-  en-US: HertzBeat Monitor
-# Input params define for monitoring(render web ui by the definition)
+  zh-CN: HertzBeat
+  en-US: HertzBeat
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Hertzbeat 监控系统的通用指标进行测量监控。<br>您可以点击 “<i>新建 HertzBeat监控系统</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors HertzBeat Monitor through general performance metric. You could click the "<i>New HertzBeat Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat對Hertzbeat監控系統的通用名額進行量測監控。<br>您可以點擊“<i>新建HertzBeat監控系統</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hertzbeat
+  en-US: https://hertzbeat.apache.org/docs/help/hertzbeat
 params:
-  # field-param field key
   - field: host
-    # name-param field display i18n name
     name:
-      zh-CN: 主机Host
-      en-US: Host
-    # type-param field type(most mapping the html input type)
+      zh-CN: 目标Host
+      en-US: Target Host
     type: host
-    # required-true or false
     required: true
-  # field-param field key
   - field: port
-    # name-param field display i18n name
     name:
       zh-CN: 端口
       en-US: Port
-    # type-param field type(most mapping the html input type)
     type: number
-    # when type is number, range is required
     range: '[0,65535]'
-    # required-true or false
     required: true
-    # default value
     defaultValue: 1157
   - field: ssl
     name:
@@ -157,7 +148,7 @@ metrics:
     priority: 0
     # collect metrics content
     fields:
-      # metrics content contains field-metric name, type-metric type:0-number,1-string, label-if is metrics label, unit-metric unit('%','ms','MB')
+      # metrics content contains field-metric name, type-metric type:0-number,1-string, instance-if is metrics, unit-metric unit('%','ms','MB')
       - field: app
         type: 1
         label: true
@@ -173,7 +164,7 @@ metrics:
     protocol: http
     # the config content when protocol is http
     http:
-      # http host: ipv4 ipv6 domain
+      # host: ipv4 ipv6 domain
       host: ^_^host^_^
       # http port
       port: ^_^port^_^
@@ -200,31 +191,23 @@ metrics:
 
 **The addition is complete, now we save and apply. We can see that the system page has added a `hertzbeat` monitoring type. **
 
-
 ![](/img/docs/advanced/extend-http-example-1.png)
-
 
 ### The system page adds the monitoring of `hertzbeat` monitoring type
 
 > We click Add `HertzBeat Monitoring Tool`, configure monitoring IP, port, collection cycle, account password in advanced settings, etc., click OK to add monitoring.
 
-
 ![](/img/docs/advanced/extend-http-example-2.png)
-
 
 ![](/img/docs/advanced/extend-http-example-3.png)
 
 > After a certain period of time (depending on the collection cycle), we can see the specific metric data and historical charts in the monitoring details!
 
-
 ![](/img/docs/advanced/extend-http-example-4.png)
-
-
 
 ### Set threshold alarm notification
 
 > Next, we can set the threshold normally. After the alarm is triggered, we can view it in the alarm center, add recipients, set alarm notifications, etc. Have Fun!!!
-
 
 ----
 
@@ -232,6 +215,6 @@ metrics:
 
 This is the end of the practice of custom monitoring of the HTTP protocol. The HTTP protocol also has other parameters such as headers and params. We can define it like postman, and the playability is also very high!
 
-If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.  
+If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.
 
 **github: https://github.com/apache/hertzbeat**

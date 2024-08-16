@@ -21,13 +21,14 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
@@ -173,11 +174,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                     } else {
                         String oid = oidsMap.get(alias);
                         String value = oidsValueMap.get(oid);
-                        if (value != null) {
-                            valueRowBuilder.addColumns(value);
-                        } else {
-                            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                        }
+                        valueRowBuilder.addColumns(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
                     }
                 }
                 builder.addValues(valueRowBuilder.build());
@@ -227,11 +224,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                                     }
                                 }
                             }
-                            if (value != null) {
-                                valueRowBuilder.addColumns(value);
-                            } else {
-                                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                            }
+                            valueRowBuilder.addColumns(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
                         }
                     }
                     builder.addValues(valueRowBuilder.build());

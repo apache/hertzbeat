@@ -30,3 +30,6 @@
 # UPDATE hzb_status_page_history SET unknowing = `unknown` WHERE `unknown` IS NOT NULL AND unknowing IS NULL;
 # ALTER TABLE hzb_status_page_history DROP COLUMN `unknown`;
 # commit;
+#
+# ALTER TABLE `hertzbeat`.`hzb_notice_rule` MODIFY COLUMN `receiver_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL AFTER `receiver_id`;
+# commit;

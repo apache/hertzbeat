@@ -25,9 +25,9 @@ export class NoticeRule {
   templateId!: number | null;
   templateName!: string | null;
   enable: boolean = true;
-  // 是否转发所有
+  // forward all or not
   filterAll: boolean = true;
-  // 告警级别过滤
+  // filter alert level
   priorities!: number[];
   tags!: TagItem[];
   days!: number[];

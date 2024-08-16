@@ -4,7 +4,7 @@
     "description": "The label for version current"
   },
   "sidebar.docs.category.quickstart": {
-    "message": "快速入门",
+    "message": "快速开始",
     "description": "The label for category quickstart in sidebar docs"
   },
   "sidebar.docs.category.custom": {
@@ -22,6 +22,10 @@
   "sidebar.docs.category.ssh": {
     "message": "SSH协议",
     "description": "The label for category ssh in sidebar docs"
+  },
+  "sidebar.docs.category.telnet": {
+    "message": "TELNET协议",
+    "description": "The label for category telnet in sidebar docs"
   },
   "sidebar.docs.category.help": {
     "message": "帮助文档",
@@ -122,5 +126,29 @@
   "sidebar.docs.category.llm": {
     "message": "Ai大模型监控",
     "description": "The label for category llm in sidebar docs"
+  },
+  "sidebar.docs.category.aiConfig": {
+    "message": "Ai大模型配置",
+    "description": "The label for category aiConfig in sidebar docs"
+  },
+  "sidebar.docs.category.install": {
+    "message": "安装",
+    "description": "The label for category install in sidebar docs"
+  },
+  "sidebar.docs.category.upgrade": {
+    "message": "升级",
+    "description": "The label for category upgrade in sidebar docs"
+  },
+  "sidebar.docs.category.setting": {
+    "message": "配置",
+    "description": "The label for category setting in sidebar docs"
+  },
+  "sidebar.docs.category.change-db": {
+    "message": "数据库切换",
+    "description": "The label for category change-db in sidebar docs"
+  },
+  "sidebar.docs.category.use-case": {
+    "message": "使用案例",
+    "description": "The label for category use-case in sidebar docs"
   }
 }

@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.component.alerter.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.util.StrUtil;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -46,28 +48,50 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, Alert alert) {
         try {
             FlyBookWebHookDto flyBookWebHookDto = new FlyBookWebHookDto();
-            Content content = new Content();
-            Post post = new Post();
-            ZhCn zhCn = new ZhCn();
-            content.setPost(post);
-            post.setZhCn(zhCn);
             flyBookWebHookDto.setMsgType("post");
-            List<List<FlyBookContent>> contents = new ArrayList<>();
-            List<FlyBookContent> contents1 = new ArrayList<>();
-            FlyBookContent flyBookContent = new FlyBookContent();
-            flyBookContent.setTag("text");
-            flyBookContent.setText(renderContent(noticeTemplate, alert));
-            contents1.add(flyBookContent);
-            FlyBookContent bookContent = new FlyBookContent();
-            bookContent.setTag("a");
-            bookContent.setText(bundle.getString("alerter.notify.console"));
-            bookContent.setHref(alerterProperties.getConsoleUrl());
-            contents1.add(bookContent);
-            contents.add(contents1);
-            zhCn.setTitle("[" + bundle.getString("alerter.notify.title") + "]");
-            zhCn.setContent(contents);
+
+            Content content = new Content();
             flyBookWebHookDto.setContent(content);
-            String webHookUrl = alerterProperties.getFlyBookWebhookUrl() + receiver.getWechatId();
+
+            Post post = new Post();
+            content.setPost(post);
+
+            ZhCn zhCn = new ZhCn();
+            post.setZhCn(zhCn);
+
+            zhCn.setTitle("[" + bundle.getString("alerter.notify.title") + "]");
+
+            List<FlyBookContent> contentList = new ArrayList<>();
+
+            FlyBookContent textContent = new FlyBookContent();
+            textContent.setTag("text");
+            textContent.setText(renderContent(noticeTemplate, alert));
+            contentList.add(textContent);
+
+            FlyBookContent linkContent = new FlyBookContent();
+            linkContent.setTag("a");
+            linkContent.setText(bundle.getString("alerter.notify.console"));
+            linkContent.setHref(alerterProperties.getConsoleUrl());
+            contentList.add(linkContent);
+
+            String userId = receiver.getUserId();
+            List<String> userIdList = StrUtil.analysisArgToList(userId);
+            if (userIdList != null && !userIdList.isEmpty()) {
+                List<FlyBookContent> atContents = userIdList.stream()
+                        .map(userID -> {
+                            FlyBookContent atContent = new FlyBookContent();
+                            atContent.setTag("at");
+                            atContent.setUserId(userID);
+                            return atContent;
+                        })
+                        .toList();
+                contentList.addAll(atContents);
+            }
+
+            List<List<FlyBookContent>> contents = Collections.singletonList(contentList);
+            zhCn.setContent(contents);
+
+            String webHookUrl = alerterProperties.getFlyBookWebhookUrl() + receiver.getAccessToken();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<FlyBookWebHookDto> flyEntity = new HttpEntity<>(flyBookWebHookDto, headers);
@@ -90,6 +114,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
         }
     }
 
+
     @Override
     public byte type() {
         return 6;
@@ -97,13 +122,15 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
 
     @Data
     private static class FlyBookWebHookDto {
-        private static final String MARKDOWN = "post";
+
+        private static final String DEFAULT_MSG_TYPE = "post";
 
         /**
          * Message type
          */
         @JsonProperty("msg_type")
-        private String msgType = MARKDOWN;
+        private String msgType = DEFAULT_MSG_TYPE;
+
 
         private Content content;
 

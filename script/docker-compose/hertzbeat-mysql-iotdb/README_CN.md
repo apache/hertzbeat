@@ -17,10 +17,13 @@
 ##### docker compose部署hertzbeat及其依赖服务     
 
 1. 下载hertzbeat-docker-compose安装部署脚本文件  
-   脚本文件位于代码仓库下`script/docker-compose/hertzbeat-mysql-iotdb` 链接 [script/docker-compose](https://github.com/hertzbeat/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-iotdb)   
+   脚本文件位于代码仓库下`script/docker-compose/hertzbeat-mysql-iotdb` 链接 [script/docker-compose](https://github.com/hertzbeat/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-iotdb)
 
+2. 添加 MYSQL jdbc 驱动 jar
+   下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
+   将此 jar 包拷贝放入 ext-lib 目录下.
 
-2. 进入部署脚本 docker-compose 目录, 执行  
+3. 进入部署脚本 docker-compose 目录, 执行  
 
    `docker compose up -d`
 

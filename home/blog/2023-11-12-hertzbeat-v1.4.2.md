@@ -20,8 +20,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 * High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
 * Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 
-
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.      
+> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
@@ -31,13 +30,11 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ### HertzBeat's 1.4.2 version release!
 
-
 - support custom notice template
 - support push metrics monitoring(beta)
 - support using Huawei Cloud OBS to store monitoring templates yml
 - support emqx monitoring and udp port monitoring
 - more features , fix multiple bugs and so on
-
 
 ### Install quickly via docker
 
@@ -56,15 +53,14 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
+
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
 - `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
 - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
 
-
-----
-
+---
 ### What's Changed
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
@@ -114,13 +110,14 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * build hertzbeat package with jdk runtime by @tomsun28 in https://github.com/apache/hertzbeat/pull/1328
 
 ## New Contributors
+
 * @rbsrcy made their first contribution in https://github.com/apache/hertzbeat/pull/1268
 * @XiaTian688 made their first contribution in https://github.com/apache/hertzbeat/pull/1308
 * @liyin made their first contribution in https://github.com/apache/hertzbeat/pull/1311
 
 **Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.4.1...v1.4.2
 
-----
+---
 
 ## ⛄ Supported
 
@@ -136,7 +133,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 ----
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### **Download Link**
 
@@ -159,3 +156,4 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 - ⬇️ [hertzbeat-collector-macos_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_arm64_1.4.2.tar.gz)
 - ⬇️ [hertzbeat-collector-macos_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_amd64_1.4.2.tar.gz)
 - ⬇️ [hertzbeat-collector-windows64_1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-windows64_1.4.2.zip)
+

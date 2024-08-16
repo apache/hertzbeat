@@ -106,15 +106,7 @@ public final class AesUtil {
      */
     public static String aesDecode(String content, String decryptKey) {
         try {
-            SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
-            // cipher based on the algorithm AES
-            Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-            // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
-            cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(decryptKey.getBytes(StandardCharsets.UTF_8)));
-            // base64 decode content
-            byte[] bytesContent = Base64.getDecoder().decode(content);
-            // decode content to byte array
-            byte[] byteDecode = cipher.doFinal(bytesContent);
+            byte[] byteDecode = getBytes(content, decryptKey);
             return new String(byteDecode, StandardCharsets.UTF_8);
         } catch (BadPaddingException e) {
             if (!ENCODE_RULES.equals(decryptKey)) {
@@ -134,7 +126,19 @@ public final class AesUtil {
         }
         return content;
     }
-
+    
+    private static byte[] getBytes(final String content, final String decryptKey) throws Exception {
+        SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
+        // cipher based on the algorithm AES
+        Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
+        // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(decryptKey.getBytes(StandardCharsets.UTF_8)));
+        // base64 decode content
+        byte[] bytesContent = Base64.getDecoder().decode(content);
+        // decode content to byte array
+        return cipher.doFinal(bytesContent);
+    }
+    
     /**
      * Determine whether it is encrypted
      * @param text text
@@ -145,11 +149,7 @@ public final class AesUtil {
         if (Base64Util.isBase64(text)) {
             // if it is base64, decrypt directly to determine
             try {
-                SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
-                Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-                cipher.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(decryptKey.getBytes(StandardCharsets.UTF_8)));
-                byte[] bytesContent = Base64.getDecoder().decode(text);
-                byte[] byteDecode = cipher.doFinal(bytesContent);
+                byte[] byteDecode = getBytes(text, decryptKey);
                 return byteDecode != null;
             } catch (Exception e) {
                 log.warn("isCiphertext method error: {}", e.getMessage());
