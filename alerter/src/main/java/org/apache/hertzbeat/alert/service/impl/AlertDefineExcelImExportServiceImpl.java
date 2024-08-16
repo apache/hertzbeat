@@ -98,17 +98,6 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         }
     }
 
-    private TagItem extractTagDataFromRow(Row row) {
-        String name = getCellValueAsString(row.getCell(7));
-        if (StringUtils.hasText(name)) {
-            TagItem tagItem = new TagItem();
-            tagItem.setName(name);
-            tagItem.setValue(getCellValueAsString(row.getCell(8)));
-            return tagItem;
-        }
-        return null;
-    }
-
     private List<TagItem> extractTagDataFromRow(Cell cell) {
         String jsonStr = getCellValueAsString(cell);
         if (StringUtils.hasText(jsonStr)) {
