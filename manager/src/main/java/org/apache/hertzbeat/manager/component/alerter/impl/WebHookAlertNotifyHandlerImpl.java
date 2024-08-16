@@ -47,6 +47,7 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
 
             // fix null pointer exception
             filterInvalidTags(alert);
+            alert.setContent(escapeJsonStr(alert.getContent()));
             String webhookJson = renderContent(noticeTemplate, alert);
             webhookJson = webhookJson.replace(",\n  }", "\n }");
 
