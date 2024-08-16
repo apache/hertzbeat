@@ -49,6 +49,4 @@ public class AiProperties {
      */
     private String apiSecret;
 
-
-
 }
