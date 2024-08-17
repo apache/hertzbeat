@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.manager.config;
 
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
@@ -26,11 +24,15 @@ import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.core5.util.Timeout;
+import org.apache.hertzbeat.common.constants.NetworkConstants.HttpClientConstants;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 /**
  * restTemplate config
@@ -50,19 +52,19 @@ public class RestTemplateConfig {
     public ClientHttpRequestFactory httpComponentsClientHttpRequestFactory() {
         ConnectionConfig connectionConfig = ConnectionConfig
                 .custom()
-                .setConnectTimeout(Timeout.of(15, TimeUnit.SECONDS))
-                .setSocketTimeout(Timeout.of(20, TimeUnit.SECONDS))
-                .setValidateAfterInactivity(Timeout.of(20, TimeUnit.SECONDS))
+                .setConnectTimeout(Timeout.of(HttpClientConstants.CONNECT_TIME_OUT, TimeUnit.SECONDS))
+                .setSocketTimeout(Timeout.of(HttpClientConstants.SOCKET_TIME_OUT, TimeUnit.SECONDS))
+                .setValidateAfterInactivity(Timeout.of(HttpClientConstants.MAX_IDLE_CONNECTIONS, TimeUnit.SECONDS))
                 .build();
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(15, TimeUnit.SECONDS)
-                .setResponseTimeout(20, TimeUnit.SECONDS)
+                .setConnectionRequestTimeout(HttpClientConstants.CONNECT_TIME_OUT, TimeUnit.SECONDS)
+                .setResponseTimeout(HttpClientConstants.SOCKET_TIME_OUT, TimeUnit.SECONDS)
                 .build();
         HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder
                 .create()
                 .setDefaultConnectionConfig(connectionConfig)
-                .setMaxConnTotal(200)
-                .setMaxConnPerRoute(20)
+                .setMaxConnTotal(HttpClientConstants.HTTP_CLIENT_MAX_CONNECT_TOTAL)
+                .setMaxConnPerRoute(HttpClientConstants.HTTP_CLIENT_MAX_CONNECT_PRE_ROUTE)
                 .build();
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setConnectionManager(connectionManager)

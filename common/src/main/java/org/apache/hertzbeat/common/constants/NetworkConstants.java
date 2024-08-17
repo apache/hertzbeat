@@ -54,7 +54,8 @@ public interface NetworkConstants {
 
         int READ_TIME_OUT = 6 * 1000;
         int WRITE_TIME_OUT = 6 * 1000;
-        int CONNECT_TIME_OUT = 6 * 1000;
+        int CONNECT_TIME_OUT = 15;
+        int SOCKET_TIME_OUT = 20;
         int CHUNK_SIZE = 8196;
         int MAX_IDLE_CONNECTIONS = 20;
         int KEEP_ALIVE_TIMEOUT = 30 * 1000;
@@ -63,6 +64,8 @@ public interface NetworkConstants {
         int HTTPCLIENT_KEEP_ALIVE_DURATION = 30 * 1000;
         int HTTP_CLIENT_CONNECTION_MANAGER_CLOSE_WAIT_TIME_MS = 1000;
         int HTTP_CLIENT_CONNECTION_MANAGER_CLOSE_IDLE_TIME_S = 30;
+        int HTTP_CLIENT_MAX_CONNECT_TOTAL = 200;
+        int HTTP_CLIENT_MAX_CONNECT_PRE_ROUTE = 200;
     }
 
 }
