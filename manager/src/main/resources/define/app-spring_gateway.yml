@@ -117,7 +117,7 @@ metrics:
     priority: 0
     # collect metrics content
     fields:
-      # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
+      # field-metric name, type-metric type(0-number,1-string), label-is label primary key, unit-metric unit
       - field: responseTime
         type: 0
         unit: ms
@@ -262,7 +262,7 @@ metrics:
         i18n:
           zh-CN: 状态
           en-US: State
-        instance: true
+        label: true
       - field: size
         type: 0
         i18n:
@@ -324,7 +324,7 @@ metrics:
         i18n:
           zh-CN: 空间
           en-US: Space
-        instance: true
+        label: true
       - field: mem_used
         type: 0
         i18n:
@@ -413,7 +413,7 @@ metrics:
         i18n:
           zh-CN: 路由 ID
           en-US: Route ID
-        instance: true
+        label: true
       - field: predicate
         type: 1
         i18n:
