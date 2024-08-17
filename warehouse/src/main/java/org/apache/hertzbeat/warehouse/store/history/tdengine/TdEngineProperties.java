@@ -37,7 +37,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 		+ SignConstants.DOT
 		+ WarehouseConstants.STORE
 		+ SignConstants.DOT
-		+ WarehouseConstants.HistoryName.TDENDINE)
+		+ WarehouseConstants.HistoryName.TD_ENGINE)
 public record TdEngineProperties(@DefaultValue("false") boolean enabled,
                                  @DefaultValue("jdbc:TAOS-RS://localhost:6041/demo") String url,
                                  @DefaultValue("com.taosdata.jdbc.rs.RestfulDriver") String driverClassName,

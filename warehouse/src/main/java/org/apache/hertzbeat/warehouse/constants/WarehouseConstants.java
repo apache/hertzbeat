@@ -35,13 +35,13 @@ public interface WarehouseConstants {
 
         String INFLUXDB = "influxdb";
 
-        String IOTDB = "iotdb";
+        String IOT_DB = "iot-db";
 
         String JPA = "jpa";
 
-        String TDENDINE = "tdengine";
+        String TD_ENGINE = "td-engine";
 
-        String VM = "vm";
+        String VM = "victoria-metrics";
 
         String VM_CLUSTER = "victoria-metrics.cluster";
     }

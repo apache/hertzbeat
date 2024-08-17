@@ -24,7 +24,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
- * Victoriametrics configuration information
+ * Victoria metrics configuration information.
  */
 
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE

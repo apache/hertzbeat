@@ -40,7 +40,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 		+ SignConstants.DOT
 		+ WarehouseConstants.STORE
 		+ SignConstants.DOT
-		+ WarehouseConstants.HistoryName.IOTDB)
+		+ WarehouseConstants.HistoryName.IOT_DB)
 public record IotDbProperties(@DefaultValue("false") boolean enabled,
                               @DefaultValue("127.0.0.1") String host,
                               @DefaultValue("6667") Integer rpcPort,

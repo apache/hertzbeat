@@ -27,7 +27,7 @@ public interface ConfigConstants {
      * Package name constant.
      */
     interface PkgConstant {
-        String PKG = "org.apache.hertzbeat.";
+        String PKG = "org.apache.hertzbeat";
     }
 
     /**
