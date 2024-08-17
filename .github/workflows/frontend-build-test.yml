@@ -34,7 +34,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # 4.1.7
     - name: Yarn Install
       working-directory: web-app
       run: yarn
