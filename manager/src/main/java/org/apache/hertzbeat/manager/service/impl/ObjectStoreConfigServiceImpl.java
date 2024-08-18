@@ -23,6 +23,7 @@ import com.obs.services.ObsClient;
 import java.lang.reflect.Type;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
@@ -63,7 +64,7 @@ public class ObjectStoreConfigServiceImpl extends
 
     @Override
     public String type() {
-        return "oss";
+        return GeneralConfigTypeEnum.oss.name();
     }
 
     @Override
