@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service.impl;
+package org.apache.hertzbeat.manager.service.ai.factory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import org.apache.hertzbeat.common.constants.AiTypeEnum;
-import org.apache.hertzbeat.manager.service.AiService;
+import org.apache.hertzbeat.manager.service.ai.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;

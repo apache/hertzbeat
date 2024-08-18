@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service.impl;
+package org.apache.hertzbeat.manager.service.ai;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +27,6 @@ import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.AliAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.AliAiResponse;
-import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
@@ -77,46 +76,39 @@ public class AlibabaAiServiceImpl implements AiService {
     @Override
     public Flux<ServerSentEvent<String>> requestAi(String text) {
         checkParam(text, aiProperties.getModel(), aiProperties.getApiKey());
-        try {
-            AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
-                    .model(aiProperties.getModel())
-                    .input(AliAiRequestParamDTO.Input.builder()
-                            .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
-                            .build())
-                    .parameters(AliAiRequestParamDTO.Parameters.builder()
-                            .maxTokens(AiConstants.AliAiConstants.MAX_TOKENS)
-                            .temperature(AiConstants.AliAiConstants.TEMPERATURE)
-                            .enableSearch(true)
-                            .resultFormat("message")
-                            .incrementalOutput(true)
-                            .build())
-                    .build();
+        AliAiRequestParamDTO aliAiRequestParamDTO = AliAiRequestParamDTO.builder()
+                .model(aiProperties.getModel())
+                .input(AliAiRequestParamDTO.Input.builder()
+                        .messages(List.of(new AiMessage(AiConstants.AliAiConstants.REQUEST_ROLE, text)))
+                        .build())
+                .parameters(AliAiRequestParamDTO.Parameters.builder()
+                        .maxTokens(AiConstants.AliAiConstants.MAX_TOKENS)
+                        .temperature(AiConstants.AliAiConstants.TEMPERATURE)
+                        .enableSearch(true)
+                        .resultFormat("message")
+                        .incrementalOutput(true)
+                        .build())
+                .build();
 
 
-            return webClient.post()
-                    .body(BodyInserters.fromValue(aliAiRequestParamDTO))
-                    .retrieve()
-                    .bodyToFlux(AliAiResponse.class)
-                    .map(aliAiResponse -> {
-                        if (Objects.nonNull(aliAiResponse)) {
-                            List<AliAiResponse.Choice> choices = aliAiResponse.getOutput().getChoices();
-                            if (CollectionUtils.isEmpty(choices)) {
-                                return ServerSentEvent.<String>builder().build();
-                            }
-                            String content = choices.get(0).getMessage().getContent();
-                            return ServerSentEvent.<String>builder()
-                                    .data(content)
-                                    .build();
+        return webClient.post()
+                .body(BodyInserters.fromValue(aliAiRequestParamDTO))
+                .retrieve()
+                .bodyToFlux(AliAiResponse.class)
+                .map(aliAiResponse -> {
+                    if (Objects.nonNull(aliAiResponse)) {
+                        List<AliAiResponse.Choice> choices = aliAiResponse.getOutput().getChoices();
+                        if (CollectionUtils.isEmpty(choices)) {
+                            return ServerSentEvent.<String>builder().build();
                         }
-                        return ServerSentEvent.<String>builder().build();
-                    })
-                    .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
-
-        } catch (Exception e) {
-            log.info("KimiAiServiceImpl.requestAi exception:{}", e.toString());
-            throw e;
-        }
-
+                        String content = choices.get(0).getMessage().getContent();
+                        return ServerSentEvent.<String>builder()
+                                .data(content)
+                                .build();
+                    }
+                    return ServerSentEvent.<String>builder().build();
+                })
+                .doOnError(error -> log.info("AlibabaAiServiceImpl.requestAi exception:{}", error.getMessage()));
     }
 
 

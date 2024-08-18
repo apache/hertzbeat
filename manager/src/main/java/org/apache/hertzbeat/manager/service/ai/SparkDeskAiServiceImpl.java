@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service.impl;
+package org.apache.hertzbeat.manager.service.ai;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -26,7 +26,6 @@ import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
-import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
@@ -78,33 +77,29 @@ public class SparkDeskAiServiceImpl implements AiService {
 
     @Override
     public Flux<ServerSentEvent<String>> requestAi(String text) {
+        checkParam(text, aiProperties.getApiKey(), aiProperties.getModel());
+        OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
+                .model(aiProperties.getModel())
+                //sse
+                .stream(Boolean.TRUE)
+                .maxTokens(AiConstants.SparkDeskConstants.MAX_TOKENS)
+                .temperature(AiConstants.SparkDeskConstants.TEMPERATURE)
+                .messages(List.of(new AiMessage(AiConstants.SparkDeskConstants.REQUEST_ROLE, text)))
+                .build();
 
-        try {
-            checkParam(text, aiProperties.getApiKey(), aiProperties.getModel());
-            OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
-                    .model(aiProperties.getModel())
-                    //sse
-                    .stream(Boolean.TRUE)
-                    .maxTokens(AiConstants.SparkDeskConstants.MAX_TOKENS)
-                    .temperature(AiConstants.SparkDeskConstants.TEMPERATURE)
-                    .messages(List.of(new AiMessage(AiConstants.SparkDeskConstants.REQUEST_ROLE, text)))
-                    .build();
+        return webClient.post()
+                .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
+                .retrieve()
+                .bodyToFlux(String.class)
+                .filter(aiResponse -> !"[DONE]".equals(aiResponse))
+                .map(OpenAiResponse::convertToResponse)
+                .doOnError(error -> log.info("SparkDeskAiServiceImpl.requestAi exception:{}", error.getMessage()));
 
-            return webClient.post()
-                    .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
-                    .retrieve()
-                    .bodyToFlux(String.class)
-                    .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                    .map(OpenAiResponse::convertToResponse);
-        } catch (Exception e) {
-            log.info("SparkDeskAiServiceImpl.requestAi exception:{}", e.toString());
-            throw e;
-        }
     }
 
     private void checkParam(String param, String apiKey, String model) {
         Assert.notNull(param, "text is null");
-        Assert.notNull(param, "model is null");
+        Assert.notNull(model, "model is null");
         Assert.notNull(apiKey, "ai.api-key is null");
     }
 }
