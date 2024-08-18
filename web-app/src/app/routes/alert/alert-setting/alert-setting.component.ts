@@ -164,7 +164,7 @@ export class AlertSettingComponent implements OnInit {
   onNewAlertDefine() {
     this.define = new AlertDefine();
     this.define.tags = [];
-    this.resetQbData({ condition: 'and', rules: [] });
+    this.resetQbDataDefault();
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -593,6 +593,7 @@ export class AlertSettingComponent implements OnInit {
   };
 
   cascadeOnChange(values: string[]): void {
+    this.resetQbDataDefault();
     if (values == null || values.length != 3) {
       return;
     }
@@ -645,7 +646,7 @@ export class AlertSettingComponent implements OnInit {
     } catch (e) {
       console.error(e);
       this.isExpr = true;
-      this.resetQbData({ condition: 'and', rules: [] });
+      this.resetQbDataDefault();
       return;
     }
   }
@@ -653,7 +654,7 @@ export class AlertSettingComponent implements OnInit {
   onManageModalCancel() {
     this.cascadeValues = [];
     this.isExpr = false;
-    this.resetQbData({ condition: 'and', rules: [] });
+    this.resetQbDataDefault();
     this.isManageModalVisible = false;
   }
 
@@ -661,10 +662,14 @@ export class AlertSettingComponent implements OnInit {
     this.qbFormCtrl.reset((this.qbData = qbData));
   }
 
+  resetQbDataDefault() {
+    this.resetQbData({ condition: 'and', rules: [] });
+  }
+
   resetManageModalData() {
     this.cascadeValues = [];
     this.isExpr = false;
-    this.resetQbData({ condition: 'and', rules: [] });
+    this.resetQbDataDefault();
     this.isManageModalVisible = false;
   }
 
