@@ -1,17 +1,11 @@
 ---
 title: 成为 Apache Committer, 对我参与开源的肯定
-date: 2024-08-17 16:21:54
-# 文章首页封面图
-index_img: /img/blog/committer/yuluo-yx/1.jpg
-# 文章页顶部大图
-banner_img: /img/blog/committer/yuluo-yx/2.png
-tags:
-- Open Source
-- ASF
-- Apache Committer
-categories:
-- Aapche
-- Open Source
+author: yuluo-yx
+author_title: Shown Ji
+author_url: https://github.com/yuluo-yx
+author_image_url: https://avatars.githubusercontent.com/u/77964041
+tags: [opensource, practice]
+keywords: [open source monitoring system, alerting system, Apache, Apache Committer, Hertzbeat]
 ---
 
 ## 我的开源历程
