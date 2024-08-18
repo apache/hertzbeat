@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemSecret;
 import org.apache.hertzbeat.manager.service.impl.SystemSecretServiceImpl;
@@ -54,7 +55,7 @@ class SystemSecretServiceTest {
 	@Test
 	void testType() {
 
-		assertEquals("secret", systemSecretService.type());
+		assertEquals(GeneralConfigTypeEnum.secret.name(), systemSecretService.type());
 	}
 
 	@Test
