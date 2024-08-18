@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.push.config;
 
 import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
@@ -27,6 +29,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 @AutoConfiguration
 @ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
+		+ SignConstants.DOT
 		+ ConfigConstants.FunctionModuleConstants.PUSH)
 public class PushAutoConfiguration {
 }
