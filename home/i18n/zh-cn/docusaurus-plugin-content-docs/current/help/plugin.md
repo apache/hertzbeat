@@ -21,7 +21,7 @@ sidebar_label: 自定义插件
 3. 在 `META-INF/services/org.apache.hertzbeat.plugin.Plugin` 文件中增加接口实现类的全限定名，每个实现类全限定名单独成行。
 4. 打包`hertzbeat-plugin`模块。
     ![plugin-3.png](/img/docs/help/plugin-3.png)
-5. 将打包后的`jar`包，通过 `插件管理`-`上传插件`功能上传到`HertzBeat` 中并启用该插件即可实现自定义告警后处理策略。
+5. 将打包后的`jar`包，通过 `插件管理`-`上传插件`功能将名称以 `-jar-with-lib.jar` 结尾的 jar 包上传到`HertzBeat` 中并启用该插件即可实现自定义告警后处理策略。
     ![plugin-5.jpg](/img/docs/help/plugin-5.jpg)
 
 ### 使用建议
