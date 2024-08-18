@@ -15,25 +15,41 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.config;
+package org.apache.hertzbeat.collector.collect.jmx;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.constants.BlackListConstants;
 
+/**
+ * custom class loader config for JMX
+ */
 @Slf4j
-public class ClassLoaderConfig extends ClassLoader {
+public class JmxClassLoaderConfig extends ClassLoader {
 
-    public ClassLoaderConfig(ClassLoader parent) {
+    private static final String[] WHITE_PRE_LIST = new String[]{
+            "java.",
+            "javax.management.",
+            "org.apache.hertzbeat.",
+            "org.springframework.util.",
+            "com.sun.",
+            "sun.",
+            "org.slf4j.",
+            "jdk.",
+            "org.w3c.dom."
+    };
+    
+    public JmxClassLoaderConfig(ClassLoader parent) {
         super(parent);
     }
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if (BlackListConstants.MEMORY_USER_DATABASE_FACTORY.equals(name)) {
-            log.error("Forbidden class: {}", name);
-            throw new ClassNotFoundException("Forbidden class: " + name);
+        for (String whitePre : WHITE_PRE_LIST) {
+            if (name.startsWith(whitePre)) {
+                return super.loadClass(name, resolve);
+            }
         }
-        return super.loadClass(name, resolve);
+        log.error("Security vulnerability detection in JMX collect: Forbidden class: {}", name);
+        throw new ClassNotFoundException("Forbidden unsafe collection request content");
     }
 
 }

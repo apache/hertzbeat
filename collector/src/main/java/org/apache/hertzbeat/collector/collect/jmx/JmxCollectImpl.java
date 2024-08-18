@@ -48,7 +48,6 @@ import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JmxConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.config.ClassLoaderConfig;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
@@ -74,7 +73,6 @@ public class JmxCollectImpl extends AbstractCollect {
 
     public JmxCollectImpl() {
         connectionCommonCache = new ConnectionCommonCache<>();
-        Thread.currentThread().setContextClassLoader(new ClassLoaderConfig(ClassLoader.getSystemClassLoader()));
     }
 
     @Override
@@ -89,7 +87,8 @@ public class JmxCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-
+        ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(new JmxClassLoaderConfig(ClassLoader.getSystemClassLoader()));
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
 
@@ -131,6 +130,8 @@ public class JmxCollectImpl extends AbstractCollect {
             log.error("JMX Error :{}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
+        } finally {
+            Thread.currentThread().setContextClassLoader(currentClassLoader);
         }
     }
 
