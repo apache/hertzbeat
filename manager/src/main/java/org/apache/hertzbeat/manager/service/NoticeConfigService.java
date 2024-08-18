@@ -94,13 +94,6 @@ public interface NoticeConfigService {
     List<NoticeRule> getReceiverFilterRule(Alert alert);
 
     /**
-     * Query the recipient information according to the recipient ID 
-     * @param id Receiver ID
-     * @return Receiver
-     */
-    NoticeReceiver getOneReceiverById(Long id);
-
-    /**
      * Query the template information according to the template ID
      * @param id Template ID
      * @return Template   
@@ -120,6 +113,7 @@ public interface NoticeConfigService {
      * @return Notification Rule Entity
      */
     NoticeRule getNoticeRulesById(Long ruleId);
+
 
     /**
      * Add a notification template

@@ -39,9 +39,7 @@ keywords: [open source monitoring system, alerting system]
 - add smtp protocol and support smtp monitoring by @ZY945
 - more feature, document and bugfix
 
-
 ### 尝试部署
-
 
 1. `docker` 环境仅需一条命令即可开始
 
@@ -58,14 +56,14 @@ keywords: [open source monitoring system, alerting system]
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
+
 - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
 - `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
 - `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
 
 更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.com/docs/start/docker-deploy)
 
-----
-
+---
 ## ⛄ 已支持
 
 > 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!    
@@ -82,13 +80,12 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 - 和更多自定义监控模版。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱`。
 
-----
+---
 
 **Github: https://github.com/apache/hertzbeat**      
 **Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
-----
-
+---
 ### What's Changed
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
@@ -101,7 +98,10 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 * monitoring the availability of websockets through handshake. by @ZY945 in https://github.com/apache/hertzbeat/pull/1413
 * Task-1386 When adding tags in tag management, random colors are given by default. by @prolevel1 in https://github.com/apache/hertzbeat/pull/1412
 * add prolevel1 as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1415
-* #1397 feature: support for dns monitoring by @Calvin979 in https://github.com/apache/hertzbeat/pull/1416
+* 
+
+# 1397 feature: support for dns monitoring by @Calvin979 in https://github.com/apache/hertzbeat/pull/1416
+
 * Support monitoring hive metrics by @a-little-fool in https://github.com/apache/hertzbeat/pull/1417
 * support legend pageable in history data charts by @tomsun28 in https://github.com/apache/hertzbeat/pull/1414
 * update component tip and help tip doc by @tomsun28 in https://github.com/apache/hertzbeat/pull/1418
@@ -163,7 +163,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 **Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.4.3...v1.4.4
 
-----
+---
 
 ## Supported
 
@@ -179,7 +179,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 ----
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### **下载链接**
 
@@ -203,8 +203,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 - ⬇️ [hertzbeat-collector-macos_amd64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-macos_amd64_1.4.4.tar.gz)
 - ⬇️ [hertzbeat-collector-windows64_1.4.4.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-windows64_1.4.4.zip)
 
-
 **hertzbeat docker compose script**
 
-- ⬇️ [docker-compose](https://github.com/apache/hertzbeat/releases/download/v1.4.4/docker-compose.zip) 
+- ⬇️ [docker-compose](https://github.com/apache/hertzbeat/releases/download/v1.4.4/docker-compose.zip)
 

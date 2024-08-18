@@ -20,6 +20,8 @@ package org.apache.hertzbeat.common.util;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -30,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FileUtilTest {
 
-    private static final String JSON_TYPE = "application/json";
     private static final String EXCEL_TYPE = "application/vnd.ms-excel";
     private static final String YAML_TYPE = "application/x-yaml";
 
@@ -42,7 +43,7 @@ class FileUtilTest {
     @BeforeEach
     void setUp() {
 
-        jsonFile = new MockMultipartFile("file", "test.json", JSON_TYPE, "test content".getBytes());
+        jsonFile = new MockMultipartFile("file", "test.json", MediaType.APPLICATION_JSON_VALUE, "test content".getBytes());
         excelFile = new MockMultipartFile("file", "test.xlsx", EXCEL_TYPE, "test content".getBytes());
         yamlFile = new MockMultipartFile("file", "test.yaml", YAML_TYPE, "test content".getBytes());
         emptyFile = new MockMultipartFile("file", "", null, (byte[]) null);

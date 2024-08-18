@@ -8,40 +8,40 @@ sidebar_label: Threshold Trigger Expression
 
 #### Supported Operators in Expressions
 
-| Operator (Visual Configuration) | Operator (Expression Configuration) | Supported Types          | Description                |
-| ------------------------------- | ----------------------------------- | ------------------------- | -------------------------- |
-| Equals                          | equals(str1,str2)                   | String                    | Check if strings are equal |
-| Not Equals                      | !equals(str1,str2)                  | String                    | Check if strings are not equal |
-| Contains                        | contains(str1,str2)                 | String                    | Check if string contains   |
-| Not Contains                    | !contains(str1,str2)                | String                    | Check if string does not contain |
-| Matches                         | matches(str1,str2)                  | String                    | Check if string matches regex |
-| Not Matches                     | !matches(str1,str2)                 | String                    | Check if string does not match regex |
-| Exists                          | exists(obj)                         | String, Numeric, Time     | Check if value exists      |
-| Not Exists                      | !exists(obj)                        | String, Numeric, Time     | Check if value does not exist |
-| Greater than                    | obj1 > obj2                         | Numeric, Time             | Check if value is greater than |
-| Less than                       | obj1 < obj2                         | Numeric, Time             | Check if value is less than |
-| Greater than or Equal to        | obj1 >= obj2                        | Numeric, Time             | Check if value is greater than or equal to |
-| Less than or Equal to           | obj1 <= obj2                        | Numeric, Time             | Check if value is less than or equal to |
-| Not Equal to                    | obj1 != obj2                        | Numeric, Time             | Check if values are not equal |
-| Equal to                        | obj1 == obj2                        | Numeric, Time             | Check if values are equal   |
+| Operator (Visual Configuration) | Operator (Expression Configuration) |    Supported Types    |                Description                 |
+|---------------------------------|-------------------------------------|-----------------------|--------------------------------------------|
+| Equals                          | equals(str1,str2)                   | String                | Check if strings are equal                 |
+| Not Equals                      | !equals(str1,str2)                  | String                | Check if strings are not equal             |
+| Contains                        | contains(str1,str2)                 | String                | Check if string contains                   |
+| Not Contains                    | !contains(str1,str2)                | String                | Check if string does not contain           |
+| Matches                         | matches(str1,str2)                  | String                | Check if string matches regex              |
+| Not Matches                     | !matches(str1,str2)                 | String                | Check if string does not match regex       |
+| Exists                          | exists(obj)                         | String, Numeric, Time | Check if value exists                      |
+| Not Exists                      | !exists(obj)                        | String, Numeric, Time | Check if value does not exist              |
+| Greater than                    | obj1 > obj2                         | Numeric, Time         | Check if value is greater than             |
+| Less than                       | obj1 < obj2                         | Numeric, Time         | Check if value is less than                |
+| Greater than or Equal to        | obj1 >= obj2                        | Numeric, Time         | Check if value is greater than or equal to |
+| Less than or Equal to           | obj1 <= obj2                        | Numeric, Time         | Check if value is less than or equal to    |
+| Not Equal to                    | obj1 != obj2                        | Numeric, Time         | Check if values are not equal              |
+| Equal to                        | obj1 == obj2                        | Numeric, Time         | Check if values are equal                  |
 
 #### Expression Function Library List
 
-| Supported Function Library       | Description                                                    |
-| -------------------------------- | -------------------------------------------------------------- |
-| condition ? trueExpression : falseExpression | Ternary operator                                         |
-| toDouble(str)                    | Convert string to Double type                                  |
-| toBoolean(str)                   | Convert string to Boolean type                                 |
-| toInteger(str)                   | Convert string to Integer type                                 |
-| array[n]                         | Retrieve the nth element of an array                            |
-| *                                | Multiplication                                                   |
-| /                                | Division                                                         |
-| %                                | Modulo                                                           |
-| ( and )                          | Parentheses for controlling the order of operations in logical or mathematical expressions |
-| +                                | Addition                                                         |
-| -                                | Subtraction                                                      |
-| &&                               | Logical AND operator                                             |
-| \|\|                             | Logical OR operator                                              |
+|          Supported Function Library          |                                        Description                                         |
+|----------------------------------------------|--------------------------------------------------------------------------------------------|
+| condition ? trueExpression : falseExpression | Ternary operator                                                                           |
+| toDouble(str)                                | Convert string to Double type                                                              |
+| toBoolean(str)                               | Convert string to Boolean type                                                             |
+| toInteger(str)                               | Convert string to Integer type                                                             |
+| array[n]                                     | Retrieve the nth element of an array                                                       |
+| *                                            | Multiplication                                                                             |
+| /                                            | Division                                                                                   |
+| %                                            | Modulo                                                                                     |
+| ( and )                                      | Parentheses for controlling the order of operations in logical or mathematical expressions |
+| +                                            | Addition                                                                                   |
+| -                                            | Subtraction                                                                                |
+| &&                                           | Logical AND operator                                                                       |
+| \|\|                                         | Logical OR operator                                                                        |
 
 #### Supported Environment Variables
 

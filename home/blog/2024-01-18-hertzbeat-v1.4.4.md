@@ -21,7 +21,7 @@ keywords: [open source monitoring system, alerting system]
 * High performance, supports horizontal expansion of multi-collector clusters, multi-isolated network monitoring and cloud-edge collaboration.
 * Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.      
+> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
@@ -30,7 +30,6 @@ keywords: [open source monitoring system, alerting system]
 **Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### HertzBeat's 1.4.4 Version Release!
-
 
 - support snmp v3 monitoring protocol @TJxiaobao
 - support monitoring NebulaGraph metrics @ZY945
@@ -43,7 +42,6 @@ keywords: [open source monitoring system, alerting system]
 - add ntp protocol and support ntp monitoring by @ZY945
 - add smtp protocol and support smtp monitoring by @ZY945
 - more feature, document and bugfix
-
 
 ### Install Quickly Via Docker
 
@@ -62,15 +60,14 @@ keywords: [open source monitoring system, alerting system]
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
+
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
 - `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
 - `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
 
-
-----
-
+---
 ### What's Changed
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
@@ -83,7 +80,10 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * monitoring the availability of websockets through handshake. by @ZY945 in https://github.com/apache/hertzbeat/pull/1413
 * [Task-1386] When adding tags in tag management, random colors are given by default. by @prolevel1 in https://github.com/apache/hertzbeat/pull/1412
 * add prolevel1 as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1415
-* #1397 feature: support for dns monitoring by @Calvin979 in https://github.com/apache/hertzbeat/pull/1416
+* 
+
+# 1397 feature: support for dns monitoring by @Calvin979 in https://github.com/apache/hertzbeat/pull/1416
+
 * Support monitoring hive metrics by @a-little-fool in https://github.com/apache/hertzbeat/pull/1417
 * support legend pageable in history data charts by @tomsun28 in https://github.com/apache/hertzbeat/pull/1414
 * update component tip and help tip doc by @tomsun28 in https://github.com/apache/hertzbeat/pull/1418
@@ -145,7 +145,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 **Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.4.3...v1.4.4
 
-----
+---
 
 ## ⛄ Supported
 
@@ -161,7 +161,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 ----
 
 **Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**  
+**Gitee: https://gitee.com/hertzbeat/hertzbeat**
 
 ### **Download Link**
 
@@ -185,7 +185,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 - ⬇️ [hertzbeat-collector-macos_amd64_1.4.4.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-macos_amd64_1.4.4.tar.gz)
 - ⬇️ [hertzbeat-collector-windows64_1.4.4.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/hertzbeat-collector-windows64_1.4.4.zip)
 
-
 **hertzbeat docker compose script**
 
-- ⬇️ [docker-compose.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/docker-compose.zip) 
+- ⬇️ [docker-compose.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.4/docker-compose.zip)
+

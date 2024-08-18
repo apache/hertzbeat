@@ -22,7 +22,6 @@ tags: [opensource, practice]
 - Clustering: NGINX, Docker, Kubernetes
 - Languages: .NET, Python, Go, Java clients available for API registration
 
-
 ### HertzBeat Introduction
 
 > HertzBeat is an open source, easy to use and friendly real-time monitoring tool, no Agent, with powerful custom monitoring capabilities.    
@@ -44,11 +43,11 @@ tags: [opensource, practice]
 1. Add the `metrics plugin` dependency to the `pom.xml` file of the gateway.
 
 ```xml
-        <dependency>
-            <groupId>org.apache.shenyu</groupId>
-            <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+<dependency>
+    <groupId>org.apache.shenyu</groupId>
+    <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
+    <version>${project.version}</version>
+</dependency>
 ```
 
 2. `metric` plugin Capture is turned off by default, edit the following in the gateway's configuration `yaml` file:
@@ -118,7 +117,6 @@ Path: Menu -> Alert Thresholds -> Add Thresholds
 
 ![hertzbeat](/img/blog/monitor-shenyu-7.png)
 
-
 2. Add message notification recipients
 
 > Configure recipients to let alert message know who to send to and in what way.
@@ -139,7 +137,6 @@ Message notification methods support **Email, Nail, WeChat, Flybook, WebHook, SM
 > Configure the alert notification policy to bind alert messages to recipients so that you can decide which alerts go to which person.
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
-
 
 ### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding.
 

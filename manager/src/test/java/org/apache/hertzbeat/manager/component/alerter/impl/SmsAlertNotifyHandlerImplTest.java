@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -72,6 +73,8 @@ class SmsAlertNotifyHandlerImplTest {
 
 		bundle = mock(ResourceBundle.class);
 		when(bundle.getString(anyString())).thenReturn("High");
+
+		Locale.setDefault(Locale.ENGLISH);
 
 		notifyHandler = new SmsAlertNotifyHandlerImpl(tencentSmsClient);
 	}

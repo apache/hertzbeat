@@ -23,8 +23,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Collections;
 import java.util.Enumeration;
-
-import org.apache.hertzbeat.common.constants.CollectorConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -119,15 +118,15 @@ class IpDomainUtilTest {
     @Test
     void testCheckIpAddressType() {
 
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType("192.168.1.1"));
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType("127.0.0.1"));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType("192.168.1.1"));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType("127.0.0.1"));
 
-        assertEquals(CollectorConstants.IPV6, IpDomainUtil.checkIpAddressType("2001:0db8:85a3:0000:0000:8a2e:0370:7334"));
-        assertEquals(CollectorConstants.IPV6, IpDomainUtil.checkIpAddressType("::1"));
+        assertEquals(NetworkConstants.IPV6, IpDomainUtil.checkIpAddressType("2001:0db8:85a3:0000:0000:8a2e:0370:7334"));
+        assertEquals(NetworkConstants.IPV6, IpDomainUtil.checkIpAddressType("::1"));
 
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType(""));
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType(null));
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType("invalid-ip"));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType(""));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType(null));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType("invalid-ip"));
 
     }
 }

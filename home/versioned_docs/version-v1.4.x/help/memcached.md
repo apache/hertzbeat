@@ -14,7 +14,7 @@ The default YML configuration for the memcache version is in compliance with 1.4
 You need to use the stats command to view the parameters that your memcache can monitor
 ```
 
-###  
+### 
 
 **1、Obtain usable parameter indicators through commands such as stats、stats setting、stats settings.
 
@@ -36,7 +36,7 @@ STAT version 1.4.15
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -49,7 +49,7 @@ STAT version 1.4.15
 
 #### Metrics Set：server_info
 
-| Metric name      | Metric unit | Metric help description                           |
+|   Metric name    | Metric unit |              Metric help description              |
 |------------------|-------------|---------------------------------------------------|
 | pid              |             | Memcache server process ID                        |
 | uptime           | s           | The number of seconds the server has been running |
@@ -67,3 +67,4 @@ STAT version 1.4.15
 | cmd_flush        |             | Flush command request count                       |
 | get_misses       |             | Get command misses                                |
 | delete_misses    |             | Delete command misses                             |
+

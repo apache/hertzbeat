@@ -4,7 +4,6 @@ title: SSL证书过期监控使用案例
 sidebar_label: 使用案例
 ---
 
-
 现在大部分网站都默认支持 HTTPS，我们申请的证书一般是3个月或者1年，很容易随着时间的流逝SSL证书过期了我们却没有第一时间发现，或者在过期之前没有及时更新证书。
 
 这篇文章介绍如果使用 hertzbeat 监控系统来检测我们网站的SSL证书有效期，当证书过期时或证书快过期前几天，给我们发告警消息。
@@ -34,9 +33,7 @@ gitee: https://gitee.com/hertzbeat/hertzbeat
 
 > 系统页面 -> 监控菜单 -> SSL证书 -> 新增SSL证书
 
-
 ![](/img/docs/start/ssl_1.png)
-
 
 2. 配置监控网站
 

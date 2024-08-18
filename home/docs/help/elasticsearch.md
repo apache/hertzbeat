@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool, monitoring ElasticSearch metrics ]
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                               |
+|   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6. Note⚠️Without protocol header (eg: https://, http://).                                             |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique.                                                       |
@@ -27,7 +27,7 @@ keywords: [ open source monitoring tool, monitoring ElasticSearch metrics ]
 
 #### Metrics Set：health
 
-| Metric name           | Metric unit | Metric help description                   |
+|      Metric name      | Metric unit |          Metric help description          |
 |-----------------------|-------------|-------------------------------------------|
 | cluster_name          | none        | Cluster Name                              |
 | status                | none        | status                                    |
@@ -49,7 +49,7 @@ keywords: [ open source monitoring tool, monitoring ElasticSearch metrics ]
 
 #### Metrics Set：nodes_detail
 
-| Metric name       | Metric unit | Metric help description |
+|    Metric name    | Metric unit | Metric help description |
 |-------------------|-------------|-------------------------|
 | node_name         | none        | Node Name               |
 | ip                | none        | IP Address              |
@@ -61,3 +61,4 @@ keywords: [ open source monitoring tool, monitoring ElasticSearch metrics ]
 | disk_free         | GB          | Disk Free               |
 | disk_total        | GB          | Disk Total              |
 | disk_used_percent | %           | Disk Used Percent       |
+
