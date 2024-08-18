@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * custom class loader config for JMX
  */
 @Slf4j
-public class JmxClassLoaderConfig extends ClassLoader {
+public class JmxClassLoader extends ClassLoader {
 
     private static final String[] WHITE_PRE_LIST = new String[]{
             "java.",
@@ -37,7 +37,7 @@ public class JmxClassLoaderConfig extends ClassLoader {
             "org.w3c.dom."
     };
     
-    public JmxClassLoaderConfig(ClassLoader parent) {
+    public JmxClassLoader(ClassLoader parent) {
         super(parent);
     }
 
