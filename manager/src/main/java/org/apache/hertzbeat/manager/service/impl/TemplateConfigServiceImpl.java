@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.AppService;
@@ -55,7 +56,7 @@ public class TemplateConfigServiceImpl extends AbstractGeneralConfigServiceImpl<
     
     @Override
     public String type() {
-        return "template";
+        return GeneralConfigTypeEnum.template.name();
     }
     
     @Override
