@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SmsNoticeSender;
 import org.apache.hertzbeat.manager.service.impl.SmsGeneralConfigServiceImpl;
@@ -60,7 +61,7 @@ class SmsGeneralConfigServiceTest {
 	@Test
 	void testType() {
 		String result = service.type();
-		assertEquals("sms", result);
+		assertEquals(GeneralConfigTypeEnum.sms.name(), result);
 	}
 
 	@Test

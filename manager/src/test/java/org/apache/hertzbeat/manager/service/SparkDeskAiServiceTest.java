@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import org.apache.hertzbeat.manager.service.impl.SparkDeskAiServiceImpl;
+import org.apache.hertzbeat.manager.service.ai.SparkDeskAiServiceImpl;
 
 /**
  * test case for {@link SparkDeskAiServiceImpl}

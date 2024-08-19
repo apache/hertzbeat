@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
 import java.util.Objects;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.TimeZoneUtil;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
@@ -60,7 +61,7 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
     
     @Override
     public String type() {
-        return "system";
+        return GeneralConfigTypeEnum.system.name();
     }
     
     @Override

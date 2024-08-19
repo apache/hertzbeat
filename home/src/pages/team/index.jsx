@@ -1121,6 +1121,18 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/83876361?v=4?s=100" width="100px;"
                     alt="Keaifa"/><br/><sub><b>Keaifa</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=keaifafafa" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/loong95"><img
+                    src="https://avatars.githubusercontent.com/u/16333958?v=4?s=100" width="100px;"
+                    alt="Loong"/><br/><sub><b>Loong</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=loong95" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/ceekay47"><img
+                    src="https://avatars.githubusercontent.com/u/104664857?v=4?s=100" width="100px;"
+                    alt="Chandrakant Vankayalapati"/><br/><sub><b>Chandrakant Vankayalapati</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=ceekay47" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/MRgenial"><img
+                    src="https://avatars.githubusercontent.com/u/49973336?v=4?s=100" width="100px;"
+                    alt="b_mountain"/><br/><sub><b>b_mountain</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=MRgenial" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>

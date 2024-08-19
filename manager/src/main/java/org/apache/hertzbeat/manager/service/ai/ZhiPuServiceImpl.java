@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service.impl;
+package org.apache.hertzbeat.manager.service.ai;
 
 
 import java.util.List;
@@ -27,7 +27,6 @@ import org.apache.hertzbeat.manager.config.AiProperties;
 import org.apache.hertzbeat.manager.pojo.dto.AiMessage;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiRequestParamDTO;
 import org.apache.hertzbeat.manager.pojo.dto.OpenAiResponse;
-import org.apache.hertzbeat.manager.service.AiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpHeaders;
@@ -73,33 +72,28 @@ public class ZhiPuServiceImpl implements AiService {
 
     @Override
     public Flux<ServerSentEvent<String>> requestAi(String text) {
-        try {
-            checkParam(text, aiProperties.getModel(), aiProperties.getApiKey());
-            OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
-                    .model(aiProperties.getModel())
-                    //sse
-                    .stream(Boolean.TRUE)
-                    .maxTokens(AiConstants.ZhiPuConstants.MAX_TOKENS)
-                    .temperature(AiConstants.ZhiPuConstants.TEMPERATURE)
-                    .messages(List.of(new AiMessage(AiConstants.ZhiPuConstants.REQUEST_ROLE, text)))
-                    .build();
+        checkParam(text, aiProperties.getModel(), aiProperties.getApiKey());
+        OpenAiRequestParamDTO zhiPuRequestParamDTO = OpenAiRequestParamDTO.builder()
+                .model(aiProperties.getModel())
+                //sse
+                .stream(Boolean.TRUE)
+                .maxTokens(AiConstants.ZhiPuConstants.MAX_TOKENS)
+                .temperature(AiConstants.ZhiPuConstants.TEMPERATURE)
+                .messages(List.of(new AiMessage(AiConstants.ZhiPuConstants.REQUEST_ROLE, text)))
+                .build();
 
-            return webClient.post()
-                    .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
-                    .retrieve()
-                    .bodyToFlux(String.class)
-                    .filter(aiResponse -> !"[DONE]".equals(aiResponse))
-                    .map(OpenAiResponse::convertToResponse)
-                    .doOnError(error -> log.info("AiResponse Exception:{}", error.toString()));
-
-        } catch (Exception e) {
-            log.info("ZhiPuServiceImpl.requestAi exception:{}", e.toString());
-            throw e;
-        }
+        return webClient.post()
+                .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
+                .retrieve()
+                .bodyToFlux(String.class)
+                .filter(aiResponse -> !"[DONE]".equals(aiResponse))
+                .map(OpenAiResponse::convertToResponse)
+                .doOnError(error -> log.info("ZhiPuServiceImpl.requestAi exception:{}", error.getMessage()));
     }
 
     private void checkParam(String param, String model, String apiKey) {
         Assert.notNull(param, "text is null");
+        Assert.notNull(model, "model is null");
         Assert.notNull(apiKey, "ai.api-key is null");
     }
 
