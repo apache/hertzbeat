@@ -35,7 +35,7 @@ public interface ConfigConstants {
      */
     interface FunctionModuleConstants {
 
-        String ALERT = "alert";
+        String ALERT = "alerter";
 
         String COLLECTOR = "collector";
 
