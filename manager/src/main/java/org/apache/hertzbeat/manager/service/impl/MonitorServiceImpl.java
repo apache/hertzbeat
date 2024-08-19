@@ -37,6 +37,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -87,7 +88,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -214,7 +214,7 @@ public class MonitorServiceImpl implements MonitorService {
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
 
-        long jobId = !StringUtils.hasText(collector) ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
+        long jobId = StringUtils.isBlank(collector) ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
                 collectJobScheduling.addAsyncCollectJob(appDefine, collector);
 
         try {
@@ -361,7 +361,7 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
         }
         // the dispatch collector must exist if pin
-        if (StringUtils.hasText(monitorDto.getCollector())) {
+        if (StringUtils.isNotBlank(monitorDto.getCollector())) {
             Optional<Collector> optionalCollector = collectorDao.findCollectorByName(monitorDto.getCollector());
             if (optionalCollector.isEmpty()) {
                 throw new IllegalArgumentException("The pinned collector does not exist.");
@@ -378,7 +378,7 @@ public class MonitorServiceImpl implements MonitorService {
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
-                if (param != null && param.getParamValue() != null && StringUtils.hasText(param.getParamValue())) {
+                if (param != null && param.getParamValue() != null && StringUtils.isNotBlank(param.getParamValue())) {
                     switch (paramDefine.getType()) {
                         case "number":
                             double doubleValue;
@@ -654,7 +654,7 @@ public class MonitorServiceImpl implements MonitorService {
                 }
                 andList.add(inPredicate);
             }
-            if (StringUtils.hasText(app)) {
+            if (StringUtils.isNotBlank(app)) {
                 Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
                 andList.add(predicateApp);
             }
@@ -663,7 +663,7 @@ public class MonitorServiceImpl implements MonitorService {
                 andList.add(predicateStatus);
             }
 
-            if (StringUtils.hasText(tag)) {
+            if (StringUtils.isNotBlank(tag)) {
                 String[] tagArr = tag.split(":");
                 String tagName = tagArr[0];
                 ListJoin<Monitor, Tag> tagJoin = root
@@ -681,11 +681,11 @@ public class MonitorServiceImpl implements MonitorService {
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (StringUtils.hasText(host)) {
+            if (StringUtils.isNotBlank(host)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
                 orList.add(predicateHost);
             }
-            if (StringUtils.hasText(name)) {
+            if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 orList.add(predicateName);
             }
@@ -748,7 +748,7 @@ public class MonitorServiceImpl implements MonitorService {
                 List<Configmap> configmaps = params.stream().map(param ->
                         new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                        .filter(item -> StringUtils.isNotBlank(item.getDefaultValue()))
                         .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
@@ -854,7 +854,7 @@ public class MonitorServiceImpl implements MonitorService {
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
                         param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                        .filter(item -> StringUtils.isNotBlank(item.getDefaultValue()))
                         .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
