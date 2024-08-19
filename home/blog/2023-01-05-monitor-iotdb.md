@@ -30,6 +30,7 @@ tags: [opensource, practice]
 #### 1. Enable the `metrics` function on the IoTDB side, which will provide interface data in the form of prometheus metrics.
 
 1. The metric collection is disabled by default, you need to modify the parameters in `conf/iotdb-metric.yml` first, then restart the server
+
 ```
 # Whether to start the monitoring module, the default is false
 enableMetric: true
@@ -73,7 +74,6 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 - **Enable `metrics` function on IoTDB in one step**
 - **Another step is to configure the IP port on the HertzBeat monitoring page to add monitoring**
 
-
 **In this way, we have completed the monitoring of IoTDB. We can view the monitoring details and metrics at any time to observe its service status, but people cannot always watch it. When there is always a time to rest, monitoring is often accompanied by alarms. When monitoring When the metrics are abnormal, the monitoring tool needs to be able to notify the person in charge in time**
 
 **Next, we will teach you step by step to configure the threshold alarm notification in the HertzBeat system**
@@ -88,7 +88,6 @@ Path: Menu -> Alarm Threshold -> Add Threshold
 - Here we configure to send an alarm when the metric `status==2`, the alarm level is **Critical Alarm**, which is triggered once, as shown in the figure below.
 
 ![hertzbeat](/img/blog/monitor-iotdb-6.png)
-
 
 2. Add message notification recipients
 
@@ -106,7 +105,6 @@ Message notification methods support **email, DingTalk, WeChat Work, Feishu, Web
 3. Configure the associated alarm notification strategy ⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
-
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 

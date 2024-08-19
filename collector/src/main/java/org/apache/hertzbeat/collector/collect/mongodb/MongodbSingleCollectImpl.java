@@ -34,6 +34,7 @@ import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.MongodbConnect;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -87,6 +88,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     /**
      * Check that the mongodb connection information in metrics is complete
      */
+    @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException{
         Assert.isTrue(metrics != null && metrics.getMongodb() != null, "Mongodb collect must has mongodb params");
         MongodbProtocol mongodbProtocol = metrics.getMongodb();
@@ -188,11 +190,20 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         if (mongoClient != null) {
             return mongoClient;
         }
-        // If the multiplexing fails, create a new connection to connect to mongodb
-        // Passwords may contain special characters and need to be encoded using JS-like encodeURIComponent, which uses java URLEncoder
-        String url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
-                URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
-                mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
+
+        String url = null;
+        if (CollectorConstants.MONGO_DB_ATLAS_MODEL.equals(mongodbProtocol.getModel())){
+            url = String.format("mongodb+srv://%s:%s@%s/%s?authSource=%s", mongodbProtocol.getUsername(),
+                    URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(),
+                    mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
+        } else {
+            // If the multiplexing fails, create a new connection to connect to mongodb
+            // Passwords may contain special characters and need to be encoded using JS-like encodeURIComponent, which uses java URLEncoder
+            url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
+                    URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
+                    mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
+        }
+
         // Use the Mongo Client Settings builder to configure timeouts and other configurations
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(url))

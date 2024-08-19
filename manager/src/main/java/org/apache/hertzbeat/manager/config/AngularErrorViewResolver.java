@@ -33,6 +33,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.lang.NonNull;
 import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.web.servlet.ModelAndView;
@@ -134,7 +135,7 @@ public class AngularErrorViewResolver implements ErrorViewResolver, Ordered {
         }
 
         @Override
-        public void render(Map<String, ?> model, HttpServletRequest request, HttpServletResponse response)
+        public void render(Map<String, ?> model, @NonNull HttpServletRequest request, HttpServletResponse response)
                 throws Exception {
             response.setContentType(getContentType());
             FileCopyUtils.copy(this.resource.getInputStream(), response.getOutputStream());

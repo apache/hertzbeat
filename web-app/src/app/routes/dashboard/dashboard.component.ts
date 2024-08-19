@@ -25,6 +25,7 @@ import { CloudData } from 'angular-tag-cloud-module';
 import { EChartsOption } from 'echarts';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { fromEvent } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 
 import { Alert } from '../../pojo/Alert';
 import { AppCount } from '../../pojo/AppCount';
@@ -55,6 +56,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Tag Word Cloud
   wordCloudData: CloudData[] = [];
+  wordCloudDataLoading: boolean = false;
   defaultWordCloudData: CloudData[] = [
     { text: 'HertzBeat', weight: 5 },
     { text: 'Env:Prod', weight: 8 },
@@ -77,41 +79,45 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ];
 
   refreshWordCloudContent(): void {
-    let tagsInit$ = this.tagSvc.loadTags(undefined, 1, 0, 10000).subscribe(
-      message => {
-        if (message.code === 0) {
-          let page = message.data;
-          let tags = page.content;
-          if (tags != null && tags.length != 0) {
-            let tmpData: CloudData[] = [];
-            tags.forEach(item => {
-              tmpData.push({
-                text: formatTagName(item),
-                weight: Math.random() * (10 - 5) + 5
+    this.wordCloudDataLoading = true;
+    let tagsInit$ = this.tagSvc
+      .loadTags(undefined, 1, 0, 10000)
+      .pipe(finalize(() => (this.wordCloudDataLoading = false)))
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            let page = message.data;
+            let tags = page.content;
+            if (tags != null && tags.length != 0) {
+              let tmpData: CloudData[] = [];
+              tags.forEach(item => {
+                tmpData.push({
+                  text: formatTagName(item),
+                  weight: Math.random() * (10 - 5) + 5
+                });
               });
-            });
-            this.wordCloudData = tmpData;
+              this.wordCloudData = tmpData;
+            } else {
+              this.wordCloudData = this.defaultWordCloudData;
+            }
+            this.cdr.detectChanges();
           } else {
-            this.wordCloudData = this.defaultWordCloudData;
+            console.warn(message.msg);
           }
-          this.cdr.detectChanges();
-        } else {
-          console.warn(message.msg);
+          tagsInit$.unsubscribe();
+        },
+        error => {
+          tagsInit$.unsubscribe();
+          console.error(error.msg);
         }
-        tagsInit$.unsubscribe();
-      },
-      error => {
-        tagsInit$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
+      );
   }
 
   onTagCloudClick(data: CloudData): void {
     this.router.navigate(['/monitors'], { queryParams: { tag: data.text } });
   }
 
-  // start 大类别数量信息
+  // start -- quantitative information summary
   appCountService: AppCount = new AppCount();
   appCountOs: AppCount = new AppCount();
   appCountDb: AppCount = new AppCount();
@@ -153,7 +159,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     ]
   };
 
-  // start 数量全局概览
+  // start -- quantity overall overview
   interval$!: any;
   appsCountLoading: boolean = true;
   appsCountTableData: any[] = [];
@@ -163,10 +169,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   pageResize$!: any;
 
   // collector list
+  collectorsLoading: boolean = false;
   collectors!: CollectorSummary[];
+  collectorsTabSelectedIndex = 0;
 
-  // 告警列表
+  // alert list
   alerts!: Alert[];
+  alertContentLoading: boolean = false;
 
   ngOnInit(): void {
     this.appsCountTheme = {
@@ -301,7 +310,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           data: [
             {
               value: 0,
-              // 设置单个柱子的样式
+              // Set the style of the individual columns
               itemStyle: {
                 color: '#ffb72b',
                 shadowColor: '#91cc75'
@@ -409,9 +418,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           apps.forEach(app => {
             let appName = this.i18nSvc.fanyi(`monitor.app.${app.app}`);
             this.appsCountTableData.push({
-              // 自定义属性
+              // custom attribute
               app: app.app,
-              // 默认属性
+              // default attribute
               name: appName,
               value: app.size
             });
@@ -546,53 +555,61 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // start 告警分布
+  // start -- alarm distribution
   alertsEChartOption!: EChartsOption;
   alertsTheme!: EChartsOption;
   alertsEchartsInstance!: any;
   alertsLoading: boolean = true;
 
-  // start 告警处理率
+  // start -- alarm processing rate
   alertsDealEChartOption!: EChartsOption;
   alertsDealTheme!: EChartsOption;
   alertsDealEchartsInstance!: any;
   alertsDealLoading: boolean = true;
 
   refreshAlertContentList(): void {
-    let alertsInit$ = this.alertSvc.loadAlerts(undefined, undefined, undefined, 0, 10).subscribe(
-      message => {
-        if (message.code === 0) {
-          let page = message.data;
-          this.alerts = page.content;
-          this.cdr.detectChanges();
-        } else {
-          console.warn(message.msg);
+    this.alertContentLoading = true;
+    let alertsInit$ = this.alertSvc
+      .loadAlerts(undefined, undefined, undefined, 0, 10)
+      .pipe(finalize(() => (this.alertContentLoading = false)))
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            let page = message.data;
+            this.alerts = page.content;
+            this.cdr.detectChanges();
+          } else {
+            console.warn(message.msg);
+          }
+          alertsInit$.unsubscribe();
+        },
+        error => {
+          alertsInit$.unsubscribe();
+          console.error(error.msg);
         }
-        alertsInit$.unsubscribe();
-      },
-      error => {
-        alertsInit$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
+      );
   }
 
   refreshCollectorContentList(): void {
-    let collectorInit$ = this.collectorSvc.getCollectors().subscribe(
-      message => {
-        if (message.code === 0) {
-          this.collectors = message.data.content;
-          this.cdr.detectChanges();
-        } else {
-          console.warn(message.msg);
+    this.collectorsLoading = true;
+    let collectorInit$ = this.collectorSvc
+      .getCollectors()
+      .pipe(finalize(() => (this.collectorsLoading = false)))
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.collectors = message.data.content;
+            this.cdr.detectChanges();
+          } else {
+            console.warn(message.msg);
+          }
+          collectorInit$.unsubscribe();
+        },
+        error => {
+          collectorInit$.unsubscribe();
+          console.error(error.msg);
         }
-        collectorInit$.unsubscribe();
-      },
-      error => {
-        collectorInit$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
+      );
   }
 
   refreshAlertSummary(): void {

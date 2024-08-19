@@ -21,10 +21,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
 import java.lang.reflect.Type;
-import java.util.Locale;
-import java.util.TimeZone;
-import org.apache.hertzbeat.common.constants.CommonConstants;
+import java.util.Objects;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
+import org.apache.hertzbeat.common.util.TimeZoneUtil;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.springframework.context.ApplicationContext;
@@ -35,9 +35,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<SystemConfig> {
-    
-    private static final Integer LANG_REGION_LENGTH = 2;
-    
     @Resource
     private ApplicationContext applicationContext;
     
@@ -48,35 +45,27 @@ public class SystemGeneralConfigServiceImpl extends AbstractGeneralConfigService
      * @param generalConfigDao ConfigDao object
      * @param objectMapper     JSON tool object
      */
-    protected SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
+    public SystemGeneralConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
     }
     
     @Override
     public void handler(SystemConfig systemConfig) {
-        if (systemConfig != null) {
-            if (systemConfig.getTimeZoneId() != null) {
-                TimeZone.setDefault(TimeZone.getTimeZone(systemConfig.getTimeZoneId()));
-            }
-            if (systemConfig.getLocale() != null) {
-                String[] arr = systemConfig.getLocale().split(CommonConstants.LOCALE_SEPARATOR);
-                if (arr.length == LANG_REGION_LENGTH) {
-                    String language = arr[0];
-                    String country = arr[1];
-                    Locale.setDefault(new Locale(language, country));
-                }
-            }
-            applicationContext.publishEvent(new SystemConfigChangeEvent(applicationContext));
+        if (Objects.isNull(systemConfig)) {
+            return;
         }
+
+        TimeZoneUtil.setTimeZoneAndLocale(systemConfig.getTimeZoneId(), systemConfig.getLocale());
+        applicationContext.publishEvent(new SystemConfigChangeEvent(applicationContext));
     }
     
     @Override
     public String type() {
-        return "system";
+        return GeneralConfigTypeEnum.system.name();
     }
     
     @Override
-    protected TypeReference<SystemConfig> getTypeReference() {
+    public TypeReference<SystemConfig> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {

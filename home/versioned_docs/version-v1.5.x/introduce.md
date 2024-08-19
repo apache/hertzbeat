@@ -5,13 +5,13 @@ sidebar_label: Introduce
 slug: /
 ---
 
-> A real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.  
+> A real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
 [![Discord](https://img.shields.io/badge/Chat-Discord-7289DA?logo=discord)](https://discord.gg/Fb6M73htGr)
 [![Reddit](https://img.shields.io/badge/Reddit-Community-7289DA?logo=reddit)](https://www.reddit.com/r/hertzbeat/)
 [![Twitter](https://img.shields.io/twitter/follow/hertzbeat1024?logo=twitter)](https://twitter.com/hertzbeat1024)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8139/badge)](https://www.bestpractices.dev/projects/8139)
-[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/repository/docker/apache/hertzbeat/general)
+[![Docker Pulls](https://img.shields.io/docker/pulls/apache/hertzbeat?style=%20for-the-badge&logo=docker&label=DockerHub%20Download)](https://hub.docker.com/r/apache/hertzbeat)
 [![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/hertzbeat)](https://artifacthub.io/packages/search?repo=hertzbeat)
 [![QQ](https://img.shields.io/badge/QQ-630061200-orange)](https://qm.qq.com/q/FltGGGIX2m)
 [![YouTube Channel Subscribers](https://img.shields.io/youtube/channel/subscribers/UCri75zfWX0GHqJFPENEbLow?logo=youtube&label=YouTube%20Channel)](https://www.youtube.com/channel/UCri75zfWX0GHqJFPENEbLow)
@@ -32,11 +32,9 @@ slug: /
 * Provides flexible alarm threshold rules and timely notifications delivered via  `Discord` `Slack` `Telegram` `Email` `Dingtalk` `WeChat` `FeiShu` `Webhook` `SMS` `ServerChan`.
 * Provides powerful status page building capabilities, easily communicate the real-time status of your service to users.
 
+> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.
 
-> HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.      
-
-----
-
+---
 ### Powerful Monitoring Templates
 
 > Before we discuss the customizable monitoring capabilities of HertzBeat, which we mentioned at the beginning, let's introduce the different monitoring templates of HertzBeat. And it is because of this monitoring template design that the advanced features come later.
@@ -48,7 +46,6 @@ HertzBeat uses these existing standard protocols or specifications, makes them a
 Do you believe that users can just write a monitoring template on the UI page, click save and immediately adapt a new monitoring type like `K8s` or `Docker`?
 
 ![hertzbeat](/img/home/9.png)
-
 
 ### Built-in Monitoring Types
 
@@ -97,7 +94,7 @@ Do you believe that users can just write a monitoring template on the UI page, c
 
 > From the previous introduction of **Monitoring Templates**, it is clear that `HertzBeat` has powerful customization features.      
 > Each monitor type is considered as a monitor template, no matter it is built-in or user-defined. You can easily add, modify and delete indicators by modifying the monitoring template.       
-> The templates contain a series of functions such as protocol configuration, environment variables, metrics conversion, metrics calculation, units conversion, metrics collection, etc., which help users to collect the metrics they want.   
+> The templates contain a series of functions such as protocol configuration, environment variables, metrics conversion, metrics calculation, units conversion, metrics collection, etc., which help users to collect the metrics they want.
 
 ![hertzbeat](/img/docs/custom-arch.png)
 
@@ -105,12 +102,12 @@ Do you believe that users can just write a monitoring template on the UI page, c
 
 > For users who have used various systems, the most troublesome thing is the installation, deployment, debugging and upgrading of various `agents`.     
 > You need to install one `agent` per host, and several corresponding `agents` to monitor different application middleware, and the number of monitoring can easily reach thousands, so writing a batch script may ease the burden.    
-> The problem of whether the version of `agent` is compatible with the main application, debugging the communication between `agent` and the main application, upgrading the `agent` synchronization and so on and so forth, are all big headaches.   
+> The problem of whether the version of `agent` is compatible with the main application, debugging the communication between `agent` and the main application, upgrading the `agent` synchronization and so on and so forth, are all big headaches.
 
-The principle of `HertzBeat` is to use different protocols to connect directly to the end system, and use the `PULL` form to pull the collected data, without the need for the user to deploy and install `Agent` | `Exporter` on the host of the end, etc. For example, monitoring the `linux operating system`.   
+The principle of `HertzBeat` is to use different protocols to connect directly to the end system, and use the `PULL` form to pull the collected data, without the need for the user to deploy and install `Agent` | `Exporter` on the host of the end, etc. For example, monitoring the `linux operating system`.
 
 - For example, if you want to monitor `linux OS`, you can just input the IP port account password or key on `HertzBeat` side.
-- For example, to monitor `linux OS`, just enter your ip/port account password or key in `HertzBeat`.    
+- For example, to monitor `linux OS`, just enter your ip/port account password or key in `HertzBeat`.
 
 **Password and other sensitive information is encrypted on all links**.
 
@@ -129,7 +126,7 @@ The principle of `HertzBeat` is to use different protocols to connect directly t
 > Two locations, three centers, multi-cloud environments, multi-isolated networks, you may have heard of these scenarios. When there is a need for a unified monitoring system to monitor the IT resources of different isolated networks, this is where our Cloud Edge Collaboration comes in.
 
 In an isolated network where multiple networks are not connected, we need to deploy a monitoring system in each network in the previous solution, which leads to data non-interoperability and inconvenient management, deployment and maintenance.     
-`HertzBeat` provides the ability of cloud edge collaboration, can be deployed in multiple isolated networks edge collector, collector in the isolated network within the monitoring task collection, collection of data reported by the main service unified scheduling management display.   
+`HertzBeat` provides the ability of cloud edge collaboration, can be deployed in multiple isolated networks edge collector, collector in the isolated network within the monitoring task collection, collection of data reported by the main service unified scheduling management display.
 
 ![hertzbeat](/img/docs/cluster-arch.png)
 
@@ -148,12 +145,11 @@ In an isolated network where multiple networks are not connected, we need to dep
 - Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
 - Open source is not the same as free, dev based on HertzBeat must retain page footnotes, copyright, etc.
 
-
 **HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**
 
 ![cncf](/img/home/cncf-landscape-left-logo.svg)
 
------
+---
 
 **HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.**
 
@@ -271,7 +267,6 @@ Built-in support for monitoring types include:
 
 ![hertzbeat](/img/home/13.png)
 
-
 ### Alarm Silence
 
 - When the alarm is triggered by the threshold rule, it will enter into the alarm silence, the alarm silence will be based on the rules of a specific one-time time period or periodic time period of the alarm message blocking silence, this time period does not send alarm messages.
@@ -302,7 +297,6 @@ Built-in support for monitoring types include:
 - All our built-in monitoring types (mysql, website, jvm, k8s) are also mapped to corresponding monitoring templates, so you can add and modify monitoring templates to customize your monitoring functions.
 
 ![hertzbeat](/img/home/9.png)
-
 
 -----
 

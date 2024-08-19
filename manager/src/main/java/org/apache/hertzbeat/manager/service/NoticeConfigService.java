@@ -23,7 +23,6 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Message notification configuration interface
@@ -32,24 +31,24 @@ public interface NoticeConfigService {
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
+     * @param name Recipient name,support fuzzy query
      * @return Search result
      */
-    List<NoticeReceiver> getNoticeReceivers(Specification<NoticeReceiver> specification);
+    List<NoticeReceiver> getNoticeReceivers(String name);
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
+     * @param name Template name,support fuzzy query
      * @return Search result
      */
-    List<NoticeTemplate> getNoticeTemplates(Specification<NoticeTemplate> specification);
+    List<NoticeTemplate> getNoticeTemplates(String name);
 
     /**
      * Dynamic conditional query
-     * @param specification Query conditions
+     * @param name Recipient name
      * @return Search result
      */
-    List<NoticeRule> getNoticeRules(Specification<NoticeRule> specification);
+    List<NoticeRule> getNoticeRules(String name);
 
     /**
      * Add a notification recipient
@@ -95,13 +94,6 @@ public interface NoticeConfigService {
     List<NoticeRule> getReceiverFilterRule(Alert alert);
 
     /**
-     * Query the recipient information according to the recipient ID 
-     * @param id Receiver ID
-     * @return Receiver
-     */
-    NoticeReceiver getOneReceiverById(Long id);
-
-    /**
      * Query the template information according to the template ID
      * @param id Template ID
      * @return Template   
@@ -121,6 +113,7 @@ public interface NoticeConfigService {
      * @return Notification Rule Entity
      */
     NoticeRule getNoticeRulesById(Long ruleId);
+
 
     /**
      * Add a notification template

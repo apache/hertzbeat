@@ -58,13 +58,15 @@ Have Fun!
 ### Upgrade ⚠️
 
 Need Convert `application.yml`.
+
 ```
 spring.
   resources: static-locations.
     static-locations.
       - classpath:/dist/
       - classpath:... /dist/
-``` 
+```
+
 To
 ``
 spring.
@@ -73,6 +75,9 @@ resources: static-locations.
 static-locations.
 - classpath:/dist/
 - classpath:... /dist/
+
 ```
 
 ----
+```
+

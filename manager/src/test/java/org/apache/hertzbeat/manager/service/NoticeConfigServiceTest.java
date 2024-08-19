@@ -69,23 +69,20 @@ class NoticeConfigServiceTest {
 
     @Test
     void getNoticeReceivers() {
-        final Specification<NoticeReceiver> specification = mock(Specification.class);
-        noticeConfigService.getNoticeReceivers(specification);
-        verify(noticeReceiverDao, times(1)).findAll(specification);
+        noticeConfigService.getNoticeReceivers(null);
+        verify(noticeReceiverDao, times(1)).findAll(any(Specification.class));
     }
 
     @Test
     void getNoticeTemplates() {
-        final Specification<NoticeTemplate> specification = mock(Specification.class);
-        noticeConfigService.getNoticeTemplates(specification);
-        verify(noticeTemplateDao, times(1)).findAll(specification);
+        noticeConfigService.getNoticeTemplates(null);
+        verify(noticeTemplateDao, times(1)).findAll(any(Specification.class));
     }
 
     @Test
     void getNoticeRules() {
-        final Specification<NoticeRule> specification = mock(Specification.class);
-        noticeConfigService.getNoticeRules(specification);
-        verify(noticeRuleDao, times(1)).findAll(specification);
+        noticeConfigService.getNoticeRules(null);
+        verify(noticeRuleDao, times(1)).findAll(any(Specification.class));
     }
 
     @Test
@@ -205,14 +202,14 @@ class NoticeConfigServiceTest {
     void getReceiverById() {
         final Long receiverId = 343432325L;
         noticeConfigService.getReceiverById(receiverId);
-        verify(noticeReceiverDao, times(1)).getReferenceById(receiverId);
+        verify(noticeReceiverDao, times(1)).findById(receiverId);
     }
 
     @Test
     void getNoticeRulesById() {
         final Long receiverId = 343432325L;
         noticeConfigService.getNoticeRulesById(receiverId);
-        verify(noticeRuleDao, times(1)).getReferenceById(receiverId);
+        verify(noticeRuleDao, times(1)).findById(receiverId);
     }
 
     @Test

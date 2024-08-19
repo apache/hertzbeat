@@ -951,7 +951,8 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/71874373?v=4?s=100" width="100px;"
                     alt="Gao Jian"/><br/><sub><b>Gao Jian</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Code">💻</a> <a
-                    href="#design-gjjjj0101" title="Design">🎨</a></td>
+                    href="#design-gjjjj0101" title="Design">🎨</a> <a
+                    href="https://github.com/apache/hertzbeat/commits?author=gjjjj0101" title="Tests">⚠️</a></td>
                 </tr>
                 <tr>
                   <td align="center" valign="top" width="14.28%"><a href="https://jangto.tistory.com/"><img
@@ -1036,7 +1037,7 @@ export default function () {
                     href="https://github.com/apache/hertzbeat/commits?author=yuluo-yx" title="Code">💻</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/Yanshuming1"><img
                     src="https://avatars.githubusercontent.com/u/118667222?v=4?s=100" width="100px;"
-                    alt="xiaoming student"/><br/><sub><b>xiaoming student</b></sub></a><br/><a
+                    alt="linDong"/><br/><sub><b>linDong</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=Yanshuming1" title="Code">💻</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/lwjxy"><img
                     src="https://avatars.githubusercontent.com/u/52726400?v=4?s=100" width="100px;"
@@ -1047,7 +1048,8 @@ export default function () {
                   <td align="center" valign="top" width="14.28%"><a href="https://thespica.github.io/"><img
                     src="https://avatars.githubusercontent.com/u/119573640?v=4?s=100" width="100px;"
                     alt="John"/><br/><sub><b>John</b></sub></a><br/><a
-                    href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a></td>
+                    href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Code">💻</a> <a
+                    href="https://github.com/apache/hertzbeat/commits?author=Thespica" title="Documentation">📖</a></td>
                   <td align="center" valign="top" width="14.28%"><a href="https://github.com/boatrainlsz"><img
                     src="https://avatars.githubusercontent.com/u/18243785?v=4?s=100" width="100px;"
                     alt="boatrainlsz"/><br/><sub><b>boatrainlsz</b></sub></a><br/><a
@@ -1065,6 +1067,72 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/17960863?v=4?s=100" width="100px;"
                     alt="xfl12345"/><br/><sub><b>xfl12345</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=xfl12345" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/yykaue"><img
+                    src="https://avatars.githubusercontent.com/u/22905143?v=4?s=100" width="100px;"
+                    alt="Limbo"/><br/><sub><b>Limbo</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=yykaue" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/irenhongyan"><img
+                    src="https://avatars.githubusercontent.com/u/53438321?v=4?s=100" width="100px;"
+                    alt="哈哈哈哈哈哈哈哈哈"/><br/><sub><b>哈哈哈哈哈哈哈哈哈</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=irenhongyan" title="Code">💻</a></td>
+                </tr>
+                <tr>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/ileonli"><img
+                    src="https://avatars.githubusercontent.com/u/45332412?v=4?s=100" width="100px;" alt="Leon Li"/><br/><sub><b>Leon
+                    Li</b></sub></a><br/><a href="https://github.com/apache/hertzbeat/commits?author=ileonli"
+                                            title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="http://fnil.net/"><img
+                    src="https://avatars.githubusercontent.com/u/14142?v=4?s=100" width="100px;"
+                    alt="dennis zhuang"/><br/><sub><b>dennis zhuang</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=killme2008" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/kerwin612"><img
+                    src="https://avatars.githubusercontent.com/u/3371163?v=4?s=100" width="100px;" alt="Kerwin Bryant"/><br/><sub><b>Kerwin
+                    Bryant</b></sub></a><br/><a href="https://github.com/apache/hertzbeat/commits?author=kerwin612"
+                                                title="Code">💻</a> <a href="#design-kerwin612" title="Design">🎨</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/ShineDevelopment"><img
+                    src="https://avatars.githubusercontent.com/u/59306780?v=4?s=100" width="100px;" alt="daixianglong"/><br/><sub><b>daixianglong</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=ShineDevelopment"
+                    title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/mchgood"><img
+                    src="https://avatars.githubusercontent.com/u/38482005?v=4?s=100" width="100px;" alt="mchgood"/><br/><sub><b>mchgood</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=mchgood" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/pwallk"><img
+                    src="https://avatars.githubusercontent.com/u/69385076?v=4?s=100" width="100px;"
+                    alt="kangli"/><br/><sub><b>kangli</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=pwallk" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/cdphantom"><img
+                    src="https://avatars.githubusercontent.com/u/12674795?v=4?s=100" width="100px;"
+                    alt="cdphantom"/><br/><sub><b>cdphantom</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=cdphantom" title="Code">💻</a></td>
+                </tr>
+                <tr>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/asd108908382"><img
+                    src="https://avatars.githubusercontent.com/u/77717999?v=4?s=100" width="100px;"
+                    alt="jiawei.guo"/><br/><sub><b>jiawei.guo</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=asd108908382" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/QBH-insist"><img
+                    src="https://avatars.githubusercontent.com/u/39401478?v=4?s=100" width="100px;"
+                    alt="QBH-insist"/><br/><sub><b>QBH-insist</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=QBH-insist" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/jiangsh-ui"><img
+                    src="https://avatars.githubusercontent.com/u/86990361?v=4?s=100" width="100px;" alt="jiangsh"/><br/><sub><b>jiangsh</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=jiangsh-ui" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/keaifafafa"><img
+                    src="https://avatars.githubusercontent.com/u/83876361?v=4?s=100" width="100px;"
+                    alt="Keaifa"/><br/><sub><b>Keaifa</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=keaifafafa" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/loong95"><img
+                    src="https://avatars.githubusercontent.com/u/16333958?v=4?s=100" width="100px;"
+                    alt="Loong"/><br/><sub><b>Loong</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=loong95" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/ceekay47"><img
+                    src="https://avatars.githubusercontent.com/u/104664857?v=4?s=100" width="100px;"
+                    alt="Chandrakant Vankayalapati"/><br/><sub><b>Chandrakant Vankayalapati</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=ceekay47" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/MRgenial"><img
+                    src="https://avatars.githubusercontent.com/u/49973336?v=4?s=100" width="100px;"
+                    alt="b_mountain"/><br/><sub><b>b_mountain</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=MRgenial" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>

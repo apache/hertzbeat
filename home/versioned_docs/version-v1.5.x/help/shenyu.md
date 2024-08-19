@@ -5,27 +5,27 @@ sidebar_label: Apache ShenYu
 keywords: [open source monitoring tool, open source apache shenyu monitoring tool, monitoring apache shenyu metrics]
 ---
 
-> monitor ShenYu running status(JVM-related), include request response and other related metrics.           
+> monitor ShenYu running status(JVM-related), include request response and other related metrics.
 
-## Pre-monitoring operations    
+## Pre-monitoring operations
 
-Enable `metrics` plugin in ShenYu, expose it's prometheus metrics endpoint。  
+Enable `metrics` plugin in ShenYu, expose it's prometheus metrics endpoint。
 
-Refer [ShenYu Document](https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin)  
+Refer [ShenYu Document](https://shenyu.apache.org/docs/plugin-center/observability/metrics-plugin)
 
-Two Steps Mainly: 
+Two Steps Mainly:
 
-1. add metrics plugin dependency in gateway's pom.xml.  
+1. add metrics plugin dependency in gateway's pom.xml.
 
 ```xml
-        <dependency>
-            <groupId>org.apache.shenyu</groupId>
-            <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+<dependency>
+    <groupId>org.apache.shenyu</groupId>
+    <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
+    <version>${project.version}</version>
+</dependency>
 ```
 
-2. modify this config in shenyu gateway yaml. 
+2. modify this config in shenyu gateway yaml.
 
 ```yaml
 shenyu:
@@ -57,75 +57,74 @@ Finally, restart the access gateway metrics endpoint `http://ip:8090` to respond
 
 #### Index collection: shenyu_request_total
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|-------------------|
-| value | None | Collect all requests from ShenYu gateway |
+| Metric Name | Metric Unit |         Metric Help Description          |
+|-------------|-------------|------------------------------------------|
+| value       | None        | Collect all requests from ShenYu gateway |
 
 #### Metric collection: shenyu_request_throw_created
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|-------------------|
-| value | None | Collect the number of abnormal requests from ShenYu Gateway |
+| Metric Name | Metric Unit |                   Metric Help Description                   |
+|-------------|-------------|-------------------------------------------------------------|
+| value       | None        | Collect the number of abnormal requests from ShenYu Gateway |
 
 #### Metric collection: process_cpu_seconds_total
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|------------------|
-| value | none | total user and system CPU elapsed seconds |
+| Metric Name | Metric Unit |          Metric Help Description          |
+|-------------|-------------|-------------------------------------------|
+| value       | none        | total user and system CPU elapsed seconds |
 
 #### Metric collection: process_open_fds
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|-------------|
-| value | none | number of open file descriptors |
+| Metric Name | Metric Unit |     Metric Help Description     |
+|-------------|-------------|---------------------------------|
+| value       | none        | number of open file descriptors |
 
 #### Metric collection: process_max_fds
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|----------------|
-| value | none | maximum number of open file descriptors |
+| Metric Name | Metric Unit |         Metric Help Description         |
+|-------------|-------------|-----------------------------------------|
+| value       | none        | maximum number of open file descriptors |
 
 #### Metric collection: jvm_info
 
 | Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|-----------|
-| runtime | none | JVM version information |
-| vendor | none | JVM version information |
-| version | None | JVM version information |
+|-------------|-------------|-------------------------|
+| runtime     | none        | JVM version information |
+| vendor      | none        | JVM version information |
+| version     | None        | JVM version information |
 
 #### Metric collection: jvm_memory_bytes_used
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|------------------|
-| area | None | JVM memory area |
-| value | MB | used size of the given JVM memory region |
+| Metric Name | Metric Unit |         Metric Help Description          |
+|-------------|-------------|------------------------------------------|
+| area        | None        | JVM memory area                          |
+| value       | MB          | used size of the given JVM memory region |
 
 #### Metric collection: jvm_memory_pool_bytes_used
 
-| Metric Name | Metric Unit | Metric Help Description |
-|--------|------|-----------------|
-| pool | None | JVM memory pool |
-| value | MB | used size of the given JVM memory pool |
+| Metric Name | Metric Unit |        Metric Help Description         |
+|-------------|-------------|----------------------------------------|
+| pool        | None        | JVM memory pool                        |
+| value       | MB          | used size of the given JVM memory pool |
 
 #### Metric collection: jvm_memory_pool_bytes_committed
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|------------------|
-| pool | None | JVM memory pool |
-| value | MB | The committed size of the given JVM memory pool |
+| Metric Name | Metric Unit |             Metric Help Description             |
+|-------------|-------------|-------------------------------------------------|
+| pool        | None        | JVM memory pool                                 |
+| value       | MB          | The committed size of the given JVM memory pool |
 
 #### Metric collection: jvm_memory_pool_bytes_max
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------| ----------- |
-| pool | None | JVM memory pool |
-| value | MB | The maximum size of the memory pool for the given JVM |
+| Metric Name | Metric Unit |                Metric Help Description                |
+|-------------|-------------|-------------------------------------------------------|
+| pool        | None        | JVM memory pool                                       |
+| value       | MB          | The maximum size of the memory pool for the given JVM |
 
 #### Metric collection: jvm_threads_state
 
-| Metric Name | Metric Unit | Metric Help Description |
-| ----------- |------|-------------|
-| state | none | thread state |
-| value | None | The number of threads corresponding to the thread state |
-
+| Metric Name | Metric Unit |                 Metric Help Description                 |
+|-------------|-------------|---------------------------------------------------------|
+| state       | none        | thread state                                            |
+| value       | None        | The number of threads corresponding to the thread state |
 

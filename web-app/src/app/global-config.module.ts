@@ -8,7 +8,7 @@ import { throwIfAlreadyLoaded } from '@core';
 
 import { environment } from '@env/environment';
 
-const alainModules: any[] = [AlainThemeModule.forRoot(), DelonACLModule.forRoot()];
+const alainModules: any[] = [AlainThemeModule.forRoot(), DelonACLModule];
 import { NzConfig, NZ_CONFIG } from 'ng-zorro-antd/core/config';
 
 const ngZorroConfig: NzConfig = {};

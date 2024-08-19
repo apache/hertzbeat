@@ -21,12 +21,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.ListJoin;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -34,11 +29,7 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,10 +46,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping(path = "/api/monitors", produces = {APPLICATION_JSON_VALUE})
 public class MonitorsController {
-
-    private static final byte ALL_MONITOR_STATUS = 9;
-
-    private static final int TAG_LENGTH = 2;
 
     @Autowired
     private MonitorService monitorService;
@@ -77,69 +64,8 @@ public class MonitorsController {
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination ", example = "8") @RequestParam(defaultValue = "8") int pageSize,
             @Parameter(description = "Monitor tag ", example = "env:prod") @RequestParam(required = false) final String tag) {
-        Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> andList = new ArrayList<>();
-            if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
-                for (long id : ids) {
-                    inPredicate.value(id);
-                }
-                andList.add(inPredicate);
-            }
-            if (StringUtils.hasText(app)) {
-                Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
-                andList.add(predicateApp);
-            }
-            if (status != null && status >= 0 && status < ALL_MONITOR_STATUS) {
-                Predicate predicateStatus = criteriaBuilder.equal(root.get("status"), status);
-                andList.add(predicateStatus);
-            }
-
-            if (StringUtils.hasText(tag)) {
-                String[] tagArr = tag.split(":");
-                String tagName = tagArr[0];
-                ListJoin<Monitor, org.apache.hertzbeat.common.entity.manager.Tag> tagJoin = root
-                        .join(root.getModel()
-                                .getList("tags", org.apache.hertzbeat.common.entity.manager.Tag.class), JoinType.LEFT);
-                if (tagArr.length == TAG_LENGTH) {
-                    String tagValue = tagArr[1];
-                    andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagName));
-                    andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagValue));
-                } else {
-                    andList.add(criteriaBuilder.equal(tagJoin.get("name"), tag));
-                }
-            }
-            Predicate[] andPredicates = new Predicate[andList.size()];
-            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
-
-            List<Predicate> orList = new ArrayList<>();
-            if (StringUtils.hasText(host)) {
-                Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
-                orList.add(predicateHost);
-            }
-            if (StringUtils.hasText(name)) {
-                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
-                orList.add(predicateName);
-            }
-            Predicate[] orPredicates = new Predicate[orList.size()];
-            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
-
-            if (andPredicates.length == 0 && orPredicates.length == 0) {
-                return query.where().getRestriction();
-            } else if (andPredicates.length == 0) {
-                return orPredicate;
-            } else if (orPredicates.length == 0) {
-                return andPredicate;
-            } else {
-                return query.where(andPredicate, orPredicate).getRestriction();
-            }
-        };
-        // Pagination is a must
-        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<Monitor> monitorPage = monitorService.getMonitors(specification, pageRequest);
-        Message<Page<Monitor>> message = Message.success(monitorPage);
-        return ResponseEntity.ok(message);
+        Page<Monitor> monitorPage = monitorService.getMonitors(ids, app, name, host, status, sort, order, pageIndex, pageSize, tag);
+        return ResponseEntity.ok(Message.success(monitorPage));
     }
 
     @GetMapping(path = "/{app}")
@@ -147,10 +73,9 @@ public class MonitorsController {
             description = "Filter all acquired monitoring information lists of the specified monitoring type according to the query")
     public ResponseEntity<Message<List<Monitor>>> getAppMonitors(
             @Parameter(description = "en: Monitoring type", example = "linux") @PathVariable(required = false) final String app) {
-        List<Monitor> monitors = monitorService.getAppMonitors(app);
-        Message<List<Monitor>> message = Message.success(monitors);
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success(monitorService.getAppMonitors(app)));
     }
+
 
     @DeleteMapping
     @Operation(summary = "Delete monitoring items in batches according to the monitoring ID list",
@@ -161,8 +86,7 @@ public class MonitorsController {
         if (ids != null && !ids.isEmpty()) {
             monitorService.deleteMonitors(new HashSet<>(ids));
         }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success());
     }
 
     @DeleteMapping("manage")
@@ -174,8 +98,7 @@ public class MonitorsController {
         if (ids != null && !ids.isEmpty()) {
             monitorService.cancelManageMonitors(new HashSet<>(ids));
         }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success());
     }
 
     @GetMapping("manage")
@@ -187,8 +110,7 @@ public class MonitorsController {
         if (ids != null && !ids.isEmpty()) {
             monitorService.enableManageMonitors(new HashSet<>(ids));
         }
-        Message<Void> message = Message.success();
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success());
     }
 
     @GetMapping("/export")

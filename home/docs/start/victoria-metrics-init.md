@@ -1,7 +1,7 @@
 ---
 id: victoria-metrics-init
 title: Use Time Series Database VictoriaMetrics to Store Metrics Data (Recommended)
-sidebar_label: Use VictoriaMetrics Store Metrics(Recommended) 
+sidebar_label: Metrics Store VictoriaMetrics (Recommended)
 ---
 
 Apache HertzBeat (incubating)'s historical data storage relies on the time series database, you can choose one of them to install and initialize, or not to install (note ⚠️ but it is strongly recommended to configure in the production environment)
@@ -15,17 +15,19 @@ VictoriaMetrics is a fast, cost-effective and scalable monitoring solution and t
 
 > If you already have an VictoriaMetrics environment, you can skip directly to the YML configuration step.
 
-### Install VictoriaMetrics via Docker   
+### Install VictoriaMetrics via Docker
+
 > Refer to the official website [installation tutorial](https://docs.victoriametrics.com/Quick-Start.html#how-to-install)
-1. Download and install Docker environment   
-   Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
-   After the installation you can check if the Docker version normally output at the terminal.
-   ```
-   $ docker -v
-   Docker version 20.10.12, build e91ed57
-   ```
-   
-2. Install VictoriaMetrics via Docker    
+> 1. Download and install Docker environment   
+> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
+> After the installation you can check if the Docker version normally output at the terminal.
+>
+> ```
+> $ docker -v
+> Docker version 20.10.12, build e91ed57
+> ```
+
+2. Install VictoriaMetrics via Docker
 
 ```shell
 $ docker run -d -p 8428:8428 \
@@ -34,8 +36,8 @@ $ docker run -d -p 8428:8428 \
     victoriametrics/victoria-metrics:v1.95.1
 ```
 
-   `-v $(pwd)/victoria-metrics-data:/victoria-metrics-data` is local persistent mount of VictoriaMetrics data directory
-   use```$ docker ps``` to check if the database started successfully
+`-v $(pwd)/victoria-metrics-data:/victoria-metrics-data` is local persistent mount of VictoriaMetrics data directory
+use```$ docker ps``` to check if the database started successfully
 
 3. Configure the database connection in hertzbeat `application.yml`configuration file
 
@@ -61,5 +63,7 @@ warehouse:
 
 ### FAQ
 
-1. Do both the time series databases need to be configured? Can they both be used?   
+1. Do both the time series databases need to be configured? Can they both be used?
+
 > You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which can affects the historical chart data.
+

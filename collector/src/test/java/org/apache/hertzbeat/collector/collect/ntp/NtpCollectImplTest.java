@@ -62,7 +62,6 @@ class NtpCollectImplTest {
         packet.setReceiveTimeStamp(new TimeStamp(2000));
         packet.setTransmitTime(new TimeStamp(1000));
         TimeInfo timeInfo = new TimeInfo(packet, 1000, false);
-        ;
 
         MockedConstruction<NTPUDPClient> mocked =
                 Mockito.mockConstruction(NTPUDPClient.class, (client, context) -> {

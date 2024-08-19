@@ -24,7 +24,7 @@ Refer: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#rem
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -58,16 +58,15 @@ Refer: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#rem
 
 #### Metrics Set：class_loading
 
-| Metric name           | Metric unit | Metric help description  |
+|      Metric name      | Metric unit | Metric help description  |
 |-----------------------|-------------|--------------------------|
 | LoadedClassCount      |             | Loaded Class Count       |
 | TotalLoadedClassCount |             | Total Loaded Class Count |
 | UnloadedClassCount    |             | Unloaded Class Count     |
 
-
 #### Metrics Set：thread
 
-| Metric name             | Metric unit | Metric help description    |
+|       Metric name       | Metric unit |  Metric help description   |
 |-------------------------|-------------|----------------------------|
 | TotalStartedThreadCount |             | Total Started Thread Count |
 | ThreadCount             |             | Thread Count               |
@@ -75,5 +74,4 @@ Refer: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#rem
 | DaemonThreadCount       |             | Daemon Thread Count        |
 | CurrentThreadUserTime   | ms          | Current Thread User Time   |
 | CurrentThreadCpuTime    | ms          | Current Thread Cpu Time    |
-
 

@@ -22,6 +22,7 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
    "identifier": "admin"
 }
 ```
+
 **The response structure data is as follows**:
 
 ```json
@@ -40,10 +41,8 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
-
-
+>
 > Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
-
 
 1. The custom monitoring type needs to add a new configuration monitoring template yml. We directly reuse the `hertzbeat` monitoring type in Tutorial 1 and modify it based on it
 
@@ -214,14 +213,11 @@ metrics:
 
 ![](/img/docs/advanced/extend-http-example-5.png)
 
-
 ** After the addition is successful, we can see the `token`, `refreshToken` metric data we collected on the details page. **
 
 ![](/img/docs/advanced/extend-http-example-6.png)
 
 ![](/img/docs/advanced/extend-http-example-7.png)
-
-
 
 ### Use `token` as a variable parameter to collect and use the following metricss
 
@@ -334,8 +330,7 @@ metrics:
        # Response data analysis method: default-system rules, jsonPath-jsonPath script, website-website usability metric monitoring
        parseType: jsonPath
        parseScript: '$.data'
-
-
+---
    - name: summary
      # The smaller the index group scheduling priority (0-127), the higher the priority, and the index group with low priority will not be scheduled until the collection of index groups with high priority is completed, and the index groups with the same priority will be scheduled and collected in parallel
      # The metrics with priority 0 is the availability metrics, that is, it will be scheduled first, and other metricss will continue to be scheduled if the collection is successful, and the scheduling will be interrupted if the collection fails
@@ -385,13 +380,13 @@ metrics:
 
 > Next, we can set the threshold normally. After the alarm is triggered, we can view it in the alarm center, add a new recipient, set alarm notification, etc. Have Fun!!!
 
-----
+---
 
 #### over!
 
 This is the end of the practice of custom monitoring of the HTTP protocol. The HTTP protocol also has other parameters such as headers and params. We can define it like postman, and the playability is also very high!
 
-If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.  
+If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.
 
 **github: https://github.com/apache/hertzbeat**
 
