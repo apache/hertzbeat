@@ -73,6 +73,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         connectionCommonCache = new ConnectionCommonCache<>();
     }
 
+    @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException{
         Assert.noNullElements(new Object[] {metrics, metrics.getRedis()}, "Redis collect must has redis params");
         RedisProtocol redisProtocol = metrics.getRedis();
@@ -315,9 +316,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .map(this::removeCr)
                 .map(r -> r.split(SignConstants.DOUBLE_MARK))
                 .filter(t -> t.length > 1)
-                .forEach(it -> {
-                    result.put(it[0], it[1]);
-                });
+                .forEach(it -> result.put(it[0], it[1]));
         // fix https://github.com/apache/hertzbeat/pull/913
         if (result.size() < fieldTotalSize) {
             for (Metrics.Field field : metrics.getFields()) {

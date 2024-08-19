@@ -121,6 +121,11 @@ public class NoticeReceiver {
             example = "779294123", accessMode = READ_WRITE)
     private String tgUserId;
 
+    @Schema(title = "DingTalk,FeiShu,WeWork user id: The notification method is valid for DingTalk,FeiShu,WeWork Bot",
+            description = "DingTalk,FeiShu,WeWork user id: The notification method is valid for DingTalk,FeiShu,WeWork Bot",
+            example = "779294123", accessMode = READ_WRITE)
+    private String userId;
+
     @Schema(title = "URL address: The notification method is valid for Slack",
             description = "URL address: The notification method is valid for Slack",
             example = "https://hooks.slack.com/services/XXXX/XXXX/XXXX", accessMode = READ_WRITE)
@@ -142,6 +147,16 @@ public class NoticeReceiver {
             description = "Enterprise weChat secret: The notification method is valid for Enterprise WeChat app message",
             example = "oUydwn92ey0lnuY02MixNa57eNK-20dJn5NEOG-u2uE", accessMode = READ_WRITE)
     private String appSecret;
+
+    @Schema(title = "Enterprise weChat party id: The notification method is valid for Enterprise WeChat app message",
+            description = "Enterprise weChat party id: The notification method is valid for Enterprise WeChat app message",
+            example = "779294123", accessMode = READ_WRITE)
+    private String partyId;
+
+    @Schema(title = "Enterprise weChat tag id: The notification method is valid for Enterprise WeChat app message",
+            description = "Enterprise weChat tag id: The notification method is valid for Enterprise WeChat app message",
+            example = "779294123", accessMode = READ_WRITE)
+    private String tagId;
 
     @Schema(title = "Discord channel id: The notification method is valid for Discord",
             description = "Discord channel id: The notification method is valid for Discord",

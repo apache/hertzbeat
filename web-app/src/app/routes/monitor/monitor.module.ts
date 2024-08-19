@@ -36,6 +36,7 @@ import { MonitorDataChartComponent } from './monitor-data-chart/monitor-data-cha
 import { MonitorDataTableComponent } from './monitor-data-table/monitor-data-table.component';
 import { MonitorDetailComponent } from './monitor-detail/monitor-detail.component';
 import { MonitorEditComponent } from './monitor-edit/monitor-edit.component';
+import { MonitorFormComponent } from './monitor-form/monitor-form.component';
 import { MonitorListComponent } from './monitor-list/monitor-list.component';
 import { MonitorNewComponent } from './monitor-new/monitor-new.component';
 import { MonitorRoutingModule } from './monitor-routing.module';
@@ -43,6 +44,7 @@ import { MonitorRoutingModule } from './monitor-routing.module';
 const COMPONENTS: Array<Type<void>> = [
   MonitorNewComponent,
   MonitorEditComponent,
+  MonitorFormComponent,
   MonitorListComponent,
   MonitorDetailComponent,
   MonitorDataTableComponent,

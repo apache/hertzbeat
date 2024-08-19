@@ -48,6 +48,7 @@ management:
     enabled-by-default: on
 
 sureness:
+  container: jakarta_servlet
   auths:
     - digest
     - basic
@@ -57,6 +58,7 @@ sureness:
              LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
              8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
+
 
 ---
 spring:
@@ -72,9 +74,22 @@ spring:
     hikari:
       max-lifetime: 120000
   jpa:
+    show-sql: false
+    database-platform: org.eclipse.persistence.platform.database.MySQLPlatform
     database: mysql
-    hibernate:
-      ddl-auto: update
+    properties:
+      eclipselink:
+        logging:
+          level: SEVERE
+  
+  flyway:
+    enabled: true
+    clean-disabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    locations:
+      - classpath:db/migration/{vendor}
+  
   # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
   mail:
@@ -96,8 +111,8 @@ spring:
 
 warehouse:
   store:
-# store history metrics data, enable only one below
-# 存储历史数据方式, 下方只能enabled启用一种方式
+    # store history metrics data, enable only one below
+    # 存储历史数据方式, 下方只能enabled启用一种方式
     jpa:
       enabled: false
       expire-time: 1h
@@ -107,8 +122,6 @@ warehouse:
       url: jdbc:TAOS-RS://tdengine:6041/hertzbeat
       username: root
       password: taosdata
-# store real-time metrics data, enable only one below
-# 存储实时数据方式, 下方只能enabled启用一种方式
     memory:
       enabled: true
       init-size: 16
@@ -122,13 +135,27 @@ common:
   queue:
     # memory or kafka
     type: memory
-    # properties when queue type is kafka
-    kafka:
-      servers: 127.0.0.1:9092
-      metrics-data-topic: async-metrics-data
-      alerts-data-topic: async-alerts-data
+
+alerter:
+  # custom console url
+  console-url: https://console.tancloud.io
+  # we work
+  we-work-webhook-url: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=
+  # ding ding talk
+  ding-talk-webhook-url: https://oapi.dingtalk.com/robot/send?access_token=
+  # fei shu fly book
+  fly-book-webhook-url: https://open.feishu.cn/open-apis/bot/v2/hook/
+  # telegram
+  telegram-webhook-url: https://api.telegram.org/bot%s/sendMessage
+  # discord
+  discord-webhook-url: https://discord.com/api/v9/channels/%s/messages
+  # server酱
+  server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
+  # gotify
+  gotify-webhook-url: http://127.0.0.1/message?token=%s
 
 scheduler:
   server:
     enabled: true
     port: 1158
+

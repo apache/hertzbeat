@@ -61,22 +61,21 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   showBasic = true;
 
   ngOnInit(): void {
-    this.loadRealTimeMetric();
     this.countDownTime = this.deadline;
-    this.interval$ = setInterval(this.countDown.bind(this), 1000);
+    this.loadRealTimeMetric();
   }
 
   loadMetricChart() {
     this.isSpinning = true;
     this.showBasic = false;
     this.whichTabIndex = 1;
-    // 检测历史数据服务是否可用
+    // detect if historical data service is available
     const detectStatus$ = this.monitorSvc
       .getWarehouseStorageServerStatus()
       .pipe(
         switchMap((message: Message<any>) => {
           if (message.code == 0) {
-            // 查询过滤出此监控下可计算聚合的数字指标
+            // Filter the numerical metrics that can be aggregated under this monitor
             if (this.app == 'push') {
               return this.appDefineSvc.getPushDefine(this.monitorId);
             } else if (this.app == 'prometheus') {
@@ -85,7 +84,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
               return this.appDefineSvc.getAppDefine(this.app);
             }
           } else {
-            // 不提供历史图表服务
+            // historical data service is unavailable
             return throwError(message.msg);
           }
         })
@@ -144,7 +143,6 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
             this.monitor = message.data.monitor;
             this.app = this.monitor?.app;
             let params: Param[] = message.data.params;
-            // 取出端口信息
             params.forEach(param => {
               if (param.field === 'port') {
                 this.port = Number(param.paramValue);
@@ -157,6 +155,9 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           } else {
             console.warn(message.msg);
           }
+          if (this.interval$ === undefined) {
+            this.interval$ = setInterval(this.countDown.bind(this), 1000);
+          }
           this.isSpinning = false;
         },
         error => {
@@ -164,10 +165,6 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
           console.error(error.msg);
         }
       );
-  }
-
-  showBasicStatus(show: boolean) {
-    this.showBasic = show;
   }
 
   countDown() {

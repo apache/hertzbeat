@@ -54,8 +54,8 @@ export class MonitorService {
   public deleteMonitors(monitorIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
-      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
-      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      // HttpParams is unmodifiable, so we need to save the return value of append/set
+      // Method append can append same key, set will replace the previous value
       httpParams = httpParams.append('ids', monitorId);
     });
     const options = { params: httpParams };
@@ -65,8 +65,8 @@ export class MonitorService {
   public exportMonitors(monitorIds: Set<number>, type: string): Observable<HttpResponse<Blob>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
-      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
-      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      // HttpParams is unmodifiable, so we need to save the return value of append/set
+      // Method append can append same key, set will replace the previous value
       httpParams = httpParams.append('ids', monitorId);
     });
     httpParams = httpParams.append('type', type);
@@ -80,8 +80,8 @@ export class MonitorService {
   public cancelManageMonitors(monitorIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     monitorIds.forEach(monitorId => {
-      // 注意HttpParams是不可变对象 需要保存append后返回的对象为最新对象
-      // append方法可以叠加同一key, set方法会把key之前的值覆盖只留一个key-value
+      // HttpParams is unmodifiable, so we need to save the return value of append/set
+      // Method append can append same key, set will replace the previous value
       httpParams = httpParams.append('ids', monitorId);
       httpParams = httpParams.append('type', 'JSON');
     });
@@ -120,7 +120,7 @@ export class MonitorService {
   ): Observable<Message<Page<Monitor>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
-    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+    // HttpParams is unmodifiable, so we need to save the return value of append/set
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
       pageIndex: pageIndex,
@@ -154,7 +154,7 @@ export class MonitorService {
   ): Observable<Message<Page<Monitor>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
-    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+    // HttpParams is unmodifiable, so we need to save the return value of append/set
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
       pageIndex: pageIndex,

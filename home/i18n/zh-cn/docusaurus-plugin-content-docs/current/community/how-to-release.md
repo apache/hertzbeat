@@ -12,7 +12,7 @@ sidebar_position: 4
 
 - JDK 17
 - Node18 Yarn
-- Apache Maven 3.x 
+- Apache Maven 3.x
 - GnuPG 2.x
 - Git
 - SVN (Apache使用svn来托管项目发布)
@@ -22,11 +22,11 @@ sidebar_position: 4
 ## 2. 准备发布
 
 > 首先整理帐户信息以更好地了解操作过程，稍后会多次使用。
-- apache id: `muchunjin (APACHE LDAP 用户名)`
-- apache passphrase: `APACHE LDAP 密钥`
-- apache email: `muchunjin@apache.org`
-- gpg real name: `muchunjin (任何名称均可用, 在这里我将其设置为与apache id相同的名称)`
-- gpg key passphrase: `创建gpg密钥时设置的密码，你需要记住此密码`
+> - apache id: `muchunjin (APACHE LDAP 用户名)`
+> - apache passphrase: `APACHE LDAP 密钥`
+> - apache email: `muchunjin@apache.org`
+> - gpg real name: `muchunjin (任何名称均可用, 在这里我将其设置为与apache id相同的名称)`
+> - gpg key passphrase: `创建gpg密钥时设置的密码，你需要记住此密码`
 
 ### 2.1 生成密钥
 
@@ -130,7 +130,6 @@ gpg:              unchanged: 1
 
 或者进入 https://keyserver.ubuntu.com/ 网址，输入密钥的名称，然后点击'Search key' 按钮，查看是否有对应名称的密钥。
 
-
 #### 2.4 将 gpg 公钥添加到 Apache SVN 项目仓库的 KEYS 文件中
 
 - Apache HertzBeat Dev 分支 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
@@ -230,9 +229,9 @@ release-1.6.0-rc1
 
 #### 3.5 对二进制和源码包进行签名
 
-将上步骤生成的三个文件包放到`dist`目录下(若无则新建目录)，然后对文件包进行签名和SHA512校验和生成。   
+将上步骤生成的三个文件包放到`dist`目录下(若无则新建目录)，然后对文件包进行签名和SHA512校验和生成。
 
-> 其中 `gpg -u 33545C76` 的 `33545C76` 是你的 GPG 密钥 ID，可以通过 `gpg --keyid-format SHORT --list-keys` 查看。   
+> 其中 `gpg -u 33545C76` 的 `33545C76` 是你的 GPG 密钥 ID，可以通过 `gpg --keyid-format SHORT --list-keys` 查看。
 
 ```shell
 cd dist
@@ -341,7 +340,7 @@ svn commit -m "release for HertzBeat 1.6.0-RC1"
 
 > `Send to`: dev@hertzbeat.apache.org <br />
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
-> `Body`: 
+> `Body`:
 
 ```
 Hello HertzBeat Community:
@@ -404,8 +403,7 @@ Dear HertzBeat community,
 
 Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
 I'm happy to announce the vote has passed:
-
-
+---
 4 binding +1, from:
 
 - cc
@@ -413,23 +411,19 @@ I'm happy to announce the vote has passed:
 1 non-binding +1, from:
 
 - Roc Marshal
-
-
+---
 no 0 or -1 votes.
 
 Vote thread:
 https://lists.apache.org/thread/t01b2lbtqzyt7j4dsbdp5qjc3gngjsdq
-
-
+---
 Thank you to everyone who helped us to verify and vote for this release. We will move to the ASF Incubator voting shortly.
-
-
+---
 Best,
 ChunJin Mu
 ```
 
 邮件内容中的一项是`Vote thread`，在 https://lists.apache.org/list.html?dev@hertzbeat.apache.org 查看获取
-
 
 #### 3.2 发送孵化社区投票邮件
 
@@ -476,17 +470,14 @@ More detailed checklist please refer:
 Steps to validate the release， Please refer to:
 • https://www.apache.org/info/verification.html
 • https://hertzbeat.apache.org/docs/community/how_to_verify_release
-
-
+---
 How to Build:
 https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
-
-
+---
 Thanks,
 
 On behalf of Apache HertzBeat (incubating) community
-
-
+---
 Best,
 ChunJin Mu
 ```
@@ -562,11 +553,14 @@ https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugi
 
 然后输入发版标题和描述
 
-- 发版标题: 
+- 发版标题:
+
 ```
 v1.6.0
 ```
+
 - 描述:
+
 ```
 xxx
 release note: xxx
@@ -580,25 +574,30 @@ release note: xxx
 
 > `Send to`: general@incubator.apache.org <br />
 > `cc`: dev@hertzbeat.apache.org <br />
-> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 1.6.0 <br />
+> `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
 ```
-Hi Incubator Community,
+Hi Community,
 
 We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
-Once again I would like to express my thanks to your help.
+Thanks again for your help. 
 
-Apache HertzBeat(https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-Download Links: https://hertzbeat.apache.org/download/
-Release Notes: https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+Download Link: 
+https://hertzbeat.apache.org/docs/download/
+
+Release Note: 
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+
+Website: 
+https://hertzbeat.apache.org/
 
 HertzBeat Resources:
 - Issue: https://github.com/apache/hertzbeat/issues
 - Mailing list: dev@hertzbeat.apache.org
-
-
+---
 Apache HertzBeat Team
 
 Best,
@@ -607,6 +606,6 @@ ChunJin Mu
 
 该版本的发布顺利结束。
 
-----
+---
 
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
+This doc refer from [Apache StreamPark](https://streampark.apache.org/)

@@ -5,20 +5,20 @@ sidebar_position: 3
 ---
 
 <!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
 
-       https://www.apache.org/licenses/LICENSE-2.0
-    
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 
 ## 成为 Apache HertzBeat™ 的 PMC 成员
@@ -45,6 +45,7 @@ PMC 成员的候选人应该持续参与并为 HertzBeat 做出大量的贡献�
 - +3 个月的高度活动和参与。
 
 ### 贡献的质量
+
 - 对项目有深入的理解。
 - 经过充分测试、良好设计、遵循 Apache HertzBeat 的编码标准，及简单的修复补丁。
 - 井井有条的面向用户的详细文档。
@@ -56,3 +57,4 @@ PMC 成员的候选人应该持续参与并为 HertzBeat 做出大量的贡献�
 - 对于拉取请求审查保持积极、有礼貌与尊重。
 - 即使存在分歧，也要以专业和外交的态度参与技术路线图的讨论。
 - 通过撰写文章或举办活动来推广项目。
+

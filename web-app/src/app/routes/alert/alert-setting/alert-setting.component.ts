@@ -17,9 +17,11 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
+import { Rule, RuleSet, QueryBuilderConfig, QueryBuilderClassNames } from '@kerwin612/ngx-query-builder';
 import { NzCascaderFilter } from 'ng-zorro-antd/cascader';
 import { ModalButtonOptions, NzModalService } from 'ng-zorro-antd/modal';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
@@ -33,19 +35,16 @@ import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
-import { TagItem } from '../../../pojo/NoticeRule';
-import { Tag } from '../../../pojo/Tag';
 import { AlertDefineService } from '../../../service/alert-define.service';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
-import { TagService } from '../../../service/tag.service';
 
 const AVAILABILITY = 'availability';
 
 @Component({
   selector: 'app-alert-setting',
   templateUrl: './alert-setting.component.html',
-  styles: []
+  styleUrls: ['./alert-setting.component.less']
 })
 export class AlertSettingComponent implements OnInit {
   constructor(
@@ -54,9 +53,12 @@ export class AlertSettingComponent implements OnInit {
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
     private alertDefineSvc: AlertDefineService,
-    private tagSvc: TagService,
-    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
-  ) {}
+    @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
+    private formBuilder: FormBuilder
+  ) {
+    this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
+  }
+  @ViewChild('defineForm', { static: false }) defineForm!: NgForm;
   search!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -72,9 +74,34 @@ export class AlertSettingComponent implements OnInit {
   switchExportTypeModalFooter: ModalButtonOptions[] = [
     { label: this.i18nSvc.fanyi('common.button.cancel'), type: 'default', onClick: () => (this.isSwitchExportTypeModalVisible = false) }
   ];
+  qbClassNames: QueryBuilderClassNames = {
+    row: 'row',
+    tree: 'tree',
+    rule: 'br-4 rule',
+    ruleSet: 'br-4 ruleset',
+    invalidRuleSet: 'br-4 ruleset-invalid'
+  };
+  qbConfig: QueryBuilderConfig = {
+    levelLimit: 3,
+    rulesLimit: 5,
+    fields: {},
+    getInputType: () => 'custom'
+  };
+  qbData: RuleSet = {
+    condition: 'and',
+    rules: []
+  };
+  qbValidator = (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value || !control.value.rules || control.value.rules.length === 0) {
+      return { required: true };
+    }
+    return null;
+  };
+  qbFormCtrl: FormControl;
+
   ngOnInit(): void {
     this.loadAlertDefineTable();
-    // 查询监控层级
+    // query monitoring hierarchy
     const getHierarchy$ = this.appDefineSvc
       .getAppHierarchy(this.i18nSvc.defaultLang)
       .pipe(
@@ -137,6 +164,7 @@ export class AlertSettingComponent implements OnInit {
   onNewAlertDefine() {
     this.define = new AlertDefine();
     this.define.tags = [];
+    this.resetQbDataDefault();
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -147,21 +175,6 @@ export class AlertSettingComponent implements OnInit {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
       return;
     }
-    this.editAlertDefine(alertDefineId);
-  }
-
-  onEditAlertDefine() {
-    // 编辑时只能选中一个
-    if (this.checkedDefineIds == null || this.checkedDefineIds.size === 0) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-edit'), '');
-      return;
-    }
-    if (this.checkedDefineIds.size > 1) {
-      this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.one-select-edit'), '');
-      return;
-    }
-    let alertDefineId = 0;
-    this.checkedDefineIds.forEach(item => (alertDefineId = item));
     this.editAlertDefine(alertDefineId);
   }
 
@@ -193,8 +206,9 @@ export class AlertSettingComponent implements OnInit {
   }
 
   editAlertDefine(alertDefineId: number) {
+    if (this.isLoadingEdit !== -1) return;
+    this.isLoadingEdit = alertDefineId;
     this.isManageModalAdd = false;
-    this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
     // 查询告警定义信息
     const getDefine$ = this.alertDefineSvc
@@ -202,6 +216,8 @@ export class AlertSettingComponent implements OnInit {
       .pipe(
         finalize(() => {
           getDefine$.unsubscribe();
+          this.isLoadingEdit = -1;
+          this.isManageModalVisible = true;
         })
       )
       .subscribe(
@@ -359,7 +375,7 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -376,9 +392,9 @@ export class AlertSettingComponent implements OnInit {
     }
   }
   /**
-   * 分页回调
+   * Paging callback
    *
-   * @param params 页码信息
+   * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
     const { pageSize, pageIndex, sort, filter } = params;
@@ -386,24 +402,198 @@ export class AlertSettingComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadAlertDefineTable();
   }
-  // end: 列表多选逻辑
+  // end: List multiple choice paging
 
-  // start 新增修改告警定义model
+  // start -- new or update alert definition model
+  isLoadingEdit = -1;
   isManageModalVisible = false;
   isManageModalOkLoading = false;
   isManageModalAdd = true;
   define: AlertDefine = new AlertDefine();
   cascadeValues: string[] = [];
   currentMetrics: any[] = [];
-  alertRules: any[] = [{}];
   isExpr = false;
+
+  private getOperatorsByType(type: number): string[] {
+    if (type === 0 || type === 3) {
+      return ['>', '<', '==', '!=', '<=', '>=', 'exists', '!exists'];
+    } else if (type === 1) {
+      return ['equals', '!equals', 'contains', '!contains', 'matches', '!matches', 'exists', '!exists'];
+    }
+    return [];
+  }
+
+  private rule2expr(rule: Rule): string {
+    if (rule.operator == 'exists' || rule.operator == '!exists') {
+      return `${rule.operator}(${rule.field})`;
+    }
+    const fieldObject = this.qbConfig.fields[rule.field];
+    if (parseInt(fieldObject.type) === 1) {
+      return `${rule.operator}(${rule.field},"${rule.value}")`;
+    }
+    return `(${rule.field} ${rule.operator} ${rule.value})`;
+  }
+
+  private ruleset2expr(ruleset: RuleSet): string {
+    if (ruleset.rules.length === 0) {
+      return '';
+    }
+    return `(${ruleset.rules
+      .map((rule: any) => (!!(rule as RuleSet).rules ? this.ruleset2expr(rule as RuleSet) : this.rule2expr(rule as Rule)))
+      .filter((s: any) => !!s)
+      .join(` ${ruleset.condition} `)})`;
+  }
+
+  private parseRule1(str: string): any {
+    if (str.startsWith('(')) {
+      let start = str.indexOf('(');
+      let operatorPrefix = str.indexOf(' ');
+      let fieldString = str.substring(start + 1, operatorPrefix);
+      if (fieldString.indexOf('(') === -1 && fieldString.indexOf(')') === -1 && fieldString.indexOf('!') === -1) {
+        let operatorSuffix = fieldString.length + 2 + str.substring(operatorPrefix + 1).indexOf(' ');
+        return {
+          rst: {
+            field: fieldString.trim(),
+            operator: str.substring(operatorPrefix, operatorSuffix).trim(),
+            value: str.substring(operatorSuffix + 1, str.indexOf(')')).trim()
+          },
+          pos: str.indexOf(')') + 1
+        };
+      }
+    }
+    return {
+      pos: 0
+    };
+  }
+
+  private parseRule2(str: string): any {
+    if (str.startsWith('exists') || str.startsWith('!exists')) {
+      let start = str.indexOf('(');
+      let end = str.indexOf(')');
+      return {
+        rst: {
+          field: str.substring(start + 1, end).trim(),
+          operator: str.substring(0, start).trim()
+        },
+        pos: end + 1
+      };
+    }
+    return {
+      pos: 0
+    };
+  }
+
+  private parseRule3(str: string): any {
+    if (
+      str.startsWith('matches') ||
+      str.startsWith('!matches') ||
+      str.startsWith('contains') ||
+      str.startsWith('!contains') ||
+      str.startsWith('equals') ||
+      str.startsWith('!equals')
+    ) {
+      let start = str.indexOf('(');
+      let end = str.indexOf(')');
+      let comma = str.indexOf(',');
+      return {
+        rst: {
+          field: str.substring(start + 1, comma).trim(),
+          operator: str.substring(0, start).trim(),
+          value: str.substring(comma + 2, end - 1).trim() // remove double quotes
+        },
+        pos: end + 1
+      };
+    }
+    return {
+      pos: 0
+    };
+  }
+
+  private filterEmptyRules(ruleset: RuleSet): RuleSet | Rule {
+    if (ruleset.rules.length === 1 && (ruleset.rules[0] as RuleSet).rules) {
+      return ruleset.rules[0];
+    } else {
+      return ruleset;
+    }
+  }
+
+  private expr2ruleset(expr: string): RuleSet {
+    let ruleset = { rules: [] as any[], condition: 'and' };
+    let current = ruleset;
+    let stack: any[] = [];
+    for (let i = 0, j = expr.length; i < j; ) {
+      if (expr[i] === '(' && this.parseRule1(expr.substring(i)).pos === 0) {
+        stack.push(current);
+        current = { rules: [] as any[], condition: 'and' };
+        i++;
+      } else if (expr[i] === 'a' && expr[i + 1] === 'n' && expr[i + 2] === 'd') {
+        current.condition = 'and';
+        i += 3;
+      } else if (expr[i] === 'o' && expr[i + 1] === 'r') {
+        current.condition = 'or';
+        i += 2;
+      } else if (expr[i] === ')') {
+        let parent = stack.pop();
+        parent.rules.push(this.filterEmptyRules(current));
+        current = parent;
+        i++;
+      } else {
+        let rule = this.parseRule1(expr.substring(i));
+        if (rule.pos) {
+          current.rules.push(rule.rst);
+          i += rule.pos;
+          continue;
+        }
+        rule = this.parseRule2(expr.substring(i));
+        if (rule.pos) {
+          current.rules.push(rule.rst);
+          i += rule.pos;
+          continue;
+        }
+        rule = this.parseRule3(expr.substring(i));
+        if (rule.pos) {
+          current.rules.push(rule.rst);
+          i += rule.pos;
+          continue;
+        }
+        i++;
+      }
+    }
+    return this.filterEmptyRules(ruleset) as RuleSet;
+  }
+
+  getOperatorLabelByType = (operator: string) => {
+    switch (operator) {
+      case 'equals':
+        return 'alert.setting.rule.operator.str-equals';
+      case '!equals':
+        return 'alert.setting.rule.operator.str-no-equals';
+      case 'contains':
+        return 'alert.setting.rule.operator.str-contains';
+      case '!contains':
+        return 'alert.setting.rule.operator.str-no-contains';
+      case 'matches':
+        return 'alert.setting.rule.operator.str-matches';
+      case '!matches':
+        return 'alert.setting.rule.operator.str-no-matches';
+      case 'exists':
+        return 'alert.setting.rule.operator.exists';
+      case '!exists':
+        return 'alert.setting.rule.operator.no-exists';
+      default:
+        return operator;
+    }
+  };
+
   caseInsensitiveFilter: NzCascaderFilter = (i, p) => {
     return p.some(o => {
       const label = o.label;
       return !!label && label.toLowerCase().indexOf(i.toLowerCase()) !== -1;
     });
   };
+
   cascadeOnChange(values: string[]): void {
+    this.resetQbDataDefault();
     if (values == null || values.length != 3) {
       return;
     }
@@ -413,14 +603,19 @@ export class AlertSettingComponent implements OnInit {
           if (metrics.value == values[1]) {
             this.currentMetrics = [];
             if (metrics.children) {
+              let fields: any = {};
               metrics.children.forEach(item => {
                 this.currentMetrics.push(item);
+                fields[item.value] = { name: item.label, type: item.type, unit: item.unit, operators: this.getOperatorsByType(item.type) };
               });
-              this.currentMetrics.push({
+              let fixedItem = {
                 value: 'system_value_row_count',
                 type: 0,
                 label: this.i18nSvc.fanyi('alert.setting.target.system_value_row_count')
-              });
+              };
+              this.currentMetrics.push(fixedItem);
+              fields[fixedItem.value] = { name: fixedItem.label, type: fixedItem.type, operators: this.getOperatorsByType(fixedItem.type) };
+              this.qbConfig = { ...this.qbConfig, fields };
             }
           }
         });
@@ -429,47 +624,12 @@ export class AlertSettingComponent implements OnInit {
   }
 
   switchAlertRuleShow() {
-    this.isExpr = !this.isExpr;
     if (this.isExpr) {
-      let expr = this.calculateAlertRuleExpr();
+      let expr = this.ruleset2expr(this.qbData);
       if (expr != '') {
         this.define.expr = expr;
       }
     }
-  }
-
-  onAddNewAlertRule() {
-    this.alertRules.push({});
-  }
-
-  onRemoveAlertRule(index: number) {
-    this.alertRules.splice(index, 1);
-  }
-
-  calculateAlertRuleExpr() {
-    let rules = this.alertRules.filter(rule => rule.metric != undefined && rule.operator != undefined);
-    let index = 0;
-    let expr = '';
-    rules.forEach(rule => {
-      let ruleStr = '';
-      if (rule.operator == 'exists' || rule.operator == '!exists') {
-        ruleStr = `${rule.operator}(${rule.metric.value})`;
-      } else {
-        if (rule.metric.type === 0 || rule.metric.type === 3) {
-          ruleStr = `${rule.metric.value} ${rule.operator} ${rule.value} `;
-        } else if (rule.metric.type === 1) {
-          ruleStr = `${rule.operator}(${rule.metric.value},"${rule.value}")`;
-        }
-      }
-      if (ruleStr != '') {
-        expr = expr + ruleStr;
-      }
-      if (index != rules.length - 1) {
-        expr = `${expr} && `;
-      }
-      index++;
-    });
-    return expr;
   }
 
   renderAlertRuleExpr(expr: string) {
@@ -480,77 +640,59 @@ export class AlertSettingComponent implements OnInit {
       this.isExpr = true;
       return;
     }
-    this.alertRules = [];
     try {
-      let exprArr: string[] = expr.split('&&');
-      for (let index in exprArr) {
-        let exprStr = exprArr[index].trim();
-        const twoParamExpressionArr = ['equals', '!equals', 'contains', '!contains', 'matches', '!matches'];
-        const oneParamExpressionArr = ['exists', '!exists'];
-        let findIndexInTowParamExpression = twoParamExpressionArr.findIndex(value => exprStr.startsWith(value));
-        let findIndexInOneParamExpression = oneParamExpressionArr.findIndex(value => exprStr.startsWith(value));
-        if (findIndexInTowParamExpression >= 0) {
-          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
-          let tmpArr = tmp.split(',');
-          if (tmpArr.length == 2) {
-            let metric = this.currentMetrics.find(item => item.value == tmpArr[0].trim());
-            let value = tmpArr[1].substring(1, tmpArr[1].length - 1);
-            let rule = { metric: metric, operator: twoParamExpressionArr[findIndexInTowParamExpression], value: value };
-            this.alertRules.push(rule);
-          }
-        } else if (findIndexInOneParamExpression >= 0) {
-          let tmp = exprStr.substring(exprStr.indexOf('(') + 1, exprStr.length - 1);
-          if (tmp != '' && tmp != null) {
-            let metric = this.currentMetrics.find(item => item.value == tmp.trim());
-            let rule = { metric: metric, operator: oneParamExpressionArr[findIndexInOneParamExpression] };
-            this.alertRules.push(rule);
-          }
-        } else {
-          let values = exprStr.trim().split(' ');
-          if (values.length == 3 && values[2].trim() != '' && !Number.isNaN(parseFloat(values[2].trim()))) {
-            let metric = this.currentMetrics.find(item => item.value == values[0].trim());
-            let rule = { metric: metric, operator: values[1].trim(), value: values[2].trim() };
-            this.alertRules.push(rule);
-          }
-        }
-      }
-      if (this.alertRules.length != exprArr.length) {
-        this.alertRules = [{}];
-        this.isExpr = true;
-        return;
-      }
+      this.resetQbData(this.expr2ruleset(expr));
+      this.isExpr = false;
     } catch (e) {
       console.error(e);
       this.isExpr = true;
-      this.alertRules = [{}];
+      this.resetQbDataDefault();
       return;
-    }
-    if (this.alertRules.length == 0) {
-      this.alertRules = [{}];
-      this.isExpr = true;
     }
   }
 
   onManageModalCancel() {
+    this.cascadeValues = [];
     this.isExpr = false;
+    this.resetQbDataDefault();
     this.isManageModalVisible = false;
+  }
+
+  resetQbData(qbData: RuleSet) {
+    this.qbFormCtrl.reset((this.qbData = qbData));
+  }
+
+  resetQbDataDefault() {
+    this.resetQbData({ condition: 'and', rules: [] });
   }
 
   resetManageModalData() {
     this.cascadeValues = [];
-    this.alertRules = [{}];
     this.isExpr = false;
+    this.resetQbDataDefault();
     this.isManageModalVisible = false;
   }
 
   onManageModalOk() {
+    if (this.cascadeValues.length == 3) {
+      this.defineForm.form.addControl('ruleset', this.qbFormCtrl);
+    }
+    if (this.defineForm?.invalid) {
+      Object.values(this.defineForm.controls).forEach(control => {
+        if (control.invalid) {
+          control.markAsDirty();
+          control.updateValueAndValidity({ onlySelf: true });
+        }
+      });
+      return;
+    }
     this.isManageModalOkLoading = true;
     this.define.app = this.cascadeValues[0];
     this.define.metric = this.cascadeValues[1];
     if (this.cascadeValues.length == 3) {
       this.define.field = this.cascadeValues[2];
       if (!this.isExpr) {
-        let expr = this.calculateAlertRuleExpr();
+        let expr = this.ruleset2expr(this.qbData);
         if (expr != '') {
           this.define.expr = expr;
         }
@@ -571,6 +713,7 @@ export class AlertSettingComponent implements OnInit {
         .subscribe(
           message => {
             if (message.code === 0) {
+              this.cascadeValues = [];
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.loadAlertDefineTable();
@@ -595,6 +738,7 @@ export class AlertSettingComponent implements OnInit {
         .subscribe(
           message => {
             if (message.code === 0) {
+              this.cascadeValues = [];
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
               this.loadAlertDefineTable();
@@ -608,86 +752,9 @@ export class AlertSettingComponent implements OnInit {
         );
     }
   }
+  // end -- new or update alert definition model
 
-  onRemoveTag(tag: TagItem) {
-    if (this.define != undefined && this.define.tags != undefined) {
-      this.define.tags = this.define.tags.filter(item => item !== tag);
-    }
-  }
-
-  sliceTagName(tag: TagItem): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
-      return `${tag.name}:${tag.value}`;
-    } else {
-      return tag.name;
-    }
-  }
-
-  // end 新增修改告警定义model
-
-  // start Tag model
-  isTagManageModalVisible = false;
-  isTagManageModalOkLoading = false;
-  tagCheckedAll: boolean = false;
-  tagTableLoading = false;
-  tagSearch!: string;
-  tags!: Tag[];
-  checkedTags = new Set<Tag>();
-  loadTagsTable() {
-    this.tagTableLoading = true;
-    let tagsReq$ = this.tagSvc.loadTags(this.tagSearch, 1, 0, 1000).subscribe(
-      message => {
-        this.tagTableLoading = false;
-        this.tagCheckedAll = false;
-        this.checkedTags.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.tags = page.content;
-        } else {
-          console.warn(message.msg);
-        }
-        tagsReq$.unsubscribe();
-      },
-      error => {
-        this.tagTableLoading = false;
-        tagsReq$.unsubscribe();
-      }
-    );
-  }
-  onShowTagsModal() {
-    this.isTagManageModalVisible = true;
-    this.loadTagsTable();
-  }
-  onTagManageModalCancel() {
-    this.isTagManageModalVisible = false;
-  }
-  onTagManageModalOk() {
-    this.isTagManageModalOkLoading = true;
-    this.checkedTags.forEach(item => {
-      if (this.define.tags.find(tag => tag.name == item.name && tag.value == item.tagValue) == undefined) {
-        this.define.tags.push({ name: item.name, value: item.tagValue });
-      }
-    });
-    this.isTagManageModalOkLoading = false;
-    this.isTagManageModalVisible = false;
-  }
-  onTagAllChecked(checked: boolean) {
-    if (checked) {
-      this.tags.forEach(tag => this.checkedTags.add(tag));
-    } else {
-      this.checkedTags.clear();
-    }
-  }
-  onTagItemChecked(tag: Tag, checked: boolean) {
-    if (checked) {
-      this.checkedTags.add(tag);
-    } else {
-      this.checkedTags.delete(tag);
-    }
-  }
-  // end tag model
-
-  // start 告警定义与监控关联model
+  // start -- associate alert definition and monitoring model
   isConnectModalVisible = false;
   isConnectModalOkLoading = false;
   transferData: TransferItem[] = [];
@@ -790,30 +857,5 @@ export class AlertSettingComponent implements OnInit {
       }
     });
   }
-  // end 告警定义与监控关联model
-  //查询告警阈值
-  onFilterSearchAlertDefinesByName() {
-    this.tableLoading = true;
-    let filter$ = this.alertDefineSvc.getAlertDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
-      message => {
-        filter$.unsubscribe();
-        this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedDefineIds.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.defines = page.content;
-          this.pageIndex = page.number + 1;
-          this.total = page.totalElements;
-        } else {
-          console.warn(message.msg);
-        }
-      },
-      error => {
-        this.tableLoading = false;
-        filter$.unsubscribe();
-        console.error(error.msg);
-      }
-    );
-  }
+  // end -- associate alert definition and monitoring model
 }

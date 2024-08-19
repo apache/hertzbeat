@@ -27,7 +27,7 @@ export class AlertDefine {
   field!: string;
   preset: boolean = true;
   expr!: string;
-  // 告警级别 0:高-emergency-紧急告警-红色 1:中-critical-严重告警-橙色 2:低-warning-警告告警-黄色
+  // alert level -- 0:high-emergency-red 1:medium-critical-orange 2:low-warning-yellow
   priority: number = 2;
   times: number = 3;
   tags!: TagItem[];
