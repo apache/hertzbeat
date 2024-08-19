@@ -176,7 +176,7 @@ public class MonitorServiceImpl implements MonitorService {
         }
         monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
         // If the detection result fails, a detection exception is thrown
-        if (collectRep == null || collectRep.isEmpty()) {
+        if (CollectionUtils.isEmpty(collectRep)) {
             monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
             throw new MonitorDetectException("Collect Timeout No Response");
         }
@@ -193,7 +193,7 @@ public class MonitorServiceImpl implements MonitorService {
         long monitorId = SnowFlakeIdGenerator.generateId();
         // Init Set Default Tags: monitorId monitorName app
         List<Tag> tags = monitor.getTags();
-        if (tags == null) {
+        if (CollectionUtils.isEmpty(tags)) {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
@@ -214,7 +214,7 @@ public class MonitorServiceImpl implements MonitorService {
         }).collect(Collectors.toList());
         appDefine.setConfigmap(configmaps);
 
-        long jobId = collector == null ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
+        long jobId = !StringUtils.hasText(collector) ? collectJobScheduling.addAsyncCollectJob(appDefine, null) :
                 collectJobScheduling.addAsyncCollectJob(appDefine, collector);
 
         try {
@@ -244,7 +244,7 @@ public class MonitorServiceImpl implements MonitorService {
     public void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params) {
         long monitorId = SnowFlakeIdGenerator.generateId();
         List<Tag> tags = monitor.getTags();
-        if (tags == null) {
+        if (CollectionUtils.isEmpty(tags)) {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
@@ -357,7 +357,7 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        if (monitor.getTags() != null) {
+        if (!CollectionUtils.isEmpty(monitor.getTags())) {
             monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
         }
         // the dispatch collector must exist if pin
@@ -371,7 +371,7 @@ public class MonitorServiceImpl implements MonitorService {
         }
         // Parameter definition structure verification
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
-        if (paramDefines != null) {
+        if (!CollectionUtils.isEmpty(paramDefines)) {
             for (ParamDefine paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 Param param = paramMap.get(field);
@@ -517,7 +517,7 @@ public class MonitorServiceImpl implements MonitorService {
         }
         // Auto Update Default Tags: monitorName
         List<Tag> tags = monitor.getTags();
-        if (tags == null) {
+        if (CollectionUtils.isEmpty(tags)) {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
@@ -647,7 +647,7 @@ public class MonitorServiceImpl implements MonitorService {
     public Page<Monitor> getMonitors(List<Long> monitorIds, String app, String name, String host, Byte status, String sort, String order, int pageIndex, int pageSize, String tag) {
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
-            if (monitorIds != null && !monitorIds.isEmpty()) {
+            if (!CollectionUtils.isEmpty(monitorIds)) {
                 CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
                 for (long id : monitorIds) {
                     inPredicate.value(id);
@@ -717,7 +717,7 @@ public class MonitorServiceImpl implements MonitorService {
                         monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE))
                 .collect(Collectors.toList());
-        if (!managedMonitors.isEmpty()) {
+        if (!CollectionUtils.isEmpty(managedMonitors)) {
             for (Monitor monitor : managedMonitors) {
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
             }
@@ -733,7 +733,7 @@ public class MonitorServiceImpl implements MonitorService {
                         monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_UP_CODE))
                 .collect(Collectors.toList());
-        if (!unManagedMonitors.isEmpty()) {
+        if (!CollectionUtils.isEmpty(unManagedMonitors)) {
             for (Monitor monitor : unManagedMonitors) {
                 // Construct the collection task Job entity
                 Job appDefine = appService.getAppDefine(monitor.getApp());
@@ -775,7 +775,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public List<AppCount> getAllAppMonitorsCount() {
         List<AppCount> appCounts = monitorDao.findAppsStatusCount();
-        if (appCounts == null) {
+        if (CollectionUtils.isEmpty(appCounts)) {
             return null;
         }
         //Statistical category information, calculate the number of corresponding states for each monitor

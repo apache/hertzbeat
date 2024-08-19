@@ -106,15 +106,13 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
-        if (!StringUtils.hasText(app)) {
-            return Collections.emptyList();
+        if (StringUtils.hasText(app)){
+            var appDefine = appDefines.get(app.toLowerCase());
+            if (appDefine != null && appDefine.getParams() != null) {
+                return appDefine.getParams();
+            }
         }
-        var appDefine = appDefines.get(app.toLowerCase());
-        if (appDefine != null && appDefine.getParams() != null) {
-            return appDefine.getParams();
-        } else {
-            return Collections.emptyList();
-        }
+        return Collections.emptyList();
     }
 
     @Override

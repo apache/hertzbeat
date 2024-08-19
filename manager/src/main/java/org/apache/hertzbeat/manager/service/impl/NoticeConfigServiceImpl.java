@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
@@ -88,7 +89,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     public List<NoticeReceiver> getNoticeReceivers(String name) {
         Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !name.isEmpty()) {
+            if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -101,7 +102,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     public List<NoticeTemplate> getNoticeTemplates(String name) {
         Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && StringUtils.isNoneBlank(name)) {
+            if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -116,7 +117,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     public List<NoticeRule> getNoticeRules(String name) {
         Specification<NoticeRule> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !name.isEmpty()) {
+            if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -164,7 +165,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         // use cache
         CommonCacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
         List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
-        if (rules == null) {
+        if (CollectionUtils.isEmpty(rules)) {
             rules = noticeRuleDao.findNoticeRulesByEnableTrue();
             noticeCache.put(CommonConstants.CACHE_NOTICE_RULE, rules);
         }
