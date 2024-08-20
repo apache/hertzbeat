@@ -47,7 +47,7 @@ import static org.mockito.Mockito.times;
  */
 
 @ExtendWith(MockitoExtension.class)
-class PushGatewayServiceImplTest {
+class PushGatewayServiceTest {
 
 	@InjectMocks
 	private PushGatewayServiceImpl pushGatewayService;
