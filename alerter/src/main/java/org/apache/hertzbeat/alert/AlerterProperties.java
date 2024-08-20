@@ -31,7 +31,8 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.ALERT)
+@ConfigurationProperties(prefix =
+        ConfigConstants.FunctionModuleConstants.ALERTER)
 public class AlerterProperties {
 
     /**

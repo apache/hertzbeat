@@ -28,7 +28,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.AI)
+@ConfigurationProperties(prefix =
+        ConfigConstants.FunctionModuleConstants.AI)
 public class AiProperties {
 
     /**
