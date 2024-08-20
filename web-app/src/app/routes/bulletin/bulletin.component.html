@@ -84,28 +84,33 @@
         </thead>
 
         <tbody>
-          <ng-container *ngFor="let data of fixedTable.data">
-            <ng-container *ngFor="let rowIndex of getRowIndexes(data)">
-              <tr>
-                <ng-container *ngIf="rowIndex === 0">
-                  <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.app }}</td>
-                  <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.host }}</td>
-                </ng-container>
-                <ng-container *ngFor="let nbr of tabDefines.column.length">
-                  <ng-container *ngFor="let field of tabDefines.content.metrics[nbr].length">
-                    <td *ngIf="data[field] !== null">
-                      {{ data[field][rowIndex].split('$$$')[0] }}
-                      <nz-tag *ngIf="data[field][rowIndex] == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
-                      <nz-tag *ngIf="data[field][rowIndex].split('$$$')[1]" nzColor="success">{{
-                        data[field][rowIndex].split('$$$')[1]
-                      }}</nz-tag>
-                    </td>
-                  </ng-container>
-                </ng-container>
-              </tr>
-            </ng-container>
+        <ng-container *ngFor="let data of tabDefines.content">
+          <ng-container *ngFor="let rowIndex of getRowIndexes(data)">
+            <tr>
+              <ng-container *ngIf="rowIndex === 0">
+                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.app }}</td>
+                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.host }}</td>
+              </ng-container>
+              <ng-container *ngFor="let metric of data.metrics">
+                <td>
+                  <div *ngFor="let field of metric.fields">
+                    <div *ngFor="let item of field">
+                      <span>{{ item.key }}: </span>
+                      <nz-tag *ngIf="item.value === 'No Data'" nzColor="warning">
+                        {{ 'monitors.detail.value.null' | i18n }}
+                      </nz-tag>
+                      <nz-tag *ngIf="item.value !== 'No Data'" nzColor="success">
+                        {{ item.value }} {{ item.unit }}
+                      </nz-tag>
+                    </div>
+                  </div>
+                </td>
+              </ng-container>
+            </tr>
           </ng-container>
+        </ng-container>
         </tbody>
+
       </nz-table>
       <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ tabDefines.total }} </ng-template>
     </ng-container>

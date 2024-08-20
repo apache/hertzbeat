@@ -150,7 +150,11 @@ public class BulletinController {
             Map<String, List<String>> fieldMap = JsonUtil.fromJson(bulletin.getFields(), new TypeReference<>() {});
 
             if (fieldMap != null) {
-                for (Map.Entry<String, List<String>> entry : fieldMap.entrySet()) {
+                // Convert entry set to a list and sort it
+                List<Map.Entry<String, List<String>>> entries = new ArrayList<>(fieldMap.entrySet());
+                entries.sort(Map.Entry.comparingByKey());
+
+                for (Map.Entry<String, List<String>> entry : entries) {
                     String metric = entry.getKey();
                     List<String> fields = entry.getValue();
                     BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
@@ -161,9 +165,9 @@ public class BulletinController {
                             buildFieldsListNoData(metric, fields);
                     metricBuilder.fields(fieldsList);
                     metrics.add(metricBuilder.build());
-
                 }
             }
+
 
             dataBuilder.metrics(metrics);
             dataList.add(dataBuilder.build());

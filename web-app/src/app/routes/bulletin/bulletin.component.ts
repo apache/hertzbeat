@@ -378,8 +378,7 @@ export class BulletinComponent implements OnInit {
           if (message.code === 0 && message.data) {
             // this.total = message.data.totalElements;
             this.tabDefines = message.data;
-            console.info('tabDefines.length:', this.tabDefines.column.length);
-            console.info('tabDefines.field:', this.tabDefines.bulletinColumn['summary']);
+            this.printDataStructure(this.tabDefines.content);
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
@@ -395,7 +394,20 @@ export class BulletinComponent implements OnInit {
     }
     this.tableLoading = false;
   }
-
+  printDataStructure(data: any) {
+    data.forEach((entry: any) => {
+      console.log(`App: ${entry.app}`);
+      console.log(`Host: ${entry.host}`);
+      entry.metrics.forEach((metric: any) => {
+        console.log(`Metric: ${metric.name}`);
+        metric.fields.forEach((fieldGroup: any) => {
+          fieldGroup.forEach((field: any) => {
+            console.log(`  Key: ${field.key}, Value: ${field.value}, Unit: ${field.unit}`);
+          });
+        });
+      });
+    });
+  }
   getKeys(metricName: string): string[] {
     const result = new Set<string>();
 
