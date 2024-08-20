@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.apache.hertzbeat.manager.service.impl.MailGeneralConfigServiceImpl;
@@ -54,7 +55,7 @@ class MailGeneralConfigServiceTest {
 	@Test
 	void testType() {
 
-		assertEquals("email", mailGeneralConfigService.type());
+		assertEquals(GeneralConfigTypeEnum.email.name(), mailGeneralConfigService.type());
 	}
 
 	@Test
