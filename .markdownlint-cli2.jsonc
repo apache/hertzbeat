@@ -1,0 +1,31 @@
+{
+  // 文件或目录匹配模式
+  "config": {
+    // 启用所有默认规则
+    "default": true,
+    // 禁用特定规则
+    "MD001": false,
+    "MD052": false,
+    "MD003": false,
+    "MD013": false,
+    "MD024": false,
+    "MD025": false,
+    "MD029": false,
+    "MD033": false,
+    "MD035": false,
+    "MD036": false,
+    "MD040": false,
+    "MD041": false,
+    "MD045": false,
+    "MD046": false,
+    // 为特定规则设置选项
+    "MD007": {
+      "indent": 4
+    }
+  },
+  // 忽略特定文件或目录
+  "ignore": [
+    "node_modules/"
+  ],
+  "fix": true
+}

@@ -31,6 +31,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: markdownlint-cli2-action
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: './home/**/*.md'
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
