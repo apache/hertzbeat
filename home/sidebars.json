@@ -207,6 +207,7 @@
             "help/mariadb",
             "help/postgresql",
             "help/vastbase",
+            "help/kingbase",
             "help/sqlserver",
             "help/oracle",
             "help/dm",
