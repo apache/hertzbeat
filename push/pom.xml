@@ -28,8 +28,6 @@
     <artifactId>hertzbeat-push</artifactId>
     <name>${project.artifactId}</name>
     <properties>
-        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
     </properties>
 
     <dependencies>
