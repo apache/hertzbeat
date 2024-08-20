@@ -37,7 +37,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 #### Metric set：state
 
-|  Metric name   | Metric unit |                                                                                     Metric help description                                                                                   |
+|  Metric name   | Metric unit |                                                                                    Metric help description                                                                                    |
 |----------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | name           | none        | Database name, or share-object is a shared object                                                                                                                                             |
 | conflicts      | times       | The number of queries canceled in the database due to a conflict with recovery                                                                                                                |
