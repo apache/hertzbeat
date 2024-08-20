@@ -23,9 +23,9 @@ name:
   en-US: Kvrocks
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 对 Apache Kvrocks 数据库的通用性能指标进行采集监控(server、clients、memory、persistence、stats、replication、cpu、errorstats、cluster、commandstats)，支持版本为 Apache Kvrocks 2.9.0+。<br>您可以点击“<i>新建 Kvrocks 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  zh-CN: HertzBeat 对 Apache Kvrocks 数据库的通用性能指标进行采集监控(server、clients、memory、persistence、stats、replication、cpu、cluster、commandstats)，支持版本为 Apache Kvrocks 2.9.0+。<br>您可以点击“<i>新建 Kvrocks 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors Apache Kvrocks database of general performance metrics such as memory, persistence, replication and so on. The versions we support is Apache Kvrocks 2.9.0+. <br>You could click the "<i>New Kvrocks</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
-  zh-TW: HertzBeat 對 Apache Kvrocks 數據庫的通用性能指標進行采集監控(server、clients、memory、persistence、stats、replication、cpu、errorstats、cluster、commandstats)，支持版本爲 Apache Kvrocks 2.9.0+。<br>您可以點擊“<i>新建 Kvrocks 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-TW: HertzBeat 對 Apache Kvrocks 數據庫的通用性能指標進行采集監控(server、clients、memory、persistence、stats、replication、cpu、cluster、commandstats)，支持版本爲 Apache Kvrocks 2.9.0+。<br>您可以點擊“<i>新建 Kvrocks 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kvrocks
   en-US: https://hertzbeat.apache.org/docs/help/kvrocks
