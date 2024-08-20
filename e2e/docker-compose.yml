@@ -26,7 +26,7 @@ services:
       - ./data/:/work/data/
       - ./testsuite.yaml:/work/testsuite.yaml
       - ./report/report.md:/report.md
-    command: atest run -p /work/testsuite.yaml --level warn --thread 3 --report md -report-file /report.md
+    command: atest run -p /work/testsuite.yaml --level warn --thread 3 --report md --report-file /report.md
     depends_on:
       hertzbeat:
         condition: service_healthy
