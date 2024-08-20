@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.common.constants;
 
+import java.util.Arrays;
+
 /**
  * Ai type Enum
  */
@@ -48,13 +50,10 @@ public enum AiTypeEnum {
      * get type
      */
     public static AiTypeEnum getTypeByName(String type) {
-        for (AiTypeEnum aiTypeEnum : values()) {
-            if (aiTypeEnum.name().equals(type)) {
-                return aiTypeEnum;
-            }
-
-        }
-        return null;
+        return Arrays.stream(values())
+                .filter(ai -> ai.name().equals(type))
+                .findFirst()
+                .orElse(null);
     }
 
 }

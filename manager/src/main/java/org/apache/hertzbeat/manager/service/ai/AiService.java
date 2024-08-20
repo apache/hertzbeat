@@ -15,13 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.manager.service;
+package org.apache.hertzbeat.manager.service.ai;
 
-import org.apache.hertzbeat.manager.service.ai.ZhiPuServiceImpl;
+
+import org.apache.hertzbeat.common.constants.AiTypeEnum;
+import org.springframework.http.codec.ServerSentEvent;
+import reactor.core.publisher.Flux;
+
 
 /**
- * test case for {@link ZhiPuServiceImpl}
+ * AI Service
  */
+public interface AiService {
 
-class ZhiPuServiceTest {
+    /**
+     * get AI type
+     * @return     type
+     */
+    AiTypeEnum getType();
+
+    /**
+     * AI response
+     * @param text  text
+     * @return      AI response
+     */
+    Flux<ServerSentEvent<String>> requestAi(String text);
+
 }

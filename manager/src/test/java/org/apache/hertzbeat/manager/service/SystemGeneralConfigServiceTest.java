@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.apache.hertzbeat.manager.service.impl.SystemGeneralConfigServiceImpl;
@@ -58,7 +59,7 @@ class SystemGeneralConfigServiceTest {
 	void testType() {
 
 		String result = service.type();
-		assertEquals("system", result);
+		assertEquals(GeneralConfigTypeEnum.system.name(), result);
 	}
 
 	@Test
