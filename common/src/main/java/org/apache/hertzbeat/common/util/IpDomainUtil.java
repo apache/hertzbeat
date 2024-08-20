@@ -24,8 +24,8 @@ import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.core5.net.InetAddressUtils;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
-import org.apache.http.conn.util.InetAddressUtils;
 import org.springframework.util.StringUtils;
 
 /**
