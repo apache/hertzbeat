@@ -21,7 +21,7 @@ We can obtain the corresponding Metric data through the data fields queried by S
 
 > Query a row of data, return the column name of the result set through query and map them to the queried field.
 
-eg：   
+eg：
 queried Metric fields：one two three four
 query SQL：select one, two, three, four from book limit 1;
 Here the Metric field and the response data can be mapped into a row of collected data one by one.
@@ -30,7 +30,7 @@ Here the Metric field and the response data can be mapped into a row of collecte
 
 > Query multiple rows of data, return the column names of the result set and map them to the queried fields.
 
-eg：   
+eg：
 queried Metric fields：one two three four
 query SQL：select one, two, three, four from book;
 Here the Metric field and the response data can be mapped into multiple rows of collected data one by one.
@@ -39,9 +39,9 @@ Here the Metric field and the response data can be mapped into multiple rows of 
 
 > Collect a row of Metric data. By matching the two columns of queried data (key value), key and the queried field, value is the value of the query field.
 
-eg：   
-queried fields：one two three four   
-query SQL：select key, value from book;   
+eg：
+queried fields：one two three four
+query SQL：select key, value from book;
 SQL response data：
 
 |  key  | value |
@@ -57,7 +57,7 @@ Here by mapping the Metric field with the key of the response data, we can  obta
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-------- 
+-------
 
 Configuration usages of the monitoring templates yml are detailed below.
 
@@ -241,4 +241,3 @@ metrics:
       sql: show global status where Variable_name like 'innodb%';
       url: ^_^url^_^
 ```
-

@@ -75,6 +75,7 @@ limitations under the License.
    ```java
    Cache<String> publicKeyCache;
    ```
+
 2. Pinyin abbreviations are prohibited for variables (excluding nouns such as place names), such as chengdu.
 3. It is recommended to end variable names with a `type`.  
    For variables of type `Collection/List`, take `xxxx` (plural representing multiple elements) or end with `xxxList` (specific type).  
@@ -84,6 +85,7 @@ limitations under the License.
    Map<Long, User> idUserMap;
    Map<Long, String> userIdNameMap;
    ```
+
 4. That can intuitively know the type and meaning of the variable through its name.  
    Method names should start with a verb first as follows:
 
@@ -119,6 +121,7 @@ limitations under the License.
          return resp;
      }
      ```
+
    - Positive demo:
 
      > Strings are extracted as constant references.
@@ -144,6 +147,7 @@ limitations under the License.
            return resp;
        }
      ```
+
 2. Ensure code readability and intuitiveness
 
 - The string in the `annotation` symbol doesn't need to be extracted as constant.
@@ -203,6 +207,7 @@ public CurrentHashMap funName();
        return;
      }
      ```
+
    - Positive demo：
 
      ```java
@@ -226,11 +231,13 @@ public CurrentHashMap funName();
    - Redundant lines
 
 Generally speaking, if a method's code line depth exceeds `2+ Tabs` due to continuous nested `if... else..`, it should be considered to try
+
 - `merging branches`,
 - `inverting branch conditions`
 - `extracting private methods`
 
 to reduce code line depth and improve readability like follows:
+
 - Union or merge the logic into the next level calling
 - Negative demo:
 
@@ -267,6 +274,7 @@ if(expression2) {
     ......
   }
   ```
+
 - Reverse the condition
 - Negative demo:
 
@@ -281,6 +289,7 @@ if(expression2) {
    }
   }
   ```
+
 - Positive demo:
 
   ```java
@@ -294,6 +303,7 @@ if(expression2) {
    // ...
   }
   ```
+
 - Using a single variable or method to reduce the complex conditional expression
 - Negative demo:
 
@@ -302,6 +312,7 @@ if(expression2) {
    ...
   }
   ```
+
 - Positive demo:
 
   ```java
@@ -346,6 +357,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
   ```java
   map.computeIfAbsent(key, x -> key.toLowerCase())
   ```
+
 - Positive demo:
 
   ```java
@@ -359,6 +371,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
   ```java
   map.computeIfAbsent(key, k-> Loader.load(k));
   ```
+
 - Positive demo:
 
   ```java
@@ -388,6 +401,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
   return;
   }
   ```
+
 - Positive demo:
 
   ```java
@@ -405,6 +419,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
     return;
   }
   ```
+
 - Positive demo:
 
   ```java
@@ -422,6 +437,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
     return;
   }
   ```
+
 - Positive demo:
 
   ```java
@@ -441,6 +457,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
     return;
   }
   ```
+
 - Positive demo:
 
   ```java
@@ -458,6 +475,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
     ...
   }
   ```
+
 - Positive demo:
 
   ```java
@@ -473,6 +491,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
   ```java
   System.out.println(JobStatus.RUNNING.toString());
   ```
+
 - Positive demo:
 
   ```java
@@ -488,6 +507,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
     ...
   }
   ```
+
 - Positive demo:
 
   ```java
@@ -525,6 +545,7 @@ public void process(String input) {
   ```java
   log.info("Deploy cluster request " + deployRequest);
   ```
+
 - Positive demo
 
   ```java
@@ -544,6 +565,7 @@ When printing the log content, if the actual parameters of the log placeholder a
   List<User> userList = getUsersByBatch(1000);
   LOG.debug("All users: {}", getAllUserIds(userList));
   ```
+
 - Positive demo:
 
   In this case, we should determine the log level in advance before making actual log calls as follows:
@@ -552,7 +574,7 @@ When printing the log content, if the actual parameters of the log placeholder a
   // ignored declaration lines.
   List<User> userList = getUsersByBatch(1000);
   if (LOG.isDebugEnabled()) {
-    LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList));	
+    LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList)); 
   }
   ```
 
@@ -564,13 +586,12 @@ When printing the log content, if the actual parameters of the log placeholder a
 
 ## References
 
-- https://site.mockito.org/
-- https://alibaba.github.io/p3c/
-- https://rules.sonarsource.com/java/
-- https://junit.org/junit5/
-- https://streampark.apache.org/
+- <https://site.mockito.org/>
+- <https://alibaba.github.io/p3c/>
+- <https://rules.sonarsource.com/java/>
+- <https://junit.org/junit5/>
+- <https://streampark.apache.org/>
 
 ```
 
 ```
-

@@ -31,9 +31,7 @@
     "MD041": false,
     "MD045": false,
     "MD046": false,
-    "MD007": {
-      "indent": 4
-    }
+    "MD047": false
   },
   "ignore": [
     "node_modules/"

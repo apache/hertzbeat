@@ -107,7 +107,7 @@ ttt
 ```
 
 注意，投票将在今天一周后结束，即
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
 [Apache投票指南](https://community.apache.org/newcommitter.html)
 
 ### 关闭投票模板
@@ -372,6 +372,7 @@ hi, i accept. Thanks for invitaion.
 ![](/img/docs/community/icla-content-2.png)
 
 在PDF中需要填写的字段：
+
 - `Full name`
 - `Public name`
 - `Postal Address`
@@ -427,7 +428,8 @@ Thanks !
 
 ### 将Apache账号和GitHub账号关联
 
-访问: https://whimsy.apache.org/roster/committer/${APACHE_ID}
+访问: <https://whimsy.apache.org/roster/committer/${APACHE_ID}>
+
 - `${APACHE_ID}`替换成你的Apache ID
 
 登录后可以看到这个内容`Link GitHub username to ASF id`，点击跳转

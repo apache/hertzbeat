@@ -34,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: markdownlint-cli2-action
+      - name: Check Markdown
         uses: DavidAnson/markdownlint-cli2-action@v16
         with:
           globs: './home/**/*.md'

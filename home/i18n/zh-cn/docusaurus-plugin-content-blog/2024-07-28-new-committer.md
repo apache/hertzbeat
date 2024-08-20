@@ -12,7 +12,7 @@ keywords: [open source monitoring system, alerting system]
 
 > 非常荣幸能成为Apache Hertzbeat的Committer
 >
-  ## 个人介绍
+## 个人介绍
 
 本人是2023年毕业，目前在一家互联网公司担任java开发工程师。
 

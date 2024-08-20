@@ -75,4 +75,3 @@ keywords: [ 开源监控系统, 开源数据库监控, MongoDB Atlas 数据库�
 | Storage Size      | Bytes | 使用存储空间大小 |
 | Indexes           | 无     | 索引数      |
 | Index Size        | Bytes | 索引大小     |
-

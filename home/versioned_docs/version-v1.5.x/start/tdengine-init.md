@@ -10,8 +10,8 @@ Apache HertzBeat (incubating)'s historical data storage relies on the time serie
 
 TDengine is an open-source IoT time-series database, which we use to store the collected historical data of monitoring metrics. Pay attention to support ⚠️ 3.x version.
 
-**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**   
-**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**   
+**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**
+**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 Note⚠️ Need TDengine 3.x Version.
 
 > If you have TDengine environment, can directly skip to create a database instance.
@@ -19,8 +19,9 @@ Note⚠️ Need TDengine 3.x Version.
 ### Install TDengine via Docker
 
 > Refer to the official website [installation tutorial](https://docs.taosdata.com/get-started/docker/)  
-> 1. Download and install Docker environment     
-> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).     
+>
+> 1. Download and install Docker environment
+> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 > After the installation you can check if the Docker version normally output at the terminal.
 >
 > ```
@@ -37,8 +38,8 @@ Note⚠️ Need TDengine 3.x Version.
 > tdengine/tdengine:3.0.4.0
 > ```
 >
-> `-v /opt/taosdata:/var/lib/taos` is local persistent mount of TDengine data directory. `/opt/taosdata` should be replaced with the actual local directory.    
-> `-e TZ="Asia/Shanghai"` can set time zone for TDengine.Set up the corresponding time zone you want.    
+> `-v /opt/taosdata:/var/lib/taos` is local persistent mount of TDengine data directory. `/opt/taosdata` should be replaced with the actual local directory.
+> `-e TZ="Asia/Shanghai"` can set time zone for TDengine.Set up the corresponding time zone you want.
 > use```$ docker ps``` to check if the database started successfully
 
 ### Create database instance
@@ -46,9 +47,10 @@ Note⚠️ Need TDengine 3.x Version.
 1. Enter database Docker container
 
    ```
-   $ docker exec -it tdengine /bin/bash
+   docker exec -it tdengine /bin/bash
    ```
-2. Create database named hertzbeat     
+
+2. Create database named hertzbeat
    After entering the container，execute `taos` command as follows:
 
    ```
@@ -65,7 +67,7 @@ Note⚠️ Need TDengine 3.x Version.
    taos> CREATE DATABASE hertzbeat KEEP 90 DURATION 10 BUFFER 16;
    ```
 
-   The above statements will create a database named hertzbeat. The data will be saved for 90 days (more than 90 days data will be automatically deleted).   
+   The above statements will create a database named hertzbeat. The data will be saved for 90 days (more than 90 days data will be automatically deleted).
    A data file every 10 days, memory blocks buffer is 16MB.
 
 3. Check if hertzbeat database has been created success
@@ -81,9 +83,9 @@ Note⚠️ Need TDengine 3.x Version.
 
 ### Configure the database connection in hertzbeat `application.yml` configuration file
 
-1. Configure HertzBeat's configuration file   
-   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)        
-   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
+1. Configure HertzBeat's configuration file
+   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
+   Note⚠️The docker container way need to mount application.yml file locally,while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
    Replace `warehouse.store.td-engine` data source parameters, URL account and password.
 
 ```yaml
@@ -123,4 +125,3 @@ warehouse:
 > Is td-engine enable set to true  
 > Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
 > You can check the startup logs according to the logs directory
-

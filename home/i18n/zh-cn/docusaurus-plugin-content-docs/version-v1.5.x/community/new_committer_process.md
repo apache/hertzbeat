@@ -80,7 +80,7 @@ ${Work list}[1]
 ```
 
 注意，投票将在今天一周后结束，即
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
 [Apache投票指南](https://community.apache.org/newcommitter.html)
 
 ### 关闭投票模板
@@ -242,4 +242,3 @@ you can now help fix that.
 
 A PPMC member will announce your election to the dev list soon.
 ```
-

@@ -58,8 +58,8 @@ Visit ```https://api.telegram.org/bot<TOKEN>/getUpdates```, **`use the Bot Token
 
 1. Telegram did not receive the robot warning notification
 
-> Please check whether the alarm information has been triggered in the alarm center   
-> Please check whether the robot Token and UserId are configured correctly, and whether the alarm policy association has been configured   
+> Please check whether the alarm information has been triggered in the alarm center
+> Please check whether the robot Token and UserId are configured correctly, and whether the alarm policy association has been configured
 > UserId should be the UserId of the recipient of the message
 
 Other questions can be fed back through the communication group ISSUE!

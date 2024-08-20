@@ -12,9 +12,9 @@ keywords: [开源监控系统, 开源网络监控, OpenAI账户监控]
 > 1. 打开 Chrome 浏览器的网络请求界面
 >    `Mac: cmd + option + i`
 >    `Windows: ctrl + shift + i`
-> 2. 访问 https://platform.openai.com/usage
-> 3. 找到 https://api.openai.com/dashboard/billing/usage 请求
-> 4. 找到请求头中 Authorization 字段，并复制 `Bearer ` 之后的内容。例如： `sess-123456`
+> 2. 访问 <https://platform.openai.com/usage>
+> 3. 找到 <https://api.openai.com/dashboard/billing/usage> 请求
+> 4. 找到请求头中 Authorization 字段，并复制 `Bearer` 之后的内容。例如： `sess-123456`
 
 ### 注意事项
 
@@ -81,4 +81,3 @@ keywords: [开源监控系统, 开源网络监控, OpenAI账户监控]
 | 税务ID         | 无      | 税务ID         |
 | 结算地址         | 无      | 结算地址         |
 | 业务地址         | 无      | 业务地址         |
-

@@ -8,7 +8,7 @@ tags: [opensource, practice]
 keywords: [开源监控系统, 操作系统监控, Linux监控]
 ---
 
-## 使用开源实时监控工具 HertzBeat 对 Linux 操作系统的监控告警实践，5分钟搞定！
+## 使用开源实时监控工具 HertzBeat 对 Linux 操作系统的监控告警实践，5分钟搞定
 
 ### HertzBeat 介绍
 
@@ -18,11 +18,11 @@ keywords: [开源监控系统, 操作系统监控, Linux监控]
 - 其将Http, Jmx, Ssh, Snmp, Jdbc, Prometheus等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？
 - HertzBeat 的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
-Github: https://github.com/apache/hertzbeat
+Github: <https://github.com/apache/hertzbeat>
 
 ### 在 HertzBeat 5分钟搞定对 Linux 的监控
 
-#### 操作前提，您已拥有 Linux 环境和 HertzBeat 环境。
+#### 操作前提，您已拥有 Linux 环境和 HertzBeat 环境
 
 - HertzBeat [安装部署文档](https://hertzbeat.com/docs/start/docker-deploy)
 
@@ -36,8 +36,8 @@ Github: https://github.com/apache/hertzbeat
 
 2. 配置新增监控 Linux 所需参数
 
-在监控页面填写 Linux **对端IP**，**SSH端口**(默认22)，**账户密码等**，最后点击确定添加即可。   
-其他参数如**采集间隔**，**超时时间**等可以参考帮助文档 https://hertzbeat.com/docs/help/mysql/
+在监控页面填写 Linux **对端IP**，**SSH端口**(默认22)，**账户密码等**，最后点击确定添加即可。
+其他参数如**采集间隔**，**超时时间**等可以参考帮助文档 <https://hertzbeat.com/docs/help/mysql/>
 
 ![hertzbeat](/img/blog/monitor-linux-2.png)
 
@@ -149,7 +149,7 @@ Github: https://github.com/apache/hertzbeat
 
 消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。
 
-- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
+- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
 - 在 HertzBeat 配置接收人参数如下。
 
 【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
@@ -188,13 +188,13 @@ Github: https://github.com/apache/hertzbeat
 
 > [HertzBeat赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，无需Agent的实时监控告警工具。应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Discord Slack Telegram)。
 >
-> 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。    
+> 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。
 > 您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？
 >
 > `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
-**Github: https://github.com/apache/hertzbeat**        
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ## ⛄ Supported
 
@@ -205,4 +205,3 @@ Github: https://github.com/apache/hertzbeat
 - Kubernetes, Docker
 - 和更多您的自定义监控。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
-

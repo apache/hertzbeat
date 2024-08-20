@@ -54,4 +54,3 @@ keywords: [ 开源监控系统,开源中间件监控, Kafka监控,Kafka-PromQL�
 
 1. kafka启用了JMX监控，可以使用 [Kafka](kafka) 监控；
 2. kafka集群部署kafka_exporter暴露的监控指标，可以参考 [Prometheus任务](prometheus) 配置Prometheus采集任务监控kafka。
-

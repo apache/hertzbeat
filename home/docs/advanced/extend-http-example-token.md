@@ -10,7 +10,7 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
 
 ### Request process
 
-【**Authentication information metrics (highest priority)**】【**HTTP interface carries account password call**】->【**Response data analysis**】->【**Analysis and issuance of TOKEN-accessToken as an metric **] -> [**Assign accessToken as a variable parameter to other collection index groups**]
+【**Authentication information metrics (highest priority)**】【**HTTP interface carries account password call**】->【**Response data analysis**】->【**Analysis and issuance of TOKEN-accessToken as an metric**] -> [**Assign accessToken as a variable parameter to other collection index groups**]
 
 > Here we still use the hertzbeat monitoring example of Tutorial 1! The hertzbeat background interface not only supports the basic direct account password authentication used in Tutorial 1, but also supports token authentication.
 
@@ -220,7 +220,7 @@ metrics:
 ---
 ```
 
-**At this time, save and apply, add `hertzbeat_token` type monitoring on the system page, configure input parameters, `content-type` fill in `application/json`, `request Body` fill in the account password json as follows: **
+**At this time, save and apply, add `hertzbeat_token` type monitoring on the system page, configure input parameters, `content-type` fill in `application/json`, `request Body` fill in the account password json as follows:**
 
 ```json
 {
@@ -231,7 +231,7 @@ metrics:
 
 ![](/img/docs/advanced/extend-http-example-5.png)
 
-** After the addition is successful, we can see the `token`, `refreshToken` metric data we collected on the details page. **
+**After the addition is successful, we can see the `token`, `refreshToken` metric data we collected on the details page.**
 
 ![](/img/docs/advanced/extend-http-example-6.png)
 
@@ -241,7 +241,7 @@ metrics:
 
 **Add an index group definition `summary` in `app-hertzbeat_token.yml`, which is the same as `summary` in Tutorial 1, and set the collection priority to 1**
 
-**Set the authentication method in the HTTP protocol configuration of this index group to `Bearer Token`, assign the index `token` collected by the previous index group `auth` as a parameter, and use `^o^` as the internal replacement symbol, that is ` ^o^token^o^`. as follows:**
+**Set the authentication method in the HTTP protocol configuration of this index group to `Bearer Token`, assign the index `token` collected by the previous index group `auth` as a parameter, and use `^o^` as the internal replacement symbol, that is `^o^token^o^`. as follows:**
 
 ```yaml
    - name: summary
@@ -399,10 +399,10 @@ metrics:
 
 ---
 
-#### over!
+#### over
 
 This is the end of the practice of custom monitoring of the HTTP protocol. The HTTP protocol also has other parameters such as headers and params. We can define it like postman, and the playability is also very high!
 
 If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much.
 
-**github: https://github.com/apache/hertzbeat**
+**github: <https://github.com/apache/hertzbeat>**

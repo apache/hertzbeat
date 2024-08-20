@@ -59,4 +59,3 @@ keywords: [ 开源监控系统, InfluxDB监控,InfluxDB-PromQL监控 ]
 | instance  | 无    | 指标所属实例  |
 | timestamp | 无    | 采集指标时间戳 |
 | value     | 无    | 指标值     |
-

@@ -41,14 +41,16 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
 - `apache/hertzbeat` : 使用[官方应用镜像](https://hub.docker.com/r/apache/hertzbeat)来启动容器, 若网络超时可用`quay.io/tancloud/hertzbeat`代替。
 
 :::tip
+
 - 标记为可选的参数，非必填项，若不需要则删除。
-- 此将容器的 1157,1158 端口映射到宿主机的 1157,1158 端口上。若宿主机该端口已被占用，则需修改主机映射端口。   
-- 挂载文件时，前面参数为你自定义本地文件地址，后面参数为容器内文件地址。挂载时请确保你本地已有此文件。   
-- 可执行```docker update --restart=always hertzbeat```配置容器自动重启。   
+- 此将容器的 1157,1158 端口映射到宿主机的 1157,1158 端口上。若宿主机该端口已被占用，则需修改主机映射端口。
+- 挂载文件时，前面参数为你自定义本地文件地址，后面参数为容器内文件地址。挂载时请确保你本地已有此文件。
+- 可执行```docker update --restart=always hertzbeat```配置容器自动重启。
+
 :::
 
 2. 开始探索 HertzBeat  
-   浏览器访问 http://ip:1157/ 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
+   浏览器访问 <http://ip:1157/> 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
 
 ### 部署 HertzBeat Collector 集群(可选)
 
@@ -82,30 +84,32 @@ $ docker run -d \
 - `apache/hertzbeat-collector` : 使用[官方应用镜像](https://hub.docker.com/r/apache/hertzbeat-collector)来启动容器, 若网络超时可用`quay.io/tancloud/hertzbeat-collector`代替。
 
 :::tip
+
 - `MANAGER_HOST=127.0.0.1` 中的 `127.0.0.1` 需被替换为 HertzBeat Server 对外 IP 地址。
 - 标记为可选的参数，非必填项，若不需要则删除。
 - 挂载文件时，前面参数为你自定义本地文件地址，后面参数为容器内文件地址。挂载时请确保你本地已有此文件。
-- 可执行```docker update --restart=always hertzbeat-collector```配置容器自动重启。   
+- 可执行```docker update --restart=always hertzbeat-collector```配置容器自动重启。
+
 :::
 
 2. 开始探索 HertzBeat Collector  
-   浏览器访问 http://ip:1157/ 即可开始探索使用，默认账户密码 admin/hertzbeat。
+   浏览器访问 <http://ip:1157/> 即可开始探索使用，默认账户密码 admin/hertzbeat。
 
 **HAVE FUN**
 
----- 
+----
 
 ### Docker 方式部署常见问题
 
 **最多的问题就是网络问题，请先提前排查**
 
-1. MYSQL,TDENGINE或IotDB和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败    
+1. MYSQL,TDENGINE或IotDB和HertzBeat都Docker部署在同一主机上，HertzBeat使用localhost或127.0.0.1连接数据库失败
    此问题本质为Docker容器访问宿主机端口连接失败，由于docker默认网络模式为Bridge模式，其通过localhost访问不到宿主机。
 
-> 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP     
+> 解决办法一：配置application.yml将数据库的连接地址由localhost修改为宿主机的对外IP
 > 解决办法二：使用Host网络模式启动Docker，即使Docker容器和宿主机共享网络 `docker run -d --network host .....`
 
-2. 按照流程部署，访问 http://ip:1157/ 无界面   
+2. 按照流程部署，访问 <http://ip:1157/> 无界面
    请参考下面几点排查问题：
 
 > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
@@ -128,8 +132,9 @@ $ docker run -d \
 
 > 此文件是HertzBeat的配置文件，用于配置HertzBeat的各种参数，如数据库连接信息，时序数据库配置等。
 
-下载 `application.yml` 文件到主机目录下，例如: $(pwd)/application.yml   
-下载源 [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)   
+下载 `application.yml` 文件到主机目录下，例如: $(pwd)/application.yml
+下载源 [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
+
 - 若需使用邮件发送告警，需替换 `application.yml` 里面的邮件服务器参数
 - 若需使用外置Mysql数据库替换内置H2数据库，需替换`application.yml`里面的`spring.datasource`参数 具体步骤参见 [H2数据库切换为MYSQL](mysql-change)）
 - 若需使用时序数据库TDengine来存储指标数据，需替换`application.yml`里面的`warehouse.store.victoria-metrics`参数 具体步骤参见 [使用victoria-metrics存储指标数据](victoria-metrics-init)
@@ -138,8 +143,8 @@ $ docker run -d \
 
 > 此文件是HertzBeat的用户配置文件，用于配置HertzBeat的用户信息，如账户密码等。
 
-HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat      
-若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤    
-下载 `sureness.yml` 文件到主机目录下，例如: $(pwd)/sureness.yml    
-下载源 [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)       
+HertzBeat默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat
+若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤
+下载 `sureness.yml` 文件到主机目录下，例如: $(pwd)/sureness.yml
+下载源 [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)
 具体修改步骤参考 [配置修改账户密码](account-modify)

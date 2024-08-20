@@ -37,7 +37,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
 
 1. Download the release package `hertzbeat-xx.tar.gz` [Download Page](https://hertzbeat.apache.org/docs/download)
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
-3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+3. Run command `$ ./bin/startup.sh` or `bin/startup.bat`
 4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 5. Deploy collector clusters(Optional)
    - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [Download Page](https://hertzbeat.apache.org/docs/download)
@@ -54,7 +54,8 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.apache
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
-   - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+
+   - Run command `$ ./bin/startup.sh` or `bin/startup.bat`
    - Access `http://localhost:1157` and you will see the registered new collector in dashboard
 
 Detailed config refer to [Install HertzBeat via Package](package-deploy)

@@ -44,7 +44,7 @@ you must commit code with your commit privilege to the codebase; it
 means you are committed to the HertzBeat project and are productively
 contributing to our community's success.
 
-## PMC member requirements:
+## PMC member requirements
 
 There are no strict rules for becoming a committer or PPMC member.
 Candidates for new PMC member are typically people that are active
@@ -83,4 +83,3 @@ of the main website or HertzBeat's GitHub repositories.
 - Be involved in the design road map discussions with a professional
   and diplomatic approach even if there is a disagreement
 - Promoting the project by writing articles or holding events
-

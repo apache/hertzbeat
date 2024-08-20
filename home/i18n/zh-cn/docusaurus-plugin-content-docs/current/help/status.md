@@ -17,9 +17,9 @@ keywords: [开源监控系统, 开源网站监控, 状态页面]
 |------|----------------------------------------|---------------------------------------------------------------------------------------------------|
 | 组织名称 | 组织的名称                                  | HertzBeat                                                                                         |
 | 组织介绍 | 组织的详细介绍                                | Apache HertzBeat (incubating) 是一个易用友好的开源实时监控告警系统，无需 Agent，高性能集群，兼容 Prometheus，提供强大的自定义监控和状态页构建能力。 |
-| 网站链接 | 组织网站的 URL，便于访问者获取更多信息                  | https://hertzbeat.apache.org/                                                                     |
-| 标志图片 | 组织官方标志或 Logo 的图片文件路径或 URL，建议使用 .svg 格式 | https://hertzbeat.apache.org/zh-cn/img/hertzbeat-logo.svg                                         |
-| 反馈地址 | 接收问题反馈的地址                              | https://github.com/apache/hertzbeat/issues                                                        |
+| 网站链接 | 组织网站的 URL，便于访问者获取更多信息                  | <https://hertzbeat.apache.org/>                                                                     |
+| 标志图片 | 组织官方标志或 Logo 的图片文件路径或 URL，建议使用 .svg 格式 | <https://hertzbeat.apache.org/zh-cn/img/hertzbeat-logo.svg>                                         |
+| 反馈地址 | 接收问题反馈的地址                              | <https://github.com/apache/hertzbeat/issues>                                                        |
 | 主题颜色 | 状态页面的主色调。                              | 在页面中点击选择                                                                                          |
 
 填写完组织信息后，点击 `确定`。

@@ -107,4 +107,3 @@ Statistics for the top 10 processes using memory. Statistics include: process ID
 | command     | None        | Executed command        |
 
 ---
-

@@ -118,4 +118,3 @@ predefinedMetrics:
 |-------------|-------------|----------------------------------|
 | name        | None        | name                             |
 | connection  | none        | thrift current connection number |
-

@@ -120,4 +120,3 @@ Complete!
 | user_name         | none        | Username                      |
 | user_home         | none        | User home directory           |
 | user_dir          | none        | User current directory        |
-

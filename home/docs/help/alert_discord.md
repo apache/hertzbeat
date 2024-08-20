@@ -61,8 +61,8 @@ keywords: [open source monitoring tool, open source alerter, open source Discord
 
 1. Discord doesn't receive bot alert notifications
 
-> Please check whether the alarm information has been triggered in the alarm center   
-> Please check whether the robot Token and ChannelId are configured correctly, and whether the alarm policy association has been configured   
+> Please check whether the alarm information has been triggered in the alarm center
+> Please check whether the robot Token and ChannelId are configured correctly, and whether the alarm policy association has been configured
 > Please check whether the bot is properly authorized by the Discord chat server
 
 Other questions can be fed back through the communication group ISSUE!

@@ -8,7 +8,7 @@ tags: [opensource, practice]
 Keywords: [Open source monitoring tool, open source database monitoring, Mysql database monitoring]
 ---
 
-## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Mysql database, and it will be done in 5 minutes!
+## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Mysql database, and it will be done in 5 minutes
 
 ### Mysql database introduction
 
@@ -24,7 +24,7 @@ Keywords: [Open source monitoring tool, open source database monitoring, Mysql d
 
 ### Get the Mysql database monitoring in HertzBeat in 5 minutes
 
-#### The premise of the operation is that you already have the Mysql environment and the HertzBeat environment.
+#### The premise of the operation is that you already have the Mysql environment and the HertzBeat environment
 
 - Mysql [Installation and deployment document](https://www.runoob.com/mysql/mysql-install.html)
 - HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
@@ -40,7 +40,7 @@ Path: Menu -> Database Monitoring -> Mysql Database -> Add Mysql Database Monito
 2. Configure the parameters required for the new monitoring Mysql database
 
 On the monitoring page, fill in Mysql **service IP**, **monitoring port** (default 3306), **account password, etc.**, and finally click OK to add.
-For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/mysql/) https://hertzbeat.com/docs/help /mysql/
+For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/mysql/) <https://hertzbeat.com/docs/help> /mysql/
 
 ![hertzbeat](/img/blog/monitor-mysql-2.png)
 
@@ -57,6 +57,7 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 ![hertzbeat](/img/blog/monitor-mysql-4.png)
 
 **DONE! Done! Through the above steps, in fact, it only takes one step to sum up**
+
 - **On the HertzBeat monitoring page, configure the IP port account password and add Mysql monitoring**
 
 :::tip
@@ -87,7 +88,7 @@ Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
 
 Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk to configure the robot on DingTalk and set the security custom keyword `HertzBeat `, get the corresponding `access_token` value.
+- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
 - Configure the receiver parameters in HertzBeat as follows.
 
 【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
@@ -118,10 +119,10 @@ Content details: mysql db query_cache_hit_rate is too low, now is 20.
 This practical article took us to experience how to use the open source real-time monitoring tool HertzBeat to monitor Mysql database metric data. We can find that HertzBeat, which integrates `monitoring-alarm-notification`, is more convenient in operation and use, just click on the page The Mysql database can be included in the monitoring and alarm notification, and the tedious operations of deploying multiple components and writing configuration files are no longer needed.
 :::
 
-Mysql Github: https://github.com/mysql/mysql-server    
-HertzBeat Github: https://github.com/apache/hertzbeat
+Mysql Github: <https://github.com/mysql/mysql-server>
+HertzBeat Github: <https://github.com/apache/hertzbeat>
 
-**Welcome to learn, use and star! **
+**Welcome to learn, use and star!**
 
 > Only one docker command is needed to install and experience heartbeat:
 

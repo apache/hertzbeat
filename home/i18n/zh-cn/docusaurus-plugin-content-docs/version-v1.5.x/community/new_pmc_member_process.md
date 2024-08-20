@@ -79,7 +79,7 @@ ${Work list}[1]
 ```
 
 注意，投票将在今天一周后结束，即
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)   
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
 [Apache 参考投票指南](https://community.apache.org/newcommitter.html)
 
 ### Close Vote Template
@@ -283,4 +283,3 @@ A PPMC member helps manage and guide the direction of the project.
 Thanks,
 On behalf of the Apache HertzBeat (incubating) PPMC
 ```
-
