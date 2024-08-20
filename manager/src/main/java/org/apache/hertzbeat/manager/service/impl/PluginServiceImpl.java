@@ -19,7 +19,10 @@ package org.apache.hertzbeat.manager.service.impl;
 
 import jakarta.persistence.criteria.Predicate;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -96,6 +99,11 @@ public class PluginServiceImpl implements PluginService {
                 if (jarFile.exists()) {
                     FileUtils.delete(jarFile);
                 }
+                // removing jar files that are dependencies for the plugin
+                File otherLibDir = new File(getOtherLibDir(plugin.getJarFilePath()));
+                if (otherLibDir.exists()) {
+                    FileUtils.deleteDirectory(otherLibDir);
+                }
                 // delete metadata
                 metadataDao.deleteById(plugin.getId());
             } catch (IOException e) {
@@ -106,6 +114,16 @@ public class PluginServiceImpl implements PluginService {
         syncPluginStatus();
         // reload classloader
         loadJarToClassLoader();
+    }
+
+    /**
+     * get the directory where the JAR files dependent on the plugin are saved
+     *
+     * @param pluginJarPath jar file path
+     * @return lib dir
+     */
+    private String getOtherLibDir(String pluginJarPath) {
+        return pluginJarPath.substring(0, pluginJarPath.lastIndexOf("."));
     }
 
     @Override
@@ -274,8 +292,9 @@ public class PluginServiceImpl implements PluginService {
             System.gc();
             List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
             for (PluginMetadata metadata : plugins) {
-                URL url = new File(metadata.getJarFilePath()).toURI().toURL();
-                pluginClassLoaders.add(new URLClassLoader(new URL[]{url}, Plugin.class.getClassLoader()));
+                List<URL> urls = loadLibInPlugin(metadata.getJarFilePath());
+                urls.add(new File(metadata.getJarFilePath()).toURI().toURL());
+                pluginClassLoaders.add(new URLClassLoader(urls.toArray(new URL[0]), Plugin.class.getClassLoader()));
             }
         } catch (MalformedURLException e) {
             log.error("Failed to load plugin:{}", e.getMessage());
@@ -283,6 +302,42 @@ public class PluginServiceImpl implements PluginService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * loading other JAR files that are dependencies for the plugin
+     *
+     * @param pluginJarPath jar file path
+     * @return urls
+     */
+    @SneakyThrows
+    private List<URL> loadLibInPlugin(String pluginJarPath) {
+        File libDir = new File(getOtherLibDir(pluginJarPath));
+        FileUtils.forceMkdir(libDir);
+        List<URL> libUrls = new ArrayList<>();
+        try (JarFile jarFile = new JarFile(pluginJarPath)) {
+            Enumeration<JarEntry> entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                File file = new File(libDir, entry.getName());
+                if (!entry.isDirectory() && entry.getName().endsWith(".jar")) {
+                    if (!file.getParentFile().exists()) {
+                        FileUtils.createParentDirectories(file);
+                    }
+                    try (InputStream in = jarFile.getInputStream(entry);
+                        OutputStream out = new FileOutputStream(file)) {
+                        byte[] buffer = new byte[4096];
+                        int len;
+                        while ((len = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, len);
+                        }
+                        libUrls.add(file.toURI().toURL());
+                        out.flush();
+                    }
+                }
+            }
+        }
+        return libUrls;
     }
 
     @Override
