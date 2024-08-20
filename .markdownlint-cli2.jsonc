@@ -37,6 +37,5 @@
   },
   "ignore": [
     "node_modules/"
-  ],
-  "fix": true
+  ]
 }

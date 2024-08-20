@@ -38,7 +38,6 @@ jobs:
         uses: DavidAnson/markdownlint-cli2-action@v16
         with:
           globs: './home/**/*.md'
-          fix: true
       - name: Check filename in home/blog
         run: |
           TARGET_DIR="./home/blog"
