@@ -378,7 +378,8 @@ export class BulletinComponent implements OnInit {
           if (message.code === 0 && message.data) {
             // this.total = message.data.totalElements;
             this.tabDefines = message.data;
-            console.info('tab:', this.tabDefines);
+            console.info('tabDefines.length:', this.tabDefines.column.length);
+            console.info('tabDefines.field:', this.tabDefines.bulletinColumn['summary']);
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
@@ -393,6 +394,23 @@ export class BulletinComponent implements OnInit {
       );
     }
     this.tableLoading = false;
+  }
+
+  getKeys(metricName: string): string[] {
+    const result = new Set<string>();
+
+    this.tabDefines.content.forEach((item: any) => {
+      item.metrics.forEach((metric: any) => {
+        if (metric.name === metricName) {
+          metric.fields.forEach((fieldGroup: any) => {
+            fieldGroup.forEach((field: any) => {
+              result.add(field.key);
+            });
+          });
+        }
+      });
+    });
+    return Array.from(result);
   }
 
   getMaxRowSpan(data: { [x: string]: string | any[] }) {
