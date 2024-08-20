@@ -61,6 +61,11 @@ limitations under the License.
 - Frontend code formatting plugin `eslint`
   Just run `npm run lint:fix` in web-app
 
+### 2.2 Document style check
+
+1. Run `mvn spotless:check` in the project to automatically detect the Markdown file format.
+2. Run `mvn spotless:apply` in the project to automatically format the Markdown file format to ensure that all documents meet the specifications.
+
 ## 3 Programming Specification
 
 ### 3.1 Naming Style

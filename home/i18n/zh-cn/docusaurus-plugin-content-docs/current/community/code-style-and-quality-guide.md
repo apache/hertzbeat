@@ -61,6 +61,11 @@ limitations under the License.
 - 前端代码格式化插件 `eslint`
   前端运行 `npm run lint:fix`
 
+### 2.2 文档样式检查
+
+1. 在项目中运行`mvn spotless:check`，会执行Markdown文件格式自动检测。
+2. 在项目中运行`mvn spotless:apply`，会执行Markdown文件格式自动格式化，以确保所有文档都符合规范。
+
 ## 3 编程规范
 
 ### 3.1 命名风格
