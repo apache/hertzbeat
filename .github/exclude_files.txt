@@ -2,3 +2,4 @@
 ./home/versioned_docs/version-v1.5.x/start/postgresql-change.md
 ./home/versioned_docs/version-v1.5.x/introduce.md
 ./home/versioned_docs/version-v1.5.x/help/sqlserver.md
+./home/versioned_docs/version-v1.5.x/help/alert_threshold_expr.md
