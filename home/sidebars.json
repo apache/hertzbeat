@@ -275,6 +275,7 @@
             "help/hdfs_datanode",
             "help/iotdb",
             "help/hive",
+            "help/iceberg",
             "help/airflow",
             "help/clickhouse",
             "help/elasticsearch",

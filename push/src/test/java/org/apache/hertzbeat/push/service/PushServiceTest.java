@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
  */
 
 @ExtendWith(MockitoExtension.class)
-class PushServiceImplTest {
+class PushServiceTest {
 
 	@Mock
 	private PushMonitorDao monitorDao;
