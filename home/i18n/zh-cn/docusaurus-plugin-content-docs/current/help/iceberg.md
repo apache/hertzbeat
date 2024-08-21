@@ -1,15 +1,15 @@
 ---
-id: hive
-Title: 监控 Apache Hive
-sidebar_label: Apache Hive
-keywords: [开源监控工具, 开源 Apache Hive 监控工具, 监控 Apache Hive 指标]
+id: iceberg
+Title: 监控 Apache Iceberg
+sidebar_label: Apache Iceberg
+keywords: [开源监控工具, 开源 Apache Iceberg 监控工具, 监控 Apache Iceberg 指标]
 ---
 
-> 收集和监控由 Apache Hive 提供的常规性能指标。
+> 收集和监控由 Apache Iceberg 提供的常规性能指标。
 
 ## 监控前操作
 
-如果您想使用此监控类型监控 Apache Hive 的信息，您需要以远程模式启动您的 Hive Server2。
+如果您想使用此监控类型监控 Apache Iceberg 的信息，您需要以远程模式启动您的 Hive Server2。
 
 **1、启用元数据存储:**
 
