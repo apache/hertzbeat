@@ -110,6 +110,12 @@ jobs:
           else
             echo "All file names are valid."
           fi
+      - name: Dead Link
+        run: |
+          sudo npm install -g markdown-link-check@3.8.7
+          for file in $(find . -name "*.md"); do
+            markdown-link-check -c .dlc.json -q "$file"
+          done
       - name: NPM INSTALL
         working-directory: home
         run: npm install
