@@ -39,3 +39,6 @@
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.4.x/help/alert_threshold_expr.md
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.4.x/others/resource.md
 ./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/others/resource.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.5.x/start/tdengine-init.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/version-v1.4.x/start/tdengine-init.md
+./home/i18n/zh-cn/docusaurus-plugin-content-docs/current/start/tdengine-init.md
