@@ -16,10 +16,10 @@
   ~ specific language governing permissions and limitations
   ~ under the License.
 -->
-
+<div #targetElement></div>
 <nz-card
   nzHoverable
-  [style]="{ height: height || '100%', display: 'flex', flexDirection: 'column' }"
+  [style]="{ height: height || '100%', display: 'flex', flexDirection: 'column', width: cardWidth + 'px' }"
   [nzBordered]="true"
   [nzBodyStyle]="{ overflow: !monitor ? 'hidden' : 'auto' }"
   [nzTitle]="card_title"
