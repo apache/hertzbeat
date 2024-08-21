@@ -4,7 +4,7 @@
       "pattern": "^http://localhost"
     },
     {
-      "pattern": "^https://mvnrepository.com"
+      "pattern": "^/img"
     }
   ],
   "timeout": "10s",
