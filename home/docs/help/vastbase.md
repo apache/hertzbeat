@@ -9,9 +9,9 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 ### Configuration parameter
 
-|   Parameter name    |                                                                        Parameter help description                                                                         |
+|   Parameter name    | Parameter help description                                                                                                                                                |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
+| Monitoring Host     | Monitored Host address. Note⚠️Without protocol header (eg: https://, http://)                                                                                             |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
 | Port                | Port provided by the database. The default is 5432                                                                                                                        |
 | Query timeout       | Set the timeout time when SQL query does not respond to data, unit: ms, default: 3000ms                                                                                   |
