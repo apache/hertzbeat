@@ -16,5 +16,9 @@
     200,
     401,
     403
+  ],
+  "ignoreFiles": [
+    "home/versioned_docs/version-v1.5.x/community/how-to-release.md",
+    "home/versioned_docs/version-v1.6.x/community/how-to-release.md"
   ]
 }
