@@ -14,8 +14,6 @@ sidebar_label: Download
 
 ## The Latest Release
 
-[test errot](https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx2)
-
 :::tip
 Previous releases of HertzBeat may be affected by security issues, please use the latest one.
 :::
