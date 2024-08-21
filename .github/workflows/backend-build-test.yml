@@ -72,9 +72,11 @@ jobs:
         sudo docker-compose up --exit-code-from testing --remove-orphans
 
     # upload application logs
-    - name: Upload logs
+    - name: Upload logs & API test reports
       uses: actions/upload-artifact@v3
       if: always()
       with:
         name: hz-logs-${{ github.run_id }}
-        path: e2e/logs/
+        path: |
+          e2e/logs/
+          e2e/report/
