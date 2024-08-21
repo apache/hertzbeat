@@ -15,7 +15,7 @@ sidebar_label: Download
 ## The Latest Release
 
 :::tip
-Previous releases of HertzBeat may be affected by security issues, please use the latest one. test
+Previous releases of HertzBeat may be affected by security issues, please use the latest one. tes
 :::
 
 | Version |    Date    |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Download                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |                              Release Notes                              |
