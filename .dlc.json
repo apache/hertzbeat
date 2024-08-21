@@ -1,19 +1,10 @@
 {
   "ignorePatterns": [
     {
-      "pattern": "^http://localhost"
+      "pattern": "^(?!http).*"
     },
     {
-      "pattern": "^/img"
-    },
-    {
-      "pattern": "^../"
-    },
-    {
-      "pattern": "^/"
-    },
-    {
-      "pattern": "^./"
+      "pattern": "!\\[.*\\]\\((?!http).*\\)"
     }
   ],
   "timeout": "10s",
