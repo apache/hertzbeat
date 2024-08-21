@@ -376,9 +376,7 @@ export class BulletinComponent implements OnInit {
         message => {
           metricData$.unsubscribe();
           if (message.code === 0 && message.data) {
-            // this.total = message.data.totalElements;
-            this.tabDefines = message.data;
-            this.printDataStructure(this.tabDefines.content);
+            this.tabDefines = message;
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
@@ -394,24 +392,11 @@ export class BulletinComponent implements OnInit {
     }
     this.tableLoading = false;
   }
-  printDataStructure(data: any) {
-    data.forEach((entry: any) => {
-      console.log(`App: ${entry.app}`);
-      console.log(`Host: ${entry.host}`);
-      entry.metrics.forEach((metric: any) => {
-        console.log(`Metric: ${metric.name}`);
-        metric.fields.forEach((fieldGroup: any) => {
-          fieldGroup.forEach((field: any) => {
-            console.log(`  Key: ${field.key}, Value: ${field.value}, Unit: ${field.unit}`);
-          });
-        });
-      });
-    });
-  }
+
   getKeys(metricName: string): string[] {
     const result = new Set<string>();
 
-    this.tabDefines.content.forEach((item: any) => {
+    this.tabDefines.data.content.forEach((item: any) => {
       item.metrics.forEach((metric: any) => {
         if (metric.name === metricName) {
           metric.fields.forEach((fieldGroup: any) => {
@@ -425,19 +410,6 @@ export class BulletinComponent implements OnInit {
     return Array.from(result);
   }
 
-  getMaxRowSpan(data: { [x: string]: string | any[] }) {
-    let maxRowSpan = 1;
-    for (let metricName of this.tabDefines.column) {
-      console.info('field', this.tabDefines.content.metrics[metricName]);
-      for (let field of this.tabDefines.content.metrics[metricName]) {
-        if (Array.isArray(data[field])) {
-          maxRowSpan = Math.max(maxRowSpan, data[field].length);
-        }
-      }
-    }
-    return maxRowSpan;
-  }
-
   onTablePageChange(params: NzTableQueryParams): void {
     const { pageSize, pageIndex } = params;
 
@@ -449,9 +421,11 @@ export class BulletinComponent implements OnInit {
     }
   }
 
-  getRowIndexes(data: { [x: string]: string | any[] }) {
-    const maxRowSpan = this.getMaxRowSpan(data);
-    return Array.from({ length: maxRowSpan }, (_, index) => index);
+  getRowIndexes() {
+    const maxRowSpan = this.tabDefines.data.content.length;
+    var numbers = Array.from({ length: maxRowSpan }, (_, index) => index);
+    console.log(numbers);
+    return numbers;
   }
 
   isDeleteModalVisible: boolean = false;
@@ -477,7 +451,6 @@ export class BulletinComponent implements OnInit {
           allNames$.unsubscribe();
           if (message.code === 0) {
             this.tabs = message.data;
-            console.info('tabs:', this.tabs);
             resolve();
           } else {
             this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), message.msg);

@@ -47,14 +47,13 @@
     <ng-container *ngIf="tabDefines">
       <nz-table
         #fixedTable
-        [nzData]="tabDefines"
+        [nzData]="tabDefines.data"
         [nzPageIndex]="pageIndex"
         [nzPageSize]="pageSize"
         [nzTotal]="total"
         nzFrontPagination="false"
         [nzLoading]="tableLoading"
         nzShowSizeChanger
-        [nzShowTotal]="rangeTemplate"
         [nzPageSizeOptions]="[10, 20, 50]"
         (nzQueryParams)="onTablePageChange($event)"
         nzShowPagination="true"
@@ -63,56 +62,52 @@
         class="table"
       >
         <thead>
-          <tr>
-            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
-            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
-            <ng-container *ngFor="let metric of tabDefines.column">
-              <th nzAlign="center" [colSpan]="getKeys(metric).length">
-                {{ metric }}
-              </th>
-            </ng-container>
-          </tr>
-          <tr>
-            <ng-container *ngFor="let metric of tabDefines.column">
-              <ng-container *ngFor="let field of getKeys(metric)">
-                <th nzAlign="center" [colSpan]="1">
-                  {{ field }}
-                </th>
-              </ng-container>
-            </ng-container>
-          </tr>
+<!--          <tr>-->
+<!--            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>-->
+<!--            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>-->
+<!--            <ng-container *ngFor="let metric of tabDefines.data.column">-->
+<!--              <th nzAlign="center" [colSpan]="getKeys(metric).length">-->
+<!--                {{ metric }}-->
+<!--              </th>-->
+<!--            </ng-container>-->
+<!--          </tr>-->
+<!--          <tr>-->
+<!--            <ng-container *ngFor="let metric of tabDefines.data.column">-->
+<!--              <ng-container *ngFor="let field of getKeys(metric)">-->
+<!--                <th nzAlign="center" [colSpan]="1">-->
+<!--                  {{ field }}-->
+<!--                </th>-->
+<!--              </ng-container>-->
+<!--            </ng-container>-->
+<!--          </tr>-->
         </thead>
 
         <tbody>
-        <ng-container *ngFor="let data of tabDefines.content">
-          <ng-container *ngFor="let rowIndex of getRowIndexes(data)">
-            <tr>
-              <ng-container *ngIf="rowIndex === 0">
-                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.app }}</td>
-                <td nzAlign="center" [rowSpan]="getMaxRowSpan(data)">{{ data.host }}</td>
-              </ng-container>
-              <ng-container *ngFor="let metric of data.metrics">
-                <td>
-                  <div *ngFor="let field of metric.fields">
-                    <div *ngFor="let item of field">
-                      <span>{{ item.key }}: </span>
-                      <nz-tag *ngIf="item.value === 'No Data'" nzColor="warning">
-                        {{ 'monitors.detail.value.null' | i18n }}
-                      </nz-tag>
-                      <nz-tag *ngIf="item.value !== 'No Data'" nzColor="success">
-                        {{ item.value }} {{ item.unit }}
-                      </nz-tag>
+          <ng-container *ngFor="let content of fixedTable.data">
+            <ng-container *ngFor="let rowIndex of getRowIndexes()">
+              <tr>
+                <ng-container *ngIf="rowIndex === 0">
+                  <td nzAlign="center" [rowSpan]="tabDefines.data.content.length">{{ content.monitorName }}</td>
+                  <td nzAlign="center" [rowSpan]="tabDefines.data.content.length">{{ content.host }}</td>
+                </ng-container>
+                <ng-container *ngFor="let metric of content.metrics">
+                  <td>
+                    <div *ngFor="let field of metric.fields">
+                      <div *ngFor="let item of field">
+                        <span>{{ item.key }}: </span>
+                        <nz-tag *ngIf="item.value === 'No Data'" nzColor="warning">
+                          {{ 'monitors.detail.value.null' | i18n }}
+                        </nz-tag>
+                        <nz-tag *ngIf="item.value !== 'No Data'" nzColor="success"> {{ item.value }} {{ item.unit }} </nz-tag>
+                      </div>
                     </div>
-                  </div>
-                </td>
-              </ng-container>
-            </tr>
+                  </td>
+                </ng-container>
+              </tr>
+            </ng-container>
           </ng-container>
-        </ng-container>
         </tbody>
-
       </nz-table>
-      <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ tabDefines.total }} </ng-template>
     </ng-container>
   </nz-tab>
 </nz-tabset>
@@ -233,7 +228,7 @@
             [nzShowSearch]="true"
             name="delete"
           >
-            <nz-option *ngFor="let bulletinTab of tabDefines" [nzLabel]="bulletinTab.name" [nzValue]="bulletinTab.name"></nz-option>
+            <nz-option *ngFor="let tab of tabs" [nzLabel]="tab" [nzValue]="tab"></nz-option>
           </nz-select>
         </nz-form-control>
       </nz-form-item>
