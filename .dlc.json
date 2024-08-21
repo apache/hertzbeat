@@ -8,6 +8,12 @@
     },
     {
       "pattern": "^../"
+    },
+    {
+      "pattern": "^/"
+    },
+    {
+      "pattern": "^./"
     }
   ],
   "timeout": "10s",

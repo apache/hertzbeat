@@ -36,11 +36,11 @@ Apache HertzBeat (incubating)'s metadata information is stored in H2 or Mysql, P
    - Back up the database file directory under the installation package `/opt/hertzbeat/data`
    - If there is a custom monitoring template, you need to back up the template YML under `/opt/hertzbeat/define`
    - `bin/shutdown.sh` stops the HertzBeat process and downloads the new installation package
-   - Refer to [Installation package to install HertzBeat](package-deploy) to start using the new installation package
+   - Refer to [Installation package to install HertzBeat](./package-deploy) to start using the new installation package
 2. If using external relational database Mysql, PostgreSQL
    - No need to back up the database file directory under the installation package
    - If there is a custom monitoring template, you need to back up the template YML under `/opt/hertzbeat/define`
    - `bin/shutdown.sh` stops the HertzBeat process and downloads the new installation package
-   - Refer to [Installation package to install HertzBeat](package-deploy) to start with the new installation package and configure the database connection in `application.yml`
+   - Refer to [Installation package to install HertzBeat](./package-deploy) to start with the new installation package and configure the database connection in `application.yml`
 
 **HAVE FUN**
