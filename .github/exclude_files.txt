@@ -13,3 +13,9 @@
 ./home/blog/2022-06-01-hertzbeat-v1.0.md
 ./home/blog/2023-12-11-hertzbeat-v1.4.3.md
 ./home/blog/2023-11-12-hertzbeat-v1.4.2.md
+./home/blog/2024-01-18-hertzbeat-v1.4.4.md
+./home/docs/introduce.md
+./home/docs/help/sqlserver.md
+./home/docs/postgresql-change.md
+./home/docs/help/alert_threshold_expr.md
+./home/docs/others/resource.md
