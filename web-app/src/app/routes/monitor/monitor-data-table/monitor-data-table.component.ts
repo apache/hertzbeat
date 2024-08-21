@@ -71,6 +71,7 @@ export class MonitorDataTableComponent implements OnInit, AfterViewInit {
       const grandparentElement = this.cardElement.nativeElement.parentElement.parentElement;
       const grandparentWidth = grandparentElement.clientWidth;
       this.cardWidth = grandparentWidth / 2 - 4;
+      this.cdr.detectChanges();
     }
   }
 
