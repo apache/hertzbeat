@@ -7,6 +7,9 @@
 ./home/versioned_docs/version-v1.4.x/help/sqlserver.md
 ./home/versioned_docs/version-v1.5.x/help/alert_threshold_expr.md
 ./home/versioned_docs/version-v1.4.x/help/alert_threshold_expr.md
+./home/versioned_docs/version-v1.4.x/others/resource.md
+./home/versioned_docs/version-v1.5.x/others/resource.md
 ./home/docs/community/how-to-release.md
 ./home/blog/2022-06-01-hertzbeat-v1.0.md
 ./home/blog/2023-12-11-hertzbeat-v1.4.3.md
+./home/blog/2023-11-12-hertzbeat-v1.4.2.md
