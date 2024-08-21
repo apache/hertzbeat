@@ -114,6 +114,14 @@ jobs:
           else
             echo "All file names are valid."
           fi
+      - name: Dead Link
+        run: |
+          sudo npm install -g markdown-link-check@3.8.7
+          for file in $(find ./home -name "*.md"); do
+            if ! grep -Fxq "$file" .github/exclude_files.txt; then
+              markdown-link-check -c .github/link_check.json -q "$file"
+            fi
+          done
       - name: NPM INSTALL
         working-directory: home
         run: npm install
