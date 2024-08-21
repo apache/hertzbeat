@@ -17,8 +17,9 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 ### Install GreptimeDB via Docker
 
 > Refer to the official website [installation tutorial](https://docs.greptime.com/getting-started/overview)  
-> 1. Download and install Docker environment     
-> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).     
+>
+> 1. Download and install Docker environment
+> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 > After the installation you can check if the Docker version normally output at the terminal.
 >
 > ```
@@ -42,9 +43,9 @@ use```$ docker ps``` to check if the database started successfully
 
 ### Configure the database connection in hertzbeat `application.yml` configuration file
 
-1. Configure HertzBeat's configuration file   
-   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)        
-   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
+1. Configure HertzBeat's configuration file
+   Modify `hertzbeat/config/application.yml` configuration file [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
+   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
    Replace `warehouse.store.greptime` data source parameters, URL account and password.
 
 ```yaml
@@ -66,4 +67,3 @@ warehouse:
 1. Do both the time series databases Greptime, IoTDB or TDengine need to be configured? Can they both be used?
 
 > You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
-

@@ -17,10 +17,10 @@ Today's article describes how to use hertzbeat monitoring system to detect the v
 
 HertzBeat is a real-time monitoring tool with powerful customizable monitoring capabilities without the need for an agent. Website monitoring, PING connectivity, port availability, database, OS, middleware, API monitoring, threshold alerts, alert notifications (email weChat pinning flybook).
 
-**Official website: https://hertzbeat.com | https://tancloud.cn**
+**Official website: <https://hertzbeat.com> | <https://tancloud.cn>**
 
-github: https://github.com/apache/hertzbeat    
-gitee: https://gitee.com/hertzbeat/hertzbeat
+github: <https://github.com/apache/hertzbeat>
+gitee: <https://gitee.com/hertzbeat/hertzbeat>
 
 #### Install HertzBeat
 
@@ -42,7 +42,7 @@ gitee: https://gitee.com/hertzbeat/hertzbeat
 
 2. Configure monitoring website
 
-> Here is an example to monitor Baidu website, configure the host domain name, name, collection interval, etc. > Click OK.    
+> Here is an example to monitor Baidu website, configure the host domain name, name, collection interval, etc. > Click OK.
 > Click OK. Note that ⚠️ will test the connectivity of the website before adding it by default, and it will add it only if the connection is successful, of course, you can also gray out the **Whether to test** button.
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ad1154670648413bb82c8bdeb5b13609~tplv-k3u1fbpfcp-zoom-1.image)
@@ -87,8 +87,8 @@ gitee: https://gitee.com/hertzbeat/hertzbeat
 
 You can refer to the help file for the token configuration of Nail WeChat Flying Book, etc.
 
-https://hertzbeat.com/docs/help/alert_dingtalk   
-https://tancloud.cn/docs/help/alert_dingtalk
+<https://hertzbeat.com/docs/help/alert_dingtalk>
+<https://tancloud.cn/docs/help/alert_dingtalk>
 
 > Alert Notification -> Add new alert notification policy -> Enable notification for the recipients you just configured
 
@@ -98,10 +98,10 @@ https://tancloud.cn/docs/help/alert_dingtalk
 
 ----  
 
-#### End!
+#### End
 
 The practice of monitoring SSL certificates here, of course, for hertzbeat this function is just the tip of the iceberg, if you think hertzbeat this open source project is good if you welcome to give us in the GitHub Gitee star oh, thank you very much. Thank you for your support. The author!
 
-**github: https://github.com/apache/hertzbeat**
+**github: <https://github.com/apache/hertzbeat>**
 
-**gitee: https://gitee.com/hertzbeat/hertzbeat**
+**gitee: <https://gitee.com/hertzbeat/hertzbeat>**

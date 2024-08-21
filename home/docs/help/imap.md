@@ -45,4 +45,3 @@ Collect information on each folder in the email (custom folders can be configure
 | Total message count  | None        | The total number of emails in this folder             |
 | Recent message count | None        | The number of recently received emails in this folder |
 | Unseen message count | None        | The number of unread emails in this folder            |
-

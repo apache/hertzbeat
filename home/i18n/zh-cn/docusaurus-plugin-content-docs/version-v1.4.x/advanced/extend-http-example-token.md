@@ -196,7 +196,7 @@ metrics:
 
 ```
 
-**此时，重启hertzbeat系统，在系统页面上添加 `hertzbeat_token` 类型监控，配置输入参数，`content-type`填`application/json` , `请求Body`填账户密码json如下: **
+**此时，重启hertzbeat系统，在系统页面上添加 `hertzbeat_token` 类型监控，配置输入参数，`content-type`填`application/json` , `请求Body`填账户密码json如下:**
 
 ```json
 {
@@ -378,12 +378,12 @@ metrics:
 
 ----  
 
-#### 完！
+#### 完
 
 HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数headers,params等，我们可以像用postman一样去定义它，可玩性也非常高！
 
 如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
 
-**github: https://github.com/apache/hertzbeat**
+**github: <https://github.com/apache/hertzbeat>**
 
-**gitee: https://gitee.com/hertzbeat/hertzbeat**
+**gitee: <https://gitee.com/hertzbeat/hertzbeat>**

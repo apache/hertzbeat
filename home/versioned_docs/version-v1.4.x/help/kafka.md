@@ -87,4 +87,3 @@ exec $base_dir/kafka-run-class.sh $EXTRA_ARGS kafka.Kafka "$@"
 | FiveMinuteRate    | %           | Five Minute Rate        |
 | MeanRate          | %           | Mean Rate               |
 | FifteenMinuteRate | %           | Fifteen Minute Rate     |
-

@@ -8,10 +8,10 @@ keywords: [open source monitoring tool, open source windows monitoring tool, mon
 > Collect and monitor the general performance Metrics of Windows operating system through SNMP protocol.
 > Note⚠️ You need to start SNMP service for Windows server.
 
-References:      
-[What is SNMP protocol 1](https://www.cnblogs.com/xdp-gacl/p/3978825.html)   
-[What is SNMP protocol 2](https://www.auvik.com/franklyit/blog/network-basics-what-is-snmp/)     
-[Win configure SNMP in English](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-snmp-service)     
+References:
+[What is SNMP protocol 1](https://www.cnblogs.com/xdp-gacl/p/3978825.html)
+[What is SNMP protocol 2](https://www.auvik.com/franklyit/blog/network-basics-what-is-snmp/)
+[Win configure SNMP in English](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-snmp-service)
 [Win configure SNMP in Chinese](https://docs.microsoft.com/zh-cn/troubleshoot/windows-server/networking/configure-snmp-service)
 
 ### Configuration parameter
@@ -41,4 +41,3 @@ References:
 | services     | number      | Current number of services   |
 | processes    | number      | Current number of processes  |
 | responseTime | ms          | Collection response time     |
-

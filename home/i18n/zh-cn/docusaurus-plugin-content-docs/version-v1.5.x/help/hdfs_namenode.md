@@ -90,4 +90,3 @@ keywords: [大数据监控系统, 分布式文件系统监控, Apache HDFS NameN
 | ThreadsBlocked                  | 个    | 处于 BLOCKED 状态的线程数量            |
 | ThreadsWaiting                  | 个    | 处于 WAITING 状态的线程数量            |
 | ThreadsTimedWaiting             | 个    | 处于 TIMED WAITING 状态的线程数量      |
-

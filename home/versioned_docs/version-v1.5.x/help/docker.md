@@ -32,7 +32,7 @@ systemctl daemon-reload
 systemctl restart docker
 ```
 
-**Note: Remember to open the `2375` port number in the server console. **
+**Note: Remember to open the `2375` port number in the server console.**
 
 **3. If the above method does not work:**
 
@@ -99,4 +99,3 @@ firewall-cmd --reload
 | cpu_delta        | None        | The number of CPUs already used by the Docker container    |
 | number_cpus      | None        | The number of CPUs that the Docker container can use       |
 | cpu_usage        | None        | Docker container CPU usage                                 |
-

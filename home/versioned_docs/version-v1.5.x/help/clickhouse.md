@@ -93,4 +93,3 @@ keywords: [open source monitoring system, open source database monitoring, Click
 | MarkCacheBytes                           | N/A         | Size of marks cache in StorageMergeTree               |
 | MarkCacheFiles                           | N/A         | Number of files in marks cache for StorageMergeTree   |
 | MaxPartCountForPartition                 | N/A         | Maximum active data blocks in partitions              |
-

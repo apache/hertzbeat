@@ -76,9 +76,9 @@ $ docker run -d -p 1157:1157 \
 
 - `-v /opt/application.yml:/opt/hertzbeat/config/application.yml` : Mount customized local configuration files to the container, i.e. use local configuration files to overwrite the container configuration files.
 
-Note that the ⚠️ local mount configuration file `application.yml` needs to exist in advance, and the full contents of the file can be found in the project repository [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/ application.yml)
+Note that the ⚠️ local mount configuration file `application.yml` needs to exist in advance, and the full contents of the file can be found in the project repository [/script/application.yml](<https://github.com/apache/hertzbeat/raw/master/script/> application.yml)
 
-2. Go to http://ip:1157/ with the default account and password admin/hertzbeat to see if HertzBeat starts successfully.
+2. Go to <http://ip:1157/> with the default account and password admin/hertzbeat to see if HertzBeat starts successfully.
 
 #### Configure to use GreptimeDB to store HertzBeat monitoring metrics metrics data
 
@@ -101,12 +101,12 @@ warehouse:
 2. Restart HertzBeat.
 
 ```shell
-$ docker restart hertzbeat
+docker restart hertzbeat
 ```
 
 #### Observe the authentication effect
 
-1. visit HertzBeat in your browser http://ip:1157/ default account password admin/hertzbeat
+1. visit HertzBeat in your browser <http://ip:1157/> default account password admin/hertzbeat
 2. Use HertzBeat to add application monitors, such as website monitors, Linux monitors, Mysql monitors, and so on.
 3. After monitoring and collecting several cycles, check whether GreptimeDB database stores the metrics data and whether HertzBeat metrics data graph data is displayed normally.
 
@@ -120,12 +120,12 @@ Here's the picture: !
 
 ## Summary
 
-This article took us to experience how to use the open source time-series database GreptimeDB to store the metrics data of the open source real-time monitoring HertzBeat, in general, the two open source products is very simple to get started, the key is that if it is too much trouble do not want to deploy both of them still have cloud services 😂 let you toss.   
+This article took us to experience how to use the open source time-series database GreptimeDB to store the metrics data of the open source real-time monitoring HertzBeat, in general, the two open source products is very simple to get started, the key is that if it is too much trouble do not want to deploy both of them still have cloud services 😂 let you toss.
 As one of the developers of the feature [HertzBeat supports GreptimeDB](https://github.com/apache/hertzbeat/pull/834), in the actual adaptation process, GreptimeDB's silky-smooth native SDK and relational database-like SQL, let us from other GreptimeDB native SDK and relational database-like SQL make it very easy to switch from other time-series databases like `TDengine, IotDB, InfluxDB` to GreptimeDB, and the experience is very smooth.
 
-GreptimeDB Github: https://github.com/GreptimeTeam/greptimedb    
-HertzBeat Github: https://github.com/apache/hertzbeat
+GreptimeDB Github: <https://github.com/GreptimeTeam/greptimedb>
+HertzBeat Github: <https://github.com/apache/hertzbeat>
 
-** Finally, you are welcome to be more understanding, more use, more comments, more ISSUE, more PR, more Star support these two did not come out for a long time hope to get care of open source cattle are not afraid of difficulties a small star oh! Do open source, we are sincere, love 💗**
+**Finally, you are welcome to be more understanding, more use, more comments, more ISSUE, more PR, more Star support these two did not come out for a long time hope to get care of open source cattle are not afraid of difficulties a small star oh! Do open source, we are sincere, love 💗**
 
 Thanks to the contributors of this feature [HertzBeat support GreptimeDB](https://github.com/apache/hertzbeat/pull/834) @zqr10159, @fengjiachun, @killme2008, @tomsun28

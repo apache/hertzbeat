@@ -9,7 +9,7 @@ sidebar_label: Help Center
 
 ## 🔬 Monitoring services
 
-> Regularly collect and monitor the performance Metrics exposed by end-to-end services, provide visual interfaces, and process data for alarm and other service scheduling.      
+> Regularly collect and monitor the performance Metrics exposed by end-to-end services, provide visual interfaces, and process data for alarm and other service scheduling.
 > Planned monitoring type：application service, database, operating system, cloud native, open source middleware.
 
 ### Application service monitoring
@@ -115,8 +115,8 @@ More details see&emsp;&#x1F449;&emsp;[Threshold alarm](alert_threshold) <br />
 
 ### Alarm notification
 
-> After triggering the alarm information, in addition to being displayed in the alarm center list, it can also be notified to the designated recipient in a specified way (e-mail, wechat and FeiShu etc.)   
-> Alarm notification provides different types of notification methods, such as email recipient, enterprise wechat robot notification, DingDing robot notification, and FeiShu robot notification.   
+> After triggering the alarm information, in addition to being displayed in the alarm center list, it can also be notified to the designated recipient in a specified way (e-mail, wechat and FeiShu etc.)
+> Alarm notification provides different types of notification methods, such as email recipient, enterprise wechat robot notification, DingDing robot notification, and FeiShu robot notification.
 > After setting the receiver, you need to set the associated alarm notification strategy to configure which alarm information is sent to which receiver.
 
 &emsp;&#x1F449;&emsp;[Configure Email Notification](alert_email) <br />

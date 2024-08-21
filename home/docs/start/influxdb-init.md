@@ -9,7 +9,7 @@ Apache HertzBeat (incubating)'s historical data storage relies on the time serie
 > It is recommended to use VictoriaMetrics as metrics storage.
 
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**  
-**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**   
+**⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 Note⚠️ Need InfluxDB 1.x Version.
 
 ### 1. Use HuaweiCloud GaussDB For Influx
@@ -23,8 +23,9 @@ Note⚠️ Need InfluxDB 1.x Version.
 ### 2. Install TDengine via Docker
 
 > Refer to the official website [installation tutorial](https://hub.docker.com/_/influxdb)  
-> 1. Download and install Docker environment     
-> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).     
+>
+> 1. Download and install Docker environment
+> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 > After the installation you can check if the Docker version normally output at the terminal.
 >
 > ```
@@ -40,14 +41,14 @@ Note⚠️ Need InfluxDB 1.x Version.
 > influxdb:1.8
 > ```
 >
-> `-v /opt/influxdb:/var/lib/influxdb` is local persistent mount of InfluxDB data directory. `/opt/influxdb` should be replaced with the actual local directory.     
+> `-v /opt/influxdb:/var/lib/influxdb` is local persistent mount of InfluxDB data directory. `/opt/influxdb` should be replaced with the actual local directory.
 > use```$ docker ps``` to check if the database started successfully
 
 ### Configure the database connection in hertzbeat `application.yml` configuration file
 
-1. Configure HertzBeat's configuration file   
-   Modify `hertzbeat/config/application.yml` configuration file          
-   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`     
+1. Configure HertzBeat's configuration file
+   Modify `hertzbeat/config/application.yml` configuration file
+   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
    Replace `warehouse.store.influxdb` data source parameters, URL account and password.
 
 ```yaml
@@ -73,4 +74,3 @@ warehouse:
 1. Do both the time series databases InfluxDB, IoTDB and TDengine need to be configured? Can they both be used?
 
 > You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
-

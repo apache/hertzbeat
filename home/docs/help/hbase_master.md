@@ -57,4 +57,3 @@ Check the `hbase-site.xml` file to obtain the value of the `hbase.master.info.po
 | receivedBytes           | MB   | Cluster received data volume                |
 | sentBytes               | MB   | Cluster sent data volume (MB)               |
 | clusterRequests         | none | Total number of cluster requests            |
-

@@ -95,4 +95,3 @@ Metric Unit:
 
 - Memory Usage Rate: %
 - CPU Usage Rate: %
-

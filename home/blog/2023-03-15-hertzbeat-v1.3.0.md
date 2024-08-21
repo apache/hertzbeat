@@ -14,8 +14,8 @@ Website: hertzbeat.com | tancloud.cn
 
 ### What is HertzBeat?
 
-> HertzBeat is an open source real-time monitoring and alerting tool with powerful custom monitoring capabilities and no Agent required.     
-> It supports monitoring of application services, database, operating system, middleware, cloud native, network and other metrics, and threshold alert notification in one step.   
+> HertzBeat is an open source real-time monitoring and alerting tool with powerful custom monitoring capabilities and no Agent required.
+> It supports monitoring of application services, database, operating system, middleware, cloud native, network and other metrics, and threshold alert notification in one step.
 > Support more liberal threshold rules (calculation expressions), `email` `Discord` `Slack` `Telegram` `Pegging` `WeChat` `FlyBook` `SMS` `Webhook` and other ways to timely delivery.
 >
 > We have made the protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable so that you can simply configure `YML` to use these protocols to customize the collection of any metrics you want.
@@ -24,9 +24,9 @@ Website: hertzbeat.com | tancloud.cn
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ### v1.3.0 release is here
 
@@ -36,13 +36,13 @@ After a month of iterations, HertzBeat v1.3.0 was officially released last weeke
 
 ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b5c9dd3e28c54c72b49a7470012a0c36~tplv-k3u1fbpfcp-zoom-1.image)
 
-- **support for monitoring network switches**.    
+- **support for monitoring network switches**.
   hertzbeat supported snmp protocol long time ago, windows monitoring is monitored by snmp protocol, this version we not only support more windows performance metrics, but also support snmp walk, adapt several common network switches monitoring, welcome to contribute more types and metrics to the community.
 
-- **Support for monitoring redis clusters and more database metrics**.   
+- **Support for monitoring redis clusters and more database metrics**.
   Community contributors have contributed extended metrics for redis clusters and multiple databases, enriching the performance metrics data.
 
-- **Support iotdb1.0 storage, dependency-free mode**   
+- **Support iotdb1.0 storage, dependency-free mode**
   and more new features welcome to explore
 
 - Fix several bugs, better documentation, refactored code.
@@ -91,5 +91,5 @@ COMMIT;
 
 ----
 
-**Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

@@ -5,7 +5,7 @@ sidebar_label: Install via Package
 ---
 
 :::tip
-You can install and run Apache HertzBeat (incubating) on Linux Windows Mac system, and CPU supports X86/ARM64.   
+You can install and run Apache HertzBeat (incubating) on Linux Windows Mac system, and CPU supports X86/ARM64.
 Deployment via package relies on Java runtime environment, ensure you have Java17 environment installed, if not please refer to [official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
 :::
 
@@ -21,11 +21,11 @@ Deployment via package relies on Java runtime environment, ensure you have Java1
    Unzip the installation package to the host eg: /opt/hertzbeat
 
    ```
-   $ tar zxvf apache-hertzbeat-xxx-incubating-bin.tar.gz
+   tar zxvf apache-hertzbeat-xxx-incubating-bin.tar.gz
    ```
 
 :::tip
-The configuration file is located in `config/application.yml`, you can modify the configuration file according to your needs to configure external dependent services, such as databases, time series databases, etc.   
+The configuration file is located in `config/application.yml`, you can modify the configuration file according to your needs to configure external dependent services, such as databases, time series databases, etc.
 HertzBeat defaults to using internal services when started, but it is recommended to switch to external database services in production environments.
 :::
 
@@ -36,8 +36,8 @@ It is recommended to use [PostgreSQL](postgresql-change) for metadata storage an
 
 3. Configure the account file(optional)
 
-   HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`   
-   If you need modify account or password, configure `config/sureness.yml`.   
+   HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`
+   If you need modify account or password, configure `config/sureness.yml`.
    For detail steps, please refer to [Configure Account Password](account-modify)
 
 4. Start the service
@@ -45,16 +45,17 @@ It is recommended to use [PostgreSQL](postgresql-change) for metadata storage an
    Execute the startup script in the installation directory `bin/`, or `startup.bat` in windows.
 
    ```
-   $ ./startup.sh 
+   ./startup.sh 
    ```
+
 5. Begin to explore HertzBeat
 
-   Access http://ip:1157/ using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
+   Access <http://ip:1157/> using browser. You can explore HertzBeat with default account `admin/hertzbeat` now!
 
 ### Deploy HertzBeat Collector Cluster(Optional)
 
 :::note
-HertzBeat Collector is a lightweight data collector used to collect and send data to HertzBeat Server.    
+HertzBeat Collector is a lightweight data collector used to collect and send data to HertzBeat Server.
 Deploying multiple HertzBeat Collectors can achieve high availability, load balancing, and cloud-edge collaboration of data.
 :::
 
@@ -70,7 +71,7 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 Unzip the installation package to the host eg: /opt/hertzbeat-collector
 
 ```
-$ tar zxvf apache-hertzbeat-collector-xxx-incubating-bin.tar.gz
+tar zxvf apache-hertzbeat-collector-xxx-incubating-bin.tar.gz
 ```
 
 Configure the collector configuration yml file `config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
@@ -96,7 +97,7 @@ collector:
 
 3. Start the service
 
-   Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+   Run command `$ ./bin/startup.sh` or `bin/startup.bat`
 
 4. Begin to explore HertzBeat Collector
 
@@ -110,9 +111,9 @@ collector:
 
 1. you need to prepare the JAVA environment in advance
 
-   Install JAVA runtime environment-refer to [official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)    
-   requirement：JDK17 ENV     
-   download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)   
+   Install JAVA runtime environment-refer to [official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+   requirement：JDK17 ENV
+   download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)
    After installation use command line to check whether you install it successfully.
 
    ```
@@ -122,10 +123,10 @@ collector:
    Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
 
    ```
-2. According to the process deploy，visit http://ip:1157/ no interface   
+
+2. According to the process deploy，visit <http://ip:1157/> no interface
    Please refer to the following points to troubleshoot issues:
 
 > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
-> 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.    
+> 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.
 > 3：Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.
-

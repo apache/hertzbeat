@@ -32,4 +32,3 @@ keywords: [open source monitoring tool, monitoring http api]
 | Metric name  | Metric unit | Metric help description |
 |--------------|-------------|-------------------------|
 | responseTime | ms          | Website response time   |
-

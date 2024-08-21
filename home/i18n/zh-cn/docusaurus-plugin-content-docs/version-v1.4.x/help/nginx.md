@@ -45,8 +45,8 @@ server {
         location /nginx-status {
                 stub_status     on;
                 access_log      on;
-                #allow 127.0.0.1;	#only allow requests from localhost
- 	            #deny all;		#deny all other hosts
+                #allow 127.0.0.1; #only allow requests from localhost
+              #deny all;  #deny all other hosts
         }
 }
 ```
@@ -93,8 +93,8 @@ http {
     server {
         location /req-status {
             req_status_show on;
-            #allow 127.0.0.1;	#only allow requests from localhost
- 	        #deny all;		#deny all other hosts
+            #allow 127.0.0.1; #only allow requests from localhost
+          #deny all;  #deny all other hosts
         }
     }
 }
@@ -108,7 +108,7 @@ nginx -s reload
 
 4. 在浏览器访问 `http://localhost/req-status` 即可查看 Nginx 监控状态信息。
 
-**参考文档： https://blog.csdn.net/weixin_55985097/article/details/116722309**
+**参考文档： <https://blog.csdn.net/weixin_55985097/article/details/116722309>**
 
 **⚠️注意监控模块的端点路径为 `/nginx-status` `/req-status`**
 
@@ -151,4 +151,3 @@ nginx -s reload
 | 总请求数    |      | 总请求数    |
 | 当前并发连接数 |      | 当前并发连接数 |
 | 当前带宽    | kb   | 当前带宽    |
-

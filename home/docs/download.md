@@ -4,12 +4,14 @@ title: Download Apache HertzBeat (incubating)
 sidebar_label: Download
 ---
 
-> **Here is the Apache HertzBeat (incubating) official download page.**       
+> **Here is the Apache HertzBeat (incubating) official download page.**
 > **Please choose version to download from the following tables. It is recommended use the latest.**
 
 :::tip
+
 - Please verify the release with corresponding hashes(sha512), signatures and [project release KEYS](https://downloads.apache.org/incubator/hertzbeat/KEYS).
 - Refer to [How to Verify](https://www.apache.org/dyn/closer.cgi#verify) for how to check the hashes and signatures.
+
 :::
 
 ## The Latest Release
@@ -26,8 +28,8 @@ Previous releases of HertzBeat may be affected by security issues, please use th
 
 > Apache HertzBeat provides a docker image for each release. You can pull the image from the [Docker Hub](https://hub.docker.com/r/apache/hertzbeat).
 
-- HertzBeat https://hub.docker.com/r/apache/hertzbeat
-- HertzBeat Collector https://hub.docker.com/r/apache/hertzbeat-collector
+- HertzBeat <https://hub.docker.com/r/apache/hertzbeat>
+- HertzBeat Collector <https://hub.docker.com/r/apache/hertzbeat-collector>
 
 ## All Archived Releases
 

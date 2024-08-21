@@ -31,4 +31,3 @@ keywords: [open source monitoring tool, open source ssl cert monitoring tool, mo
 | start_timestamp | ms millisecond  | Validity start timestamp |
 | end_time        | None            | Expiration time          |
 | end_timestamp   | ms milliseconds | expiration timestamp     |
-
