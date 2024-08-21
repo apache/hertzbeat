@@ -92,4 +92,3 @@ Successful command execution will create `${JETTY_BASE}/start.d/jmx-remote.ini` 
 | DaemonThreadCount       |             | Daemon Thread Count        |
 | CurrentThreadUserTime   | ms          | Current Thread User Time   |
 | CurrentThreadCpuTime    | ms          | Current Thread Cpu Time    |
-

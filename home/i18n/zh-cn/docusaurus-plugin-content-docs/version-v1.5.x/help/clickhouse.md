@@ -93,4 +93,3 @@ keywords: [开源监控系统, 开源数据库监控, Clickhouse数据库监控]
 | MarkCacheBytes                           | 无    | StorageMergeTree 的 marks 的缓存大小   |
 | MarkCacheFiles                           | 无    | StorageMergeTree 的 marks 的缓存文件数量 |
 | MaxPartCountForPartition                 | 无    | partitions 中最大的活跃数据块的数量          |
-

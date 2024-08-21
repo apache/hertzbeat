@@ -1,6 +1,7 @@
 Here is the English translation of the provided text:
 
 ---
+
 id: status  
 title: Status Page  
 sidebar_label: Status Page  
@@ -19,9 +20,9 @@ The fields that need to be filled in are as follows:
 |--------------------------|----------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Organization Name        | Name of the organization                                                         | HertzBeat                                                                                                                                                                                                                                                                    |
 | Organization Description | Detailed description of the organization                                         | Apache HertzBeat (incubating) is an easy-to-use and user-friendly open-source real-time monitoring and alerting system, no agent required, high-performance cluster, compatible with Prometheus, providing powerful custom monitoring and status page building capabilities. |
-| Website Link             | URL of the organization's website for more information                           | https://hertzbeat.apache.org/                                                                                                                                                                                                                                                |
-| Logo Image               | Path or URL of the organization's official logo image, preferably in .svg format | https://hertzbeat.apache.org/zh-cn/img/hertzbeat-logo.svg                                                                                                                                                                                                                    |
-| Feedback Address         | Address to receive feedback                                                      | https://github.com/apache/hertzbeat/issues                                                                                                                                                                                                                                   |
+| Website Link             | URL of the organization's website for more information                           | <https://hertzbeat.apache.org/>                                                                                                                                                                                                                                                |
+| Logo Image               | Path or URL of the organization's official logo image, preferably in .svg format | <https://hertzbeat.apache.org/zh-cn/img/hertzbeat-logo.svg>                                                                                                                                                                                                                    |
+| Feedback Address         | Address to receive feedback                                                      | <https://github.com/apache/hertzbeat/issues>                                                                                                                                                                                                                                   |
 | Theme Color              | Main color tone of the status page                                               | Click to select on the page                                                                                                                                                                                                                                                  |
 
 After filling in the organization information, click `Confirm`.

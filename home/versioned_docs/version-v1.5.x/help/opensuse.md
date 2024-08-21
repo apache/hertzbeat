@@ -105,4 +105,3 @@ Statistics for the top 10 processes using memory. Statistics include: Process ID
 | mem_usage   | %    | Memory usage rate       |
 | cpu_usage   | %    | CPU usage rate          |
 | command     | None | Executed command        |
-

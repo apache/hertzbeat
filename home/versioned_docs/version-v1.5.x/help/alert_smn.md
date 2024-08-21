@@ -37,7 +37,7 @@ keywords: [ open source monitoring tool, open source alerter, open source Huawei
 
 1. Huawei Cloud SMN did not receive the robot warning notification
 
-> Please check whether the alarm information has been triggered in the alarm center   
+> Please check whether the alarm information has been triggered in the alarm center
 > Please check whether the Huawei Cloud SMN AK, SK and other configurations are configured correctly, and whether the alarm policy association has been configured
 
 Other questions can be fed back through the communication group ISSUE!

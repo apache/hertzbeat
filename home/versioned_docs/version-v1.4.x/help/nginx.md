@@ -46,8 +46,8 @@ server {
         location /nginx-status {
                 stub_status     on;
                 access_log      on;
-                #allow 127.0.0.1;	#only allow requests from localhost
- 	            #deny all;		#deny all other hosts
+                #allow 127.0.0.1; #only allow requests from localhost
+              #deny all;  #deny all other hosts
         }
 }
 ```
@@ -93,8 +93,8 @@ http {
     server {
         location /req-status {
             req_status_show on;
-            #allow 127.0.0.1;	#only allow requests from localhost
- 	        #deny all;		#deny all other hosts
+            #allow 127.0.0.1; #only allow requests from localhost
+          #deny all;  #deny all other hosts
         }
     }
 }
@@ -109,7 +109,7 @@ nginx -s reload
 
 4. Access `http://localhost/req-status` in the browser to view the Nginx monitoring status information.
 
-**Refer Doc: https://github.com/zls0424/ngx_req_status**
+**Refer Doc: <https://github.com/zls0424/ngx_req_status>**
 
 **⚠️Attention: The endpoint path of the monitoring module is `/nginx-status` `/req-status`**
 
@@ -152,4 +152,3 @@ nginx -s reload
 | requests    |             | Total requests                 |
 | active      |             | Current concurrent connections |
 | bandwidth   | kb          | Current bandwidth              |
-

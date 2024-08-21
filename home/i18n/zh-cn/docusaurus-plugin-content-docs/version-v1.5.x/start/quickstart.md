@@ -41,7 +41,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 1. 下载您系统环境对应的安装包`hertzbeat-xx.tar.gz` [Download](https://hertzbeat.apache.org/docs/download)
 2. 配置 HertzBeat 的配置文件 `hertzbeat/config/application.yml`(可选)
-3. 部署启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
+3. 部署启动 `$ ./bin/startup.sh` 或 `bin/startup.bat`
 4. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 5. 部署采集器集群(可选)
    - 下载您系统环境对应采集器安装包`hertzbeat-collector-xx.tar.gz`到规划的另一台部署主机上 [Download](https://hertzbeat.apache.org/docs/download)
@@ -58,7 +58,8 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
-   - 启动 `$ ./bin/startup.sh ` 或 `bin/startup.bat`
+
+   - 启动 `$ ./bin/startup.sh` 或 `bin/startup.bat`
    - 浏览器访问主HertzBeat服务 `http://localhost:1157` 查看概览页面即可看到注册上来的新采集器
 
 更多配置详细步骤参考 [通过安装包安装HertzBeat](package-deploy)
@@ -94,10 +95,10 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 ##### 安装Mysql(可选)
 
-1. docker安装Mysql    
-   `   $ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7`   
+1. docker安装Mysql
+   `$ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7`
    `-v /opt/data:/var/lib/mysql` - 为mysql数据目录本地持久化挂载，需将`/opt/data`替换为实际本地存在的目录
-2. 创建名称为hertzbeat的数据库    
+2. 创建名称为hertzbeat的数据库
    `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`
 3. 在hertzbeat的配置文件`application.yml`配置Mysql数据库替换H2内置数据库连接参数
 
@@ -105,7 +106,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 ##### 安装TDengine(可选)
 
-1. docker安装TDengine   
+1. docker安装TDengine
    `docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp --name tdengine tdengine/tdengine:3.0.4.0`
 2. 创建名称为hertzbeat的数据库
 3. 在hertzbeat的配置文件`application.yml`配置tdengine连接

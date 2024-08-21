@@ -87,4 +87,3 @@ management:
 | predicate   | None        | This is a routing matching rule       |
 | uri         | None        | This is a service resource identifier |
 | order       | None        | The priority of this route            |
-

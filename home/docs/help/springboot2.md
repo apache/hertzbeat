@@ -93,4 +93,3 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 |-------------|-------------|--------------------------------------|
 | space       | None        | Memory space name                    |
 | mem_used    | MB          | This space occupies a memory size of |
-

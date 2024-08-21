@@ -10,8 +10,8 @@ sidebar_label: 常见参数配置
 
 ### 配置HertzBeat的配置文件
 
-修改位于 `hertzbeat/config/application.yml` 的配置文件    
-注意⚠️docker容器方式需要将application.yml文件挂载到主机本地   
+修改位于 `hertzbeat/config/application.yml` 的配置文件
+注意⚠️docker容器方式需要将application.yml文件挂载到主机本地
 安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
 
 1. 配置短信发送服务器
@@ -74,4 +74,3 @@ warehouse:
       port: 6379
       password: 123456
 ```
-

@@ -36,4 +36,3 @@ keywords: [开源监控系统, 开源数据库监控, Apache Airflow监控]
 |-------------|------|---------------|
 | value       | 无    | Airflow版本     |
 | git_version | 无    | Airflow git版本 |
-

@@ -97,4 +97,3 @@ Complete!
 | zk_max_latency                | ms   | 最大延时       |
 | zk_ephemerals_count           | 个    | 临时节点数      |
 | zk_min_latency                | ms   | 最小延时       |
-

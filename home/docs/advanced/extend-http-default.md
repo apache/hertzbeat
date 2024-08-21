@@ -283,4 +283,3 @@ metrics:
       parseType: jsonPath
       parseScript: '$'
 ```
-

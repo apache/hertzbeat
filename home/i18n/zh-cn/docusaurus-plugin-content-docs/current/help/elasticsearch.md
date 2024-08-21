@@ -61,4 +61,3 @@ keywords: [ 开源监控系统, 监控ElasticSearch ]
 | disk_free         | GB   | 磁盘剩余容量  |
 | disk_total        | GB   | 磁盘总容量   |
 | disk_used_percent | %    | 磁盘使用率   |
-

@@ -13,7 +13,7 @@ keywords: [open source monitoring tool, open source alerter, open source email n
 
 ![email](/img/docs/help/alert-notice-1.png)
 
-2. **【Get verification code】-> 【Enter email verification code】-> 【Confirm】**   
+2. **【Get verification code】-> 【Enter email verification code】-> 【Confirm】**
    ![email](/img/docs/help/alert-notice-2.png)
 
 ![email](/img/docs/help/alert-notice-3.png)

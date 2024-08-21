@@ -11,7 +11,7 @@ tags: [opensource]
 
 Home: hertzbeat.com | tancloud.cn
 
-Hi guys! HertzBeat v1.2.2 is coming. This release brings significant features. This version we support monitor kubernets, docker, springboot, nacos and database dm, opengauss and more. Also we bring a experimental feature, users can custom define metrics collect from promethues with promql. Fixed several bugs and improved the overall stable usability. And more, linux monitor we support top10 cpu usage metrics, top10 memory usage mertics.   
+Hi guys! HertzBeat v1.2.2 is coming. This release brings significant features. This version we support monitor kubernets, docker, springboot, nacos and database dm, opengauss and more. Also we bring a experimental feature, users can custom define metrics collect from promethues with promql. Fixed several bugs and improved the overall stable usability. And more, linux monitor we support top10 cpu usage metrics, top10 memory usage mertics.
 Let's Try It Now!
 
 Only one docker command is needed to install and experience heartbeat：
@@ -51,11 +51,11 @@ Bugfix.
 6. [[manager] bugfix the gmtUpdate not change when update monitor param #459](https://github.com/apache/hertzbeat/pull/459)
 7. [[home] fix typo in springboot2.md #464](https://github.com/apache/hertzbeat/pull/464) @eltociear
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
 Have Fun!
 
-----     
+----
 
 ## V1.2.2
 
@@ -100,5 +100,4 @@ Bugfix.
 6. [[manager] bugfix the gmtUpdate not change when update monitor param #459](https://github.com/apache/hertzbeat/pull/459)
 7. [[home] fix typo in springboot2.md #464](https://github.com/apache/hertzbeat/pull/464) @eltociear
 
-----     
-
+----

@@ -105,4 +105,3 @@ Top 10 processes consuming memory. Metrics include: Process ID, Memory usage, CP
 | mem_usage   | %           | Memory usage            |
 | cpu_usage   | %           | CPU usage               |
 | command     | None        | Executed command        |
-

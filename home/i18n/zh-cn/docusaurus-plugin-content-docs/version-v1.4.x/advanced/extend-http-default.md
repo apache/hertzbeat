@@ -43,7 +43,7 @@ sidebar_label: 系统默认解析方式
 ```
 
 样例：
-查询自定义系统的CPU信息，其暴露接口为 `/metrics/cpu`，我们需要其中的`hostname,core,useage`指标    
+查询自定义系统的CPU信息，其暴露接口为 `/metrics/cpu`，我们需要其中的`hostname,core,useage`指标
 若只有一台虚拟机，其单层格式为:
 
 ```json
@@ -157,4 +157,3 @@ metrics:
       # 这里使用HertzBeat默认解析
       parseType: default
 ```
-

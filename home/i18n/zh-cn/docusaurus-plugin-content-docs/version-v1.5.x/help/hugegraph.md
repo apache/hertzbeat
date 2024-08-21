@@ -138,4 +138,3 @@ keywords: [开源监控系统, 开源数据库监控, HugeGraph监控]
 | garbage_collector_g1_old_generation_count   | 无    | 表示G1垃圾收集器老年代垃圾收集的次数            |
 | garbage_collector_g1_old_generation_time    | 无    | 表示G1垃圾收集器老年代垃圾收集的总时间           |
 | garbage_collector_time_unit                 | 无    | 表示垃圾收集时间的单位（如毫秒、秒等）            |
-

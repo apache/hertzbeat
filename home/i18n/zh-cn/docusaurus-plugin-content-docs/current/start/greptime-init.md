@@ -16,7 +16,8 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 ### 通过Docker方式安装GreptimeDB
 
 > 可参考官方网站[安装教程](https://docs.greptime.com/getting-started/overview)  
-> 1. 下载安装Docker环境   
+>
+> 1. 下载安装Docker环境
 > Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
 > 安装完毕后终端查看Docker版本是否正常输出。
 >
@@ -75,4 +76,3 @@ warehouse:
 1. 时序数据库 GreptimeDB 或者 IoTDB 或者 TDengine 是否都需要配置，能不能都用
 
 > 不需要都配置，任选其一即可，用enable参数控制其是否使用，也可都不安装配置，只影响历史图表数据。
-

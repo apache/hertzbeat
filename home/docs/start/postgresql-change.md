@@ -10,7 +10,7 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
 
 ### Install PostgreSQL via Docker
 
-1. Download and install the Docker environment   
+1. Download and install the Docker environment
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
    After the installation you can check if the Docker version normally output at the terminal.
 
@@ -18,10 +18,11 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
+
 2. Install PostgreSQL with Docker
 
    ```shell
-   $ docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
+   docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
    ```
 
    use```$ docker ps```to check if the database started successfully
@@ -34,11 +35,13 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
    su - postgres
    psql
    ```
+
 2. Create database named hertzbeat
 
    ```sql
    CREATE DATABASE hertzbeat;
    ```
+
 3. Check if hertzbeat database has been successfully created
 
    ```sql
@@ -93,4 +96,4 @@ spring:
           level: SEVERE
 ```
 
-**Start HertzBeat  visit http://ip:1157/ on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**
+**Start HertzBeat  visit <http://ip:1157/> on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**
