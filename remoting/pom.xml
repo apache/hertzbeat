@@ -27,8 +27,6 @@
 
     <artifactId>hertzbeat-remoting</artifactId>
     <name>${project.artifactId}</name>
-    <properties>
-    </properties>
 
     <dependencies>
         <dependency>
