@@ -65,7 +65,6 @@
               [app]="app"
             ></app-monitor-data-table>
             <app-monitor-data-table
-              class="card"
               [height]="'400px'"
               *ngFor="let metric of metrics; let i = index"
               [metrics]="metric"
@@ -81,7 +80,6 @@
           </ng-template>
           <div class="cards">
             <app-monitor-data-chart
-              class="card"
               *ngFor="let item of chartMetrics; let i = index"
               [app]="app"
               [metrics]="item.metrics"
