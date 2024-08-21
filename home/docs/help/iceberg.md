@@ -1,15 +1,15 @@
 ---
-id: hive 
-Title: Monitoring Apache Hive  
-sidebar_label: Apache Hive
-keywords: [open source monitoring tool, open source apache hive monitoring tool, monitoring apache hive metrics]
+id: iceberg 
+Title: Monitoring Apache Iceberg
+sidebar_label: Apache Iceberg
+keywords: [open source monitoring tool, open source apache hive monitoring tool, monitoring apache iceberg metrics]
 ---
 
-> Collect and monitor the general performance metrics exposed by the Apache Hive.
+> Collect and monitor the general performance metrics exposed by the Apache Iceberg.
 
 ## Pre-monitoring operations
 
-If you want to monitor information in `Apache Hive` with this monitoring type, you need to open your `Hive Server2` in remoting mode.
+If you want to monitor information in `Apache Iceberg` with this monitoring type, you need to open your `Hive Server2` in remoting mode.
 
 **1、Enable metastore:**
 
@@ -74,3 +74,4 @@ hive --service hiveserver2 &
 | init        | MB          | The initial amount of memory requested for the memory pool.             |
 | max         | MB          | The maximum amount of memory that can be allocated for the memory pool. |
 | used        | MB          | The amount of memory currently being used by the memory pool.           |
+
