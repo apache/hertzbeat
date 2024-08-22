@@ -19,7 +19,7 @@
     "default": true,
     "MD001": false,
     "MD052": false,
-    "MD003": false,
+    "MD003": true,
     "MD013": false,
     "MD024": false,
     "MD025": false,
