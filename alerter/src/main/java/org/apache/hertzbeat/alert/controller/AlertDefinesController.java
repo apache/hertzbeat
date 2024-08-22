@@ -21,10 +21,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.hertzbeat.alert.service.AlertDefineService;
@@ -32,11 +29,7 @@ import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -67,39 +60,7 @@ public class AlertDefinesController {
             @Parameter(description = "Sort mode: asc: ascending, desc: descending", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-
-        Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> andList = new ArrayList<>();
-            if (ids != null && !ids.isEmpty()) {
-                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
-                for (long id : ids) {
-                    inPredicate.value(id);
-                }
-                andList.add(inPredicate);
-            }
-            if (StringUtils.hasText(search)) {
-                Predicate predicate = criteriaBuilder.or(
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("app")),
-                                "%" + search.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("metric")),
-                                "%" + search.toLowerCase() + "%"
-                        )
-                );
-                andList.add(predicate);
-            }
-            if (priority != null) {
-                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
-                andList.add(predicate);
-            }
-            Predicate[] predicates = new Predicate[andList.size()];
-            return criteriaBuilder.and(andList.toArray(predicates));
-        };
-        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
-        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(specification, pageRequest);
+        Page<AlertDefine> alertDefinePage = alertDefineService.getAlertDefines(ids, search, priority, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertDefinePage));
     }
 

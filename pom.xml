@@ -139,6 +139,7 @@
         <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <spotless.version>2.40.0</spotless.version>
     </properties>
 
     <dependencyManagement>
@@ -378,7 +379,7 @@
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
             </dependency>
-            <!-- caffeine -->
+            <!-- caffeine-->
             <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>

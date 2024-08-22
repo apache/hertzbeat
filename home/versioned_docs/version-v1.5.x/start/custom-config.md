@@ -1,7 +1,7 @@
 ---
 id: custom-config  
 title: Advanced Params Config           
-sidebar_label: Advanced Params Config      
+sidebar_label: Advanced Params Config
 ---
 
 This describes how to configure the SMS server, the number of built-in availability alarm triggers, etc.
@@ -10,15 +10,16 @@ This describes how to configure the SMS server, the number of built-in availabil
 
 ### Configure the configuration file of HertzBeat
 
-Modify the configuration file located at `hertzbeat/config/application.yml`    
-Note ⚠️The docker container method needs to mount the application.yml file to the local host     
-The installation package can be decompressed and modified in `hertzbeat/config/application.yml`    
+Modify the configuration file located at `hertzbeat/config/application.yml`
+Note ⚠️The docker container method needs to mount the application.yml file to the local host
+The installation package can be decompressed and modified in `hertzbeat/config/application.yml`
 
 1. Configure the SMS sending server
 
 > Only when your own SMS server is successfully configured, the alarm SMS triggered in the monitoring tool will be sent normally.
 
-Add the following Tencent platform SMS server configuration in `application.yml` (parameters need to be replaced with your SMS server configuration)  
+Add the following Tencent platform SMS server configuration in `application.yml` (parameters need to be replaced with your SMS server configuration)
+
 ```yaml
 common:
    sms:
@@ -32,11 +33,10 @@ common:
 
 2. Configure alarm custom parameters
 
-
 ```yaml
 alerter:
    # Custom console address
-   console-url: https://console.tancloud.cn
+   console-url: https://console.tancloud.io
 ```
 
 3. Use external redis instead of memory to store real-time metric data
@@ -44,6 +44,7 @@ alerter:
 > By default, the real-time data of our metrics is stored in memory, which can be configured as follows to use redis instead of memory storage.
 
 Note ⚠️ `memory.enabled: false, redis.enabled: true`
+
 ```yaml
 warehouse:
    store:

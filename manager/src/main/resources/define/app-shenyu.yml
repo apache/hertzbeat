@@ -51,6 +51,9 @@ params:
     defaultValue: 6000
 metrics:
   - name: shenyu_request_total
+    i18n:
+      zh-CN: ShenYu请求总量
+      en-US: ShenYu Request Total
     priority: 0
     fields:
       - field: value
@@ -70,6 +73,9 @@ metrics:
       parseType: prometheus
 
   - name: shenyu_request_throw_created
+    i18n:
+      zh-CN: ShenYu请求异常总量
+      en-US: ShenYu Request Exception Total
     priority: 1
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -90,6 +96,9 @@ metrics:
       parseType: prometheus
 
   - name: process_cpu_seconds_total
+    i18n:
+      zh-CN: 进程 CPU 时间总量 (秒)
+      en-US: Process CPU Time Total
     priority: 1
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -111,6 +120,9 @@ metrics:
       parseType: prometheus
 
   - name: process_open_fds
+    i18n:
+      zh-CN: 进程打开的文件描述符数量
+      en-US: Process Open Fds
     priority: 1
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -131,6 +143,9 @@ metrics:
       parseType: prometheus
 
   - name: process_max_fds
+    i18n:
+      zh-CN: 进程最大文件描述符数量
+      en-US: Process Max Fds
     priority: 1
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -151,15 +166,27 @@ metrics:
       parseType: prometheus
 
   - name: jvm_info
+    i18n:
+      zh-CN: JVM 信息
+      en-US: JVM Info
     priority: 1
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: runtime
         type: 1
+        i18n:
+          zh-CN: 运行时
+          en-US: Runtime
       - field: vendor
         type: 1
+        i18n:
+          zh-CN: 供应商
+          en-US: Vendor
       - field: version
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
     # Monitoring and collection usage protocol eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # Specific collection configuration when protocol is http protocol
@@ -175,12 +202,18 @@ metrics:
       parseType: prometheus
 
   - name: jvm_memory_bytes_used
+    i18n:
+      zh-CN: JVM 内存使用字节数
+      en-US: JVM Memory Bytes Used
     priority: 1
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: area
         type: 1
         label: true
+        i18n:
+          zh-CN: 区域
+          en-US: Area
       - field: value
         type: 0
         unit: MB
@@ -201,12 +234,18 @@ metrics:
       parseType: prometheus
 
   - name: jvm_memory_pool_bytes_used
+    i18n:
+      zh-CN: JVM 内存池使用字节数
+      en-US: JVM Memory Pool Bytes Used
     priority: 1
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
         type: 1
         label: true
+        i18n:
+          zh-CN: 池
+          en-US: Pool
       - field: value
         type: 0
         unit: MB
@@ -227,12 +266,18 @@ metrics:
       parseType: prometheus
 
   - name: jvm_memory_pool_bytes_committed
+    i18n:
+      zh-CN: JVM 内存池提交字节数
+      en-US: JVM Memory Pool Bytes Committed
     priority: 1
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
         type: 1
         label: true
+        i18n:
+          zh-CN: 池
+          en-US: Pool
       - field: value
         type: 0
         unit: MB
@@ -253,12 +298,18 @@ metrics:
       parseType: prometheus
 
   - name: jvm_memory_pool_bytes_max
+    i18n:
+      zh-CN: JVM 内存池最大字节数
+      en-US: JVM Memory Pool Bytes Max
     priority: 1
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
         type: 1
         label: true
+        i18n:
+          zh-CN: 池
+          en-US: Pool
       - field: value
         type: 0
         unit: MB
@@ -279,14 +330,23 @@ metrics:
       parseType: prometheus
 
   - name: jvm_threads_state
+    i18n:
+      zh-CN: JVM 线程状态
+      en-US: JVM Threads State
     priority: 1
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: state
         type: 1
         label: true
+        i18n:
+          zh-CN: 状态
+          en-US: State
       - field: count
         type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: Count
     aliasFields:
       - state
       - value

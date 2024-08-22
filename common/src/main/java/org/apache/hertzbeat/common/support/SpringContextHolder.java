@@ -21,6 +21,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 /**
@@ -34,7 +35,7 @@ public class SpringContextHolder implements ApplicationContextAware {
     private static ConfigurableApplicationContext configurableApplicationContext;
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
         set(applicationContext);
         if (applicationContext instanceof ConfigurableApplicationContext context) {
             configurableApplicationContext = context;

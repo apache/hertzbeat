@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalTime;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -177,16 +178,16 @@ public final class CommonUtil {
         if (cause != null) {
             message = cause.getMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.getMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.getLocalizedMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.toString();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = "unknown error.";
         }
         return message;
@@ -205,7 +206,21 @@ public final class CommonUtil {
         }
         return Optional.ofNullable(i18nMap.get(lang))
                 .orElse(i18nMap.values().stream()
+                        .filter(Objects::nonNull)
                         .findFirst().orElse(null));
+    }
+
+    public static void validDefineI18n(Map<String, String> i18nMap, String field) {
+        if (i18nMap == null || i18nMap.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : i18nMap.entrySet()) {
+            String value = entry.getValue();
+            String lang = entry.getKey();
+            if (StringUtils.isBlank(value)) {
+                throw new IllegalArgumentException("monitoring template " + field + " " + lang + " value can not blank");
+            }
+        }
     }
 
 }

@@ -8,7 +8,6 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-
 ! [hertzBeat](/img/blog/new-committer.png)
 
 > Welcome to HertzBeat's three new community committeers, let's learn more about their open source experience!
@@ -39,16 +38,11 @@ In the following period, I spent some time reading Hertzbeat's code, and submitt
 
 - Exposed to a great open source community and improved my skills in related areas.
 
-
 Thanks to Tom and my ospp mentor, Zheng Chenxin, who gave me a lot of help and advice during my exposure to the open source community. Currently I am still in charge of some of the code development in the community, I hope Hertzbeat can be better and better in the future!
 
-
-
-----
+---
 
 # New Committer - SongXiao
-
-
 
 **Name: Zhou Shusheng**
 
@@ -64,15 +58,13 @@ In July this year, after basically completing the study of Java framework develo
 
 ## Open source contributions
 
-* Support for Spring Gateway, Apache Spark, Apache Hive and other services metrics collection
-* Customize nginx and pop3 protocols to collect metrics for Nginx and POP3 mailbox servers, and add corresponding help files.
-
+- Support for Spring Gateway, Apache Spark, Apache Hive and other services metrics collection
+- Customize nginx and pop3 protocols to collect metrics for Nginx and POP3 mailbox servers, and add corresponding help files.
 
 ## Harvest
 
-* Exposed to better and more complex large-scale projects, improved programming and problem-solving skills.
-* Put the theoretical knowledge into practice, gained JUC, microservice related development experience, and valuable project experience.
-
+- Exposed to better and more complex large-scale projects, improved programming and problem-solving skills.
+- Put the theoretical knowledge into practice, gained JUC, microservice related development experience, and valuable project experience.
 
 ## Thanks to our community partners
 
@@ -82,16 +74,12 @@ Thanks to the other partners in the community, I've gained a lot from communicat
 
 ## Some advice for newcomers
 
-* When you first get involved in an open source project, start with simple tasks. Gradually familiarize yourself with the code and process of the project, and gradually take on more complex tasks.
-* If you encounter problems that you can't solve by yourself, you can ask for help from the community.
+- When you first get involved in an open source project, start with simple tasks. Gradually familiarize yourself with the code and process of the project, and gradually take on more complex tasks.
+- If you encounter problems that you can't solve by yourself, you can ask for help from the community.
 
-
-
-----
+---
 
 # New Committer - Dongfeng
-
-
 
 **Name: Zhang Yang
 
@@ -117,7 +105,7 @@ Since July this year, I found hertzbeat's issues and prs are very active, so I w
 - Gained a deeper understanding of network protocols.
 - I gained a deeper understanding of network protocols. I gained a preliminary understanding of the contribution process of open source projects.
 
-## Thank you to our community partners.
+## Thank you to our community partners
 
 Thanks to the authors of hertzbeat for the documentation and help. Thanks to my friends for providing me with the courage to try to enter the open source project to contribute. Thanks to other community members for their issues and prs, which accelerated my understanding of the project.
 
@@ -125,7 +113,6 @@ Thanks to the authors of hertzbeat for the documentation and help. Thanks to my 
 
 - Issues and pr's are the knock on the door of the project you are getting to know, so be willing to discuss and express your opinion.
 - No matter how big or small your contribution is, be willing to try and keep improving yourself.
-
 
 ----
 
@@ -142,12 +129,10 @@ Thanks to the authors of hertzbeat for the documentation and help. Thanks to my 
 - High-performance, supports horizontal scaling of multiple collector clusters, multi-isolated network monitoring, and cloud-side collaboration.
 - Free alarm threshold rules, `Email` `Discord` `Slack` `Telegram` `Nail` `WeChat` `Flybook` `SMS` `Webhook` `Server sauce` and other methods of timely delivery of messages.
 
-
 > ``HertzBeat``s powerful customization, multi-type support, high performance, easy to extend, low coupling, hope to help developers and teams quickly build their own monitoring system.
 
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Github: https://github.com/apache/hertzbeat**
-
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 Welcome more partners to participate in HertzBeat's open source collaboration, no matter a typo or punctuation we are very welcome, we learn together to make progress, the goal is to do a world-class open source software.

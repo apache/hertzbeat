@@ -229,7 +229,6 @@
       "type": "category",
       "label": "Others",
       "items": [
-        "others/media",
         "others/developer",
         "others/contributing",
         "others/contact",

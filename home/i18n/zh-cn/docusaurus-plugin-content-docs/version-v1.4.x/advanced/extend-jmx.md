@@ -1,38 +1,38 @@
 ---
 id: extend-jmx  
 title: JMX协议自定义监控  
-sidebar_label: JMX协议自定义监控    
+sidebar_label: JMX协议自定义监控
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JMX协议自定义指标监控。    
-> JMX协议自定义监控可以让我们很方便的通过配置 JMX Mbean Object 就能监控采集到我们想监控的 Mbean 指标     
 
-### JMX协议采集流程    
-【**对端JAVA应用暴露JMX服务**】->【**HertzBeat直连对端JMX服务**】->【**获取配置的 Mbean Object 数据**】->【**指标数据提取**】   
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用JMX协议自定义指标监控。
+> JMX协议自定义监控可以让我们很方便的通过配置 JMX Mbean Object 就能监控采集到我们想监控的 Mbean 指标
+
+### JMX协议采集流程
+
+【**对端JAVA应用暴露JMX服务**】->【**HertzBeat直连对端JMX服务**】->【**获取配置的 Mbean Object 数据**】->【**指标数据提取**】
 
 由流程可见，我们自定义一个JMX协议的监控类型，需要配置JMX请求参数，配置获取哪些指标，配置查询Object信息。
 
-### 数据解析方式   
+### 数据解析方式
 
 通过配置监控模版YML的指标`field`, `aliasFields`, `jmx` 协议的 `objectName` 来和对端系统暴露的 `Mbean`对象信息映射解析。
 
-
-
-### 自定义步骤  
+### 自定义步骤
 
 **HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
 ![](/img/docs/advanced/extend-point-1.png)
 
-------- 
-下面详细介绍下监控模版的配置用法，请注意看使用注释。   
+-------
+
+下面详细介绍下监控模版的配置用法，请注意看使用注释。
 
 ### 监控模版YML
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
+> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。
 > 即我们通过自定义这个YML，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
 
-样例：自定义一个名称为 `example_jvm` 的自定义监控类型，其使用JMX协议采集指标数据。    
-
+样例：自定义一个名称为 `example_jvm` 的自定义监控类型，其使用JMX协议采集指标数据。
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

@@ -60,7 +60,7 @@ public class AlarmConvergeReduce {
             // restored alert
             boolean isHasIgnore = false;
             Map<String, String> tags = currentAlert.getTags();
-            if (tags.containsKey(CommonConstants.IGNORE)) {
+            if (Objects.requireNonNull(tags).containsKey(CommonConstants.IGNORE)) {
                 isHasIgnore = true;
                 tags.remove(CommonConstants.IGNORE);
             }

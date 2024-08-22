@@ -26,9 +26,9 @@ Feature：
 2. [[webapp] auto redirect url when detect browser language #289](https://github.com/apache/hertzbeat/pull/289) contribute by @DreamGirl524
 3. [[home] update logo icon cdn url with fault tolerance #293](https://github.com/apache/hertzbeat/pull/293) contribute by @VampireAchao
 4. [[monitor] enable powerful jsonpath parser, add es metrics #295](https://github.com/apache/hertzbeat/pull/295) contribute by @Ceilzcx
-5.  [[webapp] update ui theme #296](https://github.com/apache/hertzbeat/pull/296)
-6.  [Feature change main pom artifactId #300](https://github.com/apache/hertzbeat/pull/300) contribute by @Privauto
-7.  [[home,webapp] add users logo and update hertzbeat brand #302](https://github.com/apache/hertzbeat/pull/302)
+5. [[webapp] update ui theme #296](https://github.com/apache/hertzbeat/pull/296)
+6. [Feature change main pom artifactId #300](https://github.com/apache/hertzbeat/pull/300) contribute by @Privauto
+7. [[home,webapp] add users logo and update hertzbeat brand #302](https://github.com/apache/hertzbeat/pull/302)
 8. [[monitor] alerter notify test throw msg to front, optional spring.email config #305](https://github.com/apache/hertzbeat/pull/305) contribute by @Ceilzcx
 9. [[home]doc:update docker-deploy.md and tdengine-init.md #306](https://github.com/apache/hertzbeat/pull/306) contribute by @Privauto
 10. [[hertzbeat] refactor common collect metrics data and alert data queue #320](https://github.com/apache/hertzbeat/pull/320)
@@ -51,21 +51,24 @@ Bugfix.
 8. [[script] add startup log and optimize port service judgment #321](https://github.com/apache/hertzbeat/pull/321)
 9. [[web-app] fix echarts y-axis value tip overflow #325](https://github.com/apache/hertzbeat/pull/325)
 10. [[webapp] fix interceptor http resp common error-msg when error #329](https://github.com/apache/hertzbeat/pull/329)
-    Online https://console.tancloud.cn.
+    Online <https://console.tancloud.cn>.
 
 Have Fun!
 
 ### Upgrade⚠️
 
 Need Convert `application.yml`
+
 ```
 spring:
   resources:
     static-locations:
       - classpath:/dist/
       - classpath:../dist/
-``` 
+```
+
 To
+
 ```
 spring:
   web:
@@ -75,9 +78,10 @@ spring:
         - classpath:../dist/
 ```
 
-----     
+----
 
 ## V1.2.0
+
 官网: hertzbeat.com | tancloud.cn
 
 大家好，HertzBeat v1.2.0 发布啦！这个版本支持了更强大的jsonpath去采集自定义监控指标，将springboot版本升级到2.7，支持指标单位的提取转换展示等。修复了若干bug，提升整体稳定性。
@@ -95,9 +99,9 @@ Feature：
 2. [[webapp] auto redirect url when detect browser language #289](https://github.com/apache/hertzbeat/pull/289) contribute by @DreamGirl524
 3. [[home] update logo icon cdn url with fault tolerance #293](https://github.com/apache/hertzbeat/pull/293) contribute by @VampireAchao
 4. [[monitor] enable powerful jsonpath parser, add es metrics #295](https://github.com/apache/hertzbeat/pull/295) contribute by @Ceilzcx
-5.  [[webapp] update ui theme #296](https://github.com/apache/hertzbeat/pull/296)
-6.  [Feature change main pom artifactId #300](https://github.com/apache/hertzbeat/pull/300) contribute by @Privauto
-7.  [[home,webapp] add users logo and update hertzbeat brand #302](https://github.com/apache/hertzbeat/pull/302)
+5. [[webapp] update ui theme #296](https://github.com/apache/hertzbeat/pull/296)
+6. [Feature change main pom artifactId #300](https://github.com/apache/hertzbeat/pull/300) contribute by @Privauto
+7. [[home,webapp] add users logo and update hertzbeat brand #302](https://github.com/apache/hertzbeat/pull/302)
 8. [[monitor] alerter notify test throw msg to front, optional spring.email config #305](https://github.com/apache/hertzbeat/pull/305) contribute by @Ceilzcx
 9. [[home]doc:update docker-deploy.md and tdengine-init.md #306](https://github.com/apache/hertzbeat/pull/306) contribute by @Privauto
 10. [[hertzbeat] refactor common collect metrics data and alert data queue #320](https://github.com/apache/hertzbeat/pull/320)
@@ -121,23 +125,24 @@ Bugfix.
 9. [[web-app] fix echarts y-axis value tip overflow #325](https://github.com/apache/hertzbeat/pull/325)
 10. [[webapp] fix interceptor http resp common error-msg when error #329](https://github.com/apache/hertzbeat/pull/329)
 
-
-Online https://console.tancloud.cn.
-
+Online <https://console.tancloud.cn>.
 
 Have Fun!
 
 ### 升级注意⚠️
 
 需要将配置文件内容 `application.yml`
+
 ```
 spring:
   resources:
     static-locations:
       - classpath:/dist/
       - classpath:../dist/
-``` 
+```
+
 变更为
+
 ```
 spring:
   web:
@@ -147,4 +152,4 @@ spring:
         - classpath:../dist/
 ```
 
-----     
+----

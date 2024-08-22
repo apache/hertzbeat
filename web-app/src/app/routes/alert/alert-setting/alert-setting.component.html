@@ -177,7 +177,7 @@
 
 <ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
 
-<!-- 新增或修改告警定义弹出框 -->
+<!-- new or update alert definition pop-up box -->
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
   [nzTitle]="isManageModalAdd ? ('alert.setting.new' | i18n) : ('alert.setting.edit' | i18n)"
@@ -204,8 +204,8 @@
           ></nz-cascader>
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2">
-        <nz-form-label [nzSpan]="7" nzFor="rule" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
+      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2" [ngStyle]="{ marginBottom: '5px' }">
+        <nz-form-label [nzSpan]="7" nzFor="isExpr" nzRequired="true" [nzTooltipTitle]="'alert.setting.rule.label' | i18n">
           {{ 'alert.setting.rule' | i18n }}
         </nz-form-label>
         <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
@@ -224,153 +224,164 @@
               {{ 'alert.setting.rule.switch-expr.1' | i18n }}
             </label>
           </nz-radio-group>
-          <div *ngIf="isExpr" id="rule" style="margin-top: 5px">
-            <nz-textarea-count [nzMaxCharacterCount]="100">
-              <textarea
-                [(ngModel)]="define.expr"
-                required
-                rows="3"
-                nz-input
-                name="expr"
-                id="expr"
-                [placeholder]="('alert.setting.expr.example' | i18n) + ': responseTime&gt;40'"
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2 && isExpr">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true" nzFor="expr"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-textarea-count [nzMaxCharacterCount]="100">
+            <textarea
+              [(ngModel)]="define.expr"
+              required
+              rows="3"
+              nz-input
+              name="expr"
+              id="expr"
+              [placeholder]="('alert.setting.expr.example' | i18n) + ': responseTime&gt;40'"
+            >
+            </textarea>
+          </nz-textarea-count>
+          <nz-collapse style="margin-top: 20px">
+            <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.expr.tip' | i18n">
+              <nz-list nzSize="small" nzSplit="false">
+                <nz-list-item *ngFor="let item of currentMetrics; let i = index">
+                  <code>
+                    {{ item.value }} :
+                    {{
+                      item.value == item.label
+                        ? i == 0
+                          ? ('alert.setting.target.tip' | i18n)
+                          : ('alert.setting.target.other' | i18n)
+                        : item.label
+                    }}
+                  </code>
+                  <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
+                    {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
+                  </nz-tag>
+                </nz-list-item>
+                <nz-list-item>
+                  <code>
+                    {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex), ==,
+                    <, <=, >, >=, !=, ( ), +, -, &&, ||
+                  </code>
+                </nz-list-item>
+              </nz-list>
+            </nz-collapse-panel>
+          </nz-collapse>
+        </nz-form-control>
+      </nz-form-item>
+      <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length != 2 && !isExpr">
+        <nz-form-label [nzSpan]="7" [nzNoColon]="true"></nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n" [nzValidateStatus]="qbFormCtrl">
+          <ngx-query-builder
+            [classNames]="qbClassNames"
+            [config]="qbConfig"
+            [formControl]="qbFormCtrl"
+            [ngStyle]="{ background: 'ghostwhite', borderRadius: '4px' }"
+          >
+            <ng-container *querySwitchGroup="let rule; let onChange = onChange">
+              <nz-radio-group
+                style="white-space: nowrap"
+                [(ngModel)]="rule.condition"
+                (ngModelChange)="onChange(rule.condition)"
+                nzButtonStyle="solid"
+                [required]="true"
+                [ngModelOptions]="{ standalone: true }"
               >
-              </textarea>
-            </nz-textarea-count>
-            <nz-collapse style="margin-top: 20px">
-              <nz-collapse-panel [nzActive]="isManageModalAdd" [nzHeader]="'alert.setting.expr.tip' | i18n">
-                <nz-list nzSize="small" nzSplit="false">
-                  <nz-list-item *ngFor="let item of currentMetrics; let i = index">
-                    <code>
-                      {{ item.value }} :
-                      {{
-                        item.value == item.label
-                          ? i == 0
-                            ? ('alert.setting.target.tip' | i18n)
-                            : ('alert.setting.target.other' | i18n)
-                          : item.label
-                      }}
-                    </code>
-                    <nz-tag [nzColor]="item.type === 0 ? 'success' : 'processing'">
-                      {{ item.type === 0 ? ('alert.setting.number' | i18n) : ('alert.setting.string' | i18n) }}
-                    </nz-tag>
-                  </nz-list-item>
-                  <nz-list-item>
-                    <code>
-                      {{ 'alert.setting.operator' | i18n }} : equals(str1,str2), contains(str1,str2), exists(keyName), matches(str,regex),
-                      ==, <, <=, >, >=, !=, ( ), +, -, &&, ||
-                    </code>
-                  </nz-list-item>
-                </nz-list>
-              </nz-collapse-panel>
-            </nz-collapse>
-          </div>
-          <div *ngIf="!isExpr" id="rule" class="br-4" style="margin-top: 5px; background: ghostwhite">
-            <ngx-query-builder [classNames]="qbClassNames" [config]="qbConfig" [formControl]="qbFormCtrl">
-              <ng-container *querySwitchGroup="let rule; let onChange = onChange">
-                <nz-radio-group
-                  style="white-space: nowrap"
-                  [(ngModel)]="rule.condition"
-                  (ngModelChange)="onChange(rule.condition)"
-                  nzButtonStyle="solid"
-                  [required]="true"
-                  [ngModelOptions]="{ standalone: true }"
+                <label nz-radio-button [nzValue]="'and'">AND</label>
+                <label nz-radio-button [nzValue]="'or'">OR</label>
+              </nz-radio-group>
+            </ng-container>
+            <ng-container *queryRulesetAddRuleButton="let rule; let addRule = addRule">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button (click)="addRule()">
+                <i nz-icon nzType="plus"></i>
+                {{ 'Rule' }}
+              </button>
+            </ng-container>
+            <ng-container *queryRulesetAddRulesetButton="let rule; let addRuleSet = addRuleSet">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button (click)="addRuleSet()">
+                <i nz-icon nzType="plus"></i>
+                {{ 'Ruleset' }}
+              </button>
+            </ng-container>
+            <ng-container *queryRulesetRemoveButton="let rule; let removeRuleSet = removeRuleSet">
+              <button style="margin-left: 0; flex-shrink: 0" nz-button nzDanger (click)="removeRuleSet(rule)">
+                <i nz-icon nzType="minus"></i>
+              </button>
+            </ng-container>
+            <ng-container *queryRuleRemoveButton="let rule; let removeRule = removeRule">
+              <button style="flex-shrink: 0" nz-button nzDanger (click)="removeRule(rule)">
+                <i nz-icon nzType="minus"></i>
+              </button>
+            </ng-container>
+            <ng-container *queryField="let rule; let getFields = getFields; let onChange = onChange">
+              <nz-select
+                [(ngModel)]="rule.field"
+                (ngModelChange)="onChange($event, rule)"
+                [ngModelOptions]="{ standalone: true }"
+                [nzDropdownMatchSelectWidth]="false"
+                [nzPlaceHolder]="'alert.setting.rule.metric.place-holder' | i18n"
+                style="width: auto"
+              >
+                <nz-option
+                  *ngFor="let field of getFields(rule.entity || '')"
+                  [nzValue]="field.value"
+                  [nzLabel]="field.name ? field.name : field.value"
+                  nzCustomContent
                 >
-                  <label nz-radio-button [nzValue]="'and'">AND</label>
-                  <label nz-radio-button [nzValue]="'or'">OR</label>
-                </nz-radio-group>
-              </ng-container>
-              <ng-container *queryRulesetAddRuleButton="let rule; let addRule = addRule">
-                <button style="margin-left: 0; flex-shrink: 0" nz-button (click)="addRule()">
-                  <i nz-icon nzType="plus"></i>
-                  {{ 'Rule' }}
-                </button>
-              </ng-container>
-              <ng-container *queryRulesetAddRulesetButton="let rule; let addRuleSet = addRuleSet">
-                <button style="margin-left: 0; flex-shrink: 0" nz-button (click)="addRuleSet()">
-                  <i nz-icon nzType="plus"></i>
-                  {{ 'Ruleset' }}
-                </button>
-              </ng-container>
-              <ng-container *queryRulesetRemoveButton="let rule; let removeRuleSet = removeRuleSet">
-                <button style="margin-left: 0; flex-shrink: 0" nz-button nzDanger (click)="removeRuleSet(rule)">
-                  <i nz-icon nzType="minus"></i>
-                </button>
-              </ng-container>
-              <ng-container *queryRuleRemoveButton="let rule; let removeRule = removeRule">
-                <button style="flex-shrink: 0" nz-button nzDanger (click)="removeRule(rule)">
-                  <i nz-icon nzType="minus"></i>
-                </button>
-              </ng-container>
-              <ng-container *queryField="let rule; let getFields = getFields; let onChange = onChange">
-                <nz-select
-                  [(ngModel)]="rule.field"
-                  (ngModelChange)="onChange($event, rule)"
-                  [ngModelOptions]="{ standalone: true }"
-                  [nzDropdownMatchSelectWidth]="false"
-                  [nzPlaceHolder]="'alert.setting.rule.metric.place-holder' | i18n"
-                  style="width: auto"
-                >
-                  <nz-option
-                    *ngFor="let field of getFields(rule.entity || '')"
-                    [nzValue]="field.value"
-                    [nzLabel]="field.name ? field.name : field.value"
-                    nzCustomContent
-                  >
-                    {{ field.name ? field.name : field.value }}
-                    <nz-tag [nzColor]="field.type === 0 ? 'success' : 'processing'">
-                      {{
-                        field.type === 0
-                          ? ('alert.setting.number' | i18n)
-                          : field.type === 3
-                          ? ('alert.setting.time' | i18n)
-                          : ('alert.setting.string' | i18n)
-                      }}
-                    </nz-tag>
-                    <nz-tag *ngIf="field.unit">
-                      {{ field.unit }}
-                    </nz-tag>
-                  </nz-option>
-                </nz-select>
-              </ng-container>
-              <ng-container *queryOperator="let rule; let operators = operators; let onChange = onChange">
-                <nz-select
-                  [(ngModel)]="rule.operator"
-                  (ngModelChange)="onChange(rule)"
-                  [ngModelOptions]="{ standalone: true }"
-                  [nzShowArrow]="false"
-                  [nzDropdownMatchSelectWidth]="false"
-                  style="text-align: center; font-weight: bolder; width: auto"
-                  [nzDropdownStyle]="{ 'text-align': 'center', 'font-weight': 'bolder', 'font-size': 'larger' }"
-                  [nzPlaceHolder]="'alert.setting.rule.operator' | i18n"
-                >
-                  <nz-option
-                    *ngFor="let operator of operators"
-                    [nzValue]="operator"
-                    [nzLabel]="getOperatorLabelByType(operator) | i18n"
-                  ></nz-option>
-                </nz-select>
-              </ng-container>
-              <ng-container *queryInput="let rule; let field = field; let onChange = onChange; type: 'custom'">
-                <input
-                  nz-input
-                  [disabled]="rule.operator == 'exists' || rule.operator == '!exists'"
-                  [type]="field.type === 0 ? 'number' : 'text'"
-                  [(ngModel)]="rule.value"
-                  (ngModelChange)="onChange($event)"
-                  [ngModelOptions]="{ standalone: true }"
-                  [placeholder]="
-                    rule.operator == 'exists' || rule.operator == '!exists'
-                      ? ''
-                      : field.type === 0
-                      ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
-                      : ('alert.setting.rule.string-value.place-holder' | i18n)
-                  "
-                  style="flex: 1"
-                />
-              </ng-container>
-            </ngx-query-builder>
-          </div>
+                  {{ field.name ? field.name : field.value }}
+                  <nz-tag [nzColor]="field.type === 0 ? 'success' : 'processing'">
+                    {{
+                      field.type === 0
+                        ? ('alert.setting.number' | i18n)
+                        : field.type === 3
+                        ? ('alert.setting.time' | i18n)
+                        : ('alert.setting.string' | i18n)
+                    }}
+                  </nz-tag>
+                  <nz-tag *ngIf="field.unit">
+                    {{ field.unit }}
+                  </nz-tag>
+                </nz-option>
+              </nz-select>
+            </ng-container>
+            <ng-container *queryOperator="let rule; let operators = operators; let onChange = onChange">
+              <nz-select
+                [(ngModel)]="rule.operator"
+                (ngModelChange)="onChange(rule)"
+                [ngModelOptions]="{ standalone: true }"
+                [nzShowArrow]="false"
+                [nzDropdownMatchSelectWidth]="false"
+                style="text-align: center; font-weight: bolder; width: auto"
+                [nzDropdownStyle]="{ 'text-align': 'center', 'font-weight': 'bolder', 'font-size': 'larger' }"
+                [nzPlaceHolder]="'alert.setting.rule.operator' | i18n"
+              >
+                <nz-option
+                  *ngFor="let operator of operators"
+                  [nzValue]="operator"
+                  [nzLabel]="getOperatorLabelByType(operator) | i18n"
+                ></nz-option>
+              </nz-select>
+            </ng-container>
+            <ng-container *queryInput="let rule; let field = field; let onChange = onChange; type: 'custom'">
+              <input
+                nz-input
+                [disabled]="rule.operator == 'exists' || rule.operator == '!exists'"
+                [type]="field.type === 0 ? 'number' : 'text'"
+                [(ngModel)]="rule.value"
+                (ngModelChange)="onChange($event)"
+                [ngModelOptions]="{ standalone: true }"
+                [placeholder]="
+                  rule.operator == 'exists' || rule.operator == '!exists'
+                    ? ''
+                    : field.type === 0
+                    ? ('alert.setting.rule.numeric-value.place-holder' | i18n)
+                    : ('alert.setting.rule.string-value.place-holder' | i18n)
+                "
+                style="flex: 1"
+              />
+            </ng-container>
+          </ngx-query-builder>
         </nz-form-control>
       </nz-form-item>
       <nz-form-item *ngIf="cascadeValues.length > 0 && cascadeValues.length == 2">
@@ -502,7 +513,7 @@
   </div>
 </nz-modal>
 
-<!-- 关联告警定义与监控关系弹出框 -->
+<!-- associate alert definition and monitoring pop-up box -->
 
 <nz-modal
   [(nzVisible)]="isConnectModalVisible"
@@ -549,7 +560,7 @@
   </nz-transfer>
 </nz-modal>
 
-<!-- 导出告警定义弹出框 -->
+<!-- export alert definitions pop-up box -->
 <nz-modal
   [(nzVisible)]="isSwitchExportTypeModalVisible"
   [nzTitle]="'alert.export.switch-type' | i18n"

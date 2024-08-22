@@ -50,7 +50,7 @@ export class SettingTagsComponent implements OnInit {
   tags!: Tag[];
   tableLoading: boolean = false;
   checkedTagIds = new Set<number>();
-  // 搜索过滤相关属性
+  // used for filtering tag name or tag value
   search: string | undefined;
 
   ngOnInit(): void {
@@ -143,7 +143,7 @@ export class SettingTagsComponent implements OnInit {
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -165,7 +165,7 @@ export class SettingTagsComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadTagsTable();
   }
-  // end: 列表多选分页逻辑
+  // end: List multiple choice paging
 
   // start 新增修改Tag model
   isManageModalVisible = false;

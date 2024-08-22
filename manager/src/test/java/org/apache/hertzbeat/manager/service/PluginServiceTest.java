@@ -24,12 +24,10 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -123,13 +121,9 @@ class PluginServiceTest {
 
     @Test
     void testGetPlugins() {
-        Specification<PluginMetadata> spec = mock(Specification.class);
-        PageRequest pageRequest = PageRequest.of(0, 10);
         Page<PluginMetadata> page = new PageImpl<>(Collections.singletonList(new PluginMetadata()));
-
         when(metadataDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
-
-        Page<PluginMetadata> result = pluginService.getPlugins(spec, pageRequest);
+        Page<PluginMetadata> result = pluginService.getPlugins(null, 0, 10);
         assertFalse(result.isEmpty());
         verify(metadataDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
     }

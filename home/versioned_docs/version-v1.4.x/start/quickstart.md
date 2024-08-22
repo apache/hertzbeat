@@ -1,7 +1,7 @@
 ---
 id: quickstart  
 title: Quick Start    
-sidebar_label: Quick Start    
+sidebar_label: Quick Start
 ---
 
 ### 🐕 Quick Start
@@ -29,6 +29,7 @@ sidebar_label: Quick Start
 ```
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
+
 - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
 - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
 - `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
@@ -40,11 +41,12 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 
 1. Download the release package `hertzbeat-xx.tar.gz` [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [Download](https://hertzbeat.apache.org/docs/download)
 2. Configure the HertzBeat configuration yml file `hertzbeat/config/application.yml` (optional)
-3. Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+3. Run command `$ ./bin/startup.sh` or `bin/startup.bat`
 4. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 5. Deploy collector clusters
    - Download the release package `hertzbeat-collector-xx.tar.gz` to new machine [GITEE Release](https://gitee.com/hertzbeat/hertzbeat/releases) [Download](https://hertzbeat.apache.org/docs/download)
    - Configure the collector configuration yml file `hertzbeat-collector/config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
+
      ```yaml
      collector:
        dispatch:
@@ -56,7 +58,8 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
              manager-host: ${MANAGER_HOST:127.0.0.1}
              manager-port: ${MANAGER_PORT:1158}
      ```
-   - Run command `$ ./bin/startup.sh ` or `bin/startup.bat`
+
+   - Run command `$ ./bin/startup.sh` or `bin/startup.bat`
    - Access `http://localhost:1157` and you will see the registered new collector in dashboard
 
 Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/docs/start/package-deploy)
@@ -68,9 +71,9 @@ Detailed config refer to [Install HertzBeat via Package](https://hertzbeat.com/d
 3. Web：need `nodejs npm angular-cli` environment, Run `ng serve --open` in `web-app` directory after backend startup.
 4. Access `http://localhost:4200` to start, default account: `admin/hertzbeat`
 
-Detailed steps refer to [CONTRIBUTING](../others/contributing)   
+Detailed steps refer to [CONTRIBUTING](../others/contributing)
 
-##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose   
+##### 4：Install All(hertzbeat+mysql+iotdb/tdengine) via Docker-compose
 
 Install and deploy the mysql database, iotdb/tdengine database and hertzbeat at one time through [docker-compose deployment script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose).
 
@@ -82,4 +85,4 @@ Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 
 Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
-**HAVE FUN**  
+**HAVE FUN**

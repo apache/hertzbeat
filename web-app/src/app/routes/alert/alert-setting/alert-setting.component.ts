@@ -18,7 +18,7 @@
  */
 
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormControl, NgForm } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormControl, NgForm, ValidationErrors } from '@angular/forms';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { Rule, RuleSet, QueryBuilderConfig, QueryBuilderClassNames } from '@kerwin612/ngx-query-builder';
@@ -56,9 +56,9 @@ export class AlertSettingComponent implements OnInit {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
     private formBuilder: FormBuilder
   ) {
-    this.qbFormCtrl = this.formBuilder.control(this.qbData);
+    this.qbFormCtrl = this.formBuilder.control(this.qbData, this.qbValidator);
   }
-  @ViewChild('defineForm', { static: false }) defineForm: NgForm | undefined;
+  @ViewChild('defineForm', { static: false }) defineForm!: NgForm;
   search!: string;
   pageIndex: number = 1;
   pageSize: number = 8;
@@ -76,6 +76,7 @@ export class AlertSettingComponent implements OnInit {
   ];
   qbClassNames: QueryBuilderClassNames = {
     row: 'row',
+    tree: 'tree',
     rule: 'br-4 rule',
     ruleSet: 'br-4 ruleset',
     invalidRuleSet: 'br-4 ruleset-invalid'
@@ -90,11 +91,17 @@ export class AlertSettingComponent implements OnInit {
     condition: 'and',
     rules: []
   };
+  qbValidator = (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value || !control.value.rules || control.value.rules.length === 0) {
+      return { required: true };
+    }
+    return null;
+  };
   qbFormCtrl: FormControl;
 
   ngOnInit(): void {
     this.loadAlertDefineTable();
-    // 查询监控层级
+    // query monitoring hierarchy
     const getHierarchy$ = this.appDefineSvc
       .getAppHierarchy(this.i18nSvc.defaultLang)
       .pipe(
@@ -157,7 +164,7 @@ export class AlertSettingComponent implements OnInit {
   onNewAlertDefine() {
     this.define = new AlertDefine();
     this.define.tags = [];
-    this.resetQbData({ condition: 'and', rules: [] });
+    this.resetQbDataDefault();
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -368,7 +375,7 @@ export class AlertSettingComponent implements OnInit {
     }
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -385,9 +392,9 @@ export class AlertSettingComponent implements OnInit {
     }
   }
   /**
-   * 分页回调
+   * Paging callback
    *
-   * @param params 页码信息
+   * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
     const { pageSize, pageIndex, sort, filter } = params;
@@ -395,9 +402,9 @@ export class AlertSettingComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadAlertDefineTable();
   }
-  // end: 列表多选逻辑
+  // end: List multiple choice paging
 
-  // start 新增修改告警定义model
+  // start -- new or update alert definition model
   isLoadingEdit = -1;
   isManageModalVisible = false;
   isManageModalOkLoading = false;
@@ -586,6 +593,7 @@ export class AlertSettingComponent implements OnInit {
   };
 
   cascadeOnChange(values: string[]): void {
+    this.resetQbDataDefault();
     if (values == null || values.length != 3) {
       return;
     }
@@ -638,30 +646,37 @@ export class AlertSettingComponent implements OnInit {
     } catch (e) {
       console.error(e);
       this.isExpr = true;
-      this.resetQbData({ condition: 'and', rules: [] });
+      this.resetQbDataDefault();
       return;
     }
   }
 
   onManageModalCancel() {
+    this.cascadeValues = [];
     this.isExpr = false;
-    this.resetQbData({ condition: 'and', rules: [] });
+    this.resetQbDataDefault();
     this.isManageModalVisible = false;
   }
 
   resetQbData(qbData: RuleSet) {
-    this.qbData = qbData;
-    this.qbFormCtrl = this.formBuilder.control(this.qbData);
+    this.qbFormCtrl.reset((this.qbData = qbData));
+  }
+
+  resetQbDataDefault() {
+    this.resetQbData({ condition: 'and', rules: [] });
   }
 
   resetManageModalData() {
     this.cascadeValues = [];
     this.isExpr = false;
-    this.resetQbData({ condition: 'and', rules: [] });
+    this.resetQbDataDefault();
     this.isManageModalVisible = false;
   }
 
   onManageModalOk() {
+    if (this.cascadeValues.length == 3) {
+      this.defineForm.form.addControl('ruleset', this.qbFormCtrl);
+    }
     if (this.defineForm?.invalid) {
       Object.values(this.defineForm.controls).forEach(control => {
         if (control.invalid) {
@@ -698,6 +713,7 @@ export class AlertSettingComponent implements OnInit {
         .subscribe(
           message => {
             if (message.code === 0) {
+              this.cascadeValues = [];
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.loadAlertDefineTable();
@@ -722,6 +738,7 @@ export class AlertSettingComponent implements OnInit {
         .subscribe(
           message => {
             if (message.code === 0) {
+              this.cascadeValues = [];
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
               this.loadAlertDefineTable();
@@ -735,9 +752,9 @@ export class AlertSettingComponent implements OnInit {
         );
     }
   }
-  // end 新增修改告警定义model
+  // end -- new or update alert definition model
 
-  // start 告警定义与监控关联model
+  // start -- associate alert definition and monitoring model
   isConnectModalVisible = false;
   isConnectModalOkLoading = false;
   transferData: TransferItem[] = [];
@@ -840,5 +857,5 @@ export class AlertSettingComponent implements OnInit {
       }
     });
   }
-  // end 告警定义与监控关联model
+  // end -- associate alert definition and monitoring model
 }

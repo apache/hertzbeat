@@ -1,68 +1,73 @@
 ---
 id: extend-jdbc  
 title: JDBC Protocol Custom Monitoring  
-sidebar_label: JDBC Protocol Custom Monitoring    
+sidebar_label: JDBC Protocol Custom Monitoring
 ---
-> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use JDBC(support mysql,mariadb,postgresql,sqlserver at present) to customize Metric monitoring. 
-> JDBC protocol custom monitoring allows us to easily monitor Metrics we want by writing SQL query statement.   
 
-### JDBC protocol collection process    
-【**System directly connected to MYSQL**】->【**Run SQL query statement**】->【**parse reponse data: oneRow, multiRow, columns**】->【**Metric data extraction**】   
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use JDBC(support mysql,mariadb,postgresql,sqlserver at present) to customize Metric monitoring.
+> JDBC protocol custom monitoring allows us to easily monitor Metrics we want by writing SQL query statement.
+
+### JDBC protocol collection process
+
+【**System directly connected to MYSQL**】->【**Run SQL query statement**】->【**parse reponse data: oneRow, multiRow, columns**】->【**Metric data extraction**】
 
 It can be seen from the process that we define a monitoring type of JDBC protocol. We need to configure SSH request parameters, configure which Metrics to obtain, and configure query SQL statements.
 
-### Data parsing method   
+### Data parsing method
+
 We can obtain the corresponding Metric data through the data fields queried by SQL and the Metric mapping we need. At present, there are three mapping parsing methods：oneRow, multiRow, columns.
 
-#### **oneRow**  
-> Query a row of data, return the column name of the result set through query and map them to the queried field.  
+#### **oneRow**
 
-eg：   
+> Query a row of data, return the column name of the result set through query and map them to the queried field.
+
+eg：
 queried Metric fields：one two three four
 query SQL：select one, two, three, four from book limit 1;
-Here the Metric field and the response data can be mapped into a row of collected data one by one.     
+Here the Metric field and the response data can be mapped into a row of collected data one by one.
 
 #### **multiRow**
-> Query multiple rows of data, return the column names of the result set and map them to the queried fields.  
 
-eg：   
+> Query multiple rows of data, return the column names of the result set and map them to the queried fields.
+
+eg：
 queried Metric fields：one two three four
 query SQL：select one, two, three, four from book;
-Here the Metric field and the response data can be mapped into multiple rows of collected data one by one. 
+Here the Metric field and the response data can be mapped into multiple rows of collected data one by one.
 
 #### **columns**
-> Collect a row of Metric data. By matching the two columns of queried data (key value), key and the queried field, value is the value of the query field. 
 
-eg：   
-queried fields：one two three four   
-query SQL：select key, value from book;   
-SQL response data：   
+> Collect a row of Metric data. By matching the two columns of queried data (key value), key and the queried field, value is the value of the query field.
 
-| key     | value |
-|---------|-------|
-| one     | 243   |
-| two     | 435   |
-| three   | 332   |
-| four    | 643   |
+eg：
+queried fields：one two three four
+query SQL：select key, value from book;
+SQL response data：
+
+|  key  | value |
+|-------|-------|
+| one   | 243   |
+| two   | 435   |
+| three | 332   |
+| four  | 643   |
 
 Here by mapping the Metric field with the key of the response data, we can  obtain the corresponding value as collection and monitoring data.
 
-### Custom Steps  
+### Custom Steps
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-------- 
+-------
+
 Configuration usages of the monitoring templates yml are detailed below.
 
 ### Monitoring Templates YML
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
-
-
+>
 > Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
 
-eg：Define a custom monitoring type `app` named `example_sql` which use the JDBC protocol to collect data.    
- 
+eg：Define a custom monitoring type `app` named `example_sql` which use the JDBC protocol to collect data.
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

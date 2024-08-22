@@ -1,53 +1,63 @@
 ---
 id: extend-ssh  
 title: SSH Protocol Custom Monitoring  
-sidebar_label: SSH Protocol Custom Monitoring     
+sidebar_label: SSH Protocol Custom Monitoring
 ---
-> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use SSH protocol to customize Metric monitoring. 
-> SSH protocol custom monitoring allows us to easily monitor and collect the Linux Metrics we want by writing sh command script.     
 
-### SSH protocol collection process   
-【**System directly connected to Linux**】->【**Run shell command script statement**】->【**parse response data: oneRow, multiRow**】->【**Metric data extraction**】   
+> From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use SSH protocol to customize Metric monitoring.
+> SSH protocol custom monitoring allows us to easily monitor and collect the Linux Metrics we want by writing sh command script.
+
+### SSH protocol collection process
+
+【**System directly connected to Linux**】->【**Run shell command script statement**】->【**parse response data: oneRow, multiRow**】->【**Metric data extraction**】
 
 It can be seen from the process that we define a monitoring type of SSH protocol. We need to configure SSH request parameters, configure which Metrics to obtain, and configure query script statements.
 
-### Data parsing method   
+### Data parsing method
+
 We can obtain the corresponding Metric data through the data fields queried by the SHELL script and the Metric mapping we need. At present, there are two mapping parsing methods：oneRow and multiRow which can meet the needs of most Metrics.
 
-#### **oneRow**   
-> Query out a column of data, return the field value (one value per row) of the result set through query and map them to the field.     
+#### **oneRow**
 
-eg：     
-Metrics of Linux to be queried hostname-host name，uptime-start time     
-Host name original query command：`hostname`     
-Start time original query command：`uptime | awk -F "," '{print $1}'`   
-Then the query script of the two Metrics in hertzbeat is(Use `;` Connect them together)：       
-`hostname; uptime | awk -F "," '{print $1}'`     
-The data responded by the terminal is：    
+> Query out a column of data, return the field value (one value per row) of the result set through query and map them to the field.
+
+eg：
+Metrics of Linux to be queried hostname-host name，uptime-start time
+Host name original query command：`hostname`
+Start time original query command：`uptime | awk -F "," '{print $1}'`
+Then the query script of the two Metrics in hertzbeat is(Use `;` Connect them together)：
+`hostname; uptime | awk -F "," '{print $1}'`
+The data responded by the terminal is：
+
 ```
 tombook
 14:00:15 up 72 days  
-```  
-At last collected Metric data is mapped one by one as：   
-hostname is `tombook`   
-uptime is `14:00:15 up 72 days`      
+```
 
-Here the Metric field and the response data can be mapped into a row of collected data one by one      
+At last collected Metric data is mapped one by one as：
+hostname is `tombook`
+uptime is `14:00:15 up 72 days`
+
+Here the Metric field and the response data can be mapped into a row of collected data one by one
 
 #### **multiRow**
-> Query multiple rows of data, return the column names of the result set through the query, and map them to the Metric field of the query.  
 
-eg：   
-Linux memory related Metric fields queried：total-Total memory, used-Used memory,free-Free memory, buff-cache-Cache size, available-Available memory   
-Memory metrics original query command：`free -m`, Console response：  
+> Query multiple rows of data, return the column names of the result set through the query, and map them to the Metric field of the query.
+
+eg：
+Linux memory related Metric fields queried：total-Total memory, used-Used memory,free-Free memory, buff-cache-Cache size, available-Available memory
+Memory metrics original query command：`free -m`, Console response：
+
 ```shell
               total        used        free      shared  buff/cache   available
 Mem:           7962        4065         333           1        3562        3593
 Swap:          8191          33        8158
 ```
+
 In hertzbeat multiRow format parsing requires a one-to-one mapping between the column name of the response data  and the indicaotr value, so the corresponding query SHELL script is:
-`free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`     
-Console response is：  
+`free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`
+Console response is：
+
 ```shell
 total  used  free  buff_cache  available
 7962   4066  331   3564        3592
@@ -59,18 +69,17 @@ Here the Metric field and the response data can be mapped into collected data on
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-------- 
+-------
+
 Configuration usages of the monitoring templates yml are detailed below.
 
 ### Monitoring Templates YML
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
-
-
+>
 > Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
 
 eg：Define a custom monitoring type `app` named `example_linux` which use the SSH protocol to collect data.
-
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

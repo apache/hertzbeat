@@ -17,28 +17,52 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import org.junit.jupiter.api.AfterEach;
+import java.util.concurrent.locks.ReentrantLock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
 
 /**
  * Test case for {@link MetricsCollectorQueue}
  */
 class MetricsCollectorQueueTest {
 
+    private MetricsCollectorQueue metricsCollectorQueue;
+
+    private MetricsCollect mockJob;
+
     @BeforeEach
     void setUp() {
-    }
 
-    @AfterEach
-    void tearDown() {
-    }
-
-    @Test
-    void addJob() {
+        metricsCollectorQueue = new MetricsCollectorQueue();
+        mockJob = mock(MetricsCollect.class);
     }
 
     @Test
-    void getJob() {
+    void testAddJob() throws InterruptedException {
+
+        metricsCollectorQueue.addJob(mockJob);
+        assertEquals(mockJob, metricsCollectorQueue.getJob());
     }
+
+    @Test
+    void testGetJobTimeout() {
+        ReentrantLock lock = new ReentrantLock();
+        Thread run = new Thread(() -> {
+            try {
+                metricsCollectorQueue.getJob();
+            } catch (Exception e) {
+                assertThrows(InterruptedException.class, () -> {
+                    throw e;
+                });
+                lock.unlock();
+            }
+        });
+        run.start();
+        run.interrupt();
+        lock.lock();
+    }
+
 }

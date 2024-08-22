@@ -316,9 +316,7 @@ public class RedisCommonCollectImpl extends AbstractCollect {
                 .map(this::removeCr)
                 .map(r -> r.split(SignConstants.DOUBLE_MARK))
                 .filter(t -> t.length > 1)
-                .forEach(it -> {
-                    result.put(it[0], it[1]);
-                });
+                .forEach(it -> result.put(it[0], it[1]));
         // fix https://github.com/apache/hertzbeat/pull/913
         if (result.size() < fieldTotalSize) {
             for (Metrics.Field field : metrics.getFields()) {

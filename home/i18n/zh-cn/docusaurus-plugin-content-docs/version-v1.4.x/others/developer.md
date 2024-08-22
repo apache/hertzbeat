@@ -1,10 +1,10 @@
 ---
-id: developer  
-title: 开发者们    
-sidebar_label: 开发者们     
+id: developer
+title: 开发者们
+sidebar_label: 开发者们
 ---
 
-## ✨ HertzBeat的成员们   
+## ✨ HertzBeat的成员们
 
 <table>
   <tbody>
@@ -21,22 +21,23 @@ sidebar_label: 开发者们
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/zqr10159"><img src="https://avatars.githubusercontent.com/u/30048352?v=4?s=100" width="100px;" alt="zqr10159"/><br /><sub><b>Logic</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=zqr10159" title="Documentation">📖</a> <a href="https://github.com/apache/hertzbeat/commits?author=zqr10159" title="Code">💻</a><a href="#design-Ceilzcx" title="Design">🎨</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vinci-897"><img src="https://avatars.githubusercontent.com/u/55838224?v=4?s=100" width="100px;" alt="vinci"/><br /><sub><b>vinci</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=vinci-897" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=vinci-897" title="Documentation">📖</a> <a href="#design-vinci-897" title="Design">🎨</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/a-little-fool"><img src="https://avatars.githubusercontent.com/u/105542329?v=4?s=100" width="100px;" alt="淞筱"/><br /><sub><b>淞筱</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=a-little-fool" title="Code">💻</a> <a href="https://github.com/apache/hertzbeat/commits?author=a-little-fool" title="Documentation">📖</a> <a href="#design-a-little-fool" title="Design">🎨</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZY945"><img src="https://avatars.githubusercontent.com/u/74083801?v=4?s=100" width="100px;" alt="东风"/><br /><sub><b>东风</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ZY945" title="Code">💻</a> <a href="#design-ZY945" title="Design">🎨</a> <a href="https://github.com/apache/hertzbeat/commits?author=ZY945" title="Documentation">📖</a></td> 
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ZY945"><img src="https://avatars.githubusercontent.com/u/74083801?v=4?s=100" width="100px;" alt="东风"/><br /><sub><b>东风</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ZY945" title="Code">💻</a> <a href="#design-ZY945" title="Design">🎨</a> <a href="https://github.com/apache/hertzbeat/commits?author=ZY945" title="Documentation">📖</a></td>
     </tr>
   </tbody>
 </table>
 
-<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>  
+<img alt="cert" src="/img/docs/cert-committer.png" width="400"/>
 
 ## ✨ HertzBeat的开发者们
 
-Thanks these wonderful people, welcome to join us: [贡献者指南](contributing)   
+Thanks these wonderful people, welcome to join us: [贡献者指南](contributing)
 
 <img alt="cert" src="/img/docs/cert-contributor.png" width="400"/>
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
+
 <table>
   <tbody>
     <tr>
@@ -258,6 +259,4 @@ Thanks these wonderful people, welcome to join us: [贡献者指南](contributin
 
 <!-- markdownlint-restore -->
 <!-- prettier-ignore-end -->
-
-<!-- ALL-CONTRIBUTORS-LIST:END -->  
-
+<!-- ALL-CONTRIBUTORS-LIST:END -->

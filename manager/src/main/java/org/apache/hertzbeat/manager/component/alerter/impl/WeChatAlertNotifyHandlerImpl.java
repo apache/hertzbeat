@@ -26,8 +26,10 @@ import java.net.http.HttpResponse;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 
 /**
  * Send alarm information through WeChat
@@ -59,8 +61,7 @@ final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
                 .GET()
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        JsonParser parser = new JsonParser();
-        JsonObject jsonObject = parser.parse(response.body()).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(response.body()).getAsJsonObject();
         String accessToken = null;
         if (jsonObject.has(ACCESS_TOKEN)) {
             accessToken = jsonObject.get(ACCESS_TOKEN).getAsString();
@@ -96,7 +97,7 @@ final class WeChatAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(new URI(SEND_MESSAGE_URL + accessToken))
-                .header("Content-Type", "application/json")
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .POST(HttpRequest.BodyPublishers.ofString(messageContent))
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());

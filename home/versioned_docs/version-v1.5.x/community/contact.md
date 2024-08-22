@@ -1,7 +1,7 @@
 ---
 id: contact  
 title: Join discussion    
-sidebar_label: Discussion     
+sidebar_label: Discussion
 ---
 
 > If you need any help or want to exchange suggestions during the use process, you can discuss and exchange through ISSUE or Github Discussion.
@@ -10,7 +10,7 @@ sidebar_label: Discussion
 
 [Chat On Discord](https://discord.gg/Fb6M73htGr)
 
-WeChat Group : Add friend `tan-cloud` and invite to the group.
+WeChat Group : Add friend `ahertzbeat` and invite to the group.
 
 WeChat Public : Search  ID `usthecom`.
 

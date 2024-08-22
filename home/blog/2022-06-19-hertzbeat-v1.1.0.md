@@ -33,9 +33,9 @@ Bugfixes:
 3. [[monitor] bugfix: Fix for Elasticsearch monitoring failure under basic authentication #174](https://github.com/apache/hertzbeat/pull/174) Contributed by @weifuqing
 4. [Fix for monitoring failure due to ambiguous Oracle monitoring parameter "database name" #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
-Online at https://console.tancloud.cn.
+Online at <https://console.tancloud.cn>.
 
------------------------
+---
 Windows Monitor coming：
 
 ![2022-06-19 11:30:57](https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png)
@@ -54,16 +54,17 @@ ALTER  TABLE param_define RENAME TO hzb_param_define;
 ALTER  TABLE tag RENAME TO hzb_tag;
 ALTER  TABLE tag_monitor_bind RENAME TO hzb_tag_monitor_bind;
 commit;
-``` 
+```
 
 Have Fun!
 
----- 
+----
 
 ## V1.1.0
+
 Home: hertzbeat.com | tancloud.cn
 
-Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.      
+Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.
 Another major change is that we use the H2 database by default to replace the MYSQL database as storage to facilitate the installation and deployment of users. Now only one docker command is needed to install and experience hertzbeat： `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 Let's Try It!
 
@@ -75,7 +76,7 @@ Feature：
 2. [[monitor]change default database mysql to h2 #191](https://github.com/apache/hertzbeat/pull/191)
 3. [[manager]support monitor params name i18n #184](https://github.com/apache/hertzbeat/pull/184).
 4. [[script]build multi cpu arch hertzbeat docker version #189](https://github.com/apache/hertzbeat/pull/189).
-5.  [[monitor]feature: support oracle multi tablespaces #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
+5. [[monitor]feature: support oracle multi tablespaces #163](https://github.com/apache/hertzbeat/pull/163) contribute by @brave4Time
 6. [[monitor]database tables append prefix hzb_ #193](https://github.com/apache/hertzbeat/pull/193) issue from @shimingxy
 
 Bugfix.
@@ -85,13 +86,13 @@ Bugfix.
 3. [[monitor] bugfix: fix elasticsearch collect error when need basic auth #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
 4. [Change the Oracle database name to the service name to reduce ambiguity #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
------------------------
+---
+
 Windows Monitor coming：
 
 <img width="1444" alt="2022-06-19 11 30 57" src="https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png"/>
-
 
 ⚠️ ⚠️⚠️⚠️Attention other version upgrade to v1.1.0 need run sql script.  Now the tables name has hzb_ prefix.
 
@@ -107,11 +108,9 @@ ALTER  TABLE param_define RENAME TO hzb_param_define;
 ALTER  TABLE tag RENAME TO hzb_tag;
 ALTER  TABLE tag_monitor_bind RENAME TO hzb_tag_monitor_bind;
 commit;
-``` 
+```
 
 Have Fun!
-
-
 
 Have Fun!
 
@@ -124,10 +123,10 @@ Have Fun!
 > HertzBeat supports more flexible alarm configurations (calculation expressions), notification alerts, templates, and real-time delivery via email, DingTalk, WeChat, Lark, etc.  
 > Welcome to try and discover more in HertzBeat's [cloud environment TanCloud](https://console.tancloud.cn).  
 > We are rapidly iterating and welcome participation to join in co-building the open-source ecosystem.
-
+>
 > HertzBeat's support for multiple types, easy expansion, and low coupling hopes to help developers and small and medium teams quickly build their own monitoring systems.
 
 **Repository Addresses**
 
-[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
-[Gitee](https://gitee.com/hertzbeat/hertzbeat) https://gitee.com/hertzbeat/hertzbeat
+[Github](https://github.com/apache/hertzbeat) <https://github.com/apache/hertzbeat>
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) <https://gitee.com/hertzbeat/hertzbeat>
