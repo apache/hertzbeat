@@ -15,21 +15,45 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.config;
-
-import org.apache.hertzbeat.common.constants.ConfigConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
+package org.apache.hertzbeat.warehouse.constants;
 
 /**
- * Collector Auto Configuration
- * @version 2.1
+ * Warehouse configuration constants.
  */
 
-@AutoConfiguration
-@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
-		+ SignConstants.DOT
-		+ ConfigConstants.FunctionModuleConstants.COLLECTOR)
-public class CollectorAutoConfiguration {
+public interface WarehouseConstants {
+
+    String STORE = "store";
+
+    String REAL_TIME = "real-time";
+
+    /**
+     * History database name.
+     */
+    interface HistoryName {
+        String GREPTIME = "greptime";
+
+        String INFLUXDB = "influxdb";
+
+        String IOT_DB = "iot-db";
+
+        String JPA = "jpa";
+
+        String TD_ENGINE = "td-engine";
+
+        String VM = "victoria-metrics";
+
+        String VM_CLUSTER = "victoria-metrics.cluster";
+    }
+
+    /**
+     * Real-time database name.
+     */
+    interface RealTimeName {
+
+        String REDIS = "redis";
+
+        String MEMORY = "memory";
+    }
+
 }
