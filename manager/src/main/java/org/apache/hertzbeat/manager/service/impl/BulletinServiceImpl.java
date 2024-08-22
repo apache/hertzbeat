@@ -21,26 +21,23 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.manager.dao.BulletinDao;
-import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
-import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.service.BulletinService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,8 +56,6 @@ public class BulletinServiceImpl implements BulletinService {
 
     /**
      * validate Bulletin
-     *
-     * @param bulletinDto
      */
     @Override
     public void validate(BulletinDto bulletinDto) throws IllegalArgumentException {
@@ -69,9 +64,6 @@ public class BulletinServiceImpl implements BulletinService {
         }
         if (bulletinDto.getApp() == null || bulletinDto.getApp().isEmpty()) {
             throw new IllegalArgumentException("Bulletin app cannot be null or empty");
-        }
-        if (bulletinDto.getMetrics() == null || bulletinDto.getMetrics().isEmpty()) {
-            throw new IllegalArgumentException("Bulletin metrics cannot be null or empty");
         }
         if (bulletinDto.getFields() == null || bulletinDto.getFields().isEmpty()) {
             throw new IllegalArgumentException("Bulletin fields cannot be null or empty");
@@ -98,15 +90,6 @@ public class BulletinServiceImpl implements BulletinService {
         return bulletinDao.findAll().stream().map(Bulletin::getName).distinct().toList();
     }
 
-    /**
-     * Get metrics by name
-     *
-     * @param name
-     */
-    @Override
-    public List<String> getMetricsByName(String name) {
-        return bulletinDao.findByName(name).getMetrics();
-    }
 
     /**
      * Save Bulletin
@@ -131,7 +114,6 @@ public class BulletinServiceImpl implements BulletinService {
             Map<String, List<String>> sortedMap = new TreeMap<>(map);
             String fields = JsonUtil.toJson(sortedMap);
             bulletin.setFields(fields);
-            bulletin.setMetrics(bulletinDto.getMetrics());
             bulletin.setMonitorIds(bulletinDto.getMonitorIds());
             bulletin.setApp(bulletinDto.getApp());
             bulletinDao.save(bulletin);
@@ -158,7 +140,6 @@ public class BulletinServiceImpl implements BulletinService {
                 vo.setId(bulletin.getId());
                 vo.setName(bulletin.getName());
                 vo.setTags(bulletin.getTags());
-                vo.setMetrics(bulletin.getMetrics());
                 vo.setMonitorId(bulletin.getMonitorIds());
                 vo.setApp(bulletin.getApp());
                 return vo;

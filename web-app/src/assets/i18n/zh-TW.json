@@ -43,6 +43,18 @@
       "silence": "告警靜默",
       "dispatch": "消息通知"
     },
+    "bulletin": {
+      "new": "新增看板項",
+      "delete": "刪除看板項",
+      "name": "看板名稱",
+      "name.placeholder": "請輸入自定義看板名稱",
+      "monitor.type": "監控類型",
+      "monitor.name": "監控任務名稱",
+      "monitor.metrics": "監控指標",
+      "help.message.content": "自定義監控看板",
+      "help.content": "自定義監控看板，以表格形式展示某種監控的自選指標",
+      "help.link": ""
+    },
     "advanced": {
       "": "高级",
       "collector": "採集集群",

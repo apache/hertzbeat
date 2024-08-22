@@ -24,6 +24,5 @@ export class BulletinDefine {
   name!: string;
   monitorIds!: number[];
   app!: string;
-  metrics!: string[];
   fields: Fields = {};
 }

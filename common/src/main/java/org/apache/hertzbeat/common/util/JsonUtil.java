@@ -107,8 +107,8 @@ public final class JsonUtil {
             return false;
         }
         jsonStr = jsonStr.trim();
-        if (!(jsonStr.startsWith("{") && jsonStr.endsWith("}")) &&
-                !(jsonStr.startsWith("[") && jsonStr.endsWith("]"))) {
+        if (!(jsonStr.startsWith("{") && jsonStr.endsWith("}"))
+                && !(jsonStr.startsWith("[") && jsonStr.endsWith("]"))) {
             return false;
         }
         try {

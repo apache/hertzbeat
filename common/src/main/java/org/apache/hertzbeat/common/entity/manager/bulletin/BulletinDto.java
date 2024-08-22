@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Map;
 import lombok.Data;
 
+/**
+ * Bulletin DTO
+ */
 @Data
 public class BulletinDto {
 
@@ -35,10 +38,6 @@ public class BulletinDto {
      */
     private String app;
 
-    /**
-     * Monitor metrics
-     */
-    private List<String> metrics;
 
     /**
      * Monitor fields

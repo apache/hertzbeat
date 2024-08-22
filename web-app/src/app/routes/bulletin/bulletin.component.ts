@@ -17,7 +17,6 @@
  * under the License.
  */
 
-import { HttpParams } from '@angular/common/http';
 import { Component, Inject, OnInit } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -83,7 +82,6 @@ export class BulletinComponent implements OnInit {
 
   onNewBulletinDefine() {
     this.define = new BulletinDefine();
-    this.define.metrics = [];
     this.define.monitorIds = [];
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
@@ -130,7 +128,6 @@ export class BulletinComponent implements OnInit {
 
   onManageModalOk() {
     this.isManageModalOkLoading = true;
-    this.define.metrics = Array.from(this.metrics);
     this.define.fields = this.fields;
     if (this.isManageModalAdd) {
       const modalOk$ = this.bulletinDefineSvc
@@ -377,6 +374,7 @@ export class BulletinComponent implements OnInit {
           metricData$.unsubscribe();
           if (message.code === 0 && message.data) {
             this.tabDefines = message;
+            console.log(this.tabDefines.data);
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
@@ -391,6 +389,15 @@ export class BulletinComponent implements OnInit {
       );
     }
     this.tableLoading = false;
+  }
+
+  getMetrics(): string[] {
+    this.tabDefines.data.content.forEach((item: any) => {
+      item.metrics.forEach((metric: any) => {
+        this.metrics.add(metric.name);
+      });
+    });
+    return Array.from(this.metrics);
   }
 
   getKeys(metricName: string): string[] {
@@ -413,7 +420,6 @@ export class BulletinComponent implements OnInit {
   onTablePageChange(params: NzTableQueryParams): void {
     const { pageSize, pageIndex } = params;
 
-    // 只有当页码或每页条数变化时才获取数据
     if (pageIndex !== this.pageIndex || pageSize !== this.pageSize) {
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
@@ -423,9 +429,7 @@ export class BulletinComponent implements OnInit {
 
   getRowIndexes() {
     const maxRowSpan = this.tabDefines.data.content.length;
-    var numbers = Array.from({ length: maxRowSpan }, (_, index) => index);
-    console.log(numbers);
-    return numbers;
+    return Array.from({ length: maxRowSpan }, (_, index) => index);
   }
 
   isDeleteModalVisible: boolean = false;
@@ -467,4 +471,13 @@ export class BulletinComponent implements OnInit {
   }
 
   protected readonly Array = Array;
+
+  onTabChange($event: number) {
+    this.tableLoading = true;
+    this.bulletinName = this.tabs[$event];
+    this.tabDefines = [];
+    this.loadData(this.pageIndex - 1, this.pageSize);
+    console.log(this.tabDefines);
+    this.tableLoading = false;
+  }
 }

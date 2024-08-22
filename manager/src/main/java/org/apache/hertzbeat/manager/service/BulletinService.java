@@ -24,7 +24,6 @@ import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
@@ -41,6 +40,7 @@ public interface BulletinService {
      * Get Bulletin by name
      */
     Bulletin getBulletinByName(String name);
+
     /**
      * Get Bulletin by id
      */
@@ -51,10 +51,6 @@ public interface BulletinService {
      */
     List<String> getAllNames();
 
-    /**
-     * Get metrics by name
-     */
-    List<String> getMetricsByName(String name);
 
     /**
      * delete Bulletin by id

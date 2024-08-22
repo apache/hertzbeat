@@ -17,15 +17,12 @@
 
 package org.apache.hertzbeat.common.entity.manager.bulletin;
 
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -35,7 +32,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.hertzbeat.common.entity.manager.JsonLongListAttributeConverter;
-import org.apache.hertzbeat.common.entity.manager.JsonStringListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.springframework.data.annotation.CreatedBy;
@@ -65,17 +61,13 @@ public class Bulletin {
     private String name;
 
     @Schema(description = "Monitor IDs", example = "1")
-    @Column(name = "monitor_ids")
+    @Column(name = "monitor_ids", length = 5000)
     @Convert(converter = JsonLongListAttributeConverter.class)
     private List<Long> monitorIds;
 
     @Schema(description = "Monitor Type eg: jvm, tomcat", example = "jvm", accessMode = READ_WRITE)
     private String app;
 
-    @Schema(description = "Monitor Metrics", example = "cpu, memory")
-    @Column(length = 4096)
-    @Convert(converter = JsonStringListAttributeConverter.class)
-    private List<String> metrics;
 
     @Schema(description = "Monitor Fields")
     @Column(length = 4096, columnDefinition = "json")

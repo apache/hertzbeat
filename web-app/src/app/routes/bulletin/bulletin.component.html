@@ -18,7 +18,7 @@
 -->
 
 <app-help-message-show
-  [help_message_content]="'自定义监控看板'"
+  [help_message_content]="'bulletin.help.message.content' | i18n"
   [guild_link]="'bulletin.help.link' | i18n"
   [module_name]="'menu.alert.setting'"
   [icon_name]="'calculator'"
@@ -33,21 +33,21 @@
     </button>
     <button nz-button nzType="primary" (click)="onNewBulletinDefine()">
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
-      新增看板项
+      {{ 'bulletin.new' | i18n }}
     </button>
     <button nz-button nzType="primary" nzDanger (click)="onDeleteBulletinDefines()">
       <i nz-icon nzType="delete" nzTheme="outline"></i>
-      删除看板项
+      {{ 'bulletin.delete' | i18n }}
     </button>
   </ng-template>
 </app-toolbar>
 
-<nz-tabset nzType="card">
+<nz-tabset nzType="card" (nzSelectedIndexChange)="onTabChange($event)">
   <nz-tab *ngFor="let tab of tabs" [nzTitle]="tab">
     <ng-container *ngIf="tabDefines">
       <nz-table
         #fixedTable
-        [nzData]="tabDefines.data"
+        [nzData]="tabDefines.data.content"
         [nzPageIndex]="pageIndex"
         [nzPageSize]="pageSize"
         [nzTotal]="total"
@@ -62,49 +62,46 @@
         class="table"
       >
         <thead>
-<!--          <tr>-->
-<!--            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>-->
-<!--            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>-->
-<!--            <ng-container *ngFor="let metric of tabDefines.data.column">-->
-<!--              <th nzAlign="center" [colSpan]="getKeys(metric).length">-->
-<!--                {{ metric }}-->
-<!--              </th>-->
-<!--            </ng-container>-->
-<!--          </tr>-->
-<!--          <tr>-->
-<!--            <ng-container *ngFor="let metric of tabDefines.data.column">-->
-<!--              <ng-container *ngFor="let field of getKeys(metric)">-->
-<!--                <th nzAlign="center" [colSpan]="1">-->
-<!--                  {{ field }}-->
-<!--                </th>-->
-<!--              </ng-container>-->
-<!--            </ng-container>-->
-<!--          </tr>-->
+          <tr>
+            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
+            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
+            <ng-container *ngFor="let metric of getMetrics()">
+              <th nzAlign="center" [colSpan]="getKeys(metric).length">
+                {{ metric }}
+              </th>
+            </ng-container>
+          </tr>
+          <tr>
+            <ng-container *ngFor="let metric of getMetrics()">
+              <ng-container *ngFor="let field of getKeys(metric)">
+                <th nzAlign="center" [colSpan]="1">
+                  {{ field }}
+                </th>
+              </ng-container>
+            </ng-container>
+          </tr>
         </thead>
-
         <tbody>
           <ng-container *ngFor="let content of fixedTable.data">
-            <ng-container *ngFor="let rowIndex of getRowIndexes()">
-              <tr>
-                <ng-container *ngIf="rowIndex === 0">
-                  <td nzAlign="center" [rowSpan]="tabDefines.data.content.length">{{ content.monitorName }}</td>
-                  <td nzAlign="center" [rowSpan]="tabDefines.data.content.length">{{ content.host }}</td>
+            <tr>
+              <td nzAlign="center" [rowSpan]="1">{{ content.monitorName }}</td>
+              <td nzAlign="center" [rowSpan]="1">{{ content.host }}</td>
+              <ng-container *ngFor="let metric of content.metrics">
+                <ng-container *ngFor="let field of metric.fields">
+                  <ng-container *ngFor="let item of field">
+                    <td nzAlign="center">
+                      <ng-container *ngIf="item.value === 'No Data'; else hasData">
+                        <nz-tag nzColor="warning">No Data Available</nz-tag>
+                      </ng-container>
+                      <ng-template #hasData>
+                        {{ item.value }}
+                        <nz-tag *ngIf="item.unit !== ''" nzColor="success">{{ item.unit }}</nz-tag>
+                      </ng-template>
+                    </td>
+                  </ng-container>
                 </ng-container>
-                <ng-container *ngFor="let metric of content.metrics">
-                  <td>
-                    <div *ngFor="let field of metric.fields">
-                      <div *ngFor="let item of field">
-                        <span>{{ item.key }}: </span>
-                        <nz-tag *ngIf="item.value === 'No Data'" nzColor="warning">
-                          {{ 'monitors.detail.value.null' | i18n }}
-                        </nz-tag>
-                        <nz-tag *ngIf="item.value !== 'No Data'" nzColor="success"> {{ item.value }} {{ item.unit }} </nz-tag>
-                      </div>
-                    </div>
-                  </td>
-                </ng-container>
-              </tr>
-            </ng-container>
+              </ng-container>
+            </tr>
           </ng-container>
         </tbody>
       </nz-table>
@@ -115,7 +112,7 @@
 <!-- new bulletin modal -->
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="isManageModalAdd ? '新增看板' : '编辑看板'"
+  [nzTitle]="'bulletin.new' | i18n"
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"
@@ -177,7 +174,6 @@
             [nzShowSelectAll]="false"
             [nzRenderList]="[leftRenderList, null]"
             (nzChange)="transferChange($event)"
-            required
           >
             <ng-template #leftRenderList let-items let-onItemSelect="onItemSelect">
               <nz-tree
@@ -210,7 +206,7 @@
 <!-- delete bulletin modal -->
 <nz-modal
   [(nzVisible)]="isDeleteModalVisible"
-  [nzTitle]="'删除看板'"
+  [nzTitle]="'bulletin.delete' | i18n"
   (nzOnCancel)="onDeleteModalCancel()"
   (nzOnOk)="onDeleteModalOk()"
   nzMaskClosable="false"

@@ -40,8 +40,6 @@ import org.apache.hertzbeat.manager.service.BulletinService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -73,6 +71,7 @@ public class BulletinController {
     /**
      * add a new bulletin
      */
+
     @PostMapping
     public ResponseEntity<Message<Void>> addNewBulletin(@Valid @RequestBody BulletinDto bulletinDto) {
         try {
@@ -104,7 +103,7 @@ public class BulletinController {
             @RequestParam List<String> names) {
         try {
             bulletinService.deleteBulletinByName(names);
-        }catch (Exception e) {
+        } catch (Exception e) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Delete failed!" + e.getMessage()));
         }
         return ResponseEntity.ok(Message.success("Delete success!"));
@@ -120,20 +119,11 @@ public class BulletinController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "real time store not available"));
         }
 
-        Pageable pageable = PageRequest.of(pageIndex, pageSize);
         Bulletin bulletin = bulletinService.getBulletinByName(name);
 
         BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder = BulletinMetricsData.builder()
-                .name(bulletin.getName())
-                .column(bulletin.getMetrics());
-
-
+                .name(bulletin.getName());
         BulletinMetricsData data = buildBulletinMetricsData(contentBuilder, bulletin);
-
-
-
-//        Page<BulletinMetricsData> metricsDataPage = new PageImpl<>(data, pageable, data.getData().size());
-
         return ResponseEntity.ok(Message.success(data));
     }
 
@@ -149,36 +139,26 @@ public class BulletinController {
             List<BulletinMetricsData.Metric> metrics = new ArrayList<>();
             Map<String, List<String>> fieldMap = JsonUtil.fromJson(bulletin.getFields(), new TypeReference<>() {});
 
-            if (fieldMap != null) {
-                // Convert entry set to a list and sort it
-                List<Map.Entry<String, List<String>>> entries = new ArrayList<>(fieldMap.entrySet());
-                entries.sort(Map.Entry.comparingByKey());
 
-                for (Map.Entry<String, List<String>> entry : entries) {
+            if (fieldMap != null) {
+                for (Map.Entry<String, List<String>> entry : fieldMap.entrySet()) {
                     String metric = entry.getKey();
                     List<String> fields = entry.getValue();
                     BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
                             .name(metric);
                     CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(monitorId, metric);
-                    List<List<BulletinMetricsData.Field>> fieldsList = (currentMetricsData != null) ?
-                            buildFieldsListFromCurrentData(currentMetricsData) :
-                            buildFieldsListNoData(metric, fields);
+                    List<List<BulletinMetricsData.Field>> fieldsList = (currentMetricsData != null)
+                            ? buildFieldsListFromCurrentData(currentMetricsData) : buildFieldsListNoData(metric, fields);
                     metricBuilder.fields(fieldsList);
                     metrics.add(metricBuilder.build());
                 }
             }
-
-
             dataBuilder.metrics(metrics);
             dataList.add(dataBuilder.build());
         }
-
         contentBuilder.content(dataList);
         return contentBuilder.build();
     }
-
-
-
 
     private List<List<BulletinMetricsData.Field>> buildFieldsListFromCurrentData(CollectRep.MetricsData currentMetricsData) {
         return currentMetricsData.getValuesList().stream()

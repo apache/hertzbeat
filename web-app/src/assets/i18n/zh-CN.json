@@ -131,17 +131,15 @@
     }
   },
   "bulletin": {
+    "new": "新增看板项",
+    "delete": "删除看板项",
     "name": "看板名称",
     "name.placeholder": "请输入自定义看板名称",
     "monitor.type": "监控类型",
     "monitor.name": "监控任务名称",
     "monitor.metrics": "监控指标",
-    "content": "公告内容",
-    "time": "发布时间",
-    "status": "状态",
-    "status.online": "已发布",
-    "status.offline": "未发布",
-    "help.content": "自定义监控看板,可以展示某种监控的duo'tai服务器的，磁盘、内存、一个总的概览，像是一个表格",
+    "help.message.content": "自定义监控看板",
+    "help.content": "自定义监控看板,以表格形式展示某种监控的自选指标",
     "help.link": ""
   },
   "question.link": "https://hertzbeat.apache.org/zh-cn/docs/help/issue",
