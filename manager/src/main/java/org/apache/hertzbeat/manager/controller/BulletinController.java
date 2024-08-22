@@ -57,9 +57,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/bulletin", produces = {APPLICATION_JSON_VALUE})
 public class BulletinController {
 
-    private static final String NO_DATA = "No Data";
-    private static final String EMPTY_STRING = "";
-
     @Autowired
     private BulletinService bulletinService;
 
@@ -123,68 +120,8 @@ public class BulletinController {
 
         BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder = BulletinMetricsData.builder()
                 .name(bulletin.getName());
-        BulletinMetricsData data = buildBulletinMetricsData(contentBuilder, bulletin);
+        BulletinMetricsData data = bulletinService.buildBulletinMetricsData(contentBuilder, bulletin);
         return ResponseEntity.ok(Message.success(data));
     }
 
-    private BulletinMetricsData buildBulletinMetricsData(BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder, Bulletin bulletin) {
-        List<BulletinMetricsData.Data> dataList = new ArrayList<>();
-        for (Long monitorId : bulletin.getMonitorIds()) {
-            Monitor monitor = monitorService.getMonitor(monitorId);
-            BulletinMetricsData.Data.DataBuilder dataBuilder = BulletinMetricsData.Data.builder()
-                    .monitorId(monitorId)
-                    .monitorName(monitor.getName())
-                    .host(monitor.getHost());
-
-            List<BulletinMetricsData.Metric> metrics = new ArrayList<>();
-            Map<String, List<String>> fieldMap = JsonUtil.fromJson(bulletin.getFields(), new TypeReference<>() {});
-
-
-            if (fieldMap != null) {
-                for (Map.Entry<String, List<String>> entry : fieldMap.entrySet()) {
-                    String metric = entry.getKey();
-                    List<String> fields = entry.getValue();
-                    BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
-                            .name(metric);
-                    CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(monitorId, metric);
-                    List<List<BulletinMetricsData.Field>> fieldsList = (currentMetricsData != null)
-                            ? buildFieldsListFromCurrentData(currentMetricsData) : buildFieldsListNoData(metric, fields);
-                    metricBuilder.fields(fieldsList);
-                    metrics.add(metricBuilder.build());
-                }
-            }
-            dataBuilder.metrics(metrics);
-            dataList.add(dataBuilder.build());
-        }
-        contentBuilder.content(dataList);
-        return contentBuilder.build();
-    }
-
-    private List<List<BulletinMetricsData.Field>> buildFieldsListFromCurrentData(CollectRep.MetricsData currentMetricsData) {
-        return currentMetricsData.getValuesList().stream()
-                .map(valueRow -> {
-                    List<BulletinMetricsData.Field> fields = currentMetricsData.getFieldsList().stream()
-                            .map(field -> BulletinMetricsData.Field.builder()
-                                    .key(field.getName())
-                                    .unit(field.getUnit())
-                                    .build())
-                            .toList();
-
-                    for (int i = 0; i < fields.size(); i++) {
-                        fields.get(i).setValue(valueRow.getColumns(i));
-                    }
-                    return fields;
-                })
-                .toList();
-    }
-
-    private List<List<BulletinMetricsData.Field>> buildFieldsListNoData(String metric, List<String> fields) {
-        return Collections.singletonList(fields.stream()
-                .map(field -> BulletinMetricsData.Field.builder()
-                        .key(field)
-                        .unit(EMPTY_STRING)
-                        .value(NO_DATA)
-                        .build())
-                .toList());
-    }
 }

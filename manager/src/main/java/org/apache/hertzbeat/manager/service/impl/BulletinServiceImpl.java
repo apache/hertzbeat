@@ -20,20 +20,27 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
+import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.manager.dao.BulletinDao;
 import org.apache.hertzbeat.manager.service.BulletinService;
+import org.apache.hertzbeat.manager.service.MonitorService;
+import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -50,8 +57,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class BulletinServiceImpl implements BulletinService {
 
+    private static final String NO_DATA = "No Data";
+
+    private static final String EMPTY_STRING = "";
+
     @Autowired
     private BulletinDao bulletinDao;
+
+    @Autowired
+    private MonitorService monitorService;
+
+    @Autowired
+    private RealTimeDataReader realTimeDataReader;
 
 
     /**
@@ -150,6 +167,70 @@ public class BulletinServiceImpl implements BulletinService {
         long total = bulletinPage.getTotalElements();
         return new PageImpl<>(voList, pageRequest, total);
     }
+
+    /**
+     * deal with the bulletin
+     *
+     */
+    @Override
+    public BulletinMetricsData buildBulletinMetricsData(BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder, Bulletin bulletin) {
+        List<BulletinMetricsData.Data> dataList = new ArrayList<>();
+        for (Long monitorId : bulletin.getMonitorIds()) {
+            Monitor monitor = monitorService.getMonitor(monitorId);
+            BulletinMetricsData.Data.DataBuilder dataBuilder = BulletinMetricsData.Data.builder()
+                    .monitorId(monitorId)
+                    .monitorName(monitor.getName())
+                    .host(monitor.getHost());
+
+            List<BulletinMetricsData.Metric> metrics = new ArrayList<>();
+            Map<String, List<String>> fieldMap = JsonUtil.fromJson(bulletin.getFields(), new TypeReference<>() {});
+
+            if (fieldMap != null) {
+                for (Map.Entry<String, List<String>> entry : fieldMap.entrySet()) {
+                    String metric = entry.getKey();
+                    List<String> fields = entry.getValue();
+                    BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
+                            .name(metric);
+                    CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(monitorId, metric);
+
+                    List<List<BulletinMetricsData.Field>> fieldsList;
+                    if (currentMetricsData != null) {
+                        fieldsList = currentMetricsData.getValuesList().stream()
+                                .map(valueRow -> {
+                                    List<BulletinMetricsData.Field> fieldList = currentMetricsData.getFieldsList().stream()
+                                            .map(field -> BulletinMetricsData.Field.builder()
+                                                    .key(field.getName())
+                                                    .unit(field.getUnit())
+                                                    .build())
+                                            .toList();
+
+                                    for (int i = 0; i < fieldList.size(); i++) {
+                                        fieldList.get(i).setValue(valueRow.getColumns(i));
+                                    }
+                                    return fieldList;
+                                })
+                                .toList();
+                    } else {
+                        fieldsList = Collections.singletonList(fields.stream()
+                                .map(field -> BulletinMetricsData.Field.builder()
+                                        .key(field)
+                                        .unit("")
+                                        .value("NO_DATA")
+                                        .build())
+                                .toList());
+                    }
+
+                    metricBuilder.fields(fieldsList);
+                    metrics.add(metricBuilder.build());
+                }
+            }
+            dataBuilder.metrics(metrics);
+            dataList.add(dataBuilder.build());
+        }
+        contentBuilder.content(dataList);
+        return contentBuilder.build();
+    }
+
 
     /**
      * Get Bulletin by id

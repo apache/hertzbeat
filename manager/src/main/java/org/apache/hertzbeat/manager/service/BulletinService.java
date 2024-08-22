@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
+import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -76,4 +77,8 @@ public interface BulletinService {
      */
     Page<BulletinVo> getBulletins(Specification<Bulletin> specification, PageRequest pageRequest);
 
+    /**
+     * deal with the bulletin
+     */
+    BulletinMetricsData buildBulletinMetricsData(BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder, Bulletin bulletin);
 }
