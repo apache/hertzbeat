@@ -51,4 +51,3 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 | innodb_data_writes  | none        | innodb average number of writes from file per second |
 | innodb_data_read    | KB          | innodb average amount of data read per second        |
 | innodb_data_written | KB          | innodb average amount of data written per second     |
-

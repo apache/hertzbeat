@@ -6,7 +6,7 @@ sidebar_label: Install via Docker
 
 > Recommend to use docker deploy HertzBeat
 
-1. Download and install the Docker environment   
+1. Download and install the Docker environment
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
    After the installation you can check if the Docker version normally output at the terminal.
 
@@ -14,34 +14,36 @@ sidebar_label: Install via Docker
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
+
 2. pull HertzBeat Docker mirror  
    you can look up the mirror version TAG in [dockerhub mirror repository](https://hub.docker.com/r/apache/hertzbeat/tags)  
    or in [quay.io mirror repository](https://quay.io/repository/apache/hertzbeat)
 
    ```shell
-   $ docker pull apache/hertzbeat   
-   $ docker pull apache/hertzbeat-collector       
+   docker pull apache/hertzbeat   
+   docker pull apache/hertzbeat-collector       
    ```
 
    or
 
    ```shell
-   $ docker pull quay.io/tancloud/hertzbeat
-   $ docker pull quay.io/tancloud/hertzbeat-collector
+   docker pull quay.io/tancloud/hertzbeat
+   docker pull quay.io/tancloud/hertzbeat-collector
    ```
-3. Mounted HertzBeat configuration file (optional)    
-   Download and config `application.yml` in the host directory, eg:`$(pwd)/application.yml`    
-   Download from [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml) or [gitee/script/application.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/application.yml).    
+
+3. Mounted HertzBeat configuration file (optional)
+   Download and config `application.yml` in the host directory, eg:`$(pwd)/application.yml`
+   Download from [github/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml) or [gitee/script/application.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/application.yml).
    You can modify the configuration yml file according to your needs.
    - If you need to use email to send alarms, you need to replace the email server parameters `spring.mail` in `application.yml`
    - **Recommended** If you need to use an external Mysql database to replace the built-in H2 database, you need to replace the `spring.datasource` parameter in `application.yml` For specific steps, see [Using Mysql to replace H2 database](mysql-change)
    - **Recommended** If you need to use the time series database TDengine to store metric data, you need to replace the `warehouse.store.td-engine` parameter in `application.yml` for specific steps, see [Using TDengine to store metrics data](tdengine-init)
    - **Recommended** If you need to use the time series database IotDB to store the metric database, you need to replace the `warehouse.storeiot-db` parameter in `application.yml` For specific steps, see [Use IotDB to store metrics data](iotdb-init)
-4. Mounted the account file(optional)           
-   HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`       
-   If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.    
-   Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`    
-   Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/sureness.yml)    
+4. Mounted the account file(optional)
+   HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`
+   If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.
+   Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`
+   Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml) or [gitee/script/sureness.yml](https://gitee.com/hertzbeat/hertzbeat/raw/master/script/sureness.yml)
    For detail steps, please refer to [Configure Account Password](account-modify)
 5. Start the HertzBeat Docker container
 
@@ -57,13 +59,14 @@ $ docker run -d -p 1157:1157 -p 1158:1158 \
 ```
 
 This command starts a running HertzBeat Docker container with mapping port 1157-1158. If existing processes on the host use the port, please modify host mapped port.  
+
 - `docker run -d` : Run a container in the background via Docker
 - `-p 1157:1157 -p 1158:1158`  : Mapping container ports to the host, 1157 is web-ui port, 1158 is cluster port.
 - `-e LANG=en_US.UTF-8`  : Set the system language
 - `-e TZ=Asia/Shanghai` : Set the system timezone
 - `-v $(pwd)/data:/opt/hertzbeat/data` : (optional, data persistence) Important⚠️ Mount the H2 database file to the local host, to ensure that the data is not lost due creating or deleting container.  
 - `-v $(pwd)/logs:/opt/hertzbeat/logs` : (optional, if you don't have a need, just delete it) Mount the log file to the local host, to ensure the log will not be lost due creating or deleting container.
-- `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional, if you don't have a need, just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file.    
+- `-v $(pwd)/application.yml:/opt/hertzbeat/config/application.yml`  : (optional, if you don't have a need, just delete it) Mount the local configuration file into the container which has been modified in the previous step, namely using the local configuration file to cover container configuration file.
 - `-v $(pwd)/sureness.yml:/opt/hertzbeat/config/sureness.yml`  : (optional, if you don't have a need, just delete it) Mount account configuration file modified in the previous step into the container. Delete this command parameters if no needs.  
 - `--name hertzbeat` : Naming container name hertzbeat
 - `apache/hertzbeat` : Use the pulled latest HertzBeat official application mirror to start the container. **Use `quay.io/tancloud/hertzbeat` instead if you pull `quay.io` docker image.**
@@ -84,6 +87,7 @@ $ docker run -d \
 ```
 
 This command starts a running HertzBeat-Collector container.
+
 - `docker run -d` : Run a container in the background via Docker
 - `-e IDENTITY=custom-collector-name`  : (optional) Set the collector unique identity name. Attention the clusters collector name must unique.
 - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.
@@ -101,13 +105,13 @@ This command starts a running HertzBeat-Collector container.
 
 **The most common problem is network problems, please check in advance**
 
-1. **MYSQL, TDENGINE, IoTDB and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**     
+1. **MYSQL, TDENGINE, IoTDB and HertzBeat are deployed on the same host by Docker,HertzBeat use localhost or 127.0.0.1 connect to the database but fail**
    The problems lies in Docker container failed to visit and connect localhost port. Because the docker default network mode is Bridge mode which can't access local machine through localhost.
 
-> Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.     
+> Solution A：Configure application.yml. Change database connection address from localhost to external IP of the host machine.
 > Solution B：Use the Host network mode to start Docker, namely making Docker container and hosting share network. `docker run -d --network host .....`
 
-2. **According to the process deploy，visit http://ip:1157/ no interface**   
+2. **According to the process deploy，visit <http://ip:1157/> no interface**
    Please refer to the following points to troubleshoot issues：
 
 > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
@@ -116,7 +120,7 @@ This command starts a running HertzBeat-Collector container.
 
 3. **Log an error TDengine connection or insert SQL failed**
 
-> 1：Check whether database account and password configured is correct, the database is created.   
+> 1：Check whether database account and password configured is correct, the database is created.
 > 2：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.
 
 4. **Historical monitoring charts have been missing data for a long time**
@@ -140,4 +144,3 @@ This command starts a running HertzBeat-Collector container.
 > Is iot-db or td-engine enable set to true
 > Note⚠️If both hertzbeat and IotDB, TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
 > You can check the startup logs according to the logs directory
-

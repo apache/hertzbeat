@@ -64,4 +64,3 @@ keywords: [ Open Source Monitoring System, Open Source Middleware Monitoring, Ka
 
 1. If Kafka is enabled with JMX monitoring, you can use [Kafka](kafka) Monitoring.
 2. If Kafka cluster deploys kafka_exporter to expose monitoring metrics, you can refer to [Prometheus task](prometheus) to configure the Prometheus collection task to monitor kafka.
-

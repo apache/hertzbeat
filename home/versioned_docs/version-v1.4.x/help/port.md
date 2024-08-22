@@ -26,4 +26,3 @@ keywords: [open source monitoring tool, open source port monitoring tool, monito
 | Metric name  | Metric unit | Metric help description |
 |--------------|-------------|-------------------------|
 | responseTime | ms          | Website response time   |
-

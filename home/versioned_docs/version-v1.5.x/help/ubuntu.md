@@ -79,4 +79,3 @@ keywords: [open source monitoring tool, open source linux ubuntu monitoring tool
 | available   | Mb          | Available disk size     |
 | usage       | %           | usage                   |
 | mounted     | none        | Mount point directory   |
-

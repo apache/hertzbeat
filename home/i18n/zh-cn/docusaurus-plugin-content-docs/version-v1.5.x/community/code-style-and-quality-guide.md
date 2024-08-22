@@ -27,7 +27,7 @@ limitations under the License.
 
    - 新建 `PR` 后需要在 `PR` 页面的 Github Development 按钮处关联已存在的对应 `ISSUE`(若无建议新建对应ISSUE)
 
-   - 标题命名格式(英文，小写)   
+   - 标题命名格式(英文，小写)
      `[feature/bugfix/doc/improve/refactor/bug/cleanup] title`
 
 2. 添加描述信息
@@ -70,6 +70,7 @@ limitations under the License.
    ```java
    Cache<String> publicKeyCache;
    ```
+
 2. 变量的拼音缩写是禁止的（排除地名等名词），例如chengdu。
 3. 推荐的变量名以 `类型` 结尾。
    对于 `Collection/List` 类型的变量，取 `xxxx` （复数表示多个元素）或以 `xxxList` （特定类型）结束。
@@ -79,6 +80,7 @@ limitations under the License.
    Map<Long, User> idUserMap;
    Map<Long, String> userIdNameMap;
    ```
+
 4. 通过其名称直观地知道变量的类型和含义。
    方法名称应首先以动词开始，如下所示：
 
@@ -114,6 +116,7 @@ limitations under the License.
          return resp;
      }
      ```
+
    - 正面示例：
 
      > 字符串提取为常量引用。
@@ -139,6 +142,7 @@ limitations under the License.
            return resp;
        }
      ```
+
 2. 确保代码的可读性和直观性
 
 - `annotation` 符号中的字符串不需要提取为常量。
@@ -198,6 +202,7 @@ public CurrentHashMap funName();
        return;
      }
      ```
+
    - 正面示例：
 
      ```java
@@ -221,11 +226,13 @@ public CurrentHashMap funName();
    - 多余的行
 
 一般来说，如果一个方法的代码行深度由于连续嵌套的 `if... else..` 超过了 `2+ Tabs`，那么应该考虑试图
+
 - `合并分支`，
 - `反转分支条件`
 - `提取私有方法`
 
 以减少代码行深度并提高可读性，例如：
+
 - 联合或将逻辑合并到下一级调用中
 - 负面示例：
 
@@ -262,6 +269,7 @@ if(expression2) {
     ......
   }
   ```
+
 - 反转条件
 - 负面示例：
 
@@ -276,6 +284,7 @@ if(expression2) {
    }
   }
   ```
+
 - 正面示例：
 
   ```java
@@ -289,6 +298,7 @@ if(expression2) {
    // ...
   }
   ```
+
 - 使用单一变量或方法减少复杂的条件表达式
 - 负面示例：
 
@@ -297,6 +307,7 @@ if(expression2) {
    ...
   }
   ```
+
 - 正面示例：
 
   ```java
@@ -341,6 +352,7 @@ if(expression2) {
   ```java
   map.computeIfAbsent(key, x -> key.toLowerCase())
   ```
+
 - 正面示例：
 
   ```java
@@ -354,6 +366,7 @@ if(expression2) {
   ```java
   map.computeIfAbsent(key, k-> Loader.load(k));
   ```
+
 - 正面示例：
 
   ```java
@@ -383,6 +396,7 @@ if(expression2) {
   return;
   }
   ```
+
 - 正面示例：
 
   ```java
@@ -400,6 +414,7 @@ if(expression2) {
     return;
   }
   ```
+
 - 正面示例：
 
   ```java
@@ -417,6 +432,7 @@ if(expression2) {
     return;
   }
   ```
+
 - 正面示例：
 
   ```java
@@ -436,6 +452,7 @@ if(expression2) {
     return;
   }
   ```
+
 - 正面示例：
 
   ```java
@@ -453,6 +470,7 @@ if(expression2) {
     ...
   }
   ```
+
 - 正面示例：
 
   ```java
@@ -468,6 +486,7 @@ if(expression2) {
   ```java
   System.out.println(JobStatus.RUNNING.toString());
   ```
+
 - 正面示例：
 
   ```java
@@ -483,6 +502,7 @@ if(expression2) {
     ...
   }
   ```
+
 - 正面示例：
 
   ```java
@@ -520,6 +540,7 @@ public void process(String input) {
   ```java
   log.info("Deploy cluster request " + deployRequest);
   ```
+
 - 正面示例
 
   ```java
@@ -539,6 +560,7 @@ public void process(String input) {
   List<User> userList = getUsersByBatch(1000);
   LOG.debug("All users: {}", getAllUserIds(userList));
   ```
+
 - 正面示例：
 
   在这种情况下，我们应该在进行实际的日志调用之前提前确定日志级别，如下所示：
@@ -547,7 +569,7 @@ public void process(String input) {
   // 忽略声明行。
   List<User> userList = getUsersByBatch(1000);
   if (LOG.isDebugEnabled()) {
-    LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList));	
+    LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList)); 
   }
   ```
 
@@ -559,13 +581,12 @@ public void process(String input) {
 
 ## 参考资料
 
-- https://site.mockito.org/
-- https://alibaba.github.io/p3c/
-- https://rules.sonarsource.com/java/
-- https://junit.org/junit5/
-- https://streampark.apache.org/
+- <https://site.mockito.org/>
+- <https://alibaba.github.io/p3c/>
+- <https://rules.sonarsource.com/java/>
+- <https://junit.org/junit5/>
+- <https://streampark.apache.org/>
 
 ```
 
 ```
-

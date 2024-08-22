@@ -32,4 +32,3 @@ keywords: [ open source monitoring tool, open source ftp server monitoring tool,
 |---------------|-------------|----------------------------------------------------------|
 | Is Active     | none        | Check if the directory exists and has access permission. |
 | Response Time | ms          | Response Time                                            |
-

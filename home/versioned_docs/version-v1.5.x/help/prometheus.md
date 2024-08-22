@@ -39,4 +39,3 @@ You can use the following configuration:
 - Endpoint Path: `/actuator/prometheus`
 
 Keep the rest of the settings default.
-

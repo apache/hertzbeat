@@ -57,8 +57,8 @@ keywords: [开源监控系统, 开源数据库监控, SqlServer数据库监控]
 
 1. SSL连接问题修复
 
-jdk版本：jdk11   
-问题描述：SQL Server2019使用SA用户连接报错       
+jdk版本：jdk11
+问题描述：SQL Server2019使用SA用户连接报错
 错误信息：
 
 ```text

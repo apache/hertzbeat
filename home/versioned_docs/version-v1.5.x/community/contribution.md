@@ -47,7 +47,7 @@ Even small corrections to typos are very welcome :)
 
 ### Getting HertzBeat up and running
 
-> To get HertzBeat code running on your development tools, and able to debug with breakpoints.   
+> To get HertzBeat code running on your development tools, and able to debug with breakpoints.
 > This is a front-end and back-end separation project. To start the local code, the back-end manager and the front-end web-app must be started separately.
 
 #### Backend start
@@ -162,6 +162,7 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 - **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
 
 > Provides monitoring management, monitoring configuration management, system user management, etc.
+>
 > - **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
 > - **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.

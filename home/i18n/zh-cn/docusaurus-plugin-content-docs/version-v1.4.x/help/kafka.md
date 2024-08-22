@@ -17,7 +17,7 @@ keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 
 2. 修改 Kafka 启动脚本
 
-修改 Kafka 安装目录下的启动脚本 `/bin/kafka-server-start.sh`    
+修改 Kafka 安装目录下的启动脚本 `/bin/kafka-server-start.sh`
 在脚本正文（即非注释行）的第一行前添加如下内容, ⚠️注意替换您自己的端口和对外 IP 地址
 
 ```shell
@@ -93,4 +93,3 @@ export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.
 | FifteenMinuteRate | 无        | 十五分钟处理率 |
 
 > 其他指标见文知意，欢迎贡献一起优化文档。
-

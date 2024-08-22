@@ -127,4 +127,3 @@ Finally, restart the access gateway metrics endpoint `http://ip:8090` to respond
 |-------------|-------------|---------------------------------------------------------|
 | state       | none        | thread state                                            |
 | value       | None        | The number of threads corresponding to the thread state |
-

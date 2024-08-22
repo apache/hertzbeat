@@ -99,4 +99,3 @@ Test whether the access Metric interface `ip:port/actuator/dynamic-tp` has respo
 | dynamic                  | None        | Dynamic thread pool or not                  |
 | run_timeout_count        | None        | Number of running timeout tasks             |
 | queue_timeout_count      | None        | Number of tasks waiting for timeout         |
-

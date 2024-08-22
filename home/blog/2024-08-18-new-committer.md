@@ -60,7 +60,7 @@ Open source is often pure, and the Apache Foundation exists to protect projects 
 
 #### Apache Community Identity
 
-Before contributing to the community, it is important to understand the community's definition of identity, where a project's Committers are located, and how to become a Committer. The Apache community has a clear definition of [Contributor Identity](https://community.apache.org/contributor-ladder. html): [Contributor Identity](https://community.apache.org/contributor-ladder. html). The Apache community has a very clear definition of [contributor status](. html):
+Before contributing to the community, it is important to understand the community's definition of identity, where a project's Committers are located, and how to become a Committer. The Apache community has a clear definition of [Contributor Identity](<https://community.apache.org/contributor-ladder>. html): [Contributor Identity](<https://community.apache.org/contributor-ladder>. html). The Apache community has a very clear definition of [contributor status](. html):
 
 ! [Apache contributor label](/img/blog/committer/yuluo-yx/6.jpg)
 
@@ -84,7 +84,7 @@ I think the best way to get involved in open source and get nominated is the **O
 
 The next step is to **Improve your Coding ability**, find the missing unit tests and code bugs in the project, and then submit PR to fix them. This is often difficult for students who are just starting out, and the Coding ability is often built up after optimizing the project code and understanding every change.
 
-The ecosystem around a good project** is often crucial**. A good documentation allows users/developers to quickly get started and participate in contributing. Multi-language extensions allow the project to be used in projects built in other languages, expanding the project's audience. A good Example repository allows users to discover more ways to use the project. Therefore, participating in the construction of the Example repository and writing and translating documentation is one of the ways to familiarize yourself with the project and get nominated.
+The ecosystem around a good project**is often crucial**. A good documentation allows users/developers to quickly get started and participate in contributing. Multi-language extensions allow the project to be used in projects built in other languages, expanding the project's audience. A good Example repository allows users to discover more ways to use the project. Therefore, participating in the construction of the Example repository and writing and translating documentation is one of the ways to familiarize yourself with the project and get nominated.
 
 Finally, I would like to say that getting nominated is something that just happens. You should not participate in open source just for the sake of getting nominated, and you should never forget your original intention.
 

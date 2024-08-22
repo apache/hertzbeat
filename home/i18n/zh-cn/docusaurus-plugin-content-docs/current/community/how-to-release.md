@@ -22,6 +22,7 @@ sidebar_position: 4
 ## 2. 准备发布
 
 > 首先整理帐户信息以更好地了解操作过程，稍后会多次使用。
+>
 > - apache id: `muchunjin (APACHE LDAP 用户名)`
 > - apache passphrase: `APACHE LDAP 密钥`
 > - apache email: `muchunjin@apache.org`
@@ -128,12 +129,12 @@ gpg: Total number processed: 1
 gpg:              unchanged: 1
 ```
 
-或者进入 https://keyserver.ubuntu.com/ 网址，输入密钥的名称，然后点击'Search key' 按钮，查看是否有对应名称的密钥。
+或者进入 <https://keyserver.ubuntu.com/> 网址，输入密钥的名称，然后点击'Search key' 按钮，查看是否有对应名称的密钥。
 
 #### 2.4 将 gpg 公钥添加到 Apache SVN 项目仓库的 KEYS 文件中
 
-- Apache HertzBeat Dev 分支 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
-- Apache HertzBeat Release 分支 https://dist.apache.org/repos/dist/release/incubator/hertzbeat
+- Apache HertzBeat Dev 分支 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat>
+- Apache HertzBeat Release 分支 <https://dist.apache.org/repos/dist/release/incubator/hertzbeat>
 
 ##### 2.4.1 将公钥添加到dev分支的KEYS
 
@@ -167,7 +168,7 @@ $ svn ci -m "add gpg key for muchunjin"
 
 ## 3. 准备物料 & 发布
 
-#### 3.1 基于 master 分支，创建一个名为 release-${release_version}-rcx 的分支，例如 release-1.6.0-rc1。并基于 release-1.6.0-rc1 分支创建一个名为 v1.6.0-rc1 的标签，并将此标签设置为预发布。
+#### 3.1 基于 master 分支，创建一个名为 release-${release_version}-rcx 的分支，例如 release-1.6.0-rc1。并基于 release-1.6.0-rc1 分支创建一个名为 v1.6.0-rc1 的标签，并将此标签设置为预发布
 
 ```shell
 git checkout master
@@ -330,7 +331,7 @@ svn commit -m "release for HertzBeat 1.6.0-RC1"
 
 - 检查 Apache SVN 提交结果
 
-> 在浏览器中访问 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/ , 检查是否有新的版本内容
+> 在浏览器中访问 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/> , 检查是否有新的版本内容
 
 ## 4. 进入社区投票阶段
 
@@ -338,7 +339,7 @@ svn commit -m "release for HertzBeat 1.6.0-RC1"
 
 发送社区投票邮件需要至少三个`+1`，且无`-1`。
 
-> `Send to`: dev@hertzbeat.apache.org <br />
+> `Send to`: <dev@hertzbeat.apache.org> <br />
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
 > `Body`:
 
@@ -394,7 +395,7 @@ Thanks!
 
 在72小时后，将统计投票结果，并发送投票结果邮件，如下所示。
 
-> `Send to`: dev@hertzbeat.apache.org <br />
+> `Send to`: <dev@hertzbeat.apache.org> <br />
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
@@ -423,14 +424,14 @@ Best,
 ChunJin Mu
 ```
 
-邮件内容中的一项是`Vote thread`，在 https://lists.apache.org/list.html?dev@hertzbeat.apache.org 查看获取
+邮件内容中的一项是`Vote thread`，在 <https://lists.apache.org/list.html?dev@hertzbeat.apache.org> 查看获取
 
 #### 3.2 发送孵化社区投票邮件
 
 发送孵化社区投票邮件需要至少三个`+1`，且无`-1`。
 
-> `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org、private@hertzbeat.apache.org <br />
+> `Send to`: <general@incubator.apache.org> <br />
+> `cc`: <dev@hertzbeat.apache.org>、<private@hertzbeat.apache.org> <br />
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
@@ -484,7 +485,7 @@ ChunJin Mu
 
 如果72小时后没有-1，回复邮件如下
 
-> `Send to`: general@incubator.apache.org <br />
+> `Send to`: <general@incubator.apache.org> <br />
 > `Body`:
 
 ```
@@ -496,7 +497,7 @@ Chunjin Mu
 
 然后将统计投票结果，并发送投票结果邮件，如下所示。
 
-> `Send to`: general@incubator.apache.org <br />
+> `Send to`: <general@incubator.apache.org> <br />
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
@@ -522,7 +523,7 @@ Best,
 ChunJin Mu
 ```
 
-邮件内容中的一项是`Vote thread`，在 https://lists.apache.org/list.html?general@incubator.apache.org 查看获取
+邮件内容中的一项是`Vote thread`，在 <https://lists.apache.org/list.html?general@incubator.apache.org> 查看获取
 
 等待一天，查看看导师是否有其他意见，如果没有，发送以下公告邮件
 
@@ -536,10 +537,10 @@ svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 http
 
 #### 4.2 添加新版本下载地址到官网
 
-https://github.com/apache/hertzbeat/blob/master/home/docs/download.md
-https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md
+<https://github.com/apache/hertzbeat/blob/master/home/docs/download.md>
+<https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md>
 
-完成后打开官网地址 https://hertzbeat.apache.org/docs/download/ 查看是否有新版本的下载
+完成后打开官网地址 <https://hertzbeat.apache.org/docs/download/> 查看是否有新版本的下载
 
 > 需要注意的是，下载链接可能需要一个小时后才会生效，请注意。
 
@@ -572,8 +573,8 @@ release note: xxx
 
 #### 4.4 发送新版本公告邮件
 
-> `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org <br />
+> `Send to`: <general@incubator.apache.org> <br />
+> `cc`: <dev@hertzbeat.apache.org> <br />
 > `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 

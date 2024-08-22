@@ -55,7 +55,7 @@ As above, usually our background API interface will design such a general return
 }
 ```
 
-**This time we get the metrics data such as `category`, `app`, `status`, `size`, `availableSize` under the app. **
+**This time we get the metrics data such as `category`, `app`, `status`, `size`, `availableSize` under the app.**
 
 ### Add Monitoring Template Yml
 
@@ -201,7 +201,7 @@ metrics:
       parseScript: '$.data.apps.*'
 ```
 
-**The addition is complete, now we restart the hertzbeat system. We can see that the system page has added a `hertzbeat` monitoring type. **
+**The addition is complete, now we restart the hertzbeat system. We can see that the system page has added a `hertzbeat` monitoring type.**
 
 ![](/img/docs/advanced/extend-http-example-1.png)
 
@@ -223,10 +223,10 @@ metrics:
 
 ----
 
-#### over!
+#### over
 
 This is the end of the practice of custom monitoring of the HTTP protocol. The HTTP protocol also has other parameters such as headers and params. We can define it like postman, and the playability is also very high!
 
 If you think hertzbeat is a good open source project, please star us on GitHub Gitee, thank you very much. Thanks for the old iron support. Refill!
 
-**github: https://github.com/apache/hertzbeat**
+**github: <https://github.com/apache/hertzbeat>**

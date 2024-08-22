@@ -39,4 +39,3 @@ keywords: [ 开源监控系统, Prometheus协议监控 ]
 - 端点路径：`/actuator/prometheus`
 
 其余设置保持默认。
-

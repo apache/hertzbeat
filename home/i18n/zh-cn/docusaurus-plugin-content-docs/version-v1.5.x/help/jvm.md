@@ -17,7 +17,7 @@ keywords: [开源监控系统, 开源JAVA监控, JVM虚拟机监控]
 
 应用启动时添加JVM参数 ⚠️注意可自定义暴露端口,对外IP
 
-参考文档: https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote
+参考文档: <https://docs.oracle.com/javase/1.5.0/docs/guide/management/agent.html#remote>
 
 ```shell
 -Djava.rmi.server.hostname=对外ip地址 
@@ -78,4 +78,3 @@ keywords: [开源监控系统, 开源JAVA监控, JVM虚拟机监控]
 | DaemonThreadCount       | 个    | 守护进程数     |
 | CurrentThreadUserTime   | ms   | 使用时间      |
 | CurrentThreadCpuTime    | ms   | 使用CPU时间   |
-

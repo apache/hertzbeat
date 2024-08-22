@@ -83,6 +83,6 @@ HertzBeat 赫兹跳动是一个拥有强大自定义监控能力，高性能集�
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
 
-Github: https://github.com/apache/hertzbeat
+Github: <https://github.com/apache/hertzbeat>
 
 欢迎更多的用户参与到`HertzBeat`的开源协作中来，不管是一个错别字还是标点符号我们都非常欢迎。
