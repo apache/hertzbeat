@@ -8,7 +8,7 @@ sidebar_position: 4
 
 详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
-在浏览器中可访问版本内容 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/
+在浏览器中可访问版本内容 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/>
 
 ## 1. 下载候选版本到本地
 
@@ -42,8 +42,8 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 #### 2.2.1 导入公钥
 
 ```shell
-$ curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # 下载KEYS
-$ gpg --import KEYS # 导入KEYS到本地
+curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # 下载KEYS
+gpg --import KEYS # 导入KEYS到本地
 ```
 
 #### 2.2.2 信任公钥
@@ -121,7 +121,7 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 - [ ] 如果依赖的是Apache许可证并且存在`NOTICE`文件，那么这些`NOTICE`文件也需要加入到版本的`NOTICE`文件中
 - [ ] .....
 
-参考: https://apache.org/legal/resolved.html
+参考: <https://apache.org/legal/resolved.html>
 
 ### 2.5. 源码编译验证
 
@@ -131,7 +131,7 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 cd apache-hertzbeat-${release_version}-incubating-src
 ```
 
-编译源码: https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
+编译源码: <https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package>
 
 进行如下检查:
 
@@ -145,7 +145,7 @@ cd apache-hertzbeat-${release_version}-incubating-src
 - [ ] 能够正确编译
 - [ ] .....
 
-参考: https://apache.org/legal/resolved.html
+参考: <https://apache.org/legal/resolved.html>
 
 ## 3. 邮件回复
 
@@ -154,13 +154,13 @@ cd apache-hertzbeat-${release_version}-incubating-src
 :::caution 注意
 回复的邮件一定要带上自己检查了那些项信息，仅仅回复`+1 approve`，是无效的。
 
-PPMC 在 dev@hertzbeat.apache.org HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
+PPMC 在 <dev@hertzbeat.apache.org> HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
 
-IPMC 在 general@incubator.apache.org incubator 社区投票，请带上 binding 后缀，表示对 incubator 社区中的投票具有约束性投票，方便统计投票结果。
+IPMC 在 <general@incubator.apache.org> incubator 社区投票，请带上 binding 后缀，表示对 incubator 社区中的投票具有约束性投票，方便统计投票结果。
 :::
 
 :::caution 注意
-如果在dev@hertzbeat.apache.org已经投过票，在incubator社区进行投票回复时，可以直接带过去,<font color="red">需要注意约束性</font>  如:
+如果在<dev@hertzbeat.apache.org>已经投过票，在incubator社区进行投票回复时，可以直接带过去,<font color="red">需要注意约束性</font>  如:
 
 ```html
 //incubator社区 投票时，只有IPMC成员才具有约束性 binding，PPMC需要注意约束性的变化
@@ -195,6 +195,6 @@ I  checked:
     5. ....
 ```
 
---- 
+---
 
 This doc refer from [Apache StreamPark](https://streampark.apache.org/)

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Inject, Input, OnInit, ViewChild } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { EChartsOption } from 'echarts';
@@ -30,7 +30,7 @@ import { MonitorService } from '../../../service/monitor.service';
   templateUrl: './monitor-data-chart.component.html',
   styles: []
 })
-export class MonitorDataChartComponent implements OnInit {
+export class MonitorDataChartComponent implements OnInit, AfterViewInit {
   @Input()
   get monitorId(): number {
     return this._monitorId;
@@ -53,7 +53,19 @@ export class MonitorDataChartComponent implements OnInit {
   echartsInstance!: any;
   // Default historical data period is last 6 hours
   timePeriod: string = '6h';
-  constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
+  cardWidth: number = 600;
+  @ViewChild('targetElement', { static: false }) cardElement!: ElementRef;
+
+  constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService, private cdr: ChangeDetectorRef) {}
+
+  ngAfterViewInit() {
+    if (this.cardElement.nativeElement) {
+      const grandparentElement = this.cardElement.nativeElement.parentElement.parentElement;
+      const grandparentWidth = grandparentElement.clientWidth;
+      this.cardWidth = grandparentWidth / 2 - 4;
+      this.cdr.detectChanges();
+    }
+  }
 
   ngOnInit(): void {
     let metricsI18n = this.i18nSvc.fanyi(`monitor.app.${this.app}.metrics.${this.metrics}`);
@@ -258,6 +270,9 @@ export class MonitorDataChartComponent implements OnInit {
                   pageButtonPosition: 'end',
                   data: legend
                 };
+              }
+              if (legend.length >= 5) {
+                this.cardWidth = this.cardWidth + this.cardWidth;
               }
               this.lineHistoryTheme.series = [];
               let valueKeyArr = Object.keys(values);

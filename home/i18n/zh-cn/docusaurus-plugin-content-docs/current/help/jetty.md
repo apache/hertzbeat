@@ -92,4 +92,3 @@ java -jar $JETTY_HOME/start.jar --add-module=jmx-remote
 | DaemonThreadCount       | 个    | 守护进程数     |
 | CurrentThreadUserTime   | ms   | 使用时间      |
 | CurrentThreadCpuTime    | ms   | 使用CPU时间   |
-

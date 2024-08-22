@@ -12,7 +12,7 @@ sidebar_label: 使用案例
 
 Apache HertzBeat (incubating) 一个拥有强大自定义监控能力，无需Agent的实时监控工具。网站监测，PING连通性，端口可用性，数据库，操作系统，中间件，API监控，阈值告警，告警通知(邮件微信钉钉飞书)。
 
-github: https://github.com/apache/hertzbeat
+github: <https://github.com/apache/hertzbeat>
 
 #### 安装 HertzBeat
 
@@ -32,7 +32,7 @@ github: https://github.com/apache/hertzbeat
 
 2. 配置监控网站
 
-> 我们这里举例监控百度网站, 配置监控host域名，名称，采集间隔等。    
+> 我们这里举例监控百度网站, 配置监控host域名，名称，采集间隔等。
 > 点击确定 注意⚠️新增前默认会先去测试网站连接性，连接成功才会新增，当然也可以把**是否测试**按钮置灰。
 
 ![](/img/docs/start/ssl_2.png)
@@ -77,8 +77,8 @@ github: https://github.com/apache/hertzbeat
 
 钉钉微信飞书等token配置可以参考帮助文档
 
-https://hertzbeat.apache.org/docs/help/alert_dingtalk   
-https://tancloud.cn/docs/help/alert_dingtalk
+<https://hertzbeat.apache.org/docs/help/alert_dingtalk>
+<https://tancloud.cn/docs/help/alert_dingtalk>
 
 > 告警通知 -> 新增告警通知策略 -> 将刚才配置的接收人启用通知
 
@@ -88,8 +88,8 @@ https://tancloud.cn/docs/help/alert_dingtalk
 
 ----  
 
-#### 完！
+#### 完
 
 监控SSL证书的实践就到这里，当然对hertzbeat来说这个功能只是冰山一角，如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
 
-**github: https://github.com/apache/hertzbeat**
+**github: <https://github.com/apache/hertzbeat>**

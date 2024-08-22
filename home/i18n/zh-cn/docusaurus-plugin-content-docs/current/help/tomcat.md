@@ -72,4 +72,4 @@ keywords: [开源监控系统, 开源网站监控, Tomcat监控]
 CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Djava.rmi.server.hostname=10.1.1.52 -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
 ```
 
-参考: https://blog.csdn.net/weixin_41924764/article/details/108694239
+参考: <https://blog.csdn.net/weixin_41924764/article/details/108694239>

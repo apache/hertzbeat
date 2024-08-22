@@ -67,4 +67,3 @@ keywords: [开源监控系统, 开源数据库监控, Oracle数据库监控]
 | qps  | QPS  | I/O Requests per Second 每秒IO请求数量      |
 | tps  | TPS  | User Transaction Per Sec 每秒用户事物处理数量   |
 | mbps | MBPS | I/O Megabytes per Second 每秒 I/O 兆字节数量 |
-

@@ -91,4 +91,3 @@ Review the `hbase-site.xml` file to obtain the value of the `hbase.regionserver.
 | MemHeapMaxM          | None | Cluster balance load times        |
 | MemMaxM              | None | RPC handle count                  |
 | GcCount              | MB   | Cluster data reception volume     |
-

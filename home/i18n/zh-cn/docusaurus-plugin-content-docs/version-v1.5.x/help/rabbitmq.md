@@ -18,7 +18,7 @@ keywords: [开源监控系统, 开源消息中间件监控, RabbitMQ消息中间
 rabbitmq-plugins enable rabbitmq_management 
 ```
 
-2. 浏览器访问 http://ip:15672/ ，默认账户密码 `guest/guest`. 成功登录即开启成功。
+2. 浏览器访问 <http://ip:15672/> ，默认账户密码 `guest/guest`. 成功登录即开启成功。
 
 3. 在 HertzBeat 添加对应 RabbitMQ 监控即可，参数使用 Management 的 IP 端口，默认账户密码。
 
@@ -123,4 +123,3 @@ rabbitmq-plugins enable rabbitmq_management
 | message_bytes_unacknowledged | B    | Like message_bytes but counting only those messages delivered to clients but not yet acknowledged                                    |
 | message_bytes_ram            | B    | Like message_bytes but counting only those messages which are currently held in RAM                                                  |
 | message_bytes_persistent     | B    | Like message_bytes but counting only those messages which are persistent                                                             |
-

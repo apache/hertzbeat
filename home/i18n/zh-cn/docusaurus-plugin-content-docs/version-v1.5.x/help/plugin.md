@@ -25,4 +25,3 @@ sidebar_label: 自定义插件
 4. 将打包后的`jar`包，拷贝到安装目录下的`ext-lib`目录下（若为`docker`安装则先将`ext-lib`目录挂载出来，再拷贝到该目录下）
    ![plugin-4.png](/img/docs/help/plugin-4.png)
 5. 然后重启`HertzBeat`，即可实现自定义告警后处理策略。
-

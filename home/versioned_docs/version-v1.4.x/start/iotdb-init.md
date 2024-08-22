@@ -9,7 +9,7 @@ We recommend VictoriaMetrics for long term support.
 
 Apache IoTDB is a software system that integrates the collection, storage, management and analysis of time series data of the Internet of Things. We use it to store and analyze the historical data of monitoring metrics collected. Support V0.13+ version and V1.0.+ version.
 
-**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**   
+**Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
 > If you already have an IoTDB environment, you can skip directly to the YML configuration step.
@@ -17,7 +17,8 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
 ### Install IoTDB via Docker
 
 > Refer to the official website [installation tutorial](https://iotdb.apache.org/UserGuide/V0.13.x/QuickStart/WayToGetIoTDB.html)
-> 1. Download and install Docker environment   
+>
+> 1. Download and install Docker environment
 > Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 > After the installation you can check if the Docker version normally output at the terminal.
 >
@@ -40,8 +41,8 @@ use```$ docker ps``` to check if the database started successfully
 
 3. Configure the database connection in hertzbeat `application.yml`configuration file
 
-   Modify `hertzbeat/config/application.yml` configuration file     
-   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`      
+   Modify `hertzbeat/config/application.yml` configuration file
+   Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
    Config the `warehouse.store.jpa.enabled` `false`. Replace `warehouse.store.iot-db` data source parameters, HOST account and password.
 
 ```
@@ -82,4 +83,3 @@ warehouse:
 > Is td-engine enable set to true  
 > Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
 > You can check the startup logs according to the logs directory
-

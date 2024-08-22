@@ -30,7 +30,7 @@ sidebar_label: 贡献者指南
 
 ### 让 HertzBeat 运行起来
 
-> 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。   
+> 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。
 > 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
 
 - 后端启动
@@ -130,6 +130,7 @@ git pull upstream master
 - **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
 
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
+>
 > - **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
 > - **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
@@ -138,4 +139,3 @@ git pull upstream master
 > 告警计算触发，任务状态联动，告警配置，告警通知。
 > - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
-

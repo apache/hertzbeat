@@ -41,6 +41,7 @@ keywords: [open source monitoring system, alerting system]
 感谢Tom哥和我的ospp导师郑晨鑫，他们在我接触开源社区的过程中给出了许多帮助和建议。目前我仍然在社区中负责部分代码的开发，希望Hertzbeat以后可以越来越好！
 
 ---
+
 # New Committer - 淞筱
 
 **姓名：周书胜**
@@ -57,13 +58,13 @@ keywords: [open source monitoring system, alerting system]
 
 ## 开源贡献
 
-* 支持Spring Gateway、Apache Spark、Apache Hive等服务指标采集
-* 自定义nginx、pop3协议，对Nginx，POP3邮箱服务器进行指标采集，并添加相应帮助文档
+- 支持Spring Gateway、Apache Spark、Apache Hive等服务指标采集
+- 自定义nginx、pop3协议，对Nginx，POP3邮箱服务器进行指标采集，并添加相应帮助文档
 
 ## 收获
 
-* 接触了更加优秀、结构更加复杂的大型项目，提高了编程和解决问题的能力
-* 将理论知识付诸于实践，收获了JUC，微服务相关的开发经验，以及宝贵的项目经历
+- 接触了更加优秀、结构更加复杂的大型项目，提高了编程和解决问题的能力
+- 将理论知识付诸于实践，收获了JUC，微服务相关的开发经验，以及宝贵的项目经历
 
 ## 感谢社区小伙伴
 
@@ -73,8 +74,8 @@ keywords: [open source monitoring system, alerting system]
 
 ## 给新人的一些建议
 
-* 初次参与开源项目时，可以从简单的任务开始。逐渐熟悉项目的代码和流程，并逐步承担更复杂的任务。
-* 如果遇到自己无法解决的问题时，可以多多请教社区的小伙伴们。
+- 初次参与开源项目时，可以从简单的任务开始。逐渐熟悉项目的代码和流程，并逐步承担更复杂的任务。
+- 如果遇到自己无法解决的问题时，可以多多请教社区的小伙伴们。
 
 ---
 
@@ -130,8 +131,8 @@ keywords: [open source monitoring system, alerting system]
 
 > `HertzBeat`的强大自定义，多类型支持，高性能，易扩展，低耦合，希望能帮助开发者和团队快速搭建自有监控系统。
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 欢迎更多小伙伴参与到HertzBeat的开源协作中来，不管是一个错别字还是标点符号我们都非常欢迎，大家一起学习进步，目标做一个世界级开源软件。

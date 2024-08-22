@@ -8,10 +8,10 @@ keywords: [开源监控系统, 开源操作系统监控, Windows操作系统监�
 > 通过SNMP协议对Windows操作系统的通用性能指标进行采集监控。
 > 注意⚠️ Windows服务器需开启SNMP服务
 
-参考资料:      
-[什么是SNMP协议1](https://www.cnblogs.com/xdp-gacl/p/3978825.html)   
-[什么是SNMP协议2](https://www.auvik.com/franklyit/blog/network-basics-what-is-snmp/)     
-[Win配置SNMP英文](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-snmp-service)     
+参考资料:
+[什么是SNMP协议1](https://www.cnblogs.com/xdp-gacl/p/3978825.html)
+[什么是SNMP协议2](https://www.auvik.com/franklyit/blog/network-basics-what-is-snmp/)
+[Win配置SNMP英文](https://docs.microsoft.com/en-us/troubleshoot/windows-server/networking/configure-snmp-service)
 [Win配置SNMP中文](https://docs.microsoft.com/zh-cn/troubleshoot/windows-server/networking/configure-snmp-service)
 
 ### 配置参数
@@ -41,4 +41,3 @@ keywords: [开源监控系统, 开源操作系统监控, Windows操作系统监�
 | services     | 个数   | 当前服务数量 |
 | processes    | 个数   | 当前进程数量 |
 | responseTime | ms   | 采集响应时间 |
-

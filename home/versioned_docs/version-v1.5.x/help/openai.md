@@ -12,8 +12,8 @@ keywords: [open source monitoring system, open source network monitoring, OpenAI
 > 1. Open Chrome browser's network request interface
 >    `Mac: cmd + option + i`
 >    `Windows: ctrl + shift + i`
-> 2. Visit https://platform.openai.com/usage
-> 3. Find the request to https://api.openai.com/dashboard/billing/usage
+> 2. Visit <https://platform.openai.com/usage>
+> 3. Find the request to <https://api.openai.com/dashboard/billing/usage>
 > 4. Find the Authorization field in the request headers, and copy the content after `Bearer`. For example: `sess-123456`
 
 ### Notes
@@ -81,4 +81,3 @@ keywords: [open source monitoring system, open source network monitoring, OpenAI
 | Tax IDs                  | None        | Tax IDs                                 |
 | Billing Address          | None        | Billing address                         |
 | Business Address         | None        | Business address                        |
-

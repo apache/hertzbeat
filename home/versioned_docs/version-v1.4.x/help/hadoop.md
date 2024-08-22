@@ -87,4 +87,3 @@ export HADOOP_OPTS= "$HADOOP_OPTS
 | DaemonThreadCount       |             | Daemon Thread Count        |
 | CurrentThreadUserTime   | ms          | Current Thread User Time   |
 | CurrentThreadCpuTime    | ms          | Current Thread Cpu Time    |
-

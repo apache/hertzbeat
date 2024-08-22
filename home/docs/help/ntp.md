@@ -35,4 +35,3 @@ keywords: [ open source monitoring tool, open source NTP monitoring tool, monito
 | stratum      |             | The stratumevel of the NTP server, indicating its distance from a reference clock).      |
 | referenceId  |             | An identifier that indicates the reference clock or time source used by the NTP server). |
 | precision    |             | The precision of the NTP server's clock, indicating its accuracy).                       |
-

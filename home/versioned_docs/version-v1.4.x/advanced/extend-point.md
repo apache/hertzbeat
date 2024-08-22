@@ -11,7 +11,7 @@ sidebar_label: Custom Monitoring
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-------- 
+-------
 
 Configuration usages of the monitoring templates yml are detailed below.
 
@@ -130,4 +130,3 @@ metrics:
       parseType: website
 
 ```
-
