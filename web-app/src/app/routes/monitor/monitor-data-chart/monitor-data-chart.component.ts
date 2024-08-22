@@ -62,7 +62,7 @@ export class MonitorDataChartComponent implements OnInit, AfterViewInit {
     if (this.cardElement.nativeElement) {
       const grandparentElement = this.cardElement.nativeElement.parentElement.parentElement;
       const grandparentWidth = grandparentElement.clientWidth;
-      this.cardWidth = grandparentWidth / 2 - 4;
+      this.cardWidth = Math.floor(grandparentWidth / 2) - 4;
       this.cdr.detectChanges();
     }
   }
