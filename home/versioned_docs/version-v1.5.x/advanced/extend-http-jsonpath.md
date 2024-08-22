@@ -61,7 +61,7 @@ Multilayer format：Set key value in the array
 
 #### Example
 
-Query the value information of the custom system, and its exposed interface is  `/metrics/person`. We need `type,num` Metric.      
+Query the value information of the custom system, and its exposed interface is  `/metrics/person`. We need `type,num` Metric.
 The raw data returned by the interface is as follows：
 
 ```json
@@ -172,4 +172,3 @@ metrics:
       parseType: jsonPath
       parseScript: '$.number[*]' 
 ```
-

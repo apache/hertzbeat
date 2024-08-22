@@ -46,4 +46,3 @@ keywords: [ 开源监控系统, 开源中间件监控, RocketMQ消息中间件�
 | Consume_type    | 无    | 消费类型   |
 | Consume_tps     | 无    | 消费TPS  |
 | Delay           | 无    | 延迟     |
-

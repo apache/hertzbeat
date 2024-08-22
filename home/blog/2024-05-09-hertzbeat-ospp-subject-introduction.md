@@ -8,14 +8,14 @@ HertzBeat is a powerful custom monitoring capabilities, high-performance cluster
 
 - Set **monitoring + alarm + notification** as a whole, support for application services, applications, database, cache, operating system, big data, middleware, Web server, cloud native, network, custom and other monitoring threshold alarm notification in one step.
 - Easy to use and friendly, no `Agent`, full `WEB` page operation, a mouse click can monitor alarms, zero hand learning costs.
-- Protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. can be configured, and the monitoring template YML can be configured in the browser to use these protocols to customize the desired metrics. Do you believe that you can immediately adapt a new monitoring type such as` K8s` or `Docker` just by configuring it?
+- Protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. can be configured, and the monitoring template YML can be configured in the browser to use these protocols to customize the desired metrics. Do you believe that you can immediately adapt a new monitoring type such as`K8s` or `Docker` just by configuring it?
 - Compatible with Prometheus` ecosystem and more, only page operations can monitor what Prometheus can monitor.
 - High-performance, supports horizontal expansion of multiple collector clusters, supports multi-isolated network monitoring, and cloud edge collaboration.
 - Free alarm threshold rules, `mail,` `Discord,` `Slack,` `Telegram,` `Dingding,` `wechat,` `Feibook,` `SMS,` `Webhook,` `Server sauce,` and other ways to send messages in a timely manner.
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ## What is Open Source Summer?
 

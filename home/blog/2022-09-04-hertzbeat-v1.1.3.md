@@ -33,11 +33,10 @@ Bugfix.
 
 1. [[docs] fix extend-http-jsonpath.md parseScript error #262](https://github.com/apache/hertzbeat/pull/262) contribute by @woshiniusange    .
 2. [[monitor] update help docs, refactor redis metrics name #264](https://github.com/apache/hertzbeat/pull/264)
-3. [[manager] bugfix alert tags is null when tags map key normal value null. #270](https://github.com/apache/hertzbeat/pull/270) issue by https://gitee.com/hello_brother_niu
-4. [[alert] bugfix: the alert global preset config do not take effect #275](https://github.com/apache/hertzbeat/pull/275) issue by https://gitee.com/hello_brother_niu
+3. [[manager] bugfix alert tags is null when tags map key normal value null. #270](https://github.com/apache/hertzbeat/pull/270) issue by <https://gitee.com/hello_brother_niu>
+4. [[alert] bugfix: the alert global preset config do not take effect #275](https://github.com/apache/hertzbeat/pull/275) issue by <https://gitee.com/hello_brother_niu>
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
-Have Fun!
+Have Fun
 ---------
-

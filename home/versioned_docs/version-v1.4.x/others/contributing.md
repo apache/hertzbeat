@@ -134,6 +134,7 @@ Public WeChat: `tancloudtech`
 - **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
 
 > Provides monitoring management, monitoring configuration management, system user management, etc.
+>
 > - **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
 > - **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.

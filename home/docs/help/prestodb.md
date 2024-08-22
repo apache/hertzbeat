@@ -72,4 +72,3 @@ keywords: [ open source monitoring system, open source database monitoring, pres
 | state         | None | State              |
 | self          | None | Self               |
 | lastHeartbeat | None | Last Heartbeat     |
-

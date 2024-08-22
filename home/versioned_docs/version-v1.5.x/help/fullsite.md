@@ -5,8 +5,8 @@ sidebar_label: Full site Monitor
 keywords: [open source monitoring tool, open source website monitoring tool, monitoring sitemap metrics]
 ---
 
-> Available or not to monitor all pages of the website.    
-> A website often has multiple pages provided by different services. We monitor the full site by collecting the SiteMap exposed by the website.   
+> Available or not to monitor all pages of the website.
+> A website often has multiple pages provided by different services. We monitor the full site by collecting the SiteMap exposed by the website.
 > Note⚠️ This monitoring requires your website to support SiteMap. We support SiteMap in XML and TXT formats.
 
 ### Configuration parameter
@@ -32,4 +32,3 @@ keywords: [open source monitoring tool, open source website monitoring tool, mon
 | statusCode   | none        | Response HTTP status code for requesting the website |
 | responseTime | ms          | Website response time                                |
 | errorMsg     | none        | Error message feedback after requesting the website  |
-

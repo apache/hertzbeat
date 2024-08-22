@@ -8,29 +8,29 @@ tags: [opensource, practice]
 keywords: [opensource monitoring, SpringBoot monitoring, alert]
 ---
 
-## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the SpringBoot2 application, and it will be done in 5 minutes!
+## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the SpringBoot2 application, and it will be done in 5 minutes
 
 ### HertzBeat Intro
 
 > HertzBeat is an open source, real-time monitoring tool with custom-monitor and agentLess. | 易用友好的开源实时监控告警工具，无需Agent，强大自定义监控能力.
 >
-> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
+> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 >
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 >
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.
 
-Github: https://github.com/apache/hertzbeat
+Github: <https://github.com/apache/hertzbeat>
 
 ### Monitoring SpringBoot2 Metrics with HertzBeat in 5 minutes
 
-#### Prerequisite, you already have SpringBoot2 application environment and HertzBeat environment.
+#### Prerequisite, you already have SpringBoot2 application environment and HertzBeat environment
 
 - HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### 1. The `actuator` metric endpoint is exposed on the SpringBoot2 application side, which will provide metrics endpoints data.
+#### 1. The `actuator` metric endpoint is exposed on the SpringBoot2 application side, which will provide metrics endpoints data
 
 1. Open SpringBoot Actuator Endpoint to expose `metrics health env` metric interface
 
@@ -94,7 +94,7 @@ Path: Menu -> Application Service Monitoring -> SpringBoot2 -> Add SpringBoot2 M
 2. Configure the parameters required for new monitoring SpringBoot2
 
 Fill in the SpringBoot2 application **peer IP**, **service port** (default 8080), **account password, etc.** on the monitoring page, and finally click OK to add.
-For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document https://hertzbeat.com/docs/help/
+For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.com/docs/help/>
 
 ![hertzbeat](/img/blog/monitor-springboot2-2.png)
 
@@ -142,7 +142,7 @@ Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
 
 Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk to configure the robot on DingTalk and set the security custom keyword `HertzBeat `, get the corresponding `access_token` value.
+- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
 - Configure the receiver parameters in HertzBeat as follows.
 
 【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
@@ -185,16 +185,16 @@ This practical article took us to experience how to use the open source real-tim
 
 ## What is HertzBeat?
 
-> [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless.       
-> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.            
+> [HertzBeat](https://github.com/apache/hertzbeat) is an open source, real-time monitoring tool with custom-monitor and agentless.
+> **Monitor+Alerter+Notify** all in one. Support monitoring web service, database, os, middleware, cloud-native, network and more.
 > More flexible threshold rule(calculation expression), timely notification delivery by `Discord` `Slack` `Telegram` `Email` `DingDing` `WeChat` `FeiShu` `Webhook` `SMS`.
 >
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 >
 > `HertzBeat`'s powerful custom-define, multi-type support, easy expansion, low coupling, hope to help developers and micro teams to quickly build their own monitoring system.
 
-----   
+----
 
 ## ⛄ Supported
 
@@ -209,5 +209,5 @@ This practical article took us to experience how to use the open source real-tim
 
 ----
 
-**Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

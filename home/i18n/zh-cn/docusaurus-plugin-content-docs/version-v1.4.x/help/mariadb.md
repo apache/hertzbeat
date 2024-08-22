@@ -51,4 +51,3 @@ keywords: [开源监控系统, 开源数据库监控, MariaDB数据库监控]
 | innodb_data_writes  | 无    | innodb平均每秒从文件中写入的次数     |
 | innodb_data_read    | KB   | innodb平均每秒钟读取的数据量，单位为KB |
 | innodb_data_written | KB   | innodb平均每秒钟写入的数据量，单位为KB |
-

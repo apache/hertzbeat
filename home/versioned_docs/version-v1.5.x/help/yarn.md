@@ -81,4 +81,3 @@ Retrieve the HTTP monitoring port of Apache Yarn. Value: `yarn.resourcemanager.w
 | Metric Name | Unit | Metric Description |
 |-------------|------|--------------------|
 | StartTime   |      | Startup timestamp  |
-

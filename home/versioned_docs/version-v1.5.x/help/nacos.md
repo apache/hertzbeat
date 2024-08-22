@@ -92,4 +92,3 @@ More information see [Nacos monitor guide](https://nacos.io/en-us/docs/monitor-g
 | nacos_monitor{name='configListenSize'} | none        | listened configuration file count |
 | nacos_client_request_seconds_count     | none        | request count                     |
 | nacos_client_request_seconds_sum       | second      | request time                      |
-

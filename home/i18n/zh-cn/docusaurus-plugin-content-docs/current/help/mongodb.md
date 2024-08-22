@@ -93,4 +93,3 @@ keywords: [ 开源监控系统, 开源数据库监控, MongoDB数据库监控 ]
 | pageSize        | 无    | 内存页大小                |
 | numPages        | 无    | 内存页数量                |
 | maxOpenFiles    | 无    | 系统中允许打开的最大文件数        |
-

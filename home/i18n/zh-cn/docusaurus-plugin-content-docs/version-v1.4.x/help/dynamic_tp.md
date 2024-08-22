@@ -99,4 +99,3 @@ management:
 | dynamic                  | 无    | 是否动态线程池                  |
 | run_timeout_count        | 无    | 运行超时任务数                  |
 | queue_timeout_count      | 无    | 等待超时任务数                  |
-

@@ -46,4 +46,3 @@ keywords: [ open source monitoring tool, monitoring Apache RocketMQ metrics ]
 | Consume_type    | none        | Consume type            |
 | Consume_tps     | none        | Consume tps             |
 | Delay           | none        | Delay                   |
-

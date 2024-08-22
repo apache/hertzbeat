@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 ### Attention, Need Add MYSQL jdbc driver jar
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.1.0.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.1.0.jar. <https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0>
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 - Restart the HertzBeat service.
 
@@ -57,4 +57,3 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 | innodb_data_writes  | none        | innodb average number of writes from file per second |
 | innodb_data_read    | KB          | innodb average amount of data read per second        |
 | innodb_data_written | KB          | innodb average amount of data written per second     |
-

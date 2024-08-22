@@ -17,4 +17,3 @@ Download: [SVG](/img/hertzbeat-logo.svg)  [PNG](/img/hertzbeat-logo.png)
 ![logo](/img/hertzbeat-brand.svg)
 
 Download: [SVG](/img/hertzbeat-brand.svg)  [PNG](/img/hertzbeat-brand.png)
-

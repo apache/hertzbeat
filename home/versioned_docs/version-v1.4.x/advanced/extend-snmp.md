@@ -23,7 +23,7 @@ By configuring the metrics `field`, `aliasFields`, and `oids` under the `snmp` p
 
 ![](/img/docs/advanced/extend-point-1.png)
 
-------- 
+-------
 
 Configuration usages of the monitoring templates yml are detailed below.
 
@@ -169,4 +169,3 @@ metrics:
         processes: 1.3.6.1.2.1.25.1.6.0
         location: 1.3.6.1.2.1.1.6.0
 ```
-

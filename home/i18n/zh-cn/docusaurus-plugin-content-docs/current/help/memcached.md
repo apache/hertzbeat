@@ -30,7 +30,7 @@ STAT version 1.4.15
 ...
 ```
 
-**帮助文档: https://www.runoob.com/memcached/memcached-stats.html**
+**帮助文档: <https://www.runoob.com/memcached/memcached-stats.html>**
 
 ### 配置参数
 
@@ -65,4 +65,3 @@ STAT version 1.4.15
 | cmd_flush        | 无    | Flush 命令请求数       |
 | get_misses       | 无    | Get 命令未命中次数       |
 | delete_misses    | 无    | Delete 命令未命中次数    |
-

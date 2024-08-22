@@ -130,4 +130,3 @@ Can observe the number of import transactions in various states to determine if 
 | committed   | None        | Committed               |
 | visible     | None        | Visible                 |
 | aborted     | None        | Aborted / Revoked       |
-

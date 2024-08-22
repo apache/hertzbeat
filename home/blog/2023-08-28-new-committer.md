@@ -34,7 +34,7 @@ In March 2023, I started to contact Hertzbeat, due to the need for a complete mo
 
 So far, to participate in the Hertzbeat open source project has been more than five months, from the first time to submit issues to the first time to submit pr, are the process of growth and progress, full count or a lot of pr, specific as follows:
 
-** contribution **:
+**contribution**:
 
 * Realize real-time data deposited into Redis custom db
 
@@ -81,6 +81,6 @@ HertzBeat HertzBeat is an open source real-time monitoring and alerting system w
 
 > `HertzBeat`'s powerful customization, multi-type support, high performance, easy to extend, low-coupling, and hopefully can help developers and teams to quickly build their own monitoring system.
 
-Github: https://github.com/apache/hertzbeat
+Github: <https://github.com/apache/hertzbeat>
 
 More users are welcome to participate in `HertzBeat` open source collaboration, no matter a typo or punctuation we are very welcome.

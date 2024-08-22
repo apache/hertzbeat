@@ -12,7 +12,7 @@ This article introduces how to use the hertzbeat monitoring tool to detect the v
 
 Apache HertzBeat (incubating) is a real-time monitoring tool with powerful custom monitoring capabilities without Agent. Website monitoring, PING connectivity, port availability, database, operating system, middleware, API monitoring, threshold alarms, alarm notification (email, WeChat, Ding Ding Feishu).
 
-github: https://github.com/apache/hertzbeat
+github: <https://github.com/apache/hertzbeat>
 
 #### Install HertzBeat
 
@@ -77,7 +77,7 @@ github: https://github.com/apache/hertzbeat
 
 For token configuration such as Dingding WeChat Feishu, please refer to the help document
 
-https://hertzbeat.apache.org/docs/help/alert_dingtalk
+<https://hertzbeat.apache.org/docs/help/alert_dingtalk>
 
 > Alarm Notification -> New Alarm Notification Policy -> Enable Notification for the Recipient Just Configured
 
@@ -87,8 +87,8 @@ https://hertzbeat.apache.org/docs/help/alert_dingtalk
 
 ----
 
-#### Finish!
+#### Finish
 
 The practice of monitoring SSL certificates is here. Of course, for hertzbeat, this function is just the tip of the iceberg. If you think hertzbeat is a good open source project, please give us a Gitee star on GitHub, thank you very much. Thank you for your support. Refill!
 
-**github: https://github.com/apache/hertzbeat**
+**github: <https://github.com/apache/hertzbeat>**

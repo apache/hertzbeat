@@ -34,7 +34,7 @@ Before you post anything to the mailing lists, be sure that you already **subscr
 
 |     List Name      |         Address          |                       Subscribe                        |                        Unsubscribe                         |                                Archive                                 |
 |--------------------|--------------------------|--------------------------------------------------------|------------------------------------------------------------|------------------------------------------------------------------------|
-| **Developer List** | dev@hertzbeat.apache.org | [subscribe](mailto:dev-subscribe@hertzbeat.apache.org) | [unsubscribe](mailto:dev-unsubscribe@hertzbeat.apache.org) | [archive](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) |
+| **Developer List** | <dev@hertzbeat.apache.org> | [subscribe](mailto:dev-subscribe@hertzbeat.apache.org) | [unsubscribe](mailto:dev-unsubscribe@hertzbeat.apache.org) | [archive](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) |
 
 ### Notification List
 
@@ -42,16 +42,16 @@ Before you post anything to the mailing lists, be sure that you already **subscr
 
 |       List Name       |              Address               |                            Subscribe                             |                             Unsubscribe                              |                                     Archive                                      |
 |-----------------------|------------------------------------|------------------------------------------------------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| **Notification List** | notifications@hertzbeat.apache.org | [subscribe](mailto:notifications-subscribe@hertzbeat.apache.org) | [unsubscribe](mailto:notifications-unsubscribe@hertzbeat.apache.org) | [archive](https://lists.apache.org/list.html?notifications@hertzbeat.apache.org) |
+| **Notification List** | <notifications@hertzbeat.apache.org> | [subscribe](mailto:notifications-subscribe@hertzbeat.apache.org) | [unsubscribe](mailto:notifications-unsubscribe@hertzbeat.apache.org) | [archive](https://lists.apache.org/list.html?notifications@hertzbeat.apache.org) |
 
 ## Steps for Subscription
 
 Sending a subscription email is also very simple. The steps are as follows:
 
 - 1、**Subscribe**: Click the **subscribe** button in the above table, and it redirects to your mail client. The subject and content are arbitrary.
-  After that, you will receive a confirmation email from dev-help@hertzbeat.apache.org (if not received, please confirm whether the email is automatically classified as SPAM, promotion email, subscription email, etc.).
+  After that, you will receive a confirmation email from <dev-help@hertzbeat.apache.org> (if not received, please confirm whether the email is automatically classified as SPAM, promotion email, subscription email, etc.).
 - 2、**Confirm**: Reply directly to the confirmation email, or click on the link in the email to reply quickly. The subject and content are arbitrary.
-- 3、**Welcome**: After completing the above steps, you will receive a welcome email with the subject WELCOME to dev@hertzbeat.apache.org, and you have successfully subscribed to the Apache HertzBeat mailing list.
+- 3、**Welcome**: After completing the above steps, you will receive a welcome email with the subject WELCOME to <dev@hertzbeat.apache.org>, and you have successfully subscribed to the Apache HertzBeat mailing list.
 
 ## Post Plain Text Mails
 
