@@ -46,4 +46,3 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 | dm_sql_thd  | None        | Thread for writing dmsql dmserver                                       |
 | dm_io_thd   | None        | IO threads, controlled by IO_THR_GROUPS parameter, default is 2 threads |
 | dm_quit_thd | None        | Thread used to perform a graceful shutdown of the database              |
-

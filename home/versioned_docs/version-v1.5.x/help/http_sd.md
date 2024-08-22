@@ -49,4 +49,3 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 | Address       |             |                                  |
 | Port          |             |                                  |
 | Health Status |             | Current health status of service |
-

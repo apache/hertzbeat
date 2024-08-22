@@ -29,4 +29,3 @@ sidebar_label: 自定义插件
    ![plugin-4.png](/img/docs/help/plugin-4.png)
 
 6. 然后重启`HertzBeat`，即可实现自定义告警后处理策略。
-

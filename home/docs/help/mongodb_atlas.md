@@ -75,4 +75,3 @@ keywords: [open-source monitoring system, open-source database monitoring, Mongo
 | Storage Size      | Bytes | Size of storage used      |
 | Indexes           | None  | Number of indexes         |
 | Index Size        | Bytes | Total size of indexes     |
-

@@ -13,7 +13,7 @@ keywords: [open source monitoring tool, open source java spark monitoring tool, 
 
 1. Add Spark `VM options` When Start Server ⚠️ customIP
 
-Refer: https://spark.apache.org/docs/latest/spark-standalone.html
+Refer: <https://spark.apache.org/docs/latest/spark-standalone.html>
 
 **监控配置spark的监控主要分为Master、Worker、driver、executor监控。Master和Worker的监控在spark集群运行时即可监控，Driver和Excutor的监控需要针对某一个app来进行监控。**
 **如果都要监控，需要根据以下步骤来配置**
@@ -112,4 +112,3 @@ gement.jmxremote.port=8711
 | DaemonThreadCount       |             | Daemon Thread Count        |
 | CurrentThreadUserTime   | ms          | Current Thread User Time   |
 | CurrentThreadCpuTime    | ms          | Current Thread Cpu Time    |
-

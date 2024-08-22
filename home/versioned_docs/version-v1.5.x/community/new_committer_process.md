@@ -80,7 +80,7 @@ ${Work list}[1]
 ```
 
 Note that, Voting ends one week from today, i.e.
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
 [Apache Voting Guidelines](https://community.apache.org/newcommitter.html)
 
 ### Close Vote Template
@@ -242,4 +242,3 @@ you can now help fix that.
 
 A PPMC member will announce your election to the dev list soon.
 ```
-

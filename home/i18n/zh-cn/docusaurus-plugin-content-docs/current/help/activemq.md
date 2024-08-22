@@ -143,4 +143,3 @@ ACTIVEMQ_SUNJMX_START="$ACTIVEMQ_SUNJMX_START -Dcom.sun.management.jmxremote"
 | DaemonThreadCount       | 个    | 守护进程数     |
 | CurrentThreadUserTime   | ms   | 使用时间      |
 | CurrentThreadCpuTime    | ms   | 使用CPU时间   |
-

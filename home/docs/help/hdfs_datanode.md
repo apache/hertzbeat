@@ -54,4 +54,3 @@ Retrieve the HTTP monitoring port for the Apache HDFS DataNode. Value: `dfs.data
 | Metric Name | Metric Unit | Metric Description |
 |-------------|-------------|--------------------|
 | StartTime   |             | Startup time       |
-

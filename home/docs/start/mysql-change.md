@@ -10,7 +10,7 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 
 ### Install MYSQL via Docker
 
-1. Download and install the Docker environment   
+1. Download and install the Docker environment
    For Docker installation, please refer to the [Docker official documentation](https://docs.docker.com/get-docker/).
    After the installation, please verify in the terminal that the Docker version can be printed normally.
 
@@ -18,6 +18,7 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
+
 2. Install MYSQl with Docker
 
    ```
@@ -29,21 +30,21 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
    mysql:5.7
    ```
 
-   `-v /opt/data:/var/lib/mysql` is local persistent mount of mysql data directory. `/opt/data` should be replaced with the actual local directory.          
+   `-v /opt/data:/var/lib/mysql` is local persistent mount of mysql data directory. `/opt/data` should be replaced with the actual local directory.
    use ```$ docker ps``` to check if the database started successfully
 
 ### Database creation
 
-1. Enter MYSQL or use the client to connect MYSQL service   
+1. Enter MYSQL or use the client to connect MYSQL service
    `mysql -uroot -p123456`
-2. Create database named hertzbeat    
+2. Create database named hertzbeat
    `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`
 3. Check if hertzbeat database has been successfully created
    `show databases;`
 
 ### Add MYSQL jdbc driver jar
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
+- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. <https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip>
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 
 ### Modify hertzbeat's configuration file application.yml and switch data source
@@ -98,4 +99,4 @@ spring:
 
 - It is recommended to set the host field in the MySQL URL to the public IP address when using Hertzbeat in docker.
 
-**Start HertzBeat  visit http://ip:1157/ on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**
+**Start HertzBeat  visit <http://ip:1157/> on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**

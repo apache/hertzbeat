@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
 ---
 
-## 使用 HertzBeat 对 线程池框架 DynamicTp 进行监控实践，5分钟搞定！
+## 使用 HertzBeat 对 线程池框架 DynamicTp 进行监控实践，5分钟搞定
 
 ### 线程池框架 DynamicTp 介绍
 
@@ -27,12 +27,12 @@ tags: [opensource, practice]
 
 ### 在 HertzBeat 5分钟搞定监控 DynamicTp
 
-#### 操作前提，您已拥有 DynamicTp 环境和 HertzBeat 环境。
+#### 操作前提，您已拥有 DynamicTp 环境和 HertzBeat 环境
 
 - DynamicTp [集成接入文档](https://dynamictp.cn/guide/use/quick-start.html)
 - HertzBeat [部署安装文档](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### 一. 在 DynamicTp 端暴露出`DynamicTp`指标接口 `/actuator/dynamic-tp`，它将提供 metrics 接口数据。
+#### 一. 在 DynamicTp 端暴露出`DynamicTp`指标接口 `/actuator/dynamic-tp`，它将提供 metrics 接口数据
 
 1. 开启 SpringBoot Actuator Endpoint 暴露出`DynamicTp`指标接口
 
@@ -88,8 +88,8 @@ management:
 
 2. 配置监控 DynamicTp 所需参数
 
-在监控页面填写 DynamicTp **服务IP**，**监控端口**(默认8080)，最后点击确定添加即可。   
-其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/dynamic_tp/) https://hertzbeat.com/docs/help/dynamic_tp/
+在监控页面填写 DynamicTp **服务IP**，**监控端口**(默认8080)，最后点击确定添加即可。
+其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/dynamic_tp/) <https://hertzbeat.com/docs/help/dynamic_tp/>
 
 ![hertzbeat](/img/blog/monitor-dynamic-tp-2.png)
 
@@ -108,7 +108,8 @@ management:
 ![hertzbeat](/img/blog/monitor-dynamic-tp-5.png)
 
 **DONE！完成啦！通过上面几步，总结起来其实也就只用两步**  
-- **第一步暴露 DynamicTp 端`metrics`端点`/actuator/dynamic-tp`**   
+
+- **第一步暴露 DynamicTp 端`metrics`端点`/actuator/dynamic-tp`**
 - **第二步在 HertzBeat 监控页面配置IP端口添加监控即可**
 
 :::tip
@@ -137,7 +138,7 @@ management:
 
 消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。
 
-- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
+- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
 - 在 HertzBeat 配置接收人参数如下。
 
 【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
@@ -168,10 +169,10 @@ management:
 这篇实践文章带我们体验了如何使用 HertzBeat 监控 DynamicTp线程池 指标数据，可以发现集 `监控-告警-通知` 的 HertzBeat 在操作与使用方面更加的便捷，只需页面上简单点一点就能把 DynamicTp线程池 纳入监控并告警通知，再也不需要部署多个组件写YML配置文件那些繁琐操作了。  
 :::
 
-DynamicTp Github: https://github.com/dromara/dynamic-tp           
-HertzBeat Github: https://github.com/apache/hertzbeat
+DynamicTp Github: <https://github.com/dromara/dynamic-tp>
+HertzBeat Github: <https://github.com/apache/hertzbeat>
 
 **欢迎了解使用Star支持哦！**
 
-只需要一条docker命令即可安装体验heartbeat ：   
+只需要一条docker命令即可安装体验heartbeat ：
 `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`

@@ -27,4 +27,3 @@ keywords: [open source monitoring tool, open source website monitoring tool, mon
 | Metric name  | Metric unit | Metric help description |
 |--------------|-------------|-------------------------|
 | responseTime | ms          | Website response time   |
-

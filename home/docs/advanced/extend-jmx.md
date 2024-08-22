@@ -23,7 +23,7 @@ By configuring the monitoring template YML metrics `field`, `aliasFields`, `obje
 
 ![](/img/docs/advanced/extend-point-1.png)
 
-------- 
+-------
 
 Configuration usages of the monitoring templates yml are detailed below.
 
@@ -192,4 +192,3 @@ metrics:
       objectName: java.lang:type=MemoryPool,name=*
       url: ^_^url^_^
 ```
-

@@ -71,4 +71,3 @@ keywords: [open source monitoring tool, open source tomcat monitoring tool, moni
 ```aidl
 CATALINA_OPTS="$CATALINA_OPTS -Dcom.sun.management.jmxremote -Djava.rmi.server.hostname=10.1.1.52 -Dcom.sun.management.jmxremote.port=1099 -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
 ```
-

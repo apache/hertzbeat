@@ -28,6 +28,7 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
+
 2. Install IoTDB via Docker
 
 ```shell
@@ -120,4 +121,3 @@ Configuration parameters:
 > Is td-engine enable set to true
 > Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
 > You can check the startup logs according to the logs directory
-

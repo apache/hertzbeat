@@ -154,4 +154,3 @@ metrics:
       # Hertzbeat default parsing is used here
       parseType: default
 ```
-

@@ -92,4 +92,3 @@ management.endpoints.web.exposure.include=*
 | nacos_monitor{name='configListenSize'} | 无    | 监听的配置数                   |
 | nacos_client_request_seconds_count     | 无    | 请求的次数，包括多种(url,方法,code)  |
 | nacos_client_request_seconds_sum       | 秒    | 请求的总耗时，包括多种(url,方法,code) |
-

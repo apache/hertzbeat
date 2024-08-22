@@ -100,4 +100,3 @@ Complete!
 | zk_max_latency                | ms          | Max latency                        |
 | zk_ephemerals_count           | number      | Number of ephemeral nodes          |
 | zk_min_latency                | ms          | Min latency                        |
-
