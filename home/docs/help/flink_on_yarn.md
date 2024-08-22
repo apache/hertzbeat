@@ -135,4 +135,3 @@
 | Status.JVM.Memory.Heap.Max        | MB          | Maximum JVM heap memory            |
 | Status.Flink.Memory.Managed.Total | MB          | Total managed memory by Flink      |
 | Status.Shuffle.Netty.UsedMemory   | MB          | Used memory by Netty Shuffle       |
-

@@ -9,7 +9,7 @@ keywords: [开源监控系统, 开源数据库监控, MariaDB数据库监控]
 
 ### 注意，必须添加 MYSQL jdbc 驱动 jar
 
-- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.1.0.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- 下载 MYSQL jdbc driver jar, 例如 mysql-connector-java-8.1.0.jar. <https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0>
 - 将此 jar 包拷贝放入 HertzBeat 的安装目录下的 `ext-lib` 目录下.
 - 重启 HertzBeat 服务。
 
@@ -57,4 +57,3 @@ keywords: [开源监控系统, 开源数据库监控, MariaDB数据库监控]
 | innodb_data_writes  | 无    | innodb平均每秒从文件中写入的次数     |
 | innodb_data_read    | KB   | innodb平均每秒钟读取的数据量，单位为KB |
 | innodb_data_written | KB   | innodb平均每秒钟写入的数据量，单位为KB |
-

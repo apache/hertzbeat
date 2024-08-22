@@ -70,4 +70,3 @@ Broker端消息发布延迟
 #### 指标集合：pulsar_metadata_store_ops_latency_ms
 
 Broker端元数据存储操作延迟
-

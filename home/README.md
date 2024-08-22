@@ -84,4 +84,3 @@ yarn docusaurus docs:version v1.5.x
 |-- docusaurus.config.js
 |-- sidebars.js // document sidebar menu configuration
 ```
-

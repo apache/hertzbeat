@@ -141,4 +141,3 @@ keywords: [开源监控系统, 开源 Flink On Yarn 监控]
 | Status.JVM.Memory.Heap.Max        | MB   | JVM 堆内存的最大容量         |
 | Status.Flink.Memory.Managed.Total | MB   | Flink 管理的内存总量        |
 | Status.Shuffle.Netty.UsedMemory   | MB   | Netty Shuffle 使用的内存  |
-

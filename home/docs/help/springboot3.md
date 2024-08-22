@@ -89,4 +89,3 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 | Metric Name | Unit |       Metric Description        |
 |-------------|------|---------------------------------|
 | status      | None | Service health status: UP, Down |
-

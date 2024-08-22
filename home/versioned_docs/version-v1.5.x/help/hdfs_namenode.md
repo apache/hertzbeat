@@ -90,4 +90,3 @@ Ensure that you have obtained the JMX monitoring port for the HDFS NameNode.
 | ThreadsBlocked                  | Count        | Number of threads in BLOCKED state       |
 | ThreadsWaiting                  | Count        | Number of threads in WAITING state       |
 | ThreadsTimedWaiting             | Count        | Number of threads in TIMED WAITING state |
-

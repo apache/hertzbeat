@@ -13,7 +13,7 @@ keywords: [open source monitoring tool, open source alerter, open source feishu 
 
 2. **【Save the key value of the WebHook address of the robot】**
 
-> eg： webHook address：`https://open.feishu.cn/open-apis/bot/v2/hook/3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`     
+> eg： webHook address：`https://open.feishu.cn/open-apis/bot/v2/hook/3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`
 > Its robot KEY value is `3adafc96-23d0-4cd5-8feb-17f6e0b5fcs4`
 
 3. **【Alarm notification】->【Add new recipient】 ->【Select FeiShu robot notification method】->【Set FeiShu robot KEY】-> 【Confirm】**
@@ -28,7 +28,7 @@ keywords: [open source monitoring tool, open source alerter, open source feishu 
 
 1. FeiShu group did not receive the robot alarm notification.
 
-> Please check whether there is any triggered alarm information in the alarm center.   
+> Please check whether there is any triggered alarm information in the alarm center.
 > Please check whether the robot key is configured correctly and whether the alarm strategy association is configured.
 
 Other issues can be fed back through the communication group ISSUE!

@@ -91,4 +91,3 @@ keywords: [开源监控系统, 开源数据库监控, RegionServer监控]
 | MemHeapMaxM          | 无    | 集群负载均衡次数           |
 | MemMaxM              | 无    | RPC句柄数             |
 | GcCount              | MB   | 集群接收数据量            |
-

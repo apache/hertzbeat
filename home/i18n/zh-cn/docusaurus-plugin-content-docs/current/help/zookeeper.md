@@ -117,4 +117,3 @@ Complete!
 | user_name         | 无    | 用户名         |
 | user_home         | 无    | 用户主目录       |
 | user_dir          | 无    | 用户当前目录      |
-

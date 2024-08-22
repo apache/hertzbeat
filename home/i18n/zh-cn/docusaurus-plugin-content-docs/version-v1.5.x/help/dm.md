@@ -46,4 +46,3 @@ keywords: [开源监控系统, 开源数据库监控, 达梦数据库监控]
 | dm_sql_thd  | 无    | 用于编写 dmsql dmserver 的线程         |
 | dm_io_thd   | 无    | IO线程，由IO_THR_GROUPS参数控制，默认为2个线程 |
 | dm_quit_thd | 无    | 用于执行正常关闭数据库的线程                  |
-

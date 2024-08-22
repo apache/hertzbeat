@@ -33,4 +33,3 @@ keywords: [开源监控系统, 开源 Flink 监控]
 | task_total   | 个    | 任务总数     |
 | jobs_running | 个    | 正在运行的任务数 |
 | jobs_failed  | 个    | 已经失败的任务数 |
-

@@ -72,4 +72,3 @@ keywords: [ 开源监控系统, 开源数据库监控, Presto数据库监控 ]
 | state         | 无    | 状态     |
 | self          | 无    | 自身     |
 | lastHeartbeat | 无    | 最后心跳时间 |
-

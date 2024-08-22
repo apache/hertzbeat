@@ -13,14 +13,14 @@ sidebar_label: HTTP Protocol Custom Monitoring
 It can be seen from the process that we define a monitoring type of HTTP protocol. We need to configure HTTP request parameters, configure which Metrics to obtain, and configure the parsing method and parsing script for response data.
 HTTP protocol supports us to customize HTTP request path, request header, request parameters, request method, request body, etc.
 
-**System default parsing method**：HTTP interface returns the JSON data structure specified by hertzbeat, that is, the default parsing method can be used to parse the data and extract the corresponding Metric data. For details, refer to [**System Default Parsing**](extend-http-default)    
+**System default parsing method**：HTTP interface returns the JSON data structure specified by hertzbeat, that is, the default parsing method can be used to parse the data and extract the corresponding Metric data. For details, refer to [**System Default Parsing**](extend-http-default)
 **JsonPath script parsing method**：Use JsonPath script to parse the response JSON data, return the data structure specified by the system, and then provide the corresponding Metric data. For details, refer to [**JsonPath Script Parsing**](extend-http-jsonpath)
 
 ### Custom Steps
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-------- 
+-------
 
 Configuration usages of the monitoring templates yml are detailed below. Please pay attention to usage annotation.
 
@@ -203,4 +203,3 @@ metrics:
         basicAuthPassword: ^_^password^_^
       parseType: default
 ```
-

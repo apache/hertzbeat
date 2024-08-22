@@ -49,12 +49,14 @@ git remote -v
   ```shell
   git fetch upstream
   ```
+
 * Synchronize remote repository code to local repository
 
   ```shell
   git checkout origin/dev
   git merge --no-ff upstream/dev
   ```
+
 * **⚠️Note that you must create a new branch to develop features `git checkout -b feature-xxx`. It is not recommended to use the master branch for direct development**
 * After modifying the code locally, submit it to your own repository:
   **Note that the submission information does not contain special characters**
@@ -63,8 +65,8 @@ git remote -v
   git commit -m 'commit content'
   git push
   ```
+
 * Submit changes to the remote repository, you can see a green button "Compare & pull request" on your repository page, click it.
 * Select the modified local branch and the branch you want to merge with the past, you need input the message carefully, describe doc is important as code, click "Create pull request".
 * Then the community Committers will do CodeReview, and then he will discuss some details (design, implementation, performance, etc.) with you, afterward you can directly update the code in this branch according to the suggestions (no need to create a new PR). When this pr is approved, the commit will be merged into the master branch
 * Finally, congratulations, you have become an official contributor to HertzBeat ! You will be added to the contributor wall, you can contact the community to obtain a contributor certificate.
-

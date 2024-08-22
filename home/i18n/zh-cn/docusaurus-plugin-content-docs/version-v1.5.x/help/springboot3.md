@@ -89,4 +89,3 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 |  指标名称  | 指标单位 |     指标帮助描述      |
 |--------|------|-----------------|
 | status | 无    | 服务健康状态: UP,Down |
-
