@@ -21,11 +21,11 @@ keywords: [open source monitoring system, alerting system]
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
-### HertzBeat's 1.4.4 新版本发布啦!
+### HertzBeat's 1.4.4 新版本发布啦
 
 - support snmp v3 monitoring protocol @TJxiaobao
 - support monitoring NebulaGraph metrics @ZY945
@@ -64,9 +64,10 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.com/docs/start/docker-deploy)
 
 ---
+
 ## ⛄ 已支持
 
-> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!    
+> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!
 > 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
 
 - Site Monitor, Port Availability, Http Api, Ping Connectivity, Jvm, SiteMap Full Site, Ssl Certificate, SpringBoot, FTP Server
@@ -82,86 +83,87 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 ---
 
-**Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ---
+
 ### What's Changed
 
 > Welcome to explore more new version updates, thanks to the hard work of the community partners, love 💗!
 
-* bugfix metrics tags value store jpa data-storage error by @tomsun28 in https://github.com/apache/hertzbeat/pull/1403
-* add smtp protocol and support smtp monitoring by @ZY945 in https://github.com/apache/hertzbeat/pull/1407
-* add ZY945 as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1409
-* support new parse type 'log' in ssh collect protocol by @tomsun28 in https://github.com/apache/hertzbeat/pull/1410
-* add ntp protocol and support ntp monitoring by @ZY945 in https://github.com/apache/hertzbeat/pull/1411
-* monitoring the availability of websockets through handshake. by @ZY945 in https://github.com/apache/hertzbeat/pull/1413
-* Task-1386 When adding tags in tag management, random colors are given by default. by @prolevel1 in https://github.com/apache/hertzbeat/pull/1412
-* add prolevel1 as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1415
-* 
+- bugfix metrics tags value store jpa data-storage error by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1403>
+- add smtp protocol and support smtp monitoring by @ZY945 in <https://github.com/apache/hertzbeat/pull/1407>
+- add ZY945 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1409>
+- support new parse type 'log' in ssh collect protocol by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1410>
+- add ntp protocol and support ntp monitoring by @ZY945 in <https://github.com/apache/hertzbeat/pull/1411>
+- monitoring the availability of websockets through handshake. by @ZY945 in <https://github.com/apache/hertzbeat/pull/1413>
+- Task-1386 When adding tags in tag management, random colors are given by default. by @prolevel1 in <https://github.com/apache/hertzbeat/pull/1412>
+- add prolevel1 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1415>
+-
 
-# 1397 feature: support for dns monitoring by @Calvin979 in https://github.com/apache/hertzbeat/pull/1416
+# 1397 feature: support for dns monitoring by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1416>
 
-* Support monitoring hive metrics by @a-little-fool in https://github.com/apache/hertzbeat/pull/1417
-* support legend pageable in history data charts by @tomsun28 in https://github.com/apache/hertzbeat/pull/1414
-* update component tip and help tip doc by @tomsun28 in https://github.com/apache/hertzbeat/pull/1418
-* feature: support monitoring nginx metrics and add a help doc by @a-little-fool in https://github.com/apache/hertzbeat/pull/1420
-* update parser to parse from prometheus txt metrics data by @tomsun28 in https://github.com/apache/hertzbeat/pull/1421
-* support monitoring memcached metrics and add a help doc by @ZY945 in https://github.com/apache/hertzbeat/pull/1423
-* support all ssh connect key exchange by @tomsun28 in https://github.com/apache/hertzbeat/pull/1424
-* doc add code of conduct by @tomsun28 in https://github.com/apache/hertzbeat/pull/1425
-* update label structure store in victoria metrics, make it prometheus like by @tomsun28 in https://github.com/apache/hertzbeat/pull/1426
-* feature: support monitoring pop3 metrics and add help doc by @a-little-fool in https://github.com/apache/hertzbeat/pull/1427
-* Update sidebars.json by @a-little-fool in https://github.com/apache/hertzbeat/pull/1428
-* Add zh-cn help doc by @a-little-fool in https://github.com/apache/hertzbeat/pull/1429
-* update monitoring state un-manage to unmonitored, update pic by @tomsun28 in https://github.com/apache/hertzbeat/pull/1430
-* Add jpa to date type storage by @Clownsw in https://github.com/apache/hertzbeat/pull/1431
-* bugfix ^o^ token error, protect metrics api auth by @tomsun28 in https://github.com/apache/hertzbeat/pull/1434
-* Add relevant documents for SMTP and NTP by @ZY945 in https://github.com/apache/hertzbeat/pull/1437
-* bugfix threshold init error in mysql env by @tomsun28 in https://github.com/apache/hertzbeat/pull/1435
-* app-rabbitmq.yml support for international name aliases by @ZY945 in https://github.com/apache/hertzbeat/pull/1439
-* fix: error create lru-cache-timeout-cleaner thread by @Clownsw in https://github.com/apache/hertzbeat/pull/1438
-* app-rabbitmq.yml Modifying Error Fields. by @ZY945 in https://github.com/apache/hertzbeat/pull/1440
-* support monitoring NebulaGraph metrics and add help doc by @ZY945 in https://github.com/apache/hertzbeat/pull/1441
-* Fix Nginx Collect validateParams function NPE by @Clownsw in https://github.com/apache/hertzbeat/pull/1442
-* feature: add metrics i18n for app-springboot3.yml by @liyin in https://github.com/apache/hertzbeat/pull/1445
-* feat: add metrics i18n for app-docker.yml by @liyin in https://github.com/apache/hertzbeat/pull/1446
-* update docker-compose script and fix version by @tomsun28 in https://github.com/apache/hertzbeat/pull/1447
-* bugfix java.lang.IllegalArgumentException: Illegal character in query… by @tomsun28 in https://github.com/apache/hertzbeat/pull/1443
-* bugfix delete monitor error after monitor canceled by @ZhangZixuan1994 in https://github.com/apache/hertzbeat/pull/1451
-* add ZhangZixuan1994 as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1454
-* remove sleep, probably busy-waiting by @tomsun28 in https://github.com/apache/hertzbeat/pull/1456
-* doc add new committer ZY945 by @tomsun28 in https://github.com/apache/hertzbeat/pull/1453
-* Update app-zookeeper.yml by @hurenjie1 in https://github.com/apache/hertzbeat/pull/1458
-* add hurenjie1 as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1459
-* update dashboard ui, remove ssh custom SignatureFactories, update app name by @tomsun28 in https://github.com/apache/hertzbeat/pull/1460
-* Task Monitoring Template Yml Metrics I18n | 监控模版指标国际化任务认领 #1212 by @tslj1024 in https://github.com/apache/hertzbeat/pull/1461
-* add tslj1024 as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1462
-* Add alarm trigger time for alarm restore by @Calvin979 in https://github.com/apache/hertzbeat/pull/1464
-* bugfix history range query not work when victoria-metrics store by @tomsun28 in https://github.com/apache/hertzbeat/pull/1463
-* bugfix springboot3 translation by @liyin in https://github.com/apache/hertzbeat/pull/1467
-* bugfix telegram-notice can not input bot-token by @tomsun28 in https://github.com/apache/hertzbeat/pull/1465
-* feat: support hostname target by @ldysdu in https://github.com/apache/hertzbeat/pull/1455
-* add ldysdu as a contributor for code by @allcontributors in https://github.com/apache/hertzbeat/pull/1471
-* feature support snmp v3 monitoring protocol by @TJxiaobao in https://github.com/apache/hertzbeat/pull/1469
-* bugfix alarm trigger-times not work when alarm and recovered trigger cyclically by @tomsun28 in https://github.com/apache/hertzbeat/pull/1468
-* update switch monitoring metrics i18n by @tomsun28 in https://github.com/apache/hertzbeat/pull/1472
-* fixed: snmpv3 contextName bug by @TJxiaobao in https://github.com/apache/hertzbeat/pull/1473
-* Fix npt of webhook notify by @Calvin979 in https://github.com/apache/hertzbeat/pull/1474
-* hertzbeat release hertzbeat version v1.4.4 by @tomsun28 in https://github.com/apache/hertzbeat/pull/1475
-* bugfix nginx collect http deadlock error by @tomsun28 in https://github.com/apache/hertzbeat/pull/1476
-* alarm calculate ignore metrics collect code - TIMEOUT by @tomsun28 in https://github.com/apache/hertzbeat/pull/1478
+- Support monitoring hive metrics by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1417>
+- support legend pageable in history data charts by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1414>
+- update component tip and help tip doc by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1418>
+- feature: support monitoring nginx metrics and add a help doc by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1420>
+- update parser to parse from prometheus txt metrics data by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1421>
+- support monitoring memcached metrics and add a help doc by @ZY945 in <https://github.com/apache/hertzbeat/pull/1423>
+- support all ssh connect key exchange by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1424>
+- doc add code of conduct by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1425>
+- update label structure store in victoria metrics, make it prometheus like by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1426>
+- feature: support monitoring pop3 metrics and add help doc by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1427>
+- Update sidebars.json by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1428>
+- Add zh-cn help doc by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1429>
+- update monitoring state un-manage to unmonitored, update pic by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1430>
+- Add jpa to date type storage by @Clownsw in <https://github.com/apache/hertzbeat/pull/1431>
+- bugfix ^o^ token error, protect metrics api auth by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1434>
+- Add relevant documents for SMTP and NTP by @ZY945 in <https://github.com/apache/hertzbeat/pull/1437>
+- bugfix threshold init error in mysql env by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1435>
+- app-rabbitmq.yml support for international name aliases by @ZY945 in <https://github.com/apache/hertzbeat/pull/1439>
+- fix: error create lru-cache-timeout-cleaner thread by @Clownsw in <https://github.com/apache/hertzbeat/pull/1438>
+- app-rabbitmq.yml Modifying Error Fields. by @ZY945 in <https://github.com/apache/hertzbeat/pull/1440>
+- support monitoring NebulaGraph metrics and add help doc by @ZY945 in <https://github.com/apache/hertzbeat/pull/1441>
+- Fix Nginx Collect validateParams function NPE by @Clownsw in <https://github.com/apache/hertzbeat/pull/1442>
+- feature: add metrics i18n for app-springboot3.yml by @liyin in <https://github.com/apache/hertzbeat/pull/1445>
+- feat: add metrics i18n for app-docker.yml by @liyin in <https://github.com/apache/hertzbeat/pull/1446>
+- update docker-compose script and fix version by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1447>
+- bugfix java.lang.IllegalArgumentException: Illegal character in query… by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1443>
+- bugfix delete monitor error after monitor canceled by @ZhangZixuan1994 in <https://github.com/apache/hertzbeat/pull/1451>
+- add ZhangZixuan1994 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1454>
+- remove sleep, probably busy-waiting by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1456>
+- doc add new committer ZY945 by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1453>
+- Update app-zookeeper.yml by @hurenjie1 in <https://github.com/apache/hertzbeat/pull/1458>
+- add hurenjie1 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1459>
+- update dashboard ui, remove ssh custom SignatureFactories, update app name by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1460>
+- Task Monitoring Template Yml Metrics I18n | 监控模版指标国际化任务认领 #1212 by @tslj1024 in <https://github.com/apache/hertzbeat/pull/1461>
+- add tslj1024 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1462>
+- Add alarm trigger time for alarm restore by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1464>
+- bugfix history range query not work when victoria-metrics store by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1463>
+- bugfix springboot3 translation by @liyin in <https://github.com/apache/hertzbeat/pull/1467>
+- bugfix telegram-notice can not input bot-token by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1465>
+- feat: support hostname target by @ldysdu in <https://github.com/apache/hertzbeat/pull/1455>
+- add ldysdu as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1471>
+- feature support snmp v3 monitoring protocol by @TJxiaobao in <https://github.com/apache/hertzbeat/pull/1469>
+- bugfix alarm trigger-times not work when alarm and recovered trigger cyclically by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1468>
+- update switch monitoring metrics i18n by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1472>
+- fixed: snmpv3 contextName bug by @TJxiaobao in <https://github.com/apache/hertzbeat/pull/1473>
+- Fix npt of webhook notify by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1474>
+- hertzbeat release hertzbeat version v1.4.4 by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1475>
+- bugfix nginx collect http deadlock error by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1476>
+- alarm calculate ignore metrics collect code - TIMEOUT by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1478>
 
 ## New Contributors
 
-* @ZY945 made their first contribution in https://github.com/apache/hertzbeat/pull/1407
-* @prolevel1 made their first contribution in https://github.com/apache/hertzbeat/pull/1412
-* @ZhangZixuan1994 made their first contribution in https://github.com/apache/hertzbeat/pull/1451
-* @hurenjie1 made their first contribution in https://github.com/apache/hertzbeat/pull/1458
-* @tslj1024 made their first contribution in https://github.com/apache/hertzbeat/pull/1461
-* @ldysdu made their first contribution in https://github.com/apache/hertzbeat/pull/1455
+- @ZY945 made their first contribution in <https://github.com/apache/hertzbeat/pull/1407>
+- @prolevel1 made their first contribution in <https://github.com/apache/hertzbeat/pull/1412>
+- @ZhangZixuan1994 made their first contribution in <https://github.com/apache/hertzbeat/pull/1451>
+- @hurenjie1 made their first contribution in <https://github.com/apache/hertzbeat/pull/1458>
+- @tslj1024 made their first contribution in <https://github.com/apache/hertzbeat/pull/1461>
+- @ldysdu made their first contribution in <https://github.com/apache/hertzbeat/pull/1455>
 
-**Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.4.3...v1.4.4
+**Full Changelog**: <https://github.com/apache/hertzbeat/compare/v1.4.3...v1.4.4>
 
 ---
 
@@ -178,8 +180,8 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 ----
 
-**Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ### **下载链接**
 
@@ -206,4 +208,3 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 **hertzbeat docker compose script**
 
 - ⬇️ [docker-compose](https://github.com/apache/hertzbeat/releases/download/v1.4.4/docker-compose.zip)
-

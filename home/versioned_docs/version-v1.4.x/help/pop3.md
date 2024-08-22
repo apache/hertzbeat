@@ -45,4 +45,3 @@ If you want to monitor information in 'POP3' with this monitoring type, you just
 |--------------|-------------|-----------------------------------------|
 | email_count  |             | Number of emails                        |
 | mailbox_size | kb          | The total size of emails in the mailbox |
-

@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
 ---
 
-## 使用 HertzBeat 对 API 网关 Apache ShenYu 进行监控实践，5分钟搞定！
+## 使用 HertzBeat 对 API 网关 Apache ShenYu 进行监控实践，5分钟搞定
 
 ### Apache ShenYu 介绍
 
@@ -24,20 +24,20 @@ tags: [opensource, practice]
 
 ### HertzBeat 介绍
 
-> HertzBeat 是一款开源，易用友好的实时监控工具，无需Agent，拥有强大自定义监控能力。    
-> 支持对应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书)。    
+> HertzBeat 是一款开源，易用友好的实时监控工具，无需Agent，拥有强大自定义监控能力。
+> 支持对应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书)。
 > HertzBeat 的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
 ### 在 HertzBeat 5分钟搞定监控 Apache ShenYu
 
-#### 操作前提，您已拥有 ShenYu 环境和 HertzBeat 环境。
+#### 操作前提，您已拥有 ShenYu 环境和 HertzBeat 环境
 
 - ShenYu [部署安装文档](https://shenyu.apache.org/zh/docs/deployment/deployment-before)
 - HertzBeat [部署安装文档](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### 一. 在 ShenYu 端开启`metrics`插件，它将提供 metrics 接口数据。
+#### 一. 在 ShenYu 端开启`metrics`插件，它将提供 metrics 接口数据
 
-> 插件是 Apache ShenYu 网关的核心执行者，指标数据采集在 `ShenYu` 也是以插件的形式集成的 - `Metrics插件`。     
+> 插件是 Apache ShenYu 网关的核心执行者，指标数据采集在 `ShenYu` 也是以插件的形式集成的 - `Metrics插件`。
 > `Metrics插件`是网关用来监控自身运行状态（`JVM`相关），请求响应等相关指标进行监测。
 
 1. 在网关的 `pom.xml` 文件中添加 `metrics插件` 的依赖。
@@ -76,8 +76,8 @@ shenyu:
 
 2. 配置监控 ShenYu 所需参数
 
-在监控页面填写 ShenYu **服务IP**，**监控端口**(默认8090)，最后点击确定添加即可。   
-其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/shenyu/) https://hertzbeat.com/docs/help/shenyu/
+在监控页面填写 ShenYu **服务IP**，**监控端口**(默认8090)，最后点击确定添加即可。
+其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/shenyu/) <https://hertzbeat.com/docs/help/shenyu/>
 
 ![hertzbeat](/img/blog/monitor-shenyu-1.png)
 
@@ -96,7 +96,8 @@ shenyu:
 ![hertzbeat](/img/blog/monitor-shenyu-6.png)
 
 **DONE！完成啦！通过上面几步，总结起来其实也就只用两步**  
-- **第一步开启 ShenYu 端`metrics`插件功能**   
+
+- **第一步开启 ShenYu 端`metrics`插件功能**
 - **第二步在 HertzBeat 监控页面配置IP端口添加监控即可**
 
 :::tip
@@ -125,7 +126,7 @@ shenyu:
 
 消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。
 
-- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
+- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
 - 在 HertzBeat 配置接收人参数如下。
 
 【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
@@ -156,10 +157,10 @@ shenyu:
 这篇实践文章带我们体验了如何使用 HertzBeat 监控 Apache ShenYu 指标数据，可以发现将 `监控-告警-通知` 集一体的 HertzBeat 在操作与使用方面更加的便捷，在页面上简单点一点就能把 ShenYu 纳入监控，再也不需要部署多个组件，写多个有门槛的YML配置文件了。  
 :::
 
-Apache ShenYu Github: https://github.com/apache/shenyu        
-HertzBeat Github: https://github.com/apache/hertzbeat
+Apache ShenYu Github: <https://github.com/apache/shenyu>
+HertzBeat Github: <https://github.com/apache/hertzbeat>
 
 **欢迎了解使用Star支持哦！**
 
-只需要一条docker命令即可安装体验heartbeat ：   
+只需要一条docker命令即可安装体验heartbeat ：
 `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`

@@ -12,7 +12,7 @@ keywords: [open source monitoring system, alerting system]
 
 > It's an honor for me to become a Committer of Apache Hertzbeat
 >
-  ## Personal introduction
+## Personal introduction
 
 I graduated in 2023 and am currently working as a Java developer in an Internet company.
 

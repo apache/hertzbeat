@@ -10,7 +10,7 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
 
 ### Install MYSQL via Docker
 
-1. Download and install the Docker environment   
+1. Download and install the Docker environment
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
    After the installation you can check if the Docker version normally output at the terminal.
 
@@ -18,20 +18,21 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
+
 2. Install MYSQl with Docker
 
    ```
-   $ docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
+   docker run -d --name mysql -p 3306:3306 -v /opt/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
    ```
 
-   `-v /opt/data:/var/lib/mysql` is local persistent mount of mysql data directory. `/opt/data` should be replaced with the actual local directory.          
+   `-v /opt/data:/var/lib/mysql` is local persistent mount of mysql data directory. `/opt/data` should be replaced with the actual local directory.
    use ```$ docker ps``` to check if the database started successfully
 
 ### Database creation
 
-1. Enter MYSQL or use the client to connect MYSQL service   
+1. Enter MYSQL or use the client to connect MYSQL service
    `mysql -uroot -p123456`
-2. Create database named hertzbeat    
+2. Create database named hertzbeat
    `create database hertzbeat default charset utf8mb4 collate utf8mb4_general_ci;`
 3. Check if hertzbeat database has been successfully created
    `show databases;`
@@ -63,4 +64,4 @@ spring:
     url: jdbc:mysql://localhost:3306/hertzbeat?useUnicode=true&characterEncoding=utf-8&useSSL=false
 ```
 
-**Start HertzBeat  visit http://ip:1157/ on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**
+**Start HertzBeat  visit <http://ip:1157/> on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**

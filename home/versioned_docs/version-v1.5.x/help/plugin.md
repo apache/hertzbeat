@@ -18,11 +18,10 @@ Currently, `HertzBeat` only set up the trigger `alert` method after alarm, if yo
 1. Pull the master branch code `git clone https://github.com/apache/hertzbeat.git` and locate the `plugin` module's
    `Plugin` interface.
    ![plugin-1.png](/img/docs/help/plugin-1.png)
-2. In the `org.apache.hertzbeat.plugin.impl` directory, create a new interface implementation class, such as `org.apache.hertzbeat.plugin.impl.DemoPluginImpl`, and receive the `Alert` class as a parameter, implement the `alert ` method, the logic is customized by the user, here we simply print the object.
+2. In the `org.apache.hertzbeat.plugin.impl` directory, create a new interface implementation class, such as `org.apache.hertzbeat.plugin.impl.DemoPluginImpl`, and receive the `Alert` class as a parameter, implement the `alert` method, the logic is customized by the user, here we simply print the object.
    ![plugin-2.png](/img/docs/help/plugin-2.png)
 3. Package the `hertzbeat-plugin` module.
    ![plugin-3.png](/img/docs/help/plugin-3.png)
 4. Copy the packaged `jar` package to the `ext-lib` directory under the installation directory (for `docker` installations, mount the `ext-lib` directory first, then copy it there).
    ![plugin-4.png](/img/docs/help/plugin-4.png)
 5. Then restart `HertzBeat` to enable the customized post-alert handling policy.
-

@@ -67,4 +67,3 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 | qps         | QPS         | I/O Requests per second     |
 | tps         | TPS         | User transaction per second |
 | mbps        | MBPS        | I/O Megabytes per second    |
-

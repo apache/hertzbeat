@@ -17,7 +17,7 @@ keywords: [open source monitoring tool, open source alerter, open source DingDin
 
 2. **【Save access_token value of the WebHook address of the robot】**
 
-> eg： webHook address：`https://oapi.dingtalk.com/robot/send?access_token=43aac28a236e001285ed84e473f8eabee70f63c7a70287acb0e0f8b65fade64f`          
+> eg： webHook address：`https://oapi.dingtalk.com/robot/send?access_token=43aac28a236e001285ed84e473f8eabee70f63c7a70287acb0e0f8b65fade64f`
 > Its robot access_token value is `43aac28a236e001285ed84e473f8eabee70f63c7a70287acb0e0f8b65fade64f`
 
 3. **【Alarm notification】->【Add new recipient】 ->【Select DingDing robot notification method】->【Set DingDing robot ACCESS_TOKEN】-> 【Confirm】**

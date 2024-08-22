@@ -28,6 +28,7 @@ Apache IoTDB是一体化收集、存储、管理与分析物联网时序数据�
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
+
 2. Docker安装IoTDB
 
 ```shell
@@ -122,4 +123,3 @@ warehouse:
 > iot-db enable是否设置为true
 > 注意⚠️若hertzbeat和IotDB都为docker容器在同一主机下启动，容器之间默认不能用127.0.0.1通讯，改为主机IP
 > 可根据logs目录下启动日志排查
-

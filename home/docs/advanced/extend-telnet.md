@@ -23,7 +23,7 @@ By configuring the metrics `field`, `aliasFields` the `Telnet` protocol of the m
 
 ![](/img/docs/advanced/extend-point-1.png)
 
-------- 
+-------
 
 Configuration usages of the monitoring templates yml are detailed below.
 
@@ -297,4 +297,3 @@ metrics:
 
   
 ```
-

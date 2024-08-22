@@ -34,7 +34,7 @@ limitations under the License.
 
 |   列表名称    |            地址            |                       订阅                        |                        退订                         |                                归档                                 |
 |-----------|--------------------------|-------------------------------------------------|---------------------------------------------------|-------------------------------------------------------------------|
-| **开发者列表** | dev@hertzbeat.apache.org | [订阅](mailto:dev-subscribe@hertzbeat.apache.org) | [退订](mailto:dev-unsubscribe@hertzbeat.apache.org) | [归档](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) |
+| **开发者列表** | <dev@hertzbeat.apache.org> | [订阅](mailto:dev-subscribe@hertzbeat.apache.org) | [退订](mailto:dev-unsubscribe@hertzbeat.apache.org) | [归档](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) |
 
 ### 通知列表
 
@@ -42,16 +42,16 @@ limitations under the License.
 
 |   列表名称   |                 地址                 |                            订阅                             |                             退订                              |                                     归档                                      |
 |----------|------------------------------------|-----------------------------------------------------------|-------------------------------------------------------------|-----------------------------------------------------------------------------|
-| **通知列表** | notifications@hertzbeat.apache.org | [订阅](mailto:notifications-subscribe@hertzbeat.apache.org) | [退订](mailto:notifications-unsubscribe@hertzbeat.apache.org) | [归档](https://lists.apache.org/list.html?notifications@hertzbeat.apache.org) |
+| **通知列表** | <notifications@hertzbeat.apache.org> | [订阅](mailto:notifications-subscribe@hertzbeat.apache.org) | [退订](mailto:notifications-unsubscribe@hertzbeat.apache.org) | [归档](https://lists.apache.org/list.html?notifications@hertzbeat.apache.org) |
 
 ## 订阅步骤
 
 发送订阅邮件即可订阅。步骤如下：
 
 - 1、**订阅**：点击上表中的 **订阅** 按钮，它将重定向到您的邮件客户端。主题和内容是任意的。
-  之后，您会从 dev-help@hertzbeat.apache.org 收到确认邮件（如果没有收到，请确认电子邮件是否被自动分类为垃圾邮件、推广邮件、订阅邮件等）。
+  之后，您会从 <dev-help@hertzbeat.apache.org> 收到确认邮件（如果没有收到，请确认电子邮件是否被自动分类为垃圾邮件、推广邮件、订阅邮件等）。
 - 2、**确认**：直接回复确认邮件，或点击邮件中的链接快速回复。主题和内容是任意的。
-- 3、**欢迎**：在完成上述步骤后，您会收到一个主题为 WELCOME to dev@hertzbeat.apache.org 的欢迎邮件，您已成功订阅 Apache HertzBeat 邮件列表。
+- 3、**欢迎**：在完成上述步骤后，您会收到一个主题为 WELCOME to <dev@hertzbeat.apache.org> 的欢迎邮件，您已成功订阅 Apache HertzBeat 邮件列表。
 
 ## 发送纯文本邮件
 

@@ -61,7 +61,7 @@ sidebar_label: JsonPath解析方式
 
 #### 样例
 
-查询自定义系统的数值信息，其暴露接口为 `/metrics/person`，我们需要其中的`type,num`指标      
+查询自定义系统的数值信息，其暴露接口为 `/metrics/person`，我们需要其中的`type,num`指标
 接口返回的原始数据如下：
 
 ```json
@@ -175,4 +175,3 @@ metrics:
       parseType: jsonPath
       parseScript: '$.number[*]' 
 ```
-

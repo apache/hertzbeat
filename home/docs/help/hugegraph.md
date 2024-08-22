@@ -138,4 +138,3 @@ Check the `rest-server.properties` file to obtain the value of the `restserver_p
 | garbage_collector_g1_old_generation_count   | NONE        | Indicates the number of old generation garbage collections by G1 garbage collector                      |
 | garbage_collector_g1_old_generation_time    | NONE        | Indicates the total time spent in old generation garbage collections by G1 garbage collector            |
 | garbage_collector_time_unit                 | NONE        | Indicates the unit of garbage collection time (such as milliseconds, seconds, etc.)                     |
-

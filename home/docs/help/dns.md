@@ -68,4 +68,3 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 | Section0    | none        | Additional information for DNS queries. |
 
 > The metric set collects up to 10 records, with metric names from Section0 to Section9.
-

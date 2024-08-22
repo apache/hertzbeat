@@ -51,4 +51,3 @@ keywords: [ 开源监控系统, 网络监控, 华为通用交换机监控 ]
 | ifOutErrors   | 无      | 对于面向数据包的接口，该节点表示由于错误而无法发送的数据包数量。对于面向字符或固定长度接口，该节点表示由于错误而无法传输的传输单元的数量。这种计数器的值可能在管理系统的重新初始化时会不连续，其他时间如ifCounterDiscontinuityTime的值。                                                                                                                                              |
 | ifAdminStatus | 无      | 接口的理想状态。 testing（3）状态表示没有可操作的数据包通过。 当受管系统初始化时，全部接口开始于ifAdminStatus在down（2）状态。由于明确的管理动作或被管理的系统保留的每个配置信息，ifAdminStatus然后被更改为Up（1）或testing（3）状态（或保留在down（2）状态）。                                                                                                                   |
 | ifOperStatus  | 无      | 当前接口的操作状态。testing(3)状态表示没有可操作的数据包可以通过。如果ifAdminStatus是down(2)，则ifOperStatus应该是down（2）。 如果ifAdminStatus是改为up（1），则ifOperStatus应该更改为up（1）。如果接口准备好传输，接收网络流量; 它应该改为dormant(5)。如果接口正在等待外部动作（如串行线路等待传入连接）; 它应该保持在down(2)状态，并且只有当有故障阻止它变成up(1)状态。 它应该留在notPresent（6）状态如果接口缺少（通常为硬件）组件。 |
-

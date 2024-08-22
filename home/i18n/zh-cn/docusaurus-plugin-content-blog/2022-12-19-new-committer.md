@@ -57,7 +57,7 @@ github：[wang1027-wqh](https://github.com/wang1027-wqh)
 
 现从事：某互联网公司Java开发工程师
 
-email：1758619238@qq.com
+email：<1758619238@qq.com>
 
 Hertzbeat Committer
 
@@ -105,4 +105,3 @@ github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 + 如果是大的改动，建议提交前编写issues，在提交pr，同时请注意编码的规范，尽量减少bug和警告的产生
 
 > 以上就是我们新晋Committer们的开源经历了，可以看出参与开源并不难，更重要的是迈出第一步，无论是代码还是文档修复或者提交issue，这些都是贡献者参与开源的姿势。快来加入我们吧！
-

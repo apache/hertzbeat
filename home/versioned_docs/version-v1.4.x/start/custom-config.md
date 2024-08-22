@@ -10,8 +10,8 @@ This describes how to configure the SMS server, the number of built-in availabil
 
 ### Configure the configuration file of HertzBeat
 
-Modify the configuration file located at `hertzbeat/config/application.yml`    
-Note ⚠️The docker container method needs to mount the application.yml file to the local host     
+Modify the configuration file located at `hertzbeat/config/application.yml`
+Note ⚠️The docker container method needs to mount the application.yml file to the local host
 The installation package can be decompressed and modified in `hertzbeat/config/application.yml`
 
 1. Configure the SMS sending server
@@ -57,4 +57,3 @@ warehouse:
        port: 6379
        password: 123456
 ```
-

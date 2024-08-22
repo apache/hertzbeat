@@ -13,18 +13,18 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/home/0.png)
 
-### 总结起来如下：
+### 总结起来如下
 
 - **重构netty client server, 采集器集群调度** @Ceilzcx @tomsun28
 - **采集器集群的UI界面管理** @Ceilzcx @tomsun28
 - **功能页面帮助信息模块和阈值表达式增强** 开源之夏和GLCC课题 @YutingNie @mikezzb
 - **新的控制台登陆界面和欢迎页面**
 - **监控指标名称国际化** 用户可以看指标的中英文名称啦，欢迎一起完善监控模版里面的i18n国际化资源
-- **支持kubernetes helm charts一键部署** 见 https://artifacthub.io/packages/search?repo=hertzbeat
+- **支持kubernetes helm charts一键部署** 见 <https://artifacthub.io/packages/search?repo=hertzbeat>
 
 **更多的特性和BUG修复，稳定性提示** 感谢 @zqr10159 @Carpe-Wang @luxx-lq @l646505418 @LINGLUOJUN @luelueking @qyaaaa @novohit @gcdd1993
 
-### 上效果图:
+### 上效果图
 
 - 新的登陆页面UI
 
@@ -62,9 +62,9 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ### 尝试部署
 
@@ -91,9 +91,10 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.com/docs/start/docker-deploy)
 
 ---
+
 ## ⛄ 已支持
 
-> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!    
+> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!
 > 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
 
 - Site Monitor, Port Availability, Http Api, Ping Connectivity, Jvm, SiteMap Full Site, Ssl Certificate, SpringBoot, FTP Server
@@ -109,6 +110,5 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 ---
 
-**Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
-
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

@@ -5,7 +5,7 @@ sidebar_label: Apache Hive
 keywords: [开源监控工具, 开源 Apache Hive 监控工具, 监控 Apache Hive 指标]
 ---
 
-> 收集和监控由 SpringBoot Actuator 提供的常规性能指标。
+> 收集和监控由 Apache Hive 提供的常规性能指标。
 
 ## 监控前操作
 
@@ -74,4 +74,3 @@ hive --service hiveserver2 &
 | 内存池初始内存    | MB   | 内存池请求的初始内存量。  |
 | 内存池可分配最大内存 | MB   | 内存池可分配的最大内存量。 |
 | 内存池内存使用量   | MB   | 内存池已使用内存量     |
-

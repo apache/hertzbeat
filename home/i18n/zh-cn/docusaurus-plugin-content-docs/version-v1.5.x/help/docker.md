@@ -99,4 +99,3 @@ firewall-cmd --reload
 | cpu_delta        | 无    | Docker容器已经使用的CPU数量 |
 | number_cpus      | 无    | Docker容器可以使用的CPU数量 |
 | cpu_usage        | 无    | Docker容器CPU使用率     |
-

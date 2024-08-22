@@ -33,7 +33,7 @@ Bugfix.
 3. [[monitor] bugfix: 修复elasticsearch监控在basic认证情况下采集失败 #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
 4. [修改oracle监控参数[数据库名称]有歧义导致的监控失败 #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
 ---
 Windows Monitor coming：
@@ -58,13 +58,13 @@ commit;
 
 Have Fun!
 
----- 
+----
 
 ## V1.1.0
 
 Home: hertzbeat.com | tancloud.cn
 
-Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.      
+Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.
 Another major change is that we use the H2 database by default to replace the MYSQL database as storage to facilitate the installation and deployment of users. Now only one docker command is needed to install and experience hertzbeat： `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 Let's Try It!
 
@@ -86,7 +86,7 @@ Bugfix.
 3. [[monitor] bugfix: fix elasticsearch collect error when need basic auth #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
 4. [Change the Oracle database name to the service name to reduce ambiguity #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
 ---
 
@@ -112,20 +112,19 @@ commit;
 
 Have Fun!
 
-----    
+----
 
 > [HertzBeat赫兹跳动](https://github.com/apache/hertzbeat) 是由 [Dromara](https://dromara.org) 孵化，[TanCloud](https://tancloud.cn)开源的一个支持网站，API，PING，端口，数据库，操作系统等监控类型，拥有易用友好的可视化操作界面的开源监控告警项目。  
 > 当然，我们也提供了对应的[SAAS云监控版本](https://console.tancloud.cn)，中小团队和个人无需再为了监控自己的网站资源，而去部署一套繁琐的监控系统，[登录即可免费开始](https://console.tancloud.cn)监控之旅。  
 > HertzBeat 支持自定义监控，只用通过配置YML文件我们就可以自定义需要的监控类型和指标，来满足常见的个性化需求。
-> HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。    
+> HertzBeat 模块化，`manager, collector, scheduler, warehouse, alerter` 各个模块解耦合，方便理解与定制开发。
 > HertzBeat 支持更自由化的告警配置(计算表达式)，支持告警通知，告警模版，邮件钉钉微信飞书等及时通知送达  
-> 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。   
+> 欢迎登录 HertzBeat 的 [云环境TanCloud](https://console.tancloud.cn) 试用发现更多。
 > 我们正在快速迭代中，欢迎参与加入共建项目开源生态。
 >
 > `HertzBeat` 的多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
 **仓库地址**
 
-[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
-[Gitee](https://gitee.com/hertzbeat/hertzbeat) https://gitee.com/hertzbeat/hertzbeat
-
+[Github](https://github.com/apache/hertzbeat) <https://github.com/apache/hertzbeat>
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) <https://gitee.com/hertzbeat/hertzbeat>
