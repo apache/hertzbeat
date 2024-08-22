@@ -37,9 +37,9 @@
           "link": "/monitors"
         },
         {
-          "text": "Monitor-bulletin",
-          "i18n": "menu.monitor.center",
-          "icon": "anticon-laptop",
+          "text": "Bulletin",
+          "i18n": "menu.monitor.bulletin",
+          "icon": "anticon-book",
           "link": "/bulletin"
         },
         {

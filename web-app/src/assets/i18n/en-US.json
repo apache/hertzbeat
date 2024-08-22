@@ -10,6 +10,7 @@
     "monitor": {
       "": "Monitoring",
       "center": "Monitor Center",
+      "bulletin": "Bulletin",
       "service": "Service Monitor",
       "db": "DB Monitor",
       "os": "OS Monitor",
