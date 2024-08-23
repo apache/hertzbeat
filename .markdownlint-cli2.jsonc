@@ -17,11 +17,13 @@
 {
   "config": {
     "default": true,
-    "MD001": false,
+    "MD001": true,
     "MD052": false,
     "MD003": false,
     "MD013": false,
-    "MD024": false,
+    "MD024": {
+        "siblings_only": true
+    },
     "MD025": false,
     "MD029": false,
     "MD033": false,
@@ -34,6 +36,8 @@
     "MD047": false
   },
   "ignore": [
-    "node_modules/"
+    "node_modules/",
+    "target/",
+    "dist/"
   ]
 }

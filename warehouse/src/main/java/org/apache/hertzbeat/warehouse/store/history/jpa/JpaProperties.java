@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.warehouse.store.history.jpa;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
@@ -26,7 +29,12 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param expireTime save data expire time(ms)
  * @param maxHistoryRecordNum The maximum number of history records retained
  */
-@ConfigurationProperties(prefix = "warehouse.store.jpa")
+
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+		+ SignConstants.DOT
+		+ WarehouseConstants.STORE
+		+ SignConstants.DOT
+		+ WarehouseConstants.HistoryName.JPA)
 public record JpaProperties(@DefaultValue("true") boolean enabled,
                             @DefaultValue("1h") String expireTime,
                             @DefaultValue("20000") Integer maxHistoryRecordNum) {
