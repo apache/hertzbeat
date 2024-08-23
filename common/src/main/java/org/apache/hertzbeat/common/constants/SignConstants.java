@@ -37,4 +37,6 @@ public interface SignConstants {
     String COMMA = ",";
 
     String BLANK = " ";
+
+    String DOT = ".";
 }

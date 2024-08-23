@@ -87,7 +87,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 **HAVE FUN**
 
-### 🐵 依赖服务部署(可选)
+#### 🐵 依赖服务部署(可选)
 
 > HertzBeat依赖于 **关系型数据库** H2(默认已内置无需安装) 或 [Mysql](mysql-change) 和 **时序性数据库** [TDengine2+](tdengine-init) 或 [IOTDB](iotdb-init) (可选)
 
