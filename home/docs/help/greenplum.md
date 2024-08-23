@@ -1,11 +1,11 @@
 ---
-id: vastbase  
-title: Monitoring：Vastbase database monitoring      
-sidebar_label: Vastbase database   
-keywords: [open source monitoring tool, open source database monitoring tool, monitoring vastbase database metrics]
+id: greenplum  
+title: Monitoring：GreenPlum database monitoring      
+sidebar_label: GreenPlum database   
+keywords: [open source monitoring tool, open source database monitoring tool, monitoring greenplum database metrics]
 ---
 
-> Collect and monitor the general performance Metrics of PostgreSQL database. Support PostgreSQL 10+.
+> Collect and monitor the general performance Metrics of GreenPlum database. Support GreenPlum 6.23.0+.
 
 ### Configuration parameter
 
@@ -37,16 +37,16 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 #### Metric set：state
 
-|  Metric name   | Metric unit |                                                                                    Metric help description                                                                                    |
-|----------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| name           | none        | Database name, or share-object is a shared object                                                                                                                                             |
-| conflicts      | times       | The number of queries canceled in the database due to a conflict with recovery                                                                                                                |
-| deadlocks      | number      | Number of deadlocks detected in the database                                                                                                                                                  |
-| blks_read      | times       | The number of disk blocks read in the database                                                                                                                                                |
-| blks_hit       | times       | Times the disk block has been found to be in the buffer, so there is no need to read it once (This only includes hits in the Vastbase buffer, not in the operating system file system buffer) |
-| blk_read_time  | ms          | Time spent by the backend reading data file blocks in the database                                                                                                                            |
-| blk_write_time | ms          | Time spent by the backend writing data file blocks in the database                                                                                                                            |
-| stats_reset    | none        | The last time these statistics were reset                                                                                                                                                     |
+|  Metric name   | Metric unit |                                                                                    Metric help description                                                                                     |
+|----------------|-------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| name           | none        | Database name, or share-object is a shared object                                                                                                                                              |
+| conflicts      | times       | The number of queries canceled in the database due to a conflict with recovery                                                                                                                 |
+| deadlocks      | number      | Number of deadlocks detected in the database                                                                                                                                                   |
+| blks_read      | times       | The number of disk blocks read in the database                                                                                                                                                 |
+| blks_hit       | times       | Times the disk block has been found to be in the buffer, so there is no need to read it once (This only includes hits in the GreenPlum buffer, not in the operating system file system buffer) |
+| blk_read_time  | ms          | Time spent by the backend reading data file blocks in the database                                                                                                                             |
+| blk_write_time | ms          | Time spent by the backend writing data file blocks in the database                                                                                                                             |
+| stats_reset    | none        | The last time these statistics were reset                                                                                                                                                      |
 
 #### Metric set：activity
 
