@@ -13,7 +13,7 @@ If you want to monitor the information in 'Kubernetes', you need to obtain an au
 
 Refer to the steps to obtain token
 
-#### method one
+### method one
 
 1. Create a service account and bind the default cluster-admin administrator cluster role
 
@@ -27,7 +27,7 @@ kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
 kubectl describe secret {secret} -n kube-system
 ```
 
-#### method two
+### method two
 
 ```shell
 kubectl create serviceaccount cluster-admin

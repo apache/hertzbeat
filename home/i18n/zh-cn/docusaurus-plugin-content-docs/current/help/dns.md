@@ -5,7 +5,7 @@ sidebar_label: DNS服务器
 keywords: [ 开源监控系统, 开源DNS监控工具, 监控DNS指标 ]
 ---
 
-# 监控：DNS服务器
+## 监控：DNS服务器
 
 > 收集和监控DNS的常规性能指标。
 
