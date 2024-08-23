@@ -168,6 +168,8 @@ $ svn ci -m "add gpg key for muchunjin"
 
 ## 3. Prepare material package & release
 
+### Build Package
+
 #### 3.1 Based on the master branch, create a release-${release_version}-rcx branch, such as release-1.6.0-rc1, And create a tag named v1.6.0-rc1 based on the release-1.6.0-rc1 branch, and set this tag as pre-release
 
 ```shell
@@ -227,6 +229,8 @@ release-1.6.0-rc1
 ```
 
 The archive package is here `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
+
+### Sign package
 
 #### 3.5 Sign binary and source packages
 
@@ -333,7 +337,7 @@ svn commit -m "release for HertzBeat 1.6.0"
 
 ## 4. Enter the community voting stage
 
-#### 4.1 Send a Community Vote Email
+### 4.1 Send a Community Vote Email
 
 Send a voting email in the community requires at least three `+1` and no `-1`.
 
@@ -525,9 +529,9 @@ One item of the email content is `Vote thread`, and the link is obtained here: <
 
 Wait a day to see if the tutor has any other comments, if not, send the following announcement email
 
-## 4. Complete the final publishing steps
+## 5. Complete the final publishing steps
 
-#### 4.1 Migrating source and binary packages
+### 5.1 Migrating source and binary packages
 
 ```shell
 svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/1.6.0  -m "transfer packages for 1.6.0-RC1"
@@ -573,27 +577,32 @@ The rename the release-1.6.0-rc1 branch to release-1.6.0.
 
 > `Send to`: <general@incubator.apache.org> <br />
 > `cc`: <dev@hertzbeat.apache.org> <br />
-> `Title`: [ANNOUNCE] Release Apache HertzBeat (incubating) 1.6.0 <br />
+> `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
 ```
-Hi Incubator Community,
+Hi Community,
 
 We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
-Once again I would like to express my thanks to your help.
+Thanks again for your help. 
 
-Apache HertzBeat(https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
+Apache HertzBeat (https://hertzbeat.apache.org/) - a real-time monitoring system with agentless, performance cluster, prometheus-compatible, custom monitoring and status page building capabilities.
 
-Download Links: https://hertzbeat.apache.org/download/
+Download Link: 
+https://hertzbeat.apache.org/docs/download/
 
-Release Notes: https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+Release Note: 
+https://github.com/apache/hertzbeat/releases/tag/v1.6.0
+
+Website: 
+https://hertzbeat.apache.org/
 
 HertzBeat Resources:
 - Issue: https://github.com/apache/hertzbeat/issues
 - Mailing list: dev@hertzbeat.apache.org
 ---
 Apache HertzBeat Team
-
+---
 Best,
 ChunJin Mu
 ```
