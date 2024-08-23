@@ -15,21 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.config;
+package org.apache.hertzbeat.common.config;
 
-import org.apache.hertzbeat.common.constants.ConfigConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
- * Collector Auto Configuration
- * @version 2.1
+ * Kafka properties
  */
 
-@AutoConfiguration
-@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
-		+ SignConstants.DOT
-		+ ConfigConstants.FunctionModuleConstants.COLLECTOR)
-public class CollectorAutoConfiguration {
+@Getter
+@Setter
+public class BaseKafkaProperties {
+
+    /**
+     * kafka's connection server url
+     */
+    private String servers = "127.0.0.1:9092";
+
+    /**
+     * The name of the topic that receives the data
+     */
+    private String topic;
+
+    /**
+     * Consumer Group ID
+     */
+    private String groupId;
+
 }

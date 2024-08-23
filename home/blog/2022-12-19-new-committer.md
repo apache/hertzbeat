@@ -9,7 +9,7 @@ tags: [opensource]
 
 > 非常高兴 HertzBeat 迎来了两位新晋社区Committer, 两位都是来自互联网公司的开发工程师，让我们来了解下他们的开源经历吧！
 
-## 第一位 花城
+# 第一位 花城
 
 姓名：王庆华
 
@@ -51,7 +51,7 @@ github：[wang1027-wqh](https://github.com/wang1027-wqh)
 ---
 ---
 
-## 第二位 星辰
+# 第二位 星辰
 
 姓名：郑晨鑫
 
