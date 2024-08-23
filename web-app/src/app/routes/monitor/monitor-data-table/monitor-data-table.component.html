@@ -126,10 +126,13 @@
     </thead>
     <tbody>
       <tr *ngFor="let valueRow of smallTable.data">
-        <td *ngFor="let value of valueRow.values; let i = index">
-          {{ value.origin }}
-          <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
-          <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
+        <td *ngFor="let value of valueRow.values; let i = index" nzEllipsis nz-tooltip [nzTooltipTitle]="contentTemplate">
+          <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+          <ng-template #contentTemplate>
+            {{ value.origin }}
+            <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+            <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
+          </ng-template>
         </td>
       </tr>
     </tbody>
