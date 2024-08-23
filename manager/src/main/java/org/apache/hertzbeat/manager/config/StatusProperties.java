@@ -17,14 +17,20 @@
 
 package org.apache.hertzbeat.manager.config;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
  * status page properties
  */
-@ConfigurationProperties(prefix = "status")
+
+@Getter
+@Setter
 @Component
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.STATUS)
 public class StatusProperties {
 
     /**
@@ -32,17 +38,11 @@ public class StatusProperties {
      */
     private CalculateProperties calculate;
 
-    public CalculateProperties getCalculate() {
-        return calculate;
-    }
-
-    public void setCalculate(CalculateProperties calculate) {
-        this.calculate = calculate;
-    }
-
     /**
      * calculate component status properties
      */
+    @Getter
+    @Setter
     public static class CalculateProperties {
 
         /**
@@ -50,13 +50,6 @@ public class StatusProperties {
          */
         private Integer interval = 300;
 
-        public Integer getInterval() {
-            return interval;
-        }
-
-        public void setInterval(Integer interval) {
-            this.interval = interval;
-        }
     }
 
 }

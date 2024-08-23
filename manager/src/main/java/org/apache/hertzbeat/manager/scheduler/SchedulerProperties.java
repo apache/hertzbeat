@@ -17,29 +17,30 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
  * scheduler properties config
  */
+
+@Getter
+@Setter
 @Component
-@ConfigurationProperties(prefix = "scheduler")
+@ConfigurationProperties(prefix =
+        ConfigConstants.FunctionModuleConstants.SCHEDULER)
 public class SchedulerProperties {
     
     private ServerProperties server;
-    
-    public ServerProperties getServer() {
-        return server;
-    }
-    
-    public void setServer(ServerProperties server) {
-        this.server = server;
-    }
 
     /**
      * server properties
      */
+    @Getter
+    @Setter
     public static class ServerProperties {
         
         private boolean enabled = true;
@@ -52,30 +53,7 @@ public class SchedulerProperties {
          * unit: s
          */
         private int idleStateEventTriggerTime = 100;
-        
-        public boolean isEnabled() {
-            return enabled;
-        }
-        
-        public void setEnabled(boolean enabled) {
-            this.enabled = enabled;
-        }
-        
-        public int getPort() {
-            return port;
-        }
-        
-        public void setPort(int port) {
-            this.port = port;
-        }
 
-        public int getIdleStateEventTriggerTime() {
-            return idleStateEventTriggerTime;
-        }
-
-        public void setIdleStateEventTriggerTime(int idleStateEventTriggerTime) {
-            this.idleStateEventTriggerTime = idleStateEventTriggerTime;
-        }
     }
     
 }
