@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -24,13 +26,10 @@ import org.springframework.stereotype.Component;
  * Schedule Distribution Task Configuration Properties
  */
 @Component
-@ConfigurationProperties(prefix = DispatchProperties.DISPATCH_PREFIX)
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.COLLECTOR
+        + SignConstants.DOT
+        + ConfigConstants.FunctionModuleConstants.DISPATCH)
 public class DispatchProperties {
-
-    /**
-     * Schedule Distribution Task Configuration Properties
-     */
-    protected static final String DISPATCH_PREFIX = "collector.dispatch";
 
     /**
      * Scheduling entry configuration properties

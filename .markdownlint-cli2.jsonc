@@ -17,7 +17,7 @@
 {
   "config": {
     "default": true,
-    "MD001": false,
+    "MD001": true,
     "MD052": false,
     "MD003": false,
     "MD013": false,
@@ -30,12 +30,13 @@
     "MD035": false,
     "MD036": false,
     "MD040": false,
-    "MD041": false,
     "MD045": false,
     "MD046": false,
     "MD047": false
   },
   "ignore": [
-    "node_modules/"
+    "node_modules/",
+    "target/",
+    "dist/"
   ]
 }
