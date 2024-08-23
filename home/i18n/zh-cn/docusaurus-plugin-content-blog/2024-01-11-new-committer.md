@@ -114,7 +114,7 @@ keywords: [open source monitoring system, alerting system]
 - issue和pr是你了解的项目的敲门砖，一点要敢于讨论并发表观点。
 - 贡献不分大小，要敢于尝试，并不断提升自己。
 
-----
+---
 
 ## 什么是 HertzBeat?
 

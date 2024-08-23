@@ -114,7 +114,7 @@ Thanks to the authors of hertzbeat for the documentation and help. Thanks to my 
 - Issues and pr's are the knock on the door of the project you are getting to know, so be willing to discuss and express your opinion.
 - No matter how big or small your contribution is, be willing to try and keep improving yourself.
 
-----
+---
 
 ## What is HertzBeat?
 
