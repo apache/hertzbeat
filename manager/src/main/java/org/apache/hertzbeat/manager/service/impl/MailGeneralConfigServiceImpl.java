@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Type;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.springframework.stereotype.Service;
@@ -46,7 +47,7 @@ public class MailGeneralConfigServiceImpl extends AbstractGeneralConfigServiceIm
     
     @Override
     public String type() {
-        return "email";
+        return GeneralConfigTypeEnum.email.name();
     }
     
     /**
@@ -54,7 +55,7 @@ public class MailGeneralConfigServiceImpl extends AbstractGeneralConfigServiceIm
      * a TypeReference of NoticeSender type
      */
     @Override
-    protected TypeReference<EmailNoticeSender> getTypeReference() {
+    public TypeReference<EmailNoticeSender> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {

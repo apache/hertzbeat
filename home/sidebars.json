@@ -1,30 +1,62 @@
 {
   "docs": [
     {
+      "type": "doc",
+      "id": "introduce"
+    },
+    {
       "type": "category",
       "label": "quickstart",
       "items": [
-        "introduce",
-        "start/quickstart",
-        "start/1.6.0-update",
-        "start/docker-deploy",
-        "start/package-deploy",
-        "start/rainbond-deploy",
         {
-          "type": "link",
-          "label": "Install via Helm",
-          "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+          "type": "category",
+          "label": "install",
+          "items": [
+            "start/docker-deploy",
+            "start/docker-compose-deploy",
+            "start/package-deploy",
+            {
+              "type": "link",
+              "label": "Install via Helm",
+              "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+            }
+          ]
         },
-        "start/account-modify",
-        "start/upgrade",
-        "start/victoria-metrics-init",
-        "start/iotdb-init",
-        "start/tdengine-init",
-        "start/influxdb-init",
-        "start/postgresql-change",
-        "start/mysql-change",
-        "start/custom-config",
-        "start/ssl-cert-practice"
+        {
+          "type": "category",
+          "label": "upgrade",
+          "items": [
+            "start/1.6.0-update",
+            "start/upgrade"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "setting",
+          "items": [
+            "start/account-modify",
+            "start/custom-config"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "change-db",
+          "items": [
+            "start/victoria-metrics-init",
+            "start/iotdb-init",
+            "start/tdengine-init",
+            "start/influxdb-init",
+            "start/postgresql-change",
+            "start/mysql-change"
+          ]
+        },
+        {
+          "type": "category",
+          "label": "use-case",
+          "items": [
+            "start/ssl-cert-practice"
+          ]
+        }
       ]
     },
     {
@@ -174,6 +206,9 @@
             "help/mysql",
             "help/mariadb",
             "help/postgresql",
+            "help/greenplum",
+            "help/vastbase",
+            "help/kingbase",
             "help/sqlserver",
             "help/oracle",
             "help/dm",
@@ -242,6 +277,7 @@
             "help/hdfs_datanode",
             "help/iotdb",
             "help/hive",
+            "help/iceberg",
             "help/airflow",
             "help/clickhouse",
             "help/elasticsearch",

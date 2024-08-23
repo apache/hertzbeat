@@ -43,3 +43,122 @@ export function findDeepestSelected(nodes: any): any {
   }
   return deepestSelectedNode;
 }
+
+export function generateReadableRandomString(): string {
+  const adjectives = [
+    'quick',
+    'bright',
+    'calm',
+    'brave',
+    'cool',
+    'eager',
+    'fancy',
+    'gentle',
+    'happy',
+    'jolly',
+    'kind',
+    'lively',
+    'merry',
+    'nice',
+    'proud',
+    'witty',
+    'zesty',
+    'nifty',
+    'quirky',
+    'unique',
+    'vivid',
+    'zany',
+    'zealous',
+    'yummy',
+    'agile',
+    'bold',
+    'daring',
+    'fearless',
+    'gleeful',
+    'humble',
+    'jumpy',
+    'keen',
+    'loyal',
+    'majestic',
+    'noble',
+    'playful',
+    'radiant',
+    'spirited',
+    'tenacious',
+    'vibrant',
+    'wise',
+    'youthful',
+    'zippy',
+    'serene',
+    'bubbly',
+    'dreamy',
+    'fierce',
+    'graceful'
+  ];
+
+  const nouns = [
+    'fox',
+    'lion',
+    'eagle',
+    'shark',
+    'whale',
+    'falcon',
+    'panda',
+    'tiger',
+    'wolf',
+    'otter',
+    'lynx',
+    'moose',
+    'dolphin',
+    'bear',
+    'hawk',
+    'zebra',
+    'giraffe',
+    'koala',
+    'lemur',
+    'lemming',
+    'cheetah',
+    'dragon',
+    'owl',
+    'rhino',
+    'stingray',
+    'jaguar',
+    'panther',
+    'elk',
+    'ocelot',
+    'beaver',
+    'walrus',
+    'gazelle',
+    'coyote',
+    'vulture',
+    'iguana',
+    'porcupine',
+    'raccoon',
+    'sloth',
+    'armadillo',
+    'chameleon',
+    'kestrel',
+    'weasel',
+    'hedgehog'
+  ];
+
+  const digits = '23456789';
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjklmnpqrstuvwxyz';
+
+  // Randomly select an adjective and a noun
+  let adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  let noun = nouns[Math.floor(Math.random() * nouns.length)];
+
+  // Randomly generate a sequence of numbers and characters
+  const randomDigits = Array.from({ length: 2 }, () => digits.charAt(Math.floor(Math.random() * digits.length))).join('');
+
+  const randomChars = Array.from({ length: 2 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+  adjective = capitalizeFirstLetter(adjective);
+  noun = capitalizeFirstLetter(noun);
+  // Combine the parts to form the final string
+  return `${adjective}_${noun}_${randomDigits}${randomChars}`;
+}
+
+function capitalizeFirstLetter(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}

@@ -17,12 +17,19 @@
 
 package org.apache.hertzbeat.collector.config;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Collector Auto Configuration
  * @version 2.1
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.collector")
+
+@AutoConfiguration
+@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
+		+ SignConstants.DOT
+		+ ConfigConstants.FunctionModuleConstants.COLLECTOR)
 public class CollectorAutoConfiguration {
 }

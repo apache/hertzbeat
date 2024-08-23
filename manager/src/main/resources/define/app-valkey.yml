@@ -1,0 +1,1270 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: cache
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: valkey
+# The monitoring i18n name
+name:
+  zh-CN: Valkey数据库
+  en-US: Valkey
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 对 Valkey 数据库的通用性能指标进行采集监控(server、clients、memory、persistence、stats、replication、cpu、errorstats、cluster、commandstats)，支持版本为 Valkey 7.0+。<br>您可以点击“<i>新建 Valkey 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors Valkey database of general performance metrics such as memory, persistence, replication and so on. The versions we support is Valkey 7.0+. <br>You could click the "<i>New Valkey</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat 對 Valkey 數據庫的通用性能指標進行采集監控(server、clients、memory、persistence、stats、replication、cpu、errorstats、cluster、commandstats)，支持版本爲 Valkey 7.0+。<br>您可以點擊“<i>新建 Valkey 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/valkey
+  en-US: https://hertzbeat.apache.org/docs/help/valkey
+# Input params define for monitoring(render web ui by
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 6379
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间
+      en-US: Timeout
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,100000]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 3000
+  # field-param field key
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 50
+    required: false
+  # field-param field key
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+
+# collect metrics config list
+metrics:
+  # metrics - server
+  - name: server
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    i18n:
+      zh-CN: 服务器信息
+      en-US: Server
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: identity
+        type: 1
+        i18n:
+          zh-CN: ID
+          en-US: Identity
+      - field: valkey_version
+        type: 1
+        i18n:
+          zh-CN: Valkey服务版本
+          en-US: Valkey Version
+      - field: valkey_git_sha1
+        type: 0
+        i18n:
+          zh-CN: Git SHA1
+          en-US: Git SHA1
+      - field: valkey_git_dirty
+        type: 0
+        i18n:
+          zh-CN: Valkey服务器代码是否有改动
+          en-US: Git Dirty Flag
+      - field: valkey_build_id
+        type: 1
+        i18n:
+          zh-CN: Build Id
+          en-US: Build Id
+      - field: valkey_mode
+        type: 1
+        i18n:
+          zh-CN: 运行模式
+          en-US: Server Mode
+      - field: os
+        type: 1
+        i18n:
+          zh-CN: 操作系统
+          en-US: Operating System
+      - field: arch_bits
+        type: 0
+        i18n:
+          zh-CN: 架构
+          en-US: Architecture Bits
+      - field: multiplexing_api
+        type: 1
+        i18n:
+          zh-CN: IO多路复用器API
+          en-US: Multiplexing API
+      - field: atomicvar_api
+        type: 1
+        i18n:
+          zh-CN: 原子操作处理API
+          en-US: Atomicvar API
+      - field: gcc_version
+        type: 1
+        i18n:
+          zh-CN: GCC版本
+          en-US: GCC Version
+      - field: process_id
+        type: 0
+        i18n:
+          zh-CN: 进程ID
+          en-US: PID
+      - field: process_supervised
+        type: 1
+        i18n:
+          zh-CN: 进程监督机制管理Valkey的方式
+          en-US: Process Supervised
+      - field: run_id
+        type: 1
+        i18n:
+          zh-CN: Run ID
+          en-US: Run ID
+      - field: tcp_port
+        type: 0
+        i18n:
+          zh-CN: TCP/IP监听端口
+          en-US: TCP Port
+      - field: server_time_usec
+        type: 0
+        i18n:
+          zh-CN: 服务器时间戳
+          en-US: Server Time Usec
+      - field: uptime_in_seconds
+        type: 0
+        i18n:
+          zh-CN: 运行时长(秒)
+          en-US: Uptime(Seconds)
+      - field: uptime_in_days
+        type: 0
+        i18n:
+          zh-CN: 运行时长(天)
+          en-US: Uptime(Days)
+      - field: hz
+        type: 0
+        i18n:
+          zh-CN: 事件循环频率
+          en-US: hz
+      - field: configured_hz
+        type: 0
+        i18n:
+          zh-CN: 配置的事件循环频率
+          en-US: Configured hz
+      - field: lru_clock
+        type: 0
+        i18n:
+          zh-CN: LRU时钟
+          en-US: LRU Clock
+      - field: executable
+        type: 1
+        i18n:
+          zh-CN: 服务器执行路径
+          en-US: Server's Executable Path
+      - field: config_file
+        type: 1
+        i18n:
+          zh-CN: 配置文件路径
+          en-US: Config File Path
+      - field: io_threads_active
+        type: 0
+        i18n:
+          zh-CN: 活跃IO线程数
+          en-US: Active IO Threads
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+  # metrics - clients
+  - name: clients
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    i18n:
+      zh-CN: 客户端信息
+      en-US: Clients
+    # collect metrics content
+    fields:
+      - field: connected_clients
+        type: 0
+        i18n:
+          zh-CN: 已连接客户端数量
+          en-US: Connected Clients
+      - field: cluster_connections
+        type: 0
+        i18n:
+          zh-CN: 集群客户端连接数
+          en-US: Cluster Connections
+      - field: maxclients
+        type: 0
+        i18n:
+          zh-CN: 最大客户端连接数
+          en-US: Max Clients
+      - field: client_recent_max_input_buffer
+        type: 0
+        i18n:
+          zh-CN: 最近客户端的最大输入缓冲区大小
+          en-US: Client Recent Max Input Buffer
+      - field: client_recent_max_output_buffer
+        type: 0
+        i18n:
+          zh-CN: 最近客户端的最大输出缓冲区大小
+          en-US: Client Recent Max Output Buffer
+      - field: blocked_clients
+        type: 0
+        i18n:
+          zh-CN: 阻塞客户端数量
+          en-US: Blocked Clients
+      - field: tracking_clients
+        type: 0
+        i18n:
+          zh-CN: 正在追踪数据的客户端数量
+          en-US: Tracking Clients
+      - field: clients_in_timeout_table
+        type: 0
+        i18n:
+          zh-CN: 超时队列中的客户端数量
+          en-US: Clients In Timeout Table
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+  # metrics - memory
+  - name: memory
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 2
+    i18n:
+      zh-CN: 内存信息
+      en-US: Memory
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: used_memory
+        type: 0
+        i18n:
+          zh-CN: 已使用内存(字节)
+          en-US: Used Memory
+      - field: used_memory_human
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 已使用内存
+          en-US: Used Memory Human
+      - field: used_memory_rss
+        type: 0
+        i18n:
+          zh-CN: 已使用物理内存(字节)
+          en-US: Used Memory RSS
+      - field: used_memory_rss_human
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 已使用物理内存
+          en-US: Used Memory RSS Human
+      - field: used_memory_peak
+        type: 0
+        i18n:
+          zh-CN: 内存使用最大峰值(字节)
+          en-US: Used Memory Peak
+      - field: used_memory_peak_human
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 内存使用最大值
+          en-US: Used Memory Peak Human
+      - field: used_memory_peak_perc
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 最大内存使用率
+          en-US: Used Memory Peak Perc
+      - field: used_memory_overhead
+        type: 0
+        i18n:
+          zh-CN: 管理数据结构的额外内存使用量
+          en-US: Used Memory Overhead
+      - field: used_memory_startup
+        type: 0
+        i18n:
+          zh-CN: Valkey服务器启动时使用的内存
+          en-US: Used Memory Startup
+      - field: used_memory_dataset
+        type: 0
+        i18n:
+          zh-CN: 存储数据占用的内存
+          en-US: Used Memory Dataset
+      - field: used_memory_dataset_perc
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 存储数据占用的内存比率
+          en-US: Used Memory Dataset Perc
+      - field: allocator_allocated
+        type: 0
+        i18n:
+          zh-CN: 内存分配器分配的内存
+          en-US: Allocator Allocated
+      - field: allocator_active
+        type: 0
+        i18n:
+          zh-CN: 内存分配器激活的内存
+          en-US: Allocator Active
+      - field: allocator_resident
+        type: 0
+        i18n:
+          zh-CN: 内存分配器加载的内存
+          en-US: Allocator Resident
+      - field: total_system_memory
+        type: 0
+        i18n:
+          zh-CN: 总系统内存容量(字节)
+          en-US: Total System Memory
+      - field: total_system_memory_human
+        type: 0
+        unit: GB
+        i18n:
+          zh-CN: 总系统内存容量
+          en-US: Total System Memory Human
+      - field: used_memory_lua
+        type: 0
+        i18n:
+          zh-CN: LUA脚本占用的内存(字节)
+          en-US: Used Memory LUA
+      - field: used_memory_lua_human
+        type: 0
+        unit: KB
+        i18n:
+          zh-CN: LUA脚本占用的内存
+          en-US: Used Memory LUA Human
+      - field: used_memory_scripts
+        type: 0
+        i18n:
+          zh-CN: Valkey缓存的LUA脚本大小(字节)
+          en-US: Used Memory Scripts
+      - field: used_memory_scripts_human
+        type: 0
+        unit: KB
+        i18n:
+          zh-CN: Valkey缓存的LUA脚本大小
+          en-US: Used Memory Scripts Human
+      - field: number_of_cached_scripts
+        type: 0
+        i18n:
+          zh-CN: Valkey缓存的LUA脚本数量
+          en-US: Number Of Cached Scripts
+      - field: maxmemory
+        type: 0
+        i18n:
+          zh-CN: 最大内存限制(字节)
+          en-US: Max Memory
+      - field: maxmemory_human
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 最大内存限制
+          en-US: Max Memory Human
+      - field: maxmemory_policy
+        type: 1
+        i18n:
+          zh-CN: 内存淘汰策略
+          en-US: Max Memory Policy
+      - field: allocator_frag_ratio
+        type: 0
+        i18n:
+          zh-CN: 内存分配器中的内存碎片占比
+          en-US: Allocator Frag Ratio
+      - field: allocator_frag_bytes
+        type: 0
+        i18n:
+          zh-CN: 内存分配器中的内存碎片大小
+          en-US: Allocator Frag Bytes
+      - field: allocator_rss_ratio
+        type: 0
+        i18n:
+          zh-CN: 内存分配器分配的内存占比
+          en-US: Allocator RSS Ratio
+      - field: allocator_rss_bytes
+        type: 0
+        i18n:
+          zh-CN: 内存分配器分配的内存大小
+          en-US: Allocator RSS Bytes
+      - field: rss_overhead_ratio
+        type: 0
+        i18n:
+          zh-CN: 实际内存占比
+          en-US: RSS Overhead Ratio
+      - field: rss_overhead_bytes
+        type: 0
+        i18n:
+          zh-CN: 实际内存大小
+          en-US: RSS Overhead Bytes
+      - field: mem_fragmentation_ratio
+        type: 0
+        i18n:
+          zh-CN: 内存碎片率
+          en-US: Mem Fragmentation Ratio
+      - field: mem_fragmentation_bytes
+        type: 0
+        i18n:
+          zh-CN: 内存碎片大小
+          en-US: Mem Fragmentation Bytes
+      - field: mem_not_counted_for_evict
+        type: 0
+        i18n:
+          zh-CN: 未计入最大内存限制的内存
+          en-US: Mem Not Counted For Evict
+      - field: mem_replication_backlog
+        type: 0
+        i18n:
+          zh-CN: 主从同步缓冲区占用的内存(字节)
+          en-US: Mem Replication Backlog
+      - field: mem_clients_slaves
+        type: 0
+        i18n:
+          zh-CN: 从节点占用的内存
+          en-US: Mem Clients Slaves
+      - field: mem_clients_normal
+        type: 0
+        i18n:
+          zh-CN: 客户端占用的内存
+          en-US: Mem Clients Normal
+      - field: mem_aof_buffer
+        type: 0
+        i18n:
+          zh-CN: AOF缓冲区占用的内存
+          en-US: Mem AOF Buffer
+      - field: mem_allocator
+        type: 1
+        i18n:
+          zh-CN: 内存分配器
+          en-US: Mem Allocator
+      - field: active_defrag_running
+        type: 0
+        i18n:
+          zh-CN: 是否正在整理内存
+          en-US: Active Defrag Running
+      - field: lazyfree_pending_objects
+        type: 0
+        i18n:
+          zh-CN: 待处理的惰性删除对象数量
+          en-US: Lazyfree Pending Objects
+      - field: lazyfreed_objects
+        type: 0
+        i18n:
+          zh-CN: 已经执行的惰性删除对象数量
+          en-US: Lazyfreed Objects
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - persistence
+  - name: persistence
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 3
+    i18n:
+      zh-CN: 持久化信息
+      en-US: Persistence
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: loading
+        type: 0
+        i18n:
+          zh-CN: 是否正在加载持久化文件
+          en-US: Loading
+      - field: current_cow_size
+        type: 0
+        i18n:
+          zh-CN: COW区域内存大小
+          en-US: Current COW Size
+      - field: current_cow_size_age
+        type: 0
+        i18n:
+          zh-CN: COW区域内存使用时间
+          en-US: Current COW Size Age
+      - field: current_fork_perc
+        type: 0
+        i18n:
+          zh-CN: COW区域内存使用率
+          en-US: Current Fork Perc
+      - field: current_save_keys_processed
+        type: 0
+        i18n:
+          zh-CN: 正在处理的保存键数量
+          en-US: Current Save Keys Processed
+      - field: current_save_keys_total
+        type: 0
+        i18n:
+          zh-CN: 保存键总数量
+          en-US: Current Save Keys Total
+      - field: rdb_changes_since_last_save
+        type: 0
+        i18n:
+          zh-CN: 自最近一次RDB后的数据改动条数
+          en-US: RDB Changes Since Last Save
+      - field: rdb_bgsave_in_progress
+        type: 0
+        i18n:
+          zh-CN: 是否正在进行RDB的bgsave命令
+          en-US: RDB bgsave In Progress
+      - field: rdb_last_save_time
+        type: 0
+        i18n:
+          zh-CN: 最近一次bgsave命令执行时间
+          en-US: RDB Last Save Time
+      - field: rdb_last_bgsave_status
+        type: 1
+        i18n:
+          zh-CN: 最近一次bgsave命令执行状态
+          en-US: RDB Last bgsave Status
+      - field: rdb_last_bgsave_time_sec
+        type: 0
+        i18n:
+          zh-CN: 最近一次bgsave命令执行时间(秒)
+          en-US: RDB Last bgsave Time Sec
+      - field: rdb_current_bgsave_time_sec
+        type: 0
+        i18n:
+          zh-CN: 当前bgsave命令执行时间(秒)
+          en-US: RDB Current bgsave Time Sec
+      - field: rdb_last_cow_size
+        type: 0
+        i18n:
+          zh-CN: RDB最近一次COW区域内存大小
+          en-US: RDB Last COW Size
+      - field: aof_enabled
+        type: 0
+        i18n:
+          zh-CN: 是否开启了AOF
+          en-US: AOF Enabled
+      - field: aof_rewrite_in_progress
+        type: 0
+        i18n:
+          zh-CN: 是否正在进行AOF的rewrite命令
+          en-US: AOF rewrite In Progress
+      - field: aof_rewrite_scheduled
+        type: 0
+        i18n:
+          zh-CN: 是否在RDB的bgsave结束后执行AOF的rewirte
+          en-US: AOF rewrite Scheduled
+      - field: aof_last_rewrite_time_sec
+        type: 0
+        i18n:
+          zh-CN: 最近一次AOF的rewrite命令执行时间(秒)
+          en-US: AOF Last rewrite Time Sec
+      - field: aof_current_rewrite_time_sec
+        type: 0
+        i18n:
+          zh-CN: 当前rewrite命令执行时间(秒)
+          en-US: AOF Current rewrite Time Sec
+      - field: aof_last_bgrewrite_status
+        type: 1
+        i18n:
+          zh-CN: 最近一次AOF的bgrewrite命令执行状态
+          en-US: AOF Last bgrewrite Status
+      - field: aof_last_write_status
+        type: 1
+        i18n:
+          zh-CN: 最近一次AOF写磁盘结果
+          en-US: AOF Last Write Status
+      - field: aof_last_cow_size
+        type: 0
+        i18n:
+          zh-CN: AOF最近一次COW区域内存大小
+          en-US: AOF Last Cow Size
+      - field: module_fork_in_progress
+        type: 0
+        i18n:
+          zh-CN: 是否正在进行fork操作
+          en-US: Module Fork In Progress
+      - field: module_fork_last_cow_size
+        type: 0
+        i18n:
+          zh-CN: 最近一次执行fork操作的COW区域内存大小
+          en-US: Module Fork Last Cow Size
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - stats
+  - name: stats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 4
+    i18n:
+      zh-CN: 全局统计信息
+      en-US: Stats
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: total_connections_received
+        type: 0
+        i18n:
+          zh-CN: 已接受的总连接数
+          en-US: Total Connections Received
+      - field: total_commands_processed
+        type: 0
+        i18n:
+          zh-CN: 执行过的命令总数
+          en-US: Total Commands Processed
+      - field: instantaneous_ops_per_sec
+        type: 0
+        i18n:
+          zh-CN: 命令处理条数/秒
+          en-US: Instantaneous Ops Per Sec
+      - field: total_net_input_bytes
+        type: 0
+        i18n:
+          zh-CN: 输入总网络流量(字节)
+          en-US: Total Net Input Bytes
+      - field: total_net_output_bytes
+        type: 0
+        i18n:
+          zh-CN: 输出总网络流量(字节)
+          en-US: Total Net Output Bytes
+      - field: instantaneous_input_kbps
+        type: 0
+        i18n:
+          zh-CN: 输入字节数/秒
+          en-US: Instantaneous Input Kbps
+      - field: instantaneous_output_kbps
+        type: 0
+        i18n:
+          zh-CN: 输出字节数/秒
+          en-US: Instantaneous Output Kbps
+      - field: rejected_connections
+        type: 0
+        i18n:
+          zh-CN: 拒绝连接数
+          en-US: Rejected Connections
+      - field: sync_full
+        type: 0
+        i18n:
+          zh-CN: 主从完全同步成功次数
+          en-US: Sync Full
+      - field: sync_partial_ok
+        type: 0
+        i18n:
+          zh-CN: 主从部分同步成功次数
+          en-US: Sync Partial OK
+      - field: sync_partial_err
+        type: 0
+        i18n:
+          zh-CN: 主从部分同步失败次数
+          en-US: Sync Partial Error
+      - field: expired_keys
+        type: 0
+        i18n:
+          zh-CN: 过期key数量
+          en-US: Expired Keys
+      - field: expired_stale_perc
+        type: 0
+        i18n:
+          zh-CN: 过期key占比
+          en-US: Expired Stale Perc
+      - field: expired_time_cap_reached_count
+        type: 0
+        i18n:
+          zh-CN: 过期key清理操作被限制次数
+          en-US: Expired Time Cap Reached Count
+      - field: expire_cycle_cpu_milliseconds
+        type: 0
+        i18n:
+          zh-CN: 清理过期key消耗的cpu时间(毫秒)
+          en-US: Expire Cycle CPU Milliseconds
+      - field: evicted_keys
+        type: 0
+        i18n:
+          zh-CN: 淘汰key数量
+          en-US: Evicted Keys
+      - field: keyspace_hits
+        type: 0
+        i18n:
+          zh-CN: key命中成功次数
+          en-US: Keyspace Hits
+      - field: keyspace_misses
+        type: 0
+        i18n:
+          zh-CN: key命中失败次数
+          en-US: Keyspace Misses
+      - field: pubsub_channels
+        type: 0
+        i18n:
+          zh-CN: 订阅的频道数量
+          en-US: Pubsub Channels
+      - field: pubsub_patterns
+        type: 0
+        i18n:
+          zh-CN: 订阅的模式数量
+          en-US: Pubsub Patterns
+      - field: latest_fork_usec
+        type: 0
+        i18n:
+          zh-CN: 最近一次fork操作消耗时间(微秒)
+          en-US: Latest Fork Usec
+      - field: total_forks
+        type: 0
+        i18n:
+          zh-CN: fork进程总数
+          en-US: Total Forks
+      - field: migrate_cached_sockets
+        type: 0
+        i18n:
+          zh-CN: 正在进行migrate的目标Valkey个数
+          en-US: Migrate Cached Sockets
+      - field: slave_expires_tracked_keys
+        type: 0
+        i18n:
+          zh-CN: 主从同步中已过期的key数量
+          en-US: Slave Expires Tracked Keys
+      - field: active_defrag_hits
+        type: 0
+        i18n:
+          zh-CN: 主动碎片整理命中次数
+          en-US: Active Defrag Hits
+      - field: active_defrag_misses
+        type: 0
+        i18n:
+          zh-CN: 主动碎片整理未命中次数
+          en-US: Active Defrag Misses
+      - field: active_defrag_key_hits
+        type: 0
+        i18n:
+          zh-CN: 主动碎片整理key命中次数
+          en-US: Active Defrag Key Hits
+      - field: active_defrag_key_misses
+        type: 0
+        i18n:
+          zh-CN: 主动碎片整理key未命中次数
+          en-US: Active Defrag Key Misses
+      - field: tracking_total_keys
+        type: 0
+        i18n:
+          zh-CN: 正在追踪的key数量
+          en-US: Tracking Total Keys
+      - field: tracking_total_items
+        type: 0
+        i18n:
+          zh-CN: 正在追踪的value数量
+          en-US: Tracking Total Items
+      - field: tracking_total_prefixes
+        type: 0
+        i18n:
+          zh-CN: 正在追踪的前缀数量
+          en-US: Tracking Total Prefixes
+      - field: unexpected_error_replies
+        type: 0
+        i18n:
+          zh-CN: 执行命令时发生错误的数量
+          en-US: Unexpected Error Replies
+      - field: total_error_replies
+        type: 0
+        i18n:
+          zh-CN: 执行命令时发生错误的总数
+          en-US: Total Error Replies
+      - field: dump_payload_sanitizations
+        type: 0
+        i18n:
+          zh-CN: Dump命令时数据清理的数量
+          en-US: Dump Payload Sanitizations
+      - field: total_reads_processed
+        type: 0
+        i18n:
+          zh-CN: 执行读操作时处理的请求数量
+          en-US: Total Reads Processed
+      - field: total_writes_processed
+        type: 0
+        i18n:
+          zh-CN: 执行写操作时处理的请求数量
+          en-US: Total Writes Processed
+      - field: io_threaded_reads_processed
+        type: 0
+        i18n:
+          zh-CN: 使用线程进行读操作时处理的请求数量
+          en-US: IO Threaded Reads Processed
+      - field: io_threaded_writes_processed
+        type: 0
+        i18n:
+          zh-CN: 使用线程进行写操作时处理的请求数量
+          en-US: IO Threaded Writes Processed
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - replication
+  - name: replication
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 5
+    i18n:
+      zh-CN: 主从同步信息
+      en-US: Replication
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: role
+        type: 1
+        i18n:
+          zh-CN: 节点角色
+          en-US: Role
+      - field: connected_slaves
+        type: 0
+        i18n:
+          zh-CN: 已连接的从节点个数
+          en-US: Connected Slaves
+      - field: master_failover_state
+        type: 1
+        i18n:
+          zh-CN: 主从故障转移状态
+          en-US: Master FailOver State
+      - field: master_replid
+        type: 1
+        i18n:
+          zh-CN: 主从同步id
+          en-US: Master Replid
+      - field: master_replid2
+        type: 0
+        i18n:
+          zh-CN: 主从同步id2
+          en-US: Master Replid2
+      - field: master_repl_offset
+        type: 0
+        i18n:
+          zh-CN: 主节点偏移量
+          en-US: Master Repl Offset
+      - field: second_repl_offset
+        type: 0
+        i18n:
+          zh-CN: 接受主从同步的从节点偏移量
+          en-US: Second Repl Offset
+      - field: repl_backlog_active
+        type: 0
+        i18n:
+          zh-CN: 复制缓冲区状态
+          en-US: Repl Backlog Active
+      - field: repl_backlog_size
+        type: 0
+        i18n:
+          zh-CN: 复制缓冲区大小(字节)
+          en-US: Repl Backlog Size
+      - field: repl_backlog_first_byte_offset
+        type: 0
+        i18n:
+          zh-CN: 复制缓冲区起始偏移量
+          en-US: Repl Backlog First Byte Offset
+      - field: repl_backlog_histlen
+        type: 0
+        i18n:
+          zh-CN: 复制缓冲区的有效数据长度
+          en-US: Repl Backlog Histlen
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - cpu
+  - name: cpu
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 6
+    i18n:
+      zh-CN: CPU消耗信息
+      en-US: CPU
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: used_cpu_sys
+        type: 0
+        i18n:
+          zh-CN: Valkey进程使用的CPU时钟总和(内核态)
+          en-US: Used CPU Sys
+      - field: used_cpu_user
+        type: 0
+        i18n:
+          zh-CN: Valkey进程使用的CPU时钟总和(用户态)
+          en-US: Used CPU User
+      - field: used_cpu_sys_children
+        type: 0
+        i18n:
+          zh-CN: 后台进程使用的CPU时钟总和(内核态)
+          en-US: Used CPU Sys Children
+      - field: used_cpu_user_children
+        type: 0
+        i18n:
+          zh-CN: 后台进程使用的CPU时钟总和(用户态)
+          en-US: Used CPU User Children
+      - field: used_cpu_sys_main_thread
+        type: 0
+        i18n:
+          zh-CN: 主进程使用的CPU时钟总和(内核态)
+          en-US: Used CPU Sys Main Thread
+      - field: used_cpu_user_main_thread
+        type: 0
+        i18n:
+          zh-CN: 主进程使用的CPU时钟总和(用户态)
+          en-US: Used CPU User Main Thread
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - errorstats
+  - name: errorstats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 8
+    i18n:
+      zh-CN: 错误信息
+      en-US: Error Stats
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: errorstat_ERR
+        type: 1
+        i18n:
+          zh-CN: 执行命令时出错的次数
+          en-US: Error Stat Error
+      - field: errorstat_MISCONF
+        type: 1
+        i18n:
+          zh-CN: 执行命令时出现misconf错误的次数
+          en-US: Error Stat Misconf
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - cluster
+  - name: cluster
+    # collect metrics content
+    priority: 9
+    i18n:
+      zh-CN: 集群信息
+      en-US: Cluster
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: cluster_enabled
+        type: 0
+        i18n:
+          zh-CN: 节点是否开启集群模式
+          en-US: Cluster Enabled
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - commandstats
+  - name: commandstats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 9
+    i18n:
+      zh-CN: 命令统计信息
+      en-US: Command Stats
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: cmdstat_set
+        type: 1
+        i18n:
+          zh-CN: set
+          en-US: set
+      - field: cmdstat_get
+        type: 1
+        i18n:
+          zh-CN: get
+          en-US: get
+      - field: cmdstat_setnx
+        type: 1
+        i18n:
+          zh-CN: setnx
+          en-US: setnx
+      - field: cmdstat_hset
+        type: 1
+        i18n:
+          zh-CN: hset
+          en-US: hset
+      - field: cmdstat_hget
+        type: 1
+        i18n:
+          zh-CN: hget
+          en-US: hget
+      - field: cmdstat_lpush
+        type: 1
+        i18n:
+          zh-CN: lpush
+          en-US: lpush
+      - field: cmdstat_rpush
+        type: 1
+        i18n:
+          zh-CN: rpush
+          en-US: rpush
+      - field: cmdstat_lpop
+        type: 1
+        i18n:
+          zh-CN: lpop
+          en-US: lpop
+      - field: cmdstat_rpop
+        type: 1
+        i18n:
+          zh-CN: rpop
+          en-US: rpop
+      - field: cmdstat_llen
+        type: 1
+        i18n:
+          zh-CN: llen
+          en-US: llen
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - keyspace
+  - name: keyspace
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 9
+    i18n:
+      zh-CN: 数据库统计信息
+      en-US: Keyspace
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: db0
+        type: 1
+        i18n:
+          zh-CN: db0
+          en-US: db0
+      - field: db1
+        type: 1
+        i18n:
+          zh-CN: db1
+          en-US: db1
+      - field: db2
+        type: 1
+        i18n:
+          zh-CN: db2
+          en-US: db2
+      - field: db3
+        type: 1
+        i18n:
+          zh-CN: db3
+          en-US: db3
+      - field: db4
+        type: 1
+        i18n:
+          zh-CN: db4
+          en-US: db4
+      - field: db5
+        type: 1
+        i18n:
+          zh-CN: db5
+          en-US: db5
+      - field: db6
+        type: 1
+        i18n:
+          zh-CN: db6
+          en-US: db6
+      - field: db7
+        type: 1
+        i18n:
+          zh-CN: db7
+          en-US: db7
+      - field: db8
+        type: 1
+        i18n:
+          zh-CN: db8
+          en-US: db8
+      - field: db9
+        type: 1
+        i18n:
+          zh-CN: db9
+          en-US: db9
+      - field: db10
+        type: 1
+        i18n:
+          zh-CN: db10
+          en-US: db10
+      - field: db11
+        type: 1
+        i18n:
+          zh-CN: db11
+          en-US: db11
+      - field: db12
+        type: 1
+        i18n:
+          zh-CN: db12
+          en-US: db12
+      - field: db13
+        type: 1
+        i18n:
+          zh-CN: db13
+          en-US: db13
+      - field: db14
+        type: 1
+        i18n:
+          zh-CN: db14
+          en-US: db14
+      - field: db15
+        type: 1
+        i18n:
+          zh-CN: db15
+          en-US: db15
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^

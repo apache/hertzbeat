@@ -146,7 +146,7 @@
   <nz-input-number
     [(ngModel)]="value"
     (ngModelChange)="onChange($event)"
-    [nzMin]="extra.interval_type === 'push' ? 1 : 30"
+    [nzMin]="extra.interval_type === 'push' ? 1 : 10"
     [nzMax]="604800"
     [nzStep]="extra.interval_type === 'push' ? 1 : 60"
     name="intervals"

@@ -8,7 +8,6 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-
 ![hertzBeat](/img/blog/new-committer.png)
 
 Hello everyone, I am very honored to receive an invitation from the community to be nominated as a Committer for Apache HertzBeat. Let me introduce myself briefly. I have been working as a backend developer since 2019, mainly using Java. Currently, I am working at a network security company, focusing on the backend development of network security-related products.

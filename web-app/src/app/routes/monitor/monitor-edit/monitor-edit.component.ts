@@ -72,7 +72,7 @@ export class MonitorEditComponent implements OnInit {
           this.isSpinning = true;
           let id = paramMap.get('monitorId');
           this.monitor.id = Number(id);
-          // 查询监控信息
+          // query monitor by id
           return this.monitorSvc.getMonitor(this.monitor.id);
         })
       )
@@ -190,7 +190,7 @@ export class MonitorEditComponent implements OnInit {
     let addMonitor = {
       detected: this.detected,
       monitor: info.monitor,
-      collector: this.collector,
+      collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
     if (this.detected) {
@@ -220,7 +220,7 @@ export class MonitorEditComponent implements OnInit {
     let detectMonitor = {
       detected: this.detected,
       monitor: info.monitor,
-      collector: this.collector,
+      collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
     this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');

@@ -58,11 +58,6 @@ items:
       }
   expect:
     statusCode: 409
-- name: missing-auth-header
-  request:
-    api: /api/monitors
-  expect:
-    statusCode: 401
 - name: monitorList
   request:
     api: /api/monitors?pageIndex=0&pageSize=8
@@ -70,8 +65,12 @@ items:
       Authorization: Bearer {{.login.data.token}}
   expect:
     bodyFieldsExpect:
-      code: 0
-
+      code: "0"
+- name: missing-auth-header
+  request:
+    api: /api/monitors
+  expect:
+    statusCode: 401
 - name: createSitemapMonitor
   request:
     api: /api/monitor

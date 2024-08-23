@@ -11,14 +11,13 @@ keywords: [ open source monitoring tool, open source SMTP monitoring tool, monit
 通过 SMTP 的 hello 命令确定服务器是否可用
 ```
 
-> 详见 https://datatracker.ietf.org/doc/html/rfc821#page-13
-
+> 详见 <https://datatracker.ietf.org/doc/html/rfc821#page-13>
 
 **协议使用：SMTP**
 
 ### 配置参数
 
-| 参数名称    | 参数帮助描述                                            |
+|  参数名称   |                      参数帮助描述                       |
 |---------|---------------------------------------------------|
 | 监控主机    | 被监控的 IPV4、IPV6 或域名。注意⚠️无需协议头（例如：https://、http://） |
 | 监控名称    | 标识此监控的名称。名称需要保持唯一                                 |
@@ -33,7 +32,7 @@ keywords: [ open source monitoring tool, open source SMTP monitoring tool, monit
 
 #### 指标集：概要
 
-| 指标名称        | 指标单位 | 指标帮助描述            |
+|    指标名称     | 指标单位 |      指标帮助描述       |
 |-------------|------|-------------------|
 | 响应时间        | 毫秒   | SMTP 服务器响应请求所需的时间 |
 | 响应状态        |      | 响应状态              |

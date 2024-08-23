@@ -17,16 +17,25 @@
 
 package org.apache.hertzbeat.warehouse.store.realtime.redis;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * Redis configuration information
  */
-@ConfigurationProperties(prefix = "warehouse.store.redis")
+
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+		+ SignConstants.DOT
+		+ WarehouseConstants.REAL_TIME
+		+ SignConstants.DOT
+		+ WarehouseConstants.RealTimeName.REDIS)
 public record RedisProperties(@DefaultValue("false") boolean enabled,
-                              @DefaultValue("127.0.0.1") String host,
-                              @DefaultValue("6379") Integer port,
+                              @DefaultValue("single") String mode,
+                              @DefaultValue("127.0.0.1:6379") String address,
+                              String masterName,
                               String password,
                               @DefaultValue("0") Integer db) {
 }

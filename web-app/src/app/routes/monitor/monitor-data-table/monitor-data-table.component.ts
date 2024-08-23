@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { finalize } from 'rxjs/operators';
 
@@ -28,7 +28,7 @@ import { MonitorService } from '../../../service/monitor.service';
   templateUrl: './monitor-data-table.component.html',
   styleUrls: ['./monitor-data-table.component.less']
 })
-export class MonitorDataTableComponent implements OnInit {
+export class MonitorDataTableComponent implements OnInit, AfterViewInit {
   @Input()
   get monitorId(): number {
     return this._monitorId;
@@ -36,7 +36,8 @@ export class MonitorDataTableComponent implements OnInit {
   set monitorId(monitorId: number) {
     this._monitorId = monitorId;
     if (this._monitorId && this.metrics) {
-      // 需将monitorId作为输入参数的最后一个  这样在执行loadData时其它入参才有值
+      // Make sure the monitorId is the last input parameter
+      // So that other input parameters are filled in before loadData is executed
       this.loadData();
     }
   }
@@ -52,6 +53,8 @@ export class MonitorDataTableComponent implements OnInit {
   @Input()
   height: string = '100%';
 
+  @ViewChild('targetElement', { static: false }) cardElement!: ElementRef;
+
   time!: any;
   fields!: any[];
   valueRows!: any[];
@@ -59,8 +62,18 @@ export class MonitorDataTableComponent implements OnInit {
   isTable: boolean = true;
   scrollY: string = '100%';
   loading: boolean = false;
+  cardWidth: number = 300;
 
-  constructor(private monitorSvc: MonitorService, private notifySvc: NzNotificationService) {}
+  constructor(private monitorSvc: MonitorService, private notifySvc: NzNotificationService, private cdr: ChangeDetectorRef) {}
+
+  ngAfterViewInit() {
+    if (this.cardElement.nativeElement) {
+      const grandparentElement = this.cardElement.nativeElement.parentElement.parentElement;
+      const grandparentWidth = grandparentElement.clientWidth;
+      this.cardWidth = Math.floor(grandparentWidth / 2) - 4;
+      this.cdr.detectChanges();
+    }
+  }
 
   ngOnInit(): void {
     this.scrollY = `calc(${this.height} - 130px)`;
@@ -68,7 +81,7 @@ export class MonitorDataTableComponent implements OnInit {
 
   loadData() {
     this.loading = true;
-    // 读取实时指标数据
+    // Read real-time metrics data
     let metricData$ = this.monitorSvc
       .getMonitorMetricsData(this.monitorId, this.metrics)
       .pipe(finalize(() => (this.loading = false)))
@@ -79,9 +92,25 @@ export class MonitorDataTableComponent implements OnInit {
             this.time = message.data.time;
             this.fields = message.data.fields;
             this.valueRows = message.data.valueRows;
+            let updateWidth = false;
             if (this.valueRows.length == 1) {
               this.isTable = false;
               this.rowValues = this.valueRows[0].values;
+            } else {
+              if (this.fields?.length >= 5) {
+                updateWidth = true;
+              }
+            }
+            this.valueRows.forEach(row => {
+              row.values.forEach((value: any) => {
+                if (value.origin?.length > 60) {
+                  updateWidth = true;
+                }
+              });
+            });
+            if (updateWidth) {
+              this.cardWidth = this.cardWidth + this.cardWidth;
+              this.cdr.detectChanges();
             }
           } else if (message.code !== 0) {
             this.notifySvc.warning(`${this.metrics}:${message.msg}`, '');

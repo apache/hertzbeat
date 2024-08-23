@@ -18,7 +18,6 @@
  */
 
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
@@ -33,6 +32,7 @@ import { ParamDefine } from '../../../pojo/ParamDefine';
 import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { generateReadableRandomString } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-add',
@@ -49,7 +49,7 @@ export class MonitorNewComponent implements OnInit {
   collectors!: Collector[];
   collector: string = '';
   detected: boolean = false;
-  // 是否显示加载中
+  // whether it is loading
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
   constructor(
@@ -153,11 +153,8 @@ export class MonitorNewComponent implements OnInit {
   }
 
   onHostChange(hostValue: string) {
-    if (this.monitor.app != 'prometheus') {
-      let autoName = `${this.monitor.app.toUpperCase()}_${hostValue}`;
-      if (this.monitor.name == undefined || this.monitor.name == '' || this.monitor.name.startsWith(this.monitor.app.toUpperCase())) {
-        this.monitor.name = autoName;
-      }
+    if (this.monitor.name == undefined || this.monitor.name == '') {
+      this.monitor.name = generateReadableRandomString();
     }
   }
 
@@ -165,7 +162,7 @@ export class MonitorNewComponent implements OnInit {
     let addMonitor = {
       detected: this.detected,
       monitor: info.monitor,
-      collector: this.collector,
+      collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
     if (this.detected) {
@@ -195,7 +192,7 @@ export class MonitorNewComponent implements OnInit {
     let detectMonitor = {
       detected: true,
       monitor: info.monitor,
-      collector: this.collector,
+      collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
     this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');

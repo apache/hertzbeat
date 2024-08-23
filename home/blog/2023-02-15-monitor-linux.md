@@ -8,7 +8,7 @@ tags: [opensource, practice]
 keywords: [Open source monitoring tool, operating system monitoring, Linux monitoring]
 ---
 
-## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Linux operating system, and it will be done in 5 minutes!
+## Use the open source real-time monitoring tool HertzBeat to monitor and alarm the Linux operating system, and it will be done in 5 minutes
 
 ### Introduction to HertzBeat
 
@@ -18,11 +18,11 @@ keywords: [Open source monitoring tool, operating system monitoring, Linux monit
 - It configurable protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. You only need to configure YML to use these protocols to customize and collect any metrics you want to collect. Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
 - HertzBeat's powerful customization, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium teams quickly build their own monitoring tools.
 
-Github: https://github.com/apache/hertzbeat
+Github: <https://github.com/apache/hertzbeat>
 
 ### Get Linux Monitoring Done in HertzBeat in 5 Minutes
 
-#### Prerequisites, you already have a Linux environment and a HertzBeat environment.
+#### Prerequisites, you already have a Linux environment and a HertzBeat environment
 
 - HertzBeat [Installation and deployment documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
@@ -37,7 +37,7 @@ Path: Menu -> Operating System Monitoring -> Linux Operating System -> Add Linux
 2. Configure the parameters required for new monitoring Linux
 
 Fill in the Linux **peer IP**, **SSH port** (default 22), **account password, etc.** on the monitoring page, and finally click OK to add.
-For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document https://hertzbeat.com/docs/help/mysql/
+For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.com/docs/help/mysql/>
 
 ![hertzbeat](/img/blog/monitor-linux-2.png)
 
@@ -81,7 +81,6 @@ Path: Menu -> Threshold Rules -> Add Threshold
 
 ![hertzbeat](/img/blog/monitor-linux-9.png)
 
-
 2. Add message notification recipients
 
 > Configure the receiver to let the alarm message know who to send and how to send it.
@@ -90,7 +89,7 @@ Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
 
 Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk to configure the robot on DingTalk and set the security custom keyword `HertzBeat `, get the corresponding `access_token` value.
+- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
 - Configure the receiver parameters in HertzBeat as follows.
 
 【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
@@ -102,7 +101,6 @@ Message notification methods support **email, DingTalk, WeChat Work, Feishu, Web
 > Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
-
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
@@ -129,14 +127,14 @@ This practical article took us to experience how to use the open source real-tim
 ## What is Hertz Beat?
 
 > [HertzBeat Hertz Beat](https://github.com/apache/hertzbeat) is a real-time monitoring and alarm system with powerful custom monitoring capabilities and no Agent required. Monitoring of application services, databases, operating systems, middleware, cloud native, etc., threshold alarms, and alarm notifications (email, WeChat, Dingding, Feishu, SMS, Discord, Slack, Telegram).
-
+>
 > We make protocol specifications such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure YML to use these protocols to customize and collect any metrics you want to collect.
 > Do you believe that you can immediately adapt to a new monitoring type such as K8s or Docker just by configuring YML?
-
+>
 > The powerful customization of `HertzBeat`, multi-type support, easy expansion, and low coupling, hope to help developers and small and medium-sized teams quickly build their own monitoring tools.
 
-**Github: https://github.com/apache/hertzbeat**
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ## ⛄ Supported
 

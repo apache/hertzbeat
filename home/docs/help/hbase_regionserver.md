@@ -4,6 +4,7 @@ title: Monitoring HBase RegionServer Monitoring
 sidebar_label: HBase RegionServer Monitoring  
 keywords: [Open-source monitoring system, Open-source database monitoring, RegionServer monitoring]
 ---
+
 > Collect and monitor common performance metrics for HBase RegionServer.
 
 **Protocol:** HTTP
@@ -14,13 +15,12 @@ Review the `hbase-site.xml` file to obtain the value of the `hbase.regionserver.
 
 ## Configuration Parameters
 
-
-| Parameter Name      | Parameter Description                                                                                                                              |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Target Host         | The IPV4, IPV6, or domain name of the monitored entity. Note ⚠️ Do not include the protocol header (e.g., https://, http://).                    |
+|   Parameter Name    |                                                               Parameter Description                                                                |
+|---------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Target Host         | The IPV4, IPV6, or domain name of the monitored entity. Note ⚠️ Do not include the protocol header (e.g., https://, http://).                      |
 | Port                | The port number of the HBase regionserver, default is 16030, i.e., the value of the`hbase.regionserver.info.port` parameter                        |
 | Task Name           | A unique name to identify this monitoring task.                                                                                                    |
-| Query Timeout       | Set the connection timeout in ms, the default is 3000 milliseconds.                                                                         |
+| Query Timeout       | Set the connection timeout in ms, the default is 3000 milliseconds.                                                                                |
 | Collection Interval | The interval time for periodic data collection in seconds, with a minimum interval of 30 seconds.                                                  |
 | Probe Before Adding | Whether to probe and check the availability of monitoring before adding new monitoring, only proceed with the addition if the probe is successful. |
 | Description Note    | Additional notes to identify and describe this monitoring, users can add notes here.                                                               |
@@ -31,9 +31,8 @@ Review the `hbase-site.xml` file to obtain the value of the `hbase.regionserver.
 
 #### Metric Set: server
 
-
-| Metric Name                       | Unit  | Metric Description                                                        |
-| --------------------------------- | ----- | ------------------------------------------------------------------------- |
+|            Metric Name            | Unit  |                            Metric Description                             |
+|-----------------------------------|-------|---------------------------------------------------------------------------|
 | regionCount                       | None  | Number of Regions                                                         |
 | readRequestCount                  | None  | Number of read requests since cluster restart                             |
 | writeRequestCount                 | None  | Number of write requests since cluster restart                            |
@@ -74,9 +73,8 @@ Review the `hbase-site.xml` file to obtain the value of the `hbase.regionserver.
 
 #### Metric Set: IPC
 
-
-| Metric Name               | Unit | Metric Description                     |
-| ------------------------- | ---- | -------------------------------------- |
+|        Metric Name        | Unit |           Metric Description           |
+|---------------------------|------|----------------------------------------|
 | numActiveHandler          | None | Current number of RITs                 |
 | NotServingRegionException | None | Number of RITs exceeding the threshold |
 | RegionMovedException      | ms   | Duration of the oldest RIT             |
@@ -84,9 +82,8 @@ Review the `hbase-site.xml` file to obtain the value of the `hbase.regionserver.
 
 #### Metric Set: JVM
 
-
-| Metric Name          | Unit | Metric Description                |
-| -------------------- | ---- | --------------------------------- |
+|     Metric Name      | Unit |        Metric Description         |
+|----------------------|------|-----------------------------------|
 | MemNonHeapUsedM      | None | Current active RegionServer list  |
 | MemNonHeapCommittedM | None | Current offline RegionServer list |
 | MemHeapUsedM         | None | Zookeeper list                    |

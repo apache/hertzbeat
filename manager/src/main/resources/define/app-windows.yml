@@ -110,29 +110,59 @@ params:
 metrics:
   # metrics - system
   - name: system
+    i18n:
+      zh-CN: 系统
+      en-US: System
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
     fields:
       - field: name
         type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Name
       - field: descr
         type: 1
+        i18n:
+          zh-CN: 描述
+          en-US: Description
       - field: uptime
         type: 1
+        i18n:
+          zh-CN: 运行时间
+          en-US: Uptime
       - field: numUsers
         type: 0
+        i18n:
+          zh-CN: 用户数
+          en-US: Number of Users
       - field: services
         type: 0
+        i18n:
+          zh-CN: 服务数
+          en-US: Number of Services
       - field: processes
         type: 0
+        i18n:
+          zh-CN: 进程数
+          en-US: Number of Processes
       - field: responseTime
         type: 0
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
         unit: ms
       - field: location
         type: 1
+        i18n:
+          zh-CN: 位置
+          en-US: Location
       - field: memory
         type: 0
+        i18n:
+          zh-CN: 内存
+          en-US: Memory
         unit: GB
     units:
       - memory=KB->GB
@@ -155,28 +185,58 @@ metrics:
         memory: 1.3.6.1.2.1.25.2.2.0
 
   - name: processes
+    i18n:
+      zh-CN: 进程
+      en-US: Processes
     priority: 1
     fields:
       - field: hrSWRunIndex
         type: 0
+        i18n:
+          zh-CN: 进程 Index
+          en-US: Process Index
       - field: hrSWRunName
         type: 1
+        i18n:
+          zh-CN: 进程名称
+          en-US: Process Name
         label: true
       - field: hrSWRunID
         type: 1
+        i18n:
+          zh-CN: 进程 ID
+          en-US: Process ID
       - field: hrSWRunPath
         type: 1
+        i18n:
+          zh-CN: 进程路径
+          en-US: Process Path
       - field: hrSWRunParameters
         type: 1
+        i18n:
+          zh-CN: 进程参数
+          en-US: Process Parameters
       - field: hrSWRunType
         type: 0
+        i18n:
+          zh-CN: 进程类型
+          en-US: Process Type
       - field: hrSWRunStatus
         type: 0
+        i18n:
+          zh-CN: 进程状态
+          en-US: Process Status
       - field: hrSWRunPerfCPU
         type: 0
+        i18n:
+          zh-CN: 进程占用 CPU
+          en-US: Process CPU
         unit: 's'
       - field: hrSWRunPerfMem
         type: 0
+        i18n:
+          zh-CN: 进程占用内存
+          en-US: Process Memory
         unit: 'KB'
     calculates:
       - hrSWRunPerfCPU = hrSWRunPerfCPU / 100
@@ -200,19 +260,37 @@ metrics:
         hrSWRunPerfMem: 1.3.6.1.2.1.25.5.1.1.2
 
   - name: services
+    i18n:
+      zh-CN: 服务
+      en-US: Services
     priority: 1
     fields:
       - field: svSvcName
         type: 1
+        i18n:
+          zh-CN: 服务名称
+          en-US: Service Name
         label: true
       - field: svSvcInstalledState
         type: 0
+        i18n:
+          zh-CN: 服务安装状态
+          en-US: Service Installed State
       - field: svSvcOperatingState
         type: 0
+        i18n:
+          zh-CN: 服务运行状态
+          en-US: Service Operating State
       - field: svSvcCanBeUninstalled
         type: 0
+        i18n:
+          zh-CN: 服务是否可以被卸载
+          en-US: Service Can Be Uninstalled
       - field: svSvcCanBePaused
         type: 0
+        i18n:
+          zh-CN: 服务是否可以被暂停
+          en-US: Service Can Be Paused
     protocol: snmp
     snmp:
       host: ^_^host^_^
@@ -229,17 +307,32 @@ metrics:
         svSvcCanBePaused: 1.3.6.1.4.1.77.1.2.3.1.5
 
   - name: installed
+    i18n:
+      zh-CN: 安装
+      en-US: Installed
     priority: 1
     fields:
       - field: hrSWInstalledIndex
         type: 0
+        i18n:
+          zh-CN: 安装 Index
+          en-US: Installed Index
       - field: hrSWInstalledName
         type: 1
+        i18n:
+          zh-CN: 安装名称
+          en-US: Installed Name
         label: true
       - field: hrSWInstalledID
         type: 1
+        i18n:
+          zh-CN: 安装 ID
+          en-US: Installed ID
       - field: hrSWInstalledType
         type: 0
+        i18n:
+          zh-CN: 安装类型
+          en-US: Installed Type
     protocol: snmp
     snmp:
       host: ^_^host^_^
@@ -255,12 +348,21 @@ metrics:
         hrSWInstalledType: 1.3.6.1.2.1.25.6.3.1.4
 
   - name: cpu
+    i18n:
+      zh-CN: CPU
+      en-US: CPU
     priority: 1
     fields:
       - field: hrProcessorFrwID
         type: 1
+        i18n:
+          zh-CN: 处理器 ID
+          en-US: Processor ID
       - field: hrProcessorLoad
         type: 0
+        i18n:
+          zh-CN: 处理器负载
+          en-US: Processor Load
         unit: '%'
     protocol: snmp
     snmp:
@@ -275,24 +377,45 @@ metrics:
         hrProcessorLoad: 1.3.6.1.2.1.25.3.3.1.2
 
   - name: storages
+    i18n:
+      zh-CN: 存储
+      en-US: Storages
     priority: 1
     fields:
       - field: index
         type: 0
+        i18n:
+          zh-CN: 存储 Index
+          en-US: Storage Index
       - field: descr
         type: 1
+        i18n:
+          zh-CN: 存储描述
+          en-US: Storage Description
         label: true
       - field: size
+        i18n:
+          zh-CN: 存储大小
+          en-US: Storage Size
         type: 0
         unit: MB
       - field: free
         type: 0
+        i18n:
+          zh-CN: 存储空闲
+          en-US: Storage Free
         unit: MB
       - field: used
         type: 0
+        i18n:
+          zh-CN: 存储占用
+          en-US: Storage Used
         unit: MB
       - field: usage
         type: 0
+        i18n:
+          zh-CN: 存储使用率
+          en-US: Storage Usage
         unit: '%'
     # (Not required) Monitor indicator alias, which maps to the indicator name above. The field used to collect interface data is not directly the final indicator name, and this alias is required for mapping translation
     aliasFields:
@@ -329,16 +452,31 @@ metrics:
         hrStorageAllocationUnits: 1.3.6.1.2.1.25.2.3.1.4
 
   - name: disk
+    i18n:
+      zh-CN: 磁盘
+      en-US: Disk
     priority: 2
     fields:
       - field: hrDiskStorageAccess
         type: 0
+        i18n:
+          zh-CN: 磁盘存储访问
+          en-US: Disk Storage Access
       - field: hrDiskStorageMedia
         type: 0
+        i18n:
+          zh-CN: 磁盘存储介质
+          en-US: Disk Storage Media
       - field: hrDiskStorageRemoveble
         type: 0
+        i18n:
+          zh-CN: 磁盘存储是否可移动
+          en-US: Disk Storage Removeble
       - field: hrDiskStorageCapacity
         type: 0
+        i18n:
+          zh-CN: 磁盘存储容量
+          en-US: Disk Storage Capacity
         unit: MB
     units:
       - hrDiskStorageCapacity=KB->MB
@@ -357,10 +495,16 @@ metrics:
         hrDiskStorageCapacity: 1.3.6.1.2.1.25.3.6.1.4
 
   - name: network
+    i18n:
+      zh-CN: 网络
+      en-US: Network
     priority: 3
     fields:
       - field: number
         type: 1
+        i18n:
+          zh-CN: 编号
+          en-US: Number
     protocol: snmp
     snmp:
       host: ^_^host^_^
@@ -372,41 +516,80 @@ metrics:
         number: 1.3.6.1.2.1.2.1.0
 
   - name: interfaces
+    i18n:
+      zh-CN: 接口
+      en-US: Interfaces
     priority: 4
     fields:
       - field: index
         type: 0
+        i18n:
+          zh-CN: 序号
+          en-US: Index
       - field: descr
         type: 1
+        i18n:
+          zh-CN: 描述
+          en-US: Description
         label: true
       - field: mtu
         type: 0
+        i18n:
+          zh-CN: 最大传输单元
+          en-US: MTU
         unit: 'byte'
       - field: speed
         type: 0
+        i18n:
+          zh-CN: 速度
+          en-US: Speed
         unit: 'KB/s'
       - field: in_octets
         type: 0
+        i18n:
+          zh-CN: 输入字节数
+          en-US: In Octets
         unit: 'byte'
       - field: in_discards
         type: 0
+        i18n:
+          zh-CN: 输入丢弃数
+          en-US: In Discards
         unit: 'package'
       - field: in_errors
         type: 0
+        i18n:
+          zh-CN: 输入错误数
+          en-US: In Errors
         unit: 'package'
       - field: out_octets
         type: 0
+        i18n:
+          zh-CN: 输出字节数
+          en-US: Out Octets
         unit: 'byte'
       - field: out_discards
         type: 0
+        i18n:
+          zh-CN: 输出丢弃数
+          en-US: Out Discards
         unit: 'package'
       - field: out_errors
         type: 0
+        i18n:
+          zh-CN: 输出错误数
+          en-US: Out Errors
         unit: 'package'
       - field: admin_status
         type: 1
+        i18n:
+          zh-CN: 管理状态
+          en-US: Admin Status
       - field: oper_status
         type: 1
+        i18n:
+          zh-CN: 运行状态
+          en-US: Oper Status
     aliasFields:
       - ifIndex
       - ifDescr
@@ -456,15 +639,27 @@ metrics:
         ifOperStatus: 1.3.6.1.2.1.2.2.1.8
 
   - name: devices
+    i18n:
+      zh-CN: 设备
+      en-US: Devices
     priority: 4
     fields:
       - field: index
         type: 1
+        i18n:
+          zh-CN: 序号
+          en-US: Index
         label: true
       - field: descr
         type: 1
+        i18n:
+          zh-CN: 描述
+          en-US: Description
       - field: status
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
     aliasFields:
       - hrDeviceIndex
       - hrDeviceDescr

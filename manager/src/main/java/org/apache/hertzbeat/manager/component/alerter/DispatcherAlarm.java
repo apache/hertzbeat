@@ -104,7 +104,7 @@ public class DispatcherAlarm implements InitializingBean {
     }
 
     private NoticeReceiver getOneReceiverById(Long id) {
-        return noticeConfigService.getOneReceiverById(id);
+        return noticeConfigService.getReceiverById(id);
     }
 
     private NoticeTemplate getOneTemplateById(Long id) {
@@ -135,6 +135,7 @@ public class DispatcherAlarm implements InitializingBean {
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     log.error(e.getMessage());
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);
@@ -143,21 +144,19 @@ public class DispatcherAlarm implements InitializingBean {
         }
 
         private void sendNotify(Alert alert) {
-            matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> {
-                noticeRules.forEach(rule -> {
-                    workerPool.executeNotify(() -> {
-                        rule.getReceiverId()
-                            .forEach(receiverId -> {
-                                try {
-                                    sendNoticeMsg(getOneReceiverById(receiverId),
-                                        getOneTemplateById(rule.getTemplateId()), alert);
-                                } catch (AlertNoticeException e) {
-                                    log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
-                                }
-                            });
-                    });
+            matchNoticeRulesByAlert(alert).ifPresent(noticeRules -> noticeRules.forEach(rule -> {
+                workerPool.executeNotify(() -> {
+                    rule.getReceiverId()
+                        .forEach(receiverId -> {
+                            try {
+                                sendNoticeMsg(getOneReceiverById(receiverId),
+                                    getOneTemplateById(rule.getTemplateId()), alert);
+                            } catch (AlertNoticeException e) {
+                                log.warn("DispatchTask sendNoticeMsg error, message: {}", e.getMessage());
+                            }
+                        });
                 });
-            });
+            }));
         }
     }
 
