@@ -97,7 +97,7 @@ metrics:
           zh-CN: 型号
           en-US: Info
       - field: cores
-        type: 0
+        type: 1
         i18n:
           zh-CN: 核数
           en-US: Cores
@@ -155,7 +155,7 @@ metrics:
     priority: 2
     fields:
       - field: total
-        type: 0
+        type: 1
         unit: Mb
         i18n:
           zh-CN: 总内存容量
@@ -217,12 +217,12 @@ metrics:
     priority: 3
     fields:
       - field: disk_num
-        type: 0
+        type: 1
         i18n:
           zh-CN: 磁盘总数
           en-US: Disk Num
       - field: partition_num
-        type: 0
+        type: 1
         i18n:
           zh-CN: 分区总数
           en-US: Partition Num

@@ -9,7 +9,7 @@ keywords: [ 开源监控系统, InfluxDB监控,InfluxDB-PromQL监控 ]
 
 ### 配置参数
 
-| 参数名称         | 参数帮助描述                                               |
+|     参数名称     |                        参数帮助描述                        |
 |--------------|------------------------------------------------------|
 | 监控Host       | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
 | 任务名称         | 标识此监控的名称，名称需要保证唯一性。                                  |
@@ -28,7 +28,7 @@ keywords: [ 开源监控系统, InfluxDB监控,InfluxDB-PromQL监控 ]
 
 #### 指标集合：basic_influxdb_memstats_alloc
 
-| 指标名称      | 指标单位 | 指标帮助描述  |
+|   指标名称    | 指标单位 | 指标帮助描述  |
 |-----------|------|---------|
 | instance  | 无    | 指标所属实例  |
 | timestamp | 无    | 采集指标时间戳 |
@@ -36,7 +36,7 @@ keywords: [ 开源监控系统, InfluxDB监控,InfluxDB-PromQL监控 ]
 
 #### 指标集合： influxdb_database_numMeasurements
 
-| 指标名称      | 指标单位 | 指标帮助描述  |
+|   指标名称    | 指标单位 | 指标帮助描述  |
 |-----------|------|---------|
 | job       | 无    | 指标名称    |
 | instance  | 无    | 指标所属实例  |
@@ -46,7 +46,7 @@ keywords: [ 开源监控系统, InfluxDB监控,InfluxDB-PromQL监控 ]
 
 #### 指标集合： influxdb_query_rate_seconds
 
-| 指标名称      | 指标单位 | 指标帮助描述  |
+|   指标名称    | 指标单位 | 指标帮助描述  |
 |-----------|------|---------|
 | instance  | 无    | 指标所属实例  |
 | timestamp | 无    | 采集指标时间戳 |
@@ -54,10 +54,8 @@ keywords: [ 开源监控系统, InfluxDB监控,InfluxDB-PromQL监控 ]
 
 #### 指标集合： influxdb_queryExecutor_queriesFinished_10s
 
-| 指标名称      | 指标单位 | 指标帮助描述  |
+|   指标名称    | 指标单位 | 指标帮助描述  |
 |-----------|------|---------|
 | instance  | 无    | 指标所属实例  |
 | timestamp | 无    | 采集指标时间戳 |
 | value     | 无    | 指标值     |
-
-

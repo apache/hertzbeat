@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
 ---
 
-### Monitoring practice for API gateway Apache ShenYu using HertzBeat, 5 minutes!
+### Monitoring practice for API gateway Apache ShenYu using HertzBeat, 5 minutes
 
 ### Introduction to Apache ShenYu
 
@@ -22,33 +22,32 @@ tags: [opensource, practice]
 - Clustering: NGINX, Docker, Kubernetes
 - Languages: .NET, Python, Go, Java clients available for API registration
 
-
 ### HertzBeat Introduction
 
-> HertzBeat is an open source, easy to use and friendly real-time monitoring tool, no Agent, with powerful custom monitoring capabilities.    
-> Support for application services, database, operating system, middleware, cloud native monitoring, threshold alarms, alarm notification (email WeChat Nail Flybook).    
+> HertzBeat is an open source, easy to use and friendly real-time monitoring tool, no Agent, with powerful custom monitoring capabilities.
+> Support for application services, database, operating system, middleware, cloud native monitoring, threshold alarms, alarm notification (email WeChat Nail Flybook).
 > HertzBeat's powerful customization, multi-type support, easy to extend, low-coupling, hope to help developers and small and medium-sized teams to quickly build their own monitoring system.
 
-### Monitor Apache ShenYu in HertzBeat in 5 minutes!
+### Monitor Apache ShenYu in HertzBeat in 5 minutes
 
-#### You must have a ShenYu environment and a HertzBeat environment.
+#### You must have a ShenYu environment and a HertzBeat environment
 
 - ShenYu [Deployment and Installation Documentation](https://shenyu.apache.org/zh/docs/deployment/deployment-before)
 - HertzBeat [Deployment and Installation Documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### i. Enable the `metrics` plugin on the ShenYu side, which will provide the metrics interface data.
+#### i. Enable the `metrics` plugin on the ShenYu side, which will provide the metrics interface data
 
-> The plugin is the core implementer of the Apache ShenYu gateway, and metrics data collection is also integrated at `ShenYu` in the form of a plugin - `Metrics Plugin`.     
+> The plugin is the core implementer of the Apache ShenYu gateway, and metrics data collection is also integrated at `ShenYu` in the form of a plugin - `Metrics Plugin`.
 > The `Metrics plugin` is used by the gateway to monitor its own operational status (`JVM` related), request responses and other related metrics.
 
 1. Add the `metrics plugin` dependency to the `pom.xml` file of the gateway.
 
 ```xml
-        <dependency>
-            <groupId>org.apache.shenyu</groupId>
-            <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
-            <version>${project.version}</version>
-        </dependency>
+<dependency>
+    <groupId>org.apache.shenyu</groupId>
+    <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
+    <version>${project.version}</version>
+</dependency>
 ```
 
 2. `metric` plugin Capture is turned off by default, edit the following in the gateway's configuration `yaml` file:
@@ -77,8 +76,8 @@ Path: Menu -> Middleware Monitor -> ShenYu Monitor -> Add ShenYu Monitor
 
 2. Configure the parameters required for monitoring ShenYu
 
-On the monitor page, fill in ShenYu **service IP**, **monitor port** (default 8090), and click OK to add.   
-For other parameters such as **collection interval**, **timeout**, etc., you can refer to the [help file](https://hertzbeat.com/docs/help/shenyu/) https://hertzbeat.com/docs/help/shenyu/
+On the monitor page, fill in ShenYu **service IP**, **monitor port** (default 8090), and click OK to add.
+For other parameters such as **collection interval**, **timeout**, etc., you can refer to the [help file](https://hertzbeat.com/docs/help/shenyu/) <https://hertzbeat.com/docs/help/shenyu/>
 
 ![hertzbeat](/img/blog/monitor-shenyu-1.png)
 
@@ -97,6 +96,7 @@ For other parameters such as **collection interval**, **timeout**, etc., you can
 ![hertzbeat](/img/blog/monitor-shenyu-6.png)
 
 **DONE! With the above steps, it's really only two steps**
+
 - **The first step is to enable the `metrics` plugin on the ShenYu side**.
 - **The second step is to configure the IP ports on the HertzBeat monitoring page to add monitoring
 
@@ -114,10 +114,9 @@ Of course, just looking at it is not perfect, monitoring is often accompanied by
 Path: Menu -> Alert Thresholds -> Add Thresholds
 
 - There are a lot of metrics in ShenYu monitoring, for example, we will set the threshold for the `number of open file descriptors` `process_open_fds` -> `value` metric, which will alert you when the number of open file descriptors on the server side is greater than 3,000.
-- Here we configure an alert to be issued when the `value' of `process_open_fds` exceeds 3000, with an alert level of **Warning alert**, which is triggered three times, as shown in the following figure.
+- Here we configure an alert to be issued when the `value' of`process_open_fds` exceeds 3000, with an alert level of **Warning alert**, which is triggered three times, as shown in the following figure.
 
 ![hertzbeat](/img/blog/monitor-shenyu-7.png)
-
 
 2. Add message notification recipients
 
@@ -127,7 +126,7 @@ Path: Menu -> Alert Notification -> Alert Recipients -> Add New Recipient.
 
 Message notification methods support **Email, Nail, WeChat, Flybook, WebHook, SMS**, etc. Here we take the commonly used Nail as an example.
 
-- Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk Configure the bot on the pinning side, set the security customization keyword ` HertzBeat`, get the corresponding `access_token` value.
+- Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> Configure the bot on the pinning side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
 - Configure the recipient parameters in HertzBeat as follows.
 
 [Alert Notification] -> [Add Recipient] -> [Select Nailed Bot Notification Method] -> [Set Nailed Bot ACCESS_TOKEN] -> [OK]
@@ -140,8 +139,7 @@ Message notification methods support **Email, Nail, WeChat, Flybook, WebHook, SM
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
 
-
-### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding.
+### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding
 
 ```
 [HertzBeat Alert Notification]
@@ -159,10 +157,10 @@ Details : Please note that the number of file descriptors opened by ⚠️ ShenY
 This hands-on article takes us through how to use HertzBeat to monitor Apache ShenYu metrics data, and we can find that HertzBeat, which combines ``Monitoring-Alert-Notification``, is much more convenient to operate and use, and you can include ShenYu in the monitoring by simply clicking on a page. There is no need to deploy multiple components and write multiple YML configuration files.  
 :::
 
-Apache ShenYu Github: https://github.com/apache/shenyu        
-HertzBeat Github: https://github.com/apache/hertzbeat
+Apache ShenYu Github: <https://github.com/apache/shenyu>
+HertzBeat Github: <https://github.com/apache/hertzbeat>
 
-**Welcome to learn about using Star Support Oh! **
+**Welcome to learn about using Star Support Oh!**
 
-Experience heartbeat with a single docker command:   
+Experience heartbeat with a single docker command:
 `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`

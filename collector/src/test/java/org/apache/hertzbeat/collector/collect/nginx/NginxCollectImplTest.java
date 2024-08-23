@@ -307,7 +307,7 @@ public class NginxCollectImplTest {
                 4 4 2
                 Reading: 0 Writing: 1 Waiting: 1""";
 
-        // 使用正则表达式匹配并提取所需的键和对应的值
+        // Use regular expressions to match and extract the required keys and corresponding values
         Pattern keyValuePattern = Pattern.compile("(\\w+): (\\d+)");
         Matcher keyValueMatcher = keyValuePattern.matcher(status);
 
@@ -318,7 +318,7 @@ public class NginxCollectImplTest {
             System.out.println(key + ": " + value);
         }
 
-        // 使用正则表达式匹配并提取"accepts"、"handled"和"requests"的键和对应的值
+        // Use regular expressions to match and extract the keys and corresponding values for "accepts", "handled", and "requests".
         Pattern valuesPattern = Pattern.compile("server\\s+(\\w+)\\s+(\\w+)\\s+(\\w+)");
         Matcher valuesMatcher = valuesPattern.matcher(status);
 

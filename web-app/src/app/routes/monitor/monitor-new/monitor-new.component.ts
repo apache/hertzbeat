@@ -18,7 +18,6 @@
  */
 
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
@@ -33,6 +32,7 @@ import { ParamDefine } from '../../../pojo/ParamDefine';
 import { AppDefineService } from '../../../service/app-define.service';
 import { CollectorService } from '../../../service/collector.service';
 import { MonitorService } from '../../../service/monitor.service';
+import { generateReadableRandomString } from '../../../shared/utils/common-util';
 
 @Component({
   selector: 'app-monitor-add',
@@ -153,11 +153,8 @@ export class MonitorNewComponent implements OnInit {
   }
 
   onHostChange(hostValue: string) {
-    if (this.monitor.app != 'prometheus') {
-      let autoName = `${this.monitor.app.toUpperCase()}_${hostValue}`;
-      if (this.monitor.name == undefined || this.monitor.name == '' || this.monitor.name.startsWith(this.monitor.app.toUpperCase())) {
-        this.monitor.name = autoName;
-      }
+    if (this.monitor.name == undefined || this.monitor.name == '') {
+      this.monitor.name = generateReadableRandomString();
     }
   }
 

@@ -469,6 +469,9 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/QBH-insist"><img src="https://avatars.githubusercontent.com/u/39401478?v=4?s=100" width="100px;" alt="QBH-insist"/><br /><sub><b>QBH-insist</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=QBH-insist" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jiangsh-ui"><img src="https://avatars.githubusercontent.com/u/86990361?v=4?s=100" width="100px;" alt="jiangsh"/><br /><sub><b>jiangsh</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jiangsh-ui" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/keaifafafa"><img src="https://avatars.githubusercontent.com/u/83876361?v=4?s=100" width="100px;" alt="Keaifa"/><br /><sub><b>Keaifa</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=keaifafafa" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/loong95"><img src="https://avatars.githubusercontent.com/u/16333958?v=4?s=100" width="100px;" alt="Loong"/><br /><sub><b>Loong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=loong95" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ceekay47"><img src="https://avatars.githubusercontent.com/u/104664857?v=4?s=100" width="100px;" alt="Chandrakant Vankayalapati"/><br /><sub><b>Chandrakant Vankayalapati</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ceekay47" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MRgenial"><img src="https://avatars.githubusercontent.com/u/49973336?v=4?s=100" width="100px;" alt="b_mountain"/><br /><sub><b>b_mountain</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=MRgenial" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -521,6 +524,15 @@ CNCF Observability And Analysis - Monitoring Landscape.</a>
 
 [![Star History Chart](https://api.star-history.com/svg?repos=apache/hertzbeat&type=Date)](https://star-history.com/#apache/hertzbeat&Date)
 
+## Contributors
+
+### Monthly Active Contributors
+
+[![Monthly Active Contributors](https://contributor-overtime-api.git-contributor.com/contributors-svg?chart=contributorMonthlyActivity&repo=apache/hertzbeat)](https://git-contributor.com?chart=contributorMonthlyActivity&repo=apache/hertzbeat)
+
+### GitHub Contributor Over Time
+
+[![GitHub Contributor Over Time](https://contributor-overtime-api.git-contributor.com/contributors-svg?chart=contributorOverTime&repo=apache/hertzbeat)](https://git-contributor.com?chart=contributorOverTime&repo=apache/hertzbeat)
 
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)

@@ -10,7 +10,7 @@ keywords: [open source monitoring tool, open source port monitoring tool, monito
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                               |
+|   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️ Without protocol header (eg: https://, http://).                             |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique.                                                       |
@@ -26,9 +26,6 @@ keywords: [open source monitoring tool, open source port monitoring tool, monito
 
 #### Metric set：summary
 
-| Metric name   | Metric unit       | Metric help description |
+|  Metric name  |    Metric unit    | Metric help description |
 |---------------|-------------------|-------------------------|
 | Response Time | Milliseconds (ms) | Website response time   |
-
-
-

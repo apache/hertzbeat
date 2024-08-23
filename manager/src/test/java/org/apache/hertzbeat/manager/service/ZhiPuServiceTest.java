@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import org.apache.hertzbeat.manager.service.impl.ZhiPuServiceImpl;
+import org.apache.hertzbeat.manager.service.ai.ZhiPuServiceImpl;
 
 /**
  * test case for {@link ZhiPuServiceImpl}

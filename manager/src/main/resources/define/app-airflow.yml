@@ -35,7 +35,7 @@ params:
   - field: host
     # name-param field display i18n name
     name:
-      zh-CN: 服务器Host
+      zh-CN: 服务器 Host
       en-US: Target Host
     # type-param field type(most mapping the html input type)
     type: host
@@ -76,23 +76,23 @@ params:
 metrics:
   - name: airflow_health
     i18n:
-      zh-CN: airflow健康状态
+      zh-CN: airflow 健康状态
       en-US: airflow health status
     priority: 0
     fields:
       - field: metadatabase
         i18n:
-          zh-CN: metadatabase健康情况
+          zh-CN: metadatabase 健康情况
           en-US: metadatabase status
         type: 1
       - field: scheduler
         i18n:
-          zh-CN: scheduler健康情况
+          zh-CN: scheduler 健康情况
           en-US: scheduler status
         type: 1
       - field: triggerer
         i18n:
-          zh-CN: triggerer健康情况
+          zh-CN: triggerer 健康情况
           en-US: triggerer status
         type: 1
     aliasFields:
@@ -120,13 +120,13 @@ metrics:
 
   - name: airflow_version
     i18n:
-      zh-CN: Airflow版本
+      zh-CN: Airflow 版本
       en-US: airflow version
     priority: 1
     fields:
       - field: version
         i18n:
-          zh-CN: Airflow版本
+          zh-CN: Airflow 版本
           en-US: Airflow version
         type: 1
       - field: git_version

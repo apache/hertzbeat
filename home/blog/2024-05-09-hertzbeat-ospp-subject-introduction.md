@@ -8,16 +8,14 @@ HertzBeat is a powerful custom monitoring capabilities, high-performance cluster
 
 - Set **monitoring + alarm + notification** as a whole, support for application services, applications, database, cache, operating system, big data, middleware, Web server, cloud native, network, custom and other monitoring threshold alarm notification in one step.
 - Easy to use and friendly, no `Agent`, full `WEB` page operation, a mouse click can monitor alarms, zero hand learning costs.
-- Protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. can be configured, and the monitoring template YML can be configured in the browser to use these protocols to customize the desired metrics. Do you believe that you can immediately adapt a new monitoring type such as` K8s` or `Docker` just by configuring it?
+- Protocol specifications such as Http, Jmx, Ssh, Snmp, Jdbc, Prometheus, etc. can be configured, and the monitoring template YML can be configured in the browser to use these protocols to customize the desired metrics. Do you believe that you can immediately adapt a new monitoring type such as`K8s` or `Docker` just by configuring it?
 - Compatible with Prometheus` ecosystem and more, only page operations can monitor what Prometheus can monitor.
 - High-performance, supports horizontal expansion of multiple collector clusters, supports multi-isolated network monitoring, and cloud edge collaboration.
 - Free alarm threshold rules, `mail,` `Discord,` `Slack,` `Telegram,` `Dingding,` `wechat,` `Feibook,` `SMS,` `Webhook,` `Server sauce,` and other ways to send messages in a timely manner.
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
-
-
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ## What is Open Source Summer?
 
@@ -39,8 +37,6 @@ Open Source Summer Website:
 
 Students are free to choose the project, communicate with the community mentor to realize the plan and write the project plan. The selected students will complete the development work as planned under the guidance of community mentors and contribute the results to the community. The community evaluates the student`s completion, and the sponsor distributes the financial aid to the student based on the evaluation results.
 
-
-
 ## HertzBeat project
 
 ### 1、 the realization of monitoring template market store
@@ -52,8 +48,6 @@ Capture the metrics we want to monitor. Some different users may have different 
 the yml configuration may not satisfy every user, so our goal is to let users contribute their own yml template to benefit more people.
 This can not only make the ecology of `HertzBeat` more perfect, but also make the user experience better!
 
-
-
 **Requirements:**
 
 1. Use Java17, springboot3 to write the back-end code, Angular(recommended) or Vue to write the front-end code.
@@ -61,19 +55,13 @@ This can not only make the ecology of `HertzBeat` more perfect, but also make th
 3. The template page displays the number of downloads, categories, template description, and (optional) template versions.
 4. Realize user personal page registration, login (later), upload template.
 
-
-
 **Output:**
 
 1. Feature code can be incorporated into the HertzBeat repository as PR.
 2. Complete the HertzBeat official template market
 3. Update the help documents
 
-
-
 **Contact Tutor:** Qingran Zhao [zqr10159@dromara.org](mailto:zqr10159@dromara.org)
-
-
 
 ### 2、 implementation of Java native ipmi2 communication protocol
 
@@ -84,18 +72,13 @@ middleware monitoring without Agent. In order for HertzBeat to have a wider moni
 package, the implementation of the native IPMI2 protocol in the query part, and use the protocol to obtain server motherboard information, network card information, power supply information, fan information,
 temperature sensor information and clock information.
 
-
-
 **Requirements:**
 
 1. Use Java to implement the native IPMI2 protocol (query part) based on the UDP protocol, without relying on any third-party package.
 2. Use the implemented IPMI2 protocol to query indicators of the IPMI enabled server, including mainboard information, network adapter information, power supply information, and fan information
-alarm, temperature sensor information and clock information.
-
+   alarm, temperature sensor information and clock information.
 3. Abstract and standardize the queried indicator information to implement configuration management (optional).
 4. Output detailed project documents, including design ideas, implementation details, usage instructions, etc.
-
-
 
 **Output:**
 
@@ -107,11 +90,7 @@ alarm, temperature sensor information and clock information.
 
 - Improve help documentation.
 
-
-
 **Contact Tutor:** Tiejia Xiaobao [tjxiaobao2024@qq.com](mailto:tjxiaobao2024@qq.com)
-
-
 
 ## What can you gain by participating in HertzBeat?
 

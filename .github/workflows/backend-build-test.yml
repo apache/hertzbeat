@@ -22,7 +22,7 @@ name: Backend CI
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ master, dev, action* ]
     paths-ignore:
       - '**.md'
       - 'home/**'
@@ -42,7 +42,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up JDK 17
       uses: actions/setup-java@v1
       with:
@@ -55,15 +55,12 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Build Image
-      env:
-        IMAGE_PUSH: false
-        IMAGE_LOAD: true
-        IMAGE_PLATFORM: linux/amd64
-      run: |
-        docker buildx create --use --name myBuilder --driver docker-container
-        docker buildx use myBuilder
-        
-        ./script/docker/server/build.sh
+      uses: docker/build-push-action@v3
+      with:
+        context: ./dist
+        file: ./script/docker/server/Dockerfile
+        push: false
+        tags: apache/hertzbeat:test
 
     - name: Run E2E
       run: |
@@ -75,9 +72,11 @@ jobs:
         sudo docker-compose up --exit-code-from testing --remove-orphans
 
     # upload application logs
-    - name: Upload logs
+    - name: Upload logs & API test reports
       uses: actions/upload-artifact@v3
       if: always()
       with:
         name: hz-logs-${{ github.run_id }}
-        path: e2e/logs/
+        path: |
+          e2e/logs/
+          e2e/report/

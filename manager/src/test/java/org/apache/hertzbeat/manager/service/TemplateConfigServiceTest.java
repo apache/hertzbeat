@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.manager.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
@@ -88,7 +89,7 @@ class TemplateConfigServiceTest {
 	void testType() {
 
 		String type = templateConfigServiceImpl.type();
-		assertEquals("template", type);
+		assertEquals(GeneralConfigTypeEnum.template.name(), type);
 	}
 
 }

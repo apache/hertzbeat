@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import org.apache.hertzbeat.manager.service.impl.AlibabaAiServiceImpl;
+import org.apache.hertzbeat.manager.service.ai.AlibabaAiServiceImpl;
 
 /**
  * test case for {@link AlibabaAiServiceImpl}

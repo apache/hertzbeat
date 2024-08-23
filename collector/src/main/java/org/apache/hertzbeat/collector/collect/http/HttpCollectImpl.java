@@ -48,12 +48,14 @@ import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusP
 import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreator;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.ExporterParser;
 import org.apache.hertzbeat.collector.collect.http.promethus.exporter.MetricFamily;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
 import org.apache.hertzbeat.collector.util.TimeExpressionUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -81,6 +83,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.w3c.dom.Document;
@@ -115,7 +118,7 @@ public class HttpCollectImpl extends AbstractCollect {
             httpProtocol.setUrl(StringUtils.hasText(url) ? RIGHT_DASH + url.trim() : RIGHT_DASH);
         }
         if (CollectionUtils.isEmpty(httpProtocol.getSuccessCodes())) {
-            httpProtocol.setSuccessCodes(List.of("200"));
+            httpProtocol.setSuccessCodes(List.of(HttpStatus.SC_OK + ""));
         }
 
         HttpContext httpContext = createHttpContext(metrics.getHttp());
@@ -126,7 +129,7 @@ public class HttpCollectImpl extends AbstractCollect {
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
                 builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("StatusCode " + statusCode);
+                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return;
             }
             // todo This code converts an InputStream directly to a String. For large data in Prometheus exporters,
@@ -229,7 +232,7 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     private void addColumnForSummary(Long responseTime, CollectRep.ValueRow.Builder valueRowBuilder, int keywordNum, String alias) {
-        if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+        if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
             valueRowBuilder.addColumns(responseTime.toString());
         } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
             valueRowBuilder.addColumns(Integer.toString(keywordNum));
@@ -304,14 +307,14 @@ public class HttpCollectImpl extends AbstractCollect {
             long responseTime = System.currentTimeMillis() - startTime;
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
-                if (CollectorConstants.URL.equalsIgnoreCase(alias)) {
+                if (NetworkConstants.URL.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(siteUrl);
-                } else if (CollectorConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
+                } else if (NetworkConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(statusCode == null
                             ? CommonConstants.NULL_VALUE : String.valueOf(statusCode));
-                } else if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                } else if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(String.valueOf(responseTime));
-                } else if (CollectorConstants.ERROR_MSG.equalsIgnoreCase(alias)) {
+                } else if (NetworkConstants.ERROR_MSG.equalsIgnoreCase(alias)) {
                     valueRowBuilder.addColumns(errorMsg);
                 } else {
                     valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
@@ -360,7 +363,7 @@ public class HttpCollectImpl extends AbstractCollect {
             } else if (objectValue instanceof String stringValue) {
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : aliasFields) {
-                    if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
+                    if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(responseTime.toString());
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumns(Integer.toString(keywordNum));
@@ -511,8 +514,8 @@ public class HttpCollectImpl extends AbstractCollect {
         }
         // The default request header can be overridden if customized
         // keep-alive
-        requestBuilder.addHeader(HttpHeaders.CONNECTION, "keep-alive");
-        requestBuilder.addHeader(HttpHeaders.USER_AGENT, "Mozilla/5.0 (Windows NT 6.1; WOW64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36");
+        requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
+        requestBuilder.addHeader(HttpHeaders.USER_AGENT, NetworkConstants.USER_AGENT);
         // headers  The custom request header is overwritten here
         Map<String, String> headers = httpProtocol.getHeaders();
         if (headers != null && !headers.isEmpty()) {
@@ -526,11 +529,11 @@ public class HttpCollectImpl extends AbstractCollect {
         // add accept
         if (DispatchConstants.PARSE_DEFAULT.equals(httpProtocol.getParseType())
                 || DispatchConstants.PARSE_JSON_PATH.equals(httpProtocol.getParseType())) {
-            requestBuilder.addHeader(HttpHeaders.ACCEPT, "application/json");
+            requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
         } else if (DispatchConstants.PARSE_XML_PATH.equals(httpProtocol.getParseType())) {
-            requestBuilder.addHeader(HttpHeaders.ACCEPT, "text/xml,application/xml");
+            requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.TEXT_HTML_VALUE + "," + MediaType.APPLICATION_XML_VALUE);
         } else {
-            requestBuilder.addHeader(HttpHeaders.ACCEPT, "*/*");
+            requestBuilder.addHeader(HttpHeaders.ACCEPT, MediaType.ALL_VALUE);
         }
 
         if (httpProtocol.getAuthorization() != null) {
@@ -560,14 +563,14 @@ public class HttpCollectImpl extends AbstractCollect {
             requestBuilder.setUri(httpProtocol.getHost() + ":" + httpProtocol.getPort() + uri);
         } else {
             String ipAddressType = IpDomainUtil.checkIpAddressType(httpProtocol.getHost());
-            String baseUri = CollectorConstants.IPV6.equals(ipAddressType)
+            String baseUri = NetworkConstants.IPV6.equals(ipAddressType)
                     ? String.format("[%s]:%s%s", httpProtocol.getHost(), httpProtocol.getPort(), uri)
                     : String.format("%s:%s%s", httpProtocol.getHost(), httpProtocol.getPort(), uri);
             boolean ssl = Boolean.parseBoolean(httpProtocol.getSsl());
             if (ssl) {
-                requestBuilder.setUri(CollectorConstants.HTTPS_HEADER + baseUri);
+                requestBuilder.setUri(NetworkConstants.HTTPS_HEADER + baseUri);
             } else {
-                requestBuilder.setUri(CollectorConstants.HTTP_HEADER + baseUri);
+                requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
             }
         }
 

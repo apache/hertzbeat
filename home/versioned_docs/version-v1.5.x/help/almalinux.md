@@ -4,14 +4,14 @@ title: Monitoring AlmaLinux Operating System Monitoring
 sidebar_label: AlmaLinux Operating System
 keywords: [open-source monitoring system, open-source operating system monitoring, AlmaLinux operating system monitoring]
 ---
+
 > Collect and monitor common performance metrics of the AlmaLinux operating system.
 
 ### Configuration Parameters
 
-
-| Parameter Name    | Parameter Help Description                                                                                                            |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Monitoring Host   | The monitored peer's IPv4, IPv6, or domain name. Note ⚠️ No protocol header (e.g., https://, http://).                              |
+|  Parameter Name   |                                                      Parameter Help Description                                                       |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| Monitoring Host   | The monitored peer's IPv4, IPv6, or domain name. Note ⚠️ No protocol header (e.g., https://, http://).                                |
 | Task Name         | A unique name to identify this monitoring task.                                                                                       |
 | Port              | The port provided by Linux SSH, default is 22.                                                                                        |
 | Timeout           | Set the connection timeout in milliseconds, default is 6000 ms.                                                                       |
@@ -28,18 +28,16 @@ keywords: [open-source monitoring system, open-source operating system monitorin
 
 #### Metric Set: Basic System Information
 
-
-| Metric Name    | Metric Unit | Metric Help Description  |
-| -------------- | ----------- | ------------------------ |
+|  Metric Name   | Metric Unit | Metric Help Description  |
+|----------------|-------------|--------------------------|
 | Host Name      | None        | Host name                |
 | System Version | None        | Operating system version |
 | Uptime         | None        | Uptime                   |
 
 #### Metric Set: CPU Information
 
-
-| Metric Name    | Metric Unit | Metric Help Description           |
-| -------------- | ----------- | --------------------------------- |
+|  Metric Name   | Metric Unit |      Metric Help Description      |
+|----------------|-------------|-----------------------------------|
 | info           | None        | CPU model                         |
 | cores          | Cores       | Number of CPU cores               |
 | interrupt      | Count       | Number of CPU interrupts          |
@@ -49,9 +47,8 @@ keywords: [open-source monitoring system, open-source operating system monitorin
 
 #### Metric Set: Memory Information
 
-
-| Metric Name | Metric Unit | Metric Help Description             |
-| ----------- | ----------- | ----------------------------------- |
+| Metric Name | Metric Unit |       Metric Help Description       |
+|-------------|-------------|-------------------------------------|
 | total       | Mb          | Total memory capacity               |
 | used        | Mb          | Memory used by user programs        |
 | free        | Mb          | Free memory capacity                |
@@ -61,9 +58,8 @@ keywords: [open-source monitoring system, open-source operating system monitorin
 
 #### Metric Set: Disk Information
 
-
-| Metric Name   | Metric Unit | Metric Help Description                |
-| ------------- | ----------- | -------------------------------------- |
+|  Metric Name  | Metric Unit |        Metric Help Description         |
+|---------------|-------------|----------------------------------------|
 | disk_num      | Count       | Total number of disks                  |
 | partition_num | Count       | Total number of partitions             |
 | block_write   | Blocks      | Total number of blocks written to disk |
@@ -72,18 +68,16 @@ keywords: [open-source monitoring system, open-source operating system monitorin
 
 #### Metric Set: Network Card Information
 
-
-| Metric Name    | Metric Unit | Metric Help Description       |
-| -------------- | ----------- | ----------------------------- |
+|  Metric Name   | Metric Unit |    Metric Help Description    |
+|----------------|-------------|-------------------------------|
 | interface_name | None        | Network card name             |
 | receive_bytes  | Byte        | Inbound data traffic (bytes)  |
 | transmit_bytes | Byte        | Outbound data traffic (bytes) |
 
 #### Metric Set: File System
 
-
 | Metric Name | Metric Unit | Metric Help Description |
-| ----------- | ----------- | ----------------------- |
+|-------------|-------------|-------------------------|
 | filesystem  | None        | Name of the file system |
 | used        | Mb          | Used disk size          |
 | available   | Mb          | Available disk size     |
@@ -94,9 +88,8 @@ keywords: [open-source monitoring system, open-source operating system monitorin
 
 Statistics for the top 10 processes using the CPU. Statistics include: process ID, CPU usage, memory usage, and executed command.
 
-
 | Metric Name | Metric Unit | Metric Help Description |
-| ----------- | ----------- | ----------------------- |
+|-------------|-------------|-------------------------|
 | pid         | None        | Process ID              |
 | cpu_usage   | %           | CPU usage               |
 | mem_usage   | %           | Memory usage            |
@@ -106,9 +99,8 @@ Statistics for the top 10 processes using the CPU. Statistics include: process I
 
 Statistics for the top 10 processes using memory. Statistics include: process ID, memory usage, CPU usage, and executed command.
 
-
 | Metric Name | Metric Unit | Metric Help Description |
-| ----------- | ----------- | ----------------------- |
+|-------------|-------------|-------------------------|
 | pid         | None        | Process ID              |
 | mem_usage   | %           | Memory usage            |
 | cpu_usage   | %           | CPU usage               |

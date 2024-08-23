@@ -53,6 +53,7 @@ export class MonitorDataTableComponent implements OnInit {
   @Input()
   height: string = '100%';
 
+  showModal!: boolean;
   time!: any;
   fields!: any[];
   valueRows!: any[];

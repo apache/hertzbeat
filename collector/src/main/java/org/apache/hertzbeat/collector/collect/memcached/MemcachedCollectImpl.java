@@ -32,8 +32,8 @@ import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
@@ -48,7 +48,6 @@ public class MemcachedCollectImpl extends AbstractCollect {
 
     private static final String STATS = "stats";
     private static final String STATS_SETTINGS = "stats settings";
-    private static final String STATS_ITEMS = "stats items";
     private static final String STATS_SIZES = "stats sizes";
     private static final String STATS_END_RSP = "END";
 

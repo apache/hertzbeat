@@ -25,12 +25,11 @@ Refer to the official website document [Sending messages using Incoming Webhooks
 
 ![email](/img/docs/help/alert-notice-policy.png)
 
-
 ### Slack Notification FAQ
 
 1. Slack did not receive the robot warning notification
 
-> Please check whether the alarm information has been triggered in the alarm center   
-> Please check whether the slack webhook url are configured correctly, and whether the alarm policy association has been configured   
+> Please check whether the alarm information has been triggered in the alarm center
+> Please check whether the slack webhook url are configured correctly, and whether the alarm policy association has been configured
 
 Other questions can be fed back through the communication group ISSUE!

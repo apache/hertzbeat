@@ -90,7 +90,6 @@ class NoticeConfigControllerTest {
         noticeReceiver.setEmail("2762242004@qq.com");
         noticeReceiver.setHookUrl("https://www.tancloud.cn");
         noticeReceiver.setType((byte) 5);
-
         return noticeReceiver;
 
     }
@@ -264,7 +263,6 @@ class NoticeConfigControllerTest {
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                //.andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))
                 .andReturn();
     }
 
