@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, open source NTP monitoring tool, monito
 
 NTP监控的中文文档如下：
 
-# NTP监控
+## NTP监控
 
 > 收集和监控NTP的常规性能指标。
 

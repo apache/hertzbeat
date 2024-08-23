@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 
 **Protocol Use：DNS**
 
-### Configuration parameter
+## Configuration parameter
 
 |   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|
@@ -24,9 +24,9 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 | Bind Tags           | Used to classify and manage monitoring resources.                                                                        |
 | Description remarks | For more information about identifying and describing this monitoring, users can note information here.                  |
 
-### Collection Metrics
+## Collection Metrics
 
-#### Metrics Set：Header
+### Metrics Set：Header
 
 |       Metric name       | Metric unit |              Metric help description              |
 |-------------------------|-------------|---------------------------------------------------|
