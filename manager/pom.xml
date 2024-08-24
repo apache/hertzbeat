@@ -29,14 +29,6 @@
 
     <properties>
         <maven.install.skip>true</maven.install.skip>
-        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
-        <nekohtml.version>1.9.22</nekohtml.version>
-        <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
-        <warehouse.version>1.0</warehouse.version>
-        <easy-poi.version>4.3.0</easy-poi.version>
-        <huawei.sdk.version>3.1.37</huawei.sdk.version>
-        <huawei.obs.version>3.23.5</huawei.obs.version>
     </properties>
 
     <dependencies>
