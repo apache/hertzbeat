@@ -176,7 +176,7 @@ public class RedfishCollectImpl extends AbstractCollect {
         if (!StringUtils.hasText(resp)) {
             return;
         }
-        List<String> aliasFields = metrics.getAliasFields();
+        List<String> aliasFields = metrics.getRedfish().getJsonPath();
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
             List<Object> res = JsonPathParser.parseContentWithJsonPath(resp, alias);
