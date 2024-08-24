@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -24,9 +26,10 @@ import org.springframework.stereotype.Component;
  * Collector info configuration Properties
  */
 @Component
-@ConfigurationProperties(prefix = CollectorInfoProperties.INFO_PREFIX)
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.COLLECTOR
+        + SignConstants.DOT
+        + ConfigConstants.FunctionModuleConstants.INFO)
 public class CollectorInfoProperties {
-    protected static final String INFO_PREFIX = "collector.info";
 
     private String version;
     private String ip;

@@ -18,8 +18,8 @@
 package org.apache.hertzbeat.manager.controller;
 
 import org.apache.hertzbeat.manager.config.AiProperties;
-import org.apache.hertzbeat.manager.service.AiService;
-import org.apache.hertzbeat.manager.service.impl.AiServiceFactoryImpl;
+import org.apache.hertzbeat.manager.service.ai.AiService;
+import org.apache.hertzbeat.manager.service.ai.factory.AiServiceFactoryImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

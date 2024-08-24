@@ -105,6 +105,64 @@ metrics:
       parseType: jsonPath
       parseScript: '$'
 
+  - name: node
+    i18n:
+      zh-CN: 节点信息
+      en-US: Node Info
+    priority: 0
+    fields:
+      - field: uri
+        type: 1
+        i18n:
+          zh-CN: 节点链接
+          en-US: Node Uri
+      - field: recentRequests
+        type: 0
+        i18n:
+          zh-CN: 最近一段时间内的请求数量
+          en-US: Recent Requests
+      - field: recentFailures
+        type: 0
+        i18n:
+          zh-CN: 最近一段时间内的失败请求数量
+          en-US: Recent Failures
+      - field: recentSuccesses
+        type: 0
+        i18n:
+          zh-CN: 最近一段时间内的成功请求数量
+          en-US: Recent Successes
+      - field: lastRequestTime
+        type: 1
+        i18n:
+          zh-CN: 最近一次请求的时间
+          en-US: Last Request Time
+      - field: lastResponseTime
+        type: 1
+        i18n:
+          zh-CN: 最近一次响应的时间
+          en-US: Last Response Time
+      - field: age
+        type: 0
+        i18n:
+          zh-CN: 持续时间
+          en-US: Age
+      - field: recentFailureRatio
+        type: 0
+        i18n:
+          zh-CN: 最近一段时间内的失败
+          en-US: Recent Failure Ratio
+
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /v1/node
+      timeout: ^_^timeout^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$[*]'
+
   - name: status
     i18n:
       zh-CN: 节点状态

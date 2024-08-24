@@ -9,7 +9,7 @@ keywords: [ Open Source Monitoring System, Open Source Operating System Monitori
 
 ### Configuration Parameters
 
-| Parameter Name      | Parameter help description                                                                                                   |
+|   Parameter Name    |                                                  Parameter help description                                                  |
 |---------------------|------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | The IPv4, IPv6, or domain name of the monitored peer. Note ⚠️ without the protocol header (eg: https://, http://).           |
 | Task Name           | Identifies the name of this monitor, ensuring uniqueness of the name.                                                        |
@@ -28,7 +28,7 @@ keywords: [ Open Source Monitoring System, Open Source Operating System Monitori
 
 #### Metric Set: Basic Info
 
-| Metric Name    | Metric Unit | Metric help description  |
+|  Metric Name   | Metric Unit | Metric help description  |
 |----------------|-------------|--------------------------|
 | Host Name      | None        | Host name                |
 | System Version | None        | Operating system version |
@@ -36,7 +36,7 @@ keywords: [ Open Source Monitoring System, Open Source Operating System Monitori
 
 #### Metric Set: CPU Info
 
-| Metric Name    | Metric Unit | Metric help description                      |
+|  Metric Name   | Metric Unit |           Metric help description            |
 |----------------|-------------|----------------------------------------------|
 | info           | None        | CPU model                                    |
 | cores          | Number      | Number of CPU cores                          |

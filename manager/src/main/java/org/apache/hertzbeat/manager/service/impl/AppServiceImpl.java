@@ -130,7 +130,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 List<Param> params = paramDao.findParamsByMonitorId(monitorId);
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getParamValue(),
-                                param.getType())).collect(Collectors.toList());
+                                param.getType())).toList();
                 Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
                 CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
                 metricsTmp.add(metric);
@@ -197,10 +197,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             if (appDefine == null) {
                 throw new IllegalArgumentException("The app " + app + " not support.");
             }
-            metricNames.addAll(appDefine.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
+            metricNames.addAll(appDefine.getMetrics().stream().map(Metrics::getName).toList());
         } else {
             appDefines.forEach((k, v) ->
-                    metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList())));
+                    metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).toList()));
         }
         return metricNames;
     }

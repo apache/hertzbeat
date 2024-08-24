@@ -29,7 +29,6 @@ import org.springframework.stereotype.Component;
 @Component
 public final class TimeLengthConvert implements UnitConvert {
 
-
     @Override
     public String convert(String value, String originUnit, String newUnit) {
         if (value == null || value.isEmpty()) {

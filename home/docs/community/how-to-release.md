@@ -22,11 +22,12 @@ This release process is operated in the UbuntuOS(Windows,Mac), and the following
 ## 2. Preparing for release
 
 > First summarize the account information to better understand the operation process, will be used many times later.
-- apache id: `muchunjin (APACHE LDAP UserName)`
-- apache passphrase: `APACHE LDAP Passphrase`
-- apache email: `muchunjin@apache.org`
-- gpg real name: `muchunjin (Any name can be used, here I set it to the same name as the apache id)`
-- gpg key passphrase: `The password set when creating the gpg key, you need to remember this password`
+>
+> - apache id: `muchunjin (APACHE LDAP UserName)`
+> - apache passphrase: `APACHE LDAP Passphrase`
+> - apache email: `muchunjin@apache.org`
+> - gpg real name: `muchunjin (Any name can be used, here I set it to the same name as the apache id)`
+> - gpg key passphrase: `The password set when creating the gpg key, you need to remember this password`
 
 ### 2.1 Key generation
 
@@ -128,12 +129,12 @@ gpg: Total number processed: 1
 gpg:              unchanged: 1
 ```
 
-Or enter https://keyserver.ubuntu.com/ address in the browser, enter the name of the key and click 'Search key' to search if existed.
+Or enter <https://keyserver.ubuntu.com/> address in the browser, enter the name of the key and click 'Search key' to search if existed.
 
 #### 2.4 Add the gpg public key to the KEYS file of the Apache SVN project repo
 
-- Apache HertzBeat Branch Dev https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
-- Apache HertzBeat Branch Release https://dist.apache.org/repos/dist/release/incubator/hertzbeat
+- Apache HertzBeat Branch Dev <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat>
+- Apache HertzBeat Branch Release <https://dist.apache.org/repos/dist/release/incubator/hertzbeat>
 
 ##### 2.4.1 Add public key to KEYS in dev branch
 
@@ -165,10 +166,11 @@ $ (gpg --list-sigs muchunjin@apache.org && gpg --export --armor muchunjin@apache
 $ svn ci -m "add gpg key for muchunjin"
 ```
 
-## 3. Prepare material package & release 
+## 3. Prepare material package & release
 
-#### 3.1 Based on the master branch, create a release-${release_version}-rcx branch, such as release-1.6.0-rc1, And create a tag named v1.6.0-rc1 based on the release-1.6.0-rc1 branch, and set this tag as pre-release.
+### Build Package
 
+#### 3.1 Based on the master branch, create a release-${release_version}-rcx branch, such as release-1.6.0-rc1, And create a tag named v1.6.0-rc1 based on the release-1.6.0-rc1 branch, and set this tag as pre-release
 
 ```shell
 git checkout master
@@ -227,6 +229,8 @@ release-1.6.0-rc1
 ```
 
 The archive package is here `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
+
+### Sign package
 
 #### 3.5 Sign binary and source packages
 
@@ -292,7 +296,7 @@ apache-hertzbeat-collector-1.6.0-incubating-bin.tar.gz: OK
 
 #### 3.7 Publish the dev directory of the Apache SVN material package
 
-- Clone the dev directory 
+- Clone the dev directory
 
 ```shell
 # Check out the dev directory of the Apache SVN to the svn/dev directory under dist in the root directory of the Apache HertzBeat project
@@ -329,18 +333,17 @@ svn commit -m "release for HertzBeat 1.6.0"
 
 - Check Apache SVN Commit Results
 
-> Visit the address https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/ in the browser, check if existed the new material package
-
+> Visit the address <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1/> in the browser, check if existed the new material package
 
 ## 4. Enter the community voting stage
 
-#### 4.1 Send a Community Vote Email
+### 4.1 Send a Community Vote Email
 
 Send a voting email in the community requires at least three `+1` and no `-1`.
 
-> `Send to`: dev@hertzbeat.apache.org <br />
+> `Send to`: <dev@hertzbeat.apache.org> <br />
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
-> `Body`: 
+> `Body`:
 
 ```
 Hello HertzBeat Community:
@@ -394,7 +397,7 @@ Thanks!
 
 After 72 hours, the voting results will be counted, and the voting result email will be sent, as follows.
 
-> `Send to`: dev@hertzbeat.apache.org <br />
+> `Send to`: <dev@hertzbeat.apache.org> <br />
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
@@ -403,8 +406,7 @@ Dear HertzBeat community,
 
 Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
 I'm happy to announce the vote has passed:
-
-
+---
 4 binding +1, from:
 
 - cc
@@ -412,29 +414,26 @@ I'm happy to announce the vote has passed:
 1 non-binding +1, from:
 
 - Roc Marshal
-
-
+---
 no 0 or -1 votes.
 
 Vote thread:
 https://lists.apache.org/thread/t01b2lbtqzyt7j4dsbdp5qjc3gngjsdq
-
-
+---
 Thank you to everyone who helped us to verify and vote for this release. We will move to the ASF Incubator voting shortly.
-
-
+---
 Best,
 ChunJin Mu
 ```
 
-One item of the email content is `Vote thread`, and the link is obtained here: https://lists.apache.org/list.html?dev@hertzbeat.apache.org
+One item of the email content is `Vote thread`, and the link is obtained here: <https://lists.apache.org/list.html?dev@hertzbeat.apache.org>
 
 #### 3.2 Send Incubator Community voting mail
 
 Send a voting email in the incubator community requires at least three `+1` and no `-1`.
 
-> `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org、private@hertzbeat.apache.org <br />
+> `Send to`: <general@incubator.apache.org> <br />
+> `cc`: <dev@hertzbeat.apache.org>、<private@hertzbeat.apache.org> <br />
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
@@ -474,24 +473,21 @@ More detailed checklist please refer:
 Steps to validate the release， Please refer to:
 • https://www.apache.org/info/verification.html
 • https://hertzbeat.apache.org/docs/community/how_to_verify_release
-
-
+---
 How to Build:
 https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package
-
-
+---
 Thanks,
 
 On behalf of Apache HertzBeat (incubating) community
-
-
+---
 Best,
 ChunJin Mu
 ```
 
 If there is no -1 after 72 hours, reply to the email as follows
 
-> `Send to`: general@incubator.apache.org <br />
+> `Send to`: <general@incubator.apache.org> <br />
 > `Body`:
 
 ```
@@ -503,7 +499,7 @@ Chunjin Mu
 
 Then the voting results will be counted, and the voting result email will be sent, as follows.
 
-> `Send to`: general@incubator.apache.org <br />
+> `Send to`: <general@incubator.apache.org> <br />
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
@@ -529,13 +525,13 @@ Best,
 ChunJin Mu
 ```
 
-One item of the email content is `Vote thread`, and the link is obtained here: https://lists.apache.org/list.html?general@incubator.apache.org
+One item of the email content is `Vote thread`, and the link is obtained here: <https://lists.apache.org/list.html?general@incubator.apache.org>
 
 Wait a day to see if the tutor has any other comments, if not, send the following announcement email
 
-## 4. Complete the final publishing steps
+## 5. Complete the final publishing steps
 
-#### 4.1 Migrating source and binary packages
+### 5.1 Migrating source and binary packages
 
 ```shell
 svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/1.6.0  -m "transfer packages for 1.6.0-RC1"
@@ -543,13 +539,12 @@ svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 http
 
 #### 4.2 Add the new version download address to the official website
 
-https://github.com/apache/hertzbeat/blob/master/home/docs/download.md
-https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md
+<https://github.com/apache/hertzbeat/blob/master/home/docs/download.md>
+<https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md>
 
+Open the official website address <https://hertzbeat.apache.org/docs/download/> to see if there is a new version of the download
 
-Open the official website address https://hertzbeat.apache.org/docs/download/ to see if there is a new version of the download
 > It should be noted that the download link may take effect after an hour, so please pay attention to it.
-
 
 #### 4.3 Generate a release on github
 
@@ -560,11 +555,15 @@ You can modify it on the original RC Release without creating a new Release.
 :::
 
 Then enter Release Title and Describe
-- Release Title: 
+
+- Release Title:
+
 ```
 v1.6.0
 ```
+
 - Describe:
+
 ```
 xxx
 release note: xxx
@@ -576,8 +575,8 @@ The rename the release-1.6.0-rc1 branch to release-1.6.0.
 
 #### 4.5 Send new version announcement email
 
-> `Send to`: general@incubator.apache.org <br />
-> `cc`: dev@hertzbeat.apache.org <br />
+> `Send to`: <general@incubator.apache.org> <br />
+> `cc`: <dev@hertzbeat.apache.org> <br />
 > `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
@@ -601,11 +600,9 @@ https://hertzbeat.apache.org/
 HertzBeat Resources:
 - Issue: https://github.com/apache/hertzbeat/issues
 - Mailing list: dev@hertzbeat.apache.org
-
-
+---
 Apache HertzBeat Team
-
-
+---
 Best,
 ChunJin Mu
 ```
@@ -614,4 +611,4 @@ This version release is over.
 
 ---
 
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
+This doc refer from [Apache StreamPark](https://streampark.apache.org/)

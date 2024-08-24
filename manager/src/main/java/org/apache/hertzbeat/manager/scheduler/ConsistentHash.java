@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 
 /**
@@ -215,7 +216,7 @@ public class ConsistentHash {
      * @return collector node
      */
     public Node dispatchJob(String dispatchKey, Long jobId) {
-        if (dispatchKey == null || "".equals(dispatchKey)) {
+        if (dispatchKey == null || StringUtils.isBlank(dispatchKey)) {
             log.error("The dispatch key can not null.");
             return null;
         }
@@ -230,7 +231,7 @@ public class ConsistentHash {
      * @return collector node
      */
     public Node preDispatchJob(String dispatchKey) {
-        if (dispatchKey == null || "".equals(dispatchKey)) {
+        if (dispatchKey == null || StringUtils.isBlank(dispatchKey)) {
             log.error("The dispatch key can not null.");
             return null;
         }

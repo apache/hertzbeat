@@ -323,10 +323,6 @@ public class Metrics {
          */
         private byte type = 1;
         /**
-         * Whether this field is the instance
-         */
-        private boolean instance = false;
-        /**
          * Whether this field is the label
          */
         private boolean label = false;

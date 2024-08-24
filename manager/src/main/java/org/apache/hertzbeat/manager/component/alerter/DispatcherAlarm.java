@@ -104,7 +104,7 @@ public class DispatcherAlarm implements InitializingBean {
     }
 
     private NoticeReceiver getOneReceiverById(Long id) {
-        return noticeConfigService.getOneReceiverById(id);
+        return noticeConfigService.getReceiverById(id);
     }
 
     private NoticeTemplate getOneTemplateById(Long id) {
@@ -135,6 +135,7 @@ public class DispatcherAlarm implements InitializingBean {
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     log.error(e.getMessage());
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);

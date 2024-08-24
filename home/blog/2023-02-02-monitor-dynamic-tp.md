@@ -7,16 +7,15 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource, practice]
 ---
 
-## Monitoring practice for thread pooling framework DynamicTp using HertzBeat, 5 minutes!
+## Monitoring practice for thread pooling framework DynamicTp using HertzBeat, 5 minutes
 
-### Introducing DynamicTp, the thread pooling framework.
+### Introducing DynamicTp, the thread pooling framework
 
 > DynamicTp is a lightweight configuration-centric dynamic thread pool in Jvm with built-in monitoring and alerting capabilities, which can be customized through SPI extensions.
 
 - Support for dynamic modification of the running thread pool parameters , real-time effective .
 - Real-time monitoring of the running status of the thread pool, alarms are triggered when the alarm policy is set, and alarm information is pushed to the office platform.
 - Collect thread pool metrics data regularly, and use grafana as a visual monitoring platform to monitor the overall situation.
-
 
 ### HertzBeat Introduction
 
@@ -26,14 +25,14 @@ tags: [opensource, practice]
 - Its Http, Jmx, Ssh, Snmp, Jdbc, Prometheus and other protocol specifications configurable, just configure YML can use these protocols to customize the collection of any metrics you want to collect. Would you believe that you can instantly adapt a new monitoring type such as K8s or Docker by simply configuring YML?
 - HertzBeat's powerful customization, multi-type support, easy scalability, and low coupling will hopefully help developers and small to medium sized teams to quickly build their own monitoring systems.
 
-### Monitor DynamicTp in 5 minutes at HertzBeat!
+### Monitor DynamicTp in 5 minutes at HertzBeat
 
-#### operation, you already have a DynamicTp environment and a HertzBeat environment.
+#### operation, you already have a DynamicTp environment and a HertzBeat environment
 
 - DynamicTp [Integration Access Documentation](https://dynamictp.cn/guide/use/quick-start.html)
 - HertzBeat [Deployment and Installation Documentation](https://hertzbeat.com/docs/start/docker-deploy)
 
-#### i. Expose the `DynamicTp` metrics interface `/actuator/dynamic-tp` on the DynamicTp side, which will provide the metrics interface data.
+#### i. Expose the `DynamicTp` metrics interface `/actuator/dynamic-tp` on the DynamicTp side, which will provide the metrics interface data
 
 1. Enable the SpringBoot Actuator Endpoint to expose the `DynamicTp` metrics interface.
 
@@ -89,8 +88,8 @@ Path: Menu -> Middleware Monitor -> DynamicTp Monitor -> Add DynamicTp Monitor
 
 2. Configure the parameters required for monitoring DynamicTp.
 
-On the monitor page, fill in DynamicTp **service IP**, **monitoring port** (default 8080), and finally click OK to add it.   
-For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.com/docs/help/dynamic_tp/) https://hertzbeat.com/docs/help/dynamic_tp/
+On the monitor page, fill in DynamicTp **service IP**, **monitoring port** (default 8080), and finally click OK to add it.
+For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.com/docs/help/dynamic_tp/) <https://hertzbeat.com/docs/help/dynamic_tp/>
 
 ![hertzbeat](/img/blog/monitor-dynamic-tp-2.png)
 
@@ -109,6 +108,7 @@ For other parameters such as **collection interval**, **timeout**, etc., you can
 ![hertzbeat](/img/blog/monitor-dynamic-tp-5.png)
 
 **DONE! With the above steps, it's really just two steps**
+
 - **The first step is to expose the DynamicTp `metrics` endpoint `/actuator/dynamic-tp`**.
 - **The second step is to configure the IP ports on the HertzBeat monitoring page to add the monitoring**
 
@@ -130,7 +130,6 @@ Path: Menu -> Alert Thresholds -> Add Thresholds
 
 ![hertzbeat](/img/blog/monitor-dynamic-tp-6.png)
 
-
 2. Add message notification recipients
 
 > Configure recipients to let alert message know who to send to and in what way.
@@ -139,7 +138,7 @@ Path: Menu -> Alert Notification -> Alert Recipient -> Add Recipient.
 
 Message notification methods support **Email, Dingtalk, WeChat, Flybook, WebHook, SMS**, etc. We take the commonly used Dingtalk as an example.
 
-- Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk Configure the bot on Dingtalk side, set the security customization keyword ` HertzBeat`, get the corresponding `access_token` value.
+- Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> Configure the bot on Dingtalk side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
 - Configure the recipient parameters in HertzBeat as follows.
 
 [Alert Notification] -> [Add Recipient] -> [Choose Dingtalk bot notification method] -> [Set Dingtalk bot ACCESS_TOKEN] -> [OK]
@@ -152,8 +151,7 @@ Message notification methods support **Email, Dingtalk, WeChat, Flybook, WebHook
 
 ![hertzbeat](/img/blog/alert-notice-2.png)
 
-
-### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding.
+### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding
 
 ```
 [HertzBeat alert notification]
@@ -171,10 +169,10 @@ Details : DynamicTp has run timeout thread, count is 2
 This practical article takes us to experience how to use HertzBeat to monitor DynamicTp thread pool metrics data, and we can find that HertzBeat with ``monitoring-alerting-notification`` is much more convenient to operate and use, and you only need to point and click on a page to include DynamicTp thread pool into the monitoring and alert notification, and you don't need to deploy multiple components to write YML configuration files anymore. There is no need to deploy multiple components and write YML configuration files.  
 :::
 
-DynamicTp Github: https://github.com/dromara/dynamic-tp           
-HertzBeat Github: https://github.com/apache/hertzbeat
+DynamicTp Github: <https://github.com/dromara/dynamic-tp>
+HertzBeat Github: <https://github.com/apache/hertzbeat>
 
 **Welcome to learn how to use Star Support!**
 
-Experience heartbeat with a single docker command:   
+Experience heartbeat with a single docker command:
 `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`

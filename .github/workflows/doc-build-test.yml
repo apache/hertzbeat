@@ -31,9 +31,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Check Markdown
+        uses: DavidAnson/markdownlint-cli2-action@v16
+        with:
+          globs: './home/**/*.md'
       - name: Check filename in home/blog
         run: |
           TARGET_DIR="./home/blog"
@@ -110,6 +114,14 @@ jobs:
           else
             echo "All file names are valid."
           fi
+      - name: Dead Link
+        run: |
+          sudo npm install -g markdown-link-check@3.8.7
+          for file in $(find ./home -name "*.md"); do
+            if ! grep -Fxq "$file" .github/exclude_files.txt; then
+              markdown-link-check -c .github/link_check.json -q "$file"
+            fi
+          done
       - name: NPM INSTALL
         working-directory: home
         run: npm install

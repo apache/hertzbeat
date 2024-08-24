@@ -31,6 +31,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -100,7 +101,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     public List<NoticeTemplate> getNoticeTemplates(String name) {
         Specification<NoticeTemplate> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !"".equals(name)) {
+            if (name != null && StringUtils.isNoneBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -217,11 +218,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     }
 
     @Override
-    public NoticeReceiver getOneReceiverById(Long id) {
-        return noticeReceiverDao.findById(id).orElse(null);
-    }
-
-    @Override
     public NoticeTemplate getOneTemplateById(Long id) {
         return noticeTemplateDao.findById(id).orElse(null);
     }
@@ -229,13 +225,14 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public NoticeReceiver getReceiverById(Long receiverId) {
-        return noticeReceiverDao.getReferenceById(receiverId);
+        return noticeReceiverDao.findById(receiverId).orElse(null);
     }
 
     @Override
     public NoticeRule getNoticeRulesById(Long ruleId) {
-        return noticeRuleDao.getReferenceById(ruleId);
+        return noticeRuleDao.findById(ruleId).orElse(null);
     }
+
 
     @Override
     public void addNoticeTemplate(NoticeTemplate noticeTemplate) {
@@ -275,17 +272,17 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         tags.put(CommonConstants.TAG_MONITOR_NAME, "100Name");
         tags.put(CommonConstants.TAG_MONITOR_HOST, "127.0.0.1");
         tags.put(CommonConstants.TAG_THRESHOLD_ID, "200");
-        Alert alert = new Alert();
-        alert.setTags(tags);
-        alert.setId(1003445L);
-        alert.setTarget(ALERT_TEST_TARGET);
-        alert.setPriority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL);
-        alert.setContent(ALERT_TEST_CONTENT);
-        alert.setAlertDefineId(200L);
-        alert.setTimes(2);
-        alert.setStatus((byte) 0);
-        alert.setFirstAlarmTime(System.currentTimeMillis());
-        alert.setLastAlarmTime(System.currentTimeMillis());
+        Alert alert = Alert.builder()
+                .tags(tags)
+                .id(1003445L)
+                .target(ALERT_TEST_TARGET)
+                .priority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL)
+                .content(ALERT_TEST_CONTENT)
+                .alertDefineId(200L)
+                .times(2)
+                .status((byte) 0)
+                .firstAlarmTime(System.currentTimeMillis())
+                .lastAlarmTime(System.currentTimeMillis()).build();
         return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, alert);
     }
 

@@ -35,8 +35,10 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -83,14 +85,18 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
     }
 
     public void initInfluxDb(InfluxdbProperties influxdbProperties) {
-        OkHttpClient.Builder client = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(true);
 
-        client.sslSocketFactory(defaultSslSocketFactory(), defaultTrustManager());
-        client.hostnameVerifier(noopHostnameVerifier());
+        var client = new OkHttpClient.Builder()
+                .readTimeout(NetworkConstants.HttpClientConstants.READ_TIME_OUT, TimeUnit.SECONDS)
+                .writeTimeout(NetworkConstants.HttpClientConstants.WRITE_TIME_OUT, TimeUnit.SECONDS)
+                .connectTimeout(NetworkConstants.HttpClientConstants.CONNECT_TIME_OUT, TimeUnit.SECONDS)
+                .connectionPool(new ConnectionPool(
+                        NetworkConstants.HttpClientConstants.MAX_IDLE_CONNECTIONS,
+                        NetworkConstants.HttpClientConstants.KEEP_ALIVE_TIMEOUT,
+                        TimeUnit.SECONDS)
+                ).sslSocketFactory(defaultSslSocketFactory(), defaultTrustManager())
+                .hostnameVerifier(noopHostnameVerifier())
+                .retryOnConnectionFailure(true);
 
         this.influxDb = InfluxDBFactory.connect(influxdbProperties.serverUrl(), influxdbProperties.username(), influxdbProperties.password(), client);
         // Close it if your application is terminating, or you are not using it anymore.

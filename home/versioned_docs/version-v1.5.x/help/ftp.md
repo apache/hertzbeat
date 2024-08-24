@@ -11,7 +11,7 @@ keywords: [ open source monitoring tool, open source ftp server monitoring tool,
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                               |
+|   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Target Host         | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: ftp://).                                         |
 | Monitoring name     | Identify the name of this monitoring, The name needs to be unique.                                                       |
@@ -28,7 +28,7 @@ keywords: [ open source monitoring tool, open source ftp server monitoring tool,
 
 #### Metrics Set：Basic
 
-| Metric name   | Metric unit | Metric help description                                  |
+|  Metric name  | Metric unit |                 Metric help description                  |
 |---------------|-------------|----------------------------------------------------------|
 | Is Active     | none        | Check if the directory exists and has access permission. |
 | Response Time | ms          | Response Time                                            |
