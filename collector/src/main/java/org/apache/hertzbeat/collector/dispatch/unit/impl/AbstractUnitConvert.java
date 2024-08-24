@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import java.math.BigDecimal;
@@ -25,32 +26,34 @@ import java.util.Map;
 
 
 /**
- * abstract UnitConvert ext
+ * abstract UnitConvert
  */
+@Slf4j
 public abstract class AbstractUnitConvert implements UnitConvert {
 
 
-    public String doPostGenericConvert(String value, String originUnit, String newUnit) {
+    @Override
+    public String convert(String value, String originUnit, String newUnit) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        if (originUnit.equalsIgnoreCase(newUnit)) {
+            log.warn("The origin unit is the same as the new unit, no need to convert");
+            return value;
+        }
+        BigDecimal wrappedValue = new BigDecimal(value);
 
-        BigDecimal length = new BigDecimal(value);
-
-//        List<String> filterPendingMatchedUnits = Lists.newArrayList(originUnit, newUnit)
-//            .stream()
-//            .filter(StringUtils::isNotBlank)
-//            .map(String::toUpperCase)
-//            .toList();
-//        if (CollectionUtils.isNotEmpty(filterPendingMatchedUnits)) {
         Map<String, Long> unitMap = convertUnitEnumToMap();
-        if (unitMap.containsKey(originUnit.toUpperCase())) {
-            Long multipleScale = unitMap.get(originUnit.toUpperCase());
-            length = length.multiply(new BigDecimal(multipleScale));
-        }
-        if (unitMap.containsKey(newUnit.toUpperCase())) {
-            Long divideScale = unitMap.get(newUnit.toUpperCase());
-            length = length.divide(new BigDecimal(divideScale), 12, RoundingMode.HALF_UP);
-        }
-//        }
-        return length.setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+
+        //There is no need to check again,as both the originUnit and newUnit have already been checked for existence.
+        Long multipleScale = unitMap.get(originUnit.toUpperCase());
+        wrappedValue = wrappedValue.multiply(new BigDecimal(multipleScale));
+
+
+        Long divideScale = unitMap.get(newUnit.toUpperCase());
+        wrappedValue = wrappedValue.divide(new BigDecimal(divideScale), 12, RoundingMode.HALF_UP);
+
+        return wrappedValue.setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
     }
 
     @Override

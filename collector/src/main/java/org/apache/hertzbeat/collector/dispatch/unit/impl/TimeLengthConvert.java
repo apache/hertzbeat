@@ -17,12 +17,12 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit.impl;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.unit.TimeLengthUnit;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 
 /**
  * the convert of time length
@@ -30,35 +30,6 @@ import java.util.stream.Collectors;
 @Component
 public final class TimeLengthConvert extends AbstractUnitConvert {
 
-
-    /**
-     * @param value      value
-     * @param originUnit through origin unit,value is converted to nanoseconds .
-     * @param newUnit    converted to the value corresponding to the new unit
-     * @return converted value if necessary
-     */
-    @Override
-    public String convert(String value, String originUnit, String newUnit) {
-        if (StringUtils.isBlank(value)) {
-            return null;
-        }
-//        BigDecimal length = new BigDecimal(value);
-//        // Idea: Value is converted to nanoseconds through origin unit,
-//        // and then converted to the value corresponding to the new unit unit
-//        for (TimeLengthUnit timeLengthUnit : TimeLengthUnit.values()) {
-//            if (timeLengthUnit.getUnit().equals(originUnit.toUpperCase())) {
-//                length = length.multiply(new BigDecimal(timeLengthUnit.getScale()));
-//            }
-//            if (timeLengthUnit.getUnit().equals(newUnit.toUpperCase())) {
-//                length = length.divide(new BigDecimal(timeLengthUnit.getScale()), 12, RoundingMode.HALF_UP);
-//            }
-//        }
-//        return length.setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
-//
-//
-//
-        return doPostGenericConvert(value, originUnit, newUnit);
-    }
 
     @Override
     Map<String, Long> convertUnitEnumToMap() {
