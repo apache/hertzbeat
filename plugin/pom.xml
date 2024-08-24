@@ -28,8 +28,6 @@
     <artifactId>hertzbeat-plugin</artifactId>
     <name>${project.artifactId}</name>
     <properties>
-        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
     </properties>
 
     <dependencies>
@@ -46,7 +44,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>${maven-assembly-plugin.version}</version>
         <configuration>
           <descriptors>
             <descriptor>src/main/resources/assembly/assembly.xml</descriptor>
