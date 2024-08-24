@@ -357,7 +357,6 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
-
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
         List<Object> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
