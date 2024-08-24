@@ -14,9 +14,9 @@ keywords: [open source monitoring tool, open source middleware monitoring tool, 
 1. Deploy the Nacos cluster according to [deployment document](https://nacos.io/en-us/docs/deployment.html).
 2. Configure the application. properties file to expose metrics data.
 
-```
-management.endpoints.web.exposure.include=*
-```
+    ```
+    management.endpoints.web.exposure.include=*
+    ```
 
 3. Access ```{ip}:8848/nacos/actuator/prometheus``` to see if metrics data can be accessed.
 
