@@ -49,7 +49,7 @@
         <dependency>
             <groupId>org.eclipse.persistence</groupId>
             <artifactId>org.eclipse.persistence.jpa</artifactId>
-            <version>4.0.2</version>
+            <version>${eclipse-jpa.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -126,7 +126,7 @@
         <dependency>
             <groupId>com.beetstra.jutf7</groupId>
             <artifactId>jutf7</artifactId>
-            <version>1.0.0</version>
+            <version>${jutf7.version}</version>
         </dependency>
     </dependencies>
 </project>
