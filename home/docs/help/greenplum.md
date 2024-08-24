@@ -53,4 +53,3 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 | Metric name | Metric unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | running     | connections | Number of current client connections |
-
