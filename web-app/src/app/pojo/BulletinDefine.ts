@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import {Fields} from "./Fields";
+import { Fields } from './Fields';
 
 export class BulletinDefine {
   id!: number;

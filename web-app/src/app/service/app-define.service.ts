@@ -107,8 +107,7 @@ export class AppDefineService {
     return this.http.get<Message<any>>(`${app_hierarchy}/${app}`, options);
   }
 
-
-  public getAppDefines(lang: string | undefined): Observable<Message<any>>  {
+  public getAppDefines(lang: string | undefined): Observable<Message<any>> {
     if (lang == undefined) {
       lang = 'en_US';
     }
