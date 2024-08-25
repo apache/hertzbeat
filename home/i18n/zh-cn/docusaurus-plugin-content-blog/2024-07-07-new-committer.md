@@ -16,7 +16,7 @@ keywords: [open source monitoring system, alerting system]
 
 个人一直热衷于开源社区，同时也是 Apache Pulsar 的 Committer，OpenTelemetry 和 VictoriaMetrics 的 Contributor。
 
-# 与 HertzBeat 结缘
+## 与 HertzBeat 结缘
 
 今年 4 月份，也就是 HertzBeat 进入 Apache 孵化器的时候，我无意间在朋友圈里看到了一篇公众号的推荐。
 
@@ -26,7 +26,7 @@ keywords: [open source monitoring system, alerting system]
 
 所以对监控系统有一些经验同时也非常感兴趣，于是便阅读了文档很快就在本地启动起来了（这一点社区做的很好，许多开源项目第一步启动就要劝退不少潜在的开发者）。
 
-# 开始贡献
+## 开始贡献
 
 我的第一个 PR 是修改了一个 PR 模版里的错误路径，社区处理的非常快，所以第一次贡献就好感倍增。
 

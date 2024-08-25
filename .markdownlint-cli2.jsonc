@@ -20,11 +20,15 @@
     "MD001": true,
     "MD052": false,
     "MD003": false,
-    "MD013": false,
+    "MD013": {
+        "line_length": 600,
+        "code_blocks": false,
+        "tables": false
+    },
     "MD024": {
         "siblings_only": true
     },
-    "MD025": false,
+    "MD025": true,
     "MD029": false,
     "MD033": false,
     "MD035": false,
