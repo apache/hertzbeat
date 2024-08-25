@@ -83,7 +83,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * add prolevel1 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1415>
 *
 
-# 1397 feature: support for dns monitoring by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1416>
+## 1397 feature: support for dns monitoring by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1416>
 
 * Support monitoring hive metrics by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1417>
 * support legend pageable in history data charts by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1414>
