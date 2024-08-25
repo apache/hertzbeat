@@ -178,6 +178,7 @@ public class PluginServiceImpl implements PluginService {
         if (CollectionUtils.isEmpty(params)) {
             return;
         }
+        pluginParamDao.deleteParamsByPluginMetadataId(params.get(0).getPluginMetadataId());
         pluginParamDao.saveAll(params);
         syncPluginParamMap(params.get(0).getPluginMetadataId(), params, false);
     }
