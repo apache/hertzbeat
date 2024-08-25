@@ -32,7 +32,7 @@ public abstract class AbstractUnitConvert implements UnitConvert {
 
 
     @Override
-    public String convert(String value, String originUnit, String newUnit) {
+    public String convertAfterUnitChecked(String value, String originUnit, String newUnit) {
         if (StringUtils.isBlank(value)) {
             return null;
         }

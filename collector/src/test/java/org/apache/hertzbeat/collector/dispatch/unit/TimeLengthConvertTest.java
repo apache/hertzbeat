@@ -39,7 +39,7 @@ class TimeLengthConvertTest {
      */
     @Test
     void convertNs2Sec() {
-        String result = convert.convert("1000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.S.getUnit());
+        String result = convert.convertAfterUnitChecked("1000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.S.getUnit());
         assertEquals("1", result);
     }
 
@@ -48,7 +48,7 @@ class TimeLengthConvertTest {
      */
     @Test
     void convertNs2Ms() {
-        String result = convert.convert("1000123450", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.MS.getUnit());
+        String result = convert.convertAfterUnitChecked("1000123450", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.MS.getUnit());
         assertEquals("1000.1235", result);
     }
 
@@ -57,7 +57,7 @@ class TimeLengthConvertTest {
      */
     @Test
     void convertNs2Us() {
-        String result = convert.convert("1000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.US.getUnit());
+        String result = convert.convertAfterUnitChecked("1000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.US.getUnit());
         assertEquals("1000000", result);
     }
 
@@ -66,7 +66,7 @@ class TimeLengthConvertTest {
      */
     @Test
     void convertNs2Day() {
-        String result = convert.convert("86400000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.D.getUnit());
+        String result = convert.convertAfterUnitChecked("86400000000000", TimeLengthUnit.NS.getUnit(), TimeLengthUnit.D.getUnit());
         assertEquals("1", result);
     }
 

@@ -26,16 +26,18 @@ public interface UnitConvert {
 
     /**
      * convert originUnit value to newUnit value
-     * @param value The collected value
+     *
+     * @param value      The collected value
      * @param originUnit The unit to which the original value corresponds.
-     * @param newUnit The unit to display
+     * @param newUnit    The unit to display
      * @return Converted value
      */
-    String convert(String value, String originUnit, String newUnit);
+    String convertAfterUnitChecked(String value, String originUnit, String newUnit);
 
     /**
      * check the unit and confirm to use this implement class
      * Checks for units before and after xxx -> xxx, also to make sure that the implementation class is being used
+     *
      * @param unit unit
      * @return true/false
      */
