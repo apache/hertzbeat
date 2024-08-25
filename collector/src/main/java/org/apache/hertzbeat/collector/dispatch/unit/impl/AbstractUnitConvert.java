@@ -36,6 +36,10 @@ public abstract class AbstractUnitConvert implements UnitConvert {
         if (StringUtils.isBlank(value)) {
             return null;
         }
+        if (!checkUnit(originUnit) || !checkUnit(newUnit)) {
+            return null;
+        }
+
         if (originUnit.equalsIgnoreCase(newUnit)) {
             log.warn("The origin unit is the same as the new unit, no need to convert");
             return value;
