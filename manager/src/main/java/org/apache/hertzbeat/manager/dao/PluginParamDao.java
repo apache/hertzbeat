@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.dao;
 
 import java.util.List;
 import java.util.Set;
-import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
 import org.springframework.data.jpa.repository.JpaRepository;
 

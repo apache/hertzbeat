@@ -76,14 +76,13 @@ public interface PluginService {
 
     /**
      * get param define
-     * @param jarPath
-     * @return
+     * @param pluginMetadataId plugin id
      */
     List<ParamDefine> getParamDefine(Long pluginMetadataId);
 
     /**
      * save plugin param
-     * @param params
+     * @param params params
      */
     void savePluginParam(List<PluginParam> params);
 

@@ -33,8 +33,6 @@ public interface Plugin {
 
     /**
      * Supports user-defined parameters
-     * @param alert
-     * @param params
      */
     void alert(Alert alert, List<Configmap> params);
 

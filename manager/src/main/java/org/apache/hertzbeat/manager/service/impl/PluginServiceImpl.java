@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import jakarta.persistence.criteria.Predicate;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -131,7 +130,7 @@ public class PluginServiceImpl implements PluginService {
                 }
                 // delete metadata
                 metadataDao.deleteById(plugin.getId());
-                syncPluginParamMap(plugin.getId(),null,true);
+                syncPluginParamMap(plugin.getId(), null, true);
                 pluginParamDao.deleteParamsByPluginMetadataId(plugin.getId());
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -180,16 +179,16 @@ public class PluginServiceImpl implements PluginService {
             return;
         }
         pluginParamDao.saveAll(params);
-        syncPluginParamMap(params.get(0).getPluginMetadataId(),params,false);
+        syncPluginParamMap(params.get(0).getPluginMetadataId(), params, false);
     }
 
-    private void syncPluginParamMap(Long pluginMetadataId, List<PluginParam> params,boolean isDelete) {
+    private void syncPluginParamMap(Long pluginMetadataId, List<PluginParam> params, boolean isDelete) {
         if (isDelete) {
             PARAMS_MAP.remove(pluginMetadataId);
             return;
         }
         List<Configmap> configmapList = params.stream().map(item -> new Configmap(item.getField(), item.getParamValue(), item.getType())).toList();
-        PARAMS_MAP.put(pluginMetadataId,configmapList);
+        PARAMS_MAP.put(pluginMetadataId, configmapList);
     }
 
     static {
@@ -342,7 +341,7 @@ public class PluginServiceImpl implements PluginService {
                     .collect(Collectors.groupingBy(PluginParam::getPluginMetadataId));
 
             for (Map.Entry<Long, List<PluginParam>> entry : content.entrySet()) {
-                syncPluginParamMap(entry.getKey(), entry.getValue(),false);
+                syncPluginParamMap(entry.getKey(), entry.getValue(), false);
             }
         } catch (Exception e) {
             log.error("Failed to init params:{}", e.getMessage());
@@ -369,7 +368,7 @@ public class PluginServiceImpl implements PluginService {
             PARAMS_Define_MAP.clear();
             List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
             for (PluginMetadata metadata : plugins) {
-                List<URL> urls = loadLibInPlugin(metadata.getJarFilePath(),metadata.getId());
+                List<URL> urls = loadLibInPlugin(metadata.getJarFilePath(), metadata.getId());
                 urls.add(new File(metadata.getJarFilePath()).toURI().toURL());
                 pluginClassLoaders.add(new URLClassLoader(urls.toArray(new URL[0]), Plugin.class.getClassLoader()));
             }
@@ -386,7 +385,7 @@ public class PluginServiceImpl implements PluginService {
      * loading other JAR files that are dependencies for the plugin
      *
      * @param pluginJarPath jar file path
-     * @param pluginMetadataId
+     * @param pluginMetadataId plugin id
      * @return urls
      */
     @SneakyThrows
