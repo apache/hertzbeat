@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 
-
 /**
  * abstract UnitConvert
  */
@@ -48,8 +47,7 @@ public abstract class AbstractUnitConvert implements UnitConvert {
         //There is no need to check again,as both the originUnit and newUnit have already been checked for existence.
         Long multipleScale = unitMap.get(originUnit.toUpperCase());
         wrappedValue = wrappedValue.multiply(new BigDecimal(multipleScale));
-
-
+        
         Long divideScale = unitMap.get(newUnit.toUpperCase());
         wrappedValue = wrappedValue.divide(new BigDecimal(divideScale), 12, RoundingMode.HALF_UP);
 

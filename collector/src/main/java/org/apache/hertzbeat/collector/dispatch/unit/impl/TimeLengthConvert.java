@@ -23,7 +23,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 /**
  * the convert of time length
  */
@@ -33,8 +32,7 @@ public final class TimeLengthConvert extends AbstractUnitConvert {
 
     @Override
     Map<String, Long> convertUnitEnumToMap() {
-        return Arrays.stream(TimeLengthUnit.values())
-            .collect(Collectors.toMap(TimeLengthUnit::getUnit, TimeLengthUnit::getScale));
+        return Arrays.stream(TimeLengthUnit.values()).collect(Collectors.toMap(TimeLengthUnit::getUnit, TimeLengthUnit::getScale));
     }
 
 

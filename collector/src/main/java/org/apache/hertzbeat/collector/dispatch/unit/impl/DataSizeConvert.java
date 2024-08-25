@@ -17,18 +17,15 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit.impl;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.unit.DataUnit;
 import org.springframework.stereotype.Component;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 /**
  * the convert of data size
  */
-@Slf4j
 @Component
 public final class DataSizeConvert extends AbstractUnitConvert {
 
