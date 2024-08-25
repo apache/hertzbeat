@@ -4,13 +4,13 @@ title: 版本物料的验证
 sidebar_position: 4
 ---
 
-# 验证候选版本
+## 验证候选版本
 
 详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
 在浏览器中可访问版本内容 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/>
 
-## 1. 下载候选版本到本地
+### 1. 下载候选版本到本地
 
 > 需要依赖gpg工具，如果没有，建议安装gpg2
 
@@ -22,11 +22,11 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 
 ```
 
-## 2. 验证上传的版本是否合规
+### 2. 验证上传的版本是否合规
 
 > 开始验证环节，验证包含但不局限于以下内容和形式
 
-### 2.1 查看发布包是否完整
+#### 2.1 查看发布包是否完整
 
 > 上传到dist的包必须包含源码包，二进制包可选
 
@@ -35,18 +35,18 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 3. 是否包含源码包的sha512
 4. 如果上传了二进制包，则同样检查(2)-(4)所列的内容
 
-### 2.2 检查gpg签名
+#### 2.2 检查gpg签名
 
 首先导入发布人公钥。从svn仓库导入KEYS到本地环境。（发布版本的人不需要再导入，帮助做验证的人需要导入，用户名填发版人的即可）
 
-#### 2.2.1 导入公钥
+##### 2.2.1 导入公钥
 
 ```shell
 curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # 下载KEYS
 gpg --import KEYS # 导入KEYS到本地
 ```
 
-#### 2.2.2 信任公钥
+##### 2.2.2 信任公钥
 
 > 信任此次版本所使用的KEY
 
@@ -75,7 +75,7 @@ gpg>
      
 ```
 
-#### 2.2.3 检查签名
+##### 2.2.3 检查签名
 
 ```shell
 for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
@@ -92,7 +92,7 @@ gpg:                using RSA key XXXXX
 gpg: Good signature from "xxx @apache.org>"
 ```
 
-### 2.3 检查sha512哈希
+#### 2.3 检查sha512哈希
 
 > 本地计算sha512哈希后，验证是否与dist上的一致，如果上传二进制包，则同样需要检查二进制包的sha512哈希
 
@@ -100,7 +100,7 @@ gpg: Good signature from "xxx @apache.org>"
 for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
 ```
 
-### 2.4 检查二进制包
+#### 2.4 检查二进制包
 
 解压缩  `apache-hertzbeat-${release.version}-incubating-bin.tar.gz`
 
@@ -123,7 +123,7 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 
 参考: <https://apache.org/legal/resolved.html>
 
-### 2.5. 源码编译验证
+#### 2.5. 源码编译验证
 
 解压缩 `apache-hertzbeat-${release_version}-incubating-src.tar.gz`
 
@@ -147,7 +147,7 @@ cd apache-hertzbeat-${release_version}-incubating-src
 
 参考: <https://apache.org/legal/resolved.html>
 
-## 3. 邮件回复
+### 3. 邮件回复
 
 如果发起了发布投票，验证后，可以参照此回复示例进行邮件回复
 
