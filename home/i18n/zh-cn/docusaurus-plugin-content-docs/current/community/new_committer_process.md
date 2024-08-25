@@ -348,73 +348,73 @@ hi, i accept. Thanks for invitaion.
 
 1. 下载iCLA申请表
 
-打开访问:[https://www.apache.org/licenses/#clas](https://www.apache.org/licenses/#clas)
+    打开访问:[https://www.apache.org/licenses/#clas](https://www.apache.org/licenses/#clas)
 
-找到`CLAs`点击进入页面
+    找到`CLAs`点击进入页面
 
-![](/img/docs/community/clas-web.png)
+    ![](/img/docs/community/clas-web.png)
 
-找到`ICLA(个人贡献者许可协议)`，点击[Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf)
+    找到`ICLA(个人贡献者许可协议)`，点击[Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf)
 
-![](/img/docs/community/icla-web.png)
+    ![](/img/docs/community/icla-web.png)
 
-跳转后，会显示需要签署的协议，这里可以在网页上直接填写，也可以下载后填写。
+    跳转后，会显示需要签署的协议，这里可以在网页上直接填写，也可以下载后填写。
 
-![](/img/docs/community/icla-pdf.png)
+    ![](/img/docs/community/icla-pdf.png)
 
 2. 填写iCLA
 
-> tips: 签名时需要手写签名，其他的可以直接填写后打印。
+    > tips: 签名时需要手写签名，其他的可以直接填写后打印。
 
-需要填写的内容：
+    需要填写的内容：
 
-![](/img/docs/community/icla-content-1.png)
-![](/img/docs/community/icla-content-2.png)
+    ![](/img/docs/community/icla-content-1.png)
+    ![](/img/docs/community/icla-content-2.png)
 
-在PDF中需要填写的字段：
+    在PDF中需要填写的字段：
 
-- `Full name`
-- `Public name`
-- `Postal Address`
-- `Country`
-- `E-Mail`
-- `(optional) preferred Apache id(s)`
-- `(optional) notify project`
-- `Date`
+   - `Full name`
+   - `Public name`
+   - `Postal Address`
+   - `Country`
+   - `E-Mail`
+   - `(optional) preferred Apache id(s)`
+   - `(optional) notify project`
+   - `Date`
 
-> 填写样例
-> ![](/img/docs/community/icla-content-3.png)
-> ![](/img/docs/community/icla-content-4.png)
+    > 填写样例
+    > ![](/img/docs/community/icla-content-3.png)
+    > ![](/img/docs/community/icla-content-4.png)
 
 3. 打印并签署
 
-![](/img/docs/community/icla-content-5.png)
+    ![](/img/docs/community/icla-content-5.png)
 
-`Please sign`字段需要将文件打印出来然后手写签名，内容为自己姓名的全拼。
+    `Please sign`字段需要将文件打印出来然后手写签名，内容为自己姓名的全拼。
 
 4. 将签名后的文件拍照或扫描转为PDF，并重命名为`姓名拼音-icla.pdf`
 
 5. 发送邮件到指定邮箱
 
-邮件发送到`secretary@apache.org`，抄送到`private@hertzbeat.apache.org`。
+  邮件发送到`secretary@apache.org`，抄送到`private@hertzbeat.apache.org`。
 
-注意⚠️此邮件内容需要附加上之前的 committer 邀请邮件信息, 建议在之前的往来邮件点击回复然后修改标题和收件人等。
+  注意⚠️此邮件内容需要附加上之前的 committer 邀请邮件信息, 建议在之前的往来邮件点击回复然后修改标题和收件人等。
 
-**发送模板**
+  **发送模板**
 
-主题：`Accept to become a Hertzbeat(incubating) committer`
+  主题：`Accept to become a Hertzbeat(incubating) committer`
 
-正文:
+  正文:
 
-```
-Hello Apache,
-    I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
-Thanks !
-```
+  ```
+  Hello Apache,
+      I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
+  Thanks !
+  ```
 
-大概1-5个工作日你就会收到一封来自`root@apache.org`的邮件。
+  大概1-5个工作日你就会收到一封来自`root@apache.org`的邮件。
 
-当您收到邮件标题为：`Welcome to the Apache Software Foundation`的邮件，恭喜你，你已经获取到Apache ID了！
+  当您收到邮件标题为：`Welcome to the Apache Software Foundation`的邮件，恭喜你，你已经获取到Apache ID了！
 
 ### 设置Apache密码
 

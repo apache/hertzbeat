@@ -88,29 +88,29 @@ limitations under the License.
 1. 首先您需要 Fork 目标仓库 [hertzbeat repository](https://github.com/apache/hertzbeat).
 2. 然后 用git命令 将代码下载到本地:
 
-```shell
-git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
-```
+    ```shell
+    git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
+    ```
 
 3. 下载完成后，请参考目标仓库的入门指南或者 README 文件对项目进行初始化。
 4. 接着，您可以参考如下命令进行代码的提交, 切换新的分支, 进行开发:
 
-```shell
-git checkout -b a-feature-branch #Recommended  
-```
+    ```shell
+    git checkout -b a-feature-branch #Recommended  
+    ```
 
 5. 提交 commit , commit 描述信息需要符合约定格式: [module name or type name]feature or bugfix or doc: custom message.
 
-```shell
-git add <modified file/path> 
-git commit -m '[docs]feature: necessary instructions' #Recommended 
-```
+    ```shell
+    git add <modified file/path> 
+    git commit -m '[docs]feature: necessary instructions' #Recommended 
+    ```
 
 6. 推送到远程仓库
 
-```shell
-git push origin a-feature-branch   
-```
+    ```shell
+    git push origin a-feature-branch   
+    ```
 
 7. 然后您就可以在 GitHub 上发起新的 PR (Pull Request)。
 
