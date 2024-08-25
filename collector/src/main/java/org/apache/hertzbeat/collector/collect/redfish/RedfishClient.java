@@ -73,7 +73,7 @@ public class RedfishClient {
                     ? String.format("[%s]:%s", this.host, this.port + uri)
                     : String.format("%s:%s", this.host, this.port + uri);
 
-            requestBuilder.setUri(NetworkConstants.HTTP_HEADER + baseUri);
+            requestBuilder.setUri(NetworkConstants.HTTPS_HEADER + baseUri);
         }
 
         requestBuilder.addHeader(HttpHeaders.CONNECTION, NetworkConstants.KEEP_ALIVE);
