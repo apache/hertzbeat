@@ -8,7 +8,7 @@ sidebar_label: Quick Start
 
 - If you wish to deploy Apache HertzBeat (incubating) locally, please refer to the following Deployment Documentation for instructions.
 
-### 🍞 Install HertzBeat
+#### 🍞 Install HertzBeat
 
 > Apache HertzBeat (incubating) supports installation through source code, docker or package, cpu support X86/ARM64.
 

@@ -13,7 +13,7 @@ keywords: [开源监控系统, 开源Kubernetes监控]
 
 参考获取token步骤
 
-#### 方式一
+### 方式一
 
 1. 创建service account并绑定默认cluster-admin管理员集群角色
 
@@ -27,7 +27,7 @@ keywords: [开源监控系统, 开源Kubernetes监控]
     kubectl describe secret {secret} -n kube-system
     ```
 
-#### 方式二
+### 方式二
 
 ```shell
 kubectl create serviceaccount cluster-admin
