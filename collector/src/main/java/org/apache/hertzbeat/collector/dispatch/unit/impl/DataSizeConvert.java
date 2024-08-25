@@ -30,6 +30,9 @@ import java.util.stream.Collectors;
 public final class DataSizeConvert extends AbstractUnitConvert {
 
 
+    /**
+     * convert the enumeration of DataUnit to  map where the key is the unit and the value is the conversion coefficient.
+     */
     @Override
     Map<String, Long> convertUnitEnumToMap() {
         return Arrays.stream(DataUnit.values()).collect(Collectors.toMap(DataUnit::getUnit, DataUnit::getScale));

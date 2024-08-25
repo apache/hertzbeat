@@ -30,6 +30,9 @@ import java.util.stream.Collectors;
 public final class TimeLengthConvert extends AbstractUnitConvert {
 
 
+    /**
+     * convert the enumeration of TimeLengthUnit to  map where the key is the unit and the value is the conversion coefficient.
+     */
     @Override
     Map<String, Long> convertUnitEnumToMap() {
         return Arrays.stream(TimeLengthUnit.values()).collect(Collectors.toMap(TimeLengthUnit::getUnit, TimeLengthUnit::getScale));
