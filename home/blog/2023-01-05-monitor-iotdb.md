@@ -31,7 +31,7 @@ tags: [opensource, practice]
 
 1. The metric collection is disabled by default, you need to modify the parameters in `conf/iotdb-metric.yml` first, then restart the server
 
-```
+```yaml
 # Whether to start the monitoring module, the default is false
 enableMetric: true
 
@@ -109,7 +109,7 @@ Message notification methods support **email, DingTalk, WeChat Work, Feishu, Web
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
-```
+```text
 [HertzBeat warning notification]
 Alarm target object: iotdb.cluster_node_status.status
 Affiliated monitoring ID: 205540620349696

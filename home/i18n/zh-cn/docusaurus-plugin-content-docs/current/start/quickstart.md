@@ -26,7 +26,7 @@ sidebar_label: 快速开始
 
 3. 部署采集器集群(可选)
 
-```
+```shell
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 

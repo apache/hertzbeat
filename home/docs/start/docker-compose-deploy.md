@@ -28,13 +28,13 @@ Download the installation script package `apache-hertzbeat-xxx-incubating-docker
 
 - Unzip the script package
 
-```
+```shell
 tar zxvf apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
 ```
 
 - Enter the decompression directory and select `HertzBeat + PostgreSQL + VictoriaMetrics` for one-click deployment
 
-```
+```shell
 cd apache-hertzbeat-1.6.0-incubating-docker-compose    
 cd hertzbeat-postgresql-victoria-metrics
 ```
@@ -43,7 +43,7 @@ cd hertzbeat-postgresql-victoria-metrics
 
 > Run script in `hertzbeat-postgresql-victoria-metrics` directory
 
-```
+```shell
 docker-compose up -d
 ```
 
@@ -51,7 +51,7 @@ docker-compose up -d
 
 > View the running status of each container, up is the normal running status
 
-```
+```shell
 docker-compose ps
 ```
 

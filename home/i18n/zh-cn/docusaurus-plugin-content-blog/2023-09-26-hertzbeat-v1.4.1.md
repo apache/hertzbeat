@@ -80,7 +80,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 3. 部署采集器集群
 
-```
+```shell
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 

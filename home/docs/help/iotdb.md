@@ -17,7 +17,7 @@ The main steps are as follows:
 
 1. The metric collection is disabled by default, you need to modify the parameters in `conf/iotdb-metric.yml` first, then restart the server
 
-```
+```shell
 # Whether to start the monitoring module, the default is false
 enableMetric: true
 

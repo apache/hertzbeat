@@ -57,7 +57,7 @@ keywords: [open source monitoring system, alerting system]
 
 3. Deploy collector clusters
 
-```
+```shell
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 

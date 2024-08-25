@@ -113,7 +113,7 @@ oracle（如果你要监控oracle，这两个驱动是必须的）
 
 1. 关闭 HertzBeat 容器
 
-```
+```shell
 docker stop hertzbeat
 ```
 
@@ -189,7 +189,7 @@ oracle（如果你要监控oracle，这两个驱动是必须的）
 
 1. 关闭 HertzBeat 容器
 
-```
+```shell
 docker stop hertzbeat
 ```
 
@@ -199,7 +199,7 @@ docker stop hertzbeat
    下载 h2 驱动 jar [https://mvnrepository.com/artifact/com.h2database/h2/2.2.220](https://mvnrepository.com/artifact/com.h2database/h2/2.2.220)
    使用 h2 驱动 jar 本地启动数据库
 
-```
+```shell
 java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
 ```
 

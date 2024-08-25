@@ -19,7 +19,7 @@ Apache HertzBeat (incubating) 支持在Linux Windows Mac系统安装运行，CPU
 
 解压安装包到主机 eg: /opt/hertzbeat
 
-```
+```shell
 tar zxvf apache-hertzbeat-xxx-incubating-bin.tar.gz
 ```
 
@@ -44,7 +44,7 @@ HertzBeat 默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat
 
 执行位于安装目录 bin 下的启动脚本 startup.sh, windows 环境下为 startup.bat
 
-```
+```shell
 ./startup.sh 
 ```
 
@@ -68,7 +68,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
 解压安装包到主机 eg: /opt/hertzbeat-collector
 
-```
+```shell
 tar zxvf apache-hertzbeat-collector-xxx-incubating-bin.tar.gz
 ```
 
@@ -97,7 +97,7 @@ collector:
 
 执行位于安装目录 hertzbeat-collector/bin/ 下的启动脚本 startup.sh, windows 环境下为 startup.bat
 
-```
+```shell
 ./startup.sh 
 ```
 
@@ -119,7 +119,7 @@ collector:
 下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)
 安装后命令行检查是否成功安装
 
-```
+```shell
 $ java -version
 java version "17.0.9"
 Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)

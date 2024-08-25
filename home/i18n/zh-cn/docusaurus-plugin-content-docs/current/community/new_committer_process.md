@@ -287,7 +287,7 @@ Best Wishes!
 
 当通过PMC内部投票后，PMC会向您索要个人邮箱，之后您会收到一封邮件，邮件会指引您进行下一步操作，内容为:
 
-```
+```text
 Hello xxxx,
 
 The HertzBeat Project Management Committee (PPMC)
@@ -336,7 +336,7 @@ establishing you as a committer.
 
 如果您接受邀请，请回复该邮件，记住要**回复全部**，回复内容为:
 
-```
+```text
 hi, i accept. Thanks for invitaion.
 ```
 
@@ -406,7 +406,7 @@ hi, i accept. Thanks for invitaion.
 
 正文:
 
-```
+```text
 Hello Apache,
     I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
 Thanks !

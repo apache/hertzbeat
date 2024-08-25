@@ -104,7 +104,7 @@ Message notification methods support **email, DingTalk, WeChat Work, Feishu, Web
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
-```
+```text
 [HertzBeat warning notification]
 Alarm target object: linux.cpu.usage
 Affiliated monitoring ID: 483783444839382

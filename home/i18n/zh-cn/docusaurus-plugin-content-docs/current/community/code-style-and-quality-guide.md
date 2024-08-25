@@ -649,7 +649,3 @@ public void process(String input) {
 - <https://rules.sonarsource.com/java/>
 - <https://junit.org/junit5/>
 - <https://streampark.apache.org/>
-
-```
-
-```

@@ -12,7 +12,7 @@ sidebar_label: 安装包方式部署
 2. 配置HertzBeat的配置文件(可选)
    解压安装包到主机 eg: /opt/hertzbeat
 
-   ```
+   ```shell
    $ tar zxvf hertzbeat-xx.tar.gz
    or
    $ unzip -o hertzbeat-xx.zip
@@ -33,7 +33,7 @@ sidebar_label: 安装包方式部署
 4. 部署启动
    执行位于安装目录hertzbeat/bin/下的启动脚本 startup.sh, windows环境下为 startup.bat
 
-   ```
+   ```shell
    ./startup.sh 
    ```
 
@@ -71,7 +71,7 @@ sidebar_label: 安装包方式部署
 下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)
 安装后命令行检查是否成功安装
 
-```
+```shell
 $ java -version
 java version "17.0.9"
 Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)

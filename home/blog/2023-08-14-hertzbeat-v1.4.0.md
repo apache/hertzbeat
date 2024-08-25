@@ -84,7 +84,7 @@ As for open source commercialization, the premise of open source commercializati
 
 3. Deploy collector clusters
 
-```
+```shell
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 

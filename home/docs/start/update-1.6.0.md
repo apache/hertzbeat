@@ -112,7 +112,7 @@ Next, run the start-up script as before to experience the latest HertzBeat 1.6.0
 
 - Stop the HertzBeat container:
 
-  ```
+  ```shell
   docker stop hertzbeat
   ```
 
@@ -129,7 +129,7 @@ Next, run HertzBeat using Docker as before to experience the latest HertzBeat 1.
 
 - Stop the HertzBeat container:
 
-  ```
+  ```shell
   docker stop hertzbeat
   ```
 
@@ -138,7 +138,7 @@ Next, run HertzBeat using Docker as before to experience the latest HertzBeat 1.
   - Download the H2 driver jar from [https://mvnrepository.com/artifact/com.h2database/h2/2.2.220](https://mvnrepository.com/artifact/com.h2database/h2/2.2.220).
   - Start the database locally using the H2 driver jar:
 
-    ```
+    ```shell
     java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
     ```
 

@@ -42,7 +42,7 @@ Windows Monitor is coming:
 
 ⚠️ ⚠️⚠️⚠️Please note that upgrading to v1.1.0 from other versions requires running the following SQL script. Now, our table names have a unified prefix hzb_prefix.
 
-```
+```properties
 ALTER  TABLE alert RENAME TO hzb_alert;
 ALTER  TABLE alert_define RENAME TO hzb_alert_define;
 ALTER  TABLE alert_define_monitor_bind RENAME TO hzb_alert_define_monitor_bind;
@@ -96,7 +96,7 @@ Windows Monitor coming：
 
 ⚠️ ⚠️⚠️⚠️Attention other version upgrade to v1.1.0 need run sql script.  Now the tables name has hzb_ prefix.
 
-```
+```properties
 ALTER  TABLE alert RENAME TO hzb_alert;
 ALTER  TABLE alert_define RENAME TO hzb_alert_define;
 ALTER  TABLE alert_define_monitor_bind RENAME TO hzb_alert_define_monitor_bind;

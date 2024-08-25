@@ -157,7 +157,7 @@ Message notification methods support **email, DingTalk, WeChat Work, Feishu, Web
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
-```
+```text
 [HertzBeat warning notification]
 Alarm target object: springboot2.threads.size
 Affiliated monitoring ID: 483783444839322

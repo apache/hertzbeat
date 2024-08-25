@@ -20,7 +20,7 @@ Deployment via package relies on Java runtime environment, ensure you have Java1
 
    Unzip the installation package to the host eg: /opt/hertzbeat
 
-   ```
+   ```shell
    tar zxvf apache-hertzbeat-xxx-incubating-bin.tar.gz
    ```
 
@@ -44,7 +44,7 @@ It is recommended to use [PostgreSQL](postgresql-change) for metadata storage an
 
    Execute the startup script in the installation directory `bin/`, or `startup.bat` in windows.
 
-   ```
+   ```shell
    ./startup.sh 
    ```
 
@@ -70,7 +70,7 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 
 Unzip the installation package to the host eg: /opt/hertzbeat-collector
 
-```
+```shell
 tar zxvf apache-hertzbeat-collector-xxx-incubating-bin.tar.gz
 ```
 
@@ -116,7 +116,7 @@ collector:
    download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)
    After installation use command line to check whether you install it successfully.
 
-   ```
+   ```shell
    $ java -version
    java version "17.0.9"
    Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)

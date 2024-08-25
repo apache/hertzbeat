@@ -103,7 +103,7 @@ keywords: [开源监控系统, 开源数据库监控, Mysql数据库监控]
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 
-```
+```text
 [HertzBeat告警通知]
 告警目标对象 : mysql.cahce.query_cache_hit_rate
 所属监控任务ID : 205540620394932

@@ -141,7 +141,7 @@ shenyu:
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 
-```
+```text
 [HertzBeat告警通知]
 告警目标对象 : shenyu.process_open_fds.value
 所属监控任务ID : 205540620349696

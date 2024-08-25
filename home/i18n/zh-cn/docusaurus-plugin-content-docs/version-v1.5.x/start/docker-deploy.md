@@ -12,7 +12,7 @@ sidebar_label: Docker方式部署
    [菜鸟教程-Docker教程](https://www.runoob.com/docker/docker-tutorial.html)
    安装完毕后终端查看Docker版本是否正常输出。
 
-   ```
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```

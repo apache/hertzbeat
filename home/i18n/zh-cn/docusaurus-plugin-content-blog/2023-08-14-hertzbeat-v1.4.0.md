@@ -87,7 +87,7 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 3. 部署采集器集群
 
-```
+```shell
 docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_IP=1158 --name hertzbeat-collector apache/hertzbeat-collector
 ```
 

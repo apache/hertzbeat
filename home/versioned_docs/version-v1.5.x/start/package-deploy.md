@@ -12,7 +12,7 @@ sidebar_label: Install via Package
 2. Configure HertzBeat's configuration file(optional)
    Unzip the installation package to the host eg: /opt/hertzbeat
 
-   ```
+   ```shell
    $ tar zxvf hertzbeat-xx.tar.gz
    or
    $ unzip -o hertzbeat-xx.zip
@@ -33,7 +33,7 @@ sidebar_label: Install via Package
 4. Start the service
    Execute the startup script `startup.sh` in the installation directory `hertzbeat/bin/`, or `startup.bat` in windows.
 
-   ```
+   ```shell
    ./startup.sh 
    ```
 
@@ -72,7 +72,7 @@ sidebar_label: Install via Package
    download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)
    After installation use command line to check whether you install it successfully.
 
-   ```
+   ```shell
    $ java -version
    java version "17.0.9"
    Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)

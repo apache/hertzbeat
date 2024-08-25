@@ -24,7 +24,7 @@ Apache IoTDB是一体化收集、存储、管理与分析物联网时序数据�
    Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
    安装完毕后终端查看Docker版本是否正常输出。
 
-   ```
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```

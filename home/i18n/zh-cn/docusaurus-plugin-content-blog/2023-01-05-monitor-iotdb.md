@@ -32,7 +32,7 @@ keywords: [开源监控系统, 开源数据库监控, IotDB数据库监控]
 
 1. metric 采集默认是关闭的，需要先到 `conf/iotdb-metric.yml` 中修改参数打开后重启 server
 
-```
+```yaml
 # 是否启动监控模块，默认为false
 enableMetric: true
 
@@ -110,7 +110,7 @@ metricReporterList:
 
 ### 完毕，现在坐等告警消息过来了。叮叮叮叮
 
-```
+```text
 [HertzBeat告警通知]
 告警目标对象 : iotdb.cluster_node_status.status
 所属监控任务ID : 205540620349696

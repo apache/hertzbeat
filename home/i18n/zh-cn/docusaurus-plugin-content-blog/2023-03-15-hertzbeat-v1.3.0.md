@@ -117,7 +117,7 @@ Bugfix.
 
 修改 `application.yml` 并设置 `warehouse.store.jpa.enabled` 参数为 false
 
-```
+```yaml
 warehouse:
   store:
     jpa:
@@ -126,7 +126,7 @@ warehouse:
 
 执行SQL脚本
 
-```
+```shell
 ALTER table hzb_monitor modify job_id bigint default null;
 COMMIT;
 ```

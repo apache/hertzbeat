@@ -586,7 +586,3 @@ When printing the log content, if the actual parameters of the log placeholder a
 - <https://rules.sonarsource.com/java/>
 - <https://junit.org/junit5/>
 - <https://streampark.apache.org/>
-
-```
-
-```

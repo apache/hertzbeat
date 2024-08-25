@@ -17,7 +17,7 @@ keywords: [开源监控系统, 开源数据库监控, IoTDB数据库监控]
 
 1. metric 采集默认是关闭的，需要先到 `conf/iotdb-metric.yml` 中修改参数打开后重启 server
 
-```
+```text
 # 是否启动监控模块，默认为false
 enableMetric: true
 

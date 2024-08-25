@@ -22,7 +22,7 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 > Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 > After the installation you can check if the Docker version normally output at the terminal.
 >
-> ```
+> ```shell
 > $ docker -v
 > Docker version 20.10.12, build e91ed57
 > ```
