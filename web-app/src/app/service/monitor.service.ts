@@ -110,38 +110,6 @@ export class MonitorService {
     return this.http.get<Message<Monitor[]>>(`${monitors_uri}/${app}`);
   }
 
-  public getMonitors(
-    app: string | undefined,
-    tag: string | undefined,
-    pageIndex: number,
-    pageSize: number,
-    sortField?: string | null,
-    sortOrder?: string | null
-  ): Observable<Message<Page<Monitor>>> {
-    pageIndex = pageIndex ? pageIndex : 0;
-    pageSize = pageSize ? pageSize : 8;
-    // HttpParams is unmodifiable, so we need to save the return value of append/set
-    let httpParams = new HttpParams();
-    httpParams = httpParams.appendAll({
-      pageIndex: pageIndex,
-      pageSize: pageSize
-    });
-    if (app != undefined) {
-      httpParams = httpParams.append('app', app.trim());
-    }
-    if (tag != undefined) {
-      httpParams = httpParams.append('tag', tag);
-    }
-    if (sortField != null && sortOrder != null) {
-      httpParams = httpParams.appendAll({
-        sort: sortField,
-        order: sortOrder == 'ascend' ? 'asc' : 'desc'
-      });
-    }
-    const options = { params: httpParams };
-    return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
-  }
-
   public searchMonitors(
     app: string | undefined,
     tag: string | undefined,
