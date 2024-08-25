@@ -13,7 +13,7 @@ sidebar_label: Install via Package
 2. Configure HertzBeat's configuration file(optional)
    Unzip the installation package to the host eg: /opt/hertzbeat
 
-   ```
+   ```shell
    $ tar zxvf hertzbeat-xx.tar.gz
    or
    $ unzip -o hertzbeat-xx.zip
@@ -84,17 +84,17 @@ sidebar_label: Install via Package
 2. **According to the process deploy，visit <http://ip:1157/> no interface**
    Please refer to the following points to troubleshoot issues:
 
-> 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
-> 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.
-> 3：Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.
+   > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.  
+   > 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.  
+   > 3：Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.
 
 3. **Log an error TDengine connection or insert SQL failed**
 
-> 1：Check whether database account and password configured is correct, the database is created.
-> 2：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.
+   > 1：Check whether database account and password configured is correct, the database is created.  
+   > 2：If you install TDengine2.3+ version, you must execute `systemctl start taosadapter` to start adapter in addition to start the server.
 
 4. **Monitoring historical charts with no data for a long time**
 
-> 1: Whether the time series database is configured or not, if it is not configured, there is no historical chart data.  
-> 2: If you are using Tdengine, check whether the database `hertzbeat` of Tdengine is created.
-> 3: HertzBeat's configuration file `application.yml`, the dependent services in it, the time series, the IP account password, etc. are configured correctly.
+   > 1: Whether the time series database is configured or not, if it is not configured, there is no historical chart data.  
+   > 2: If you are using Tdengine, check whether the database `hertzbeat` of Tdengine is created.  
+   > 3: HertzBeat's configuration file `application.yml`, the dependent services in it, the time series, the IP account password, etc. are configured correctly.

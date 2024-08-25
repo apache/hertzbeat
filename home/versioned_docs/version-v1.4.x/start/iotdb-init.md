@@ -17,27 +17,27 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
 ### Install IoTDB via Docker
 
 > Refer to the official website [installation tutorial](https://iotdb.apache.org/UserGuide/V0.13.x/QuickStart/WayToGetIoTDB.html)
->
-> 1. Download and install Docker environment
-> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
-> After the installation you can check if the Docker version normally output at the terminal.
->
-> ```
-> $ docker -v
-> Docker version 20.10.12, build e91ed57
-> ```
->
-> 2. Install IoTDB via Docker
 
-```shell
-$ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
-    -v /opt/iotdb/data:/iotdb/data \ 
-    --name iotdb \
-    apache/iotdb:0.13.3-node
-```
+1. Download and install Docker environment
+Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
+After the installation you can check if the Docker version normally output at the terminal.
 
-`-v /opt/iotdb/data:/iotdb/data` is local persistent mount of IotDB data directory.`/iotdb/data` should be replaced with the actual local directory.
-use```$ docker ps``` to check if the database started successfully
+   ```shell
+   $ docker -v
+   Docker version 20.10.12, build e91ed57
+   ```
+
+2. Install IoTDB via Docker
+
+   ```shell
+   $ docker run -d -p 6667:6667 -p 31999:31999 -p 8181:8181 \
+       -v /opt/iotdb/data:/iotdb/data \ 
+       --name iotdb \
+       apache/iotdb:0.13.3-node
+   ```
+
+   `-v /opt/iotdb/data:/iotdb/data` is local persistent mount of IotDB data directory.`/iotdb/data` should be replaced with the actual local directory.  
+    use```$ docker ps``` to check if the database started successfully
 
 3. Configure the database connection in hertzbeat `application.yml`configuration file
 
@@ -45,25 +45,25 @@ use```$ docker ps``` to check if the database started successfully
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
    Config the `warehouse.store.jpa.enabled` `false`. Replace `warehouse.store.iot-db` data source parameters, HOST account and password.
 
-```
-warehouse:
-  store:
-    # disable JPA
-    jpa:
-      enabled: false
-    # enable iot-db
-    iot-db:
-      enabled: true
-      host: 127.0.0.1
-      rpc-port: 6667
-      username: root
-      password: root
-      # config.org.apache.hertzbeat.warehouse.IotDbVersion: V_0_13 || V_1_0
-      version: V_0_13
-      query-timeout-in-ms: -1
-      # default '7776000000'（90days,unit:ms,-1:no-expire）
-      expire-time: '7776000000'
-```
+   ```yaml
+   warehouse:
+     store:
+       # disable JPA
+       jpa:
+         enabled: false
+       # enable iot-db
+       iot-db:
+         enabled: true
+         host: 127.0.0.1
+         rpc-port: 6667
+         username: root
+         password: root
+         # config.org.apache.hertzbeat.warehouse.IotDbVersion: V_0_13 || V_1_0
+         version: V_0_13
+         query-timeout-in-ms: -1
+         # default '7776000000'（90days,unit:ms,-1:no-expire）
+         expire-time: '7776000000'
+   ```
 
 4. Restart HertzBeat
 
@@ -71,15 +71,15 @@ warehouse:
 
 1. Do both the time series databases IoTDB and TDengine need to be configured? Can they both be used?
 
-> You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
+   > You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
 
 2. The historical chart of the monitoring page is not displayed, and pops up [Unable to provide historical chart data, please configure to rely on the time series database]
 
-> As shown in the pop-up window, the premise of displaying the history chart is to install and configure the dependent services of hertzbeat - IotDB database or TDengine database
+   > As shown in the pop-up window, the premise of displaying the history chart is to install and configure the dependent services of hertzbeat - IotDB database or TDengine database
 
 3. The TDengine database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure the dependent time series database]
 
-> Please check if the configuration parameters are correct  
-> Is td-engine enable set to true  
-> Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
-> You can check the startup logs according to the logs directory
+   > Please check if the configuration parameters are correct  
+   > Is td-engine enable set to true  
+   > Note⚠️If both hertzbeat and TDengine are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
+   > You can check the startup logs according to the logs directory

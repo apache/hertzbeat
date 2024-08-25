@@ -99,12 +99,12 @@ sidebar_label: HertzBeat 华为云镜像部署快速指引
 1. **按照流程部署，访问 <http://ip:1157/> 无界面**
    请参考下面几点排查问题：
 
-> 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
-> 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确
-> 三：若都无问题可以查看 `hertzbeat/logs/` 目录下面的运行日志是否有明显错误，提issue或交流群或社区反馈
+   > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功  
+   > 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确  
+   > 三：若都无问题可以查看 `hertzbeat/logs/` 目录下面的运行日志是否有明显错误，提issue或交流群或社区反馈
 
 2. **监控历史图表长时间都一直无数据**
 
-> 一：Tdengine或IoTDB是否配置，未配置则无历史图表数据  
-> 二：若使用了Tdengine，排查Tdengine的数据库`hertzbeat`是否创建
-> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 IotDB 或 Tdengine IP账户密码等配置是否正确
+   > 一：Tdengine或IoTDB是否配置，未配置则无历史图表数据  
+   > 二：若使用了Tdengine，排查Tdengine的数据库`hertzbeat`是否创建  
+   > 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 IotDB 或 Tdengine IP账户密码等配置是否正确
