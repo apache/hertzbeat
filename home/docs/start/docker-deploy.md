@@ -131,9 +131,9 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
 
 5. The time series database is installed and configured, but the page still displays a pop-up [Unable to provide historical chart data, please configure dependent time series database]
 
-   > Please check if the configuration parameters are correct
+   > Please check if the configuration parameters are correct  
    > Is time-series database enable set to true  
-   > Note⚠️If both hertzbeat and time-series database are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed
+   > Note⚠️If both hertzbeat and time-series database are started under the same host for docker containers, 127.0.0.1 cannot be used for communication between containers by default, and the host IP is changed  
    > You can check the startup logs according to the logs directory
 
 6. What is the purpose of application.yml
@@ -152,6 +152,6 @@ By deploying multiple HertzBeat Collectors, high availability, load balancing, a
    > This file is the user configuration file of HertzBeat, used to configure user information of HertzBeat, such as account password, etc.  
    > HertzBeat default built-in three user accounts, respectively `admin/hertzbeat tom/hertzbeat guest/hertzbeat`  
    > If you need update account or password, configure `sureness.yml`. Ignore this step without this demand.  
-   > Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`
+   > Download and config `sureness.yml` in the host directory，eg:`$(pwd)/sureness.yml`  
    > Download from [github/script/sureness.yml](https://github.com/apache/hertzbeat/raw/master/script/sureness.yml)  
    > For detail steps, please refer to [Configure Account Password](account-modify)

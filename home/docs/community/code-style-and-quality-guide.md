@@ -260,7 +260,7 @@ Error code description:
 
      ```java
      if (pathPart.length() == 0) {
-       return;
+        return;
      }
      ```
 
@@ -268,7 +268,7 @@ Error code description:
 
      ```java
      if (pathPart.isEmpty()) {
-       return;
+        return;
      }
      ```
 
@@ -336,13 +336,13 @@ to reduce code line depth and improve readability like follows:
 
     ```java
     public void doSomething() {
-     // Ignored more deeper block lines
-     // .....
-     if (condition1) {
-        ...
-     } else {
-        ...
-     }
+        // Ignored more deeper block lines
+        // .....
+        if (condition1) {
+            // ...
+        } else {
+            // ...
+        }
     }
     ```
 
@@ -350,13 +350,13 @@ to reduce code line depth and improve readability like follows:
 
     ```java
     public void doSomething() {
-     // Ignored more deeper block lines
-     // .....
-     if (!condition1) {
-        ...
-        return;
-     }
-     // ...
+        // Ignored more deeper block lines
+        // .....
+        if (!condition1) {
+            // ...
+            return;
+        }
+        // ...
     }
     ```
 
@@ -365,7 +365,7 @@ to reduce code line depth and improve readability like follows:
 
     ```java
     if (dbType.indexOf("sqlserver") >= 0 || dbType.indexOf("sql server") >= 0) {
-     ...
+        // ...
     }
     ```
 
@@ -373,7 +373,7 @@ to reduce code line depth and improve readability like follows:
 
     ```java
     if (containsSqlServer(dbType)) {
-      ....
+        // ....
     }
     //.....
     // definition of the containsSqlServer
@@ -454,7 +454,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      if (StringUtils.isEmpty(name)) {
-     return;
+        return;
      }
      ```
 
@@ -462,7 +462,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      if (StringUtils.isBlank(name)) {
-     return;
+        return;
      }
      ```
 
@@ -472,7 +472,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      if (StringUtils.isNotEmpty(name)) {
-       return;
+        return;
      }
      ```
 
@@ -480,7 +480,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      if (StringUtils.isNotBlank(name)) {
-       return;
+        return;
      }
      ```
 
@@ -490,7 +490,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      if (StringUtils.isAllEmpty(name, age)) {
-       return;
+        return;
      }
      ```
 
@@ -498,7 +498,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      if (StringUtils.isAllBlank(name, age)) {
-       return;
+        return;
      }
      ```
 
@@ -510,7 +510,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      if (status.equals(JobStatus.RUNNING)) {
-       return;
+        return;
      }
      ```
 
@@ -518,7 +518,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      if (status == JobStatus.RUNNING) {
-       return;
+        return;
      }
      ```
 
@@ -528,7 +528,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      public enum JobStatus implements Serializable {
-       ...
+        // ...
      }
      ```
 
@@ -536,7 +536,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      public enum JobStatus {
-       ...
+        // ...
      }
      ```
 
@@ -560,7 +560,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      public enum JobStatus {
-       ...
+        // ...
      }
      ```
 
@@ -568,7 +568,7 @@ to reduce code line depth and improve readability like follows:
 
      ```java
      public enum JobStatusEnum {
-       ...
+        // ...
      }
      ```
 
@@ -579,7 +579,7 @@ to reduce code line depth and improve readability like follows:
 ```java
 @deprecated
 public void process(String input) {
-  ...
+    // ...
 }
 ```
 
@@ -588,7 +588,7 @@ public void process(String input) {
 ```java
 @Deprecated
 public void process(String input) {
-  ...
+    // ...
 }
 ```
 
