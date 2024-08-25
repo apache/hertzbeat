@@ -17,72 +17,65 @@
 
 package org.apache.hertzbeat.alert.controller;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import org.apache.catalina.Manager;
-import org.apache.hertzbeat.alert.service.AlertDefineService;
+import org.apache.hertzbeat.alert.service.AlertSilenceService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
 /**
- * Test case for {@link AlertDefinesController}
- * Test whether the data mocked at the mock is correct, and test whether the format of the returned data is correct
+ * test case for {@link AlertSilencesController}
  */
 
 @ExtendWith(MockitoExtension.class)
-@SpringBootTest(classes = Manager.class)
-class AlertDefinesControllerTest {
+class AlertSilencesControllerTest {
 
 	private MockMvc mockMvc;
 
-	@InjectMocks
-	private AlertDefinesController alertDefinesController;
-
 	@Mock
-	private AlertDefineService alertDefineService;
+	private AlertSilenceService alertSilenceService;
 
-	private AlertDefine alertDefine;
+	private AlertSilence alertSilence;
+
+	@InjectMocks
+	private AlertSilencesController alertSilencesController;
 
 	@BeforeEach
 	void setUp() {
 
-		this.mockMvc = standaloneSetup(alertDefinesController).build();
+		this.mockMvc = standaloneSetup(alertSilencesController).build();
 
-		alertDefine = AlertDefine.builder()
-				.id(9L)
-				.app("linux")
-				.metric("disk")
-				.field("usage")
-				.expr("x")
-				.times(1)
-				.tags(new LinkedList<>())
+		alertSilence = AlertSilence
+				.builder()
+				.id(1L)
+				.type((byte) 1)
+				.name("Test Silence")
 				.build();
 	}
 
 	@Test
-	void deleteAlertDefines() throws Exception {
+	void testDeleteAlertDefines() throws Exception {
 
-		this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/alert/defines")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(JsonUtil.toJson(Collections.singletonList(1))))
+		doNothing().when(alertSilenceService).deleteAlertSilences(any());
+
+		mockMvc.perform(delete("/api/alert/silences")
+						.param("ids", "1,2,3")
+						.accept(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-				.andReturn();
+				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
 	}
 
 }

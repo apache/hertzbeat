@@ -56,6 +56,7 @@ public class AlertSilencesController {
             @Parameter(description = "Sort mode: asc: ascending, desc: descending", example = "desc") @RequestParam(defaultValue = "desc") String order,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pages", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
+        
         Page<AlertSilence> alertSilencePage = alertSilenceService.getAlertSilences(ids, search, sort, order, pageIndex, pageSize);
         return ResponseEntity.ok(Message.success(alertSilencePage));
     }

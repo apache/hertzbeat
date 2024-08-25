@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 server:
-  port: 1157
+  port: 11570
 spring:
   application:
     name: ${HOSTNAME:@hertzbeat@}${PID}
