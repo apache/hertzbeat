@@ -58,6 +58,10 @@ resourceRole:
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
   - /api/status/page/**===delete===[admin]
+  - /api/bulletin/**===get===[admin,user,guest]
+  - /api/bulletin/**===post===[admin,user]
+  - /api/bulletin/**===put===[admin,user]
+  - /api/bulletin/**===delete===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
@@ -69,7 +73,6 @@ excludedResource:
   - /api/apps/hierarchy===get
   - /api/push/**===*
   - /api/status/page/public/**===*
-  - /api/bulletin/**===*
   # web ui resource
   - /===get
   - /dashboard/**===get
