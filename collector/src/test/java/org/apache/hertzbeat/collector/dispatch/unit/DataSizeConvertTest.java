@@ -41,15 +41,15 @@ class DataSizeConvertTest {
     @Test
     void testConvert() {
 
-        assertEquals("1", convert.convertAfterUnitChecked("1024", "B", "KB"));
-        assertEquals("1024", convert.convertAfterUnitChecked("1024", "B", "B"));
-        assertEquals("1", convert.convertAfterUnitChecked("1024", "B", "kb"));
-        assertEquals("1", convert.convertAfterUnitChecked("1024", "b", "kb"));
-        assertEquals("1", convert.convertAfterUnitChecked("1024", "KB", "MB"));
-        assertEquals("1", convert.convertAfterUnitChecked("1024", "MB", "GB"));
-        assertNull(convert.convertAfterUnitChecked("", "B", "KB"));
-        assertNull(convert.convertAfterUnitChecked("1024", "INVALID", "KB"));
-        assertNull(convert.convertAfterUnitChecked("1024", "B", "INVALID"));
+        assertEquals("1", convert.convert("1024", "B", "KB"));
+        assertEquals("1024", convert.convert("1024", "B", "B"));
+        assertEquals("1", convert.convert("1024", "B", "kb"));
+        assertEquals("1", convert.convert("1024", "b", "kb"));
+        assertEquals("1", convert.convert("1024", "KB", "MB"));
+        assertEquals("1", convert.convert("1024", "MB", "GB"));
+        assertNull(convert.convert("", "B", "KB"));
+        assertNull(convert.convert("1024", "INVALID", "KB"));
+        assertNull(convert.convert("1024", "B", "INVALID"));
 
     }
 

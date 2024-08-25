@@ -318,8 +318,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
                 if (value != null && unitPair != null) {
                     for (UnitConvert unitConvert : unitConvertList) {
-                        value = unitConvert.convertAfterUnitChecked(value, unitPair.getLeft(), unitPair.getRight());
-
+                        if (unitConvert.checkUnit(unitPair.getLeft()) && unitConvert.checkUnit(unitPair.getRight())) {
+                            value = unitConvert.convert(value, unitPair.getLeft(), unitPair.getRight());
+                        }
                     }
                 }
                 // Handle metrics values that may have units such as 34%, 34Mb, and limit values to 4 decimal places

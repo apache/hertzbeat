@@ -32,7 +32,7 @@ public interface UnitConvert {
      * @param newUnit    The unit to display
      * @return Converted value
      */
-    String convertAfterUnitChecked(String value, String originUnit, String newUnit);
+    String convert(String value, String originUnit, String newUnit);
 
     /**
      * check the unit and confirm to use this implement class
