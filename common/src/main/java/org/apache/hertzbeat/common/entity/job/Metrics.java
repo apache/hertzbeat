@@ -59,7 +59,8 @@ import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
- * Details of the monitoring metrics collected eg: cpu | memory | health
+ * Details of the monitoring metrics collected
+ * eg: cpu | memory | health
  */
 @Data
 @AllArgsConstructor
