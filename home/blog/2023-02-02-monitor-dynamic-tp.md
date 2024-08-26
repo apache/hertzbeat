@@ -153,7 +153,7 @@ Of course, just watching is not perfect, monitoring is often accompanied by alar
 
 ### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding
 
-```
+```text
 [HertzBeat alert notification]
 Alert target object : dynamic_tp.thread_pool_running.run_timeout_count
 Task ID : 205540620349493

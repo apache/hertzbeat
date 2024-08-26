@@ -16,8 +16,6 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 
 ### Install GreptimeDB via Docker
 
-> Refer to the official website [installation tutorial](https://docs.greptime.com/getting-started/overview)  
-
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 After the installation you can check if the Docker version normally output at the terminal.
