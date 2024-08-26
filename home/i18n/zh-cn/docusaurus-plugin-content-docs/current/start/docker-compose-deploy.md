@@ -28,13 +28,13 @@ sidebar_label: Docker Compose方式安装
 
    - 解压脚本包
 
-   ```
+   ```shell
    tar zxvf apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
    ```
 
    - 进入解压目录, 选择 `HertzBeat + PostgreSQL + VictoriaMetrics` 一键部署
 
-   ```
+   ```shell
    cd apache-hertzbeat-1.6.0-incubating-docker-compose    
    cd hertzbeat-postgresql-victoria-metrics
    ```
@@ -43,7 +43,7 @@ sidebar_label: Docker Compose方式安装
 
    > 在 `hertzbeat-postgresql-victoria-metrics` 目录下执行以下命令
 
-   ```
+   ```shell
    docker-compose up -d
    ```
 
@@ -51,7 +51,7 @@ sidebar_label: Docker Compose方式安装
 
    > 查看各个容器的运行状态，up 为正常运行状态
 
-   ```
+   ```shell
    docker-compose ps
    ```
 

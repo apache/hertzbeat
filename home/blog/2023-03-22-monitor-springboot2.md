@@ -157,7 +157,7 @@ Of course, it is impossible to manually check the metrics in real time. Monitori
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
-```
+```text
 [HertzBeat warning notification]
 Alarm target object: springboot2.threads.size
 Affiliated monitoring ID: 483783444839322

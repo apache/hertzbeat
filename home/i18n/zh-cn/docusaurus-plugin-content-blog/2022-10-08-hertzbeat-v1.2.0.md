@@ -59,7 +59,7 @@ Have Fun!
 
 Need Convert `application.yml`
 
-```
+```yaml
 spring:
   resources:
     static-locations:
@@ -69,7 +69,7 @@ spring:
 
 To
 
-```
+```yaml
 spring:
   web:
     resources:
@@ -133,7 +133,7 @@ Have Fun!
 
 需要将配置文件内容 `application.yml`
 
-```
+```yaml
 spring:
   resources:
     static-locations:
@@ -143,7 +143,7 @@ spring:
 
 变更为
 
-```
+```yaml
 spring:
   web:
     resources:

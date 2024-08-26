@@ -17,13 +17,11 @@ VictoriaMetrics is a fast, cost-effective and scalable monitoring solution and t
 
 ### Install VictoriaMetrics via Docker
 
-> Refer to the official website [installation tutorial](https://docs.victoriametrics.com/Quick-Start.html#how-to-install)
-
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 After the installation you can check if the Docker version normally output at the terminal.
 
-   ```
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```

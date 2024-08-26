@@ -42,7 +42,7 @@ Windows Monitor coming：
 
 ⚠️ ⚠️⚠️⚠️请注意其它版本升级到v1.1.0需要先执行下面的SQL脚本.  现在我们的表名称有个统一前缀 hzb_ prefix.
 
-```
+```properties
 ALTER  TABLE alert RENAME TO hzb_alert;
 ALTER  TABLE alert_define RENAME TO hzb_alert_define;
 ALTER  TABLE alert_define_monitor_bind RENAME TO hzb_alert_define_monitor_bind;
@@ -96,7 +96,7 @@ Windows Monitor coming：
 
 ⚠️ ⚠️⚠️⚠️Attention other version upgrade to v1.1.0 need run sql script.  Now the tables name has hzb_ prefix.
 
-```
+```properties
 ALTER  TABLE alert RENAME TO hzb_alert;
 ALTER  TABLE alert_define RENAME TO hzb_alert_define;
 ALTER  TABLE alert_define_monitor_bind RENAME TO hzb_alert_define_monitor_bind;
