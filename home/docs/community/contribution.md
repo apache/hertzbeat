@@ -88,33 +88,33 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
 1. First you need to fork your target [hertzbeat repository](https://github.com/apache/hertzbeat).
 2. Then download the code locally with git command:
 
-```shell
-git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
-```
+    ```shell
+    git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
+    ```
 
 3. After the download is complete, please refer to the getting started guide or README file of the target repository to initialize the project.
 4. Then, you can refer to the following command to submit the code:
 
-```shell
-git checkout -b a-feature-branch #Recommended  
-```
+    ```shell
+    git checkout -b a-feature-branch #Recommended  
+    ```
 
 5. Submit the coed as a commit, the commit message format specification required: [module name or type name]feature or bugfix or doc: custom message.
 
-```shell
-git add <modified file/path> 
-git commit -m '[docs]feature: necessary instructions' #Recommended 
-```
+    ```shell
+    git add <modified file/path> 
+    git commit -m '[docs]feature: necessary instructions' #Recommended 
+    ```
 
 6. Push to the remote repository
 
-```shell
-git push origin a-feature-branch   
-```
+    ```shell
+    git push origin a-feature-branch   
+    ```
 
 7. Then you can initiate a new PR (Pull Request) on GitHub.
 
-Please note that the title of the PR needs to conform to our spec, and write the necessary description in the PR to facilitate code review by Committers and other contributors.
+    Please note that the title of the PR needs to conform to our spec, and write the necessary description in the PR to facilitate code review by Committers and other contributors.
 
 ### Wait for the code to be merged
 

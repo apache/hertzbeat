@@ -20,7 +20,9 @@ From my junior year to the present, I still maintain my passion for open source 
 
 ## Participate in the Apache Community
 
-[Apache Software Foundation (ASF)](https://community.apache.org/) is an American non-profit organization that aims to support various open source software projects. ASF was originally formed by a group of developers of Apache HTTP Server and was officially established on March 25, 1999. As of 2021, its total membership is approximately 1,000. The name comes from a local Indian tribe in North America. This tribe is famous for its superb military literacy and superhuman endurance. In the second half of the 19th century, it resisted the invaders who invaded their territory. In order to show respect for this Indian tribe, the name of the tribe (Apache) is used as the server name. But when it comes to this naming, there is an interesting story circulating here. Because this server is based on the NCSA HTTPd server and is the product of continuous revision and patching through the efforts of everyone, it is nicknamed "A Patchy Server" (a patch server). Here, because "A Patchy" and "Apache" are homophones, it was finally officially named "Apache Server".
+[Apache Software Foundation (ASF)](https://community.apache.org/) is an American non-profit organization that aims to support various open source software projects. ASF was originally formed by a group of developers of Apache HTTP Server and was officially established on March 25, 1999. As of 2021, its total membership is approximately 1,000. The name comes from a local Indian tribe in North America.  
+This tribe is famous for its superb military literacy and superhuman endurance. In the second half of the 19th century, it resisted the invaders who invaded their territory. In order to show respect for this Indian tribe, the name of the tribe (Apache) is used as the server name.  
+But when it comes to this naming, there is an interesting story circulating here. Because this server is based on the NCSA HTTPd server and is the product of continuous revision and patching through the efforts of everyone, it is nicknamed "A Patchy Server" (a patch server). Here, because "A Patchy" and "Apache" are homophones, it was finally officially named "Apache Server".
 
 The above is an introduction to the Apache Software Foundation from Wikipedia.
 
@@ -46,13 +48,15 @@ As the saying goes, the greater the ability, the greater the task. Becoming a pr
 
 ## How to participate in open source
 
-Anyone who wants to do something needs an opportunity and a guide. Among the many Apache projects, there are many people who pay attention to the project's Issue List. The one time that remains fresh in my memory is: one night after writing the unit test of a tool class, I discovered a small bug. What I thought at the time was that there was too much contextual information and it was not good to write it in a PR, so I opened an Issue to record the context. How small is this bug? It was so small that I just created the Issue. After submitting the unit test and the code to fix the bug together, I refreshed the PR List again and saw a PR Title to fix the bug.
+Anyone who wants to do something needs an opportunity and a guide. Among the many Apache projects, there are many people who pay attention to the project's Issue List. The one time that remains fresh in my memory is: one night after writing the unit test of a tool class, I discovered a small bug. What I thought at the time was that there was too much contextual information and it was not good to write it in a PR, so I opened an Issue to record the context.  
+How small is this bug? It was so small that I just created the Issue. After submitting the unit test and the code to fix the bug together, I refreshed the PR List again and saw a PR Title to fix the bug.
 
 In fact, there is no shortage of people paying attention to the project, but more of an opportunity! Opportunities to participate in projects.
 
 ### The Apache Way
 
-[The Apache Way](https://www.apache.org/theapacheway/) pursued by the Apache Community. The community is greater than the code. A good community is often more important than excellent code. The components of the community include developers, users, etc. Users are the first users of the project code. A healthy community status is when users discover problems, then report problems, and finally solve problems during use. A more likely scenario is that a user reports a problem, switches from being a user to a developer, and solves the problem. And continue to participate in the maintenance of community projects.
+[The Apache Way](https://www.apache.org/theapacheway/) pursued by the Apache Community. The community is greater than the code. A good community is often more important than excellent code. The components of the community include developers, users, etc. Users are the first users of the project code. A healthy community status is when users discover problems, then report problems, and finally solve problems during use.  
+A more likely scenario is that a user reports a problem, switches from being a user to a developer, and solves the problem. And continue to participate in the maintenance of community projects.
 
 ### Paths to participate in open source
 

@@ -11,7 +11,7 @@ HertzBeat支持使用表达式计算监控采集时的相对时间，支持更�
 
 ### 语法
 
-```
+```shell
 ${FORMATTER [{ + | - }<DURATION> <TIME_UNIT>]}
 ```
 
