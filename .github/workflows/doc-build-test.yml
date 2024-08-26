@@ -40,7 +40,7 @@ jobs:
         with:
           globs: './home/**/*.md'
 
-      - name: Check filename in home
+      - name: Check filenames
         uses: actions/setup-python@v4
         with:
           python-version: '3.8'
