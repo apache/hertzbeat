@@ -17,29 +17,29 @@ The main steps are as follows:
 
 1. The metric collection is disabled by default, you need to modify the parameters in `conf/iotdb-metric.yml` first, then restart the server
 
-```
-# Whether to start the monitoring module, the default is false
-enableMetric: true
-
-# Whether to enable operation delay statistics
-enablePerformanceStat: false
-
-# Data provision method, externally provide metrics data through jmx and prometheus protocol, optional parameters: [JMX, PROMETHEUS, IOTDB], IOTDB is closed by default.
-metricReporterList:
-   - JMX
-   - PROMETHEUS
-
-# The metric architecture used at the bottom layer, optional parameters: [MICROMETER, DROPWIZARD]
-monitorType: MICROMETER
-
-# Initialize the level of the metric, optional parameters: [CORE, IMPORTANT, NORMAL, ALL]
-metricLevel: IMPORTANT
-
-# Predefined metrics set, optional parameters: [JVM, LOGBACK, FILE, PROCESS, SYSTEM]
-predefinedMetrics:
-   - JVM
-   - FILE
-```
+    ```
+    # Whether to start the monitoring module, the default is false
+    enableMetric: true
+    
+    # Whether to enable operation delay statistics
+    enablePerformanceStat: false
+    
+    # Data provision method, externally provide metrics data through jmx and prometheus protocol, optional parameters: [JMX, PROMETHEUS, IOTDB], IOTDB is closed by default.
+    metricReporterList:
+       - JMX
+       - PROMETHEUS
+    
+    # The metric architecture used at the bottom layer, optional parameters: [MICROMETER, DROPWIZARD]
+    monitorType: MICROMETER
+    
+    # Initialize the level of the metric, optional parameters: [CORE, IMPORTANT, NORMAL, ALL]
+    metricLevel: IMPORTANT
+    
+    # Predefined metrics set, optional parameters: [JVM, LOGBACK, FILE, PROCESS, SYSTEM]
+    predefinedMetrics:
+       - JVM
+       - FILE
+    ```
 
 2. Restart IoTDB, open a browser or use curl to access http://servier_ip:9091/metrics, and you can see the metric data.
 

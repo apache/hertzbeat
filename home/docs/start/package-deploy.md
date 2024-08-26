@@ -24,15 +24,15 @@ Deployment via package relies on Java runtime environment, ensure you have Java1
    tar zxvf apache-hertzbeat-xxx-incubating-bin.tar.gz
    ```
 
-:::tip
-The configuration file is located in `config/application.yml`, you can modify the configuration file according to your needs to configure external dependent services, such as databases, time series databases, etc.
-HertzBeat defaults to using internal services when started, but it is recommended to switch to external database services in production environments.
-:::
+   :::tip
+   The configuration file is located in `config/application.yml`, you can modify the configuration file according to your needs to configure external dependent services, such as databases, time series databases, etc.
+   HertzBeat defaults to using internal services when started, but it is recommended to switch to external database services in production environments.
+   :::
 
-It is recommended to use [PostgreSQL](postgresql-change) for metadata storage and [VictoriaMetrics](victoria-metrics-init) for metric data storage. Specific steps are as follows
+   It is recommended to use [PostgreSQL](postgresql-change) for metadata storage and [VictoriaMetrics](victoria-metrics-init) for metric data storage. Specific steps are as follows
 
-- [Switch built-in H2 database to PostgreSQL](postgresql-change)
-- [Using VictoriaMetrics to store metric data](victoria-metrics-init)
+   - [Switch built-in H2 database to PostgreSQL](postgresql-change)
+   - [Using VictoriaMetrics to store metric data](victoria-metrics-init)
 
 3. Configure the account file(optional)
 
@@ -68,32 +68,32 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 
 2. Configure the collector configuration file
 
-Unzip the installation package to the host eg: /opt/hertzbeat-collector
+   Unzip the installation package to the host eg: /opt/hertzbeat-collector
 
-```
-tar zxvf apache-hertzbeat-collector-xxx-incubating-bin.tar.gz
-```
+   ```
+   tar zxvf apache-hertzbeat-collector-xxx-incubating-bin.tar.gz
+   ```
 
-Configure the collector configuration yml file `config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
+   Configure the collector configuration yml file `config/application.yml`: unique `identity` name, running `mode` (public or private), hertzbeat `manager-host`, hertzbeat `manager-port`
 
-```yaml
-collector:
-  dispatch:
-    entrance:
-      netty:
-        enabled: true
-        identity: ${IDENTITY:}
-        mode: ${MODE:public}
-        manager-host: ${MANAGER_HOST:127.0.0.1}
-        manager-port: ${MANAGER_PORT:1158}
-```
+   ```yaml
+   collector:
+     dispatch:
+       entrance:
+         netty:
+           enabled: true
+           identity: ${IDENTITY:}
+           mode: ${MODE:public}
+           manager-host: ${MANAGER_HOST:127.0.0.1}
+           manager-port: ${MANAGER_PORT:1158}
+   ```
 
-> Parameters detailed explanation
+   > Parameters detailed explanation
 
-- `identity` : (optional) Set the unique identifier name of the collector. Note that the name of the collector must be unique when there are multiple collectors.
-- `mode` : Configure the running mode (public or private), public cluster mode or private cloud-edge mode.
-- `manager-host` : Important, configure the address of the connected HertzBeat Server,
-- `manager-port` : (optional) Configure the port of the connected HertzBeat Server, default 1158.
+   - `identity` : (optional) Set the unique identifier name of the collector. Note that the name of the collector must be unique when there are multiple collectors.
+   - `mode` : Configure the running mode (public or private), public cluster mode or private cloud-edge mode.
+   - `manager-host` : Important, configure the address of the connected HertzBeat Server,
+   - `manager-port` : (optional) Configure the port of the connected HertzBeat Server, default 1158.
 
 3. Start the service
 
@@ -127,6 +127,6 @@ collector:
 2. According to the process deploy，visit <http://ip:1157/> no interface
    Please refer to the following points to troubleshoot issues:
 
-> 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.
-> 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.
-> 3：Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.
+   > 1：If you switch to dependency service MYSQL database，check whether the database is created and started successfully.  
+   > 2：Check whether dependent services, IP account and password configuration is correct in HertzBeat's configuration file `hertzbeat/config/application.yml`.  
+   > 3：Check whether the running log has errors in `hertzbeat/logs/` directory. If you haven't solved the issue, report it to the communication group or community.

@@ -58,23 +58,23 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 1. Just one command to get started:
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-```or use quay.io (if dockerhub network connect timeout)```
+    ```or use quay.io (if dockerhub network connect timeout)```
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 
 3. Deploy collector clusters
 
-```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
+    ```
+    docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+    ```
 
-* `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
-* `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
-* `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
+    * `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
+    * `-e MANAGER_HOST=127.0.0.1` : set the main hertzbeat server ip.
+    * `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
 
@@ -150,7 +150,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * and more for your custom monitoring.
 * Notifications support `Discord` `Slack` `Telegram` `Mail` `Pinning` `WeChat` `FlyBook` `SMS` `Webhook` `ServerChan`.
 
-----
+---
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

@@ -17,15 +17,15 @@ Refer to the steps to obtain token
 
 1. Create a service account and bind the default cluster-admin administrator cluster role
 
-```kubectl create serviceaccount dashboard-admin -n kube-system```
+    ```kubectl create serviceaccount dashboard-admin -n kube-system```
 
 2. User Authorization
 
-```shell
-kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=kube-system:dashboard-admin
-kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
-kubectl describe secret {secret} -n kube-system
-```
+    ```shell
+    kubectl create clusterrolebinding dashboard-admin --clusterrole=cluster-admin --serviceaccount=kube-system:dashboard-admin
+    kubectl -n kube-system get secret | grep dashboard-admin | awk '{print $1}'
+    kubectl describe secret {secret} -n kube-system
+    ```
 
 ### method two
 
