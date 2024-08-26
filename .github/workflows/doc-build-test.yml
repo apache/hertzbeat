@@ -41,7 +41,7 @@ jobs:
       - name: Check Markdown
         uses: DavidAnson/markdownlint-cli2-action@v16
         with:
-          globs: './home'
+          globs: './home/**/*.md'
 
       - name: Check filenames
         run: python ./script/ci/docs/check_file_name.py ./script/ci/docs/check_file_name.json
