@@ -24,7 +24,7 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
    After the installation you can check if the Docker version normally output at the terminal.
 
-   ```
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```

@@ -28,13 +28,13 @@ Run the `docker compose version` command to check if you have a Docker Compose e
 
    - Unzip the script package
 
-   ```
+   ```shell
    tar zxvf apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
    ```
 
    - Enter the decompression directory and select `HertzBeat + PostgreSQL + VictoriaMetrics` for one-click deployment
 
-   ```
+   ```shell
    cd apache-hertzbeat-1.6.0-incubating-docker-compose    
    cd hertzbeat-postgresql-victoria-metrics
    ```
@@ -43,7 +43,7 @@ Run the `docker compose version` command to check if you have a Docker Compose e
 
    > Run script in `hertzbeat-postgresql-victoria-metrics` directory
 
-   ```
+   ```shell
    docker-compose up -d
    ```
 
@@ -51,7 +51,7 @@ Run the `docker compose version` command to check if you have a Docker Compose e
 
       > View the running status of each container, up is the normal running status
 
-      ```
+      ```shell
       docker-compose ps
       ```
 
