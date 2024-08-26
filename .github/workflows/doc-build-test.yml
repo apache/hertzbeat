@@ -47,12 +47,19 @@ jobs:
         run: python ./script/ci/docs/check_file_name.py ./script/ci/docs/check_file_name.json
 
       - name: Dead Link Check
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          folder-path: './home'
-          use-quiet-mode: 'yes'
-          use-verbose-mode: 'yes'
-          config-file: './script/ci/link_check.json'
+        run: |
+          sudo npm install -g markdown-link-check@3.8.7
+          for file in $(find ./home -name "*.md"); do
+            if ! grep -Fxq "$file" ./script/ci/exclude_files.txt; then
+              markdown-link-check -c ./script/ci/link_check.json -q "$file"
+            fi
+          done
+        # uses: JustinBeckwith/linkinator-action@v6
+        # with:
+        #   folder-path: './home'
+        #   use-quiet-mode: 'yes'
+        #   use-verbose-mode: 'yes'
+        #   config-file: './script/ci/link_check.json'
 
       - name: NPM INSTALL
         working-directory: home

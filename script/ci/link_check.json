@@ -1,9 +1,6 @@
 {
   "ignorePatterns": [
     {
-      "pattern": "^(https?://)?(apache|hertzbeat|microsoft\\.com)"
-    },
-    {
       "pattern": "^(?!http).*"
     },
     {
