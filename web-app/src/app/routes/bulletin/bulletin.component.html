@@ -35,10 +35,11 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'bulletin.new' | i18n }}
     </button>
-    <button *ngIf="currentDefine" nz-button nzType="primary" (click)="onEditBulletinDefine()">
+    <!--TODO: Wait until the backend interface is improved before releasing it.-->
+    <!--<button *ngIf="currentDefine" nz-button nzType="primary" (click)="onEditBulletinDefine()">
       <i nz-icon nzType="edit" nzTheme="outline"></i>
       {{ 'bulletin.edit' | i18n }}
-    </button>
+    </button>-->
     <button *ngIf="currentDefine" nz-button nzType="primary" nzDanger (click)="onDeleteBulletinDefines()">
       <i nz-icon nzType="delete" nzTheme="outline"></i>
       {{ 'bulletin.delete' | i18n }}
