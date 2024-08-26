@@ -110,7 +110,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
-      objectName: kafka.server:type=app-info,id=0
+      objectName: kafka.server:type=app-info,id=*
       # jmx url
       url: ^_^url^_^
 
