@@ -31,15 +31,15 @@ tags: [opensource, practice]
 
 1. The metric collection is disabled by default, you need to modify the parameters in `conf/iotdb-metric.yml` first, then restart the server
 
-```
-# Whether to start the monitoring module, the default is false
-enableMetric: true
-
-# Data provision method, externally provide metrics data through jmx and prometheus protocol, optional parameters: [JMX, PROMETHEUS, IOTDB], IOTDB is closed by default.
-metricReporterList:
-   - JMX
-   - PROMETHEUS
-```
+    ```yaml
+    # Whether to start the monitoring module, the default is false
+    enableMetric: true
+    
+    # Data provision method, externally provide metrics data through jmx and prometheus protocol, optional parameters: [JMX, PROMETHEUS, IOTDB], IOTDB is closed by default.
+    metricReporterList:
+       - JMX
+       - PROMETHEUS
+    ```
 
 2. Restart IoTDB, open a browser or use curl to access <http://ip:9091/metrics>, and you can see the metric data.
 
@@ -47,28 +47,28 @@ metricReporterList:
 
 1. Click Add IoTDB Monitoring
 
-Path: Menu -> Database Monitoring -> IoTDB Monitoring -> Add IoTDB Monitoring
+    Path: Menu -> Database Monitoring -> IoTDB Monitoring -> Add IoTDB Monitoring
 
-![hertzbeat](/img/blog/monitor-iotdb-1.png)
+    ![hertzbeat](/img/blog/monitor-iotdb-1.png)
 
 2. Configure the parameters required for monitoring IoTDB
 
-Fill in the IoTDB **service IP** and **monitoring port** (default 9091) on the monitoring page, and finally click OK to add.
-For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/iotdb/) <https://hertzbeat.com/docs/help> /iotdb/
+    Fill in the IoTDB **service IP** and **monitoring port** (default 9091) on the monitoring page, and finally click OK to add.
+    For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/iotdb/) <https://hertzbeat.com/docs/help> /iotdb/
 
-![hertzbeat](/img/blog/monitor-iotdb-2.png)
+    ![hertzbeat](/img/blog/monitor-iotdb-2.png)
 
 3. Complete ✅, now we have added the monitoring of IoTDB, check the monitoring list to see our added items.
 
-![hertzbeat](/img/blog/monitor-iotdb-3.png)
+    ![hertzbeat](/img/blog/monitor-iotdb-3.png)
 
 4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of IoTDB.
 
-![hertzbeat](/img/blog/monitor-iotdb-4.png)
+    ![hertzbeat](/img/blog/monitor-iotdb-4.png)
 
 5. Click **Monitoring History Details TAB** to browse IoTDB's historical monitoring metric data chart📈.
 
-![hertzbeat](/img/blog/monitor-iotdb-5.png)
+    ![hertzbeat](/img/blog/monitor-iotdb-5.png)
 
 **Complete DONE! Through the above steps, it is actually two steps to sum up**
 
@@ -83,29 +83,29 @@ For other parameters such as **collection interval**, **timeout period**, etc., 
 
 1. Configure a threshold alarm for an important metric
 
-Path: Menu -> Alarm Threshold -> Add Threshold
+    Path: Menu -> Alarm Threshold -> Add Threshold
 
-- Select the configured metric object. IotDB monitors many metrics, one of which is related to the status of the node `cluster_node_status` -> `status` (node status, 1=online 2=offline).
-- Here we configure to send an alarm when the metric `status==2`, the alarm level is **Critical Alarm**, which is triggered once, as shown in the figure below.
+   - Select the configured metric object. IotDB monitors many metrics, one of which is related to the status of the node `cluster_node_status` -> `status` (node status, 1=online 2=offline).
+   - Here we configure to send an alarm when the metric `status==2`, the alarm level is **Critical Alarm**, which is triggered once, as shown in the figure below.
 
-![hertzbeat](/img/blog/monitor-iotdb-6.png)
+    ![hertzbeat](/img/blog/monitor-iotdb-6.png)
 
 2. Add message notification recipients
 
-Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
+    Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
 
-Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
+    Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
-- Configure the receiver parameters in HertzBeat as follows.
+   - Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Configure the receiver parameters in HertzBeat as follows.
 
-【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
+    【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
 
-![hertzbeat](/img/blog/alert-notice-1.png)
+    ![hertzbeat](/img/blog/alert-notice-1.png)
 
 3. Configure the associated alarm notification strategy ⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]
 
-![hertzbeat](/img/blog/alert-notice-2.png)
+    ![hertzbeat](/img/blog/alert-notice-2.png)
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 

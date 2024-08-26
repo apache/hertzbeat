@@ -33,28 +33,28 @@ Keywords: [Open source monitoring tool, open source database monitoring, Mysql d
 
 1. Click Add Mysql Monitoring
 
-Path: Menu -> Database Monitoring -> Mysql Database -> Add Mysql Database Monitoring
+    Path: Menu -> Database Monitoring -> Mysql Database -> Add Mysql Database Monitoring
 
-![hertzbeat](/img/blog/monitor-mysql-1.png)
+   ![hertzbeat](/img/blog/monitor-mysql-1.png)
 
 2. Configure the parameters required for the new monitoring Mysql database
 
-On the monitoring page, fill in Mysql **service IP**, **monitoring port** (default 3306), **account password, etc.**, and finally click OK to add.
-For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/mysql/) <https://hertzbeat.com/docs/help> /mysql/
+   On the monitoring page, fill in Mysql **service IP**, **monitoring port** (default 3306), **account password, etc.**, and finally click OK to add.
+   For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/mysql/) <https://hertzbeat.com/docs/help> /mysql/
 
-![hertzbeat](/img/blog/monitor-mysql-2.png)
+   ![hertzbeat](/img/blog/monitor-mysql-2.png)
 
 3. Complete ✅, now we have added the monitoring of the Mysql database, check the monitoring list to see our added items.
 
-![hertzbeat](/img/blog/monitor-mysql-1.png)
+   ![hertzbeat](/img/blog/monitor-mysql-1.png)
 
 4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of the Mysql database.
 
-![hertzbeat](/img/blog/monitor-mysql-3.png)
+   ![hertzbeat](/img/blog/monitor-mysql-3.png)
 
 5. Click **Monitoring History Details TAB** to browse the historical monitoring metric data chart of Mysql database📈.
 
-![hertzbeat](/img/blog/monitor-mysql-4.png)
+   ![hertzbeat](/img/blog/monitor-mysql-4.png)
 
 **DONE! Done! Through the above steps, in fact, it only takes one step to sum up**
 
@@ -71,35 +71,35 @@ Of course, just looking at it is definitely not perfect. Monitoring is often acc
 
 1. Configure an alarm threshold for an important metric
 
-Path: Menu -> Threshold Rules -> Add Threshold
+   Path: Menu -> Threshold Rules -> Add Threshold
 
-- Select the configured metric object. Mysql database monitoring is mainly about database performance and other related metrics. For example, we set the threshold for the metric `query cache hit rate` `cache` -> `query_cache_hit_rate`. When the query cache hit rate of Mysql is very low An alarm is issued when it is less than 30%.
-- Here we configure to send an alarm when the `query_cache_hit_rate<30` of this metric `cache`, the alarm level is **serious alarm**, and it will be triggered after three times, as shown in the figure below.
+   - Select the configured metric object. Mysql database monitoring is mainly about database performance and other related metrics. For example, we set the threshold for the metric `query cache hit rate` `cache` -> `query_cache_hit_rate`. When the query cache hit rate of Mysql is very low An alarm is issued when it is less than 30%.
+   - Here we configure to send an alarm when the `query_cache_hit_rate<30` of this metric `cache`, the alarm level is **serious alarm**, and it will be triggered after three times, as shown in the figure below.
 
-![hertzbeat](/img/blog/monitor-mysql-5.png)
+   ![hertzbeat](/img/blog/monitor-mysql-5.png)
 
-![hertzbeat](/img/blog/monitor-mysql-6.png)
+   ![hertzbeat](/img/blog/monitor-mysql-6.png)
 
 2. Add message notification recipients
 
-> Configure the receiver to let the alarm message know who to send and how to send it.
+   > Configure the receiver to let the alarm message know who to send and how to send it.
 
-Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
+   Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
 
-Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
+   Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
-- Configure the receiver parameters in HertzBeat as follows.
+   - Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Configure the receiver parameters in HertzBeat as follows.
 
-【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
+   【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
 
-![hertzbeat](/img/blog/alert-notice-1.png)
+   ![hertzbeat](/img/blog/alert-notice-1.png)
 
 3. Configure the associated alarm notification strategy ⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]
 
-> Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
+   > Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
 
-![hertzbeat](/img/blog/alert-notice-2.png)
+   ![hertzbeat](/img/blog/alert-notice-2.png)
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
