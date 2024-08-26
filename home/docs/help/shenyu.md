@@ -17,27 +17,27 @@ Two Steps Mainly:
 
 1. add metrics plugin dependency in gateway's pom.xml.
 
-```xml
-<dependency>
-    <groupId>org.apache.shenyu</groupId>
-    <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
-    <version>${project.version}</version>
-</dependency>
-```
+    ```xml
+    <dependency>
+        <groupId>org.apache.shenyu</groupId>
+        <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+    ```
 
 2. modify this config in shenyu gateway yaml.
 
-```yaml
-shenyu:
-  metrics:
-    enabled: false #false is close, true is open
-    name : prometheus 
-    host: 127.0.0.1 
-    port: 8090 
-    jmxConfig: 
-    props:
-      jvm_enabled: true #enable jvm monitoring
-```
+    ```yaml
+    shenyu:
+      metrics:
+        enabled: false #false is close, true is open
+        name : prometheus 
+        host: 127.0.0.1 
+        port: 8090 
+        jmxConfig: 
+        props:
+          jvm_enabled: true #enable jvm monitoring
+    ```
 
 Finally, restart the access gateway metrics endpoint `http://ip:8090` to respond to prometheus format data.
 

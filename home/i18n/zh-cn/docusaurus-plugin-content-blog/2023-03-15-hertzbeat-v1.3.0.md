@@ -109,7 +109,7 @@ Bugfix.
 22. [[script] modified the linux memory metrics specified script code #719](https://github.com/apache/hertzbeat/pull/719)
 23. [[webapp] bugfix the cover of the big screen is too small #724](https://github.com/apache/hertzbeat/pull/724)
 
-----
+---
 
 升级注意⚠️.
 
@@ -117,7 +117,7 @@ Bugfix.
 
 修改 `application.yml` 并设置 `warehouse.store.jpa.enabled` 参数为 false
 
-```
+```yaml
 warehouse:
   store:
     jpa:
@@ -126,7 +126,7 @@ warehouse:
 
 执行SQL脚本
 
-```
+```shell
 ALTER table hzb_monitor modify job_id bigint default null;
 COMMIT;
 ```
@@ -144,7 +144,7 @@ COMMIT;
 - 和更多你的自定义监控。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
 
-----
+---
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
