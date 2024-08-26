@@ -120,7 +120,7 @@
 <!-- new bulletin modal -->
 <nz-modal
   [(nzVisible)]="isManageModalVisible"
-  [nzTitle]="'bulletin.new' | i18n"
+  [nzTitle]="(isManageModalAdd ? 'bulletin.new' : 'bulletin.edit') | i18n"
   (nzOnCancel)="onManageModalCancel()"
   (nzOnOk)="onManageModalOk()"
   nzMaskClosable="false"

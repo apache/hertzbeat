@@ -88,6 +88,8 @@ export class BulletinComponent implements OnInit {
   onEditBulletinDefine() {
     if (this.currentDefine) {
       this.define = this.currentDefine;
+      this.onAppChange(this.define.app);
+      // this.tempMetrics.add(...this.define.fields.keys());
       this.isManageModalAdd = false;
       this.isManageModalVisible = true;
       this.isManageModalOkLoading = false;
