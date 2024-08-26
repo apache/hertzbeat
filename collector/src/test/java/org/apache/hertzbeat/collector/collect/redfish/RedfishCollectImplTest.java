@@ -63,11 +63,11 @@ public class RedfishCollectImplTest {
     @Test
     void collect() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        List<String> aliasField = new ArrayList<>();
-        aliasField.add("$.Id");
+        List<String> jsonPath = new ArrayList<>();
+        jsonPath.add("$.Id");
         Metrics metrics = new Metrics();
         metrics.setRedfish(redfishProtocol);
-        metrics.setAliasFields(aliasField);
+        metrics.getRedfish().setJsonPath(jsonPath);
         metrics.setName("Chassis");
         RedfishClient.create(redfishProtocol);
         redfishCollect.preCheck(metrics);
@@ -77,12 +77,12 @@ public class RedfishCollectImplTest {
     @Test
     void mockCollect() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-        List<String> aliasField = new ArrayList<>();
-        aliasField.add("$.['@odata.id']");
+        List<String> jsonPath = new ArrayList<>();
+        jsonPath.add("$.['@odata.id']");
         redfishProtocol.setSchema("/redfish/v1/Chassis/{ChassisId}/PowerSubsystem/PowerSupplies");
         Metrics metrics = new Metrics();
         metrics.setRedfish(redfishProtocol);
-        metrics.setAliasFields(aliasField);
+        metrics.getRedfish().setJsonPath(jsonPath);
         metrics.setName("PowerSupply");
         String chassis = """
                 {
