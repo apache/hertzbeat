@@ -29,7 +29,7 @@ Then the query script of the two Metrics in hertzbeat is(Use `;` Connect them to
 `hostname; uptime | awk -F "," '{print $1}'`
 The data responded by the terminal is：
 
-```
+```text
 tombook
 14:00:15 up 72 days  
 ```
