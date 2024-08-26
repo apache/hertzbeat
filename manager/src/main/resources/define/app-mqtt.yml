@@ -20,12 +20,12 @@ app: mqtt
 # The app api i18n name
 name:
   zh-CN: MQTT 连接
-  en-US: MQTT connection
+  en-US: MQTT Connection
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 对 SMTP 服务的(Banner,helo响应)相关指标进行监测。<br>您可以点击 “<i>新建 SMTP</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat monitors the banner and hello response related metrics of the SMTP service.<br>You can click "<i>New SMTP</i>" and configure it, or select "<i>More Action</i>" to import the existing configuration.
-  zh-TW: HertzBeat對SMTP服務的（Banner，helo響應）相關名額進行監測。<br>您可以點擊 “<i>新建 ShenYu</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+  zh-CN: HertzBeat 对 MQTT 连接进行监测。<br>您可以点击 “<i>新建 MQTT 连接</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors MQTT connections. <br>You can click "<i>New MQTT connection</i>" and configure it, or select "<i>More actions</i>" to import an existing configuration.
+  zh-TW: HertzBeat 對 MQTT 連接進行監測。 <br>您可以點選 “<i>新建 MQTT 連線</i>” 並進行配置，或選擇“<i>更多操作</i>”，匯入已有配置。
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -55,7 +55,7 @@ params:
   - field: protocolVersion
     name:
       zh-CN: 协议版本
-      en-US: protocol version
+      en-US: Protocol version
     type: radio
     options:
       - label: MQTT 3.1.1
@@ -82,7 +82,7 @@ params:
   - field: username
     name:
       zh-CN: 用户名
-      en-US: username
+      en-US: Username
     type: text
     hide: true
     # required-true or false
@@ -90,7 +90,7 @@ params:
   - field: password
     name:
       zh-CN: 密码
-      en-US: password
+      en-US: Password
     type: text
     hide: true
     # required-true or false
@@ -98,21 +98,22 @@ params:
   - field: clientId
     name:
       zh-CN: 客户端ID
-      en-US: client Id
+      en-US: Client Id
     type: text
+    defaultValue: hertzbeat-mqtt-client
     # required-true or false
     required: true
 
   - field: topic
     name:
       zh-CN: 主题
-      en-US: topic
+      en-US: Topic
     type: text
     required: true
   - field: testMessage
     name:
       zh-CN: 测试消息
-      en-US: test message
+      en-US: Test message
     type: text
     required: false
 # collect metrics config list
@@ -137,12 +138,12 @@ metrics:
         type: 1
         i18n:
           zh-CN: 正常订阅
-          en-US: Response
+          en-US: Normal subscription
       - field: canPublish
         type: 1
         i18n:
           zh-CN: 正常推送
-          en-US: SMTP Banner
+          en-US: Normal publish
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: mqtt
     # Specific collection configuration when protocol is telnet protocol
