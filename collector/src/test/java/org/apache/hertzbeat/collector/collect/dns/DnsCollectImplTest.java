@@ -19,7 +19,6 @@ package org.apache.hertzbeat.collector.collect.dns;
 
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.util.Collections;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
@@ -30,7 +29,6 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link DnsCollectImpl}
- *
  */
 public class DnsCollectImplTest {
     private DnsProtocol dnsProtocol;

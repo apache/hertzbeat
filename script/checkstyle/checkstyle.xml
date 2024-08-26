@@ -278,7 +278,7 @@
         </module>
         <module name="RegexpSinglelineJava">
             <property name="format" 
-                      value="^.*(@author|@date).*" />
+                      value="^.*( @author| @date).*" />
             <property name="message" 
                       value="Java file header cannot contain @author or @date" />
         </module>

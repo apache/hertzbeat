@@ -17,12 +17,10 @@
 
 package org.apache.hertzbeat.manager.service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import javax.naming.AuthenticationException;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import com.usthe.sureness.provider.DefaultAccount;
 import com.usthe.sureness.provider.SurenessAccount;
 import com.usthe.sureness.provider.SurenessAccountProvider;
@@ -30,6 +28,10 @@ import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
 import io.jsonwebtoken.MalformedJwtException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.naming.AuthenticationException;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
@@ -38,117 +40,113 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link AccountServiceImpl}
  */
 
 class AccountServiceTest {
 
-	private AccountServiceImpl accountService;
+    private AccountServiceImpl accountService;
 
-	private SurenessAccountProvider accountProvider;
+    private SurenessAccountProvider accountProvider;
 
-	private final String identifier = "admin";
-	private final String password = "hertzbeat";
-	private final String salt = "salt1";
-	private final List<String> roles = List.of("admin");
+    private final String identifier = "admin";
+    private final String password = "hertzbeat";
+    private final String salt = "salt1";
+    private final List<String> roles = List.of("admin");
 
-	private final String jwt = """
-			  CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
-			  LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
-			  8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
-			  dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp
-			""";
-	@BeforeEach
-	void setUp() {
+    private final String jwt = """
+              CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
+              LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+              8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5
+              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp
+            """;
 
-		accountProvider = mock(DocumentAccountProvider.class);
-		accountService = new AccountServiceImpl();
+    @BeforeEach
+    void setUp() {
 
-		JsonWebTokenUtil.setDefaultSecretKey(jwt);
-	}
+        accountProvider = mock(DocumentAccountProvider.class);
+        accountService = new AccountServiceImpl();
 
-	@Test
-	void testAuthGetTokenWithValidAccount() throws AuthenticationException {
+        JsonWebTokenUtil.setDefaultSecretKey(jwt);
+    }
 
-		SurenessAccount account = DefaultAccount.builder("app1")
-				.setPassword(Md5Util.md5(password + salt))
-				.setSalt(salt)
-				.setOwnRoles(roles)
-				.setDisabledAccount(Boolean.FALSE)
-				.setExcessiveAttempts(Boolean.FALSE)
-				.build();
-		LoginDto loginDto = LoginDto.builder()
-				.credential(password)
-				.identifier(identifier)
-				.build();
+    @Test
+    void testAuthGetTokenWithValidAccount() throws AuthenticationException {
 
-		when(accountProvider.loadAccount(identifier)).thenReturn(account);
+        SurenessAccount account = DefaultAccount.builder("app1")
+                .setPassword(Md5Util.md5(password + salt))
+                .setSalt(salt)
+                .setOwnRoles(roles)
+                .setDisabledAccount(Boolean.FALSE)
+                .setExcessiveAttempts(Boolean.FALSE)
+                .build();
+        LoginDto loginDto = LoginDto.builder()
+                .credential(password)
+                .identifier(identifier)
+                .build();
 
-		Map<String, String> response = accountService.authGetToken(loginDto);
+        when(accountProvider.loadAccount(identifier)).thenReturn(account);
 
-		assertNotNull(response);
-		assertNotNull(response.get("token"));
-		assertNotNull(response.get("refreshToken"));
-		assertNotNull(response.get("role"));
-		assertEquals(JsonUtil.toJson(roles), response.get("role"));
+        Map<String, String> response = accountService.authGetToken(loginDto);
 
-	}
+        assertNotNull(response);
+        assertNotNull(response.get("token"));
+        assertNotNull(response.get("refreshToken"));
+        assertNotNull(response.get("role"));
+        assertEquals(JsonUtil.toJson(roles), response.get("role"));
 
-	@Test
-	void testAuthGetTokenWithInvalidAccount() {
+    }
 
-		String identifier = "user1";
-		String password = "wrongPassword";
-		LoginDto loginDto = LoginDto.builder()
-				.credential(password)
-				.identifier(identifier)
-				.build();
+    @Test
+    void testAuthGetTokenWithInvalidAccount() {
 
-		when(accountProvider.loadAccount(identifier)).thenReturn(null);
+        String identifier = "user1";
+        String password = "wrongPassword";
+        LoginDto loginDto = LoginDto.builder()
+                .credential(password)
+                .identifier(identifier)
+                .build();
 
-		Assertions.assertThrows(
-				AuthenticationException.class,
-				() -> accountService.authGetToken(loginDto)
-		);
-	}
+        when(accountProvider.loadAccount(identifier)).thenReturn(null);
 
-	@Test
-	void testRefreshTokenWithValidToken() throws AuthenticationException {
+        Assertions.assertThrows(
+                AuthenticationException.class,
+                () -> accountService.authGetToken(loginDto)
+        );
+    }
 
-		String userId = "admin";
-		String refreshToken = JsonWebTokenUtil.issueJwt(userId, 3600L, Collections.singletonMap("refresh", true));
+    @Test
+    void testRefreshTokenWithValidToken() throws AuthenticationException {
 
-		SurenessAccount account = DefaultAccount.builder("app1")
-				.setPassword(Md5Util.md5(password + salt))
-				.setSalt(salt)
-				.setOwnRoles(roles)
-				.setDisabledAccount(Boolean.FALSE)
-				.setExcessiveAttempts(Boolean.FALSE)
-				.build();
-		when(accountProvider.loadAccount(userId)).thenReturn(account);
+        String userId = "admin";
+        String refreshToken = JsonWebTokenUtil.issueJwt(userId, 3600L, Collections.singletonMap("refresh", true));
 
-		RefreshTokenResponse response = accountService.refreshToken(refreshToken);
+        SurenessAccount account = DefaultAccount.builder("app1")
+                .setPassword(Md5Util.md5(password + salt))
+                .setSalt(salt)
+                .setOwnRoles(roles)
+                .setDisabledAccount(Boolean.FALSE)
+                .setExcessiveAttempts(Boolean.FALSE)
+                .build();
+        when(accountProvider.loadAccount(userId)).thenReturn(account);
 
-		assertNotNull(response);
-		assertNotNull(response.getToken());
-		assertNotNull(response.getRefreshToken());
-	}
+        RefreshTokenResponse response = accountService.refreshToken(refreshToken);
 
-	@Test
-	void testRefreshTokenWithInvalidToken() {
+        assertNotNull(response);
+        assertNotNull(response.getToken());
+        assertNotNull(response.getRefreshToken());
+    }
 
-		String refreshToken = "invalidToken";
+    @Test
+    void testRefreshTokenWithInvalidToken() {
 
-		Assertions.assertThrows(
-				MalformedJwtException.class,
-				() -> accountService.refreshToken(refreshToken)
-		);
-	}
+        String refreshToken = "invalidToken";
+
+        Assertions.assertThrows(
+                MalformedJwtException.class,
+                () -> accountService.refreshToken(refreshToken)
+        );
+    }
 
 }

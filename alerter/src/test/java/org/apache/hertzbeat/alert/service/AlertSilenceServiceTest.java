@@ -45,83 +45,83 @@ import org.springframework.data.jpa.domain.Specification;
 
 class AlertSilenceServiceTest {
 
-	@Mock
-	private AlertSilenceDao alertSilenceDao;
+    @Mock
+    private AlertSilenceDao alertSilenceDao;
 
-	@InjectMocks
-	private AlertSilenceServiceImpl alertSilenceService;
+    @InjectMocks
+    private AlertSilenceServiceImpl alertSilenceService;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		alertSilenceDao.save(AlertSilence
-				.builder()
-				.id(1L)
-				.type((byte) 1)
-				.build()
-		);
+        alertSilenceDao.save(AlertSilence
+                .builder()
+                .id(1L)
+                .type((byte) 1)
+                .build()
+        );
 
-		assertNotNull(alertSilenceDao.findAll());
-	}
+        assertNotNull(alertSilenceDao.findAll());
+    }
 
-	@Test
-	void testValidate() {
+    @Test
+    void testValidate() {
 
-		AlertSilence alertSilence = new AlertSilence();
-		alertSilence.setType((byte) 1);
+        AlertSilence alertSilence = new AlertSilence();
+        alertSilence.setType((byte) 1);
 
-		alertSilenceService.validate(alertSilence, false);
+        alertSilenceService.validate(alertSilence, false);
 
-		assertNotNull(alertSilence.getDays());
-		assertEquals(7, alertSilence.getDays().size());
-	}
+        assertNotNull(alertSilence.getDays());
+        assertEquals(7, alertSilence.getDays().size());
+    }
 
-	@Test
-	void testAddAlertSilence() {
+    @Test
+    void testAddAlertSilence() {
 
-		AlertSilence alertSilence = new AlertSilence();
-		when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(alertSilence);
+        AlertSilence alertSilence = new AlertSilence();
+        when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(alertSilence);
 
-		assertDoesNotThrow(() -> alertSilenceService.addAlertSilence(alertSilence));
-		verify(alertSilenceDao, times(1)).save(alertSilence);
-	}
+        assertDoesNotThrow(() -> alertSilenceService.addAlertSilence(alertSilence));
+        verify(alertSilenceDao, times(1)).save(alertSilence);
+    }
 
-	@Test
-	void testModifyAlertSilence() {
-		AlertSilence alertSilence = new AlertSilence();
-		when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(alertSilence);
+    @Test
+    void testModifyAlertSilence() {
+        AlertSilence alertSilence = new AlertSilence();
+        when(alertSilenceDao.save(any(AlertSilence.class))).thenReturn(alertSilence);
 
-		assertDoesNotThrow(() -> alertSilenceService.modifyAlertSilence(alertSilence));
-		verify(alertSilenceDao, times(1)).save(alertSilence);
-	}
+        assertDoesNotThrow(() -> alertSilenceService.modifyAlertSilence(alertSilence));
+        verify(alertSilenceDao, times(1)).save(alertSilence);
+    }
 
-	@Test
-	void testGetAlertSilence() {
-		AlertSilence alertSilence = new AlertSilence();
-		when(alertSilenceDao.findById(anyLong())).thenReturn(Optional.of(alertSilence));
+    @Test
+    void testGetAlertSilence() {
+        AlertSilence alertSilence = new AlertSilence();
+        when(alertSilenceDao.findById(anyLong())).thenReturn(Optional.of(alertSilence));
 
-		AlertSilence result = alertSilenceService.getAlertSilence(1L);
-		assertNotNull(result);
-		verify(alertSilenceDao, times(1)).findById(1L);
-	}
+        AlertSilence result = alertSilenceService.getAlertSilence(1L);
+        assertNotNull(result);
+        verify(alertSilenceDao, times(1)).findById(1L);
+    }
 
-	@Test
-	void testGetAlertSilences() {
-		when(alertSilenceDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
-		assertDoesNotThrow(() -> alertSilenceService.getAlertSilences(null, null, "id", "desc", 1, 10));
-		verify(alertSilenceDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+    @Test
+    void testGetAlertSilences() {
+        when(alertSilenceDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
+        assertDoesNotThrow(() -> alertSilenceService.getAlertSilences(null, null, "id", "desc", 1, 10));
+        verify(alertSilenceDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
 
-		assertNotNull(alertSilenceService.getAlertSilences(null, null, "id", "desc", 1, 10));
-	}
+        assertNotNull(alertSilenceService.getAlertSilences(null, null, "id", "desc", 1, 10));
+    }
 
-	@Test
-	void testDeleteAlertSilences() {
+    @Test
+    void testDeleteAlertSilences() {
 
-		alertSilenceDao.deleteAlertSilencesByIdIn(Set.of(1L));
+        alertSilenceDao.deleteAlertSilencesByIdIn(Set.of(1L));
 
-		verify(alertSilenceDao, times(1)).deleteAlertSilencesByIdIn(Set.of(1L));
-	}
+        verify(alertSilenceDao, times(1)).deleteAlertSilencesByIdIn(Set.of(1L));
+    }
 
 }
