@@ -47,25 +47,6 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
    Config the `warehouse.store.jpa.enabled` `false`. Replace `warehouse.store.iot-db` data source parameters, HOST account and password.
 
-<<<<<<< HEAD
-```yaml
-warehouse:
-  store:
-    # disable JPA
-    jpa:
-      enabled: false
-    # enable iot-db
-    iot-db:
-      enabled: true
-      host: 127.0.0.1
-      rpc-port: 6667
-      username: root
-      password: root
-      query-timeout-in-ms: -1
-      # default '7776000000'（90days,unit:ms,-1:no-expire）
-      expire-time: '7776000000'
-```
-=======
    ```yaml
    warehouse:
      store:

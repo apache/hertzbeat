@@ -26,15 +26,9 @@ sidebar_label: Quick Start
 
 3. Deploy collector clusters(Optional)
 
-<<<<<<< HEAD
-```shell
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
-=======
     ```shell
     docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
     ```
->>>>>>> 2f4343c4531cb22b24b1969b006ba9b251b3f1bd
 
    - `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
    - `-e MODE=public` : set the running mode(public or private), public cluster or private cloud-edge.

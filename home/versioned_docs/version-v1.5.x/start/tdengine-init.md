@@ -39,7 +39,6 @@ After the installation you can check if the Docker version normally output at th
    `-v /opt/taosdata:/var/lib/taos` is local persistent mount of TDengine data directory. `/opt/taosdata` should be replaced with the actual local directory.  
    `-e TZ="Asia/Shanghai"` can set time zone for TDengine.Set up the corresponding time zone you want.  
     use```$ docker ps``` to check if the database started successfully
->>>>>>> 2f4343c4531cb22b24b1969b006ba9b251b3f1bd
 
 ### Create database instance
 
