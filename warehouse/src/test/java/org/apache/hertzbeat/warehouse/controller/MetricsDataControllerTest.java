@@ -137,7 +137,7 @@ class MetricsDataControllerTest {
         when(metricsDataService.getWarehouseStorageServerStatus()).thenReturn(false);
         this.mockMvc.perform(MockMvcRequestBuilders.get(getUrl).params(params))
                 .andExpect(status().isOk())
-                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
                 .andExpect(jsonPath("$.msg").value("time series database not available"))
                 .andExpect(jsonPath("$.data").isEmpty())
                 .andReturn();

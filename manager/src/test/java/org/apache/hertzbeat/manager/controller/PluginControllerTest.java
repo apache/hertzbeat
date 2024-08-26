@@ -59,29 +59,29 @@ class PluginControllerTest {
     @Test
     void uploadNewPlugin() throws Exception {
         MockMultipartFile jarFile = new MockMultipartFile(
-            "jarFile",
-            "plugin-test.jar",
-            "application/java-archive",
-            "This is the file content".getBytes()
+                "jarFile",
+                "plugin-test.jar",
+                "application/java-archive",
+                "This is the file content".getBytes()
         );
 
         this.mockMvc.perform(MockMvcRequestBuilders.multipart("/api/plugin")
-                .file(jarFile)
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .param("name", "test-plugin")
-                .param("enableStatus", "true"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-            .andExpect(jsonPath("$.msg").value("Add success"))
-            .andReturn();
+                        .file(jarFile)
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .param("name", "test-plugin")
+                        .param("enableStatus", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Add success"))
+                .andReturn();
     }
 
     @Test
     void getPlugins() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/plugin?&search={search}", "test"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-            .andReturn();
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
     }
 
     @Test
@@ -90,12 +90,12 @@ class PluginControllerTest {
         ids.add(6565463543L);
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/plugin")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(ids)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-            .andExpect(jsonPath("$.msg").value("Delete success"))
-            .andReturn();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(ids)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Delete success"))
+                .andReturn();
     }
 
     @Test
@@ -105,12 +105,12 @@ class PluginControllerTest {
         metadata.setEnableStatus(true);
 
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/plugin")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(metadata)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-            .andExpect(jsonPath("$.msg").value("Update success"))
-            .andReturn();
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(metadata)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Update success"))
+                .andReturn();
     }
 
 }

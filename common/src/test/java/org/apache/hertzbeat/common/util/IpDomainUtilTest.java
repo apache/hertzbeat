@@ -17,6 +17,12 @@
 
 package org.apache.hertzbeat.common.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -27,13 +33,6 @@ import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Test case for {@link IpDomainUtil}
@@ -96,10 +95,10 @@ class IpDomainUtilTest {
         }
 
         // no network interface
-        Enumeration<NetworkInterface> noNetworkIFNetworkInterfaces = Collections.enumeration(Collections.emptyList());
+        Enumeration<NetworkInterface> noNetworkNetworkInterfaces = Collections.enumeration(Collections.emptyList());
 
         try (MockedStatic<NetworkInterface> mockedStaticNetworkInterface = Mockito.mockStatic(NetworkInterface.class)) {
-            mockedStaticNetworkInterface.when(NetworkInterface::getNetworkInterfaces).thenReturn(noNetworkIFNetworkInterfaces);
+            mockedStaticNetworkInterface.when(NetworkInterface::getNetworkInterfaces).thenReturn(noNetworkNetworkInterfaces);
             String localhostIp = IpDomainUtil.getLocalhostIp();
 
             assertNull(localhostIp);
