@@ -103,7 +103,7 @@ Of course, just looking at it is definitely not perfect. Monitoring is often acc
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
-```
+```text
 [HertzBeat warning notification]
 Alarm target object: mysql.cahce.query_cache_hit_rate
 Affiliated monitoring ID: 205540620394932

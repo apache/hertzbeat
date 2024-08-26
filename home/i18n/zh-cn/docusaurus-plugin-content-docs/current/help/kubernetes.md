@@ -29,7 +29,7 @@ keywords: [开源监控系统, 开源Kubernetes监控]
 
 ### 方式二
 
-```
+```shell
 kubectl create serviceaccount cluster-admin
 
 kubectl create clusterrolebinding cluster-admin-manual --clusterrole=cluster-admin --serviceaccount=default:cluster-admin
