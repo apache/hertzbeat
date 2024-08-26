@@ -549,6 +549,7 @@
   "plugin.type": "插件类型",
   "plugin.type.POST_ALERT": "告警后",
   "plugin.search": "搜索插件",
+  "plugin.edit": "编辑插件",
   "define.help": "监控模版定义每一个监控类型，类型的参数变量，指标信息，采集协议等。您可根据需求在下拉菜单中选择已有监控模板修改。左下区域为对照区，右下区域为编辑区。<br>您也可以点击“<i>新增监控类型</i>”来自定义新的的监控类型，目前支持 <a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-http'> HTTP 协议</a>，<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jdbc'>JDBC协议</a>，<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-ssh'>SSH协议</a>，<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'> JMX 协议</a>，<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-snmp'> SNMP 协议</a>，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/template'>点击查看监控模板</a>。\n",
   "define.help.link": "https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-point/",
   "define.save-apply": "保存并应用",
