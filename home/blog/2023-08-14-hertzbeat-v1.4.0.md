@@ -64,7 +64,8 @@ First of all, let's take a look at what open source can bring, or why open sourc
 
 * User traffic. Open source projects are provided free of charge to users and developers, and have advantages in attracting users to use and promoting them.
 * User trust. Open source products are naturally easy to gain the trust and patience of users, or lower the threshold of trust for users.
-* Community collaboration. Open source products can attract top contributors to contribute together, receive user feedback issues, pr contributions, etc. Driven by the community, open source projects will become better and better, and more people will participate and use them after positive feedback. Community collaboration I think this is the meaning of open source, and this is not just the contribution code collaboration between programmers, users are all collaboration objects (for example, our project has a large number of operation and maintenance friends who contribute code and documents), if it is only code Open source without community collaboration, it is better to release an installation package for others to use and download for free.
+* Community collaboration. Open source products can attract top contributors to contribute together, receive user feedback issues, pr contributions, etc.
+* Driven by the community, open source projects will become better and better, and more people will participate and use them after positive feedback. Community collaboration I think this is the meaning of open source, and this is not just the contribution code collaboration between programmers, users are all collaboration objects (for example, our project has a large number of operation and maintenance friends who contribute code and documents), if it is only code Open source without community collaboration, it is better to release an installation package for others to use and download for free.
 * Product ecology. This is required for some ecological products, such as hertzbeat, which need to support monitoring types that connect to various types of protocols, and a large number of monitoring templates. Only a good open source project ecology can attract other contributors to contribute and share, exchange what is needed in the ecology, and ultimately everyone will benefit from the ecology. This is difficult to do in closed source programs.
 
 The above points focus on community collaboration and product ecology. This is also the reason for the open source cluster version. Only open source products can be rolled into stronger product power. For example, the technical feature of cluster will naturally attract developers (and the cluster itself is The product of our community collaboration) will attract more users and contributors to use feedback and iterate together. The community drives and then positively promotes open source projects and satisfies user functional experience.
@@ -74,23 +75,23 @@ As for open source commercialization, the premise of open source commercializati
 
 1. Just one command to get started:
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-```or use quay.io (if dockerhub network connect timeout)```
+    ```or use quay.io (if dockerhub network connect timeout)```
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. Access `http://localhost:1157` to start, default account: `admin/hertzbeat`
 
 3. Deploy collector clusters
 
-```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
+    ```shell
+    docker run -d -e IDENTITY=custom-collector-name -e MANAGER_IP=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+    ```
 
-* `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
-* `-e MANAGER_IP=127.0.0.1` : set the main hertzbeat server ip.
-* `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
+   * `-e IDENTITY=custom-collector-name` : set the collector unique identity name.
+   * `-e MANAGER_IP=127.0.0.1` : set the main hertzbeat server ip.
+   * `-e MANAGER_PORT=1158` : set the main hertzbeat server port, default 1158.
 
 Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/docs/start/docker-deploy)
 
@@ -161,7 +162,7 @@ Detailed config refer to [Install HertzBeat via Docker](https://hertzbeat.com/do
 * and more for your custom monitoring.
 * Notifications support `Discord` `Slack` `Telegram` `Mail` `Pinning` `WeChat` `FlyBook` `SMS` `Webhook`.
 
-----
+---
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

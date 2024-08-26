@@ -29,7 +29,7 @@ SHELL脚本查询回来的数据字段和我们需要的指标映射，就能获
 `hostname; uptime | awk -F "," '{print $1}'`
 终端响应的数据为：
 
-```
+```shell
 tombook
 14:00:15 up 72 days  
 ```

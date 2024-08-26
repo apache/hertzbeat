@@ -164,12 +164,6 @@ metrics:
           en-US: Chasis Health
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
-    aliasFields:
-      - $.['@odata.id']
-      - $.Name
-      - $.ChassisType
-      - $.Status.State
-      - $.Status.Health
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: redfish
     # the config content when protocol is redfish
@@ -184,6 +178,12 @@ metrics:
       password: ^_^password^_^
       # timeout unit：ms
       timeout: ^_^timeout^_^
+      jsonPath:
+        - $.['@odata.id']
+        - $.Name
+        - $.ChassisType
+        - $.Status.State
+        - $.Status.Health
 
   - name: Battery
     priority: 1
@@ -213,12 +213,6 @@ metrics:
         i18n:
           zh-CN: 电池充电状态
           en-US: Battery Charge Status
-    aliasFields:
-      - $.['@odata.id']
-      - $.Name
-      - $.Status.State
-      - $.Status.Health
-      - $.ChargeState
     protocol: redfish
     redfish:
       # redfish host: ipv4 ipv6 domain
@@ -231,6 +225,12 @@ metrics:
       password: ^_^password^_^
       # timeout unit：ms
       timeout: ^_^timeout^_^
+      jsonPath:
+        - $.['@odata.id']
+        - $.Name
+        - $.Status.State
+        - $.Status.Health
+        - $.ChargeState
 
   - name: Fan
     priority: 2
@@ -265,13 +265,6 @@ metrics:
         i18n:
           zh-CN: 风扇转速
           en-US: Fan Speed
-    aliasFields:
-      - $.['@odata.id']
-      - $.Name
-      - $.Status.State
-      - $.Status.Health
-      - $.SpeedPercent.Reading
-      - $.SpeedPercent.SpeedRPM
     protocol: redfish
     redfish:
       # redfish host: ipv4 ipv6 domain
@@ -286,3 +279,10 @@ metrics:
       timeout: ^_^timeout^_^
       # redfish fan collection schema
       schema: /redfish/v1/Chassis/{ChassisId}/ThermalSubsystem/Fans
+      jsonPath:
+        - $.['@odata.id']
+        - $.Name
+        - $.Status.State
+        - $.Status.Health
+        - $.SpeedPercent.Reading
+        - $.SpeedPercent.SpeedRPM
