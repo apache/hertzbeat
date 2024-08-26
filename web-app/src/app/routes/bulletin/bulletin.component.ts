@@ -78,8 +78,7 @@ export class BulletinComponent implements OnInit {
   }
 
   onNewBulletinDefine() {
-    this.define = new BulletinDefine();
-    this.define.monitorIds = [];
+    this.resetManageModalData();
     this.isManageModalAdd = true;
     this.isManageModalVisible = true;
     this.isManageModalOkLoading = false;
@@ -131,6 +130,8 @@ export class BulletinComponent implements OnInit {
   resetManageModalData() {
     this.define = new BulletinDefine();
     this.define.monitorIds = [];
+    this.hierarchies = [];
+    this.treeNodes = [];
   }
 
   onManageModalOk() {
