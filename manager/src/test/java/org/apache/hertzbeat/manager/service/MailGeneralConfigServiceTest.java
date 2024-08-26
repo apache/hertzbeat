@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
@@ -29,8 +30,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 /**
  * test case for {@link MailGeneralConfigServiceImpl}
  */
@@ -38,32 +37,32 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(MockitoExtension.class)
 class MailGeneralConfigServiceTest {
 
-	@Mock
-	private GeneralConfigDao generalConfigDao;
+    @Mock
+    private GeneralConfigDao generalConfigDao;
 
-	@Mock
-	private ObjectMapper objectMapper;
+    @Mock
+    private ObjectMapper objectMapper;
 
-	private MailGeneralConfigServiceImpl mailGeneralConfigService;
+    private MailGeneralConfigServiceImpl mailGeneralConfigService;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		mailGeneralConfigService = new MailGeneralConfigServiceImpl(generalConfigDao, objectMapper);
-	}
+        mailGeneralConfigService = new MailGeneralConfigServiceImpl(generalConfigDao, objectMapper);
+    }
 
-	@Test
-	void testType() {
+    @Test
+    void testType() {
 
-		assertEquals(GeneralConfigTypeEnum.email.name(), mailGeneralConfigService.type());
-	}
+        assertEquals(GeneralConfigTypeEnum.email.name(), mailGeneralConfigService.type());
+    }
 
-	@Test
-	void testGetTypeReference() {
+    @Test
+    void testGetTypeReference() {
 
-		TypeReference<EmailNoticeSender> typeReference = mailGeneralConfigService.getTypeReference();
+        TypeReference<EmailNoticeSender> typeReference = mailGeneralConfigService.getTypeReference();
 
-		assertEquals(EmailNoticeSender.class, typeReference.getType());
-	}
+        assertEquals(EmailNoticeSender.class, typeReference.getType());
+    }
 
 }

@@ -56,7 +56,7 @@ public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrati
         Alert alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");
-        NoticeTemplate noticeTemplate=new NoticeTemplate();
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("WeChatApp");
         noticeTemplate.setContent("");

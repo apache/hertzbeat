@@ -91,6 +91,6 @@ class TagServiceTest {
     @Test
     void deleteUsingTags() {
         when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(1L);
-        assertThrows(CommonException.class,() -> tagService.deleteTags(new HashSet<>(1)));
+        assertThrows(CommonException.class, () -> tagService.deleteTags(new HashSet<>(1)));
     }
 }

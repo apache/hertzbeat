@@ -17,9 +17,14 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance;
 
-import java.util.concurrent.ScheduledExecutorService;
-
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import io.netty.channel.Channel;
+import java.util.concurrent.ScheduledExecutorService;
 import org.apache.hertzbeat.collector.dispatch.CollectorInfoProperties;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
@@ -34,13 +39,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link CollectServer}
  */
@@ -48,100 +46,100 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CollectServerTest {
 
-	@Mock
-	private CollectJobService collectJobService;
+    @Mock
+    private CollectJobService collectJobService;
 
-	@Mock
-	private TimerDispatch timerDispatch;
+    @Mock
+    private TimerDispatch timerDispatch;
 
-	@Mock
-	private DispatchProperties properties;
+    @Mock
+    private DispatchProperties properties;
 
-	@Mock
-	private DispatchProperties.EntranceProperties entranceProperties;
+    @Mock
+    private DispatchProperties.EntranceProperties entranceProperties;
 
-	@Mock
-	private DispatchProperties.EntranceProperties.NettyProperties nettyProperties;
+    @Mock
+    private DispatchProperties.EntranceProperties.NettyProperties nettyProperties;
 
-	@Mock
-	private CommonThreadPool threadPool;
+    @Mock
+    private CommonThreadPool threadPool;
 
-	@Mock
-	private CollectorInfoProperties infoProperties;
+    @Mock
+    private CollectorInfoProperties infoProperties;
 
-	private CollectServer collectServer;
+    private CollectServer collectServer;
 
-	private CollectServer.CollectNettyEventListener collectNettyEventListener;
+    private CollectServer.CollectNettyEventListener collectNettyEventListener;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		when(nettyProperties.getManagerHost()).thenReturn("127.0.0.1");
-		when(nettyProperties.getManagerPort()).thenReturn(8080);
-		when(entranceProperties.getNetty()).thenReturn(nettyProperties);
-		when(properties.getEntrance()).thenReturn(entranceProperties);
+        when(nettyProperties.getManagerHost()).thenReturn("127.0.0.1");
+        when(nettyProperties.getManagerPort()).thenReturn(8080);
+        when(entranceProperties.getNetty()).thenReturn(nettyProperties);
+        when(properties.getEntrance()).thenReturn(entranceProperties);
 
-		collectServer = new CollectServer(collectJobService, timerDispatch, properties, threadPool, infoProperties);
-		collectNettyEventListener = collectServer.new CollectNettyEventListener();
-	}
+        collectServer = new CollectServer(collectJobService, timerDispatch, properties, threadPool, infoProperties);
+        collectNettyEventListener = collectServer.new CollectNettyEventListener();
+    }
 
-	@Test
-	void testRun() throws Exception {
+    @Test
+    void testRun() throws Exception {
 
-		RemotingClient remotingClient = mock(RemotingClient.class);
-		ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
+        RemotingClient remotingClient = mock(RemotingClient.class);
+        ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
 
-		collectServer.run();
+        collectServer.run();
 
-		verify(remotingClient, times(1)).start();
-	}
+        verify(remotingClient, times(1)).start();
+    }
 
-	@Test
-	void testShutdown() {
+    @Test
+    void testShutdown() {
 
-		RemotingClient remotingClient = mock(RemotingClient.class);
-		ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
-		ReflectionTestUtils.setField(collectServer, "scheduledExecutor", mock(ScheduledExecutorService.class));
+        RemotingClient remotingClient = mock(RemotingClient.class);
+        ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
+        ReflectionTestUtils.setField(collectServer, "scheduledExecutor", mock(ScheduledExecutorService.class));
 
-		collectServer.shutdown();
+        collectServer.shutdown();
 
-		ScheduledExecutorService scheduledExecutor = (ScheduledExecutorService) ReflectionTestUtils.getField(collectServer, "scheduledExecutor");
-		verify((scheduledExecutor), times(1)).shutdownNow();
-		verify(remotingClient, times(1)).shutdown();
-	}
+        ScheduledExecutorService scheduledExecutor = (ScheduledExecutorService) ReflectionTestUtils.getField(collectServer, "scheduledExecutor");
+        verify((scheduledExecutor), times(1)).shutdownNow();
+        verify(remotingClient, times(1)).shutdown();
+    }
 
-	@Test
-	void testSendMsg() {
+    @Test
+    void testSendMsg() {
 
-		RemotingClient remotingClient = mock(RemotingClient.class);
-		ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
-		ClusterMsg.Message message = mock(ClusterMsg.Message.class);
+        RemotingClient remotingClient = mock(RemotingClient.class);
+        ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
+        ClusterMsg.Message message = mock(ClusterMsg.Message.class);
 
-		collectServer.sendMsg(message);
+        collectServer.sendMsg(message);
 
-		verify(remotingClient, times(1)).sendMsg(message);
-	}
+        verify(remotingClient, times(1)).sendMsg(message);
+    }
 
-	@Test
-	void testOnChannelActive() {
+    @Test
+    void testOnChannelActive() {
 
-		RemotingClient remotingClient = mock(RemotingClient.class);
-		ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
+        RemotingClient remotingClient = mock(RemotingClient.class);
+        ReflectionTestUtils.setField(collectServer, "remotingClient", remotingClient);
 
-		Channel channel = mock(Channel.class);
-		when(collectJobService.getCollectorIdentity()).thenReturn("collector1");
-		when(collectJobService.getCollectorMode()).thenReturn("mode1");
-		when(infoProperties.getIp()).thenReturn("127.0.0.1");
-		when(infoProperties.getVersion()).thenReturn("1.0");
+        Channel channel = mock(Channel.class);
+        when(collectJobService.getCollectorIdentity()).thenReturn("collector1");
+        when(collectJobService.getCollectorMode()).thenReturn("mode1");
+        when(infoProperties.getIp()).thenReturn("127.0.0.1");
+        when(infoProperties.getVersion()).thenReturn("1.0");
 
-		collectNettyEventListener.onChannelActive(channel);
+        collectNettyEventListener.onChannelActive(channel);
 
-		verify(timerDispatch, times(1)).goOnline();
-		verify(remotingClient, times(1)).sendMsg(any(ClusterMsg.Message.class));
+        verify(timerDispatch, times(1)).goOnline();
+        verify(remotingClient, times(1)).sendMsg(any(ClusterMsg.Message.class));
 
-		ScheduledExecutorService scheduledExecutor =
-				(ScheduledExecutorService) ReflectionTestUtils.getField(collectServer, "scheduledExecutor");
-		assertNotNull(scheduledExecutor);
-	}
+        ScheduledExecutorService scheduledExecutor =
+                (ScheduledExecutorService) ReflectionTestUtils.getField(collectServer, "scheduledExecutor");
+        assertNotNull(scheduledExecutor);
+    }
 
 }

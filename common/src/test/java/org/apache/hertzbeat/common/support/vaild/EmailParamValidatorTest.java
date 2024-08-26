@@ -17,6 +17,10 @@
 
 package org.apache.hertzbeat.common.support.vaild;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import jakarta.validation.ConstraintValidatorContext;
 import org.apache.hertzbeat.common.support.valid.EmailParamValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,60 +29,55 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 /**
  * Test case for {@link EmailParamValidator}
  */
 
 class EmailParamValidatorTest {
 
-	@InjectMocks
-	private EmailParamValidator emailParamValidator;
+    @InjectMocks
+    private EmailParamValidator emailParamValidator;
 
-	@Mock
-	private ConstraintValidatorContext context;
+    @Mock
+    private ConstraintValidatorContext context;
 
-	@Mock
-	private ConstraintValidatorContext.ConstraintViolationBuilder constraintViolationBuilder;
+    @Mock
+    private ConstraintValidatorContext.ConstraintViolationBuilder constraintViolationBuilder;
 
-	@BeforeEach
-	public void setUp() {
-		MockitoAnnotations.initMocks(this);
-		when(context.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
-	}
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+        when(context.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
+    }
 
-	@Test
-	public void testIsValid() {
-		boolean result = emailParamValidator.isValid(null, context);
-		assertFalse(result);
+    @Test
+    public void testIsValid() {
+        boolean result = emailParamValidator.isValid(null, context);
+        assertFalse(result);
 
-		result = emailParamValidator.isValid("123456345@qq.com", context);
-		assertTrue(result);
+        result = emailParamValidator.isValid("123456345@qq.com", context);
+        assertTrue(result);
 
-		result = emailParamValidator.isValid("", context);
-		assertFalse(result);
+        result = emailParamValidator.isValid("", context);
+        assertFalse(result);
 
-		result = emailParamValidator.isValid("   ", context);
-		assertFalse(result);
+        result = emailParamValidator.isValid("   ", context);
+        assertFalse(result);
 
-		result = emailParamValidator.isValid("test@example.com", context);
-		assertTrue(result);
+        result = emailParamValidator.isValid("test@example.com", context);
+        assertTrue(result);
 
-		result = emailParamValidator.isValid("test@example", context);
-		assertFalse(result);
+        result = emailParamValidator.isValid("test@example", context);
+        assertFalse(result);
 
-		result = emailParamValidator.isValid("test@sub.example.com", context);
-		assertTrue(result);
+        result = emailParamValidator.isValid("test@sub.example.com", context);
+        assertTrue(result);
 
 
-		String longEmail = "verylongemailaddress@subdomain.domain.example.com";
-		result = emailParamValidator.isValid(longEmail, context);
-		assertTrue(result);
-	}
+        String longEmail = "verylongemailaddress@subdomain.domain.example.com";
+        result = emailParamValidator.isValid(longEmail, context);
+        assertTrue(result);
+    }
 
 }
 
