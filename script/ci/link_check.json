@@ -5,6 +5,9 @@
     },
     {
       "pattern": "!\\[.*\\]\\((?!http).*\\)"
+    },
+    {
+      "pattern": "^(https?://)?(hertzbeat|microsoft|dist\\.com)"
     }
   ],
   "timeout": "10s",
