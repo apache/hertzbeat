@@ -109,7 +109,7 @@ Bugfix.
 22. [[script] modified the linux memory metrics specified script code #719](https://github.com/apache/hertzbeat/pull/719)
 23. [[webapp] bugfix the cover of the big screen is too small #724](https://github.com/apache/hertzbeat/pull/724)
 
-----
+---
 
 升级注意⚠️.
 
@@ -144,7 +144,7 @@ COMMIT;
 - 和更多你的自定义监控。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
 
-----
+---
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

@@ -154,7 +154,7 @@ In an isolated network where multiple networks are not connected, we need to dep
 
 **HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.**
 
------
+---
 
 ## Quickly Start
 
@@ -299,10 +299,10 @@ Built-in support for monitoring types include:
 
 ![hertzbeat](/img/home/9.png)
 
------
+---
 
 **There's so much more to discover. Have Fun!**
 
------
+---
 
 **Github: <https://github.com/apache/hertzbeat>**

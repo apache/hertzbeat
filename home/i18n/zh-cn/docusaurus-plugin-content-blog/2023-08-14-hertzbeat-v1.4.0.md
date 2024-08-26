@@ -169,7 +169,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 - 和更多自定义监控模版。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
 
-----
+---
 
 欢迎star一波来支持我们哦。
 
