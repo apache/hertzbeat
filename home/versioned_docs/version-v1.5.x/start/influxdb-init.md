@@ -22,6 +22,8 @@ Note⚠️ Need InfluxDB 1.x Version.
 
 ### 2. Install TDengine via Docker
 
+> Refer to the official website [installation tutorial](https://hub.docker.com/_/influxdb)  
+
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 After the installation you can check if the Docker version normally output at the terminal.

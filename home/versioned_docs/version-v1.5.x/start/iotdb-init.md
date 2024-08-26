@@ -64,7 +64,6 @@ Apache IoTDB is a software system that integrates the collection, storage, manag
          # default '7776000000'（90days,unit:ms,-1:no-expire）
          expire-time: '7776000000'
    ```
->>>>>>> 2f4343c4531cb22b24b1969b006ba9b251b3f1bd
 
    **IoTDB Cluster Configuration**
 

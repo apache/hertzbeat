@@ -13,6 +13,10 @@ VictoriaMetrics is a fast, cost-effective and scalable monitoring solution and t
 **Note⚠️ Time series database is optional, but production environment configuration is strongly recommended to provide more complete historical chart functions and high performance**
 **⚠️ If you do not configure a time series database, only the last hour of historical data is retained.**
 
+> If you already have an VictoriaMetrics environment, you can skip directly to the YML configuration step.
+
+### Install VictoriaMetrics via Docker
+
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 After the installation you can check if the Docker version normally output at the terminal.

@@ -18,6 +18,8 @@ Note⚠️ Need TDengine 3.x Version.
 
 ### Install TDengine via Docker
 
+> Refer to the official website [installation tutorial](https://docs.taosdata.com/get-started/docker/)  
+
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 After the installation you can check if the Docker version normally output at the terminal.
