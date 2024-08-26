@@ -28,12 +28,15 @@ on:
       - 'home/**'
 
 jobs:
-  build:
+  docs-build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
 
       - name: Check Markdown
         uses: DavidAnson/markdownlint-cli2-action@v16
@@ -41,9 +44,6 @@ jobs:
           globs: './home/**/*.md'
 
       - name: Check filenames
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
         run: python ./script/ci/docs/check_file_name.py ./script/ci/docs/check_file_name.json
 
       - name: Dead Link Check
