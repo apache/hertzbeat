@@ -42,6 +42,10 @@ export class BulletinDefineService {
     return this.http.put<Message<any>>(bulletin_define_uri, body);
   }
 
+  public getBulletinDefine(name: string) {
+    return this.http.get<Message<any>>(`${bulletin_define_uri}/${name}`);
+  }
+
   public deleteBulletinDefines(names: string[]): Observable<Message<any>> {
     let params = new HttpParams();
     names.forEach(name => {
@@ -50,6 +54,7 @@ export class BulletinDefineService {
 
     return this.http.delete<Message<any>>(bulletin_define_uri, { params });
   }
+
   public getMonitorMetricsData(
     name: string,
     pageIndex: number,

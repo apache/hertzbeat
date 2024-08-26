@@ -133,7 +133,9 @@
   },
   "bulletin": {
     "new": "新增看板项",
+    "edit": "编辑看板项",
     "delete": "删除看板项",
+    "batch.delete": "批量删除看板项",
     "name": "看板名称",
     "name.placeholder": "请输入自定义看板名称",
     "monitor.type": "监控类型",

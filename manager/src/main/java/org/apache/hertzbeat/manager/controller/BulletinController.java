@@ -36,7 +36,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -58,10 +60,10 @@ public class BulletinController {
 
     @Autowired
     private MonitorService monitorService;
+
     /**
      * add a new bulletin
      */
-
     @PostMapping
     public ResponseEntity<Message<Void>> addNewBulletin(@Valid @RequestBody BulletinDto bulletinDto) {
         try {
@@ -71,6 +73,32 @@ public class BulletinController {
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
         }
         return ResponseEntity.ok(Message.success("Add success!"));
+    }
+
+    /**
+     * edit a exist bulletin
+     */
+    @PutMapping
+    public ResponseEntity<Message<Void>> editBulletin(@Valid @RequestBody BulletinDto bulletinDto) {
+        try {
+            bulletinService.validate(bulletinDto);
+            bulletinService.editBulletin(bulletinDto);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
+        }
+        return ResponseEntity.ok(Message.success("Add success!"));
+    }
+
+    /**
+     * edit a exist bulletin
+     */
+    @GetMapping("/{name}")
+    public ResponseEntity<Message<Bulletin>> getBulletinByName(@Valid @PathVariable String name) {
+        try {
+            return ResponseEntity.ok(Message.success(bulletinService.getBulletinByName(name)));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
+        }
     }
 
     /**

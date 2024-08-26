@@ -35,19 +35,27 @@
       <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
       {{ 'bulletin.new' | i18n }}
     </button>
-    <button nz-button nzType="primary" nzDanger (click)="onDeleteBulletinDefines()">
+    <button *ngIf="currentDefine" nz-button nzType="primary" (click)="onEditBulletinDefine()">
+      <i nz-icon nzType="edit" nzTheme="outline"></i>
+      {{ 'bulletin.edit' | i18n }}
+    </button>
+    <button *ngIf="currentDefine" nz-button nzType="primary" nzDanger (click)="onDeleteBulletinDefines()">
       <i nz-icon nzType="delete" nzTheme="outline"></i>
       {{ 'bulletin.delete' | i18n }}
+    </button>
+    <button *ngIf="currentDefine" nz-button nzType="primary" nzDanger (click)="onBatchDeleteBulletinDefines()">
+      <i nz-icon nzType="delete" nzTheme="outline"></i>
+      {{ 'bulletin.batch.delete' | i18n }}
     </button>
   </ng-template>
 </app-toolbar>
 
 <nz-tabset nzType="card" (nzSelectedIndexChange)="onTabChange($event)">
   <nz-tab *ngFor="let tab of tabs" [nzTitle]="tab">
-    <ng-container *ngIf="tabDefines">
+    <ng-container *ngIf="metricsData">
       <nz-table
         #fixedTable
-        [nzData]="tabDefines.data.content"
+        [nzData]="metricsData"
         [nzPageIndex]="pageIndex"
         [nzPageSize]="pageSize"
         [nzTotal]="total"
@@ -65,14 +73,14 @@
           <tr>
             <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
             <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
-            <ng-container *ngFor="let metric of getMetrics()">
+            <ng-container *ngFor="let metric of metrics">
               <th nzAlign="center" [colSpan]="getKeys(metric).length">
                 {{ metric }}
               </th>
             </ng-container>
           </tr>
           <tr>
-            <ng-container *ngFor="let metric of getMetrics()">
+            <ng-container *ngFor="let metric of metrics">
               <ng-container *ngFor="let field of getKeys(metric)">
                 <th nzAlign="center" [colSpan]="1">
                   {{ field }}
@@ -182,7 +190,7 @@
                 nzBlockNode
                 nzCheckable
                 nzCheckStrictly
-                [(ngModel)]="metrics"
+                [(ngModel)]="tempMetrics"
                 name="metrics"
                 (nzCheckBoxChange)="treeCheckBoxChange($event, onItemSelect)"
               >
@@ -205,10 +213,10 @@
 
 <!-- delete bulletin modal -->
 <nz-modal
-  [(nzVisible)]="isDeleteModalVisible"
-  [nzTitle]="'bulletin.delete' | i18n"
-  (nzOnCancel)="onDeleteModalCancel()"
-  (nzOnOk)="onDeleteModalOk()"
+  [(nzVisible)]="isBatchDeleteModalVisible"
+  [nzTitle]="'bulletin.batch.delete' | i18n"
+  (nzOnCancel)="onBatchDeleteModalCancel()"
+  (nzOnOk)="onBatchDeleteModalOk()"
   nzMaskClosable="false"
   nzWidth="70%"
 >

@@ -50,7 +50,7 @@ export class BulletinComponent implements OnInit {
   ) {}
   search!: string;
   tabs!: string[];
-  tabDefines!: any;
+  metricsData!: any;
   tableLoading: boolean = true;
   bulletinName!: string;
   deleteBulletinNames: string[] = [];
@@ -63,17 +63,14 @@ export class BulletinComponent implements OnInit {
   checkedNodeList: NzTreeNode[] = [];
   monitors: Monitor[] = [];
   metrics = new Set<string>();
+  tempMetrics = new Set<string>();
   fields: Fields = {};
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
 
-  async ngOnInit(): Promise<void> {
-    await this.getAllNames();
-    if (this.tabs != null) {
-      this.bulletinName = this.tabs[0];
-    }
-    this.loadData(this.pageIndex - 1, this.pageSize);
+  ngOnInit() {
+    this.loadTabs();
   }
 
   sync() {
@@ -88,25 +85,31 @@ export class BulletinComponent implements OnInit {
     this.isManageModalOkLoading = false;
   }
 
+  onEditBulletinDefine() {
+    if (this.currentDefine) {
+      this.define = this.currentDefine;
+      this.isManageModalAdd = false;
+      this.isManageModalVisible = true;
+      this.isManageModalOkLoading = false;
+    }
+  }
+
   deleteBulletinDefines(defineNames: string[]) {
     if (defineNames == null || defineNames.length == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
-    this.tableLoading = true;
     const deleteDefines$ = this.bulletinDefineSvc.deleteBulletinDefines(defineNames).subscribe(
       message => {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
           this.notifySvc.success(this.i18nSvc.fanyi('common.notify.delete-success'), '');
-          this.loadData(this.pageIndex - 1, this.pageSize);
+          this.loadTabs();
         } else {
-          this.tableLoading = false;
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), message.msg);
         }
       },
       error => {
-        this.tableLoading = false;
         deleteDefines$.unsubscribe();
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
@@ -117,13 +120,15 @@ export class BulletinComponent implements OnInit {
   isManageModalOkLoading = false;
   isManageModalAdd = true;
   define: BulletinDefine = new BulletinDefine();
+  currentDefine!: BulletinDefine | null;
 
   onManageModalCancel() {
     this.isManageModalVisible = false;
   }
 
   resetManageModalData() {
-    this.isManageModalVisible = false;
+    this.define = new BulletinDefine();
+    this.define.monitorIds = [];
   }
 
   onManageModalOk() {
@@ -141,10 +146,10 @@ export class BulletinComponent implements OnInit {
         .subscribe(
           message => {
             if (message.code === 0) {
-              this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-              this.loadData(this.pageIndex - 1, this.pageSize);
+              this.isManageModalVisible = false;
               this.resetManageModalData();
+              this.loadTabs();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
             }
@@ -312,6 +317,7 @@ export class BulletinComponent implements OnInit {
   treeCheckBoxChange(event: NzFormatEmitEvent, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     this.checkBoxChange(event.node!, onItemSelect);
   }
+
   checkBoxChange(node: NzTreeNode, onItemSelect: (item: NzTreeNodeOptions) => void): void {
     if (node.isDisabled) {
       return;
@@ -335,7 +341,7 @@ export class BulletinComponent implements OnInit {
       this.checkedNodeList.forEach(node => {
         node.isDisabled = true;
         node.isChecked = true;
-        this.metrics.add(node.key);
+        this.tempMetrics.add(node.key);
 
         if (!this.fields[node.key]) {
           this.fields[node.key] = [];
@@ -350,7 +356,7 @@ export class BulletinComponent implements OnInit {
       this.checkedNodeList.forEach(node => {
         node.isDisabled = false;
         node.isChecked = false;
-        this.metrics.delete(node.key);
+        this.tempMetrics.delete(node.key);
 
         if (this.fields[node.key]) {
           const index = this.fields[node.key].indexOf(node.origin.value);
@@ -366,24 +372,67 @@ export class BulletinComponent implements OnInit {
     }
   }
 
+  loadTabs() {
+    const allNames$ = this.bulletinDefineSvc.getAllNames().subscribe(
+      message => {
+        allNames$.unsubscribe();
+        if (message.code === 0) {
+          this.tabs = message.data;
+          if (this.tabs != null) {
+            this.bulletinName = this.tabs[0];
+          }
+          this.loadData(this.pageIndex - 1, this.pageSize);
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), message.msg);
+        }
+      },
+      error => {
+        allNames$.unsubscribe();
+        this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), error.msg);
+      }
+    );
+  }
+
   loadData(page: number, size: number) {
     this.tableLoading = true;
+    this.metricsData = [];
+    this.currentDefine = null;
+    this.metrics = new Set<string>();
     if (this.bulletinName != null) {
-      const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(this.bulletinName, page, size).subscribe(
+      const defineData$ = this.bulletinDefineSvc.getBulletinDefine(this.bulletinName).subscribe(
         message => {
-          metricData$.unsubscribe();
-          if (message.code === 0 && message.data) {
-            this.tabDefines = message;
-            console.log(this.tabDefines.data);
-          } else if (message.code !== 0) {
+          if (message.code === 0) {
+            this.currentDefine = message.data;
+
+            const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(this.bulletinName, page, size).subscribe(
+              message => {
+                metricData$.unsubscribe();
+                if (message.code === 0 && message.data) {
+                  (this.metricsData = message.data.content).forEach((item: any) => {
+                    item.metrics.forEach((metric: any) => {
+                      this.metrics.add(metric.name);
+                    });
+                  });
+                } else if (message.code !== 0) {
+                  this.notifySvc.warning(`${message.msg}`, '');
+                  console.info(`${message.msg}`);
+                }
+                this.tableLoading = false;
+              },
+              error => {
+                console.error(error.msg);
+                metricData$.unsubscribe();
+                this.tableLoading = false;
+              }
+            );
+          } else {
             this.notifySvc.warning(`${message.msg}`, '');
             console.info(`${message.msg}`);
           }
-          this.tableLoading = false;
         },
         error => {
           console.error(error.msg);
-          metricData$.unsubscribe();
+          defineData$.unsubscribe();
           this.tableLoading = false;
         }
       );
@@ -391,19 +440,9 @@ export class BulletinComponent implements OnInit {
     this.tableLoading = false;
   }
 
-  getMetrics(): string[] {
-    this.tabDefines.data.content.forEach((item: any) => {
-      item.metrics.forEach((metric: any) => {
-        this.metrics.add(metric.name);
-      });
-    });
-    return Array.from(this.metrics);
-  }
-
   getKeys(metricName: string): string[] {
     const result = new Set<string>();
-
-    this.tabDefines.data.content.forEach((item: any) => {
+    this.metricsData.forEach((item: any) => {
       item.metrics.forEach((metric: any) => {
         if (metric.name === metricName) {
           metric.fields.forEach((fieldGroup: any) => {
@@ -427,57 +466,41 @@ export class BulletinComponent implements OnInit {
     }
   }
 
-  getRowIndexes() {
-    const maxRowSpan = this.tabDefines.data.content.length;
-    return Array.from({ length: maxRowSpan }, (_, index) => index);
-  }
-
-  isDeleteModalVisible: boolean = false;
-  isDeleteModalOkLoading: boolean = false;
+  isBatchDeleteModalVisible: boolean = false;
+  isBatchDeleteModalOkLoading: boolean = false;
 
   onDeleteBulletinDefines() {
-    this.isDeleteModalVisible = true;
-  }
-  onDeleteModalCancel() {
-    this.isDeleteModalVisible = false;
-  }
-
-  onDeleteModalOk() {
-    this.deleteBulletinDefines(this.deleteBulletinNames);
-    this.isDeleteModalOkLoading = false;
-    this.isDeleteModalVisible = false;
-  }
-
-  getAllNames(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const allNames$ = this.bulletinDefineSvc.getAllNames().subscribe(
-        message => {
-          allNames$.unsubscribe();
-          if (message.code === 0) {
-            this.tabs = message.data;
-            resolve();
-          } else {
-            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), message.msg);
-            reject(message.msg);
-          }
-        },
-        error => {
-          allNames$.unsubscribe();
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), error.msg);
-          reject(error.msg);
-        }
-      );
+    this.modal.confirm({
+      nzTitle: this.i18nSvc.fanyi('common.confirm.delete'),
+      nzOkText: this.i18nSvc.fanyi('common.button.ok'),
+      nzCancelText: this.i18nSvc.fanyi('common.button.cancel'),
+      nzOkDanger: true,
+      nzOkType: 'primary',
+      nzClosable: false,
+      nzOnOk: () => this.deleteBulletinDefines([this.bulletinName])
     });
+  }
+
+  onBatchDeleteBulletinDefines() {
+    this.isBatchDeleteModalVisible = true;
+  }
+
+  onBatchDeleteModalCancel() {
+    this.isBatchDeleteModalVisible = false;
+  }
+
+  onBatchDeleteModalOk() {
+    this.deleteBulletinDefines(this.deleteBulletinNames);
+    this.isBatchDeleteModalOkLoading = false;
+    this.isBatchDeleteModalVisible = false;
   }
 
   protected readonly Array = Array;
 
   onTabChange($event: number) {
-    this.tableLoading = true;
     this.bulletinName = this.tabs[$event];
-    this.tabDefines = [];
+    this.metricsData = [];
     this.loadData(this.pageIndex - 1, this.pageSize);
-    console.log(this.tabDefines);
-    this.tableLoading = false;
+    console.log(this.metricsData);
   }
 }

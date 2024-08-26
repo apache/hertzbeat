@@ -46,7 +46,9 @@
     },
     "bulletin": {
       "new": "新增看板項",
+      "edit": "編輯看板項",
       "delete": "刪除看板項",
+      "batch.delete": "批量刪除看板項",
       "name": "看板名稱",
       "name.placeholder": "請輸入自定義看板名稱",
       "monitor.type": "監控類型",

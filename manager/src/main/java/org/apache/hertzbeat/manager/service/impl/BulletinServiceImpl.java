@@ -110,8 +110,12 @@ public class BulletinServiceImpl implements BulletinService {
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveBulletin(Bulletin bulletin) {
-        bulletinDao.save(bulletin);
+    public void editBulletin(BulletinDto bulletinDto) {
+        try {
+            //TODO: update bulletin
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

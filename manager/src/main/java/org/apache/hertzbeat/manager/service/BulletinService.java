@@ -62,7 +62,7 @@ public interface BulletinService {
     /**
      * Save Bulletin
      */
-    void saveBulletin(Bulletin bulletin);
+    void editBulletin(BulletinDto bulletinDto);
 
     /**
      * Add Bulletin
