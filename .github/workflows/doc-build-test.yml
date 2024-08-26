@@ -52,7 +52,7 @@ jobs:
           folder-path: 'home/**/*.md'
           use-quiet-mode: 'yes'
           use-verbose-mode: 'yes'
-          config: './script/co/link_check.json'
+          config: './script/ci/link_check.json'
 
       - name: NPM INSTALL
         working-directory: home
