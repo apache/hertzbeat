@@ -43,23 +43,23 @@ keywords: [open source monitoring system, alerting system]
 
 1. `docker` 环境仅需一条命令即可开始
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-```或者使用 quay.io (若 dockerhub 网络链接超时)```
+    ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 3. 部署采集器集群
 
-```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
+    ```shell
+    docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+    ```
 
-- `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
-- `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
-- `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
+   - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
+   - `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
+   - `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
 
 更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.com/docs/start/docker-deploy)
 
@@ -102,7 +102,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 - add prolevel1 as a contributor for code by @allcontributors in <https://github.com/apache/hertzbeat/pull/1415>
 -
 
-# 1397 feature: support for dns monitoring by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1416>
+## 1397 feature: support for dns monitoring by @Calvin979 in <https://github.com/apache/hertzbeat/pull/1416>
 
 - Support monitoring hive metrics by @a-little-fool in <https://github.com/apache/hertzbeat/pull/1417>
 - support legend pageable in history data charts by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1414>
@@ -178,7 +178,7 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 - and more for your custom monitoring.
 - Notifications support `Discord` `Slack` `Telegram` `Mail` `Pinning` `WeChat` `FlyBook` `SMS` `Webhook` `ServerChan`.
 
-----
+---
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

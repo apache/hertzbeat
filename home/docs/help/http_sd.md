@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 
 **Protocol Use：httpsd**
 
-# Steps to monitor micro services
+## Steps to monitor micro services
 
 1. Make sure your **Register center** is available
 
@@ -18,7 +18,7 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 2. Add http_sd monitor and enter necessary info about **Register center** on Hertzbeat, such as host, port and so on.
 3. Click **OK**
 
-# Configuration parameter
+## Configuration parameter
 
 |    Parameter name     |                                                                        Parameter help description                                                                         |
 |-----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -30,7 +30,7 @@ keywords: [open source monitoring tool, open source java monitoring tool, monito
 | Whether to detect     | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks   | For more information about identifying and describing this monitoring, users can note information here                                                                    |
 
-# Collection Metrics
+## Collection Metrics
 
 ## Metrics Set：server
 

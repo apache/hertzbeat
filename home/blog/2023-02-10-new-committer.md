@@ -9,7 +9,7 @@ tags: [opensource]
 
 ![hertzBeat](/img/blog/new-committer.png)
 
-# Welcome two new Committers from HertzBeat
+## Welcome two new Committers from HertzBeat
 
 > I am very happy that the HertzBeat open source community has welcomed two new community Committers, one is the leader of the R&D team from the front line, and the other is an intern from a large factory. Let us learn about their open source experience!
 
