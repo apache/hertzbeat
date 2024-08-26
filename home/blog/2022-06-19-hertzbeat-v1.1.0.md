@@ -58,7 +58,7 @@ commit;
 
 Have Fun!
 
-----
+---
 
 ## V1.1.0
 
@@ -114,7 +114,7 @@ Have Fun!
 
 Have Fun!
 
-----
+---
 
 > [HertzBeat](https://github.com/apache/hertzbeat), incubated by [Dromara](https://dromara.org) and open-sourced by [TanCloud](https://tancloud.cn), is an open-source project supporting monitoring for websites, APIs, PING, ports, databases, operating systems, and more, with a user-friendly visual interface.  
 > We also offer a [SAAS cloud monitoring version](https://console.tancloud.cn), allowing small and medium teams and individuals to start monitoring their web resources without deploying a complicated monitoring system, simply [log in to start](https://console.tancloud.cn) your monitoring journey for free.  

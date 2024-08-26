@@ -24,26 +24,26 @@ InfluxDB是一个由InfluxData开发的开源时序型数据库，专注于海�
 ### 2. 通过Docker方式安装InfluxDB
 
 > 可参考官方网站[安装教程](https://hub.docker.com/_/influxdb)  
->
-> 1. 下载安装Docker环境
-> Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-> 安装完毕后终端查看Docker版本是否正常输出。
->
-> ```
-> $ docker -v
-> Docker version 20.10.12, build e91ed57
-> ```
->
-> 2. Docker安装InfluxDB 1.x
 
-```shell
-$ docker run -p 8086:8086 \
-      -v /opt/influxdb:/var/lib/influxdb \
-      influxdb:1.8
-```
+1. 下载安装Docker环境
+Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
+安装完毕后终端查看Docker版本是否正常输出。
 
-`-v /opt/influxdb:/var/lib/influxdb` 为influxdb数据目录本地持久化挂载，需将`/opt/influxdb`替换为实际本地存在的目录
-使用```$ docker ps```查看数据库是否启动成功
+   ```shell
+   $ docker -v
+   Docker version 20.10.12, build e91ed57
+   ```
+
+2. Docker安装InfluxDB 1.x
+
+   ```shell
+   $ docker run -p 8086:8086 \
+         -v /opt/influxdb:/var/lib/influxdb \
+         influxdb:1.8
+   ```
+
+   `-v /opt/influxdb:/var/lib/influxdb` 为influxdb数据目录本地持久化挂载，需将`/opt/influxdb`替换为实际本地存在的目录  
+    使用```$ docker ps```查看数据库是否启动成功
 
 ### 在hertzbeat的`application.yml`配置文件配置此数据库连接
 
@@ -51,22 +51,22 @@ $ docker run -p 8086:8086 \
    修改位于 `hertzbeat/config/application.yml` 的配置文件 [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
 
-**修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.influxdb`数据源参数，URL账户密码，并启用`enabled`为`true`**
+   **修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.influxdb`数据源参数，URL账户密码，并启用`enabled`为`true`**
 
-```yaml
-warehouse:
-   store:
-      # 关闭默认JPA
-      jpa:
-         enabled: false
-      influxdb:
-         enabled: true
-         server-url: http://localhost:8086
-         username: root
-         password: root
-         expire-time: '30d'
-         replication: 1
-```
+   ```yaml
+   warehouse:
+      store:
+         # 关闭默认JPA
+         jpa:
+            enabled: false
+         influxdb:
+            enabled: true
+            server-url: http://localhost:8086
+            username: root
+            password: root
+            expire-time: '30d'
+            replication: 1
+   ```
 
 2. 重启 HertzBeat
 
@@ -74,4 +74,4 @@ warehouse:
 
 1. 时序数据库InfluxDb, IoTDB和TDengine是否都需要配置，能不能都用
 
-> 不需要都配置，任选其一即可，用enable参数控制其是否使用，也可都不安装配置，只影响历史图表数据。
+   > 不需要都配置，任选其一即可，用enable参数控制其是否使用，也可都不安装配置，只影响历史图表数据。

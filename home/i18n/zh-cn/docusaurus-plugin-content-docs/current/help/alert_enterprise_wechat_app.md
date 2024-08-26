@@ -11,17 +11,17 @@ keywords: [开源告警系统, 开源监控告警系统, 企业微信应用告�
 
 1. **【企业微信后台管理】-> 【App管理】-> 【创建一个新的应用】-> 【设置应用信息】->【添加成功后复制应用的AgentId和Secret】**
 
-![email](/img/docs/help/alert-wechat-1.jpg)
+    ![email](/img/docs/help/alert-wechat-1.jpg)
 
 2. **【告警通知】->【新增接收人】 ->【选择企业微信应用通知方式】->【设置企业ID,企业应用id和应用的secret 】-> 【确定】**
 
-![email](/img/docs/help/alert-wechat-2.jpg)
+    ![email](/img/docs/help/alert-wechat-2.jpg)
 
 3. **配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】**
 
-> **注意⚠️ 新增了接收人并不代表已经生效可以接收告警信息，还需配置关联的告警通知策略，即指定哪些消息发给哪些接收人。**
+    > **注意⚠️ 新增了接收人并不代表已经生效可以接收告警信息，还需配置关联的告警通知策略，即指定哪些消息发给哪些接收人。**
 
-![email](/img/docs/help/alert-wechat-3.jpg)
+    ![email](/img/docs/help/alert-wechat-3.jpg)
 
 ### 企业微信应用通知常见问题
 
