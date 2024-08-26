@@ -99,7 +99,7 @@
                 <ng-container *ngFor="let field of metric.fields">
                   <ng-container *ngFor="let item of field">
                     <td nzAlign="center">
-                      <ng-container *ngIf="item.value === 'No Data'; else hasData">
+                      <ng-container *ngIf="item.value === 'NO_DATA'; else hasData">
                         <nz-tag nzColor="warning">No Data Available</nz-tag>
                       </ng-container>
                       <ng-template #hasData>
