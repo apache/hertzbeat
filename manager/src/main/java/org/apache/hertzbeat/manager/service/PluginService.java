@@ -17,10 +17,15 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
+import org.apache.hertzbeat.common.entity.job.Configmap;
+import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
 import org.springframework.data.domain.Page;
 
 /**
@@ -58,7 +63,7 @@ public interface PluginService {
      * @param execute run plugin logic
      * @param <T> plugin type
      */
-    <T> void pluginExecute(Class<T> clazz, Consumer<T> execute);
+    <T> void pluginExecute(Class<T> clazz, Consumer<T> execute, BiConsumer<T, List<Configmap>> biConsumer);
 
     /**
      * delete plugin
@@ -68,5 +73,17 @@ public interface PluginService {
     void deletePlugins(Set<Long> ids);
 
     void updateStatus(PluginMetadata plugin);
+
+    /**
+     * get param define
+     * @param pluginMetadataId plugin id
+     */
+    List<ParamDefine> getParamDefine(Long pluginMetadataId);
+
+    /**
+     * save plugin param
+     * @param params params
+     */
+    void savePluginParam(List<PluginParam> params);
 
 }
