@@ -12,7 +12,7 @@ sidebar_label: 安装包方式部署
 2. 配置HertzBeat的配置文件(可选)
    解压安装包到主机 eg: /opt/hertzbeat
 
-   ```
+   ```shell
    $ tar zxvf hertzbeat-xx.tar.gz
    or
    $ unzip -o hertzbeat-xx.zip
@@ -33,7 +33,7 @@ sidebar_label: 安装包方式部署
 4. 部署启动
    执行位于安装目录hertzbeat/bin/下的启动脚本 startup.sh, windows环境下为 startup.bat
 
-   ```
+   ```shell
    ./startup.sh 
    ```
 
@@ -76,7 +76,6 @@ sidebar_label: 安装包方式部署
    java version "17.0.9"
    Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
    Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
-   
    ```
 
 2. **按照流程部署，访问 <http://ip:1157/> 无界面**

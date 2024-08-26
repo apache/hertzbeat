@@ -11,7 +11,7 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
 
    *redis.config*
 
-   ```
+   ```shell
      port 6379
      cluster-enabled yes
      cluster-config-file nodes.conf
@@ -93,7 +93,7 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
    docker network inspect hertzbeat-redis-cluste
    ```
 
-   ```
+   ```json
    "Containers": {
                "187b879f73c473b3cbb82ff95f668e65af46115ddaa27f3ff1a712332b981531": {
                    ...

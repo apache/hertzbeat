@@ -153,7 +153,7 @@ Github: <https://github.com/apache/hertzbeat>
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 
-```
+```text
 [HertzBeat告警通知]
 告警目标对象 : springboot2.threads.size
 所属监控任务ID : 483783444839322

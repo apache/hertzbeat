@@ -141,7 +141,7 @@ Of course, just looking at it is not perfect, monitoring is often accompanied by
 
 ### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding
 
-```
+```text
 [HertzBeat Alert Notification]
 Alert target object : shenyu.process_open_fds.value
 Task ID : 205540620349696
