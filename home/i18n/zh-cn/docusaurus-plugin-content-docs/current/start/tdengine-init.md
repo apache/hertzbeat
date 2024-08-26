@@ -17,19 +17,6 @@ TDengine是一款开源物联网时序型数据库，我们用其存储采集到
 
 ### 通过Docker方式安装TDengine
 
-> 可参考官方网站[安装教程](https://docs.taosdata.com/get-started/docker/)  
->
-> 1. 下载安装Docker环境
-> Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-> 安装完毕后终端查看Docker版本是否正常输出。
->
-> ```shell
-> $ docker -v
-> Docker version 20.10.12, build e91ed57
-> ```
->
-> 2. Docker安装TDengine
-
 1. 下载安装Docker环境
 Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
 安装完毕后终端查看Docker版本是否正常输出。

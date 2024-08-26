@@ -71,23 +71,12 @@ sidebar_label: 安装包方式部署
    下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)  
    安装后命令行检查是否成功安装
 
-<<<<<<< HEAD
-```shell
-$ java -version
-java version "17.0.9"
-Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
-Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
-
-```
-=======
    ```shell
    $ java -version
    java version "17.0.9"
    Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
    Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
-   
    ```
->>>>>>> 2f4343c4531cb22b24b1969b006ba9b251b3f1bd
 
 2. **按照流程部署，访问 <http://ip:1157/> 无界面**
    请参考下面几点排查问题：

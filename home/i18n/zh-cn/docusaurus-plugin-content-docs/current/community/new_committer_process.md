@@ -406,19 +406,11 @@ hi, i accept. Thanks for invitaion.
 
   正文:
 
-<<<<<<< HEAD
-```text
-Hello Apache,
-    I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
-Thanks !
-```
-=======
-  ```
+  ```text
   Hello Apache,
       I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
   Thanks !
   ```
->>>>>>> 2f4343c4531cb22b24b1969b006ba9b251b3f1bd
 
   大概1-5个工作日你就会收到一封来自`root@apache.org`的邮件。
 

@@ -15,19 +15,6 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 
 ### 通过Docker方式安装GreptimeDB
 
-> 可参考官方网站[安装教程](https://docs.greptime.com/getting-started/overview)  
->
-> 1. 下载安装Docker环境
-> Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-> 安装完毕后终端查看Docker版本是否正常输出。
->
-> ```shell
-> $ docker -v
-> Docker version 20.10.12, build e91ed57
-> ```
->
-> 2. Docker安装GreptimeDB
-
 1. 下载安装Docker环境
 Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
 安装完毕后终端查看Docker版本是否正常输出。

@@ -18,30 +18,6 @@ Note⚠️ Need TDengine 3.x Version.
 
 ### Install TDengine via Docker
 
-> Refer to the official website [installation tutorial](https://docs.taosdata.com/get-started/docker/)  
->
-> 1. Download and install Docker environment
-> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
-> After the installation you can check if the Docker version normally output at the terminal.
->
-> ```shell
-> $ docker -v
-> Docker version 20.10.12, build e91ed57
-> ```
->
-> 2. Install TDengine with Docker
->
-> ```shell
-> $ docker run -d -p 6030-6049:6030-6049 -p 6030-6049:6030-6049/udp \
-> -v /opt/taosdata:/var/lib/taos \ 
-> --name tdengine -e TZ=Asia/Shanghai \
-> tdengine/tdengine:3.0.4.0
-> ```
->
-> `-v /opt/taosdata:/var/lib/taos` is local persistent mount of TDengine data directory. `/opt/taosdata` should be replaced with the actual local directory.
-> `-e TZ="Asia/Shanghai"` can set time zone for TDengine.Set up the corresponding time zone you want.
-> use```$ docker ps``` to check if the database started successfully
-
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 After the installation you can check if the Docker version normally output at the terminal.
