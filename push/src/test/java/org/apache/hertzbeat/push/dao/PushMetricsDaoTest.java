@@ -27,10 +27,17 @@ import static org.mockito.Mockito.when;
 import org.apache.hertzbeat.common.entity.push.PushMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * test case for {@link PushMetricsDao}
+ */
+
+@ExtendWith(MockitoExtension.class)
 public class PushMetricsDaoTest {
     @Mock
     private PushMetricsDao pushMetricsDao;
