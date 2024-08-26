@@ -36,76 +36,76 @@ tags: [opensource, practice]
 
 1. Enable the SpringBoot Actuator Endpoint to expose the `DynamicTp` metrics interface.
 
-```yaml
-management:
-  endpoints:
-    web:
-      exposure:
-        include: '*'
-```
+    ```yaml
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: '*'
+    ```
 
 2. Reboot and test access to the metrics interface `ip:port/actuator/dynamic-tp` to see if it responds with json data as follows.
 
-```json
-[
-  {
-    "poolName": "commonExecutor",
-    "corePoolSize": 1,
-    "maximumPoolSize": 1,
-    "queueType": "LinkedBlockingQueue",
-    "queueCapacity": 2147483647,
-    "queueSize": 0,
-    "fair": false,
-    "queueRemainingCapacity": 2147483647,
-    "activeCount": 0,
-    "taskCount": 0,
-    "completedTaskCount": 0,
-    "largestPoolSize": 0,
-    "poolSize": 0,
-    "waitTaskCount": 0,
-    "rejectCount": 0,
-    "rejectHandlerName": null,
-    "dynamic": false,
-    "runTimeoutCount": 0,
-    "queueTimeoutCount": 0
-  },
-  {
-    "maxMemory": "4 GB",
-    "totalMemory": "444 MB",
-    "freeMemory": "250.34 MB",
-    "usableMemory": "3.81 GB"
-  }
-]
-```
+    ```json
+    [
+      {
+        "poolName": "commonExecutor",
+        "corePoolSize": 1,
+        "maximumPoolSize": 1,
+        "queueType": "LinkedBlockingQueue",
+        "queueCapacity": 2147483647,
+        "queueSize": 0,
+        "fair": false,
+        "queueRemainingCapacity": 2147483647,
+        "activeCount": 0,
+        "taskCount": 0,
+        "completedTaskCount": 0,
+        "largestPoolSize": 0,
+        "poolSize": 0,
+        "waitTaskCount": 0,
+        "rejectCount": 0,
+        "rejectHandlerName": null,
+        "dynamic": false,
+        "runTimeoutCount": 0,
+        "queueTimeoutCount": 0
+      },
+      {
+        "maxMemory": "4 GB",
+        "totalMemory": "444 MB",
+        "freeMemory": "250.34 MB",
+        "usableMemory": "3.81 GB"
+      }
+    ]
+    ```
 
 #### ii. To add DynamicTp thread pool monitoring to the HertzBeat monitoring page
 
 1. Click Add DynamicTp Monitor
 
-Path: Menu -> Middleware Monitor -> DynamicTp Monitor -> Add DynamicTp Monitor
+    Path: Menu -> Middleware Monitor -> DynamicTp Monitor -> Add DynamicTp Monitor
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)
+    ![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)
 
 2. Configure the parameters required for monitoring DynamicTp.
 
-On the monitor page, fill in DynamicTp **service IP**, **monitoring port** (default 8080), and finally click OK to add it.
-For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.com/docs/help/dynamic_tp/) <https://hertzbeat.com/docs/help/dynamic_tp/>
+    On the monitor page, fill in DynamicTp **service IP**, **monitoring port** (default 8080), and finally click OK to add it.
+    For other parameters such as **collection interval**, **timeout**, etc., you can refer to [help](https://hertzbeat.com/docs/help/dynamic_tp/) <https://hertzbeat.com/docs/help/dynamic_tp/>
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-2.png)
+    ![hertzbeat](/img/blog/monitor-dynamic-tp-2.png)
 
 3. Done ✅, now we have added monitoring for DynamicTp, check the monitor list to see our additions.
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)
+    ![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)
 
 4. Click **Options**->**Monitor Details icon** in the Monitor list to view the real-time monitoring metrics of the DynamicTp thread pool.
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-3.png)
+    ![hertzbeat](/img/blog/monitor-dynamic-tp-3.png)
 
 5. Click the **Monitoring History TAB** to view a graphical representation of the historical monitoring metrics for the DynamicTp thread pool 📈.
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-4.png)
+    ![hertzbeat](/img/blog/monitor-dynamic-tp-4.png)
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-5.png)
+    ![hertzbeat](/img/blog/monitor-dynamic-tp-5.png)
 
 **DONE! With the above steps, it's really just two steps**
 
@@ -123,33 +123,33 @@ Of course, just watching is not perfect, monitoring is often accompanied by alar
 
 1. Configure an alarm threshold for an important metric.
 
-Path: Menu -> Alert Thresholds -> Add Thresholds
+    Path: Menu -> Alert Thresholds -> Add Thresholds
 
-- DynamicTp monitors some thread pool related metrics, for example, we set the threshold for the `run_timeout_count` `thread_pool_running` -> `run_timeout_count` metric, which will raise an alarm when the thread_timeout_count is greater than one.
-- Here we configure an alert to be issued when `thread_pool_running` has a `run_timeout_count>1`, with an alert level of **Serious Alert**, which is triggered three times, as shown in the following figure.
+   - DynamicTp monitors some thread pool related metrics, for example, we set the threshold for the `run_timeout_count` `thread_pool_running` -> `run_timeout_count` metric, which will raise an alarm when the thread_timeout_count is greater than one.
+   - Here we configure an alert to be issued when `thread_pool_running` has a `run_timeout_count>1`, with an alert level of **Serious Alert**, which is triggered three times, as shown in the following figure.
 
-![hertzbeat](/img/blog/monitor-dynamic-tp-6.png)
+    ![hertzbeat](/img/blog/monitor-dynamic-tp-6.png)
 
 2. Add message notification recipients
 
-> Configure recipients to let alert message know who to send to and in what way.
+    > Configure recipients to let alert message know who to send to and in what way.
 
-Path: Menu -> Alert Notification -> Alert Recipient -> Add Recipient.
+    Path: Menu -> Alert Notification -> Alert Recipient -> Add Recipient.
 
-Message notification methods support **Email, Dingtalk, WeChat, Flybook, WebHook, SMS**, etc. We take the commonly used Dingtalk as an example.
+    Message notification methods support **Email, Dingtalk, WeChat, Flybook, WebHook, SMS**, etc. We take the commonly used Dingtalk as an example.
 
-- Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> Configure the bot on Dingtalk side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
-- Configure the recipient parameters in HertzBeat as follows.
+   - Refer to this [help document](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> Configure the bot on Dingtalk side, set the security customization keyword `HertzBeat`, get the corresponding `access_token` value.
+   - Configure the recipient parameters in HertzBeat as follows.
 
-[Alert Notification] -> [Add Recipient] -> [Choose Dingtalk bot notification method] -> [Set Dingtalk bot ACCESS_TOKEN] -> [OK]
+    [Alert Notification] -> [Add Recipient] -> [Choose Dingtalk bot notification method] -> [Set Dingtalk bot ACCESS_TOKEN] -> [OK]
 
-![hertzbeat](/img/blog/alert-notice-1.png)
+    ![hertzbeat](/img/blog/alert-notice-1.png)
 
 3. Configure the associated alert notification policy ⚠️ [Add Notification Policy] -> [Associate the recipient you just set] -> [OK] !
 
-> Configure the alert notification policy to bind alert messages to recipients so that you can decide which alerts go to which person.
+    > Configure the alert notification policy to bind alert messages to recipients so that you can decide which alerts go to which person.
 
-![hertzbeat](/img/blog/alert-notice-2.png)
+    ![hertzbeat](/img/blog/alert-notice-2.png)
 
 ### Over and out, now wait for the alert message to come through. Ding, ding, ding, ding
 

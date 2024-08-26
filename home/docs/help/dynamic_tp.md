@@ -11,53 +11,53 @@ keywords: [open source monitoring tool, open source dynamicTp monitoring tool, m
 
 1. Integration Using `DynamicTp`
 
-`DynamicTp` is a lightweight dynamic thread pool based on the configuration center of the Jvm language. It has built-in monitoring and alarm functions, which can be realized through SPI custom extensions.
+    `DynamicTp` is a lightweight dynamic thread pool based on the configuration center of the Jvm language. It has built-in monitoring and alarm functions, which can be realized through SPI custom extensions.
 
-For integrated use, please refer to the document [Quick Start](https://dynamictp.cn/guide/use/quick-start.html)
+    For integrated use, please refer to the document [Quick Start](https://dynamictp.cn/guide/use/quick-start.html)
 
 2. Open SpringBoot Actuator Endpoint to expose `DynamicTp` Metric interface
 
-```yaml
-management:
-   endpoints:
-     web:
-       exposure:
-         include: '*'
-```
+    ```yaml
+    management:
+       endpoints:
+         web:
+           exposure:
+             include: '*'
+    ```
 
-Test whether the access Metric interface `ip:port/actuator/dynamic-tp` has response json data as follows:
+    Test whether the access Metric interface `ip:port/actuator/dynamic-tp` has response json data as follows:
 
-```json
-[
-   {
-     "poolName": "commonExecutor",
-     "corePoolSize": 1,
-     "maximumPoolSize": 1,
-     "queueType": "LinkedBlockingQueue",
-     "queueCapacity": 2147483647,
-     "queueSize": 0,
-     "fair": false,
-     "queueRemainingCapacity": 2147483647,
-     "activeCount": 0,
-     "taskCount": 0,
-     "completedTaskCount": 0,
-     "largestPoolSize": 0,
-     "poolSize": 0,
-     "waitTaskCount": 0,
-     "rejectCount": 0,
-     "rejectHandlerName": null,
-     "dynamic": false,
-     "runTimeoutCount": 0,
-     "queueTimeoutCount": 0
-   },
-   {
-     "maxMemory": "4GB",
-     "totalMemory": "444MB",
-     "freeMemory": "250.34 MB",
-     "usableMemory": "3.81GB"
-   }
-]
-```
+    ```json
+    [
+       {
+         "poolName": "commonExecutor",
+         "corePoolSize": 1,
+         "maximumPoolSize": 1,
+         "queueType": "LinkedBlockingQueue",
+         "queueCapacity": 2147483647,
+         "queueSize": 0,
+         "fair": false,
+         "queueRemainingCapacity": 2147483647,
+         "activeCount": 0,
+         "taskCount": 0,
+         "completedTaskCount": 0,
+         "largestPoolSize": 0,
+         "poolSize": 0,
+         "waitTaskCount": 0,
+         "rejectCount": 0,
+         "rejectHandlerName": null,
+         "dynamic": false,
+         "runTimeoutCount": 0,
+         "queueTimeoutCount": 0
+       },
+       {
+         "maxMemory": "4GB",
+         "totalMemory": "444MB",
+         "freeMemory": "250.34 MB",
+         "usableMemory": "3.81GB"
+       }
+    ]
+    ```
 
 3. Add DynamicTp monitoring under HertzBeat middleware monitoring
 
