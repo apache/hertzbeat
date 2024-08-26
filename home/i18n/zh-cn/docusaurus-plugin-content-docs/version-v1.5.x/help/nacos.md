@@ -14,9 +14,9 @@ keywords: [开源监控系统, 中间件监控, Nacos分布式监控]
 1. 按照[部署文档](https://nacos.io/zh-cn/docs/deployment.html)搭建好Nacos集群。
 2. 配置application.properties文件，暴露metrics数据。
 
-```properties
-management.endpoints.web.exposure.include=*
-```
+    ```properties
+    management.endpoints.web.exposure.include=*
+    ```
 
 3. 访问```{ip}:8848/nacos/actuator/prometheus```，查看是否能访问到metrics数据。
 

@@ -17,29 +17,29 @@ keywords: [开源监控系统, 开源数据库监控, IoTDB数据库监控]
 
 1. metric 采集默认是关闭的，需要先到 `conf/iotdb-metric.yml` 中修改参数打开后重启 server
 
-```text
-# 是否启动监控模块，默认为false
-enableMetric: true
-
-# 是否启用操作延迟统计
-enablePerformanceStat: false
-
-# 数据提供方式，对外部通过jmx和prometheus协议提供metrics的数据, 可选参数：[JMX, PROMETHEUS, IOTDB],IOTDB是默认关闭的。
-metricReporterList:
-  - JMX
-  - PROMETHEUS
-
-# 底层使用的metric架构，可选参数：[MICROMETER, DROPWIZARD]
-monitorType: MICROMETER
-
-# 初始化metric的级别，可选参数: [CORE, IMPORTANT, NORMAL, ALL]
-metricLevel: IMPORTANT
-
-# 预定义的指标集, 可选参数: [JVM, LOGBACK, FILE, PROCESS, SYSTEM]
-predefinedMetrics:
-  - JVM
-  - FILE
-```
+    ```text
+    # 是否启动监控模块，默认为false
+    enableMetric: true
+    
+    # 是否启用操作延迟统计
+    enablePerformanceStat: false
+    
+    # 数据提供方式，对外部通过jmx和prometheus协议提供metrics的数据, 可选参数：[JMX, PROMETHEUS, IOTDB],IOTDB是默认关闭的。
+    metricReporterList:
+      - JMX
+      - PROMETHEUS
+    
+    # 底层使用的metric架构，可选参数：[MICROMETER, DROPWIZARD]
+    monitorType: MICROMETER
+    
+    # 初始化metric的级别，可选参数: [CORE, IMPORTANT, NORMAL, ALL]
+    metricLevel: IMPORTANT
+    
+    # 预定义的指标集, 可选参数: [JVM, LOGBACK, FILE, PROCESS, SYSTEM]
+    predefinedMetrics:
+      - JVM
+      - FILE
+    ```
 
 2. 重启 IoTDB, 打开浏览器或者用curl 访问 <http://ip:9091/metrics>, 就能看到metric数据了。
 

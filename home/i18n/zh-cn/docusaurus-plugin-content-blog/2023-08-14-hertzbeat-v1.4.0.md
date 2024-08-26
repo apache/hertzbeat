@@ -77,23 +77,23 @@ HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采�
 
 1. `docker` 环境仅需一条命令即可开始
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-```或者使用 quay.io (若 dockerhub 网络链接超时)```
+    ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 3. 部署采集器集群
 
-```shell
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_IP=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
+    ```shell
+    docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_IP=1158 --name hertzbeat-collector apache/hertzbeat-collector
+    ```
 
-- `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
-- `-e MANAGER_IP=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
-- `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
+   - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
+   - `-e MANAGER_IP=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
+   - `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
 
 更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.com/docs/start/docker-deploy)
 

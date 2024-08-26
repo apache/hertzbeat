@@ -16,29 +16,27 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 
 ### Install GreptimeDB via Docker
 
-> Refer to the official website [installation tutorial](https://docs.greptime.com/getting-started/overview)  
->
-> 1. Download and install Docker environment
-> Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
-> After the installation you can check if the Docker version normally output at the terminal.
->
-> ```shell
-> $ docker -v
-> Docker version 20.10.12, build e91ed57
-> ```
->
-> 2. Install GreptimeDB with Docker
+1. Download and install Docker environment
+Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
+After the installation you can check if the Docker version normally output at the terminal.
 
-```shell
-$ docker run -p 127.0.0.1:4000-4003:4000-4003 \
-  -v "$(pwd)/greptimedb:/tmp/greptimedb" \
-  --name greptime --rm \
-  greptime/greptimedb:latest standalone start \
-  --http-addr 0.0.0.0:4000 \
-  --rpc-addr 0.0.0.0:4001 \
-  --mysql-addr 0.0.0.0:4002 \
-  --postgres-addr 0.0.0.0:4003
-```
+   ```shell
+   $ docker -v
+   Docker version 20.10.12, build e91ed57
+   ```
+
+2. Install GreptimeDB with Docker
+
+    ```shell
+    $ docker run -p 127.0.0.1:4000-4003:4000-4003 \
+    v "$(pwd)/greptimedb:/tmp/greptimedb" \
+    --name greptime --rm \
+    greptime/greptimedb:latest standalone start \
+    --http-addr 0.0.0.0:4000 \
+    --rpc-addr 0.0.0.0:4001 \
+    --mysql-addr 0.0.0.0:4002 \
+    --postgres-addr 0.0.0.0:4003
+    ```
 
 `-v "$(pwd)/greptimedb:/tmp/greptimedb"` is local persistent mount of greptimedb data directory. `$(pwd)/greptimedb` should be replaced with the actual local directory, default is the `greptimedb` directory under the current directory.
 use```$ docker ps``` to check if the database started successfully
@@ -50,24 +48,24 @@ use```$ docker ps``` to check if the database started successfully
    Note⚠️The docker container way need to mount application.yml file locally, while you can use installation package way to unzip and modify `hertzbeat/config/application.yml`
    Replace `warehouse.store.greptime` data source parameters, URL account and password.
 
-```yaml
-warehouse:
-   store:
-      # disable jpa
-      jpa:
-         enabled: false
-      # enable greptime   
-      greptime:
-         enabled: true
-         grpc-endpoints: localhost:4001
-         url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
-         driver-class-name: com.mysql.cj.jdbc.Driver
-         username: greptime
-         password: greptime
-         expire-time: 30d
-```
+   ```yaml
+   warehouse:
+      store:
+         # disable jpa
+         jpa:
+            enabled: false
+         # enable greptime   
+         greptime:
+            enabled: true
+            grpc-endpoints: localhost:4001
+            url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
+            driver-class-name: com.mysql.cj.jdbc.Driver
+            username: greptime
+            password: greptime
+            expire-time: 30d
+   ```
 
-The default database is `hertzbeat` in the `url`, and it will be created automatically. The `expire-time` specifies the TTL(time-to-live) of the auto-created database, it's 30 days by default.
+   The default database is `hertzbeat` in the `url`, and it will be created automatically. The `expire-time` specifies the TTL(time-to-live) of the auto-created database, it's 30 days by default.
 
 2. Restart HertzBeat
 
@@ -75,4 +73,4 @@ The default database is `hertzbeat` in the `url`, and it will be created automat
 
 1. Do both the time series databases Greptime, IoTDB or TDengine need to be configured? Can they both be used?
 
-> You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
+   > You don't need to configure all of them, you can choose one of them. Use the enable parameter to control whether it is used or not. You can also install and configure neither, which only affects the historical chart data.
