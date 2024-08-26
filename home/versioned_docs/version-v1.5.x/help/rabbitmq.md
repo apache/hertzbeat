@@ -14,9 +14,9 @@ keywords: [open source monitoring tool, open source rabbitmq monitoring tool, mo
 
 1. Open the Management plugin, or use the self-opening version
 
-```shell
-rabbitmq-plugins enable rabbitmq_management
-```
+    ```shell
+    rabbitmq-plugins enable rabbitmq_management
+    ```
 
 2. Access <http://ip:15672/> with a browser, and the default account password is `guest/guest`. Successful login means that it is successfully opened.
 

@@ -72,7 +72,7 @@ ALTER TABLE HZB_PARAM DROP CONSTRAINT CONSTRAINT_82;;
 How to Enable H2 WEB Console:
 Modify `application.yml` and restart, access `ip:1157/h2-console`
 
-```
+```yaml
 spring:
   h2:
     console:
