@@ -54,12 +54,6 @@ jobs:
               markdown-link-check -c ./script/ci/link_check.json -q "$file"
             fi
           done
-        # uses: JustinBeckwith/linkinator-action@v6
-        # with:
-        #   folder-path: './home'
-        #   use-quiet-mode: 'yes'
-        #   use-verbose-mode: 'yes'
-        #   config-file: './script/ci/link_check.json'
 
       - name: NPM INSTALL
         working-directory: home
