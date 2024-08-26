@@ -30,32 +30,32 @@ Github: <https://github.com/apache/hertzbeat>
 
 1. Click Add Linux Monitoring
 
-Path: Menu -> Operating System Monitoring -> Linux Operating System -> Add Linux Operating System Monitoring
+    Path: Menu -> Operating System Monitoring -> Linux Operating System -> Add Linux Operating System Monitoring
 
-![hertzbeat](/img/blog/monitor-linux-1.png)
+    ![hertzbeat](/img/blog/monitor-linux-1.png)
 
 2. Configure the parameters required for new monitoring Linux
 
-Fill in the Linux **peer IP**, **SSH port** (default 22), **account password, etc.** on the monitoring page, and finally click OK to add.
-For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.com/docs/help/mysql/>
+    Fill in the Linux **peer IP**, **SSH port** (default 22), **account password, etc.** on the monitoring page, and finally click OK to add.
+    For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.com/docs/help/mysql/>
 
-![hertzbeat](/img/blog/monitor-linux-2.png)
+    ![hertzbeat](/img/blog/monitor-linux-2.png)
 
 3. Complete ✅, now we have added the monitoring of Linux, check the monitoring list to see our added items.
 
-![hertzbeat](/img/blog/monitor-linux-3.png)
+    ![hertzbeat](/img/blog/monitor-linux-3.png)
 
 4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of Linux.
 
-![hertzbeat](/img/blog/monitor-linux-4.png)
+    ![hertzbeat](/img/blog/monitor-linux-4.png)
 
-![hertzbeat](/img/blog/monitor-linux-7.png)
+    ![hertzbeat](/img/blog/monitor-linux-7.png)
 
 5. Click **Monitoring History Details TAB** to browse the historical monitoring metric data chart of Linux📈.
 
-![hertzbeat](/img/blog/monitor-linux-5.png)
+    ![hertzbeat](/img/blog/monitor-linux-5.png)
 
-![hertzbeat](/img/blog/monitor-linux-6.png)
+    ![hertzbeat](/img/blog/monitor-linux-6.png)
 
 **DONE! Done! To sum up, it only takes one step**
 
@@ -72,35 +72,35 @@ Of course, just looking at it is definitely not perfect. Monitoring is often acc
 
 1. Configure an alarm threshold for an important metric
 
-Path: Menu -> Threshold Rules -> Add Threshold
+    Path: Menu -> Threshold Rules -> Add Threshold
 
-- Select the configured metric object. Linux monitors mainly related metrics such as cpu, memory, disk, network performance, etc. For example, we set the threshold for the metric `CPU utilization` `cpu` -> `usage`. When the Linux cpu utilization is greater than 90% When a warning is issued.
-- Here we configure to send an alarm when the `usage>90` of this metric `cpu`, the alarm level is **Warning Alarm**, which will be triggered after three times, as shown in the figure below.
+    - Select the configured metric object. Linux monitors mainly related metrics such as cpu, memory, disk, network performance, etc. For example, we set the threshold for the metric `CPU utilization` `cpu` -> `usage`. When the Linux cpu utilization is greater than 90% When a warning is issued.
+    - Here we configure to send an alarm when the `usage>90` of this metric `cpu`, the alarm level is **Warning Alarm**, which will be triggered after three times, as shown in the figure below.
 
-![hertzbeat](/img/blog/monitor-linux-8.png)
+    ![hertzbeat](/img/blog/monitor-linux-8.png)
 
-![hertzbeat](/img/blog/monitor-linux-9.png)
+    ![hertzbeat](/img/blog/monitor-linux-9.png)
 
 2. Add message notification recipients
 
-> Configure the receiver to let the alarm message know who to send and how to send it.
+    > Configure the receiver to let the alarm message know who to send and how to send it.
 
-Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
+    Path: Menu -> Alarm Notification -> Alarm Recipient -> Add New Recipient
 
-Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
+    Message notification methods support **email, DingTalk, WeChat Work, Feishu, WebHook, SMS**, etc. Here we take the commonly used DingTalk as an example.
 
-- Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
-- Configure the receiver parameters in HertzBeat as follows.
+    - Refer to this [Help Documentation](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> to configure the robot on DingTalk and set the security custom keyword `HertzBeat`, get the corresponding `access_token` value.
+    - Configure the receiver parameters in HertzBeat as follows.
 
-【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
+    【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
 
-![hertzbeat](/img/blog/alert-notice-1.png)
+    ![hertzbeat](/img/blog/alert-notice-1.png)
 
 3. Configure the associated alarm notification strategy ⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]
 
-> Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
+    > Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
 
-![hertzbeat](/img/blog/alert-notice-2.png)
+    ![hertzbeat](/img/blog/alert-notice-2.png)
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
