@@ -38,6 +38,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
@@ -58,8 +59,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
- * Details of the monitoring metrics collected
- * eg: cpu | memory | health
+ * Details of the monitoring metrics collected eg: cpu | memory | health
  */
 @Data
 @AllArgsConstructor
@@ -73,9 +73,7 @@ public class Metrics {
      */
     private String name;
     /**
-     * metrics name's i18n value
-     * zh-CN: CPU信息
-     * en-US: CPU Info
+     * metrics name's i18n value zh-CN: CPU信息 en-US: CPU Info
      */
     private Map<String, String> i18n;
     /**
@@ -83,15 +81,13 @@ public class Metrics {
      */
     private String protocol;
     /**
-     * Range (0-127) metrics scheduling priority, the smaller the value, the higher the priority
-     * The collection task of the next priority metrics will be scheduled only after the scheduled collection with the higher priority is completed.
-     * The default priority of the availability metrics is 0, and the range of other common metrics is 1-127, that is,
-     * the subsequent metrics tasks will only be scheduled after the availability is collected successfully.
+     * Range (0-127) metrics scheduling priority, the smaller the value, the higher the priority The collection task of the next priority metrics will be scheduled only after the scheduled collection
+     * with the higher priority is completed. The default priority of the availability metrics is 0, and the range of other common metrics is 1-127, that is, the subsequent metrics tasks will only be
+     * scheduled after the availability is collected successfully.
      */
     private Byte priority;
     /**
-     * Is it visible true or false
-     * if false, web ui will not see this metrics.
+     * Is it visible true or false if false, web ui will not see this metrics.
      */
     private boolean visible = true;
     /**
@@ -103,18 +99,12 @@ public class Metrics {
      */
     private List<String> aliasFields;
     /**
-     * Public attribute - expression calculation, map the pre-query attribute (pre Fields)
-     * with the final attribute (fields), and calculate the final attribute (fields) value
-     * eg: size = size1 + size2, speed = speedSize
+     * Public attribute - expression calculation, map the pre-query attribute (pre Fields) with the final attribute (fields), and calculate the final attribute (fields) value eg: size = size1 + size2,
+     * speed = speedSize
      */
     private List<String> calculates;
     /**
-     * unit conversion expr
-     * eg:
-     * - heap_used=B->MB
-     * - heap_total=B->MB
-     * - disk_free=B->GB
-     * - disk_total=B->GB
+     * unit conversion expr eg: - heap_used=B->MB - heap_total=B->MB - disk_free=B->GB - disk_total=B->GB
      */
     private List<String> units;
     /**
@@ -225,6 +215,10 @@ public class Metrics {
      * Monitoring configuration information using the public script protocol
      */
     private ScriptProtocol script;
+    /**
+     * Monitoring configuration information using the public mqtt protocol
+     */
+    private MqttProtocol mqtt;
 
     /**
      * collector use - Temporarily store subTask metrics response data
@@ -309,13 +303,13 @@ public class Metrics {
     @NoArgsConstructor
     @Builder
     public static class Field {
+
         /**
          * Metric name
          */
         private String field;
         /**
-         * metric field name's i18n value
-         * CPU Version
+         * metric field name's i18n value CPU Version
          */
         private Map<String, String> i18n;
         /**
