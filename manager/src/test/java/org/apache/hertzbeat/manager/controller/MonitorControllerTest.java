@@ -53,7 +53,7 @@ class MonitorControllerTest {
     @InjectMocks
     private MonitorController monitorController;
 
-    public MonitorDto DataTest(){
+    public MonitorDto dataTest() {
         Monitor monitor = new Monitor();
         monitor.setApp("website");
         monitor.setId(87584674384L);
@@ -87,10 +87,10 @@ class MonitorControllerTest {
     @Test
     void addNewMonitor() throws Exception {
 
-        MonitorDto monitorDto = DataTest();
+        MonitorDto monitorDto = dataTest();
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(monitorDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -99,11 +99,11 @@ class MonitorControllerTest {
 
     @Test
     void modifyMonitor() throws Exception {
-        MonitorDto monitorDto = DataTest();
+        MonitorDto monitorDto = dataTest();
 
         this.mockMvc.perform(MockMvcRequestBuilders.put("/api/monitor")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(monitorDto)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(monitorDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -161,7 +161,7 @@ class MonitorControllerTest {
 
     @Test
     void detectMonitor() throws Exception {
-        MonitorDto monitorDto = DataTest();
+        MonitorDto monitorDto = dataTest();
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/detect")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -174,7 +174,7 @@ class MonitorControllerTest {
 
     @Test
     void addNewMonitorOptionalMetrics() throws Exception {
-        MonitorDto monitorDto = DataTest();
+        MonitorDto monitorDto = dataTest();
 
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/optional")
                         .contentType(MediaType.APPLICATION_JSON)

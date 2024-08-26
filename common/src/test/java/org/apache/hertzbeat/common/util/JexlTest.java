@@ -39,7 +39,7 @@ import org.junit.jupiter.api.Test;
 public class JexlTest {
 
     private JexlBuilder jexlBuilder;
-    
+
     @BeforeEach
     void setUp() {
         ClassLoader classLoader = new ClassLoader() {
@@ -55,7 +55,7 @@ public class JexlTest {
                 .features(features).strict(true).silent(false).stackOverflow(40);
 
     }
-    
+
     @Test
     void testMultiExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -66,7 +66,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(8, o);
     }
-    
+
     @Test
     void testDivisionExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -77,7 +77,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(8, o);
     }
-    
+
     @Test
     void testAdditionExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -93,7 +93,7 @@ public class JexlTest {
         o = e.evaluate(context);
         Assertions.assertEquals("hello3.0", o);
     }
-    
+
     @Test
     void testSubtractionExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -104,7 +104,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(7, o);
     }
-    
+
     @Test
     void testModulusExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -115,7 +115,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(2, o);
     }
-    
+
     @Test
     void testComplicatedExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -126,7 +126,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(23, o);
     }
-    
+
     @Test
     void testComplicatedExpressionWithParentheses() {
         JexlEngine jexl = jexlBuilder.create();
@@ -137,7 +137,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(23, o);
     }
-    
+
     @Test
     void testComplicatedExpressionWithParenthesesAndSpaces() {
         JexlEngine jexl = jexlBuilder.create();
@@ -148,7 +148,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(23, o);
     }
-    
+
     @Test
     void testComplicatedSpecialVariableNameExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -162,7 +162,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(121.0, o);
     }
-    
+
     @Test
     void testComplicatedSpecialVariableNameExpressionWithParenthesesAndSpaces() {
         JexlEngine jexl = jexlBuilder.create();
@@ -176,7 +176,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(121.0, o);
     }
-    
+
     @Test
     void testVariableAssignment() {
         JexlEngine jexl = jexlBuilder.create();
@@ -186,7 +186,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(20.0, o);
     }
-    
+
     @Test
     void testSpecialVariableNameWithoutSpacesExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -208,7 +208,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertEquals(47.82608695652174, o);
     }
-    
+
     @Test
     void testJudgmentExpression() {
         JexlEngine jexl = jexlBuilder.create();
@@ -219,7 +219,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testJudgmentExpressionWithParentheses() {
         JexlEngine jexl = jexlBuilder.create();
@@ -230,7 +230,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testJudgmentExpressionWithParenthesesAndSpaces() {
         JexlEngine jexl = jexlBuilder.create();
@@ -241,7 +241,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testJudgmentExpressionWithAndOperator() {
         JexlEngine jexl = jexlBuilder.create();
@@ -253,7 +253,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertFalse((Boolean) o);
     }
-    
+
     @Test
     void testJudgmentExpressionWithOrOperator() {
         JexlEngine jexl = jexlBuilder.create();
@@ -265,7 +265,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testJudgmentExpressionWithNotOperator() {
         JexlEngine jexl = jexlBuilder.create();
@@ -275,7 +275,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertFalse((Boolean) o);
     }
-    
+
     @Test
     void testJudgmentExpressionWithNotOperatorAndParentheses() {
         JexlEngine jexl = jexlBuilder.create();
@@ -300,7 +300,7 @@ public class JexlTest {
         String result = (String) o;
         Assertions.assertTrue(result.endsWith("2"));
     }
-    
+
     @Test
     void testZeroThrowException() {
         JexlEngine jexl = jexlBuilder.create();
@@ -310,7 +310,7 @@ public class JexlTest {
         JexlExpression e = jexl.createExpression("x / y");
         Assertions.assertThrows(JexlException.class, () -> e.evaluate(context));
     }
-    
+
     @Test
     void testNullThrowException() {
         JexlEngine jexl = jexlBuilder.create();
@@ -320,7 +320,7 @@ public class JexlTest {
         JexlExpression e = jexl.createExpression("x / y");
         Assertions.assertThrows(JexlException.class, () -> e.evaluate(context));
     }
-    
+
     @Test
     void testEmptyStringThrowException() {
         JexlEngine jexl = jexlBuilder.create();
@@ -330,7 +330,7 @@ public class JexlTest {
         JexlExpression e = jexl.createExpression("x / y");
         Assertions.assertThrows(JexlException.class, () -> e.evaluate(context));
     }
-    
+
     @Test
     void testEqualsFunction() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -344,7 +344,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testNotEqualsFunction() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -372,7 +372,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testExistsFunction() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -385,7 +385,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testExistsFunctionWithNull() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -396,7 +396,7 @@ public class JexlTest {
         JexlExpression e = jexl.createExpression("sys:exists(x)");
         Assertions.assertThrows(JexlException.class, () -> e.evaluate(context));
     }
-    
+
     @Test
     void testExistsFunctionWithEmptyString() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -435,7 +435,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testMatchesFunctionWithNull() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -448,7 +448,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertFalse((Boolean) o);
     }
-    
+
     @Test
     void testMatchesFunctionWithEmptyString() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -461,7 +461,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testMatchesFunctionWithEmptyStringAndSpace() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -474,7 +474,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testMatchesFunctionWithRegex() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -487,7 +487,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertTrue((Boolean) o);
     }
-    
+
     @Test
     void testMatchesFunctionWithRegexNotMatch() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -500,7 +500,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertFalse((Boolean) o);
     }
-    
+
     @Test
     void testMatchesFunctionWithRegexAndSpace() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -513,7 +513,7 @@ public class JexlTest {
         Object o = e.evaluate(context);
         Assertions.assertFalse((Boolean) o);
     }
-    
+
     @Test
     void testMatchesFunctionWithRegexAndSpace2() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -529,7 +529,7 @@ public class JexlTest {
         o = e.evaluate(context);
         Assertions.assertFalse((Boolean) o);
     }
-    
+
     @Test
     void testNowFunction() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
@@ -542,7 +542,7 @@ public class JexlTest {
         String result = (String) o;
         Assertions.assertTrue(result.endsWith("-0"));
     }
-    
+
     @Test
     void testAddString() {
         JexlEngine jexl = jexlBuilder.create();
@@ -557,7 +557,7 @@ public class JexlTest {
         result = (String) o;
         Assertions.assertEquals("Ubuntu-00000", result);
     }
-    
+
     @Test
     void testUnconventionalMapping() {
         // database_pages=Database pages
@@ -572,7 +572,7 @@ public class JexlTest {
         Assertions.assertThrows(JexlException.class, () -> jexl.createExpression("Buffer Cache Hit Ratio"));
         Assertions.assertThrows(JexlException.class, () -> jexl.createExpression("Page reads/sec"));
     }
-    
+
     @Test
     void testRecException() {
         JexlEngine jexl = jexlBuilder.create();
@@ -591,7 +591,7 @@ public class JexlTest {
         Assertions.assertThrows(JexlException.class, () -> jexl.createExpression("'string'.length()"));
         Assertions.assertThrows(JexlException.class, () -> jexl.createExpression("System.currentTimeMillis()"));
     }
-    
+
     /**
      * custom function
      */
