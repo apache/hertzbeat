@@ -17,12 +17,12 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
-import java.util.concurrent.locks.ReentrantLock;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import java.util.concurrent.locks.ReentrantLock;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link MetricsCollectorQueue}

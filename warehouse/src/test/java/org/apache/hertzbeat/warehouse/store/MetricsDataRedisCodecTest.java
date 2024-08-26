@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
@@ -25,10 +28,6 @@ import org.apache.hertzbeat.warehouse.store.realtime.redis.MetricsDataRedisCodec
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Test case for {@link MetricsDataRedisCodec}
@@ -69,7 +68,7 @@ class MetricsDataRedisCodecTest {
     void testEncodeValue() {
 
         CollectRep.MetricsData metricsData = Mockito.mock(CollectRep.MetricsData.class);
-        byte[] bytes = new byte[] {1, 2, 3};
+        byte[] bytes = new byte[]{1, 2, 3};
         Mockito.when(metricsData.toByteArray()).thenReturn(bytes);
 
         ByteBuffer encodedValue = codec.encodeValue(metricsData);
@@ -80,7 +79,7 @@ class MetricsDataRedisCodecTest {
     void testDecodeValue() {
 
         CollectRep.MetricsData metricsData = Mockito.mock(CollectRep.MetricsData.class);
-        byte[] bytes = new byte[] {1, 2, 3};
+        byte[] bytes = new byte[]{1, 2, 3};
 
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
@@ -91,12 +90,10 @@ class MetricsDataRedisCodecTest {
             CollectRep.MetricsData decodedValue = codec.decodeValue(buffer);
 
             assertEquals(metricsData, decodedValue);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error(e.getMessage());
             fail("Exception thrown during decodeValue test");
-        }
-        finally {
+        } finally {
             Mockito.clearAllCaches();
         }
     }
