@@ -44,7 +44,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 需要执行SQL升级脚本
 
-```
+```shell
 ALTER table hzb_alert_define modify field varchar(255) default null;
 COMMIT;
 ```

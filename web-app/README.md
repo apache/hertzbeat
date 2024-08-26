@@ -18,14 +18,14 @@
 
 1. Execute command in web-app  
 
-```ng build --configuration production```
+    ```ng build --configuration production```
 
 2. Execute command in root  
 
-```mvn clean install```
+    ```mvn clean install```
 
-The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`     
+    The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`     
 
 3. Execute command in collector  
 
-```mvn clean package -Pcluster```
+    ```mvn clean package -Pcluster```

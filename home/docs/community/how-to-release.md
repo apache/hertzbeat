@@ -250,7 +250,7 @@ for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
 
 > The final file list is as follows
 
-```
+```text
 apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
@@ -307,7 +307,9 @@ svn co --depth empty https://dist.apache.org/repos/dist/dev/incubator/hertzbeat
 
 - Copy the material package to the dev directory
 
-Create a version number directory and name it in the form of ${release_version}-${RC_version}. RC_version starts from 1, that is, the candidate version starts from RC1. During the release process, there is a problem that causes the vote to fail. If it needs to be corrected, it needs to iterate the RC version , the RC version number needs to be +1. For example: Vote for version 1.6.0-RC1. If the vote passes without any problems, the RC1 version material will be released as the final version material. If there is a problem (when the hertzbeat/incubator community votes, the voters will strictly check various release requirements and compliance issues) and need to be corrected, then re-initiate the vote after the correction, and the candidate version for the next vote is 1.6.0- RC2.
+Create a version number directory and name it in the form of ${release_version}-${RC_version}. RC_version starts from 1, that is, the candidate version starts from RC1. During the release process, there is a problem that causes the vote to fail.  
+If it needs to be corrected, it needs to iterate the RC version , the RC version number needs to be +1. For example: Vote for version 1.6.0-RC1. If the vote passes without any problems, the RC1 version material will be released as the final version material.  
+If there is a problem (when the hertzbeat/incubator community votes, the voters will strictly check various release requirements and compliance issues) and need to be corrected, then re-initiate the vote after the correction, and the candidate version for the next vote is 1.6.0- RC2.
 
 ```shell
 mkdir -p svn/dev/1.6.0-RC1
@@ -345,7 +347,7 @@ Send a voting email in the community requires at least three `+1` and no `-1`.
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
 > `Body`:
 
-```
+```text
 Hello HertzBeat Community:
 
 This is a call for vote to release Apache HertzBeat (incubating) version release-1.6.0-RC1.
@@ -401,7 +403,7 @@ After 72 hours, the voting results will be counted, and the voting result email 
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Dear HertzBeat community,
 
 Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
@@ -437,7 +439,7 @@ Send a voting email in the incubator community requires at least three `+1` and 
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Hello Incubator Community:
 
 This is a call for a vote to release Apache HertzBeat (incubating) version 1.6.0-RC1.
@@ -490,7 +492,7 @@ If there is no -1 after 72 hours, reply to the email as follows
 > `Send to`: <general@incubator.apache.org> <br />
 > `Body`:
 
-```
+```text
 Thanks everyone for review and vote, 72H passed. I'll announce the vote result soon.
 
 Best,
@@ -503,7 +505,7 @@ Then the voting results will be counted, and the voting result email will be sen
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Hi Incubator Community,
 
 The vote to release Apache HertzBeat (incubating) 1.6.0-rc4 has passed with 3 +1 binding and no +0 or -1 votes.
@@ -558,13 +560,13 @@ Then enter Release Title and Describe
 
 - Release Title:
 
-```
+```text
 v1.6.0
 ```
 
 - Describe:
 
-```
+```text
 xxx
 release note: xxx
 ```
@@ -580,7 +582,7 @@ The rename the release-1.6.0-rc1 branch to release-1.6.0.
 > `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
-```
+```text
 Hi Community,
 
 We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.

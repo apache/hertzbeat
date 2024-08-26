@@ -14,14 +14,14 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
    After the installation you can check if the Docker version normally output at the terminal.
 
-   ```
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
 
 2. Install PostgreSQL with Docker
 
-   ```
+   ```shell
    docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
    ```
 
@@ -33,7 +33,7 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
 
 1. Enter postgreSQL or use the client to connect postgreSQL service
 
-   ```
+   ```shell
    su - postgres
    psql
    ```

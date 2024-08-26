@@ -14,14 +14,14 @@ MYSQL is a reliable relational database. In addition to default built-in H2 data
    For Docker installation, please refer to the [Docker official documentation](https://docs.docker.com/get-docker/).
    After the installation, please verify in the terminal that the Docker version can be printed normally.
 
-   ```
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
 
 2. Install MYSQl with Docker
 
-   ```
+   ```shell
    $ docker run -d --name mysql \
     -p 3306:3306 \
    -v /opt/data:/var/lib/mysql \

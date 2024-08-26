@@ -4,13 +4,13 @@ title: How to Verify Release
 sidebar_position: 4
 ---
 
-# Verify the candidate version
+## Verify the candidate version
 
 For detailed check list, please refer to the official [check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
 Version content accessible in browser <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/>
 
-## 1. Download the candidate version
+### 1. Download the candidate version
 
 Download the candidate version to be released to the local environment Need to rely on gpg tool, if not, it is recommended to install `gpg2`.
 
@@ -27,11 +27,11 @@ $ svn co https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_ve
 $ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_version}-${rc_version}/xxx.xxx
 ```
 
-## 2. Verify that the uploaded version is compliant
+### 2. Verify that the uploaded version is compliant
 
 Start the verification process, which includes but is not limited to the following content and forms.
 
-### 2.1 Check whether the release package is complete
+#### 2.1 Check whether the release package is complete
 
 The package uploaded to dist must include the source code package, and the binary package is optional.
 
@@ -40,18 +40,18 @@ The package uploaded to dist must include the source code package, and the binar
 3. Whether to include the sha512 of the source code package
 4. If the binary package is uploaded, also check the contents listed in (2)-(4)
 
-### 2.2 Check gpg signature
+#### 2.2 Check gpg signature
 
 First import the publisher's public key. Import KEYS from the svn repository to the local environment. (The person who releases the version does not need to import it again, the person who helps to do the verification needs to import it, and the user name is enough for the person who issued the version)
 
-#### 2.2.1 Import public key
+##### 2.2.1 Import public key
 
 ```shell
 curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # Download KEYS
 gpg --import KEYS # Import KEYS to local
 ```
 
-#### 2.2.2 Trust the public key
+##### 2.2.2 Trust the public key
 
 Trust the KEY used in this version:
 
@@ -80,7 +80,7 @@ gpg>
          
 ```
 
-#### 2.2.3 Check the gpg signature
+##### 2.2.3 Check the gpg signature
 
 ```shell
 for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i; done
@@ -97,13 +97,13 @@ gpg: using RSA key XXXXX
 gpg: Good signature from "xxx @apache.org>"
 ```
 
-### 2.3 Check sha512 hash
+#### 2.3 Check sha512 hash
 
 ```shell
 for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
 ```
 
-### 2.4 Check the binary package
+#### 2.4 Check the binary package
 
 unzip  `apache-hertzbeat-${release.version}-incubating-bin.tar.gz`
 
@@ -123,7 +123,7 @@ check as follows:
 - [ ] Able to compile correctly
 - [ ] .....
 
-### 2.5 Check the source package
+#### 2.5 Check the source package
 
 > If the binary/web-binary package is uploaded, check the binary package.
 
@@ -149,7 +149,7 @@ and check as follows:
 
 You can refer to this article: [ASF Third Party License Policy](https://apache.org/legal/resolved.html)
 
-## 3. Email reply
+### 3. Email reply
 
 If you initiate a posting vote, you can refer to this response example to reply to the email after verification
 <font color="red">
