@@ -17,6 +17,13 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.mockito.Mockito.doNothing;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
@@ -31,15 +38,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.mockito.Mockito.doNothing;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Test case for {@link MonitorsController}
@@ -64,12 +62,12 @@ class MonitorsControllerTest {
     void getMonitors() throws Exception {
 
         this.mockMvc.perform(MockMvcRequestBuilders.get(
-                "/api/monitors?app={app}&ids={ids}&host={host}&id={id}",
+                        "/api/monitors?app={app}&ids={ids}&host={host}&id={id}",
                         "website",
-                                    6565463543L,
-                                    "127.0.0.1",
-                                    "id"
-                        ))
+                        6565463543L,
+                        "127.0.0.1",
+                        "id"
+                ))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -89,8 +87,8 @@ class MonitorsControllerTest {
         ids.add(6565463543L);
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitors")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(ids)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -102,8 +100,8 @@ class MonitorsControllerTest {
         ids.add(6565463543L);
 
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/monitors/manage")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(ids)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

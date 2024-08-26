@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.common.serialize;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.Arrays;
 import java.util.Map;
-
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.kafka.common.header.Headers;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,82 +30,77 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 /**
  * test case for {@link AlertSerializer}
  */
 
 class AlertSerializerTest {
 
-	private AlertSerializer alertSerializer;
+    private AlertSerializer alertSerializer;
 
-	@Mock
-	private Map<String, ?> configs;
+    @Mock
+    private Map<String, ?> configs;
 
-	@Mock
-	private Headers headers;
+    @Mock
+    private Headers headers;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
-		alertSerializer = new AlertSerializer();
-	}
+        MockitoAnnotations.openMocks(this);
+        alertSerializer = new AlertSerializer();
+    }
 
-	@Test
-	void testConfigure() {
+    @Test
+    void testConfigure() {
 
-		alertSerializer.configure(configs, false);
-	}
+        alertSerializer.configure(configs, false);
+    }
 
-	@Test
-	void testSerializeWithAlert() {
+    @Test
+    void testSerializeWithAlert() {
 
-		Alert alert = Alert.builder()
-				.content("test")
-				.target("test")
-				.build();
-		byte[] expectedJson = ("{\"id\":null,\"target\":\"test\",\"alertDefineId\":null,\"priority\":0,\"content\":"
-				+ "\"test\",\"status\":0,\"times\":null,\"firstAlarmTime\":null,\"lastAlarmTime\":null,\"triggerTimes"
-				+ "\":null,\"tags\":null,\"creator\":null,\"modifier\":null,\"gmtCreate\":null,\"gmtUpdate\":null}").getBytes();
+        Alert alert = Alert.builder()
+                .content("test")
+                .target("test")
+                .build();
+        byte[] expectedJson = ("{\"id\":null,\"target\":\"test\",\"alertDefineId\":null,\"priority\":0,\"content\":"
+                + "\"test\",\"status\":0,\"times\":null,\"firstAlarmTime\":null,\"lastAlarmTime\":null,\"triggerTimes"
+                + "\":null,\"tags\":null,\"creator\":null,\"modifier\":null,\"gmtCreate\":null,\"gmtUpdate\":null}").getBytes();
 
-		byte[] bytes = alertSerializer.serialize("", alert);
+        byte[] bytes = alertSerializer.serialize("", alert);
 
-		assertNotNull(bytes);
-		assertEquals(Arrays.toString(expectedJson), Arrays.toString(bytes));
-	}
+        assertNotNull(bytes);
+        assertEquals(Arrays.toString(expectedJson), Arrays.toString(bytes));
+    }
 
-	@Test
-	void testSerializeWithNullAlert() {
+    @Test
+    void testSerializeWithNullAlert() {
 
-		byte[] bytes = alertSerializer.serialize("", null);
-		assertNull(bytes);
-	}
+        byte[] bytes = alertSerializer.serialize("", null);
+        assertNull(bytes);
+    }
 
-	@Test
-	void testSerializeWithHeaders() {
+    @Test
+    void testSerializeWithHeaders() {
 
-		Alert alert = Alert.builder()
-				.content("test")
-				.target("test")
-				.build();
-		byte[] expectedBytes = ("{\"id\":null,\"target\":\"test\",\"alertDefineId\":null,\"priority\":0,\"content\":"
-				+ "\"test\",\"status\":0,\"times\":null,\"firstAlarmTime\":null,\"lastAlarmTime\":null,\"triggerTimes"
-				+ "\":null,\"tags\":null,\"creator\":null,\"modifier\":null,\"gmtCreate\":null,\"gmtUpdate\":null}").getBytes();
+        Alert alert = Alert.builder()
+                .content("test")
+                .target("test")
+                .build();
+        byte[] expectedBytes = ("{\"id\":null,\"target\":\"test\",\"alertDefineId\":null,\"priority\":0,\"content\":"
+                + "\"test\",\"status\":0,\"times\":null,\"firstAlarmTime\":null,\"lastAlarmTime\":null,\"triggerTimes"
+                + "\":null,\"tags\":null,\"creator\":null,\"modifier\":null,\"gmtCreate\":null,\"gmtUpdate\":null}").getBytes();
 
-		byte[] bytes = alertSerializer.serialize("alerts", headers, alert);
+        byte[] bytes = alertSerializer.serialize("alerts", headers, alert);
 
-		assertArrayEquals(expectedBytes, bytes);
-	}
+        assertArrayEquals(expectedBytes, bytes);
+    }
 
-	@Test
-	void testClose() {
+    @Test
+    void testClose() {
 
-		alertSerializer.close();
-	}
+        alertSerializer.close();
+    }
 
 }
