@@ -17,25 +17,29 @@
 {
   "config": {
     "default": true,
-    "MD001": false,
+    "MD001": true,
     "MD052": false,
     "MD003": false,
-    "MD013": false,
+    "MD013": {
+        "line_length": 600,
+        "code_blocks": false,
+        "tables": false
+    },
     "MD024": {
         "siblings_only": true
     },
-    "MD025": false,
-    "MD029": false,
+    "MD025": true,
+    "MD029": true,
     "MD033": false,
-    "MD035": false,
     "MD036": false,
-    "MD040": false,
-    "MD041": false,
+    "MD040": true,
     "MD045": false,
-    "MD046": false,
-    "MD047": false
+    "MD046": true,
+    "MD047": true
   },
   "ignore": [
-    "node_modules/"
+    "node_modules/",
+    "target/",
+    "dist/"
   ]
 }

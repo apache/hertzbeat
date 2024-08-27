@@ -16,14 +16,14 @@ PostgreSQL是一个功能强大，开源的关系型数据库管理系统（RDBM
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
    After the installation you can check if the Docker version normally output at the terminal.
 
-   ```
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
 
 2. Docker安装 PostgreSQL
 
-   ```
+   ```shell
    docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
    ```
 
@@ -35,7 +35,7 @@ PostgreSQL是一个功能强大，开源的关系型数据库管理系统（RDBM
 
 1. 进入 PostgreSQL 或使用客户端连接 PostgreSQL 服务
 
-   ```
+   ```shell
    su - postgres
    psql
    ```
