@@ -74,7 +74,7 @@ class PluginServiceTest {
 
     @BeforeEach
     void setUp() {
-        pluginService = new PluginServiceImpl(metadataDao, itemDao,pluginParamDao);
+        pluginService = new PluginServiceImpl(metadataDao, itemDao, pluginParamDao);
     }
 
     @Test
