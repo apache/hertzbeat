@@ -60,12 +60,14 @@ import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
 import org.apache.hertzbeat.manager.dao.PluginParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.apache.hertzbeat.manager.service.PluginService;
 import org.apache.hertzbeat.plugin.Plugin;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -131,12 +133,12 @@ public class PluginServiceImpl implements PluginService {
                 // delete metadata
                 metadataDao.deleteById(plugin.getId());
                 syncPluginParamMap(plugin.getId(), null, true);
-                pluginParamDao.deleteParamsByPluginMetadataId(plugin.getId());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
 
         }
+        pluginParamDao.deletePluginParamsByPluginMetadataIdIn(ids);
         syncPluginStatus();
         // reload classloader
         loadJarToClassLoader();
@@ -166,19 +168,26 @@ public class PluginServiceImpl implements PluginService {
     }
 
     @Override
-    public List<ParamDefine> getParamDefine(Long pluginMetadataId) {
+    public PluginParametersVO getParamDefine(Long pluginMetadataId) {
+
+        PluginParametersVO pluginParametersVO = new PluginParametersVO();
         if (PARAMS_Define_MAP.containsKey(pluginMetadataId)) {
-            return PARAMS_Define_MAP.get(pluginMetadataId);
+            List<ParamDefine> paramDefines = PARAMS_Define_MAP.get(pluginMetadataId);
+            List<PluginParam> paramsByPluginMetadataId = pluginParamDao.findParamsByPluginMetadataId(pluginMetadataId);
+            pluginParametersVO.setParamDefines(paramDefines);
+            pluginParametersVO.setPluginParams(paramsByPluginMetadataId);
+            return pluginParametersVO;
         }
-        return List.of();
+        return pluginParametersVO;
     }
 
     @Override
+    @Transactional
     public void savePluginParam(List<PluginParam> params) {
         if (CollectionUtils.isEmpty(params)) {
             return;
         }
-        pluginParamDao.deleteParamsByPluginMetadataId(params.get(0).getPluginMetadataId());
+        pluginParamDao.deletePluginParamsByPluginMetadataId(params.get(0).getPluginMetadataId());
         pluginParamDao.saveAll(params);
         syncPluginParamMap(params.get(0).getPluginMetadataId(), params, false);
     }

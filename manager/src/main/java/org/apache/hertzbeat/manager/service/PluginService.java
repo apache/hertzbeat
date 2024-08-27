@@ -23,9 +23,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
 import org.apache.hertzbeat.common.entity.job.Configmap;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.springframework.data.domain.Page;
 
 /**
@@ -78,7 +78,7 @@ public interface PluginService {
      * get param define
      * @param pluginMetadataId plugin id
      */
-    List<ParamDefine> getParamDefine(Long pluginMetadataId);
+    PluginParametersVO getParamDefine(Long pluginMetadataId);
 
     /**
      * save plugin param

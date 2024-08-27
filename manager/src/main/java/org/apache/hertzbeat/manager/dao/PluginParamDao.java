@@ -38,11 +38,11 @@ public interface PluginParamDao extends JpaRepository<PluginParam, Long> {
      * Remove the parameter list associated with the pluginMetadata ID based on it
      * @param pluginMetadataId Monitor Id
      */
-    void deleteParamsByPluginMetadataId(long pluginMetadataId);
+    void deletePluginParamsByPluginMetadataId(long pluginMetadataId);
 
     /**
      * Remove the parameter list associated with the pluginMetadata ID list based on it
      * @param pluginMetadataIds Monitoring ID List
      */
-    void deleteParamsByPluginMetadataIdIn(Set<Long> pluginMetadataIds);
+    void deletePluginParamsByPluginMetadataIdIn(Set<Long> pluginMetadataIds);
 }
