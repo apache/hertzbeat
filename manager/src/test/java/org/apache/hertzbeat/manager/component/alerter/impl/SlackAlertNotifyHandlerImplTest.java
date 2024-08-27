@@ -20,13 +20,13 @@ package org.apache.hertzbeat.manager.component.alerter.impl;
 import jakarta.annotation.Resource;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.StringUtils;
 
 /**
  * Test case for {@link SlackAlertNotifyHandlerImpl}
@@ -42,7 +42,7 @@ class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
     @Test
     void send() {
         var slackWebHook = System.getenv("SLACK_WEB_HOOK");
-        if (!StringUtils.hasText(slackWebHook)) {
+        if (StringUtils.isBlank(slackWebHook)) {
             log.warn("Please provide environment variables SLACK_WEB_HOOK");
             return;
         }
