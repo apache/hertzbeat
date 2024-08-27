@@ -17,48 +17,26 @@
 
 package org.apache.hertzbeat.collector.dispatch.unit.impl;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import org.apache.hertzbeat.collector.dispatch.unit.TimeLengthUnit;
-import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.springframework.stereotype.Component;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * the convert of time length
  */
 @Component
-public final class TimeLengthConvert implements UnitConvert {
+public final class TimeLengthConvert extends AbstractUnitConvert {
 
+
+    /**
+     * convert the enumeration of TimeLengthUnit to  map where the key is the unit and the value is the conversion coefficient.
+     */
     @Override
-    public String convert(String value, String originUnit, String newUnit) {
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
-        BigDecimal length = new BigDecimal(value);
-        // Idea: Value is converted to nanoseconds through origin unit,
-        // and then converted to the value corresponding to the new unit unit
-        for (TimeLengthUnit timeLengthUnit : TimeLengthUnit.values()) {
-            if (timeLengthUnit.getUnit().equals(originUnit.toUpperCase())) {
-                length = length.multiply(new BigDecimal(timeLengthUnit.getScale()));
-            }
-            if (timeLengthUnit.getUnit().equals(newUnit.toUpperCase())) {
-                length = length.divide(new BigDecimal(timeLengthUnit.getScale()), 12, RoundingMode.HALF_UP);
-            }
-        }
-        return length.setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    Map<String, Long> convertUnitEnumToMap() {
+        return Arrays.stream(TimeLengthUnit.values()).collect(Collectors.toMap(TimeLengthUnit::getUnit, TimeLengthUnit::getScale));
     }
 
-    @Override
-    public boolean checkUnit(String unit) {
-        if (unit == null || unit.isEmpty()) {
-            return false;
-        }
-        for (TimeLengthUnit timeUnit : TimeLengthUnit.values()) {
-            // not case-sensitive
-            if (timeUnit.getUnit().equals(unit.toUpperCase())) {
-                return true;
-            }
-        }
-        return false;
-    }
+
 }
