@@ -86,6 +86,9 @@ public class MqttCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_MQTT;
     }
 
+    /**
+     * collecting data of MQTT 5
+     */
     private void collectWithVersion5(Metrics metrics, Builder builder) {
         MqttProtocol mqttProtocol = metrics.getMqtt();
         Map<Object, String> data = new HashMap<>();
@@ -104,6 +107,9 @@ public class MqttCollectImpl extends AbstractCollect {
         client.disconnect();
     }
 
+    /**
+     * collecting data of MQTT 3.1.1
+     */
     private void collectWithVersion3(Metrics metrics, Builder builder) {
         MqttProtocol mqttProtocol = metrics.getMqtt();
         Map<Object, String> data = new HashMap<>();
