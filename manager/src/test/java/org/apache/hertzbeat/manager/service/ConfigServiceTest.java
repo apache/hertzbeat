@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
@@ -90,7 +89,7 @@ public class ConfigServiceTest {
     }
 
     @Test
-    public void testUpdateTemplateAppConfig(){
+    public void testUpdateTemplateAppConfig() {
         TemplateConfig templateConfig = new TemplateConfig();
         when(templateConfigService.getConfig()).thenReturn(templateConfig);
         configService.updateTemplateAppConfig("custom", new TemplateConfig.AppTemplate());
@@ -100,7 +99,7 @@ public class ConfigServiceTest {
     }
 
     @Test
-    public void testException(){
+    public void testException() {
         assertThrows(IllegalArgumentException.class, () -> configService.saveConfig("test", new ObjectStoreDTO<>()));
         assertThrows(IllegalArgumentException.class, () -> configService.getConfig("test2"), "Not supported this config type: test2");
     }

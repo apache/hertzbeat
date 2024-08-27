@@ -17,15 +17,21 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
@@ -60,7 +66,7 @@ class NoticeConfigControllerTest {
     private NoticeConfigController noticeConfigController;
 
 
-    public NoticeRule getNoticeRule(){
+    public NoticeRule getNoticeRule() {
         List<TagItem> tags = new ArrayList<>();
         TagItem tagItem = new TagItem();
         tagItem.setName("key1");
@@ -81,7 +87,7 @@ class NoticeConfigControllerTest {
         return noticeRule;
     }
 
-    public NoticeReceiver getNoticeReceiver(){
+    public NoticeReceiver getNoticeReceiver() {
 
         NoticeReceiver noticeReceiver = new NoticeReceiver();
         noticeReceiver.setName("tom");
@@ -94,7 +100,7 @@ class NoticeConfigControllerTest {
 
     }
 
-    public NoticeTemplate getNoticeTemplate(){
+    public NoticeTemplate getNoticeTemplate() {
         NoticeTemplate template = new NoticeTemplate();
         template.setId(5L);
         template.setName("Dingding");
@@ -358,7 +364,6 @@ class NoticeConfigControllerTest {
 
         verify(noticeConfigService, times(1)).sendTestMsg(noticeReceiver);
     }
-
 
 
 }

@@ -50,11 +50,11 @@ class NgqlCollectImplTest {
     @BeforeEach
     public void init() {
         ngqlProtocol = NgqlProtocol.builder()
-            .host("127.0.0.1")
-            .port("9669")
-            .password("123456")
-            .username("root")
-            .timeout("60000").build();
+                .host("127.0.0.1")
+                .port("9669")
+                .password("123456")
+                .username("root")
+                .timeout("60000").build();
     }
 
     @Test
@@ -74,11 +74,11 @@ class NgqlCollectImplTest {
         result.add(data);
 
         MockedConstruction<NebulaTemplate> mocked =
-            Mockito.mockConstruction(NebulaTemplate.class, (template, context) -> {
-                Mockito.doNothing().when(template).closeSessionAndPool();
-                Mockito.when(template.initSession(ngqlProtocol)).thenReturn(true);
-                Mockito.when(template.executeCommand(ngql)).thenReturn(result);
-            });
+                Mockito.mockConstruction(NebulaTemplate.class, (template, context) -> {
+                    Mockito.doNothing().when(template).closeSessionAndPool();
+                    Mockito.when(template.initSession(ngqlProtocol)).thenReturn(true);
+                    Mockito.when(template.executeCommand(ngql)).thenReturn(result);
+                });
 
         Metrics metrics = new Metrics();
         metrics.setNgql(ngqlProtocol);
@@ -108,11 +108,11 @@ class NgqlCollectImplTest {
             result.add(data);
         }
         MockedConstruction<NebulaTemplate> mocked =
-            Mockito.mockConstruction(NebulaTemplate.class, (template, context) -> {
-                Mockito.doNothing().when(template).closeSessionAndPool();
-                Mockito.when(template.initSession(ngqlProtocol)).thenReturn(true);
-                Mockito.when(template.executeCommand("SHOW HOSTS")).thenReturn(result);
-            });
+                Mockito.mockConstruction(NebulaTemplate.class, (template, context) -> {
+                    Mockito.doNothing().when(template).closeSessionAndPool();
+                    Mockito.when(template.initSession(ngqlProtocol)).thenReturn(true);
+                    Mockito.when(template.executeCommand("SHOW HOSTS")).thenReturn(result);
+                });
 
         Metrics metrics = new Metrics();
         metrics.setNgql(ngqlProtocol);
@@ -141,11 +141,11 @@ class NgqlCollectImplTest {
             result.add(data);
         }
         MockedConstruction<NebulaTemplate> mocked =
-            Mockito.mockConstruction(NebulaTemplate.class, (template, context) -> {
-                Mockito.doNothing().when(template).closeSessionAndPool();
-                Mockito.when(template.initSession(ngqlProtocol)).thenReturn(true);
-                Mockito.when(template.executeCommand(command)).thenReturn(result);
-            });
+                Mockito.mockConstruction(NebulaTemplate.class, (template, context) -> {
+                    Mockito.doNothing().when(template).closeSessionAndPool();
+                    Mockito.when(template.initSession(ngqlProtocol)).thenReturn(true);
+                    Mockito.when(template.executeCommand(command)).thenReturn(result);
+                });
 
         Metrics metrics = new Metrics();
         metrics.setNgql(ngqlProtocol);
@@ -179,11 +179,11 @@ class NgqlCollectImplTest {
             result.add(data);
         }
         MockedConstruction<NebulaTemplate> mocked =
-            Mockito.mockConstruction(NebulaTemplate.class, (template, context) -> {
-                Mockito.doNothing().when(template).closeSessionAndPool();
-                Mockito.when(template.initSession(ngqlProtocol)).thenReturn(true);
-                Mockito.when(template.executeCommand(command)).thenReturn(result);
-            });
+                Mockito.mockConstruction(NebulaTemplate.class, (template, context) -> {
+                    Mockito.doNothing().when(template).closeSessionAndPool();
+                    Mockito.when(template.initSession(ngqlProtocol)).thenReturn(true);
+                    Mockito.when(template.executeCommand(command)).thenReturn(result);
+                });
 
         Metrics metrics = new Metrics();
         metrics.setNgql(ngqlProtocol);

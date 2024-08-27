@@ -79,11 +79,11 @@ sidebar_label: Install via Docker
 
    ```shell
    $ docker run -d \
-       -e IDENTITY=custom-collector-name \
-       -e MODE=public \
-       -e MANAGER_HOST=127.0.0.1 \
-       -e MANAGER_PORT=1158 \
-       --name hertzbeat-collector apache/hertzbeat-collector
+          -e IDENTITY=custom-collector-name \
+          -e MODE=public \
+          -e MANAGER_HOST=127.0.0.1 \
+          -e MANAGER_PORT=1158 \
+          --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
    This command starts a running HertzBeat-Collector container.

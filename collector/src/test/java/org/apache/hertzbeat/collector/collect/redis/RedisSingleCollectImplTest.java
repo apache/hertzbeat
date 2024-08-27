@@ -70,7 +70,7 @@ class RedisSingleCollectImplTest {
                 .pattern("1")
                 .build();
     }
-   
+
     @AfterEach
     void setDown() {
         connection.close();
@@ -84,10 +84,10 @@ class RedisSingleCollectImplTest {
     @Test
     void collect() {
         String info = """
-            # CPU
-            used_cpu_sys:0.544635
-            used_cpu_user:0.330690
-            """;
+                # CPU
+                used_cpu_sys:0.544635
+                used_cpu_user:0.330690
+                """;
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         List<String> aliasField = new ArrayList<>();
         aliasField.add("used_cpu_sys");
@@ -99,7 +99,7 @@ class RedisSingleCollectImplTest {
 
         MockedStatic<RedisClient> clientMockedStatic = Mockito.mockStatic(RedisClient.class);
         clientMockedStatic.when(() -> RedisClient.create(Mockito.any(ClientResources.class), Mockito.any(RedisURI.class)))
-            .thenReturn(client);
+                .thenReturn(client);
         Mockito.when(client.connect()).thenReturn(connection);
         Mockito.when(connection.sync()).thenReturn(cmd);
         Mockito.when(cmd.info(metrics.getName())).thenReturn(info);
@@ -142,7 +142,7 @@ class RedisSingleCollectImplTest {
 
         MockedStatic<RedisClient> clientMockedStatic = Mockito.mockStatic(RedisClient.class);
         clientMockedStatic.when(() -> RedisClient.create(Mockito.any(ClientResources.class), Mockito.any(RedisURI.class)))
-                        .thenReturn(client);
+                .thenReturn(client);
 
         Mockito.when(client.connect()).thenReturn(connection);
         Mockito.when(connection.sync()).thenReturn(cmd);
