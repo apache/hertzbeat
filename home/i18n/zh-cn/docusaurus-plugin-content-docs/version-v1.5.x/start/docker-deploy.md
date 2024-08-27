@@ -76,7 +76,7 @@ sidebar_label: Docker方式部署
        --name hertzbeat apache/hertzbeat
    ```
 
-        这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。  
+   这条命令启动一个运行HertzBeat的Docker容器，并且将容器的1157端口映射到宿主机的1157端口上。若宿主机已有进程占用该端口，则需要修改主机映射端口。
 
    - `docker run -d` : 通过Docker运行一个容器,使其在后台运行
    - `-e LANG=zh_CN.UTF-8`  : 设置系统语言
@@ -90,13 +90,14 @@ sidebar_label: Docker方式部署
    - `--name hertzbeat` : 命名容器名称 hertzbeat
    - `--restart=always`：(可选，不需要可删除)使容器在Docker启动后自动重启。若您未在容器创建时指定该参数，可通过以下命令实现该容器自启。
 
-     ```shell
-     docker update --restart=always hertzbeat
-     ```
+      ```shell
+       docker update --restart=always hertzbeat
+      ```
 
    - `apache/hertzbeat` : 使用拉取最新的的HertzBeat官方发布的应用镜像来启动容器,**若使用`quay.io`镜像需用参数`quay.io/tancloud/hertzbeat`代替。**
 
 7. 开始探索HertzBeat  
+
    浏览器访问 <http://ip:1157/> 即可开始探索使用HertzBeat，默认账户密码 admin/hertzbeat。
 
 8. 部署采集器集群(可选)

@@ -101,13 +101,13 @@ sidebar_label: 1.6.0升级指南
 
 4. 添加相应的数据库驱动
 
-           由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动，复制到安装目录下`ext-lib`中。
+由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动，复制到安装目录下`ext-lib`中。
 
-    mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)  
-    oracle（如果你要监控oracle，这两个驱动是必须的）：  
+mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)  
+oracle（如果你要监控oracle，这两个驱动是必须的）：  
     [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)  
     [https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar?utm_source=mavenlibs.com)  
-    接下来，像之前那样运行启动脚本，即可体验最新的HertzBeat1.6.0！
+接下来，像之前那样运行启动脚本，即可体验最新的HertzBeat1.6.0！
 
 ### Docker 方式升级 - Mysql数据库
 
@@ -177,13 +177,13 @@ sidebar_label: 1.6.0升级指南
 
 4. 添加相应的数据库驱动
 
-           由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
+由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
 
-    mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)  
-    oracle（如果你要监控oracle，这两个驱动是必须的）：  
+mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)  
+oracle（如果你要监控oracle，这两个驱动是必须的）：  
     [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)  
     [https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar?utm_source=mavenlibs.com)  
-    接下来，像之前那样 Docker 运行启动 HertzBeat，即可体验最新的HertzBeat1.6.0！
+接下来，像之前那样 Docker 运行启动 HertzBeat，即可体验最新的HertzBeat1.6.0！
 
 ### Docker安装升级 - H2内置数据库(生产环境不推荐使用H2)
 
@@ -261,13 +261,13 @@ sidebar_label: 1.6.0升级指南
 
 4. 添加相应的数据库驱动
 
-           由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
+由于apache基金会对于license合规的要求，HertzBeat的安装包不能包含mysql，oracle等gpl许可的依赖，需要用户自行添加，用户可通过以下链接自行下载驱动 jar 放到本地 `ext-lib`目录下，然后启动时将`ext-lib`挂载到容器的 `/opt/hertzbeat/ext-lib`目录。
 
-    mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)  
-    oracle（如果你要监控oracle，这两个驱动是必须的）：  
+mysql：[https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.18.zip)  
+oracle（如果你要监控oracle，这两个驱动是必须的）：  
     [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)  
     [https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar?utm_source=mavenlibs.com)  
-    接下来，像之前那样 Docker 运行启动，即可体验最新的HertzBeat1.6.0！
+接下来，像之前那样 Docker 运行启动，即可体验最新的HertzBeat1.6.0！
 
 ### 通过导出导入升级
 
