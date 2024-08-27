@@ -239,8 +239,8 @@ class AppControllerTest {
 
         // Request interface
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/apps/hierarchy", "zh-CN"))
-                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                    .andExpect(jsonPath("$.data[0].category").value("os"))
-                    .andReturn();
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.data[0].category").value("os"))
+                .andReturn();
     }
 }

@@ -30,6 +30,7 @@ import org.springframework.util.StringUtils;
 
 /**
  * Test case for {@link SlackAlertNotifyHandlerImpl}
+ *
  * @version 2.1
  */
 @Slf4j
