@@ -45,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  */
 @ExtendWith(MockitoExtension.class)
 public class RedisClusterCollectImplTest {
-    
+
     @InjectMocks
     private RedisCommonCollectImpl redisClusterCollect;
 
@@ -70,7 +70,7 @@ public class RedisClusterCollectImplTest {
     }
 
     @Test
-    void testCollect(){
+    void testCollect() {
         RedisProtocol redisProtocol = RedisProtocol.builder()
                 .host("127.0.0.1")
                 .port("6379")
@@ -111,7 +111,7 @@ public class RedisClusterCollectImplTest {
         metrics.setFields(fields);
 
 
-        Mockito.mockStatic(RedisClusterClient.class).when(()->RedisClusterClient.create(Mockito.any(ClientResources.class),
+        Mockito.mockStatic(RedisClusterClient.class).when(() -> RedisClusterClient.create(Mockito.any(ClientResources.class),
                 Mockito.any(RedisURI.class))).thenReturn(client);
         Mockito.when(client.connect()).thenReturn(connection);
 

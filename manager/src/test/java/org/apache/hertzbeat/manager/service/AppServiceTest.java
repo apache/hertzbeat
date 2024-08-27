@@ -46,10 +46,10 @@ class AppServiceTest {
 
     @Mock
     private MonitorDao monitorDao;
-    
+
     @Mock
     private WarehouseService warehouseService;
-    
+
     @Mock
     private ObjectStoreConfigServiceImpl objectStoreConfigService;
 

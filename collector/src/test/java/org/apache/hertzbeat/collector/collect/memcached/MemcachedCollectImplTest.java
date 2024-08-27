@@ -79,10 +79,10 @@ public class MemcachedCollectImplTest {
     void testCollectCmdResponse() {
         String httpResponse =
                 """
-                STAT pid 1
-                STAT uptime 2
-                END
-                """;
+                        STAT pid 1
+                        STAT uptime 2
+                        END
+                        """;
         OutputStream outputStreamMock = Mockito.mock(OutputStream.class);
         byte[] responseBytes = httpResponse.getBytes(StandardCharsets.UTF_8);
         InputStream inputStream = new ByteArrayInputStream(responseBytes);
