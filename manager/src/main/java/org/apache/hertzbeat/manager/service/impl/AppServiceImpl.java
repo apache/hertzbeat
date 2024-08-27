@@ -38,6 +38,7 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.entity.job.Configmap;
@@ -70,7 +71,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
-import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -106,15 +106,13 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
-        if (!StringUtils.hasText(app)) {
-            return Collections.emptyList();
+        if (StringUtils.isNotBlank(app)){
+            var appDefine = appDefines.get(app.toLowerCase());
+            if (appDefine != null && appDefine.getParams() != null) {
+                return appDefine.getParams();
+            }
         }
-        var appDefine = appDefines.get(app.toLowerCase());
-        if (appDefine != null && appDefine.getParams() != null) {
-            return appDefine.getParams();
-        } else {
-            return Collections.emptyList();
-        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -170,7 +168,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Job getAppDefine(String app) throws IllegalArgumentException {
-        if (!StringUtils.hasText(app)) {
+        if (StringUtils.isBlank(app)) {
             throw new IllegalArgumentException("The app can not null.");
         }
         var appDefine = appDefines.get(app.toLowerCase());
@@ -182,7 +180,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Optional<Job> getAppDefineOption(String app) {
-        if (StringUtils.hasText(app)) {
+        if (StringUtils.isNotBlank(app)) {
             Job appDefine = appDefines.get(app.toLowerCase());
             return Optional.ofNullable(appDefine);
         }
@@ -192,7 +190,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public List<String> getAppDefineMetricNames(String app) {
         List<String> metricNames = new ArrayList<>(16);
-        if (StringUtils.hasLength(app)) {
+        if (StringUtils.isNotBlank(app)) {
             var appDefine = appDefines.get(app.toLowerCase());
             if (appDefine == null) {
                 throw new IllegalArgumentException("The app " + app + " not support.");
