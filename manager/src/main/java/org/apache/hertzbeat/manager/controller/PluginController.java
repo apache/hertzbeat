@@ -26,9 +26,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
-import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.apache.hertzbeat.manager.service.PluginService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -90,8 +90,8 @@ public class PluginController {
 
     @GetMapping("/getParamDefine")
     @Operation(summary = "get param define", description = "get param define by jar path")
-    public ResponseEntity<Message<List<ParamDefine>>> getParamDefine(@RequestParam Long pluginMetadataId) {
-        List<ParamDefine> plugins = pluginService.getParamDefine(pluginMetadataId);
+    public ResponseEntity<Message<PluginParametersVO>> getParamDefine(@RequestParam Long pluginMetadataId) {
+        PluginParametersVO plugins = pluginService.getParamDefine(pluginMetadataId);
         return ResponseEntity.ok(Message.success(plugins));
     }
 
