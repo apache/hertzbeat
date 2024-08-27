@@ -60,7 +60,7 @@ class FtpCollectImplTest {
         metrics.setName("server");
         metrics.setFtp(ftpProtocol);
         metrics.setAliasFields(aliasField);
-        assertThrows(IllegalArgumentException.class, ()-> ftpCollectImpl.preCheck(metrics));
+        assertThrows(IllegalArgumentException.class, () -> ftpCollectImpl.preCheck(metrics));
 
     }
 

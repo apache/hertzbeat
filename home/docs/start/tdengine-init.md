@@ -18,8 +18,6 @@ Note⚠️ Need TDengine 3.x Version.
 
 ### Install TDengine via Docker
 
-> Refer to the official website [installation tutorial](https://docs.taosdata.com/get-started/docker/)  
-
 1. Download and install Docker environment
 Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/).
 After the installation you can check if the Docker version normally output at the terminal.
@@ -46,14 +44,14 @@ After the installation you can check if the Docker version normally output at th
 
 1. Enter database Docker container
 
-   ```
+   ```shell
    docker exec -it tdengine /bin/bash
    ```
 
 2. Create database named hertzbeat
    After entering the container，execute `taos` command as follows:
 
-   ```
+   ```shell
    root@tdengine-server:~/TDengine-server# taos
    Welcome to the TDengine shell from Linux, Client Version
    Copyright (c) 2020 by TAOS Data, Inc. All rights reserved.
@@ -62,7 +60,7 @@ After the installation you can check if the Docker version normally output at th
 
    execute commands to create database
 
-   ```
+   ```shell
    taos> show databases;
    taos> CREATE DATABASE hertzbeat KEEP 90 DURATION 10 BUFFER 16;
    ```
@@ -72,7 +70,7 @@ After the installation you can check if the Docker version normally output at th
 
 3. Check if hertzbeat database has been created success
 
-   ```
+   ```shell
    taos> show databases;
    taos> use hertzbeat;
    ```

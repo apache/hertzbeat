@@ -17,14 +17,12 @@
 
 package org.apache.hertzbeat.common.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Locale;
 import java.util.TimeZone;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * test case for {@link TimeZoneUtil}
@@ -32,57 +30,57 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TimeZoneUtilTest {
 
-	private TimeZone defaultTimeZone;
-	private Locale defaultLocale;
+    private TimeZone defaultTimeZone;
+    private Locale defaultLocale;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		defaultTimeZone = TimeZone.getDefault();
-		defaultLocale = Locale.getDefault();
-	}
+        defaultTimeZone = TimeZone.getDefault();
+        defaultLocale = Locale.getDefault();
+    }
 
-	@AfterEach
-	void tearDown() {
+    @AfterEach
+    void tearDown() {
 
-		TimeZone.setDefault(defaultTimeZone);
-		Locale.setDefault(defaultLocale);
-	}
+        TimeZone.setDefault(defaultTimeZone);
+        Locale.setDefault(defaultLocale);
+    }
 
-	@Test
-	void testSetTimeZoneAndLocale() {
+    @Test
+    void testSetTimeZoneAndLocale() {
 
-		TimeZoneUtil.setTimeZoneAndLocale("America/New_York", "en_US");
-		assertEquals("America/New_York", TimeZone.getDefault().getID());
-		assertEquals(new Locale("en", "US"), Locale.getDefault());
-	}
+        TimeZoneUtil.setTimeZoneAndLocale("America/New_York", "en_US");
+        assertEquals("America/New_York", TimeZone.getDefault().getID());
+        assertEquals(new Locale("en", "US"), Locale.getDefault());
+    }
 
-	@Test
-	void testSetTimeZone() {
+    @Test
+    void testSetTimeZone() {
 
-		TimeZoneUtil.setTimeZone("Asia/Tokyo");
-		assertEquals("Asia/Tokyo", TimeZone.getDefault().getID());
-
-
-		TimeZoneUtil.setTimeZone("");
-		assertEquals("Asia/Tokyo", TimeZone.getDefault().getID());
-
-		TimeZoneUtil.setTimeZone(null);
-		assertEquals("Asia/Tokyo", TimeZone.getDefault().getID());
-	}
-
-	@Test
-	void testSetLocale() {
-
-		TimeZoneUtil.setLocale("fr_FR");
-		assertEquals(new Locale("fr", "FR"), Locale.getDefault());
+        TimeZoneUtil.setTimeZone("Asia/Tokyo");
+        assertEquals("Asia/Tokyo", TimeZone.getDefault().getID());
 
 
-		TimeZoneUtil.setLocale("");
-		assertEquals(new Locale("fr", "FR"), Locale.getDefault());
+        TimeZoneUtil.setTimeZone("");
+        assertEquals("Asia/Tokyo", TimeZone.getDefault().getID());
 
-		TimeZoneUtil.setLocale(null);
-		assertEquals(new Locale("fr", "FR"), Locale.getDefault());
-	}
+        TimeZoneUtil.setTimeZone(null);
+        assertEquals("Asia/Tokyo", TimeZone.getDefault().getID());
+    }
+
+    @Test
+    void testSetLocale() {
+
+        TimeZoneUtil.setLocale("fr_FR");
+        assertEquals(new Locale("fr", "FR"), Locale.getDefault());
+
+
+        TimeZoneUtil.setLocale("");
+        assertEquals(new Locale("fr", "FR"), Locale.getDefault());
+
+        TimeZoneUtil.setLocale(null);
+        assertEquals(new Locale("fr", "FR"), Locale.getDefault());
+    }
 
 }

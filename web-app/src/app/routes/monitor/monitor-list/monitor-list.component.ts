@@ -506,7 +506,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     const currentSort = sort.find(item => item.value !== null);
     const sortField = (currentSort && currentSort.key) || null;
     const sortOrder = (currentSort && currentSort.value) || null;
-    // this.changeMonitorTable(sortField, sortOrder);
+    this.changeMonitorTable(sortField, sortOrder);
   }
 
   // begin: app type search filter

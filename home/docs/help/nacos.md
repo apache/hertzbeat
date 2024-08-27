@@ -14,7 +14,7 @@ keywords: [open source monitoring tool, open source middleware monitoring tool, 
 1. Deploy the Nacos cluster according to [deployment document](https://nacos.io/en-us/docs/deployment.html).
 2. Configure the application. properties file to expose metrics data.
 
-    ```
+    ```properties
     management.endpoints.web.exposure.include=*
     ```
 

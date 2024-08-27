@@ -17,10 +17,10 @@
 
 package org.apache.hertzbeat.manager.scheduler;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,8 +45,8 @@ public class ConsistentHashTest {
         long jobId2 = SnowFlakeIdGenerator.generateId();
         String job3 = "job3";
         long jobId3 = SnowFlakeIdGenerator.generateId();
-        ConsistentHash.Node node1 = new ConsistentHash.Node("node1", "public","192.168.0.1", System.currentTimeMillis(), (byte) 10);
-        ConsistentHash.Node node2 = new ConsistentHash.Node("node2", "public","192.168.0.2", System.currentTimeMillis(), (byte) 10);
+        ConsistentHash.Node node1 = new ConsistentHash.Node("node1", "public", "192.168.0.1", System.currentTimeMillis(), (byte) 10);
+        ConsistentHash.Node node2 = new ConsistentHash.Node("node2", "public", "192.168.0.2", System.currentTimeMillis(), (byte) 10);
         consistentHash.addNode(node1);
         consistentHash.dispatchJob(job1, jobId1);
         consistentHash.dispatchJob(job2, jobId2);
@@ -64,7 +64,7 @@ public class ConsistentHashTest {
         long jobId1 = SnowFlakeIdGenerator.generateId();
         ConsistentHash.Node res1 = consistentHash.dispatchJob(job1, jobId1);
         assertNull(res1);
-        ConsistentHash.Node node1 = new ConsistentHash.Node("node1", "public","192.168.0.1", System.currentTimeMillis(), (byte) 10);
+        ConsistentHash.Node node1 = new ConsistentHash.Node("node1", "public", "192.168.0.1", System.currentTimeMillis(), (byte) 10);
         consistentHash.addNode(node1);
         String job2 = "job2";
         long jobId2 = SnowFlakeIdGenerator.generateId();

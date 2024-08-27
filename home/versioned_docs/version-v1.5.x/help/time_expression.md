@@ -11,7 +11,7 @@ HertzBeat supports using expressions to calculate relative time during monitorin
 
 ### Syntax
 
-```
+```shell
 ${FORMATTER [{ + | - }<DURATION> <TIME_UNIT>]}
 ```
 

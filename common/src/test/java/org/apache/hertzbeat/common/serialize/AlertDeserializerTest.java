@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.common.serialize;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.Map;
-
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.kafka.common.header.Headers;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,73 +26,71 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 /**
  * test case for {@link AlertDeserializer}
  */
 
 class AlertDeserializerTest {
 
-	private AlertDeserializer alertDeserializer;
+    private AlertDeserializer alertDeserializer;
 
-	@Mock
-	private Map<String, ?> configs;
+    @Mock
+    private Map<String, ?> configs;
 
-	@Mock
-	private Headers headers;
+    @Mock
+    private Headers headers;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		alertDeserializer = new AlertDeserializer();
-	}
+        alertDeserializer = new AlertDeserializer();
+    }
 
-	@Test
-	void testConfigure() {
+    @Test
+    void testConfigure() {
 
-		alertDeserializer.configure(configs, false);
-	}
+        alertDeserializer.configure(configs, false);
+    }
 
-	@Test
-	void testDeserializeWithBytes() {
+    @Test
+    void testDeserializeWithBytes() {
 
-		String json = "{\"target\":\"test\",\"content\":\"test\"}";
-		byte[] bytes = json.getBytes();
-		Alert expectedAlert = Alert.builder()
-				.content("test")
-				.target("test")
-				.build();
+        String json = "{\"target\":\"test\",\"content\":\"test\"}";
+        byte[] bytes = json.getBytes();
+        Alert expectedAlert = Alert.builder()
+                .content("test")
+                .target("test")
+                .build();
 
-		Alert actualAlert = alertDeserializer.deserialize("", bytes);
+        Alert actualAlert = alertDeserializer.deserialize("", bytes);
 
-		assertEquals(expectedAlert.getContent(), actualAlert.getContent());
-		assertEquals(expectedAlert.getTarget(), actualAlert.getTarget());
-	}
+        assertEquals(expectedAlert.getContent(), actualAlert.getContent());
+        assertEquals(expectedAlert.getTarget(), actualAlert.getTarget());
+    }
 
-	@Test
-	void testDeserializeWithHeaders() {
+    @Test
+    void testDeserializeWithHeaders() {
 
-		String topic = "alerts";
-		byte[] data = "{\"target\":\"test\",\"content\":\"test\"}".getBytes();
+        String topic = "alerts";
+        byte[] data = "{\"target\":\"test\",\"content\":\"test\"}".getBytes();
 
-		Alert expectedAlert = Alert.builder()
-				.content("test")
-				.target("test")
-				.build();
+        Alert expectedAlert = Alert.builder()
+                .content("test")
+                .target("test")
+                .build();
 
-		Alert actualAlert = alertDeserializer.deserialize(topic, headers, data);
+        Alert actualAlert = alertDeserializer.deserialize(topic, headers, data);
 
-		assertEquals(expectedAlert.getContent(), actualAlert.getContent());
-		assertEquals(expectedAlert.getTarget(), actualAlert.getTarget());
-	}
+        assertEquals(expectedAlert.getContent(), actualAlert.getContent());
+        assertEquals(expectedAlert.getTarget(), actualAlert.getTarget());
+    }
 
-	@Test
-	void testClose() {
+    @Test
+    void testClose() {
 
-		alertDeserializer.close();
-	}
+        alertDeserializer.close();
+    }
 
 }

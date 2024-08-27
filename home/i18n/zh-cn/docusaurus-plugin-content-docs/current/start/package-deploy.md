@@ -124,7 +124,6 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    java version "17.0.9"
    Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
    Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
-   
    ```
 
 2. 按照流程部署，访问 <http://ip:1157/> 无界面

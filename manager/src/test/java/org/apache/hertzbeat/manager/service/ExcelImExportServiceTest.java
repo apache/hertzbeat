@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,81 +33,78 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 /**
  * Test case for {@link ExcelImExportServiceImpl}
  */
 
 class ExcelImExportServiceTest {
 
-	@InjectMocks
-	private ExcelImExportServiceImpl excelImExportService;
+    @InjectMocks
+    private ExcelImExportServiceImpl excelImExportService;
 
-	@BeforeEach
-	public void setUp() {
+    @BeforeEach
+    public void setUp() {
 
-		MockitoAnnotations.openMocks(this);
-	}
+        MockitoAnnotations.openMocks(this);
+    }
 
-	@Test
-	public void testParseImport() throws IOException {
+    @Test
+    public void testParseImport() throws IOException {
 
-		Workbook workbook = new XSSFWorkbook();
-		var sheet = workbook.createSheet();
-		var headerRow = sheet.createRow(0);
-		headerRow.createCell(0).setCellValue("name");
-		headerRow.createCell(1).setCellValue("app");
-		headerRow.createCell(2).setCellValue("host");
-		var dataRow = sheet.createRow(1);
-		dataRow.createCell(0).setCellValue("Monitor1");
-		dataRow.createCell(1).setCellValue("App1");
-		dataRow.createCell(2).setCellValue("Host1");
+        Workbook workbook = new XSSFWorkbook();
+        var sheet = workbook.createSheet();
+        var headerRow = sheet.createRow(0);
+        headerRow.createCell(0).setCellValue("name");
+        headerRow.createCell(1).setCellValue("app");
+        headerRow.createCell(2).setCellValue("host");
+        var dataRow = sheet.createRow(1);
+        dataRow.createCell(0).setCellValue("Monitor1");
+        dataRow.createCell(1).setCellValue("App1");
+        dataRow.createCell(2).setCellValue("Host1");
 
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		workbook.write(bos);
-		ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        workbook.write(bos);
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
 
-		List<AbstractImExportServiceImpl.ExportMonitorDTO> result = excelImExportService.parseImport(bis);
-		assertNotNull(result);
-		assertEquals(1, result.size());
-		assertEquals("Monitor1", result.get(0).getMonitor().getName());
-	}
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> result = excelImExportService.parseImport(bis);
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Monitor1", result.get(0).getMonitor().getName());
+    }
 
-	@Test
-	public void testWriteOs() throws IOException {
+    @Test
+    public void testWriteOs() throws IOException {
 
-		AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
-		monitorDTO.setName("Monitor1");
-		monitorDTO.setApp("App1");
-		monitorDTO.setHost("Host1");
-		monitorDTO.setIntervals(10);
-		monitorDTO.setStatus((byte) 1);
-		monitorDTO.setTags(List.of(1L, 2L));
+        AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
+        monitorDTO.setName("Monitor1");
+        monitorDTO.setApp("App1");
+        monitorDTO.setHost("Host1");
+        monitorDTO.setIntervals(10);
+        monitorDTO.setStatus((byte) 1);
+        monitorDTO.setTags(List.of(1L, 2L));
 
-		AbstractImExportServiceImpl.ParamDTO paramDTO = new AbstractImExportServiceImpl.ParamDTO();
-		paramDTO.setField("field1");
-		paramDTO.setValue("value1");
-		paramDTO.setType((byte) 1);
+        AbstractImExportServiceImpl.ParamDTO paramDTO = new AbstractImExportServiceImpl.ParamDTO();
+        paramDTO.setField("field1");
+        paramDTO.setValue("value1");
+        paramDTO.setType((byte) 1);
 
-		AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
-		exportMonitorDTO.setMonitor(monitorDTO);
-		exportMonitorDTO.setParams(List.of(paramDTO));
+        AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
+        exportMonitorDTO.setMonitor(monitorDTO);
+        exportMonitorDTO.setParams(List.of(paramDTO));
 
-		List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = List.of(exportMonitorDTO);
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = List.of(exportMonitorDTO);
 
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		excelImExportService.writeOs(monitorList, bos);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        excelImExportService.writeOs(monitorList, bos);
 
-		ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
-		Workbook workbook = WorkbookFactory.create(bis);
-		var sheet = workbook.getSheetAt(0);
-		var dataRow = sheet.getRow(1);
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+        Workbook workbook = WorkbookFactory.create(bis);
+        var sheet = workbook.getSheetAt(0);
+        var dataRow = sheet.getRow(1);
 
-		assertEquals("Monitor1", dataRow.getCell(0).getStringCellValue());
-		assertEquals("App1", dataRow.getCell(1).getStringCellValue());
-		assertEquals("Host1", dataRow.getCell(2).getStringCellValue());
-	}
+        assertEquals("Monitor1", dataRow.getCell(0).getStringCellValue());
+        assertEquals("App1", dataRow.getCell(1).getStringCellValue());
+        assertEquals("Host1", dataRow.getCell(2).getStringCellValue());
+    }
 
 }

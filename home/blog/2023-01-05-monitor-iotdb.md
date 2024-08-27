@@ -109,7 +109,7 @@ tags: [opensource, practice]
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
-```
+```text
 [HertzBeat warning notification]
 Alarm target object: iotdb.cluster_node_status.status
 Affiliated monitoring ID: 205540620349696

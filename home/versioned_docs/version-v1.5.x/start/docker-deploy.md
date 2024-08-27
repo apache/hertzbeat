@@ -10,7 +10,7 @@ sidebar_label: Install via Docker
    Docker tools download refer to [Docker official document](https://docs.docker.com/get-docker/)。
    After the installation you can check if the Docker version normally output at the terminal.
 
-   ```
+   ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
@@ -79,11 +79,11 @@ sidebar_label: Install via Docker
 
    ```shell
    $ docker run -d \
-       -e IDENTITY=custom-collector-name \
-       -e MODE=public \
-       -e MANAGER_HOST=127.0.0.1 \
-       -e MANAGER_PORT=1158 \
-       --name hertzbeat-collector apache/hertzbeat-collector
+          -e IDENTITY=custom-collector-name \
+          -e MODE=public \
+          -e MANAGER_HOST=127.0.0.1 \
+          -e MANAGER_PORT=1158 \
+          --name hertzbeat-collector apache/hertzbeat-collector
    ```
 
    This command starts a running HertzBeat-Collector container.

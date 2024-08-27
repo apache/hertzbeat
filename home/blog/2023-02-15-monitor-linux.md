@@ -104,7 +104,7 @@ Of course, just looking at it is definitely not perfect. Monitoring is often acc
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
-```
+```text
 [HertzBeat warning notification]
 Alarm target object: linux.cpu.usage
 Affiliated monitoring ID: 483783444839382

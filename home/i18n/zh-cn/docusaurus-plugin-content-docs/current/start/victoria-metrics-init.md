@@ -15,9 +15,7 @@ VictoriaMetrics，是一个快速高效、经济并且可扩展的监控解决�
 
 > 如果您已有VictoriaMetrics环境，可直接跳到YML配置那一步。
 
-### 通过Docker方式安装VictoriaMetrics
-
-> 可参考官方网站[安装教程](https://docs.victoriametrics.com/Quick-Start.html#how-to-install)  
+### 通过Docker方式安装VictoriaMetrics  
 
 1. 下载安装Docker环境
 Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
