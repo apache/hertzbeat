@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
@@ -68,7 +70,7 @@ public class CollectorServiceImpl implements CollectorService {
         }
         Specification<Collector> specification = (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-            if (name != null && !name.isEmpty()) {
+            if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 predicate = criteriaBuilder.and(predicateName);
             }
@@ -93,13 +95,13 @@ public class CollectorServiceImpl implements CollectorService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRegisteredCollector(List<String> collectors) {
-        if (collectors == null || collectors.isEmpty()) {
+        if (CollectionUtils.isEmpty(collectors)) {
             return;
         }
         // Determine whether there are fixed tasks on the collector
         collectors.forEach(collector -> {
             List<CollectorMonitorBind> binds = this.collectorMonitorBindDao.findCollectorMonitorBindsByCollector(collector);
-            if (!binds.isEmpty()) {
+            if (CollectionUtils.isNotEmpty(binds)) {
                 throw new CommonException("The collector " + collector + " has pinned tasks that cannot be deleted.");
             }
         });
@@ -128,14 +130,14 @@ public class CollectorServiceImpl implements CollectorService {
 
     @Override
     public void makeCollectorsOffline(List<String> collectors) {
-        if (collectors != null) {
+        if (CollectionUtils.isNotEmpty(collectors)) {
             collectors.forEach(collector -> this.manageServer.getCollectorAndJobScheduler().offlineCollector(collector));
         }
     }
 
     @Override
     public void makeCollectorsOnline(List<String> collectors) {
-        if (collectors != null) {
+        if (CollectionUtils.isNotEmpty(collectors)) {
             collectors.forEach(collector ->
                     this.manageServer.getCollectorAndJobScheduler().onlineCollector(collector));
         }
