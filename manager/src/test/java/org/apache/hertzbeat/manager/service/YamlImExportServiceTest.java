@@ -17,6 +17,10 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -32,11 +36,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 /**
  * Test case for {@link YamlImExportServiceImpl}
  */
@@ -44,75 +43,75 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @ExtendWith(MockitoExtension.class)
 class YamlImExportServiceTest {
 
-	@InjectMocks
-	private YamlImExportServiceImpl yamlImExportService;
+    @InjectMocks
+    private YamlImExportServiceImpl yamlImExportService;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		yamlImExportService = new YamlImExportServiceImpl();
-	}
+        yamlImExportService = new YamlImExportServiceImpl();
+    }
 
-	@Test
-	void testType() {
+    @Test
+    void testType() {
 
-		assertEquals("YAML", yamlImExportService.type());
-	}
+        assertEquals("YAML", yamlImExportService.type());
+    }
 
-	@Test
-	void testParseImport() {
+    @Test
+    void testParseImport() {
 
-		String yamlContent = "- id: 1\n  name: Monitor1\n- id: 2\n  name: Monitor2";
-		InputStream is = new ByteArrayInputStream(yamlContent.getBytes(StandardCharsets.UTF_8));
+        String yamlContent = "- id: 1\n  name: Monitor1\n- id: 2\n  name: Monitor2";
+        InputStream is = new ByteArrayInputStream(yamlContent.getBytes(StandardCharsets.UTF_8));
 
-		List<AbstractImExportServiceImpl.ExportMonitorDTO> result = yamlImExportService.parseImport(is);
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> result = yamlImExportService.parseImport(is);
 
-		assertNotNull(result);
-		assertEquals(2, result.size());
-		assertEquals("[{id=1, name=Monitor1}, {id=2, name=Monitor2}]", result.toString());
-	}
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("[{id=1, name=Monitor1}, {id=2, name=Monitor2}]", result.toString());
+    }
 
-	@Test
-	void testParseImportNull() {
+    @Test
+    void testParseImportNull() {
 
-		InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
+        InputStream is = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
 
-		List<AbstractImExportServiceImpl.ExportMonitorDTO> result = yamlImExportService.parseImport(is);
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> result = yamlImExportService.parseImport(is);
 
-		assertNull(result);
-	}
+        assertNull(result);
+    }
 
-	@Test
-	void testWriteOS() {
+    @Test
+    void testWriteOs() {
 
-		AbstractImExportServiceImpl.ParamDTO paramDTO = new AbstractImExportServiceImpl.ParamDTO();
-		paramDTO.setType((byte) 1);
-		paramDTO.setField("Test");
-		paramDTO.setValue("Test");
-		AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
-		monitorDTO.setTags(List.of(1L, 2L));
-		monitorDTO.setIntervals(1);
-		monitorDTO.setStatus((byte) 1);
-		AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO1 = new AbstractImExportServiceImpl.ExportMonitorDTO();
-		exportMonitorDTO1.setParams(List.of(paramDTO));
-		exportMonitorDTO1.setMonitor(monitorDTO);
-		exportMonitorDTO1.setMetrics(List.of("Test1", "Test2"));
-		AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO2 = new AbstractImExportServiceImpl.ExportMonitorDTO();
-		exportMonitorDTO2.setParams(List.of(paramDTO));
-		exportMonitorDTO2.setMonitor(monitorDTO);
-		exportMonitorDTO2.setMetrics(List.of("Test1", "Test2"));
+        AbstractImExportServiceImpl.ParamDTO paramDTO = new AbstractImExportServiceImpl.ParamDTO();
+        paramDTO.setType((byte) 1);
+        paramDTO.setField("Test");
+        paramDTO.setValue("Test");
+        AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
+        monitorDTO.setTags(List.of(1L, 2L));
+        monitorDTO.setIntervals(1);
+        monitorDTO.setStatus((byte) 1);
+        AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto1 = new AbstractImExportServiceImpl.ExportMonitorDTO();
+        exportMonitorDto1.setParams(List.of(paramDTO));
+        exportMonitorDto1.setMonitor(monitorDTO);
+        exportMonitorDto1.setMetrics(List.of("Test1", "Test2"));
+        AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDto2 = new AbstractImExportServiceImpl.ExportMonitorDTO();
+        exportMonitorDto2.setParams(List.of(paramDTO));
+        exportMonitorDto2.setMonitor(monitorDTO);
+        exportMonitorDto2.setMetrics(List.of("Test1", "Test2"));
 
-		List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = Arrays.asList(
-				exportMonitorDTO1,
-				exportMonitorDTO2
-		);
-		OutputStream os = new ByteArrayOutputStream();
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = Arrays.asList(
+                exportMonitorDto1,
+                exportMonitorDto2
+        );
+        OutputStream os = new ByteArrayOutputStream();
 
-		yamlImExportService.writeOs(monitorList, os);
+        yamlImExportService.writeOs(monitorList, os);
 
-		String output = os.toString();
-		assertTrue(output.contains("metrics:\n  - Test1"));
-		assertTrue(output.contains("  params:\n  - &id002\n    field: Test"));
-	}
+        String output = os.toString();
+        assertTrue(output.contains("metrics:\n  - Test1"));
+        assertTrue(output.contains("  params:\n  - &id002\n    field: Test"));
+    }
 
 }

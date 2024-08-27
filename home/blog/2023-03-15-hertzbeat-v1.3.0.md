@@ -62,7 +62,7 @@ For users who previously used iotdb or tdengine to store metrics data, you need 
 
 Modify `application.yml` and set `warehouse.store.jpa.enabled` parameter to false
 
-```
+```yaml
 warehouse:
   store:
     jpa:
@@ -71,7 +71,7 @@ warehouse:
 
 Execute SQL script
 
-```
+```text
 ALTER table hzb_monitor modify job_id bigint default null;
 COMMIT;
 ```
@@ -89,7 +89,7 @@ COMMIT;
 - and more for your custom monitoring.
 - Notifications support `Discord` `Slack` `Telegram` `Mail` `Pinning` `WeChat` `FlyBook` `SMS` `Webhook`.
 
-----
+---
 
 **Github: <https://github.com/apache/hertzbeat>**
 **Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

@@ -49,7 +49,7 @@ If use tdengine before, please upgrade tdengine to 3.0+
 
 Please Run SQL Script When Upgrade.
 
-```
+```text
 ALTER table hzb_alert_define modify field varchar(255) default null;
 COMMIT;
 ```

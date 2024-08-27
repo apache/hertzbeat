@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link TelegramBotAlertNotifyHandlerImpl}
+ *
  * @version 2.1
  */
 @Slf4j

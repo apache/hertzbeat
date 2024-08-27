@@ -59,7 +59,7 @@ Have Fun!
 
 Need Convert `application.yml`.
 
-```
+```yaml
 spring.
   resources: static-locations.
     static-locations.
@@ -68,16 +68,12 @@ spring.
 ```
 
 To
-``
+
+```yaml
 spring.
-web.
-resources: static-locations.
-static-locations.
-
-- classpath:/dist/
-- classpath:... /dist/
-
-```
-
-----
+  web.
+    resources: static-locations.
+      static-locations.
+        - classpath:/dist/
+        - classpath:... /dist/
 ```

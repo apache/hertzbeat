@@ -15,33 +15,31 @@ It's designed to work on infrastructure of the cloud era, and users benefit from
 
 ### 通过Docker方式安装GreptimeDB
 
-> 可参考官方网站[安装教程](https://docs.greptime.com/getting-started/overview)  
->
-> 1. 下载安装Docker环境
-> Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
-> 安装完毕后终端查看Docker版本是否正常输出。
->
-> ```
-> $ docker -v
-> Docker version 20.10.12, build e91ed57
-> ```
->
-> 2. Docker安装GreptimeDB
+1. 下载安装Docker环境
+Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
+安装完毕后终端查看Docker版本是否正常输出。
 
-```shell
-$ docker run -p 127.0.0.1:4000-4003:4000-4003 \
-  -v "$(pwd)/greptimedb:/tmp/greptimedb" \
-  --name greptime --rm \
-  greptime/greptimedb:latest standalone start \
-  --http-addr 0.0.0.0:4000 \
-  --rpc-addr 0.0.0.0:4001 \
-  --mysql-addr 0.0.0.0:4002 \
-  --postgres-addr 0.0.0.0:4003
-```
+   ```shell
+   $ docker -v
+   Docker version 20.10.12, build e91ed57
+   ```
 
-`-v "$(pwd)/greptimedb:/tmp/greptimedb` 为 greptimedb 数据目录本地持久化挂载，需将 `$(pwd)/greptimedb` 替换为实际本地存在的目录，默认使用执行命令的当前目录下的 `greptimedb` 目录作为数据目录。
+2. Docker安装GreptimeDB
 
-使用```$ docker ps```查看数据库是否启动成功
+   ```shell
+   $ docker run -p 127.0.0.1:4000-4003:4000-4003 \
+     -v "$(pwd)/greptimedb:/tmp/greptimedb" \
+     --name greptime --rm \
+     greptime/greptimedb:latest standalone start \
+     --http-addr 0.0.0.0:4000 \
+     --rpc-addr 0.0.0.0:4001 \
+     --mysql-addr 0.0.0.0:4002 \
+     --postgres-addr 0.0.0.0:4003
+   ```
+
+   `-v "$(pwd)/greptimedb:/tmp/greptimedb` 为 greptimedb 数据目录本地持久化挂载，需将 `$(pwd)/greptimedb` 替换为实际本地存在的目录，默认使用执行命令的当前目录下的 `greptimedb` 目录作为数据目录。
+
+   使用```$ docker ps```查看数据库是否启动成功
 
 ### 在hertzbeat的`application.yml`配置文件配置此数据库连接
 
@@ -49,25 +47,25 @@ $ docker run -p 127.0.0.1:4000-4003:4000-4003 \
    修改位于 `hertzbeat/config/application.yml` 的配置文件 [/script/application.yml](https://github.com/apache/hertzbeat/raw/master/script/application.yml)
    注意⚠️docker容器方式需要将application.yml文件挂载到主机本地,安装包方式解压修改位于 `hertzbeat/config/application.yml` 即可
 
-**修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.greptime`数据源参数，URL账户密码，并启用`enabled`为`true`**
+   **修改里面的`warehouse.store.jpa.enabled`参数为`false`， 配置里面的`warehouse.store.greptime`数据源参数，URL账户密码，并启用`enabled`为`true`**
 
-```yaml
-warehouse:
-   store:
-      # 关闭默认JPA
-      jpa:
-         enabled: false
-      greptime:
-         enabled: true
-         grpc-endpoints: localhost:4001
-         url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
-         driver-class-name: com.mysql.cj.jdbc.Driver
-         username: greptime
-         password: greptime
-         expire-time: 30d
-```
+   ```yaml
+   warehouse:
+      store:
+         # 关闭默认JPA
+         jpa:
+            enabled: false
+         greptime:
+            enabled: true
+            grpc-endpoints: localhost:4001
+            url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
+            driver-class-name: com.mysql.cj.jdbc.Driver
+            username: greptime
+            password: greptime
+            expire-time: 30d
+   ```
 
-默认数据库是 URL 中配置的  `hertzbeat` ，将自动创建。 `expire-time` 是自动创建的数据库的 TTL （数据过期）时间，默认为 30 天。
+   默认数据库是 URL 中配置的  `hertzbeat` ，将自动创建。 `expire-time` 是自动创建的数据库的 TTL （数据过期）时间，默认为 30 天。
 
 2. 重启 HertzBeat
 
@@ -75,4 +73,4 @@ warehouse:
 
 1. 时序数据库 GreptimeDB 或者 IoTDB 或者 TDengine 是否都需要配置，能不能都用
 
-> 不需要都配置，任选其一即可，用enable参数控制其是否使用，也可都不安装配置，只影响历史图表数据。
+   > 不需要都配置，任选其一即可，用enable参数控制其是否使用，也可都不安装配置，只影响历史图表数据。

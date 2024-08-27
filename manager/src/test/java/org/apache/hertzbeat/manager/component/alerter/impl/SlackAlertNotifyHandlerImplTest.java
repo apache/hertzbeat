@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Test case for {@link SlackAlertNotifyHandlerImpl}
+ *
  * @version 2.1
  */
 @Slf4j

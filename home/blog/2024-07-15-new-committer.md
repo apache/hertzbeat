@@ -14,7 +14,8 @@ Hello everyone, I am very honored to receive an invitation from the community to
 
 ### Encounter
 
-In my work, several physical servers are deployed, running various databases and middleware. Although we have deployed the Prometheus + Grafana monitoring combination, most services and servers require additional installation of exporters. As a result, this monitoring system does not cover the entire project. Sometimes, we only realize a service is down when it is too late. One day in April, I came across an article introducing HertzBeat. I was immediately attracted by its unique features, such as no need for agents and fully visualized configuration, along with support for one-click deployment via Docker. I quickly deployed HertzBeat and put it into use.
+In my work, several physical servers are deployed, running various databases and middleware. Although we have deployed the Prometheus + Grafana monitoring combination, most services and servers require additional installation of exporters.  
+As a result, this monitoring system does not cover the entire project. Sometimes, we only realize a service is down when it is too late. One day in April, I came across an article introducing HertzBeat. I was immediately attracted by its unique features, such as no need for agents and fully visualized configuration, along with support for one-click deployment via Docker. I quickly deployed HertzBeat and put it into use.
 
 ### Familiarization
 
