@@ -110,6 +110,7 @@ public class PluginServiceImpl implements PluginService {
     private final List<URLClassLoader> pluginClassLoaders = new ArrayList<>();
 
     @Override
+    @Transactional
     public void deletePlugins(Set<Long> ids) {
         List<PluginMetadata> plugins = metadataDao.findAllById(ids);
         // disable the plugins that need to be removed
