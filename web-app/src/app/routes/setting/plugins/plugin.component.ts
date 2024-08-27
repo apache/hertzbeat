@@ -293,13 +293,13 @@ export class SettingPluginsComponent implements OnInit {
       )
       .subscribe((message: any) => {
         if (message.code === 0) {
-          this.paramDefines = message.data.map((i: any) => {
+          this.paramDefines = message.data.paramDefines.map((i: any) => {
             this.params[i.field] = {
               pluginMetadataId: pluginId,
               // Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
-              type: i.type === 'number' ? 0 : i.type === 'text' ? 1 : i.type === 'json' ? 3 : 2,
+              type: i.type === 'number' ? 0 : (i.type === 'text' || i.type === 'string') ? 1 : i.type === 'json' ? 3 : 2,
               field: i.field,
-              paramValue: null
+              paramValue: this.getParamValue(message.data.pluginParams, i.field)
             };
             i.name = i.name[this.lang];
             return i;
@@ -331,5 +331,9 @@ export class SettingPluginsComponent implements OnInit {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
         }
       });
+  }
+
+  getParamValue(pluginParams: any[], field: string) {
+    return pluginParams.filter((i: any) => i.field === field)[0].paramValue;
   }
 }
