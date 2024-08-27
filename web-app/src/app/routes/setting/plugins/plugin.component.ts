@@ -297,7 +297,7 @@ export class SettingPluginsComponent implements OnInit {
             this.params[i.field] = {
               pluginMetadataId: pluginId,
               // Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
-              type: i.type === 'number' ? 0 : (i.type === 'text' || i.type === 'string') ? 1 : i.type === 'json' ? 3 : 2,
+              type: i.type === 'number' ? 0 : i.type === 'text' || i.type === 'string' ? 1 : i.type === 'json' ? 3 : 2,
               field: i.field,
               paramValue: this.getParamValue(message.data.pluginParams, i.field)
             };
