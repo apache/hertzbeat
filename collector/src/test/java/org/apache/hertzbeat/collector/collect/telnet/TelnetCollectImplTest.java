@@ -46,7 +46,7 @@ class TelnetCollectImplTest {
     private TelnetCollectImpl telnetCollect;
 
     @Test
-    void testCollectWithEquals(){
+    void testCollectWithEquals() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         TelnetProtocol telnetProtocol = TelnetProtocol.builder()
                 .timeout("10")
@@ -99,7 +99,7 @@ class TelnetCollectImplTest {
     }
 
     @Test
-    void testCollectWithTab(){
+    void testCollectWithTab() {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         TelnetProtocol telnetProtocol = TelnetProtocol.builder()
                 .timeout("10")

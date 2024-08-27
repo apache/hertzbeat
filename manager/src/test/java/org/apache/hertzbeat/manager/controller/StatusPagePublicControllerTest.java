@@ -17,6 +17,11 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import java.util.Collections;
 import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -33,12 +38,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
-
 /**
  * test case for {@link StatusPagePublicController}
  */
@@ -46,78 +45,78 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 @ExtendWith(MockitoExtension.class)
 class StatusPagePublicControllerTest {
 
-	private MockMvc mockMvc;
+    private MockMvc mockMvc;
 
-	@Mock
-	private StatusPageService statusPageService;
+    @Mock
+    private StatusPageService statusPageService;
 
-	@InjectMocks
-	private StatusPagePublicController statusPagePublicController;
+    @InjectMocks
+    private StatusPagePublicController statusPagePublicController;
 
-	@BeforeEach
-	public void setup() {
+    @BeforeEach
+    public void setup() {
 
-		mockMvc = standaloneSetup(statusPagePublicController).build();
-	}
+        mockMvc = standaloneSetup(statusPagePublicController).build();
+    }
 
-	@Test
-	public void testQueryStatusPageOrg() throws Exception {
+    @Test
+    public void testQueryStatusPageOrg() throws Exception {
 
-		StatusPageOrg statusPageOrg = StatusPageOrg.builder().build();
-		when(statusPageService.queryStatusPageOrg()).thenReturn(statusPageOrg);
+        StatusPageOrg statusPageOrg = StatusPageOrg.builder().build();
+        when(statusPageService.queryStatusPageOrg()).thenReturn(statusPageOrg);
 
-		mockMvc.perform(get("/api/status/page/public/org")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(get("/api/status/page/public/org")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 
-	@Test
-	public void testQueryStatusPageOrgNotFound() throws Exception {
+    @Test
+    public void testQueryStatusPageOrgNotFound() throws Exception {
 
-		when(statusPageService.queryStatusPageOrg()).thenReturn(null);
+        when(statusPageService.queryStatusPageOrg()).thenReturn(null);
 
-		mockMvc.perform(get("/api/status/page/public/org")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
-				.andExpect(jsonPath("$.msg").value("Status Page Organization Not Found"));
-	}
+        mockMvc.perform(get("/api/status/page/public/org")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE))
+                .andExpect(jsonPath("$.msg").value("Status Page Organization Not Found"));
+    }
 
-	@Test
-	public void testQueryStatusPageComponent() throws Exception {
+    @Test
+    public void testQueryStatusPageComponent() throws Exception {
 
-		List<ComponentStatus> componentStatusList = Collections.singletonList(new ComponentStatus());
-		when(statusPageService.queryComponentsStatus()).thenReturn(componentStatusList);
+        List<ComponentStatus> componentStatusList = Collections.singletonList(new ComponentStatus());
+        when(statusPageService.queryComponentsStatus()).thenReturn(componentStatusList);
 
-		mockMvc.perform(get("/api/status/page/public/component")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(get("/api/status/page/public/component")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 
-	@Test
-	public void testQueryStatusPageComponentById() throws Exception {
+    @Test
+    public void testQueryStatusPageComponentById() throws Exception {
 
-		ComponentStatus componentStatus = new ComponentStatus();
-		when(statusPageService.queryComponentStatus(1L)).thenReturn(componentStatus);
+        ComponentStatus componentStatus = new ComponentStatus();
+        when(statusPageService.queryComponentStatus(1L)).thenReturn(componentStatus);
 
-		mockMvc.perform(get("/api/status/page/public/component/1")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(get("/api/status/page/public/component/1")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 
-	@Test
-	public void testQueryStatusPageIncident() throws Exception {
+    @Test
+    public void testQueryStatusPageIncident() throws Exception {
 
-		List<StatusPageIncident> incidents = Collections.singletonList(new StatusPageIncident());
-		when(statusPageService.queryStatusPageIncidents()).thenReturn(incidents);
+        List<StatusPageIncident> incidents = Collections.singletonList(new StatusPageIncident());
+        when(statusPageService.queryStatusPageIncidents()).thenReturn(incidents);
 
-		mockMvc.perform(get("/api/status/page/public/incident")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(get("/api/status/page/public/incident")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 
 }

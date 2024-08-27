@@ -73,7 +73,7 @@ class PluginServiceTest {
     }
 
     @Test
-    void testSavePlugin(){
+    void testSavePlugin() {
 
         List<PluginItem> pluginItems = Collections.singletonList(new PluginItem("org.apache.hertzbear.PluginTest", PluginType.POST_ALERT));
         PluginServiceImpl service = spy(pluginService);

@@ -17,14 +17,22 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.ResolvedType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.ResolvedType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.JsonImExportServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,73 +42,64 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * Test case for {@link JsonImExportServiceImpl}
  */
 
 class JsonImExportServiceTest {
 
-	@InjectMocks
-	private JsonImExportServiceImpl jsonImExportService;
+    @InjectMocks
+    private JsonImExportServiceImpl jsonImExportService;
 
-	@Mock
-	private ObjectMapper objectMapper;
+    @Mock
+    private ObjectMapper objectMapper;
 
-	@BeforeEach
-	public void setUp() {
+    @BeforeEach
+    public void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		ReflectionTestUtils.setField(jsonImExportService, "objectMapper", objectMapper);
-	}
+        ReflectionTestUtils.setField(jsonImExportService, "objectMapper", objectMapper);
+    }
 
-	@Test
-	void testParseImport() throws IOException {
+    @Test
+    void testParseImport() throws IOException {
 
-		String json = "[{}]";
-		ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes());
+        String json = "[{}]";
+        ByteArrayInputStream bis = new ByteArrayInputStream(json.getBytes());
 
-		AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
+        AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
 
-		AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
-		exportMonitorDTO.setMonitor(monitorDTO);
+        AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
+        exportMonitorDTO.setMonitor(monitorDTO);
 
-		List<AbstractImExportServiceImpl.ExportMonitorDTO> expectedList = List.of(exportMonitorDTO);
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> expectedList = List.of(exportMonitorDTO);
 
-		when(objectMapper.readValue(any(JsonParser.class), any(ResolvedType.class))).thenReturn(expectedList);
+        when(objectMapper.readValue(any(JsonParser.class), any(ResolvedType.class))).thenReturn(expectedList);
 
-		List<AbstractImExportServiceImpl.ExportMonitorDTO> result = jsonImExportService.parseImport(bis);
-		assertNull(result);
-	}
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> result = jsonImExportService.parseImport(bis);
+        assertNull(result);
+    }
 
-	@Test
-	public void testWriteOs() throws IOException {
+    @Test
+    public void testWriteOs() throws IOException {
 
-		AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
-		monitorDTO.setName("Monitor1");
-		monitorDTO.setApp("App1");
-		monitorDTO.setHost("Host1");
+        AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
+        monitorDTO.setName("Monitor1");
+        monitorDTO.setApp("App1");
+        monitorDTO.setHost("Host1");
 
-		AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
-		exportMonitorDTO.setMonitor(monitorDTO);
+        AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
+        exportMonitorDTO.setMonitor(monitorDTO);
 
-		List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = List.of(exportMonitorDTO);
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> monitorList = List.of(exportMonitorDTO);
 
-		doNothing().when(objectMapper).writeValue(any(OutputStream.class), anyList());
+        doNothing().when(objectMapper).writeValue(any(OutputStream.class), anyList());
 
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		jsonImExportService.writeOs(monitorList, bos);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        jsonImExportService.writeOs(monitorList, bos);
 
-		verify(objectMapper, times(1)).writeValue(any(OutputStream.class), eq(monitorList));
-	}
+        verify(objectMapper, times(1)).writeValue(any(OutputStream.class), eq(monitorList));
+    }
 
 }

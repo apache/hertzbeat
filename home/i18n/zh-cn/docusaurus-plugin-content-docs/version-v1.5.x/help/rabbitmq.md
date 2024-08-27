@@ -14,9 +14,9 @@ keywords: [开源监控系统, 开源消息中间件监控, RabbitMQ消息中间
 
 1. 开启 Management 插件，或使用自开启版本
 
-```shell
-rabbitmq-plugins enable rabbitmq_management 
-```
+    ```shell
+    rabbitmq-plugins enable rabbitmq_management 
+    ```
 
 2. 浏览器访问 <http://ip:15672/> ，默认账户密码 `guest/guest`. 成功登录即开启成功。
 

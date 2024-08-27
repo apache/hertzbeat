@@ -12,7 +12,7 @@ sidebar_label: 安装包方式部署
 2. 配置HertzBeat的配置文件(可选)
    解压安装包到主机 eg: /opt/hertzbeat
 
-   ```
+   ```shell
    $ tar zxvf hertzbeat-xx.tar.gz
    or
    $ unzip -o hertzbeat-xx.zip
@@ -33,7 +33,7 @@ sidebar_label: 安装包方式部署
 4. 部署启动
    执行位于安装目录hertzbeat/bin/下的启动脚本 startup.sh, windows环境下为 startup.bat
 
-   ```
+   ```shell
    ./startup.sh 
    ```
 
@@ -66,33 +66,32 @@ sidebar_label: 安装包方式部署
 
 1. **若您使用的是不含JDK的安装包，需您提前准备JAVA运行环境**
 
-安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
-要求：JAVA17环境
-下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)
-安装后命令行检查是否成功安装
+   安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)  
+   要求：JAVA17环境  
+   下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)  
+   安装后命令行检查是否成功安装
 
-```
-$ java -version
-java version "17.0.9"
-Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
-Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
-
-```
+   ```shell
+   $ java -version
+   java version "17.0.9"
+   Java(TM) SE Runtime Environment 17.0.9 (build 17.0.9+8-LTS-237)
+   Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
+   ```
 
 2. **按照流程部署，访问 <http://ip:1157/> 无界面**
    请参考下面几点排查问题：
 
-> 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功
-> 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确
-> 三：若都无问题可以查看 `hertzbeat/logs/` 目录下面的运行日志是否有明显错误，提issue或交流群或社区反馈
+   > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功  
+   > 二：HertzBeat的配置文件 `hertzbeat/config/application.yml` 里面的依赖服务IP账户密码等配置是否正确  
+   > 三：若都无问题可以查看 `hertzbeat/logs/` 目录下面的运行日志是否有明显错误，提issue或交流群或社区反馈
 
 3. **日志报错TDengine连接或插入SQL失败**
 
-> 一：排查配置的数据库账户密码是否正确，数据库是否创建
-> 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter
+   > 一：排查配置的数据库账户密码是否正确，数据库是否创建  
+   > 二：若是安装包安装的TDengine2.3+，除了启动server外，还需执行 `systemctl start taosadapter` 启动 adapter
 
 4. **监控历史图表长时间都一直无数据**
 
-> 一：时序数据库是否配置，未配置则无历史图表数据  
-> 二：若使用了Tdengine，排查Tdengine的数据库`hertzbeat`是否创建
-> 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 时序数据库 IP账户密码等配置是否正确
+   > 一：时序数据库是否配置，未配置则无历史图表数据  
+   > 二：若使用了Tdengine，排查Tdengine的数据库`hertzbeat`是否创建  
+   > 三: HertzBeat的配置文件 `application.yml` 里面的依赖服务 时序数据库 IP账户密码等配置是否正确
