@@ -10,6 +10,7 @@
     "monitor": {
       "": "监控",
       "center": "监控中心",
+      "bulletin": "自定义看板",
       "service": "应用服务监控",
       "db": "数据库监控",
       "os": "操作系统监控",
@@ -129,6 +130,20 @@
       "1": "严重告警",
       "2": "警告告警"
     }
+  },
+  "bulletin": {
+    "new": "新增看板项",
+    "edit": "编辑看板项",
+    "delete": "删除看板项",
+    "batch.delete": "批量删除看板项",
+    "name": "看板名称",
+    "name.placeholder": "请输入自定义看板名称",
+    "monitor.type": "监控类型",
+    "monitor.name": "监控任务名称",
+    "monitor.metrics": "监控指标",
+    "help.message.content": "自定义监控看板",
+    "help.content": "自定义监控看板,以表格形式展示某种监控的自选指标",
+    "help.link": ""
   },
   "question.link": "https://hertzbeat.apache.org/zh-cn/docs/help/issue",
   "alert.setting.new": "新增阈值规则",

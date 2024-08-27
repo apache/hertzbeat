@@ -37,6 +37,12 @@
           "link": "/monitors"
         },
         {
+          "text": "Bulletin",
+          "i18n": "menu.monitor.bulletin",
+          "icon": "anticon-book",
+          "link": "/bulletin"
+        },
+        {
           "text": "Define",
           "i18n": "menu.advanced.define",
           "icon": "anticon-code",
