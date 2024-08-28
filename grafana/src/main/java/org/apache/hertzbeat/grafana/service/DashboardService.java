@@ -1,5 +1,9 @@
 package org.apache.hertzbeat.grafana.service;
 
+import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.KIOSK;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.REFRESH;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
@@ -7,13 +11,16 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.grafana.dao.DashboardDao;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
 
-import static org.apache.hertzbeat.grafana.common.CommonConstants.*;
 
 /**
  * Service for managing Grafana dashboards.

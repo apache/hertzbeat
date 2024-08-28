@@ -1,14 +1,22 @@
 package org.apache.hertzbeat.grafana.service;
 
-import static org.apache.hertzbeat.grafana.common.CommonConstants.*;
 
+import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DATASOURCE_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_ACCESS;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_NAME;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_TYPE;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DATASOURCE_API;
 import jakarta.annotation.PostConstruct;
 import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -53,7 +61,7 @@ public class DatasourceService {
      * @return ResponseEntity containing the response from Grafana
      */
     public ResponseEntity<String> createDatasource() {
-        String url = String.format(CREATE_DATASOURCE_API,username, password, grafanaUrl);
+        String url = String.format(CREATE_DATASOURCE_API, username, password, grafanaUrl);
 
         HttpHeaders headers = createHeaders();
 
