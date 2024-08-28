@@ -62,9 +62,9 @@ class IcmpCollectImplTest {
     @BeforeEach
     void setUp() {
         icmpProtocol = IcmpProtocol.builder()
-            .host("127.0.0.1")
-            .timeout("3000")
-            .build();
+                .host("127.0.0.1")
+                .timeout("3000")
+                .build();
         List<String> aliasField = new ArrayList<>();
         aliasField.add("responseTime");
         metrics = new Metrics();

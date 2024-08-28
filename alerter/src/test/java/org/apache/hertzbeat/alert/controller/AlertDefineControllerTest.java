@@ -97,8 +97,8 @@ class AlertDefineControllerTest {
     void addNewAlertDefine() throws Exception {
         // Simulate the client sending a request to the server
         mockMvc.perform(MockMvcRequestBuilders.post("/api/alert/define")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(this.alertDefine)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(this.alertDefine)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -107,8 +107,8 @@ class AlertDefineControllerTest {
     @Test
     void modifyAlertDefine() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.put("/api/alert/define")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(this.alertDefine)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(this.alertDefine)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -121,7 +121,7 @@ class AlertDefineControllerTest {
                 .thenReturn(this.alertDefine);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/alert/define/" + this.alertDefine.getId())
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.id").value(alertDefine.getId()))
@@ -138,8 +138,8 @@ class AlertDefineControllerTest {
     @Test
     void deleteAlertDefine() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/alert/define/" + this.alertDefine.getId())
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(this.alertDefine)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(this.alertDefine)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -148,8 +148,8 @@ class AlertDefineControllerTest {
     @Test
     void applyAlertDefineMonitorsBind() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.post("/api/alert/define/" + this.alertDefine.getId() + "/monitors")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(this.alertDefineMonitorBinds)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(this.alertDefineMonitorBinds)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();
@@ -161,7 +161,7 @@ class AlertDefineControllerTest {
                 .thenReturn(this.alertDefineMonitorBinds);
 
         mockMvc.perform(MockMvcRequestBuilders.get("/api/alert/define/" + this.alertDefine.getId() + "/monitors")
-                .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data[0].id").value(alertDefineMonitorBinds.get(0).getId()))

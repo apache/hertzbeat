@@ -17,30 +17,28 @@
 
 package org.apache.hertzbeat.alert.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 
 /**
  * tes case for {@link AlertSilenceController}
@@ -49,76 +47,76 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 @ExtendWith(MockitoExtension.class)
 class AlertSilenceControllerTest {
 
-	private MockMvc mockMvc;
+    private MockMvc mockMvc;
 
-	@Mock
-	private AlertSilenceService alertSilenceService;
+    @Mock
+    private AlertSilenceService alertSilenceService;
 
-	private AlertSilence alertSilence;
+    private AlertSilence alertSilence;
 
-	@InjectMocks
-	private AlertSilenceController alertSilenceController;
+    @InjectMocks
+    private AlertSilenceController alertSilenceController;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		this.mockMvc = standaloneSetup(alertSilenceController).build();
+        this.mockMvc = standaloneSetup(alertSilenceController).build();
 
-		alertSilence = AlertSilence.builder()
-				.id(1L)
-				.name("Test Silence")
-				.type((byte) 1)
-				.build();
-	}
+        alertSilence = AlertSilence.builder()
+                .id(1L)
+                .name("Test Silence")
+                .type((byte) 1)
+                .build();
+    }
 
-	@Test
-	void testAddNewAlertSilence() throws Exception {
+    @Test
+    void testAddNewAlertSilence() throws Exception {
 
-		doNothing().when(alertSilenceService).validate(any(AlertSilence.class), eq(false));
-		doNothing().when(alertSilenceService).addAlertSilence(any(AlertSilence.class));
+        doNothing().when(alertSilenceService).validate(any(AlertSilence.class), eq(false));
+        doNothing().when(alertSilenceService).addAlertSilence(any(AlertSilence.class));
 
-		mockMvc.perform(post("/api/alert/silence")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(JsonUtil.toJson(alertSilence)))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(post("/api/alert/silence")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(alertSilence)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 
-	@Test
-	void testModifyAlertSilence() throws Exception {
+    @Test
+    void testModifyAlertSilence() throws Exception {
 
-		doNothing().when(alertSilenceService).validate(any(AlertSilence.class), eq(true));
-		doNothing().when(alertSilenceService).modifyAlertSilence(any(AlertSilence.class));
+        doNothing().when(alertSilenceService).validate(any(AlertSilence.class), eq(true));
+        doNothing().when(alertSilenceService).modifyAlertSilence(any(AlertSilence.class));
 
-		mockMvc.perform(put("/api/alert/silence")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(JsonUtil.toJson(alertSilence)))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(put("/api/alert/silence")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(alertSilence)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 
-	@Test
-	void testGetAlertSilence() throws Exception {
+    @Test
+    void testGetAlertSilence() throws Exception {
 
-		when(alertSilenceService.getAlertSilence(1L)).thenReturn(alertSilence);
+        when(alertSilenceService.getAlertSilence(1L)).thenReturn(alertSilence);
 
-		mockMvc.perform(get("/api/alert/silence/1")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.id").value(1))
-				.andExpect(jsonPath("$.data.name").value("Test Silence"));
-	}
+        mockMvc.perform(get("/api/alert/silence/1")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.name").value("Test Silence"));
+    }
 
-	@Test
-	void testGetAlertSilenceNotExists() throws Exception {
+    @Test
+    void testGetAlertSilenceNotExists() throws Exception {
 
-		when(alertSilenceService.getAlertSilence(1L)).thenReturn(null);
+        when(alertSilenceService.getAlertSilence(1L)).thenReturn(null);
 
-		mockMvc.perform(get("/api/alert/silence/1")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_NOT_EXIST_CODE))
-				.andExpect(jsonPath("$.msg").value("AlertSilence not exist."));
-	}
+        mockMvc.perform(get("/api/alert/silence/1")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_NOT_EXIST_CODE))
+                .andExpect(jsonPath("$.msg").value("AlertSilence not exist."));
+    }
 
 }
