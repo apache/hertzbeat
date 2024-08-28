@@ -88,14 +88,14 @@ public class PluginController {
         return ResponseEntity.ok(Message.success("Update success"));
     }
 
-    @GetMapping("/getParamDefine")
+    @GetMapping("/params/define")
     @Operation(summary = "get param define", description = "get param define by jar path")
     public ResponseEntity<Message<PluginParametersVO>> getParamDefine(@RequestParam Long pluginMetadataId) {
         PluginParametersVO plugins = pluginService.getParamDefine(pluginMetadataId);
         return ResponseEntity.ok(Message.success(plugins));
     }
 
-    @PostMapping("/saveParams")
+    @PostMapping("/params")
     @Operation(summary = "get param define", description = "get param define by jar path")
     public ResponseEntity<Message<Boolean>> saveParams(@RequestBody List<PluginParam> pluginParams) {
         pluginService.savePluginParam(pluginParams);
