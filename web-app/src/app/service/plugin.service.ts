@@ -79,10 +79,10 @@ export class PluginService {
       pluginMetadataId: pluginId
     });
     const options = { params: httpParams };
-    return this.http.get<Message<any>>(`${plugin_uri}/getParamDefine`, options);
+    return this.http.get<Message<any>>(`${plugin_uri}/params/define`, options);
   }
 
   public savePluginParamDefine(body: any): Observable<Message<any>> {
-    return this.http.post<Message<any>>(`${plugin_uri}/saveParams`, body);
+    return this.http.post<Message<any>>(`${plugin_uri}/params`, body);
   }
 }

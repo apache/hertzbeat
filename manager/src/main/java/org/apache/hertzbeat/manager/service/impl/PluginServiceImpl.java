@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.persistence.TableGenerator;
 import jakarta.persistence.criteria.Predicate;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -70,6 +71,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
 /**
  * plugin service
@@ -95,7 +97,7 @@ public class PluginServiceImpl implements PluginService {
     /**
      * plugin param define
      */
-    private static final Map<Long, List<ParamDefine>> PARAMS_Define_MAP = new ConcurrentHashMap<>();
+    private static final Map<Long, List<ParamDefine>> PARAMS_DEFINE_MAP = new ConcurrentHashMap<>();
 
     /**
      * plugin params
@@ -172,8 +174,8 @@ public class PluginServiceImpl implements PluginService {
     public PluginParametersVO getParamDefine(Long pluginMetadataId) {
 
         PluginParametersVO pluginParametersVO = new PluginParametersVO();
-        if (PARAMS_Define_MAP.containsKey(pluginMetadataId)) {
-            List<ParamDefine> paramDefines = PARAMS_Define_MAP.get(pluginMetadataId);
+        if (PARAMS_DEFINE_MAP.containsKey(pluginMetadataId)) {
+            List<ParamDefine> paramDefines = PARAMS_DEFINE_MAP.get(pluginMetadataId);
             List<PluginParam> paramsByPluginMetadataId = pluginParamDao.findParamsByPluginMetadataId(pluginMetadataId);
             pluginParametersVO.setParamDefines(paramDefines);
             pluginParametersVO.setPluginParams(paramsByPluginMetadataId);
@@ -217,8 +219,9 @@ public class PluginServiceImpl implements PluginService {
         try {
             URL jarUrl = new URL("file:" + jarFile.getAbsolutePath());
             try (URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl}, this.getClass().getClassLoader());
-                JarFile jar = new JarFile(jarFile)) {
+                 JarFile jar = new JarFile(jarFile)) {
                 Enumeration<JarEntry> entries = jar.entries();
+                Yaml yaml = new Yaml();
                 while (entries.hasMoreElements()) {
                     JarEntry entry = entries.nextElement();
                     if (entry.getName().endsWith(".class")) {
@@ -236,6 +239,11 @@ public class PluginServiceImpl implements PluginService {
                             System.err.println("Failed to load class: " + className);
                         }
                     }
+                    if ((entry.getName().contains("define")) && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
+                        try (InputStream ymlInputStream = jar.getInputStream(entry)) {
+                            yaml.loadAs(ymlInputStream, List.class);
+                        }
+                    }
                 }
                 if (pluginItems.isEmpty()) {
                     throw new CommonException("Illegal plug-ins, please refer to https://hertzbeat.apache.org/docs/help/plugin/");
@@ -247,6 +255,8 @@ public class PluginServiceImpl implements PluginService {
         } catch (MalformedURLException e) {
             log.error("Invalid JAR file URL: {}", jarFile.getAbsoluteFile(), e);
             throw new CommonException("Invalid JAR file URL: " + jarFile.getAbsolutePath());
+        } catch (YAMLException e) {
+            throw new CommonException("YAML the file format is incorrect");
         }
         return pluginItems;
     }
@@ -259,6 +269,7 @@ public class PluginServiceImpl implements PluginService {
 
     @Override
     @SneakyThrows
+    @Transactional
     public void savePlugin(PluginUpload pluginUpload) {
         String jarPath = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getAbsolutePath();
         Path extLibPath = Paths.get(new File(jarPath).getParent(), "plugin-lib");
@@ -376,7 +387,7 @@ public class PluginServiceImpl implements PluginService {
                 pluginClassLoaders.clear();
                 System.gc();
             }
-            PARAMS_Define_MAP.clear();
+            PARAMS_DEFINE_MAP.clear();
             List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
             for (PluginMetadata metadata : plugins) {
                 List<URL> urls = loadLibInPlugin(metadata.getJarFilePath(), metadata.getId());
@@ -431,7 +442,7 @@ public class PluginServiceImpl implements PluginService {
                 if ((entry.getName().contains("define")) && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
                     try (InputStream ymlInputStream = jarFile.getInputStream(entry)) {
                         List<ParamDefine> params = yaml.loadAs(ymlInputStream, List.class);
-                        PARAMS_Define_MAP.putIfAbsent(pluginMetadataId, params);
+                        PARAMS_DEFINE_MAP.put(pluginMetadataId, params);
                     }
                 }
             }
