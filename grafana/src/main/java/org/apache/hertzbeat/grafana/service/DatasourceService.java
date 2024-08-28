@@ -3,6 +3,7 @@ package org.apache.hertzbeat.grafana.service;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.*;
 
 import jakarta.annotation.PostConstruct;
+import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
 import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
@@ -19,8 +20,8 @@ import org.springframework.web.client.RestTemplate;
 public class DatasourceService {
 
     private String grafanaUrl;
-    private String grafanaUsername;
-    private String grafanaPassword;
+    private String username;
+    private String password;
     private String victoriaMetricsUrl;
 
     private final GrafanaConfiguration grafanaConfiguration;
@@ -41,8 +42,8 @@ public class DatasourceService {
     @PostConstruct
     public void init() {
         this.grafanaUrl = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
-        this.grafanaUsername = grafanaConfiguration.getUsername();
-        this.grafanaPassword = grafanaConfiguration.getPassword();
+        this.username = grafanaConfiguration.getUsername();
+        this.password = grafanaConfiguration.getPassword();
         this.victoriaMetricsUrl = warehouseProperties.url();
     }
 
@@ -52,11 +53,9 @@ public class DatasourceService {
      * @return ResponseEntity containing the response from Grafana
      */
     public ResponseEntity<String> createDatasource() {
-        String url = String.format(CREATE_DATASOURCE_API, grafanaUrl);
+        String url = String.format(CREATE_DATASOURCE_API,username, password, grafanaUrl);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(grafanaUsername, grafanaPassword);
+        HttpHeaders headers = createHeaders();
 
         String body = String.format(
                 "{\"name\":\"%s\",\"type\":\"%s\",\"access\":\"%s\",\"url\":\"%s\",\"basicAuth\":%s}",
@@ -83,10 +82,9 @@ public class DatasourceService {
      * @return ResponseEntity containing the response from Grafana
      */
     public ResponseEntity<String> deleteDatasource() {
-        String url = String.format(DELETE_DATASOURCE_API, grafanaUrl, DATASOURCE_NAME);
+        String url = String.format(DELETE_DATASOURCE_API, username, password, grafanaUrl, DATASOURCE_NAME);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBasicAuth(grafanaUsername, grafanaPassword);
+        HttpHeaders headers = createHeaders();
 
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
@@ -100,5 +98,16 @@ public class DatasourceService {
             log.error("Delete datasource error", ex);
             throw new RuntimeException("Delete datasource error", ex);
         }
+    }
+
+    private HttpHeaders createHeaders() {
+        String auth = username + ":" + password;
+        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
+        String authHeader = "Basic " + new String(encodedAuth);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", authHeader);
+        return headers;
     }
 }

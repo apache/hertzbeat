@@ -1,5 +1,7 @@
 package org.apache.hertzbeat.grafana.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
@@ -40,18 +42,22 @@ public class DashboardService {
      * @return ResponseEntity containing the response from Grafana
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<String> createDashboard(String dashboardJson, Long monitorId) {
+    public ResponseEntity<?> createDashboard(String dashboardJson, Long monitorId) {
         String token = serviceAccountService.getToken();
         String url = grafanaConfiguration.getUrl() + CREATE_DASHBOARD_API;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set(AUTHORIZATION, BEARER + token);
+        headers.setBearerAuth(token);
 
-        HttpEntity<String> entity = new HttpEntity<>(dashboardJson, headers);
+        Map<String, Object> body = new HashMap<>();
+        body.put("dashboard", JsonUtil.fromJson(dashboardJson, Object.class));
+        body.put("overwrite", true);
+
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
         try {
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(response.getBody(), GrafanaDashboard.class);
@@ -60,15 +66,19 @@ public class DashboardService {
                     grafanaDashboard.setUrl(grafanaConfiguration.getUrl() + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH);
                     grafanaDashboard.setMonitorId(monitorId);
                     dashboardDao.save(grafanaDashboard);
-                    log.info("Create dashboard success, response: {}", response.getBody());
+                    log.info("create dashboard success, token: {}", response.getBody());
                 }
+                return response;
+            } else {
+                log.error("create dashboard error: {}", response.getStatusCode());
+                throw new RuntimeException("create dashboard error");
             }
-            return response;
         } catch (Exception ex) {
-            log.error("Create dashboard error", ex);
-            throw new RuntimeException("Create dashboard error", ex);
+            log.error("create dashboard error", ex);
+            throw new RuntimeException("create dashboard error", ex);
         }
     }
+
 
     /**
      * Deletes a dashboard in Grafana by monitor ID.
@@ -84,23 +94,27 @@ public class DashboardService {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set(AUTHORIZATION, BEARER + token);
+        headers.setBearerAuth(token);
 
-        HttpEntity<String> entity = new HttpEntity<>(headers);
+        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
 
         try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
+            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 dashboardDao.deleteByMonitorId(monitorId);
-                log.info("Delete dashboard success");
+                log.info("delete dashboard success");
+                return response;
+            } else {
+                log.error("delete dashboard error: {}", response.getStatusCode());
+                throw new RuntimeException("delete dashboard error");
             }
-            return response;
         } catch (Exception ex) {
-            log.error("Delete dashboard error", ex);
-            throw new RuntimeException("Delete dashboard error", ex);
+            log.error("delete dashboard error", ex);
+            throw new RuntimeException("delete dashboard error", ex);
         }
     }
+
 
     /**
      * Retrieves a dashboard by monitor ID.

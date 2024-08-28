@@ -40,7 +40,7 @@ public class DashboardController {
     @PostMapping
     public ResponseEntity<Message<?>> createDashboard(@RequestParam String dashboardJson, @RequestParam Long monitorId) {
         try {
-            ResponseEntity<String> response = dashboardService.createDashboard(dashboardJson, monitorId);
+            ResponseEntity<?> response = dashboardService.createDashboard(dashboardJson, monitorId);
             if (response.getStatusCode().is2xxSuccessful()) {
                 return ResponseEntity.ok(Message.success("create dashboard success"));
             }
@@ -77,7 +77,7 @@ public class DashboardController {
      */
     @Operation(summary = "Delete dashboard by monitor id", description = "Delete dashboard by monitor id")
     @DeleteMapping
-    public ResponseEntity<Message<?>> deleteDashboardByMonitorId(@RequestParam Long monitorId) {
+    public ResponseEntity<Message<String>> deleteDashboardByMonitorId(@RequestParam Long monitorId) {
         try {
             ResponseEntity<String> response = dashboardService.deleteDashboard(monitorId);
             if (response.getStatusCode().is2xxSuccessful()) {

@@ -28,6 +28,7 @@ import static org.apache.hertzbeat.grafana.common.CommonConstants.GET_SERVICE_TO
 import static org.apache.hertzbeat.grafana.common.CommonConstants.HERTZBEAT_TOKEN;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.PostConstruct;
+import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -94,8 +95,7 @@ public class ServiceAccountService {
      */
     public ResponseEntity<String> createServiceAccount() {
         String endpoint = String.format(CREATE_SERVICE_ACCOUNT_API, username, password, url);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createHeaders();
         String body = String.format("{\"name\":\"%s\",\"role\":\"%s\",\"isDisabled\":false}", ACCOUNT_NAME, ACCOUNT_ROLE);
 
         HttpEntity<String> request = new HttpEntity<>(body, headers);
@@ -123,8 +123,7 @@ public class ServiceAccountService {
      */
     public ResponseEntity<String> deleteAccount(Long id) {
         String endpoint = String.format(DELETE_SERVICE_ACCOUNT_API, username, password, url, id);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createHeaders();
 
         HttpEntity<String> request = new HttpEntity<>(headers);
         try {
@@ -151,8 +150,7 @@ public class ServiceAccountService {
             throw new RuntimeException("Service account not found");
         }
         String endpoint = String.format(CREATE_SERVICE_TOKEN_API, username, password, url, hertzbeat.getId());
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createHeaders();
         String body = String.format("{\"name\":\"%s\"}", HERTZBEAT_TOKEN);
 
         HttpEntity<String> request = new HttpEntity<>(body, headers);
@@ -179,8 +177,7 @@ public class ServiceAccountService {
      */
     public ResponseEntity<String> getAccounts() {
         String endpoint = String.format(GET_SERVICE_ACCOUNTS_API, username, password, url);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createHeaders();
 
         HttpEntity<String> request = new HttpEntity<>(headers);
         try {
@@ -202,8 +199,7 @@ public class ServiceAccountService {
      */
     public ResponseEntity<String> getTokens() {
         String endpoint = String.format(GET_SERVICE_TOKENS_API, username, password, url, getAccountId());
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = createHeaders();
 
         HttpEntity<String> request = new HttpEntity<>(headers);
         try {
@@ -296,5 +292,16 @@ public class ServiceAccountService {
         }
         serviceAccountDao.truncate();
         serviceTokenDao.truncate();
+    }
+
+    private HttpHeaders createHeaders() {
+        String auth = username + ":" + password;
+        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
+        String authHeader = "Basic " + new String(encodedAuth);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", authHeader);
+        return headers;
     }
 }
