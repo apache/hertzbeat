@@ -225,7 +225,8 @@
           "label": "cache",
           "items": [
             "help/redis",
-            "help/memcached"
+            "help/memcached",
+            "help/valkey"
           ]
         },
         {
