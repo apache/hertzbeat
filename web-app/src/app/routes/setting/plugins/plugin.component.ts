@@ -334,6 +334,7 @@ export class SettingPluginsComponent implements OnInit {
   }
 
   getParamValue(pluginParams: any[], field: string) {
-    return pluginParams.filter((i: any) => i.field === field)[0].paramValue;
+    const pluginParam = (pluginParams || []).filter((i: any) => i.field === field);
+    return pluginParam.length > 0 ? pluginParam[0].paramValue : null;
   }
 }
