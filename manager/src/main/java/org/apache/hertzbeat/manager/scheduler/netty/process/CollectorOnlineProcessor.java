@@ -20,12 +20,12 @@ package org.apache.hertzbeat.manager.scheduler.netty.process;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.InetSocketAddress;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.CollectorInfo;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.remoting.netty.NettyRemotingProcessor;
-import org.springframework.util.StringUtils;
 
 /**
  * handle collector online message
@@ -43,7 +43,7 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
         String collector = message.getIdentity();
         log.info("the collector {} actively requests to go online.", collector);
         CollectorInfo collectorInfo = JsonUtil.fromJson(message.getMsg(), CollectorInfo.class);
-        if (collectorInfo != null && !StringUtils.hasText(collectorInfo.getIp())) {
+        if (collectorInfo != null && StringUtils.isBlank(collectorInfo.getIp())) {
             // fetch remote ip address
             InetSocketAddress socketAddress = (InetSocketAddress) ctx.channel().remoteAddress();
             String clientIP = socketAddress.getAddress().getHostAddress();
