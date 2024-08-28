@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
  * Store and collect real-time data - memory
  */
 @Component
-@ConditionalOnProperty(prefix = "warehouse.store.memory", name = "enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(prefix = "warehouse.real-time.memory", name = "enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class MemoryDataStorage extends AbstractRealTimeDataStorage {
 
@@ -70,10 +70,6 @@ public class MemoryDataStorage extends AbstractRealTimeDataStorage {
         Long monitorId = metricsData.getId();
         String metrics = metricsData.getMetrics();
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
-            return;
-        }
-        if (metricsData.getValuesList().isEmpty()) {
-            log.debug("[warehouse memory] memory flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         Map<String, CollectRep.MetricsData> metricsDataMap = monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));

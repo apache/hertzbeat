@@ -19,22 +19,26 @@ package org.apache.hertzbeat.alert;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.hertzbeat.common.config.BaseKafkaProperties;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 /**
  * alerter prop config
  */
-@Component
-@ConfigurationProperties(prefix = "alerter")
+
 @Getter
 @Setter
+@Component
+@ConfigurationProperties(prefix =
+        ConfigConstants.FunctionModuleConstants.ALERTER)
 public class AlerterProperties {
 
     /**
      * Alarm content console link
      */
-    private String consoleUrl = "https://console.tancloud.cn";
+    private String consoleUrl = "https://console.tancloud.io";
 
     /**
      * WeWork webhook url
@@ -92,25 +96,13 @@ public class AlerterProperties {
          */
         @Getter
         @Setter
-        public static class KafkaProperties {
+        public static class KafkaProperties extends BaseKafkaProperties {
+
             /**
              * Whether the kafka data entry is started
              */
             private boolean enabled = true;
-
-            /**
-             * kafka's connection server url
-             */
-            private String servers = "127.0.0.1:9092";
-            /**
-             * The name of the topic that receives the data
-             */
-            private String topic;
-            /**
-             * Consumer Group ID
-             */
-            private String groupId;
-
         }
     }
+
 }

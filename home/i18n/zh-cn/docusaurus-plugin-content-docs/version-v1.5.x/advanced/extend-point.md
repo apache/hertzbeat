@@ -1,12 +1,13 @@
 ---
 id: extend-point  
 title: 自定义监控  
-sidebar_label: 自定义监控    
+sidebar_label: 自定义监控
 ---
-> HertzBeat拥有自定义监控能力，您只需配置监控模版YML就能适配一款自定义的监控类型。  
-> 目前自定义监控支持[HTTP协议](extend-http)，[JDBC协议](extend-jdbc)，[SSH协议](extend-ssh)，[JMX协议](extend-jmx)，[SNMP协议](extend-snmp)，后续会支持更多通用协议。        
 
-### 自定义流程  
+> HertzBeat拥有自定义监控能力，您只需配置监控模版YML就能适配一款自定义的监控类型。  
+> 目前自定义监控支持[HTTP协议](extend-http)，[JDBC协议](extend-jdbc)，[SSH协议](extend-ssh)，[JMX协议](extend-jmx)，[SNMP协议](extend-snmp)，后续会支持更多通用协议。
+
+### 自定义流程
 
 **HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
@@ -14,13 +15,13 @@ sidebar_label: 自定义监控
 
 -------
 
-### 监控模版YML   
+### 监控模版YML
 
 **HertzBeat的设计是一个监控模版对应一个监控类型，所有监控类型都是由监控模版来定义的**。
 
-> 监控模版YML定义了 *监控类型的名称(国际化), 配置参数映射, 采集指标信息, 采集协议配置* 等。  
+> 监控模版YML定义了 *监控类型的名称(国际化), 配置参数映射, 采集指标信息, 采集协议配置* 等。
 
-下面使用样例详细介绍下这监控模版YML的配置用法。   
+下面使用样例详细介绍下这监控模版YML的配置用法。
 
 样例：自定义一个 `app` 名称为 `example2` 的自定义监控类型，其使用HTTP协议采集指标数据。
 
@@ -167,4 +168,3 @@ metrics:
       parseType: website
 
 ```
-

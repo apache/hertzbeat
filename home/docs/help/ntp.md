@@ -11,7 +11,7 @@ keywords: [ open source monitoring tool, open source NTP monitoring tool, monito
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -23,7 +23,7 @@ keywords: [ open source monitoring tool, open source NTP monitoring tool, monito
 
 #### Metrics Set：summary
 
-| Metric name  | Metric unit | Metric help description                                                                  |
+| Metric name  | Metric unit |                                 Metric help description                                  |
 |--------------|-------------|------------------------------------------------------------------------------------------|
 | responseTime | ms          | The time it takes for the NTP server to respond to a request).                           |
 | time         | ms          | The current time reported by the NTP server).                                            |
@@ -35,4 +35,3 @@ keywords: [ open source monitoring tool, open source NTP monitoring tool, monito
 | stratum      |             | The stratumevel of the NTP server, indicating its distance from a reference clock).      |
 | referenceId  |             | An identifier that indicates the reference clock or time source used by the NTP server). |
 | precision    |             | The precision of the NTP server's clock, indicating its accuracy).                       |
-

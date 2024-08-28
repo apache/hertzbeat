@@ -1,6 +1,7 @@
 # HertzBeat 1.6.0 Upgrade Guide
 
-**Note: This guide is applicable for upgrading from versions prior to 1.6.0 to version 1.6.0.**
+**Note: This guide is applicable for upgrading from 1.5.0 to 1.6.0 to version 1.6.0.**
+**If you are using an older version, it is recommended to reinstall using the export function, or upgrade to 1.5.0 and then follow this guide to 1.6.0.**
 
 ## Binary Installation Package Upgrade
 
@@ -20,9 +21,10 @@ Go to [https://github.com/apache/hertzbeat/tree/master/manager/src/main/resource
 
 Due to significant changes in `application.yml` and `sureness.yml`, it is recommended to directly use the new `yml` configuration files and then modify them based on your own needs.
 
-#### `application.yml` generally needs to modify the following parts:
+#### `application.yml` generally needs to modify the following parts
 
 Default is:
+
 ```yaml
   datasource:
     driver-class-name: org.h2.Driver
@@ -41,7 +43,9 @@ Default is:
         logging:
           level: SEVERE
 ```
+
 If you change to a MySQL database, here is an example:
+
 ```yaml
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -61,7 +65,7 @@ If you change to a MySQL database, here is an example:
           level: SEVERE
 ```
 
-#### `sureness.yml` modification is optional, usually when you need to change account passwords:
+#### `sureness.yml` modification is optional, usually when you need to change account passwords
 
 ```yaml
 # account info config
@@ -93,49 +97,49 @@ Due to the Apache Foundation's requirements for license compliance, HertzBeat's 
 
 - MySQL: [https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip](https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip)
 - Oracle (If you want to monitor Oracle, these two drivers are required):
-    - [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)
-    - [https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
+  - [https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar](https://download.oracle.com/otn-pub/otn_software/jdbc/234/ojdbc8.jar)
+  - [https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar](https://repo.mavenlibs.com/maven/com/oracle/database/nls/orai18n/21.5.0.0/orai18n-21.5.0.0.jar)
 
 Next, run the start-up script as before to experience the latest HertzBeat 1.6.0!
 
 ## Docker Upgrade - Mysql Database
 
 - Stop the HertzBeat container:
-  ```
+
+  ```shell
   docker stop hertzbeat
   ```
 
 - Upgrade the database script:
-    - Go to [https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration), choose the directory of your database and execute the corresponding `V160__update_column.sql` file in MySQL.
-
+  - Go to [https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration), choose the directory of your database and execute the corresponding `V160__update_column.sql` file in MySQL.
 - Upgrade the configuration files:
-    - As mentioned, due to significant changes in `application.yml` and `sureness.yml`, it is recommended to directly mount and use the new `yml` configuration files, and then modify them based on your own needs.
-
+  - As mentioned, due to significant changes in `application.yml` and `sureness.yml`, it is recommended to directly mount and use the new `yml` configuration files, and then modify them based on your own needs.
 - Add the corresponding database drivers:
-    - Due to the Apache Foundation's license compliance requirements, HertzBeat's installation package cannot include MySQL, Oracle, and other GPL-licensed dependencies. Users need to add them themselves by downloading the driver jars from the above links and placing them in the local `ext-lib` directory, then mounting `ext-lib` to the container's `/opt/hertzbeat/ext-lib` directory when starting.
+  - Due to the Apache Foundation's license compliance requirements, HertzBeat's installation package cannot include MySQL, Oracle, and other GPL-licensed dependencies. Users need to add them themselves by downloading the driver jars from the above links and placing them in the local `ext-lib` directory, then mounting `ext-lib` to the container's `/opt/hertzbeat/ext-lib` directory when starting.
 
 Next, run HertzBeat using Docker as before to experience the latest HertzBeat 1.6.0!
 
 ## Docker Installation Upgrade - H2 Built-in Database (Not recommended for production use)
 
 - Stop the HertzBeat container:
-  ```
+
+  ```shell
   docker stop hertzbeat
   ```
 
 - Edit the H2 database files:
-    - Assuming you have mounted the H2 database files in the `data` directory to the local system, or copied the `/opt/hertzbeat/data` directory from the old container manually.
-    - Download the H2 driver jar from [https://mvnrepository.com/artifact/com.h2database/h2/2.2.220](https://mvnrepository.com/artifact/com.h2database/h2/2.2.220).
-    - Start the database locally using the H2 driver jar:
-      ```
-      java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
-      ```
+  - Assuming you have mounted the H2 database files in the `data` directory to the local system, or copied the `/opt/hertzbeat/data` directory from the old container manually.
+  - Download the H2 driver jar from [https://mvnrepository.com/artifact/com.h2database/h2/2.2.220](https://mvnrepository.com/artifact/com.h2database/h2/2.2.220).
+  - Start the database locally using the H2 driver jar:
+
+    ```shell
+    java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
+    ```
 
 - Upgrade the configuration files:
-    - As mentioned, due to significant changes in `application.yml` and `sureness.yml`, it is recommended to directly mount and use the new `yml` configuration files, and then modify them based on your own needs.
-
+  - As mentioned, due to significant changes in `application.yml` and `sureness.yml`, it is recommended to directly mount and use the new `yml` configuration files, and then modify them based on your own needs.
 - Add the corresponding database drivers:
-    - As mentioned, due to the Apache Foundation's license compliance requirements, HertzBeat's installation package cannot include MySQL, Oracle, and other GPL-licensed dependencies. Users need to add them themselves by downloading the driver jars from the above links and placing them in the local `ext-lib` directory, then mounting `ext-lib` to the container's `/opt/hertzbeat/ext-lib` directory when starting.
+  - As mentioned, due to the Apache Foundation's license compliance requirements, HertzBeat's installation package cannot include MySQL, Oracle, and other GPL-licensed dependencies. Users need to add them themselves by downloading the driver jars from the above links and placing them in the local `ext-lib` directory, then mounting `ext-lib` to the container's `/opt/hertzbeat/ext-lib` directory when starting.
 
 Next, run the Docker to start HertzBeat as before to experience the latest HertzBeat 1.6.0!
 

@@ -11,21 +11,21 @@
 2. Install yarn if not existed `npm install -g yarn`
 3. Execute `yarn install` or `yarn install --registry=https://registry.npmmirror.com` in `web-app`  
 4. Install angular-cli : `yarn global add @angular/cli@15` or `yarn global add @angular/cli@15 --registry=https://registry.npmmirror.com`    
-5. Start After Backend Server Available : `ng serve --open`
+5. Start After Backend Server Available : `yarn start`
 
 
 ### Build HertzBeat Install Package    
 
 1. Execute command in web-app  
 
-```ng build --configuration production```
+    ```ng build --configuration production```
 
 2. Execute command in root  
 
-```mvn clean install```
+    ```mvn clean install```
 
-The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`     
+    The HertzBeat install package will at `manager/target/hertzbeat-{version}.tar.gz`     
 
 3. Execute command in collector  
 
-```mvn clean package -Pcluster```
+    ```mvn clean package -Pcluster```

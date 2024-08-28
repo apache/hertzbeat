@@ -17,24 +17,69 @@
 
 package org.apache.hertzbeat.warehouse.store;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import com.google.common.collect.Lists;
+import java.util.List;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.store.realtime.redis.RedisDataStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
 /**
  * Test case for {@link RedisDataStorage}
  */
 class RedisDataStorageTest {
+    @Mock
+    private RedisDataStorage redisDataStorage;
 
     @BeforeEach
     void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void getCurrentMetricsData() {
+    void testGetCurrentMetricsData() {
+        Long monitorId = 1L;
+        String metric = "testMetric";
+        CollectRep.MetricsData expectedMetricsData = CollectRep.MetricsData.newBuilder().setMetrics(metric).setId(monitorId).build();
+        Mockito.doReturn(expectedMetricsData).when(redisDataStorage).getCurrentMetricsData(monitorId, metric);
+
+        CollectRep.MetricsData actualMetricsData = redisDataStorage.getCurrentMetricsData(monitorId, metric);
+
+        assertNotNull(actualMetricsData);
+        assertEquals(expectedMetricsData, actualMetricsData);
+
+        verify(redisDataStorage, times(1)).getCurrentMetricsData(monitorId, metric);
     }
 
     @Test
-    void destroy() {
+    void testGetCurrentMetricsDataByMonitorId() {
+        Long monitorId = 1L;
+        String metric = "testMetric";
+        CollectRep.MetricsData expectedMetricsData = CollectRep.MetricsData.newBuilder().setMetrics(metric).setId(monitorId).build();
+        Mockito.doReturn(Lists.newArrayList(expectedMetricsData)).when(redisDataStorage).getCurrentMetricsData(monitorId);
+
+        List<CollectRep.MetricsData> actualMetricsData = redisDataStorage.getCurrentMetricsData(monitorId);
+
+        assertNotNull(actualMetricsData);
+        assertEquals(expectedMetricsData, actualMetricsData.get(0));
+
+        verify(redisDataStorage, times(1)).getCurrentMetricsData(monitorId);
+    }
+
+    @Test
+    void testSaveData() {
+        long monitorId = 1L;
+        String metric = "testMetric";
+        CollectRep.MetricsData expectedMetricsData = CollectRep.MetricsData.newBuilder().setMetrics(metric).setId(monitorId).build();
+        redisDataStorage.saveData(expectedMetricsData);
+
+        verify(redisDataStorage, times(1)).saveData(expectedMetricsData);
     }
 }

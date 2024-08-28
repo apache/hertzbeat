@@ -28,12 +28,11 @@ export class ParamDefine {
   placeholder!: string;
   range: string | undefined;
   limit: number | undefined;
-  //'[{"label":"GET请求","value":"GET"},{"label":"PUT请求","value":"PUT"}]'
   options!: any[];
-  // 当type为key-value时有效,表示别名描述
+  // key alias. This param is valid when the type is key-value
   keyAlias!: string;
   valueAlias!: string;
-  // 此参数是否隐藏 即默认不显示, 在高级设置区显示
+  // whether the param is hidden, default is false
   hide: boolean = false;
   // Map of dependent params
   depend: Map<string, List<any>> | undefined;

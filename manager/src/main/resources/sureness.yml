@@ -62,6 +62,10 @@ resourceRole:
   - /api/grafana/**===post===[admin,user]
   - /api/grafana/**===put===[admin,user]
   - /api/grafana/**===delete===[admin]
+  - /api/bulletin/**===get===[admin,user,guest]
+  - /api/bulletin/**===post===[admin,user]
+  - /api/bulletin/**===put===[admin,user]
+  - /api/bulletin/**===delete===[admin]
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method 

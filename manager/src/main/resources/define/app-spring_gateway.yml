@@ -109,15 +109,21 @@ params:
 metrics:
   # metrics - available
   - name: available
+    i18n:
+      zh-CN: 可用性
+      en-US: Availability
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
     # collect metrics content
     fields:
-      # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
+      # field-metric name, type-metric type(0-number,1-string), label-is label primary key, unit-metric unit
       - field: responseTime
         type: 0
         unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     # Specific collection configuration when protocol is http protocol
@@ -142,21 +148,42 @@ metrics:
       parseType: default
 
   - name: environment
+    i18n:
+      zh-CN: 环境
+      en-US: Environment
     priority: 1
     fields:
       # The metric information, including field name, type of the field (0-number, 1-string), whether it is an instance primary key, and the unit of the metric.
       - field: profile
         type: 1
+        i18n:
+          zh-CN: 配置文件
+          en-US: Profile
       - field: port
         type: 0
+        i18n:
+          zh-CN: 端口
+          en-US: Port
       - field: os
         type: 1
+        i18n:
+          zh-CN: 操作系统
+          en-US: Operating System
       - field: os_arch
         type: 1
+        i18n:
+          zh-CN: 操作系统架构
+          en-US: Operating System Architecture
       - field: jdk_vendor
         type: 1
+        i18n:
+          zh-CN: JDK 供应商
+          en-US: JDK Vendor
       - field: jvm_version
         type: 1
+        i18n:
+          zh-CN: JVM 版本
+          en-US: JVM Version
     # metric alias list, used to identify metrics in query results
     aliasFields:
       - $.activeProfiles[0]
@@ -199,11 +226,17 @@ metrics:
       parseScript: '$'
 
   - name: thread_state
+    i18n:
+      zh-CN: 线程状态
+      en-US: Thread State
     visible: false
     priority: 2
     fields:
       - field: state
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: State
     protocol: http
     http:
       host: ^_^host^_^
@@ -219,13 +252,22 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
   - name: threads
+    i18n:
+      zh-CN: 线程
+      en-US: Threads
     priority: 3
     fields:
       - field: state
         type: 1
-        instance: true
+        i18n:
+          zh-CN: 状态
+          en-US: State
+        label: true
       - field: size
         type: 0
+        i18n:
+          zh-CN: 数量
+          en-US: Size
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
     calculates:
@@ -246,11 +288,17 @@ metrics:
       parseScript: '$'
 
   - name: space_name
+    i18n:
+      zh-CN: 空间名称
+      en-US: Space Name
     visible: false
     priority: 4
     fields:
       - field: id
         type: 1
+        i18n:
+          zh-CN: 主键
+          en-US: ID
     protocol: http
     http:
       host: ^_^host^_^
@@ -266,13 +314,22 @@ metrics:
       parseScript: '$.availableTags[?(@.tag == "id")].values[*]'
 
   - name: memory_used
+    i18n:
+      zh-CN: 内存使用
+      en-US: Memory Used
     priority: 5
     fields:
       - field: space
         type: 1
-        instance: true
+        i18n:
+          zh-CN: 空间
+          en-US: Space
+        label: true
       - field: mem_used
         type: 0
+        i18n:
+          zh-CN: 内存使用
+          en-US: Memory Used
         unit: MB
     aliasFields:
       - $.measurements[?(@.statistic == "VALUE")].value
@@ -296,10 +353,16 @@ metrics:
       parseScript: '$'
 
   - name: health
+    i18n:
+      zh-CN: 健康
+      en-US: Health
     priority: 6
     fields:
       - field: status
         type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
     protocol: http
     http:
       host: ^_^host^_^
@@ -314,11 +377,17 @@ metrics:
       parseType: default
 
   - name: route_id
+    i18n:
+      zh-CN: 路由 ID
+      en-US: Route ID
     visible: false
     priority: 7
     fields:
       - field: name
         type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Name
     protocol: http
     http:
       host: ^_^host^_^
@@ -334,17 +403,32 @@ metrics:
       parseScript: '$[*].route_id'
 
   - name: route_info
+    i18n:
+      zh-CN: 路由信息
+      en-US: Route Info
     priority: 8
     fields:
       - field: route_id
         type: 1
-        instance: true
+        i18n:
+          zh-CN: 路由 ID
+          en-US: Route ID
+        label: true
       - field: predicate
         type: 1
+        i18n:
+          zh-CN: 断言
+          en-US: Predicate
       - field: uri
         type: 1
+        i18n:
+          zh-CN: URI
+          en-US: URI
       - field: order
         type: 0
+        i18n:
+          zh-CN: 顺序
+          en-US: Order
     aliasFields:
       - $.predicate
       - $.uri

@@ -77,6 +77,9 @@ params:
 metrics:
   # metrics - server_info
   - name: server_info
+    i18n:
+      zh-CN: 服务器信息
+      en-US: Server Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -85,10 +88,19 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: Version
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
       - field: StartTimeMs
         type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: Start Time
       - field: CommitId
         type: 1
+        i18n:
+          zh-CN: CommitId
+          en-US: CommitId
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: jmx
     # the config content when protocol is jmx
@@ -98,7 +110,7 @@ metrics:
       username: ^_^username^_^
       password: ^_^password^_^
       # jmx mbean object name
-      objectName: kafka.server:type=app-info,id=0
+      objectName: kafka.server:type=app-info,id=*
       # jmx url
       url: ^_^url^_^
 
@@ -193,10 +205,16 @@ metrics:
       url: ^_^url^_^
 
   - name: active_controller_count
+    i18n:
+      zh-CN: 活跃控制器数量
+      en-US: Active Controller Count
     priority: 1
     fields:
       - field: Value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -208,10 +226,16 @@ metrics:
       url: ^_^url^_^
 
   - name: broker_partition_count
+    i18n:
+      zh-CN: Broker分区数量
+      en-US: Broker Partition Count
     priority: 1
     fields:
       - field: Value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -223,10 +247,16 @@ metrics:
       url: ^_^url^_^
 
   - name: broker_leader_count
+    i18n:
+      zh-CN: Broker领导者数量
+      en-US: Broker Leader Count
     priority: 1
     fields:
       - field: Value
         type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -238,22 +268,46 @@ metrics:
       url: ^_^url^_^
 
   - name: broker_handler_avg_percent
+    i18n:
+      zh-CN: Broker处理器平均百分比
+      en-US: Broker Handler Avg Percent
     priority: 2
     fields:
       - field: EventType
         type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
       - field: RateUnit
         type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
       - field: Count
         type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
       - field: MeanRate
         type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
       - field: OneMinuteRate
         type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
       - field: FiveMinuteRate
         type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
       - field: FifteenMinuteRate
         type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -265,22 +319,46 @@ metrics:
       url: ^_^url^_^
 
   - name: topic_bytes_in_persec
+    i18n:
+      zh-CN: 每秒主题流入字节
+      en-US: Topic Bytes In PerSec
     priority: 2
     fields:
       - field: EventType
         type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
       - field: RateUnit
         type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
       - field: MeanRate
         type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
       - field: OneMinuteRate
         type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
       - field: FiveMinuteRate
         type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
       - field: FifteenMinuteRate
         type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
       - field: Count
         type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -292,22 +370,46 @@ metrics:
       url: ^_^url^_^
 
   - name: topic_bytes_out_persec
+    i18n:
+      zh-CN: 每秒主题流出字节
+      en-US: Topic Bytes Out PerSec
     priority: 2
     fields:
       - field: EventType
         type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
       - field: RateUnit
         type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
       - field: MeanRate
         type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
       - field: OneMinuteRate
         type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
       - field: FiveMinuteRate
         type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
       - field: FifteenMinuteRate
         type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
       - field: Count
         type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -319,22 +421,46 @@ metrics:
       url: ^_^url^_^
 
   - name: produce_message_conversions_persec
+    i18n:
+      zh-CN: 每秒生产消息转换
+      en-US: Produce Message Conversions PerSec
     priority: 2
     fields:
       - field: EventType
         type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
       - field: RateUnit
         type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
       - field: MeanRate
         type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
       - field: OneMinuteRate
         type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
       - field: FiveMinuteRate
         type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
       - field: FifteenMinuteRate
         type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
       - field: Count
         type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
     protocol: jmx
     jmx:
       host: ^_^host^_^
@@ -346,22 +472,46 @@ metrics:
       url: ^_^url^_^
 
   - name: produce_total_requests_persec
+    i18n:
+      zh-CN: 每秒生产总请求数
+      en-US: Produce Total Requests PerSec
     priority: 2
     fields:
       - field: EventType
         type: 1
+        i18n:
+          zh-CN: 事件类型
+          en-US: Event Type
       - field: RateUnit
         type: 1
+        i18n:
+          zh-CN: 速率单位
+          en-US: Rate Unit
       - field: MeanRate
         type: 0
+        i18n:
+          zh-CN: 平均速率
+          en-US: Mean Rate
       - field: OneMinuteRate
         type: 0
+        i18n:
+          zh-CN: 一分钟速率
+          en-US: One Minute Rate
       - field: FiveMinuteRate
         type: 0
+        i18n:
+          zh-CN: 五分钟速率
+          en-US: Five Minute Rate
       - field: FifteenMinuteRate
         type: 0
+        i18n:
+          zh-CN: 十五分钟速率
+          en-US: Fifteen Minute Rate
       - field: Count
         type: 0
+        i18n:
+          zh-CN: 计数
+          en-US: Count
     protocol: jmx
     jmx:
       host: ^_^host^_^

@@ -17,8 +17,12 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.persistence.criteria.Predicate;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -33,11 +37,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -77,17 +81,28 @@ public class PluginServiceImpl implements PluginService {
     private static final Map<String, Boolean> PLUGIN_ENABLE_STATUS = new ConcurrentHashMap<>();
 
 
-    private URLClassLoader pluginClassLoader;
+    private final List<URLClassLoader> pluginClassLoaders = new ArrayList<>();
 
     @Override
     public void deletePlugins(Set<Long> ids) {
         List<PluginMetadata> plugins = metadataDao.findAllById(ids);
+        // disable the plugins that need to be removed
+        for (PluginMetadata plugin : plugins) {
+            plugin.setEnableStatus(false);
+            updateStatus(plugin);
+        }
+        loadJarToClassLoader();
         for (PluginMetadata plugin : plugins) {
             try {
                 // delete jar file
                 File jarFile = new File(plugin.getJarFilePath());
                 if (jarFile.exists()) {
                     FileUtils.delete(jarFile);
+                }
+                // removing jar files that are dependencies for the plugin
+                File otherLibDir = new File(getOtherLibDir(plugin.getJarFilePath()));
+                if (otherLibDir.exists()) {
+                    FileUtils.deleteDirectory(otherLibDir);
                 }
                 // delete metadata
                 metadataDao.deleteById(plugin.getId());
@@ -99,6 +114,16 @@ public class PluginServiceImpl implements PluginService {
         syncPluginStatus();
         // reload classloader
         loadJarToClassLoader();
+    }
+
+    /**
+     * get the directory where the JAR files dependent on the plugin are saved
+     *
+     * @param pluginJarPath jar file path
+     * @return lib dir
+     */
+    private String getOtherLibDir(String pluginJarPath) {
+        return pluginJarPath.substring(0, pluginJarPath.lastIndexOf("."));
     }
 
     @Override
@@ -114,11 +139,9 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
-
     static {
         PLUGIN_TYPE_MAPPING.put(Plugin.class, PluginType.POST_ALERT);
     }
-
 
     /**
      * verify the type of the jar package
@@ -169,9 +192,6 @@ public class PluginServiceImpl implements PluginService {
         if (metadataDao.countPluginMetadataByName(metadata.getName()) != 0) {
             throw new CommonException("A plugin named " + metadata.getName() + " already exists");
         }
-        if (itemDao.countPluginItemByClassIdentifierIn((metadata.getItems().stream().map(PluginItem::getClassIdentifier).collect(Collectors.toList()))) != 0) {
-            throw new CommonException("Plugin already exists");
-        }
     }
 
     @Override
@@ -185,19 +205,27 @@ public class PluginServiceImpl implements PluginService {
         if (fileName == null) {
             throw new CommonException("Failed to upload plugin");
         }
+        fileName = UUID.randomUUID().toString().replace("-", "") + "_" + fileName;
         File destFile = new File(extLibDir, fileName);
         FileUtils.createParentDirectories(destFile);
         pluginUpload.getJarFile().transferTo(destFile);
-        List<PluginItem> pluginItems = validateJarFile(destFile);
-
+        List<PluginItem> pluginItems;
+        PluginMetadata pluginMetadata;
+        try {
+            pluginItems = validateJarFile(destFile);
+            pluginMetadata = PluginMetadata.builder()
+                .name(pluginUpload.getName())
+                .enableStatus(true)
+                .items(pluginItems).jarFilePath(destFile.getAbsolutePath())
+                .gmtCreate(LocalDateTime.now())
+                .build();
+            validateMetadata(pluginMetadata);
+        } catch (Exception e) {
+            // verification failed, delete file
+            FileUtils.delete(destFile);
+            throw e;
+        }
         // save plugin metadata
-        PluginMetadata pluginMetadata = PluginMetadata.builder()
-            .name(pluginUpload.getName())
-            .enableStatus(true)
-            .items(pluginItems).jarFilePath(destFile.getAbsolutePath())
-            .gmtCreate(LocalDateTime.now())
-            .build();
-        validateMetadata(pluginMetadata);
         metadataDao.save(pluginMetadata);
         itemDao.saveAll(pluginItems);
         // load jar to classloader
@@ -212,7 +240,24 @@ public class PluginServiceImpl implements PluginService {
     }
 
     @Override
-    public Page<PluginMetadata> getPlugins(Specification<PluginMetadata> specification, PageRequest pageRequest) {
+    public Page<PluginMetadata> getPlugins(String search, int pageIndex, int pageSize) {
+        // Get tag information
+        Specification<PluginMetadata> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (search != null && !search.isEmpty()) {
+                Predicate predicateApp = criteriaBuilder.like(root.get("name"), "%" + search + "%");
+                andList.add(predicateApp);
+            }
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+
+            if (andPredicates.length == 0) {
+                return query.where().getRestriction();
+            } else {
+                return andPredicate;
+            }
+        };
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
         return metadataDao.findAll(specification, pageRequest);
     }
 
@@ -238,16 +283,19 @@ public class PluginServiceImpl implements PluginService {
     @PostConstruct
     private void loadJarToClassLoader() {
         try {
-            if (pluginClassLoader != null) {
-                pluginClassLoader.close();
+            for (URLClassLoader pluginClassLoader : pluginClassLoaders) {
+                if (pluginClassLoader != null) {
+                    pluginClassLoader.close();
+                }
             }
+            pluginClassLoaders.clear();
+            System.gc();
             List<PluginMetadata> plugins = metadataDao.findPluginMetadataByEnableStatusTrue();
-            List<URL> urls = new ArrayList<>();
             for (PluginMetadata metadata : plugins) {
-                URL url = new File(metadata.getJarFilePath()).toURI().toURL();
-                urls.add(url);
+                List<URL> urls = loadLibInPlugin(metadata.getJarFilePath());
+                urls.add(new File(metadata.getJarFilePath()).toURI().toURL());
+                pluginClassLoaders.add(new URLClassLoader(urls.toArray(new URL[0]), Plugin.class.getClassLoader()));
             }
-            pluginClassLoader = new URLClassLoader(urls.toArray(new URL[0]));
         } catch (MalformedURLException e) {
             log.error("Failed to load plugin:{}", e.getMessage());
             throw new CommonException("Failed to load plugin:" + e.getMessage());
@@ -256,12 +304,50 @@ public class PluginServiceImpl implements PluginService {
         }
     }
 
+    /**
+     * loading other JAR files that are dependencies for the plugin
+     *
+     * @param pluginJarPath jar file path
+     * @return urls
+     */
+    @SneakyThrows
+    private List<URL> loadLibInPlugin(String pluginJarPath) {
+        File libDir = new File(getOtherLibDir(pluginJarPath));
+        FileUtils.forceMkdir(libDir);
+        List<URL> libUrls = new ArrayList<>();
+        try (JarFile jarFile = new JarFile(pluginJarPath)) {
+            Enumeration<JarEntry> entries = jarFile.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                File file = new File(libDir, entry.getName());
+                if (!entry.isDirectory() && entry.getName().endsWith(".jar")) {
+                    if (!file.getParentFile().exists()) {
+                        FileUtils.createParentDirectories(file);
+                    }
+                    try (InputStream in = jarFile.getInputStream(entry);
+                        OutputStream out = new FileOutputStream(file)) {
+                        byte[] buffer = new byte[4096];
+                        int len;
+                        while ((len = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, len);
+                        }
+                        libUrls.add(file.toURI().toURL());
+                        out.flush();
+                    }
+                }
+            }
+        }
+        return libUrls;
+    }
+
     @Override
     public <T> void pluginExecute(Class<T> clazz, Consumer<T> execute) {
-        ServiceLoader<T> load = ServiceLoader.load(clazz, pluginClassLoader);
-        for (T t : load) {
-            if (pluginIsEnable(t.getClass())) {
-                execute.accept(t);
+        for (URLClassLoader pluginClassLoader : pluginClassLoaders) {
+            ServiceLoader<T> load = ServiceLoader.load(clazz, pluginClassLoader);
+            for (T t : load) {
+                if (pluginIsEnable(t.getClass())) {
+                    execute.accept(t);
+                }
             }
         }
     }

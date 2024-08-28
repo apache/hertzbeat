@@ -328,55 +328,63 @@
   <div nz-col [nzXs]="{ span: 24 }" [nzSm]="{ span: 24 }" [nzMd]="{ span: 6 }" style="height: 100%">
     <nz-spin [nzSpinning]="collectorsLoading">
       <div style="overflow-y: auto; height: inherit">
-        <nz-card *ngFor="let item of collectors; let i = index" class="rounded-lg" nzBordered="false" [nzTitle]="collectorCardTitle">
-          <nz-card-tab>
-            <nz-tabset nzSize="small">
-              <nz-tab [nzTitle]="'collector.status' | i18n">
-                <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                  <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
-                    {{
-                      item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n)
-                    }}
-                  </span>
-                </div>
-              </nz-tab>
-              <nz-tab [nzTitle]="'collector.task' | i18n">
-                <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                  <span style="font-size: xxx-large; font-weight: bolder; color: white">
-                    {{ item.pinMonitorNum + item.dispatchMonitorNum }}
-                  </span>
-                  <br />
-                  <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
-                  <nz-tag style="margin-bottom: 4%; font-weight: bolder"
-                    >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
-                  >
-                </div>
-              </nz-tab>
-              <nz-tab [nzTitle]="'collector.start-time' | i18n">
-                <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                  <span style="font-size: x-large; font-weight: bolder; color: white">{{
-                    (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
-                  }}</span>
-                </div>
-              </nz-tab>
-              <nz-tab [nzTitle]="'collector.ip' | i18n">
-                <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                  <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.ip }}</span>
-                </div>
-              </nz-tab>
-              <nz-tab [nzTitle]="'collector.node' | i18n">
-                <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
-                  <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.name }}</span>
-                </div>
-              </nz-tab>
-            </nz-tabset>
-          </nz-card-tab>
+        <nz-card
+          *ngFor="let item of collectors; let i = index"
+          class="rounded-lg collectors"
+          nzBordered="false"
+          [nzTitle]="collectorCardTitle"
+        >
           <ng-template #collectorCardTitle>
             <span style="font-size: medium; font-weight: bold" nz-tooltip [nzTooltipTitle]="item.collector.name">
               <span nz-icon nzType="bug" nzTheme="outline" style="margin-right: 4px"></span>
               <span>{{ 'collector' | i18n }} : {{ item.collector.name }}</span>
             </span>
           </ng-template>
+          <nz-card-tab>
+            <nz-tabset nzSize="small" [(nzSelectedIndex)]="collectorsTabSelectedIndex">
+              <nz-tab [nzTitle]="'collector.status' | i18n" />
+              <nz-tab [nzTitle]="'collector.task' | i18n" />
+              <nz-tab [nzTitle]="'collector.start-time' | i18n" />
+              <nz-tab [nzTitle]="'collector.ip' | i18n" />
+              <nz-tab [nzTitle]="'collector.node' | i18n" />
+            </nz-tabset>
+          </nz-card-tab>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 0">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span [style]="'font-size: x-large; font-weight: bolder;' + (item.collector.status == 0 ? 'color: green' : 'color: red')">
+                {{ item.collector.status == 0 ? ('monitor.collector.status.online' | i18n) : ('monitor.collector.status.offline' | i18n) }}
+              </span>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 1">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span style="font-size: xxx-large; font-weight: bolder; color: white">
+                {{ item.pinMonitorNum + item.dispatchMonitorNum }}
+              </span>
+              <br />
+              <nz-tag style="margin-bottom: 4%; font-weight: bolder">{{ 'collector.pinned' | i18n }}: {{ item.pinMonitorNum }}</nz-tag>
+              <nz-tag style="margin-bottom: 4%; font-weight: bolder"
+                >{{ 'collector.dispatched' | i18n }}: {{ item.dispatchMonitorNum }}</nz-tag
+              >
+            </div>
+          </ng-container>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 2">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span style="font-size: x-large; font-weight: bolder; color: white">{{
+                (item.collector.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss')?.trim()
+              }}</span>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 3">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.ip }}</span>
+            </div>
+          </ng-container>
+          <ng-container *ngIf="collectorsTabSelectedIndex === 4">
+            <div class="rounded-lg" style="text-align: center; width: 100%; background-color: #8fccca; padding: 2%">
+              <span style="font-size: x-large; font-weight: bolder; color: white">{{ item.collector.name }}</span>
+            </div>
+          </ng-container>
         </nz-card>
       </div>
     </nz-spin>

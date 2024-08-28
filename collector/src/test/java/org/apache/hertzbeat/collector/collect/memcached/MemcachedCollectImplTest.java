@@ -69,26 +69,20 @@ public class MemcachedCollectImplTest {
 
     @Test
     void testPreCheck() {
-        assertDoesNotThrow(() -> {
-            memcachedCollect.preCheck(metrics);
-        });
-        assertThrows(IllegalArgumentException.class, () -> {
-            memcachedCollect.preCheck(null);
-        });
+        assertDoesNotThrow(() -> memcachedCollect.preCheck(metrics));
+        assertThrows(IllegalArgumentException.class, () -> memcachedCollect.preCheck(null));
         metrics.setIcmp(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            memcachedCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> memcachedCollect.preCheck(null));
     }
 
     @Test
     void testCollectCmdResponse() {
         String httpResponse =
                 """
-                STAT pid 1
-                STAT uptime 2
-                END
-                """;
+                        STAT pid 1
+                        STAT uptime 2
+                        END
+                        """;
         OutputStream outputStreamMock = Mockito.mock(OutputStream.class);
         byte[] responseBytes = httpResponse.getBytes(StandardCharsets.UTF_8);
         InputStream inputStream = new ByteArrayInputStream(responseBytes);

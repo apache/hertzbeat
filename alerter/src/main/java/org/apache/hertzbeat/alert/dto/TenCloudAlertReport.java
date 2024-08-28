@@ -174,7 +174,7 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
     @Override
     public String getContent() {
         StringBuilder contentBuilder = new StringBuilder();
-        // 判断类型
+        // Check Type.
         if (EVENT.equals(getAlarmType())) {
             contentBuilder
                     .append("[")
@@ -225,5 +225,3 @@ public class TenCloudAlertReport extends CloudAlertReportAbstract implements Ser
     }
 
 }
-
-

@@ -1,13 +1,13 @@
 ---
 id: account-modify  
 title: Modify Account Username Password And Secret        
-sidebar_label: Update Account Secret        
+sidebar_label: Update Account Secret
 ---
 
 ## Update Account
 
-Apache HertzBeat (incubating) default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat     
-If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.   
+Apache HertzBeat (incubating) default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat
+If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.
 Modify the following **part parameters** in sureness.yml：**[Note⚠️Other default sureness configuration parameters should be retained]**
 
 ```yaml
@@ -141,12 +141,11 @@ account:
     role: [user]
 ```
 
-## Update Security Secret  
+## Update Security Secret
 
-> This secret is the key for account security encryption management and needs to be updated to your custom key string of the same length. 
+> This secret is the key for account security encryption management and needs to be updated to your custom key string of the same length.
 
-
-Update the `application.yml` file in the `config` directory, modify the `sureness.jwt.secret` parameter to your custom key string of the same length.  
+Update the `application.yml` file in the `config` directory, modify the `sureness.jwt.secret` parameter to your custom key string of the same length.
 
 ```yaml
 sureness:
@@ -157,4 +156,4 @@ sureness:
              dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp'
 ```
 
-**Restart HertzBeat, access http://ip:1157/ to explore**  
+**Restart HertzBeat, access <http://ip:1157/> to explore**

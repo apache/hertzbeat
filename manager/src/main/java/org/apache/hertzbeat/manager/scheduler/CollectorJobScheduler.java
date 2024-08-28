@@ -22,13 +22,15 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -53,7 +55,6 @@ import org.apache.hertzbeat.manager.service.AppService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 /**
  * collector service
@@ -92,14 +93,12 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
 
     @Override
     public void collectorGoOnline(String identity, CollectorInfo collectorInfo) {
-        if (identity == null) {
+        if (StringUtils.isBlank(identity)) {
             log.error("identity can not be null if collector not existed");
             return;
         }
-        Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
-        Collector collector;
-        if (collectorOptional.isPresent()) {
-            collector = collectorOptional.get();
+        Collector collector = collectorDao.findCollectorByName(identity).orElse(null);
+        if (Objects.nonNull(collector)) {
             if (collector.getStatus() == CommonConstants.COLLECTOR_STATUS_ONLINE) {
                 return;
             }
@@ -129,13 +128,12 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         reBalanceCollectorAssignJobs();
         // Read database The fixed collection tasks at this collector are delivered
         List<CollectorMonitorBind> binds = collectorMonitorBindDao.findCollectorMonitorBindsByCollector(identity);
-        for (CollectorMonitorBind bind : binds) {
-            Optional<Monitor> monitorOptional = monitorDao.findById(bind.getMonitorId());
-            if (monitorOptional.isEmpty()) {
-                continue;
-            }
-            Monitor monitor = monitorOptional.get();
-            if (monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
+        if (CollectionUtils.isEmpty(binds)){
+            return;
+        }
+        List<Monitor> monitors = monitorDao.findMonitorsByIdIn(binds.stream().map(CollectorMonitorBind::getMonitorId).collect(Collectors.toSet()));
+        for (Monitor monitor : monitors) {
+            if (Objects.isNull(monitor) || monitor.getStatus() == CommonConstants.MONITOR_PAUSED_CODE) {
                 continue;
             }
             try {
@@ -150,15 +148,20 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());
                 List<Configmap> configmaps = params.stream()
-                        .map(param -> new Configmap(param.getField(), param.getParamValue(),
-                                param.getType())).collect(Collectors.toList());
+                        .map(param -> Configmap.builder()
+                                        .key(param.getField())
+                                        .value(param.getParamValue())
+                                        .type(param.getType()).build()).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                        .filter(item -> StringUtils.isNotBlank(item.getDefaultValue()))
                         .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
-                        Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), (byte) 1);
-                        configmaps.add(configmap);
+                        configmaps.add(Configmap.builder()
+                                .key(defaultVar.getField())
+                                .value(defaultVar.getDefaultValue())
+                                .type((byte) 1)
+                                .build());
                     }
                 });
                 appDefine.setConfigmap(configmaps);
@@ -173,12 +176,11 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
 
     @Override
     public void collectorGoOffline(String identity) {
-        Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
-        if (collectorOptional.isEmpty()) {
+        Collector collector = collectorDao.findCollectorByName(identity).orElse(null);
+        if (Objects.isNull(collector)) {
             log.info("the collector : {} not found.", identity);
             return;
         }
-        Collector collector = collectorOptional.get();
         collector.setStatus(CommonConstants.COLLECTOR_STATUS_OFFLINE);
         collectorDao.save(collector);
         consistentHash.removeNode(identity);
@@ -191,14 +193,14 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         consistentHash.getAllNodes().entrySet().parallelStream().forEach(entry -> {
             String collectorName = entry.getKey();
             AssignJobs assignJobs = entry.getValue().getAssignJobs();
-            if (collectorName == null || assignJobs == null) {
+            if (StringUtils.isBlank(collectorName) || Objects.isNull(assignJobs)) {
                 return;
             }
-            if (assignJobs.getAddingJobs() != null && !assignJobs.getAddingJobs().isEmpty()) {
+            if (CollectionUtils.isNotEmpty(assignJobs.getAddingJobs())) {
                 Set<Long> addedJobIds = new HashSet<>(8);
                 for (Long addingJobId : assignJobs.getAddingJobs()) {
                     Job job = jobContentCache.get(addingJobId);
-                    if (job == null) {
+                    if (Objects.isNull(job)) {
                         log.error("assigning job {} content is null.", addingJobId);
                         continue;
                     }
@@ -217,7 +219,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 assignJobs.addAssignJobs(addedJobIds);
                 assignJobs.removeAddingJobs(addedJobIds);
             }
-            if (assignJobs.getRemovingJobs() != null && !assignJobs.getRemovingJobs().isEmpty()) {
+            if (CollectionUtils.isNotEmpty(assignJobs.getRemovingJobs())) {
                 if (CommonConstants.MAIN_COLLECTOR_NODE.equals(collectorName)) {
                     assignJobs.getRemovingJobs().forEach(jobId -> collectJobService.cancelAsyncCollectJob(jobId));
                 } else {
@@ -251,11 +253,10 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
 
     @Override
     public boolean onlineCollector(String identity) {
-        Optional<Collector> collectorOptional = collectorDao.findCollectorByName(identity);
-        if (collectorOptional.isEmpty()) {
+        Collector collector = collectorDao.findCollectorByName(identity).orElse(null);
+        if (Objects.isNull(collector)) {
             return false;
         }
-        Collector collector = collectorOptional.get();
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setType(ClusterMsg.MessageType.GO_ONLINE)
                 .setDirection(ClusterMsg.Direction.REQUEST)
@@ -281,7 +282,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         // todo dispatchKey ip+port or id
         String dispatchKey = String.valueOf(job.getMonitorId());
         ConsistentHash.Node node = consistentHash.preDispatchJob(dispatchKey);
-        if (node == null) {
+        if (Objects.isNull(node)) {
             log.error("there is no collector online to assign job.");
             CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
                     .setCode(CollectRep.Code.FAIL)
@@ -326,7 +327,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
     @Override
     public List<CollectRep.MetricsData> collectSyncJobData(Job job, String collector) {
         ConsistentHash.Node node = consistentHash.getNode(collector);
-        if (node == null) {
+        if (Objects.isNull(node)) {
             log.error("there is no collector online to assign job.");
             CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
                     .setCode(CollectRep.Code.FAIL)
@@ -371,7 +372,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
         job.setId(jobId);
         jobContentCache.put(jobId, job);
         ConsistentHash.Node node;
-        if (collector == null) {
+        if (StringUtils.isBlank(collector)) {
             // todo dispatchKey ip+port or id
             String dispatchKey = String.valueOf(job.getMonitorId());
             node = consistentHash.dispatchJob(dispatchKey, jobId);
@@ -447,13 +448,13 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
 
     @Override
     public void collectSyncJobResponse(List<CollectRep.MetricsData> metricsDataList) {
-        if (metricsDataList.isEmpty()) {
+        if (CollectionUtils.isEmpty(metricsDataList)) {
             return;
         }
         CollectRep.MetricsData metricsData = metricsDataList.get(0);
         long monitorId = metricsData.getId();
         CollectResponseEventListener eventListener = eventListeners.remove(monitorId);
-        if (eventListener != null) {
+        if (Objects.nonNull(eventListener)) {
             eventListener.response(metricsDataList);
         }
     }

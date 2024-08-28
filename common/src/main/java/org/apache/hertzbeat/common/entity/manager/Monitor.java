@@ -141,14 +141,14 @@ public class Monitor {
     /**
      * Record create time
      */
-    @Schema(title = "Record create time", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "Record create time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
     @CreatedDate
     private LocalDateTime gmtCreate;
 
     /**
      * Record the latest modification time (timestamp in milliseconds)
      */
-    @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "Record modify time", example = "2024-07-02T20:09:34.903217", accessMode = READ_ONLY)
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
 

@@ -17,11 +17,18 @@
 
 package org.apache.hertzbeat.alert.config;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Alert auto configuration.
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.alert")
+
+@AutoConfiguration
+@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
+		+ SignConstants.DOT
+		+ ConfigConstants.FunctionModuleConstants.ALERT)
 public class AlerterAutoConfiguration {
 }

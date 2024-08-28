@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool,  Websocket监控 ]
 
 ### Configuration parameter
 
-| Parameter name            | Parameter help description                                                                                               |
+|      Parameter name       |                                                Parameter help description                                                |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Host of WebSocket service | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://).                              |
 | Monitoring name           | Identify the name of this monitoring. The name needs to be unique.                                                       |
@@ -23,7 +23,7 @@ keywords: [ open source monitoring tool,  Websocket监控 ]
 
 #### Metric set：Summary
 
-| Metric name   | Metric unit | Metric help description |
+|  Metric name  | Metric unit | Metric help description |
 |---------------|-------------|-------------------------|
 | responseTime  | ms          | Response time           |
 | httpVersion   | none        | HTTP version            |

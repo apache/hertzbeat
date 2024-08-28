@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -37,11 +38,12 @@ import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.SshConnect;
+import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshBlacklist;
 import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshClient;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.util.PrivateKeyUtils;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
@@ -84,6 +86,7 @@ public class SshCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+
         long startTime = System.currentTimeMillis();
         SshProtocol sshProtocol = metrics.getSsh();
         boolean reuseConnection = Boolean.parseBoolean(sshProtocol.getReuseConnection());
@@ -92,6 +95,12 @@ public class SshCollectImpl extends AbstractCollect {
         ClientSession clientSession = null;
         try {
             clientSession = getConnectSession(sshProtocol, timeout, reuseConnection);
+            if (CommonSshBlacklist.isCommandBlacklisted(sshProtocol.getScript())) {
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("The command is blacklisted: " + sshProtocol.getScript());
+                log.warn("The command is blacklisted: {}", sshProtocol.getScript());
+                return;
+            }
             channel = clientSession.createExecChannel(sshProtocol.getScript());
             ByteArrayOutputStream response = new ByteArrayOutputStream();
             channel.setOut(response);
@@ -101,6 +110,10 @@ public class SshCollectImpl extends AbstractCollect {
             list.add(ClientChannelEvent.CLOSED);
             Collection<ClientChannelEvent> waitEvents = channel.waitFor(list, timeout);
             if (waitEvents.contains(ClientChannelEvent.TIMEOUT)) {
+                //  A cancel signal needs to be sent if the execution times out, otherwise the session cannot be closed promptly
+                int cancelSignal = 3;
+                channel.getInvertedIn().write(cancelSignal);
+                channel.getInvertedIn().flush();
                 throw new SocketTimeoutException("Failed to retrieve command result in time: " + sshProtocol.getScript());
             }
             Long responseTime = System.currentTimeMillis() - startTime;
@@ -146,7 +159,10 @@ public class SshCollectImpl extends AbstractCollect {
         } finally {
             if (channel != null && channel.isOpen()) {
                 try {
-                    channel.close();
+                    // Close the SSH channel with the 'false' parameter to ensure the session is not kept alive.
+                    long st = System.currentTimeMillis();
+                    channel.close(false).addListener(future ->
+                            log.debug("channel is closed in {} ms", System.currentTimeMillis() - st));
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -206,11 +222,7 @@ public class SshCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = mapValue.get(field);
-            if (fieldValue == null) {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            } else {
-                valueRowBuilder.addColumns(fieldValue);
-            }
+            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
         }
         builder.addValues(valueRowBuilder.build());
     }

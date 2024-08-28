@@ -76,6 +76,13 @@ export class SettingPluginsComponent implements OnInit {
     return false;
   };
 
+  fileRemove = (): boolean => {
+    this.pluginForm.patchValue({
+      jarFile: null
+    });
+    return true;
+  };
+
   loadPluginsTable() {
     this.tableLoading = true;
     let pluginsInit$ = this.pluginService.loadPlugins(this.search, 1, this.pageIndex - 1, this.pageSize).subscribe(
@@ -186,7 +193,7 @@ export class SettingPluginsComponent implements OnInit {
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
 
   onAllChecked(checked: boolean) {
@@ -232,17 +239,24 @@ export class SettingPluginsComponent implements OnInit {
       formData.append('name', this.pluginForm.get('name')?.value);
       formData.append('jarFile', this.fileList[0] as any);
       formData.append('enableStatus', this.pluginForm.get('enableStatus')?.value);
-      this.pluginService.uploadPlugin(formData).subscribe((message: any) => {
-        if (message.code === 0) {
-          this.isManageModalVisible = false;
-          this.resetForm();
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-          this.loadPluginsTable();
-        } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
-        }
-        this.isManageModalOkLoading = false;
-      });
+      const uploadPlugin$ = this.pluginService
+        .uploadPlugin(formData)
+        .pipe(
+          finalize(() => {
+            uploadPlugin$.unsubscribe();
+            this.isManageModalOkLoading = false;
+          })
+        )
+        .subscribe((message: any) => {
+          if (message.code === 0) {
+            this.isManageModalVisible = false;
+            this.resetForm();
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
+            this.loadPluginsTable();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
+          }
+        });
     } else {
       Object.values(this.pluginForm.controls).forEach(control => {
         if (control.invalid) {
@@ -250,6 +264,7 @@ export class SettingPluginsComponent implements OnInit {
           control.updateValueAndValidity({ onlySelf: true });
         }
       });
+      this.isManageModalOkLoading = false;
     }
   }
 

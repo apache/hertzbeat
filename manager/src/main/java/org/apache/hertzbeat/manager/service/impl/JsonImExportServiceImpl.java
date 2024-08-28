@@ -15,6 +15,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.JsonFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.JsonFile.TYPE;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -32,16 +34,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class JsonImExportServiceImpl extends AbstractImExportServiceImpl {
-    public static final String TYPE = "JSON";
-    public static final String FILE_SUFFIX = ".json";
 
     private final ObjectMapper objectMapper;
 
     @Override
-    List<ExportMonitorDTO> parseImport(InputStream is) {
+    public List<ExportMonitorDTO> parseImport(InputStream is) {
         try {
-            return objectMapper.readValue(is, new TypeReference<>() {
-            });
+            return objectMapper.readValue(is, new TypeReference<>(){});
         } catch (IOException ex) {
             log.error("import monitor failed.", ex);
             throw new RuntimeException("import monitor failed");
@@ -49,7 +48,7 @@ public class JsonImExportServiceImpl extends AbstractImExportServiceImpl {
     }
 
     @Override
-    void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
+    public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
         try {
             objectMapper.writeValue(os, monitorList);
         } catch (IOException ex) {

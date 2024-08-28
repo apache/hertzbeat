@@ -4,14 +4,16 @@ title: HTTP Protocol System Default Parsing Method
 sidebar_label: Default Parsing Method
 ---
 
-> After calling the HTTP api to obtain the response data, use the default parsing method of hertzbeat to parse the response data.    
+> After calling the HTTP api to obtain the response data, use the default parsing method of hertzbeat to parse the response data.
 
-**The interface response data structure must be consistent with the data structure rules specified by hertzbeat**   
+**The interface response data structure must be consistent with the data structure rules specified by hertzbeat**
 
-### HertzBeat data format specification      
-Note⚠️ The response data is JSON format.  
+### HertzBeat data format specification
+
+Note⚠️ The response data is JSON format.
 
 Single layer format ：key-value
+
 ```json
 {
   "metricName1": "metricValue",
@@ -20,7 +22,9 @@ Single layer format ：key-value
   "metricName4": "metricValue"
 }
 ```
+
 Multilayer format：Set key value in the array
+
 ```json
 [
   {
@@ -37,9 +41,11 @@ Multilayer format：Set key value in the array
   }
 ]
 ```
+
 eg：
-Query the CPU information of the custom system. The exposed interface is `/metrics/cpu`. We need `hostname,core,useage` Metric. 
-If there is only one virtual machine, its single-layer format is : 
+Query the CPU information of the custom system. The exposed interface is `/metrics/cpu`. We need `hostname,core,useage` Metric.
+If there is only one virtual machine, its single-layer format is :
+
 ```json
 {
   "hostname": "linux-1",
@@ -49,7 +55,9 @@ If there is only one virtual machine, its single-layer format is :
   "runningTime": 100
 }
 ```
-If there are multiple virtual machines, the multilayer format is: : 
+
+If there are multiple virtual machines, the multilayer format is: :
+
 ```json
 [
   {
@@ -76,7 +84,7 @@ If there are multiple virtual machines, the multilayer format is: :
 ]
 ```
 
-**The corresponding monitoring template yml can be configured as follows**  
+**The corresponding monitoring template yml can be configured as follows**
 
 ```yaml
 category: custom

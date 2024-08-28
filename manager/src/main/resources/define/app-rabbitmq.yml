@@ -104,6 +104,9 @@ params:
 metrics:
   # Note: The built-in monitoring metrics include (responseTime - response time)
   - name: overview
+    i18n:
+      zh-CN: 概览
+      en-US: Overview
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -170,6 +173,9 @@ metrics:
       parseType: default
 
   - name: object_totals
+    i18n:
+      zh-CN: 对象总数
+      en-US: Object Totals
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -224,6 +230,9 @@ metrics:
       parseScript: '$.object_totals'
 
   - name: nodes
+    i18n:
+      zh-CN: 节点数
+      en-US: Nodes
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1
@@ -443,6 +452,9 @@ metrics:
       parseScript: '$.*'
 
   - name: queues
+    i18n:
+      zh-CN: 队列数
+      en-US: Queues
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 1

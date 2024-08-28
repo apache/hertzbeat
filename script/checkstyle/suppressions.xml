@@ -36,7 +36,4 @@
     <suppress checks=".*" files=".+[\\/]generated[\\/].+\.java"/>
     <suppress checks=".*" files=".+[\\/]generated-sources[\\/].+\.java"/>
     <suppress checks=".*" files=".+[\\/]generated-test-sources[\\/].+\.java"/>
-
-    <!-- suppress most all checks expect below-->
-    <suppress checks="^(?!.*(UnusedImports|IllegalImport)).*$" files=".*[\\/]src[\\/]test[\\/].*"/>
 </suppressions>

@@ -15,11 +15,11 @@
 ##### docker compose deploys hertzbeat and its dependent services
 
 1. Download the hertzbeat-docker-compose installation deployment script file
-   The script file is located in `script/docker-compose/hertzbeat-mysql-victoria-metrics` link [script/docker-compose](https://github.com/hertzbeat/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-victoria-metrics)
+   The script file is located in `script/docker-compose/hertzbeat-mysql-victoria-metrics` link [script/docker-compose](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/hertzbeat-mysql-victoria-metrics)
 
 2. Add MYSQL jdbc driver jar
 
-   Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.26.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+   Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.0.25.jar. https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.25.zip
    Copy the jar package to the ext-lib directory.
 
 3. Enter the deployment script docker-compose directory, execute
