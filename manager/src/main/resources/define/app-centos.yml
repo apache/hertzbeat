@@ -379,7 +379,7 @@ metrics:
       privateKey: ^_^privateKey^_^
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
-      script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'
+      script: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {gsub(":", "", $1); print $1,$2,$10}'
       parseType: multiRow
 
   - name: disk_free
