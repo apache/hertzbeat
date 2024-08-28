@@ -28,10 +28,6 @@ public interface CommonConstants {
 
     String AUTHORIZATION = "Authorization";
     
-    String DASHBOARD = "dashboard";
-    
-    String OVERWRITE = "overwrite";
-    
     String BEARER = "Bearer ";
     
     String CREATE_DASHBOARD_API = "/api/dashboards/db";
@@ -63,24 +59,14 @@ public interface CommonConstants {
     String CREATE_SERVICE_TOKEN_API = "http://%s:%s@%s/api/serviceaccounts/%d/tokens";
     
     String GET_SERVICE_TOKENS_API = "http://%s:%s@%s/api/serviceaccounts/%d/tokens";
-    
-    String CONTENT_TYPE = "Content-type";
-    
+
     String NAME = "name";
-    
-    String ROLE = "role";
-    
-    String IS_DISABLED = "isDisabled";
-    
+
     String APPLICATION_JSON = "application/json";
     
     String HERTZBEAT_TOKEN = "hertzbeat-token";
 
     String TYPE = "type";
 
-    String ACCESS = "access";
-
     String URL = "url";
-
-    String BASIC_AUTH = "basicAuth";
 }
