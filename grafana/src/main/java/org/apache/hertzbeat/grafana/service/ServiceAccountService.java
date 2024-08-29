@@ -63,6 +63,7 @@ public class ServiceAccountService {
     private String url;
     private String username;
     private String password;
+    private String prefix;
 
     @Autowired
     public ServiceAccountService(
@@ -79,9 +80,10 @@ public class ServiceAccountService {
 
     @PostConstruct
     public void init() {
-        this.url = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        this.url = grafanaConfiguration.getUrl();
         this.username = grafanaConfiguration.getUsername();
         this.password = grafanaConfiguration.getPassword();
+        this.prefix = grafanaConfiguration.getPrefix();
         ServiceToken serviceToken = serviceTokenDao.findByName(ACCOUNT_TOKEN_NAME);
         if (serviceToken == null) {
             log.error("Service token {} not found", ACCOUNT_TOKEN_NAME);
@@ -94,7 +96,7 @@ public class ServiceAccountService {
      * @return ResponseEntity containing the result of the account creation
      */
     public ResponseEntity<String> createServiceAccount() {
-        String endpoint = String.format(CREATE_SERVICE_ACCOUNT_API, username, password, url);
+        String endpoint = String.format(prefix + CREATE_SERVICE_ACCOUNT_API, username, password, url);
         HttpHeaders headers = createHeaders();
         String body = String.format("{\"name\":\"%s\",\"role\":\"%s\",\"isDisabled\":false}", ACCOUNT_NAME, ACCOUNT_ROLE);
 
@@ -122,7 +124,7 @@ public class ServiceAccountService {
      * @return ResponseEntity containing the result of the deletion
      */
     public ResponseEntity<String> deleteAccount(Long id) {
-        String endpoint = String.format(DELETE_SERVICE_ACCOUNT_API, username, password, url, id);
+        String endpoint = String.format(prefix + DELETE_SERVICE_ACCOUNT_API, username, password, url, id);
         HttpHeaders headers = createHeaders();
 
         HttpEntity<String> request = new HttpEntity<>(headers);
@@ -149,7 +151,7 @@ public class ServiceAccountService {
             log.error("Service account not found");
             throw new RuntimeException("Service account not found");
         }
-        String endpoint = String.format(CREATE_SERVICE_TOKEN_API, username, password, url, hertzbeat.getId());
+        String endpoint = String.format(prefix + CREATE_SERVICE_TOKEN_API, username, password, url, hertzbeat.getId());
         HttpHeaders headers = createHeaders();
         String body = String.format("{\"name\":\"%s\"}", HERTZBEAT_TOKEN);
 
@@ -176,7 +178,7 @@ public class ServiceAccountService {
      * @return ResponseEntity containing the list of service accounts
      */
     public ResponseEntity<String> getAccounts() {
-        String endpoint = String.format(GET_SERVICE_ACCOUNTS_API, username, password, url);
+        String endpoint = String.format(prefix + GET_SERVICE_ACCOUNTS_API, username, password, url);
         HttpHeaders headers = createHeaders();
 
         HttpEntity<String> request = new HttpEntity<>(headers);
@@ -198,7 +200,7 @@ public class ServiceAccountService {
      * @return ResponseEntity containing the list of tokens
      */
     public ResponseEntity<String> getTokens() {
-        String endpoint = String.format(GET_SERVICE_TOKENS_API, username, password, url, getAccountId());
+        String endpoint = String.format(prefix + GET_SERVICE_TOKENS_API, username, password, url, getAccountId());
         HttpHeaders headers = createHeaders();
 
         HttpEntity<String> request = new HttpEntity<>(headers);

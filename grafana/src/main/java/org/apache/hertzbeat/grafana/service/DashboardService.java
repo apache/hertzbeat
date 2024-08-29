@@ -51,7 +51,7 @@ public class DashboardService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<?> createDashboard(String dashboardJson, Long monitorId) {
         String token = serviceAccountService.getToken();
-        String url = grafanaConfiguration.getUrl() + CREATE_DASHBOARD_API;
+        String url = grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + CREATE_DASHBOARD_API;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -70,7 +70,7 @@ public class DashboardService {
                 GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(response.getBody(), GrafanaDashboard.class);
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
-                    grafanaDashboard.setUrl(grafanaConfiguration.getUrl() + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH);
+                    grafanaDashboard.setUrl(grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH);
                     grafanaDashboard.setMonitorId(monitorId);
                     dashboardDao.save(grafanaDashboard);
                     log.info("create dashboard success, token: {}", response.getBody());
@@ -97,7 +97,7 @@ public class DashboardService {
     public ResponseEntity<String> deleteDashboard(Long monitorId) {
         GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
         String token = serviceAccountService.getToken();
-        String url = grafanaConfiguration.getUrl() + String.format(DELETE_DASHBOARD_API, grafanaDashboard.getUid());
+        String url = grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + String.format(DELETE_DASHBOARD_API, grafanaDashboard.getUid());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

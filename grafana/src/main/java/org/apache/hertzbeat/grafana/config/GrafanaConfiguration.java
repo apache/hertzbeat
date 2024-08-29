@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.grafana.config;
 
+import static org.apache.hertzbeat.grafana.common.CommonConstants.HTTP;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.HTTPS;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -48,4 +50,28 @@ public class GrafanaConfiguration {
      * grafana password
      */
     private String password;
+
+    /**
+     * get the prefix of the grafana url, such as http or https
+     */
+    public String getPrefix() {
+        if (url.startsWith(HTTP)) {
+            return HTTP;
+        }else if (url.startsWith(HTTPS)) {
+            return HTTPS;
+        }
+        return HTTP;
+    }
+
+    /**
+     * get the grafana url without the prefix, such as localhost:3000
+     */
+    public String getUrl() {
+        if (getPrefix().equals(HTTP)) {
+            return url.replace(HTTP, "");
+        }else if (getPrefix().equals(HTTPS)) {
+            return url.replace(HTTPS, "");
+        }
+        return url;
+    }
 }

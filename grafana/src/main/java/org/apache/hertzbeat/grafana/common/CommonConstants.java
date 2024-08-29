@@ -21,6 +21,9 @@ package org.apache.hertzbeat.grafana.common;
  * Grafana Common Constants
  */
 public interface CommonConstants {
+    String HTTP = "http://";
+
+    String HTTPS = "https://";
     
     String KIOSK = "?kiosk=tv";
 
@@ -40,9 +43,9 @@ public interface CommonConstants {
     
     String DATASOURCE_ACCESS = "proxy";
     
-    String CREATE_DATASOURCE_API = "http://%s:%s@%s/api/datasources";
+    String CREATE_DATASOURCE_API = "%s:%s@%s/api/datasources";
     
-    String DELETE_DATASOURCE_API = "http://%s:%s@%s/api/datasources/name/%s";  
+    String DELETE_DATASOURCE_API = "%s:%s@%s/api/datasources/name/%s";  
     
     String ACCOUNT_NAME = "hertzbeat";
     
@@ -50,15 +53,15 @@ public interface CommonConstants {
     
     String ACCOUNT_TOKEN_NAME = "hertzbeat-token";
     
-    String CREATE_SERVICE_ACCOUNT_API = "http://%s:%s@%s/api/serviceaccounts";
+    String CREATE_SERVICE_ACCOUNT_API = "%s:%s@%s/api/serviceaccounts";
     
-    String GET_SERVICE_ACCOUNTS_API = "http://%s:%s@%s/api/serviceaccounts/search";
+    String GET_SERVICE_ACCOUNTS_API = "%s:%s@%s/api/serviceaccounts/search";
     
-    String DELETE_SERVICE_ACCOUNT_API = "http://%s:%s@%s/api/serviceaccounts/%d";
+    String DELETE_SERVICE_ACCOUNT_API = "%s:%s@%s/api/serviceaccounts/%d";
     
-    String CREATE_SERVICE_TOKEN_API = "http://%s:%s@%s/api/serviceaccounts/%d/tokens";
+    String CREATE_SERVICE_TOKEN_API = "%s:%s@%s/api/serviceaccounts/%d/tokens";
     
-    String GET_SERVICE_TOKENS_API = "http://%s:%s@%s/api/serviceaccounts/%d/tokens";
+    String GET_SERVICE_TOKENS_API = "%s:%s@%s/api/serviceaccounts/%d/tokens";
 
     String NAME = "name";
 

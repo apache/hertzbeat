@@ -30,6 +30,7 @@ public class DatasourceService {
     private String grafanaUrl;
     private String username;
     private String password;
+    private String prefix;
     private String victoriaMetricsUrl;
 
     private final GrafanaConfiguration grafanaConfiguration;
@@ -49,9 +50,10 @@ public class DatasourceService {
 
     @PostConstruct
     public void init() {
-        this.grafanaUrl = grafanaConfiguration.getUrl().replace("http://", "").replace("https://", "");
+        this.grafanaUrl = grafanaConfiguration.getUrl();
         this.username = grafanaConfiguration.getUsername();
         this.password = grafanaConfiguration.getPassword();
+        this.prefix = grafanaConfiguration.getPrefix();
         this.victoriaMetricsUrl = warehouseProperties.url();
     }
 
@@ -61,7 +63,7 @@ public class DatasourceService {
      * @return ResponseEntity containing the response from Grafana
      */
     public ResponseEntity<String> createDatasource() {
-        String url = String.format(CREATE_DATASOURCE_API, username, password, grafanaUrl);
+        String url = String.format(prefix + CREATE_DATASOURCE_API, username, password, grafanaUrl);
 
         HttpHeaders headers = createHeaders();
 
@@ -90,7 +92,7 @@ public class DatasourceService {
      * @return ResponseEntity containing the response from Grafana
      */
     public ResponseEntity<String> deleteDatasource() {
-        String url = String.format(DELETE_DATASOURCE_API, username, password, grafanaUrl, DATASOURCE_NAME);
+        String url = String.format(prefix + DELETE_DATASOURCE_API, username, password, grafanaUrl, DATASOURCE_NAME);
 
         HttpHeaders headers = createHeaders();
 
