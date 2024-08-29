@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
-import jakarta.persistence.TableGenerator;
 import jakarta.persistence.criteria.Predicate;
 import java.io.File;
 import java.io.FileOutputStream;
