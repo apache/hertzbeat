@@ -31,7 +31,7 @@ import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.service.NoticeConfigService;
-import org.apache.hertzbeat.manager.service.PluginService;
+import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,7 +58,7 @@ class DispatcherAlarmTest {
     private AlertStoreHandler alertStoreHandler;
 
     @Mock
-    private PluginService pluginService;
+    private PluginRunner pluginRunner;
 
     @Mock
     private AlertNotifyHandler alertNotifyHandler;
@@ -77,7 +77,7 @@ class DispatcherAlarmTest {
                 noticeConfigService,
                 alertStoreHandler,
                 alertNotifyHandlerList,
-                pluginService
+                pluginRunner
         );
     }
 

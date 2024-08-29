@@ -35,6 +35,12 @@
             <artifactId>hertzbeat-common</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- plugin -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-plugin</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- util -->
         <dependency>
             <groupId>commons-net</groupId>
