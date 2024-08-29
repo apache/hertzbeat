@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -43,7 +44,6 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * Configure the import and export EXCEL format
@@ -89,14 +89,14 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                     continue;
                 }
                 String name = getCellValueAsString(row.getCell(0));
-                if (StringUtils.hasText(name)) {
+                if (StringUtils.isNotBlank(name)) {
                     startRowList.add(row.getRowNum());
                     MonitorDTO monitor = extractMonitorDataFromRow(row);
                     ExportMonitorDTO exportMonitor = new ExportMonitorDTO();
                     exportMonitor.setMonitor(monitor);
                     monitors.add(exportMonitor);
                     String metrics = getCellValueAsString(row.getCell(11));
-                    if (StringUtils.hasText(metrics)) {
+                    if (StringUtils.isNotBlank(metrics)) {
                         List<String> metricList = Arrays.stream(metrics.split(",")).collect(Collectors.toList());
                         exportMonitor.setMetrics(metricList);
                     }
@@ -145,7 +145,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         monitor.setDescription(getCellValueAsString(row.getCell(5)));
 
         String tagsString = getCellValueAsString(row.getCell(6));
-        if (StringUtils.hasText(tagsString)) {
+        if (StringUtils.isNotBlank(tagsString)) {
             List<Long> tags = Arrays.stream(tagsString.split(","))
                     .map(Long::parseLong)
                     .collect(Collectors.toList());
@@ -159,7 +159,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
 
     private ParamDTO extractParamDataFromRow(Row row) {
         String fieldName = getCellValueAsString(row.getCell(8));
-        if (StringUtils.hasText(fieldName)) {
+        if (StringUtils.isNotBlank(fieldName)) {
             ParamDTO param = new ParamDTO();
             param.setField(fieldName);
             param.setType(getCellValueAsByte(row.getCell(9)));

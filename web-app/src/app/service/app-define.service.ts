@@ -97,4 +97,22 @@ export class AppDefineService {
     const options = { params: httpParams };
     return this.http.get<Message<any>>(app_hierarchy, options);
   }
+
+  public getAppHierarchyByName(lang: string | undefined, app: string): Observable<Message<any>> {
+    if (lang == undefined) {
+      lang = 'en_US';
+    }
+    let httpParams = new HttpParams().append('lang', lang);
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(`${app_hierarchy}/${app}`, options);
+  }
+
+  public getAppDefines(lang: string | undefined): Observable<Message<any>> {
+    if (lang == undefined) {
+      lang = 'en_US';
+    }
+    let httpParams = new HttpParams().append('lang', lang);
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(`/apps/defines`, options);
+  }
 }

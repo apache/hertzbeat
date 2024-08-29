@@ -17,6 +17,12 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -31,13 +37,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * Test case for {@link DbAlertStoreHandlerImpl}
  */
@@ -45,121 +44,121 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class DbAlertStoreHandlerImplTest {
 
-	@Mock
-	private MonitorService monitorService;
+    @Mock
+    private MonitorService monitorService;
 
-	@Mock
-	private AlertService alertService;
+    @Mock
+    private AlertService alertService;
 
-	@InjectMocks
-	private DbAlertStoreHandlerImpl dbAlertStoreHandler;
+    @InjectMocks
+    private DbAlertStoreHandlerImpl dbAlertStoreHandler;
 
-	private Alert alert;
+    private Alert alert;
 
-	@BeforeEach
-	public void setUp() {
+    @BeforeEach
+    public void setUp() {
 
-		alert = new Alert();
-		alert.setTags(new HashMap<>());
-		alert.setTarget(CommonConstants.AVAILABILITY);
-		alert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);
-	}
+        alert = new Alert();
+        alert.setTags(new HashMap<>());
+        alert.setTarget(CommonConstants.AVAILABILITY);
+        alert.setStatus(CommonConstants.ALERT_STATUS_CODE_PENDING);
+    }
 
-	@Test
-	public void testStoreMonitorNotExist() {
-
-        alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
-		when(monitorService.getMonitor(1L)).thenReturn(null);
-
-		dbAlertStoreHandler.store(alert);
-
-		verify(monitorService).getMonitor(1L);
-		verify(alertService, never()).addAlert(any(Alert.class));
-	}
-
-	@Test
-	public void testStoreMonitorPaused() {
+    @Test
+    public void testStoreMonitorNotExist() {
 
         alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
+        when(monitorService.getMonitor(1L)).thenReturn(null);
 
-		Monitor monitor = new Monitor();
-		monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
-		when(monitorService.getMonitor(1L)).thenReturn(monitor);
+        dbAlertStoreHandler.store(alert);
 
-		dbAlertStoreHandler.store(alert);
+        verify(monitorService).getMonitor(1L);
+        verify(alertService, never()).addAlert(any(Alert.class));
+    }
 
-		verify(monitorService).getMonitor(1L);
-		verify(alertService, never()).addAlert(any(Alert.class));
-	}
-
-	@Test
-	public void testStoreAvailabilityPendingAndMonitorUp() {
+    @Test
+    public void testStoreMonitorPaused() {
 
         alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
 
-		Monitor monitor = new Monitor();
-		monitor.setId(1L);
-		monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
-		when(monitorService.getMonitor(1L)).thenReturn(monitor);
+        Monitor monitor = new Monitor();
+        monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE);
+        when(monitorService.getMonitor(1L)).thenReturn(monitor);
 
-		dbAlertStoreHandler.store(alert);
+        dbAlertStoreHandler.store(alert);
 
-		verify(monitorService).updateMonitorStatus(1L, CommonConstants.MONITOR_DOWN_CODE);
-		verify(alertService).addAlert(alert);
-	}
+        verify(monitorService).getMonitor(1L);
+        verify(alertService, never()).addAlert(any(Alert.class));
+    }
 
-	@Test
-	public void testStoreAvailabilityRestoredAndMonitorDown() {
+    @Test
+    public void testStoreAvailabilityPendingAndMonitorUp() {
 
-		alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
-		alert.setStatus(CommonConstants.ALERT_STATUS_CODE_RESTORED);
+        alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
 
-		Monitor monitor = new Monitor();
-		monitor.setId(1L);
-		monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
-		when(monitorService.getMonitor(1L)).thenReturn(monitor);
+        Monitor monitor = new Monitor();
+        monitor.setId(1L);
+        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
+        when(monitorService.getMonitor(1L)).thenReturn(monitor);
 
-		dbAlertStoreHandler.store(alert);
+        dbAlertStoreHandler.store(alert);
 
-		verify(monitorService).updateMonitorStatus(1L, CommonConstants.MONITOR_UP_CODE);
-		verify(alertService).addAlert(alert);
-	}
+        verify(monitorService).updateMonitorStatus(1L, CommonConstants.MONITOR_DOWN_CODE);
+        verify(alertService).addAlert(alert);
+    }
 
-	@Test
-	public void testStoreIgnoreTagExists() {
+    @Test
+    public void testStoreAvailabilityRestoredAndMonitorDown() {
 
-		alert.getTags().put(CommonConstants.IGNORE, "true");
+        alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
+        alert.setStatus(CommonConstants.ALERT_STATUS_CODE_RESTORED);
 
-		assertThrows(IgnoreException.class, () -> dbAlertStoreHandler.store(alert));
-	}
+        Monitor monitor = new Monitor();
+        monitor.setId(1L);
+        monitor.setStatus(CommonConstants.MONITOR_DOWN_CODE);
+        when(monitorService.getMonitor(1L)).thenReturn(monitor);
 
-	@Test
-	public void testStoreNoMonitorId() {
+        dbAlertStoreHandler.store(alert);
+
+        verify(monitorService).updateMonitorStatus(1L, CommonConstants.MONITOR_UP_CODE);
+        verify(alertService).addAlert(alert);
+    }
+
+    @Test
+    public void testStoreIgnoreTagExists() {
+
+        alert.getTags().put(CommonConstants.IGNORE, "true");
+
+        assertThrows(IgnoreException.class, () -> dbAlertStoreHandler.store(alert));
+    }
+
+    @Test
+    public void testStoreNoMonitorId() {
 
         alert.getTags().remove(CommonConstants.TAG_MONITOR_ID);
-		dbAlertStoreHandler.store(alert);
+        dbAlertStoreHandler.store(alert);
 
-		verify(alertService).addAlert(alert);
-	}
+        verify(alertService).addAlert(alert);
+    }
 
-	@Test
-	public void testStoreAddMonitorNameAndHostIfNotPresent() {
+    @Test
+    public void testStoreAddMonitorNameAndHostIfNotPresent() {
 
-		alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
+        alert.getTags().put(CommonConstants.TAG_MONITOR_ID, "1");
 
-		Monitor monitor = new Monitor();
-		monitor.setId(1L);
-		monitor.setName("test-monitor");
-		monitor.setHost("test-host");
-		monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
-		when(monitorService.getMonitor(1L)).thenReturn(monitor);
+        Monitor monitor = new Monitor();
+        monitor.setId(1L);
+        monitor.setName("test-monitor");
+        monitor.setHost("test-host");
+        monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
+        when(monitorService.getMonitor(1L)).thenReturn(monitor);
 
-		dbAlertStoreHandler.store(alert);
+        dbAlertStoreHandler.store(alert);
 
-		verify(monitorService).getMonitor(1L);
-		assertEquals("test-monitor", alert.getTags().get(CommonConstants.TAG_MONITOR_NAME));
-		assertEquals("test-host", alert.getTags().get(CommonConstants.TAG_MONITOR_HOST));
-		verify(alertService).addAlert(alert);
-	}
+        verify(monitorService).getMonitor(1L);
+        assertEquals("test-monitor", alert.getTags().get(CommonConstants.TAG_MONITOR_NAME));
+        assertEquals("test-host", alert.getTags().get(CommonConstants.TAG_MONITOR_HOST));
+        verify(alertService).addAlert(alert);
+    }
 
 }

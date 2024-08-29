@@ -17,6 +17,11 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -34,12 +39,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link AiServiceFactoryImpl}
  */
@@ -47,80 +46,80 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AiServiceFactoryTest {
 
-	@Mock
-	private List<AiService> aiService;
+    @Mock
+    private List<AiService> aiService;
 
-	@Mock
-	private AiService aiService1;
+    @Mock
+    private AiService aiService1;
 
-	@Mock
-	private AiService aiService2;
+    @Mock
+    private AiService aiService2;
 
-	@InjectMocks
-	private AiServiceFactoryImpl aiServiceFactory;
+    @InjectMocks
+    private AiServiceFactoryImpl aiServiceFactory;
 
-	@BeforeEach
-	public void setup() {
+    @BeforeEach
+    public void setup() {
 
-		when(aiService1.getType()).thenReturn(AiTypeEnum.alibabaAi);
-		when(aiService2.getType()).thenReturn(AiTypeEnum.zhiPu);
+        when(aiService1.getType()).thenReturn(AiTypeEnum.alibabaAi);
+        when(aiService2.getType()).thenReturn(AiTypeEnum.zhiPu);
 
-		aiService = Arrays.asList(aiService1, aiService2);
-		ReflectionTestUtils.setField(aiServiceFactory, "aiService", aiService);
+        aiService = Arrays.asList(aiService1, aiService2);
+        ReflectionTestUtils.setField(aiServiceFactory, "aiService", aiService);
 
-		aiServiceFactory.init();
-	}
+        aiServiceFactory.init();
+    }
 
-	@Test
-	public void testInit() {
+    @Test
+    public void testInit() {
 
-		Map<AiTypeEnum, AiService> expectedMap = aiService.stream()
-				.collect(Collectors.toMap(AiService::getType, Function.identity()));
+        Map<AiTypeEnum, AiService> expectedMap = aiService.stream()
+                .collect(Collectors.toMap(AiService::getType, Function.identity()));
 
-		Map<AiTypeEnum, AiService> actualMap = (Map<AiTypeEnum, AiService>) ReflectionTestUtils.getField(aiServiceFactory, "aiServiceFactoryMap");
+        Map<AiTypeEnum, AiService> actualMap = (Map<AiTypeEnum, AiService>) ReflectionTestUtils.getField(aiServiceFactory, "aiServiceFactoryMap");
 
-		assertEquals(expectedMap, actualMap);
-	}
+        assertEquals(expectedMap, actualMap);
+    }
 
-	@Test
-	public void testGetAiServiceImplBean_Success() {
+    @Test
+    public void testGetAiServiceImplBean_Success() {
 
-		AiService service = aiServiceFactory.getAiServiceImplBean(AiTypeEnum.alibabaAi + "");
-		assertNotNull(service);
-		assertEquals(aiService1, service);
+        AiService service = aiServiceFactory.getAiServiceImplBean(AiTypeEnum.alibabaAi + "");
+        assertNotNull(service);
+        assertEquals(aiService1, service);
 
-		service = aiServiceFactory.getAiServiceImplBean(AiTypeEnum.zhiPu + "");
-		assertNotNull(service);
-		assertEquals(aiService2, service);
-	}
+        service = aiServiceFactory.getAiServiceImplBean(AiTypeEnum.zhiPu + "");
+        assertNotNull(service);
+        assertEquals(aiService2, service);
+    }
 
-	@Test
-	public void testGetAiServiceImplBeanTypeNotFound() {
+    @Test
+    public void testGetAiServiceImplBeanTypeNotFound() {
 
-		Exception exception = assertThrows(
-				IllegalArgumentException.class,
-				() -> aiServiceFactory.getAiServiceImplBean("InvalidType")
-		);
+        Exception exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> aiServiceFactory.getAiServiceImplBean("InvalidType")
+        );
 
-		assertTrue(exception.getMessage().contains("The current type is not supported"));
-	}
+        assertTrue(exception.getMessage().contains("The current type is not supported"));
+    }
 
-	@Test
-	public void testGetAiServiceImplBeanNoBean() {
+    @Test
+    public void testGetAiServiceImplBeanNoBean() {
 
-		aiServiceFactory.init();
+        aiServiceFactory.init();
 
-		when(aiService1.getType()).thenReturn(AiTypeEnum.kimiAi);
-		List<AiService> singleServiceList = Collections.singletonList(aiService1);
-		ReflectionTestUtils.setField(aiServiceFactory, "aiService", singleServiceList);
-		aiServiceFactory.init();
+        when(aiService1.getType()).thenReturn(AiTypeEnum.kimiAi);
+        List<AiService> singleServiceList = Collections.singletonList(aiService1);
+        ReflectionTestUtils.setField(aiServiceFactory, "aiService", singleServiceList);
+        aiServiceFactory.init();
 
-		Exception exception = assertThrows(
-				IllegalArgumentException.class,
-				() -> aiServiceFactory.getAiServiceImplBean(AiTypeEnum.sparkDesk + "")
-		);
+        Exception exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> aiServiceFactory.getAiServiceImplBean(AiTypeEnum.sparkDesk + "")
+        );
 
-		assertTrue(exception.getMessage().contains("No bean for current type found"));
-	}
+        assertTrue(exception.getMessage().contains("No bean for current type found"));
+    }
 
 }

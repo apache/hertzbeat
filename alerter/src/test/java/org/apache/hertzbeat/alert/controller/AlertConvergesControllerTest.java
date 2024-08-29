@@ -53,68 +53,68 @@ import org.springframework.test.web.servlet.MockMvc;
 @ExtendWith(MockitoExtension.class)
 class AlertConvergesControllerTest {
 
-	private MockMvc mockMvc;
+    private MockMvc mockMvc;
 
-	@Mock
-	private AlertConvergeService alertConvergeService;
+    @Mock
+    private AlertConvergeService alertConvergeService;
 
-	@InjectMocks
-	private AlertConvergesController alertConvergesController;
+    @InjectMocks
+    private AlertConvergesController alertConvergesController;
 
-	private List<AlertConverge> alertConvergeList;
+    private List<AlertConverge> alertConvergeList;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		this.mockMvc = standaloneSetup(alertConvergesController).build();
+        this.mockMvc = standaloneSetup(alertConvergesController).build();
 
-		AlertConverge alertConverge1 = AlertConverge.builder()
-				.name("Converge1")
-				.id(1L)
-				.build();
+        AlertConverge alertConverge1 = AlertConverge.builder()
+                .name("Converge1")
+                .id(1L)
+                .build();
 
-		AlertConverge alertConverge2 = AlertConverge.builder()
-				.name("Converge2")
-				.id(2L)
-				.build();
+        AlertConverge alertConverge2 = AlertConverge.builder()
+                .name("Converge2")
+                .id(2L)
+                .build();
 
-		alertConvergeList = Arrays.asList(alertConverge1, alertConverge2);
-	}
+        alertConvergeList = Arrays.asList(alertConverge1, alertConverge2);
+    }
 
-	@Test
-	void testGetAlertConverges() throws Exception {
+    @Test
+    void testGetAlertConverges() throws Exception {
 
-		Page<AlertConverge> alertConvergePage = new PageImpl<>(
-				alertConvergeList,
-				PageRequest.of(0, 8, Sort.by("id").descending()),
-				alertConvergeList.size()
-		);
+        Page<AlertConverge> alertConvergePage = new PageImpl<>(
+                alertConvergeList,
+                PageRequest.of(0, 8, Sort.by("id").descending()),
+                alertConvergeList.size()
+        );
 
-		when(alertConvergeService.getAlertConverges(null, null, "id", "desc", 0, 8)).thenReturn(alertConvergePage);
+        when(alertConvergeService.getAlertConverges(null, null, "id", "desc", 0, 8)).thenReturn(alertConvergePage);
 
-		mockMvc.perform(get("/api/alert/converges")
-						.param("pageIndex", "0")
-						.param("pageSize", "8")
-						.param("sort", "id")
-						.param("order", "desc")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.data.content[0].id").value(1))
-				.andExpect(jsonPath("$.data.content[0].name").value("Converge1"))
-				.andExpect(jsonPath("$.data.content[1].id").value(2))
-				.andExpect(jsonPath("$.data.content[1].name").value("Converge2"));
-	}
+        mockMvc.perform(get("/api/alert/converges")
+                        .param("pageIndex", "0")
+                        .param("pageSize", "8")
+                        .param("sort", "id")
+                        .param("order", "desc")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].id").value(1))
+                .andExpect(jsonPath("$.data.content[0].name").value("Converge1"))
+                .andExpect(jsonPath("$.data.content[1].id").value(2))
+                .andExpect(jsonPath("$.data.content[1].name").value("Converge2"));
+    }
 
-	@Test
-	void testDeleteAlertDefines() throws Exception {
+    @Test
+    void testDeleteAlertDefines() throws Exception {
 
-		doNothing().when(alertConvergeService).deleteAlertConverges(eq(new HashSet<>(Arrays.asList(1L, 2L))));
+        doNothing().when(alertConvergeService).deleteAlertConverges(eq(new HashSet<>(Arrays.asList(1L, 2L))));
 
-		mockMvc.perform(delete("/api/alert/converges")
-						.param("ids", "1,2")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(delete("/api/alert/converges")
+                        .param("ids", "1,2")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 }
 
