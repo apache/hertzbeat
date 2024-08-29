@@ -26,7 +26,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -57,11 +57,11 @@ public class Collector {
     private Long id;
 
     @Schema(title = "collector identity name", description = "collector identity name")
-    @NotNull
+    @NotBlank(message = "name can not null")
     private String name;
 
     @Schema(title = "collector ip", description = "collector remote ip")
-    @NotNull
+    @NotBlank(message = "ip can not null")
     private String ip;
 
     @Schema(title = "collector version", description = "collector version")

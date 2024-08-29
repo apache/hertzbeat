@@ -25,6 +25,7 @@ RUN mkdir /var/run/sshd
 
 ADD apache-hertzbeat-collector-*-incubating-bin.tar.gz /opt/
 
+ENV JAVA_OPTS ""
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
