@@ -131,7 +131,7 @@ public class DispatcherAlarm implements InitializingBean {
                         // Notice distribution
                         sendNotify(alert);
                         // Execute the plugin if enable
-                        pluginService.pluginExecute(Plugin.class, plugin -> plugin.alert(alert));
+                        pluginService.pluginExecute(Plugin.class, plugin -> plugin.alert(alert), (plugin, configMapList) -> plugin.alert(alert, configMapList));
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {
