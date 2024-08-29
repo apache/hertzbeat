@@ -191,5 +191,4 @@ export class MonitorFormComponent implements OnChanges {
       };
     }
   }
-
 }
