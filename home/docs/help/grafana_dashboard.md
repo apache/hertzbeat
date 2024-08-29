@@ -39,4 +39,3 @@ For example, create a new monitor in `HertzBeat` for `VictoriaMetrics` single no
 
 On the `HertzBeat` monitoring page, click the `Grafana` button, select `Grafana` Historical Charts, select a monitoring template, and click the `Query` button to view the `Grafana` historical charts.
     ![grafana_2.png](/img/docs/help/grafana_2.png)
-
