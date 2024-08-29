@@ -143,7 +143,7 @@
     "monitor.metrics": "监控指标",
     "help.message.content": "自定义监控看板",
     "help.content": "自定义监控看板,以表格形式展示某种监控的自选指标",
-    "help.link": ""
+    "help.link": "https://hertzbeat.apache.org/zh-cn/docs/help/bulletin"
   },
   "question.link": "https://hertzbeat.apache.org/zh-cn/docs/help/issue",
   "alert.setting.new": "新增阈值规则",
