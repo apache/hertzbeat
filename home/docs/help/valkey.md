@@ -1,18 +1,18 @@
 ---
-id: redis  
-title: Monitorin REDIS database 
-sidebar_label: REDIS   
-keywords: [ open source monitoring tool, open source Redis monitoring tool, monitoring Redis metrics ]
+id: valkey  
+title: Monitorin Valkey database 
+sidebar_label: Valkey   
+keywords: [ open source monitoring tool, open source valkey monitoring tool, monitoring valkey metrics ]
 ---
 
-> Collect and monitor the general performance Metrics of Redis database. Support REDIS1.0+.
+> Collect and monitor the general performance Metrics of Valkey database. Support Valkey 7.0+.
 
 ### Configuration parameter
 
 |  Parameter name  |                        Parameter help description                        |
 |--------|------------------------------------------------------|
 | Target Host | The IP, IPV6, or domain name of the monitored endpoint. Note ⚠️: Do not include protocol headers (eg: https://, http://). |
-| Port     | The HTTP port provided by Redis, default value is 6379, sentinel node`s default value is 26379               |
+| Port     | The HTTP port provided by Valkey, default value is 6379, sentinel node`s default value is 26379               |
 | Timeout   | Set the timeout time when SQL query does not respond to data, unit: ms, default: 3000ms          |
 | Username    | Database connection user name, optional                                          |
 | Password     | Database connection password, optional                                          |
@@ -23,22 +23,22 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 
 |           Metric name           | Metric unit | Metric help description                       |
 |--------------------------|------|-----------------------------------------------|
-| redis_version            | none    | Version of the Redis server                     |
-| redis_git_sha1           | none    | Git SHA1                                |
-| redis_git_dirty          | none    | Git dirty flag                                |
-| redis_build_id           | none    | The build id                               |
-| redis_mode               | none    | The server's mode ("standalone", "sentinel" or "cluster")      |
-| os                       | none    | Operating system hosting the Redis server                          |
+| valkey_version            | none    | Version of the Valkey server                     |
+| valkey_git_sha1           | none    | Git SHA1                                |
+| valkey_git_dirty          | none    | Git dirty flag                                |
+| valkey_build_id           | none    | The build id                               |
+| valkey_mode               | none    | The server's mode ("standalone", "sentinel" or "cluster")      |
+| os                       | none    | Operating system hosting the Valkey server                          |
 | arch_bits                | none    | Architecture (32 or 64 bits)                                |
-| multiplexing_api         | none    | Event loop mechanism used by Redis                               |
-| atomicvar_api            | none    | Atomicvar API used by Redis                       |
-| gcc_version              | none    | Version of the GCC compiler used to compile the Redis server                       |
+| multiplexing_api         | none    | Event loop mechanism used by Valkey                               |
+| atomicvar_api            | none    | Atomicvar API used by Valkey                       |
+| gcc_version              | none    | Version of the GCC compiler used to compile the Valkey server                       |
 | process_id               | none    | PID of the server process                        |
 | process_supervised       | none    | Supervised system ("upstart", "systemd", "unknown" or "no")          |
-| run_id                   | none    | Random value identifying the Redis server (to be used by Sentinel and Cluster)          |
+| run_id                   | none    | Random value identifying the Valkey server (to be used by Sentinel and Cluster)          |
 | tcp_port                 | none    | TCP/IP listen port                    |
 | server_time_usec         | none    | Epoch-based system time with microsecond precision                              |
-| uptime_in_seconds        | none    | Number of seconds since Redis server start                             |
+| uptime_in_seconds        | none    | Number of seconds since Valkey server start                             |
 | uptime_in_days           | none    | Same value expressed in days                            |
 | hz                       | none    | The server's current frequency setting |
 | configured_hz            | none    | The server's configured frequency setting                                   |
@@ -65,27 +65,27 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 
 |           Metric name            |   Metric unit   |                                            Metric help description                                             |
 |---------------------------|----------|-----------------------------------------------------------------------------------------------|
-| used_memory               | byte     | Total number of bytes allocated by Redis using its allocator (either standard libc, jemalloc, or an alternative allocator such as tcmalloc)                                  |
+| used_memory               | byte     | Total number of bytes allocated by Valkey using its allocator (either standard libc, jemalloc, or an alternative allocator such as tcmalloc)                                  |
 | used_memory_human         | GB/MB/KB | Human readable representation of previous value                                                                                   |
-| used_memory_rss           | byte     | Number of bytes that Redis allocated as seen by the operating system (a.k.a resident set size). This is the number reported by tools such as top(1) and ps(1)                                  |
+| used_memory_rss           | byte     | Number of bytes that Valkey allocated as seen by the operating system (a.k.a resident set size). This is the number reported by tools such as top(1) and ps(1)                                  |
 | used_memory_rss_human     | GB/MB/KB | Human readable representation of previous value值                                                                                    |
-| used_memory_peak          | byte     | Peak memory consumed by Redis (in bytes)                               |
+| used_memory_peak          | byte     | Peak memory consumed by Valkey (in bytes)                               |
 | used_memory_peak_human    | GB/MB/KB | Human readable representation of previous value                                      |
 | used_memory_peak_perc     | none        | The percentage of used_memory_peak out of used_memory                                                              |
 | used_memory_overhead      | byte     | The sum in bytes of all overheads that the server allocated for managing its internal data structures                                                                   |
-| used_memory_startup       | byte     | Initial amount of memory consumed by Redis at startup in bytes                                                                         |
+| used_memory_startup       | byte     | Initial amount of memory consumed by Valkey at startup in bytes                                                                         |
 | used_memory_dataset       | byte     | The size in bytes of the dataset (used_memory_overhead subtracted from used_memory)                                                 |
 | used_memory_dataset_perc  | none        | The percentage of used_memory_dataset out of the net memory usage (used_memory minus used_memory_startup)                 |
 | allocator_allocated       | byte     | Total bytes allocated form the allocator, including internal-fragmentation. Normally the same as used_memory.                                                               |
 | allocator_active          | byte     | Total bytes in the allocator active pages, this includes external-fragmentation.                                                                           |
 | allocator_resident        | byte     | Total bytes resident (RSS) in the allocator, this includes pages that can be released to the OS (by MEMORY PURGE, or just waiting).                                            |
-| total_system_memory       | byte     | The total amount of memory that the Redis host has                                                                                 |
+| total_system_memory       | byte     | The total amount of memory that the Valkey host has                                                                                 |
 | total_system_memory_human | GB/MB/KB | Human readable representation of previous value                                                                                    |
-| used_memory_lua           | byte     | Number of bytes used by the Lua engine for EVAL scripts. Deprecated in Redis 7.0, renamed to used_memory_vm_eval                                                           |
-| used_memory_lua_human     | KB       | Human readable representation of previous value. Deprecated in Redis 7.0                                                                                    |
-| used_memory_scripts       | byte     | used_memory_scripts_eval + used_memory_functions (part of used_memory). Added in Redis 7.0                                                                               |
+| used_memory_lua           | byte     | Number of bytes used by the Lua engine for EVAL scripts. Deprecated in Valkey 7.0, renamed to used_memory_vm_eval                                                           |
+| used_memory_lua_human     | KB       | Human readable representation of previous value. Deprecated in Valkey 7.0                                                                                    |
+| used_memory_scripts       | byte     | used_memory_scripts_eval + used_memory_functions (part of used_memory). Added in Valkey 7.0                                                                               |
 | used_memory_scripts_human | GB/MB/KB | Human readable representation of previous value                                                                                |
-| number_of_cached_scripts  | none        | The number of EVAL scripts cached by the server. Added in Redis 7.0                                                                                 |
+| number_of_cached_scripts  | none        | The number of EVAL scripts cached by the server. Added in Valkey 7.0                                                                                 |
 | maxmemory                 | byte     | The value of the maxmemory configuration directive                                                                         |
 | maxmemory_human           | GB/MB/KB | Human readable representation of previous value                                                                                  |
 | maxmemory_policy          | none        | The value of the maxmemory-policy configuration directive                                                                        |
@@ -99,7 +99,7 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 | mem_fragmentation_bytes   | byte     | Delta between used_memory_rss and used_memory. Note that when the total fragmentation bytes is low (few megabytes), a high ratio (e.g. 1.5 and above) is not an indication of an issue.                     |
 | mem_not_counted_for_evict | byte     | Used memory that's not counted for key eviction. This is basically transient replica and AOF buffers.                                                           |
 | mem_replication_backlog   | byte     | Memory used by replication backlog                                                                      |
-| mem_clients_slaves        | none        | Memory used by replica clients - Starting Redis 7.0, replica buffers share memory with the replication backlog, so this field can show 0 when replicas don't trigger an increase of memory usage.                            |
+| mem_clients_slaves        | none        | Memory used by replica clients - Starting Valkey 7.0, replica buffers share memory with the replication backlog, so this field can show 0 when replicas don't trigger an increase of memory usage.                            |
 | mem_clients_normal        | none        | Memory used by normal clients                                                                              |
 | mem_aof_buffer            | none        | Transient memory used for AOF and AOF rewrite buffers                                                                         |
 | mem_allocator             | none        | Memory allocator, chosen at compile time.                                                                     |
@@ -185,7 +185,7 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 | role                           | none    | Value is "master" if the instance is replica of no one, or "slave" if the instance is a replica of some master instance. Note that a replica can be master of another replica (chained replication).                                                           |
 | connected_slaves               | none    | Number of connected replicas                                                                          |
 | master_failover_state          | none    | The state of an ongoing failover, if any.                                                                   |
-| master_replid                  | none    | The replication ID of the Redis server.                                                                     |
+| master_replid                  | none    | The replication ID of the Valkey server.                                                                     |
 | master_replid2                 | none    | The secondary replication ID, used for PSYNC after a failover.                                                                 |
 | master_repl_offset             | none    | The server's current replication offset                                                                             |
 | second_repl_offset             | none    | The offset up to which replication IDs are accepted                                                                       |
@@ -198,12 +198,12 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 
 |           Metric name            | Metric unit |         Metric help description         |
 |---------------------------|------|------------------------|
-| used_cpu_sys              | none    | System CPU consumed by the Redis server, which is the sum of system CPU consumed by all threads of the server process (main thread and background threads) |
-| used_cpu_user             | none    | User CPU consumed by the Redis server, which is the sum of user CPU consumed by all threads of the server process (main thread and background threads) |
+| used_cpu_sys              | none    | System CPU consumed by the Valkey server, which is the sum of system CPU consumed by all threads of the server process (main thread and background threads) |
+| used_cpu_user             | none    | User CPU consumed by the Valkey server, which is the sum of user CPU consumed by all threads of the server process (main thread and background threads) |
 | used_cpu_sys_children     | none    | System CPU consumed by the background processes |
 | used_cpu_user_children    | none    | User CPU consumed by the background processes |
-| used_cpu_sys_main_thread  | none    | System CPU consumed by the Redis server main thread    |
-| used_cpu_user_main_thread | none    | User CPU consumed by the Redis server main thread    |
+| used_cpu_sys_main_thread  | none    | System CPU consumed by the Valkey server main thread    |
+| used_cpu_user_main_thread | none    | User CPU consumed by the Valkey server main thread    |
 
 #### Metric set：errorstats
 
@@ -216,7 +216,7 @@ keywords: [ open source monitoring tool, open source Redis monitoring tool, moni
 
 |      Metric name       | Metric unit |       Metric help description       |
 |-----------------|------|--------------------|
-| cluster_enabled | none    | Indicate Redis cluster is enabled |
+| cluster_enabled | none    | Indicate Valkey cluster is enabled |
 
 #### Metric set：commandstats
 
