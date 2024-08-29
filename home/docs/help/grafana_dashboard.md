@@ -33,9 +33,9 @@ grafana:
 In `HertzBeat`, when creating or editing a `Prometheus` type monitor, click Enable Grafana Templates and select the Grafana template json file to upload.
 The monitor template json file can be downloaded at <https://grafana.com/grafana/dashboards/>.
 For example, create a new monitor in `HertzBeat` for `VictoriaMetrics` single node, then open <https://grafana.com/grafana/dashboards/10229-victoriametrics-single-node/>, click `Download JSON` button on the right side. `Download JSON` button on the right to download the template json file. Upload the template json file in the `HertzBeat` monitor, save it.
-    ![grafana_1.png](/img/docs/help/grafana_1.png)
+    ![grafana-1.png](/img/docs/help/grafana-1.png)
 
 ### View Grafana historical charts
 
 On the `HertzBeat` monitoring page, click the `Grafana` button, select `Grafana` Historical Charts, select a monitoring template, and click the `Query` button to view the `Grafana` historical charts.
-    ![grafana_2.png](/img/docs/help/grafana_2.png)
+    ![grafana-2.png](/img/docs/help/grafana-2.png)
