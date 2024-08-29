@@ -110,12 +110,9 @@ class TagControllerTest {
 
     @Test
     void deleteTags() throws Exception {
-        List<Long> ids = new ArrayList<>();
-        ids.add(6565463543L);
-
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/tag")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(ids)))
+                        .contentType(MediaType.MULTIPART_FORM_DATA)
+                        .param("ids", "6565463543"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.msg").value("Delete success"))
