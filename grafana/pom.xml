@@ -52,11 +52,5 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
-        <!--forest-->
-        <dependency>
-            <groupId>com.dtflys.forest</groupId>
-            <artifactId>forest-spring-boot3-starter</artifactId>
-            <version>1.5.35</version>
-        </dependency>
     </dependencies>
 </project>
