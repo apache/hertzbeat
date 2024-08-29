@@ -9,7 +9,7 @@ keywords: [ Open Source Monitoring System, InfluxDB Monitoring, InfluxDB-PromQL 
 
 ### Configuration Parameters
 
-| Parameter Name      | Parameter help description                                                                                                 |
+|   Parameter Name    |                                                 Parameter help description                                                 |
 |---------------------|----------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | IP, IPv6, or domain name of the target being monitored. Note ⚠️: Do not include protocol header (e.g., https://, http://). |
 | Monitoring name     | Name to identify this monitoring, ensuring uniqueness of names.                                                            |
@@ -28,7 +28,7 @@ keywords: [ Open Source Monitoring System, InfluxDB Monitoring, InfluxDB-PromQL 
 
 #### Metric Set: basic_influxdb_memstats_alloc
 
-| Metric Name | Metric Unit | Metric help description              |
+| Metric Name | Metric Unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | instance    | None        | Instance to which the metric belongs |
 | timestamp   | None        | Timestamp of metric collection       |
@@ -36,7 +36,7 @@ keywords: [ Open Source Monitoring System, InfluxDB Monitoring, InfluxDB-PromQL 
 
 #### Metric Set: influxdb_database_numMeasurements
 
-| Metric Name | Metric Unit | Metric help description              |
+| Metric Name | Metric Unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | job         | None        | Metric name                          |
 | instance    | None        | Instance to which the metric belongs |
@@ -46,7 +46,7 @@ keywords: [ Open Source Monitoring System, InfluxDB Monitoring, InfluxDB-PromQL 
 
 #### Metric Set: influxdb_query_rate_seconds
 
-| Metric Name | Metric Unit | Metric help description              |
+| Metric Name | Metric Unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | instance    | None        | Instance to which the metric belongs |
 | timestamp   | None        | Timestamp of metric collection       |
@@ -54,7 +54,7 @@ keywords: [ Open Source Monitoring System, InfluxDB Monitoring, InfluxDB-PromQL 
 
 #### Metric Set: influxdb_queryExecutor_queriesFinished_10s
 
-| Metric Name | Metric Unit | Metric help description              |
+| Metric Name | Metric Unit |       Metric help description        |
 |-------------|-------------|--------------------------------------|
 | instance    | None        | Instance to which the metric belongs |
 | timestamp   | None        | Timestamp of metric collection       |

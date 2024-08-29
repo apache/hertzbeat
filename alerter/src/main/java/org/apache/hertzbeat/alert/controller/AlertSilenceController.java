@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.Objects;
 import org.apache.hertzbeat.alert.service.AlertSilenceService;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -69,11 +70,10 @@ public class AlertSilenceController {
     public ResponseEntity<Message<AlertSilence>> getAlertSilence(
             @Parameter(description = "Alarm Silence ID", example = "6565463543") @PathVariable("id") long id) {
         AlertSilence alertSilence = alertSilenceService.getAlertSilence(id);
-        if (alertSilence == null) {
-            return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertSilence not exist."));
-        } else {
-            return ResponseEntity.ok(Message.success(alertSilence));
-        }
+
+        return Objects.isNull(alertSilence)
+                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertSilence not exist."))
+                : ResponseEntity.ok(Message.success(alertSilence));
     }
 
 }

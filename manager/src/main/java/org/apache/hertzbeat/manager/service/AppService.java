@@ -81,12 +81,29 @@ public interface AppService {
     Map<String, String> getI18nResources(String lang);
 
     /**
+     * Get the I 18 N resources of the monitoring type
+     *
+     * @param lang Language type
+     * @return I18N Resources
+     */
+    Map<String, String> getI18nApps(String lang);
+
+    /**
      * Query all types of monitoring hierarchy
      *
      * @param lang language     
      * @return hierarchy information 
      */
     List<Hierarchy> getAllAppHierarchy(String lang);
+
+    /**
+     * Get the monitoring hierarchy based on the monitoring type
+     *
+     * @param app monitoring type
+     * @param lang language
+     * @return hierarchy information
+     */
+    List<Hierarchy> getAppHierarchy(String app, String lang);
 
     /**
      * Get all app define

@@ -104,7 +104,7 @@ public class DispatcherAlarm implements InitializingBean {
     }
 
     private NoticeReceiver getOneReceiverById(Long id) {
-        return noticeConfigService.getOneReceiverById(id);
+        return noticeConfigService.getReceiverById(id);
     }
 
     private NoticeTemplate getOneTemplateById(Long id) {
@@ -131,10 +131,11 @@ public class DispatcherAlarm implements InitializingBean {
                         // Notice distribution
                         sendNotify(alert);
                         // Execute the plugin if enable
-                        pluginService.pluginExecute(Plugin.class, plugin -> plugin.alert(alert));
+                        pluginService.pluginExecute(Plugin.class, plugin -> plugin.alert(alert), (plugin, configMapList) -> plugin.alert(alert, configMapList));
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                     log.error(e.getMessage());
                 } catch (Exception exception) {
                     log.error(exception.getMessage(), exception);

@@ -20,16 +20,17 @@ package org.apache.hertzbeat.manager.component.alerter.impl;
 import jakarta.annotation.Resource;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.StringUtils;
 
 /**
  * Test case for {@link SlackAlertNotifyHandlerImpl}
+ *
  * @version 2.1
  */
 @Slf4j
@@ -41,7 +42,7 @@ class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
     @Test
     void send() {
         var slackWebHook = System.getenv("SLACK_WEB_HOOK");
-        if (!StringUtils.hasText(slackWebHook)) {
+        if (StringUtils.isBlank(slackWebHook)) {
             log.warn("Please provide environment variables SLACK_WEB_HOOK");
             return;
         }
@@ -55,14 +56,15 @@ class SlackAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         var noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("Slack");
-        noticeTemplate.setContent("*[${title}]*\n"
-                + "${targetLabel} : ${target}\n"
-                + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
-                + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
-                + "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n"
-                + "${priorityLabel} : ${priority}\n"
-                + "${triggerTimeLabel} : ${triggerTime}\n"
-                + "${contentLabel} : ${content}");
+        noticeTemplate.setContent("""
+                *[${title}]*
+                ${targetLabel} : ${target}
+                <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+                <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+                <#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>
+                ${priorityLabel} : ${priority}
+                ${triggerTimeLabel} : ${triggerTime}
+                ${contentLabel} : ${content}""");
         var map = Map.of(
                 CommonConstants.TAG_MONITOR_ID, "Mock monitor id",
                 CommonConstants.TAG_MONITOR_NAME, "Mock monitor name",

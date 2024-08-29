@@ -178,16 +178,16 @@ public final class CommonUtil {
         if (cause != null) {
             message = cause.getMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.getMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.getLocalizedMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.toString();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = "unknown error.";
         }
         return message;

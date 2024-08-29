@@ -29,6 +29,7 @@ import java.util.List;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -70,6 +71,12 @@ class RedisSingleCollectImplTest {
                 .build();
     }
 
+    @AfterEach
+    void setDown() {
+        connection.close();
+        client.shutdown();
+    }
+
     @Test
     void getInstance() {
     }
@@ -77,10 +84,10 @@ class RedisSingleCollectImplTest {
     @Test
     void collect() {
         String info = """
-            # CPU
-            used_cpu_sys:0.544635
-            used_cpu_user:0.330690
-            """;
+                # CPU
+                used_cpu_sys:0.544635
+                used_cpu_user:0.330690
+                """;
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         List<String> aliasField = new ArrayList<>();
         aliasField.add("used_cpu_sys");
@@ -92,7 +99,7 @@ class RedisSingleCollectImplTest {
 
         MockedStatic<RedisClient> clientMockedStatic = Mockito.mockStatic(RedisClient.class);
         clientMockedStatic.when(() -> RedisClient.create(Mockito.any(ClientResources.class), Mockito.any(RedisURI.class)))
-            .thenReturn(client);
+                .thenReturn(client);
         Mockito.when(client.connect()).thenReturn(connection);
         Mockito.when(connection.sync()).thenReturn(cmd);
         Mockito.when(cmd.info(metrics.getName())).thenReturn(info);
@@ -135,7 +142,7 @@ class RedisSingleCollectImplTest {
 
         MockedStatic<RedisClient> clientMockedStatic = Mockito.mockStatic(RedisClient.class);
         clientMockedStatic.when(() -> RedisClient.create(Mockito.any(ClientResources.class), Mockito.any(RedisURI.class)))
-                        .thenReturn(client);
+                .thenReturn(client);
 
         Mockito.when(client.connect()).thenReturn(connection);
         Mockito.when(connection.sync()).thenReturn(cmd);
@@ -150,5 +157,6 @@ class RedisSingleCollectImplTest {
             assertEquals(row.getColumns(1), version);
         }
         clientMockedStatic.close();
+        client.shutdown();
     }
 }

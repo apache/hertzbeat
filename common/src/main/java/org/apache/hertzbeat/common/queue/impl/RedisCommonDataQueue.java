@@ -23,6 +23,7 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
+import org.apache.hertzbeat.common.constants.DataQueueConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
@@ -38,9 +39,9 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 @ConditionalOnProperty(
-        prefix = "common.queue",
-        name = "type",
-        havingValue = "redis"
+        prefix = DataQueueConstants.PREFIX,
+        name = DataQueueConstants.NAME,
+        havingValue = DataQueueConstants.REDIS
 )
 public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
 

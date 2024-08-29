@@ -179,26 +179,28 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
-    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.tag, this.pageIndex - 1, this.pageSize, sortField, sortOrder).subscribe(
-      message => {
-        this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedMonitorIds.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.monitors = page.content;
-          this.pageIndex = page.number + 1;
-          this.total = page.totalElements;
-        } else {
-          console.warn(message.msg);
+    let monitorInit$ = this.monitorSvc
+      .searchMonitors(this.app, this.tag, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize, sortField, sortOrder)
+      .subscribe(
+        message => {
+          this.tableLoading = false;
+          this.checkedAll = false;
+          this.checkedMonitorIds.clear();
+          if (message.code === 0) {
+            let page = message.data;
+            this.monitors = page.content;
+            this.pageIndex = page.number + 1;
+            this.total = page.totalElements;
+          } else {
+            console.warn(message.msg);
+          }
+          monitorInit$.unsubscribe();
+        },
+        error => {
+          this.tableLoading = false;
+          monitorInit$.unsubscribe();
         }
-        monitorInit$.unsubscribe();
-      },
-      error => {
-        this.tableLoading = false;
-        monitorInit$.unsubscribe();
-      }
-    );
+      );
   }
   changeMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;

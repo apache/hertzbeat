@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.warehouse.store.history.tdengine;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
@@ -29,7 +32,12 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param password  tdengine password
  * @param tableStrColumnDefineMaxLength auto create table's string column define max length : NCHAR(200)
  */
-@ConfigurationProperties(prefix = "warehouse.store.td-engine")
+
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+		+ SignConstants.DOT
+		+ WarehouseConstants.STORE
+		+ SignConstants.DOT
+		+ WarehouseConstants.HistoryName.TD_ENGINE)
 public record TdEngineProperties(@DefaultValue("false") boolean enabled,
                                  @DefaultValue("jdbc:TAOS-RS://localhost:6041/demo") String url,
                                  @DefaultValue("com.taosdata.jdbc.rs.RestfulDriver") String driverClassName,

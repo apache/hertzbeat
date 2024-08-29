@@ -9,13 +9,13 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 ### Attention, Need Add MYSQL jdbc driver jar
 
-- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.1.0.jar. https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0
+- Download the MYSQL jdbc driver jar package, such as mysql-connector-java-8.1.0.jar. <https://mvnrepository.com/artifact/com.mysql/mysql-connector-j/8.1.0>
 - Copy the jar package to the `hertzbeat/ext-lib` directory.
 - Restart the HertzBeat service.
 
-### Configuration parameter 
+### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -33,31 +33,27 @@ keywords: [open source monitoring tool, open source database monitoring tool, mo
 
 #### Metric set：basic
 
-| Metric name      | Metric unit | Metric help description |
-| ----------- | ----------- | ----------- |
-| version         | none | Database version |
-| port            | none | Database exposure service port |
-| datadir         | none | Database storage data disk address |
-| max_connections | none | Database maximum connections |
+|   Metric name   | Metric unit |      Metric help description       |
+|-----------------|-------------|------------------------------------|
+| version         | none        | Database version                   |
+| port            | none        | Database exposure service port     |
+| datadir         | none        | Database storage data disk address |
+| max_connections | none        | Database maximum connections       |
 
 #### Metric set：status
 
-| Metric name      | Metric unit | Metric help description |
-| ----------- | ----------- | ----------- |
-| threads_created         | none | MySql created total connections |
-| threads_connected            | none | MySql connected connections |
-| threads_cached         | none | MySql current cached connections |
-| threads_running | none | MySql current active connections |
-
+|    Metric name    | Metric unit |     Metric help description      |
+|-------------------|-------------|----------------------------------|
+| threads_created   | none        | MySql created total connections  |
+| threads_connected | none        | MySql connected connections      |
+| threads_cached    | none        | MySql current cached connections |
+| threads_running   | none        | MySql current active connections |
 
 #### Metric set：innodb
 
-| Metric name      | Metric unit | Metric help description |
-| ----------- | ----------- | ----------- |
-| innodb_data_reads     | none | innodb average number of reads from files per second |
-| innodb_data_writes    | none | innodb average number of writes from file per second |
-| innodb_data_read         | KB | innodb average amount of data read per second |
-| innodb_data_written | KB | innodb average amount of data written per second |  
-
-
-
+|     Metric name     | Metric unit |               Metric help description                |
+|---------------------|-------------|------------------------------------------------------|
+| innodb_data_reads   | none        | innodb average number of reads from files per second |
+| innodb_data_writes  | none        | innodb average number of writes from file per second |
+| innodb_data_read    | KB          | innodb average amount of data read per second        |
+| innodb_data_written | KB          | innodb average amount of data written per second     |

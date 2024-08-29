@@ -5,20 +5,20 @@ sidebar_position: 1
 ---
 
 <!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
 
-       https://www.apache.org/licenses/LICENSE-2.0
+https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 
 Good documentation is critical for any type of software. Any contribution that can improve the HertzBeat documentation is welcome.
@@ -40,8 +40,8 @@ This website is compiled using node, using Docusaurus framework components
 1. Download and install nodejs (version 18.8.0)
 2. Clone the code to the local `git clone git@github.com:apache/hertzbeat.git`
 3. In `home` directory run `npm install` to install the required dependent libraries.
-4. In `home` directory run `npm run start`, you can visit http://localhost:3000 to view the English mode preview of the site
-5. In `home` directory run `npm run start-zh-cn`, you can visit http://localhost:3000 to view the Chinese mode preview of the site
+4. In `home` directory run `npm run start`, you can visit <http://localhost:3000> to view the English mode preview of the site
+5. In `home` directory run `npm run start-zh-cn`, you can visit <http://localhost:3000> to view the Chinese mode preview of the site
 6. To generate static website resource files, run `npm run build`. The static resources of the build are in the build directory.
 
 ## Directory structure
@@ -93,5 +93,3 @@ css and other style files are placed in the `src/css` directory
 ### Page content modification
 
 > All pages doc can be directly jumped to the corresponding github resource modification page through the 'Edit this page' button at the bottom
-
-

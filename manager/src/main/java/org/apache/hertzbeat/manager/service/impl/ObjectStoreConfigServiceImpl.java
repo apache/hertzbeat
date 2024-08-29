@@ -23,10 +23,10 @@ import com.obs.services.ObsClient;
 import java.lang.reflect.Type;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -41,7 +41,9 @@ import org.springframework.util.Assert;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @Slf4j
 @Service
-public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceImpl<ObjectStoreDTO<T>> implements InitializingBean {
+public class ObjectStoreConfigServiceImpl extends
+        AbstractGeneralConfigServiceImpl<ObjectStoreDTO<ObjectStoreDTO.ObsConfig>> implements InitializingBean {
+
     @Resource
     private DefaultListableBeanFactory beanFactory;
 
@@ -56,17 +58,17 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
      * @param generalConfigDao  configDao object
      * @param objectMapper     JSON tool object
      */
-    protected ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
+    public ObjectStoreConfigServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
     }
 
     @Override
     public String type() {
-        return "oss";
+        return GeneralConfigTypeEnum.oss.name();
     }
 
     @Override
-    protected TypeReference<ObjectStoreDTO<T>> getTypeReference() {
+    public TypeReference<ObjectStoreDTO<ObjectStoreDTO.ObsConfig>> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {
@@ -76,7 +78,7 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
     }
 
     @Override
-    public void handler(ObjectStoreDTO<T> config) {
+    public void handler(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
         // initialize file storage service
         if (config != null) {
             if (config.getType() == ObjectStoreDTO.Type.OBS) {
@@ -85,12 +87,13 @@ public class ObjectStoreConfigServiceImpl extends AbstractGeneralConfigServiceIm
             }
             ctx.publishEvent(new ObjectStoreConfigChangeEvent(config));
         }
+        log.warn("object store config is null, please check the configuration file.");
     }
 
     /**
      * init Huawei Cloud OBS
      */
-    private void initObs(ObjectStoreDTO<T> config) {
+    private void initObs(ObjectStoreDTO<ObjectStoreDTO.ObsConfig> config) {
         var obsConfig = objectMapper.convertValue(config.getConfig(), ObjectStoreDTO.ObsConfig.class);
         Assert.hasText(obsConfig.getAccessKey(), "cannot find obs accessKey");
         Assert.hasText(obsConfig.getSecretKey(), "cannot find obs secretKey");

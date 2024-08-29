@@ -1,0 +1,45 @@
+//
+// Licensed to the Apache Software Foundation (ASF) under one or more
+// contributor license agreements.  See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership.
+// The ASF licenses this file to You under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with
+// the License.  You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+{
+  "config": {
+    "default": true,
+    "MD001": true,
+    "MD052": false,
+    "MD003": false,
+    "MD013": {
+        "line_length": 600,
+        "code_blocks": false,
+        "tables": false
+    },
+    "MD024": {
+        "siblings_only": true
+    },
+    "MD025": true,
+    "MD029": true,
+    "MD033": false,
+    "MD036": false,
+    "MD040": true,
+    "MD045": false,
+    "MD046": true,
+    "MD047": true
+  },
+  "ignore": [
+    "node_modules/",
+    "target/",
+    "dist/"
+  ]
+}

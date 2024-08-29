@@ -17,26 +17,35 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDao;
 import org.apache.hertzbeat.alert.dto.AlertPriorityNum;
 import org.apache.hertzbeat.alert.dto.AlertSummary;
+import org.apache.hertzbeat.alert.dto.CloudAlertReportAbstract;
+import org.apache.hertzbeat.alert.enums.CloudServiceAlarmInformationEnum;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.dto.AlertReport;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,7 +70,38 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
-    public Page<Alert> getAlerts(Specification<Alert> specification, PageRequest pageRequest) {
+    public Page<Alert> getAlerts(List<Long> alarmIds, Long monitorId, Byte priority, Byte status, String content, String sort, String order, int pageIndex, int pageSize) {
+        Specification<Alert> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+
+            if (alarmIds != null && !alarmIds.isEmpty()) {
+                CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
+                for (long id : alarmIds) {
+                    inPredicate.value(id);
+                }
+                andList.add(inPredicate);
+            }
+            if (monitorId != null) {
+                Predicate predicate = criteriaBuilder.like(root.get("tags").as(String.class), "%" + monitorId + "%");
+                andList.add(predicate);
+            }
+            if (priority != null) {
+                Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
+                andList.add(predicate);
+            }
+            if (status != null) {
+                Predicate predicate = criteriaBuilder.equal(root.get("status"), status);
+                andList.add(predicate);
+            }
+            if (content != null && !content.isEmpty()) {
+                Predicate predicateContent = criteriaBuilder.like(root.get("content"), "%" + content + "%");
+                andList.add(predicateContent);
+            }
+            Predicate[] predicates = new Predicate[andList.size()];
+            return criteriaBuilder.and(andList.toArray(predicates));
+        };
+        Sort sortExp = Sort.by(new Sort.Order(Sort.Direction.fromString(order), sort));
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, sortExp);
         return alertDao.findAll(specification, pageRequest);
     }
 
@@ -119,6 +159,43 @@ public class AlertServiceImpl implements AlertService {
     @Override
     public void addNewAlertReport(AlertReport alertReport) {
         alarmCommonReduce.reduceAndSendAlarm(buildAlertData(alertReport));
+    }
+
+    @Override
+    public void addNewAlertReportFromCloud(String cloudServiceName, String alertReport) {
+        CloudServiceAlarmInformationEnum cloudService = CloudServiceAlarmInformationEnum
+                .getEnumFromCloudServiceName(cloudServiceName);
+
+        AlertReport alert = null;
+        if (cloudService != null) {
+            try {
+                CloudAlertReportAbstract cloudAlertReport = JsonUtil
+                        .fromJson(alertReport, cloudService.getCloudServiceAlarmInformationEntity());
+                assert cloudAlertReport != null;
+                alert = AlertReport.builder()
+                        .content(cloudAlertReport.getContent())
+                        .alertName(cloudAlertReport.getAlertName())
+                        .alertTime(cloudAlertReport.getAlertTime())
+                        .alertDuration(cloudAlertReport.getAlertDuration())
+                        .priority(cloudAlertReport.getPriority())
+                        .reportType(cloudAlertReport.getReportType())
+                        .labels(cloudAlertReport.getLabels())
+                        .annotations(cloudAlertReport.getAnnotations())
+                        .build();
+            } catch (Exception e) {
+                log.error("[alert report] parse cloud service alarm content failed! cloud service: {} conrent: {}",
+                        cloudService.name(), alertReport);
+            }
+        } else {
+            alert = AlertReport.builder()
+                    .content("error do not has cloud service api")
+                    .alertName("/api/alerts/report/" + cloudServiceName)
+                    .alertTime(new Date().getTime())
+                    .priority(1)
+                    .reportType(1)
+                    .build();
+        }
+        Optional.ofNullable(alert).ifPresent(this::addNewAlertReport);
     }
 
     @Override

@@ -644,7 +644,7 @@ public class HashedWheelTimer implements Timer {
                 task.run(this);
             } catch (Throwable t) {
                 if (logger.isWarnEnabled()) {
-                    logger.warn("An exception was thrown by " + TimerTask.class.getSimpleName() + '.', t);
+                    logger.warn("An exception was thrown by {}.", TimerTask.class.getSimpleName(), t);
                 }
             }
         }

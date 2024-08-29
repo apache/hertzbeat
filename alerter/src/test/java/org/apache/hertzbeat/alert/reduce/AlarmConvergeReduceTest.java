@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.HashMap;
-
 import org.apache.hertzbeat.alert.dao.AlertConvergeDao;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
@@ -33,11 +36,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link AlarmConvergeReduce}
  */
@@ -45,70 +43,70 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AlarmConvergeReduceTest {
 
-	@Mock
-	private AlertConvergeDao alertConvergeDao;
+    @Mock
+    private AlertConvergeDao alertConvergeDao;
 
-	@Mock
-	private CommonCacheService<String, Object> convergeCache;
+    @Mock
+    private CommonCacheService<String, Object> convergeCache;
 
-	private AlarmConvergeReduce alarmConvergeReduce;
+    private AlarmConvergeReduce alarmConvergeReduce;
 
-	private Alert testAlert;
+    private Alert testAlert;
 
-	private MockedStatic<CacheFactory> cacheFactoryMockedStatic;
+    private MockedStatic<CacheFactory> cacheFactoryMockedStatic;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		testAlert = Alert.builder()
-				.tags(new HashMap<>())
-				.status(CommonConstants.ALERT_STATUS_CODE_SOLVED)
-				.build();
+        testAlert = Alert.builder()
+                .tags(new HashMap<>())
+                .status(CommonConstants.ALERT_STATUS_CODE_SOLVED)
+                .build();
 
-		cacheFactoryMockedStatic = mockStatic(CacheFactory.class);
-		cacheFactoryMockedStatic.when(CacheFactory::getAlertConvergeCache).thenReturn(convergeCache);
+        cacheFactoryMockedStatic = mockStatic(CacheFactory.class);
+        cacheFactoryMockedStatic.when(CacheFactory::getAlertConvergeCache).thenReturn(convergeCache);
 
-		alarmConvergeReduce = new AlarmConvergeReduce(alertConvergeDao);
-	}
+        alarmConvergeReduce = new AlarmConvergeReduce(alertConvergeDao);
+    }
 
-	@AfterEach
-	void tearDown() {
+    @AfterEach
+    void tearDown() {
 
-		if (cacheFactoryMockedStatic != null) {
-			cacheFactoryMockedStatic.close();
-		}
-	}
+        if (cacheFactoryMockedStatic != null) {
+            cacheFactoryMockedStatic.close();
+        }
+    }
 
-	@Test
-	void testFilterConverge_RestoredAlert() {
+    @Test
+    void testFilterConverge_RestoredAlert() {
 
-		testAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_RESTORED);
-		boolean result = alarmConvergeReduce.filterConverge(testAlert);
+        testAlert.setStatus(CommonConstants.ALERT_STATUS_CODE_RESTORED);
+        boolean result = alarmConvergeReduce.filterConverge(testAlert);
 
-		assertTrue(result);
-	}
+        assertTrue(result);
+    }
 
-	@Test
-	void testFilterConverge_IgnoreTag() {
+    @Test
+    void testFilterConverge_IgnoreTag() {
 
-		testAlert.getTags().put(CommonConstants.IGNORE, "true");
-		boolean result = alarmConvergeReduce.filterConverge(testAlert);
+        testAlert.getTags().put(CommonConstants.IGNORE, "true");
+        boolean result = alarmConvergeReduce.filterConverge(testAlert);
 
-		assertTrue(result);
-	}
+        assertTrue(result);
+    }
 
-	@Test
-	void testFilterConvergeNoConverge() {
+    @Test
+    void testFilterConvergeNoConverge() {
 
-		when(convergeCache.get(CommonConstants.CACHE_ALERT_CONVERGE)).thenReturn(null);
-		when(alertConvergeDao.findAll()).thenReturn(Collections.emptyList());
+        when(convergeCache.get(CommonConstants.CACHE_ALERT_CONVERGE)).thenReturn(null);
+        when(alertConvergeDao.findAll()).thenReturn(Collections.emptyList());
 
-		boolean result = alarmConvergeReduce.filterConverge(testAlert);
+        boolean result = alarmConvergeReduce.filterConverge(testAlert);
 
-		assertTrue(result);
-		verify(convergeCache).get(CommonConstants.CACHE_ALERT_CONVERGE);
-		verify(alertConvergeDao).findAll();
-		verify(convergeCache).put(CommonConstants.CACHE_ALERT_CONVERGE, Collections.emptyList());
-	}
+        assertTrue(result);
+        verify(convergeCache).get(CommonConstants.CACHE_ALERT_CONVERGE);
+        verify(alertConvergeDao).findAll();
+        verify(convergeCache).put(CommonConstants.CACHE_ALERT_CONVERGE, Collections.emptyList());
+    }
 
 }

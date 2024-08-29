@@ -74,6 +74,9 @@ params:
 metrics:
   # metrics - Server
   - name: Server
+    i18n:
+      zh-CN: Master服务信息
+      en-US: Master Service Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -125,6 +128,9 @@ metrics:
       parseType: jsonPath
       parseScript: '$.beans[?(@.name == "Hadoop:service=HBase,name=Master,sub=Server")]'
   - name: Rit
+    i18n:
+      zh-CN: Region In Transition 信息
+      en-US: Region In Transition Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -168,6 +174,9 @@ metrics:
       parseType: jsonPath
       parseScript: '$.beans[?(@.name == "Hadoop:service=HBase,name=Master,sub=AssignmentManager")]'
   - name: basic
+    i18n:
+      zh-CN: 基础信息
+      en-US: Basic Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0

@@ -17,9 +17,16 @@
 
 package org.apache.hertzbeat.manager.component.alerter.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
@@ -33,14 +40,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link SmsAlertNotifyHandlerImpl}
  */
@@ -48,73 +47,75 @@ import static org.mockito.Mockito.when;
 class SmsAlertNotifyHandlerImplTest {
 
 
-	@Mock
-	private TencentSmsClient tencentSmsClient;
+    @Mock
+    private TencentSmsClient tencentSmsClient;
 
-	private SmsAlertNotifyHandlerImpl notifyHandler;
+    private SmsAlertNotifyHandlerImpl notifyHandler;
 
-	private NoticeTemplate noticeTemplate;
+    private NoticeTemplate noticeTemplate;
 
-	private NoticeReceiver receiver;
+    private NoticeReceiver receiver;
 
-	private ResourceBundle bundle;
+    private ResourceBundle bundle;
 
-	@BeforeEach
-	public void setUp() {
+    @BeforeEach
+    public void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		noticeTemplate = mock(NoticeTemplate.class);
-		when(noticeTemplate.getContent()).thenReturn("This is a test notice template.");
+        noticeTemplate = mock(NoticeTemplate.class);
+        when(noticeTemplate.getContent()).thenReturn("This is a test notice template.");
 
-		receiver = mock(NoticeReceiver.class);
-		when(receiver.getPhone()).thenReturn("1234567890");
+        receiver = mock(NoticeReceiver.class);
+        when(receiver.getPhone()).thenReturn("1234567890");
 
-		bundle = mock(ResourceBundle.class);
-		when(bundle.getString(anyString())).thenReturn("High");
+        bundle = mock(ResourceBundle.class);
+        when(bundle.getString(anyString())).thenReturn("High");
 
-		notifyHandler = new SmsAlertNotifyHandlerImpl(tencentSmsClient);
-	}
+        Locale.setDefault(Locale.ENGLISH);
 
-	@Test
-	public void testSendSuccess() throws AlertNoticeException {
+        notifyHandler = new SmsAlertNotifyHandlerImpl(tencentSmsClient);
+    }
 
-		Alert alert = Alert.builder()
-				.content("Alert Content")
-				.priority((byte) 1)
-				.target("TestTarget")
-				.tags(Map.of(CommonConstants.TAG_MONITOR_NAME, "MonitorName"))
-				.lastAlarmTime(System.currentTimeMillis())
-				.id(1L)
-				.build();
-		when(bundle.getString("alerter.priority.1")).thenReturn("High");
+    @Test
+    public void testSendSuccess() throws AlertNoticeException {
 
-		notifyHandler.send(receiver, noticeTemplate, alert);
+        Alert alert = Alert.builder()
+                .content("Alert Content")
+                .priority((byte) 1)
+                .target("TestTarget")
+                .tags(Map.of(CommonConstants.TAG_MONITOR_NAME, "MonitorName"))
+                .lastAlarmTime(System.currentTimeMillis())
+                .id(1L)
+                .build();
+        when(bundle.getString("alerter.priority.1")).thenReturn("High");
 
-		String[] expectedParams = {"MonitorName", "Critical Alert", "Alert Content"};
-		verify(tencentSmsClient).sendMessage(expectedParams, new String[]{"1234567890"});
-	}
+        notifyHandler.send(receiver, noticeTemplate, alert);
 
-	@Test
-	public void testSendFailed() {
+        String[] expectedParams = {"MonitorName", "Critical Alert", "Alert Content"};
+        verify(tencentSmsClient).sendMessage(expectedParams, new String[]{"1234567890"});
+    }
 
-		Alert alert = Alert.builder()
-				.content("Alert Content")
-				.priority((byte) 1)
-				.target("TestTarget")
-				.tags(Map.of(CommonConstants.TAG_MONITOR_NAME, "MonitorName"))
-				.lastAlarmTime(System.currentTimeMillis())
-				.id(1L)
-				.build();
-		Mockito.when(bundle.getString("alerter.priority.1")).thenReturn("High");
+    @Test
+    public void testSendFailed() {
 
-		doThrow(new RuntimeException("[Sms Notify Error]")).when(tencentSmsClient).sendMessage(any(), any());
+        Alert alert = Alert.builder()
+                .content("Alert Content")
+                .priority((byte) 1)
+                .target("TestTarget")
+                .tags(Map.of(CommonConstants.TAG_MONITOR_NAME, "MonitorName"))
+                .lastAlarmTime(System.currentTimeMillis())
+                .id(1L)
+                .build();
+        Mockito.when(bundle.getString("alerter.priority.1")).thenReturn("High");
 
-		Exception exception = Assertions.assertThrows(
-				AlertNoticeException.class,
-				() -> notifyHandler.send(receiver, noticeTemplate, alert)
-		);
-		assertEquals("[Sms Notify Error] [Sms Notify Error]", exception.getMessage());
-	}
+        doThrow(new RuntimeException("[Sms Notify Error]")).when(tencentSmsClient).sendMessage(any(), any());
+
+        Exception exception = Assertions.assertThrows(
+                AlertNoticeException.class,
+                () -> notifyHandler.send(receiver, noticeTemplate, alert)
+        );
+        assertEquals("[Sms Notify Error] [Sms Notify Error]", exception.getMessage());
+    }
 
 }

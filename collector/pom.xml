@@ -30,8 +30,6 @@
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
     </properties>
 
     <dependencies>
@@ -89,7 +87,7 @@
         <dependency>
             <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
             <artifactId>concurrentlinkedhashmap-lru</artifactId>
-            <version>1.4.2</version>
+            <version>${concurrentlinkedhashmap-lru.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -126,12 +124,12 @@
         <dependency>
             <groupId>org.apache.sshd</groupId>
             <artifactId>sshd-core</artifactId>
-            <version>2.13.1</version>
+            <version>${sshd-core.version}</version>
         </dependency>
         <dependency>
             <groupId>net.i2p.crypto</groupId>
             <artifactId>eddsa</artifactId>
-            <version>0.3.0</version>
+            <version>${eddsa.version}</version>
         </dependency>
         <!-- sql server -->
         <dependency>
@@ -163,40 +161,40 @@
         <dependency>
             <groupId>org.snmp4j</groupId>
             <artifactId>snmp4j</artifactId>
-            <version>3.6.7</version>
+            <version>${snmp4j.version}</version>
         </dependency>
 
         <!-- rocketmq -->
         <dependency>
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-tools</artifactId>
-            <version>4.9.4</version>
+            <version>${rocketmq-tools.version}</version>
         </dependency>
 
         <!--dns-->
         <dependency>
             <groupId>dnsjava</groupId>
             <artifactId>dnsjava</artifactId>
-            <version>3.5.2</version>
+            <version>${dnsjava.version}</version>
         </dependency>
 
         <!-- consul -->
         <dependency>
             <groupId>com.ecwid.consul</groupId>
             <artifactId>consul-api</artifactId>
-            <version>1.4.5</version>
+            <version>${consul-api.version}</version>
         </dependency>
         <!-- nacos -->
         <dependency>
             <groupId>com.alibaba.nacos</groupId>
             <artifactId>nacos-client</artifactId>
-            <version>2.2.1</version>
+            <version>${nacos-client.version}</version>
         </dependency>
         <!-- nebula graph client -->
         <dependency>
             <groupId>com.vesoft</groupId>
             <artifactId>client</artifactId>
-            <version>3.6.0</version>
+            <version>${vesoft-client.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>javax.servlet</groupId>
@@ -207,6 +205,12 @@
                     <artifactId>fastjson</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <!-- mqtt -->
+        <dependency>
+            <groupId>com.hivemq</groupId>
+            <artifactId>hivemq-mqtt-client</artifactId>
+            <version>1.3.3</version>
         </dependency>
     </dependencies>
 

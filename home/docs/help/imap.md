@@ -21,7 +21,7 @@ For example, in QQ Mail (other emails are similar):
 
 ### Configuration Parameters
 
-| Parameter Name      | Parameter Help Description                                                                                 |
+| Parameter Name      |                                         Parameter Help Description                                         |
 |:--------------------|------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | IMAP mail server domain. Note ⚠️ do not include protocol headers (e.g., https://, http://).                |
 | Task Name           | The name that identifies this monitoring task, which needs to be unique.                                   |
@@ -40,7 +40,7 @@ Collect information on each folder in the email (custom folders can be configure
 
 #### Metrics Collection: (Folder Name in Email)
 
-| Metric Name          | Metric Unit | Metric Help Description                               |
+|     Metric Name      | Metric Unit |                Metric Help Description                |
 |----------------------|-------------|-------------------------------------------------------|
 | Total message count  | None        | The total number of emails in this folder             |
 | Recent message count | None        | The number of recently received emails in this folder |

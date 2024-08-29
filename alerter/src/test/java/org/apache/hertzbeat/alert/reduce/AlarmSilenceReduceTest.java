@@ -17,11 +17,21 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashMap;
-
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
@@ -36,153 +46,141 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link AlarmSilenceReduce}
  */
 
 class AlarmSilenceReduceTest {
 
-	@Mock
-	private AlertSilenceDao alertSilenceDao;
+    @Mock
+    private AlertSilenceDao alertSilenceDao;
 
-	@Mock
-	private CommonCacheService<String, Object> silenceCache;
+    @Mock
+    private CommonCacheService<String, Object> silenceCache;
 
-	private AlarmSilenceReduce alarmSilenceReduce;
+    private AlarmSilenceReduce alarmSilenceReduce;
 
-	private MockedStatic<CacheFactory> cacheFactoryMockedStatic;
+    private MockedStatic<CacheFactory> cacheFactoryMockedStatic;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		cacheFactoryMockedStatic = mockStatic(CacheFactory.class);
-		cacheFactoryMockedStatic.when(CacheFactory::getAlertSilenceCache).thenReturn(silenceCache);
+        cacheFactoryMockedStatic = mockStatic(CacheFactory.class);
+        cacheFactoryMockedStatic.when(CacheFactory::getAlertSilenceCache).thenReturn(silenceCache);
 
-		// inject dao object.
-		alarmSilenceReduce = new AlarmSilenceReduce(alertSilenceDao);
-	}
+        // inject dao object.
+        alarmSilenceReduce = new AlarmSilenceReduce(alertSilenceDao);
+    }
 
-	@Test
-	void testFilterSilenceNull() {
+    @Test
+    void testFilterSilenceNull() {
 
-		// when cache get result is null, exec db logic.
-		when(silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE)).thenReturn(null);
-		doReturn(Collections.emptyList()).when(alertSilenceDao).findAll();
+        // when cache get result is null, exec db logic.
+        when(silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE)).thenReturn(null);
+        doReturn(Collections.emptyList()).when(alertSilenceDao).findAll();
 
-		Alert alert = Alert.builder()
-				.tags(new HashMap<>())
-				.priority((byte) 1)
-				.build();
+        Alert alert = Alert.builder()
+                .tags(new HashMap<>())
+                .priority((byte) 1)
+                .build();
 
-		boolean result = alarmSilenceReduce.filterSilence(alert);
+        boolean result = alarmSilenceReduce.filterSilence(alert);
 
-		assertTrue(result);
-		verify(alertSilenceDao, times(1)).findAll();
-		verify(silenceCache, times(1)).put(eq(CommonConstants.CACHE_ALERT_SILENCE), any());
-	}
+        assertTrue(result);
+        verify(alertSilenceDao, times(1)).findAll();
+        verify(silenceCache, times(1)).put(eq(CommonConstants.CACHE_ALERT_SILENCE), any());
+    }
 
-	@Test
-	void testFilterSilenceOnce() {
+    @Test
+    void testFilterSilenceOnce() {
 
-		AlertSilence alertSilence = AlertSilence.builder()
-				.enable(Boolean.TRUE)
-				.matchAll(Boolean.TRUE)
-				.type((byte) 0)
-				.periodEnd(LocalDateTime.now().atZone(ZoneId.systemDefault()).plusHours(1))
-				.periodStart(LocalDateTime.now().atZone(ZoneId.systemDefault()).minusHours(1))
-				.times(0)
-				.build();
+        AlertSilence alertSilence = AlertSilence.builder()
+                .enable(Boolean.TRUE)
+                .matchAll(Boolean.TRUE)
+                .type((byte) 0)
+                .periodEnd(LocalDateTime.now().atZone(ZoneId.systemDefault()).plusHours(1))
+                .periodStart(LocalDateTime.now().atZone(ZoneId.systemDefault()).minusHours(1))
+                .times(0)
+                .build();
 
-		when(silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE)).thenReturn(Collections.singletonList(alertSilence));
-		doReturn(alertSilence).when(alertSilenceDao).save(alertSilence);
+        when(silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE)).thenReturn(Collections.singletonList(alertSilence));
+        doReturn(alertSilence).when(alertSilenceDao).save(alertSilence);
 
-		Alert alert = Alert.builder()
-				.tags(new HashMap<>())
-				.priority((byte) 1)
-				.build();
+        Alert alert = Alert.builder()
+                .tags(new HashMap<>())
+                .priority((byte) 1)
+                .build();
 
-		boolean result = alarmSilenceReduce.filterSilence(alert);
+        boolean result = alarmSilenceReduce.filterSilence(alert);
 
-		assertFalse(result);
-		verify(alertSilenceDao, times(1)).save(alertSilence);
-		assertEquals(1, alertSilence.getTimes());
-	}
+        assertFalse(result);
+        verify(alertSilenceDao, times(1)).save(alertSilence);
+        assertEquals(1, alertSilence.getTimes());
+    }
 
-	@Test
-	void testFilterSilenceCyc() {
+    @Test
+    void testFilterSilenceCyc() {
 
-		AlertSilence alertSilence = AlertSilence.builder()
-				.enable(Boolean.TRUE)
-				.matchAll(Boolean.TRUE)
-				.type((byte) 1)  // cyc time
-				.periodEnd(LocalDateTime.now().atZone(ZoneId.systemDefault()).plusHours(1))
-				.periodStart(LocalDateTime.now().atZone(ZoneId.systemDefault()).minusHours(1))
-				.times(0)
-				.days(Collections.singletonList((byte) LocalDateTime.now().getDayOfWeek().getValue()))
-				.build();
+        AlertSilence alertSilence = AlertSilence.builder()
+                .enable(Boolean.TRUE)
+                .matchAll(Boolean.TRUE)
+                .type((byte) 1)  // cyc time
+                .periodEnd(LocalDateTime.now().atZone(ZoneId.systemDefault()).plusHours(1))
+                .periodStart(LocalDateTime.now().atZone(ZoneId.systemDefault()).minusHours(1))
+                .times(0)
+                .days(Collections.singletonList((byte) LocalDateTime.now().getDayOfWeek().getValue()))
+                .build();
 
-		when(silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE)).thenReturn(Collections.singletonList(alertSilence));
-		doReturn(alertSilence).when(alertSilenceDao).save(alertSilence);
+        when(silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE)).thenReturn(Collections.singletonList(alertSilence));
+        doReturn(alertSilence).when(alertSilenceDao).save(alertSilence);
 
-		Alert alert = Alert.builder()
-				.tags(new HashMap<>())
-				.priority((byte) 1)
-				.build();
+        Alert alert = Alert.builder()
+                .tags(new HashMap<>())
+                .priority((byte) 1)
+                .build();
 
-		boolean result = alarmSilenceReduce.filterSilence(alert);
+        boolean result = alarmSilenceReduce.filterSilence(alert);
 
-		assertFalse(result);
-		verify(alertSilenceDao, times(1)).save(alertSilence);
-		assertEquals(1, alertSilence.getTimes());
-	}
+        assertFalse(result);
+        verify(alertSilenceDao, times(1)).save(alertSilence);
+        assertEquals(1, alertSilence.getTimes());
+    }
 
-	@Test
-	void testFilterSilenceNoMatch() {
+    @Test
+    void testFilterSilenceNoMatch() {
 
-		AlertSilence alertSilence = AlertSilence.builder()
-				.enable(Boolean.TRUE)
-				.matchAll(Boolean.TRUE)
-				.type((byte) 0)
-				.tags(Collections.singletonList(new TagItem("non-matching-tag", "value")))
-				.periodEnd(LocalDateTime.now().atZone(ZoneId.systemDefault()).minusHours(1))
-				.periodStart(LocalDateTime.now().atZone(ZoneId.systemDefault()).plusHours(1))
-				.times(0)
-				.build();
+        AlertSilence alertSilence = AlertSilence.builder()
+                .enable(Boolean.TRUE)
+                .matchAll(Boolean.TRUE)
+                .type((byte) 0)
+                .tags(Collections.singletonList(new TagItem("non-matching-tag", "value")))
+                .periodEnd(LocalDateTime.now().atZone(ZoneId.systemDefault()).minusHours(1))
+                .periodStart(LocalDateTime.now().atZone(ZoneId.systemDefault()).plusHours(1))
+                .times(0)
+                .build();
 
-		when(silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE)).thenReturn(Collections.singletonList(alertSilence));
-		doReturn(alertSilence).when(alertSilenceDao).save(alertSilence);
+        when(silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE)).thenReturn(Collections.singletonList(alertSilence));
+        doReturn(alertSilence).when(alertSilenceDao).save(alertSilence);
 
-		Alert alert = Alert.builder()
-				.tags(new HashMap<>())
-				.priority((byte) 1)
-				.build();
+        Alert alert = Alert.builder()
+                .tags(new HashMap<>())
+                .priority((byte) 1)
+                .build();
 
-		boolean result = alarmSilenceReduce.filterSilence(alert);
+        boolean result = alarmSilenceReduce.filterSilence(alert);
 
-		assertTrue(result);
-		verify(alertSilenceDao, never()).save(any());
-	}
+        assertTrue(result);
+        verify(alertSilenceDao, never()).save(any());
+    }
 
-	@AfterEach
-	public void tearDown() {
+    @AfterEach
+    public void tearDown() {
 
-		if (cacheFactoryMockedStatic != null) {
-			cacheFactoryMockedStatic.close();
-		}
-	}
+        if (cacheFactoryMockedStatic != null) {
+            cacheFactoryMockedStatic.close();
+        }
+    }
 
 }

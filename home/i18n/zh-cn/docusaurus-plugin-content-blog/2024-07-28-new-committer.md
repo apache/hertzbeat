@@ -11,11 +11,13 @@ keywords: [open source monitoring system, alerting system]
 ![hertzBeat](/img/blog/new-committer.png)
 
 > 非常荣幸能成为Apache Hertzbeat的Committer
+>
 ## 个人介绍
 
 本人是2023年毕业，目前在一家互联网公司担任java开发工程师。
 
 ## 初识 Apache Hertzbeat
+
 毕业之后，工作了半年，萌生出接触开源的想法。然而，在 GitHub 上搜索开源项目时，发现诸多社区活跃度欠佳，官方文档也不完善，致使项目上手难度颇大，因此开源之事暂且搁置。
 某天，在某平台看到小宝大佬的一个帖子，我瞬间兴趣盎然，随即私聊小宝，咨询开源相关事宜。小宝大佬极其热情且细致地为我讲解了不少开源方面的情况，并向我推荐了 Hertzbeat 这个项目。
 

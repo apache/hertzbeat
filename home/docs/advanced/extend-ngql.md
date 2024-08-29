@@ -21,22 +21,25 @@ Mapping the fields returned by NGQL queries to the metrics we need allows us to 
 > `filterValue`: filter attribute value (optional)
 
 For example:  
+
 - online_meta_count#SHOW HOSTS META#Status#ONLINE  
-  Counts the number of rows returned by `SHOW HOSTS META` where Status equals ONLINE.
+Counts the number of rows returned by `SHOW HOSTS META` where Status equals ONLINE.
 - online_meta_count#SHOW HOSTS META##  
-  Counts the number of rows returned by `SHOW HOSTS META`.
+Counts the number of rows returned by `SHOW HOSTS META`.
 
 #### **oneRow**
 
 > Queries a single row of data by mapping the column names of the query result set to the queried fields.
 
 For example:
+
 - Metrics fields: a, b
 - NGQL query: match (v:metrics) return v.metrics.a as a, v.metrics.b as b;
 
 Here, the metric fields can be mapped to the response data row by row.
 
 Notes:
+
 - When using the `oneRow` method, if a single query statement returns multiple rows of results, only the first row of results will be mapped to the metric fields.
 - When the `commands` field contains two or more query statements and the returned fields of multiple query statements are the same, the fields returned by the subsequent statement will overwrite those returned by the previous statement.
 - It is recommended to use the limit statement to limit the number of rows returned in the result set when defining `commands`.
@@ -46,11 +49,13 @@ Notes:
 > Queries multiple rows of data by mapping the column names of the query result set to the queried fields.
 
 For example:
+
 - Metrics fields: a, b
 - NGQL query: match (v:metrics) return v.metrics.a as a, v.metrics.b as b;
 
 Here, the metric fields can be mapped to the response data row by row.
 Notes:
+
 - When using the `multiRow` method, the `commands` field can only contain one query statement.
 
 #### **columns**
@@ -58,6 +63,7 @@ Notes:
 > Collects a single row of metric data by mapping two columns of data (key-value), where the key matches the queried fields and the value is the value of the queried field.
 
 Notes:
+
 - When using the `columns` method, the first two columns of the result set are mapped to collect data by default, where the first column corresponds to the metric name and the second column corresponds to the metric value.
 - When the `commands` field contains two or more query statements and the first column of data returned by multiple query statements is duplicated, the result of the last statement will be retained.
 
@@ -67,13 +73,14 @@ Notes:
 
 ![HertzBeat Page](/img/docs/advanced/extend-point-1.png)
 
-------- 
+-------
+
 Configuration usages of the monitoring templates yml are detailed below.
 
 ### Monitoring Template YML
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.  
-> Monitoring template is used to define the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information, etc.  
+> Monitoring template is used to define the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information, etc.
 
 eg: Customize a monitoring type named example_ngql, which collects metric data using NGQL.
 

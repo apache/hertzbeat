@@ -33,7 +33,10 @@ spring:
     exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
   freemarker:
     enabled: false
-
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 
 management:
   health:
@@ -81,7 +84,7 @@ spring:
       eclipselink:
         logging:
           level: SEVERE
-          
+
   flyway:
     enabled: true
     clean-disabled: true
@@ -89,9 +92,9 @@ spring:
     baseline-version: 1
     locations:
       - classpath:db/migration/{vendor}
-    
+
   mail:
-    # Mail server address, eg: qq-mailbox is smtp.qq.com, qq-exmail is smtp.exmail.qq.com  
+    # Mail server address, eg: qq-mailbox is smtp.qq.com, qq-exmail is smtp.exmail.qq.com
     host: smtp.qq.com
     username: tancloud@qq.com
     # Attention this is not email account password, this requires an email authorization code

@@ -39,9 +39,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.ExportFileConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -57,6 +61,7 @@ import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.FileUtil;
 import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -86,10 +91,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -101,15 +106,14 @@ import org.springframework.web.multipart.MultipartFile;
 public class MonitorServiceImpl implements MonitorService {
     private static final Long MONITOR_ID_TMP = 1000000000L;
 
-    public static final String HTTP = "http://";
-    public static final String HTTPS = "https://";
-    public static final String BLANK = "";
     public static final String PATTERN_HTTP = "(?i)http://";
     public static final String PATTERN_HTTPS = "(?i)https://";
 
     private static final byte ALL_MONITOR_STATUS = 9;
 
     private static final int TAG_LENGTH = 2;
+
+    private static final String CONTENT_VALUE = MediaType.APPLICATION_OCTET_STREAM_VALUE + SignConstants.SINGLE_MARK + "charset=" + StandardCharsets.UTF_8;
 
     @Autowired
     private AppService appService;
@@ -181,7 +185,7 @@ public class MonitorServiceImpl implements MonitorService {
     public void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params) {
         long monitorId = SnowFlakeIdGenerator.generateId();
         List<Tag> tags = monitor.getTags();
-        if (tags == null) {
+        if (CollectionUtils.isEmpty(tags)) {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
@@ -252,31 +256,20 @@ public class MonitorServiceImpl implements MonitorService {
             throw new IllegalArgumentException("not support export type: " + type);
         }
         var fileName = imExportService.getFileName();
-        res.setHeader("content-type", "application/octet-stream;charset=UTF-8");
-        res.setContentType("application/octet-stream;charset=UTF-8");
+        res.setHeader(HttpHeaders.CONTENT_DISPOSITION, CONTENT_VALUE);
+        res.setContentType(CONTENT_VALUE);
         res.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + URLEncoder.encode(fileName, StandardCharsets.UTF_8));
-        res.setHeader("Access-Control-Expose-Headers", "Content-Disposition");
+        res.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION);
         imExportService.exportConfig(res.getOutputStream(), ids);
     }
 
     @Override
     public void importConfig(MultipartFile file) throws Exception {
-        var fileName = file.getOriginalFilename();
-        if (!StringUtils.hasText(fileName)) {
-            return;
-        }
-        var type = "";
-        if (fileName.toLowerCase().endsWith(JsonImExportServiceImpl.FILE_SUFFIX)) {
-            type = JsonImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(ExcelImExportServiceImpl.FILE_SUFFIX)) {
-            type = ExcelImExportServiceImpl.TYPE;
-        }
-        if (fileName.toLowerCase().endsWith(YamlImExportServiceImpl.FILE_SUFFIX)) {
-            type = YamlImExportServiceImpl.TYPE;
-        }
+
+        var fileName = FileUtil.getFileName(file);
+        var type = FileUtil.getFileType(file);
         if (!imExportServiceMap.containsKey(type)) {
-            throw new RuntimeException("file " + fileName + " is not supported.");
+            throw new RuntimeException(ExportFileConstants.FILE + " " + fileName + " is not supported.");
         }
         var imExportService = imExportServiceMap.get(type);
         imExportService.importConfig(file.getInputStream());
@@ -316,11 +309,11 @@ public class MonitorServiceImpl implements MonitorService {
                 }
             }
         }
-        if (monitor.getTags() != null) {
+        if (!CollectionUtils.isEmpty(monitor.getTags())) {
             monitor.setTags(monitor.getTags().stream().distinct().collect(Collectors.toList()));
         }
         // the dispatch collector must exist if pin
-        if (StringUtils.hasText(monitorDto.getCollector())) {
+        if (StringUtils.isNotBlank(monitorDto.getCollector())) {
             Optional<Collector> optionalCollector = collectorDao.findCollectorByName(monitorDto.getCollector());
             if (optionalCollector.isEmpty()) {
                 throw new IllegalArgumentException("The pinned collector does not exist.");
@@ -330,14 +323,14 @@ public class MonitorServiceImpl implements MonitorService {
         }
         // Parameter definition structure verification
         List<ParamDefine> paramDefines = appService.getAppParamDefines(monitorDto.getMonitor().getApp());
-        if (paramDefines != null) {
+        if (!CollectionUtils.isEmpty(paramDefines)) {
             for (ParamDefine paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 Param param = paramMap.get(field);
                 if (paramDefine.isRequired() && (param == null || param.getParamValue() == null)) {
                     throw new IllegalArgumentException("Params field " + field + " is required.");
                 }
-                if (param != null && param.getParamValue() != null && !"".equals(param.getParamValue())) {
+                if (param != null && param.getParamValue() != null && StringUtils.isNotBlank(param.getParamValue())) {
                     switch (paramDefine.getType()) {
                         case "number":
                             double doubleValue;
@@ -372,11 +365,11 @@ public class MonitorServiceImpl implements MonitorService {
                             break;
                         case "host":
                             String hostValue = param.getParamValue();
-                            if (hostValue.toLowerCase().contains(HTTP)) {
-                                hostValue = hostValue.replaceAll(PATTERN_HTTP, BLANK);
+                            if (hostValue.toLowerCase().contains(NetworkConstants.HTTP_HEADER)) {
+                                hostValue = hostValue.replaceAll(PATTERN_HTTP, SignConstants.BLANK);
                             }
-                            if (hostValue.toLowerCase().contains(HTTPS)) {
-                                hostValue = hostValue.replace(PATTERN_HTTPS, BLANK);
+                            if (hostValue.toLowerCase().contains(NetworkConstants.HTTPS_HEADER)) {
+                                hostValue = hostValue.replace(PATTERN_HTTPS, SignConstants.BLANK);
                             }
                             if (!IpDomainUtil.validateIpDomain(hostValue)) {
                                 throw new IllegalArgumentException("Params field " + field + " value "
@@ -477,7 +470,7 @@ public class MonitorServiceImpl implements MonitorService {
         }
         // Auto Update Default Tags: monitorName
         List<Tag> tags = monitor.getTags();
-        if (tags == null) {
+        if (CollectionUtils.isEmpty(tags)) {
             tags = new LinkedList<>();
             monitor.setTags(tags);
         }
@@ -634,14 +627,14 @@ public class MonitorServiceImpl implements MonitorService {
     public Page<Monitor> getMonitors(List<Long> monitorIds, String app, String name, String host, Byte status, String sort, String order, int pageIndex, int pageSize, String tag) {
         Specification<Monitor> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
-            if (monitorIds != null && !monitorIds.isEmpty()) {
+            if (!CollectionUtils.isEmpty(monitorIds)) {
                 CriteriaBuilder.In<Long> inPredicate = criteriaBuilder.in(root.get("id"));
                 for (long id : monitorIds) {
                     inPredicate.value(id);
                 }
                 andList.add(inPredicate);
             }
-            if (StringUtils.hasText(app)) {
+            if (StringUtils.isNotBlank(app)) {
                 Predicate predicateApp = criteriaBuilder.equal(root.get("app"), app);
                 andList.add(predicateApp);
             }
@@ -650,7 +643,7 @@ public class MonitorServiceImpl implements MonitorService {
                 andList.add(predicateStatus);
             }
 
-            if (StringUtils.hasText(tag)) {
+            if (StringUtils.isNotBlank(tag)) {
                 String[] tagArr = tag.split(":");
                 String tagName = tagArr[0];
                 ListJoin<Monitor, Tag> tagJoin = root
@@ -668,11 +661,11 @@ public class MonitorServiceImpl implements MonitorService {
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (StringUtils.hasText(host)) {
+            if (StringUtils.isNotBlank(host)) {
                 Predicate predicateHost = criteriaBuilder.like(root.get("host"), "%" + host + "%");
                 orList.add(predicateHost);
             }
-            if (StringUtils.hasText(name)) {
+            if (StringUtils.isNotBlank(name)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + name + "%");
                 orList.add(predicateName);
             }
@@ -715,7 +708,7 @@ public class MonitorServiceImpl implements MonitorService {
                         monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE)
                 .peek(monitor -> monitor.setStatus(CommonConstants.MONITOR_PAUSED_CODE))
                 .collect(Collectors.toList());
-        if (!managedMonitors.isEmpty()) {
+        if (!CollectionUtils.isEmpty(managedMonitors)) {
             for (Monitor monitor : managedMonitors) {
                 collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
             }
@@ -789,7 +782,7 @@ public class MonitorServiceImpl implements MonitorService {
     @Override
     public List<AppCount> getAllAppMonitorsCount() {
         List<AppCount> appCounts = monitorDao.findAppsStatusCount();
-        if (appCounts == null) {
+        if (CollectionUtils.isEmpty(appCounts)) {
             return null;
         }
         //Statistical category information, calculate the number of corresponding states for each monitor
@@ -868,7 +861,7 @@ public class MonitorServiceImpl implements MonitorService {
                 List<Configmap> configmaps = params.stream().map(param -> new Configmap(param.getField(),
                         param.getParamValue(), param.getType())).collect(Collectors.toList());
                 List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                        .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                        .filter(item -> StringUtils.isNotBlank(item.getDefaultValue()))
                         .toList();
                 paramDefaultValue.forEach(defaultVar -> {
                     if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {

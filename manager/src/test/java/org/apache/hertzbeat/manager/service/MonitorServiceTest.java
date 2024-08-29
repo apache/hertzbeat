@@ -27,7 +27,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -749,7 +748,7 @@ class MonitorServiceTest {
         when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
 
         List<Param> params = Collections.singletonList(new Param());
-        List<String> metrics = Arrays.asList();
+        List<String> metrics = List.of();
         try {
             monitorService.addNewMonitorOptionalMetrics(metrics, monitor, params);
         } catch (MonitorMetricsException e) {
@@ -757,7 +756,7 @@ class MonitorServiceTest {
         }
         reset();
         when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
-        metrics = Arrays.asList("metric-001");
+        metrics = List.of("metric-001");
         List<Metrics> metricsDefine = new ArrayList<>();
         Metrics e = new Metrics();
         e.setName("metric-001");
