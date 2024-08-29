@@ -755,7 +755,7 @@ public class MonitorServiceImpl implements MonitorService {
             List<Configmap> configmaps = params.stream().map(param ->
                     new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
             List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
-                    .filter(item -> StringUtils.hasText(item.getDefaultValue()))
+                    .filter(item -> StringUtils.isNotBlank(item.getDefaultValue()))
                     .collect(Collectors.toList());
             paramDefaultValue.forEach(defaultVar -> {
                 if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {

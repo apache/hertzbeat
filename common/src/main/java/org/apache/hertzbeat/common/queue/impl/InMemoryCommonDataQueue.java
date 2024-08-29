@@ -94,7 +94,7 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
 
     @Override
     public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
-        return serviceDiscoveryDataQueue.poll(2, TimeUnit.SECONDS);
+        return serviceDiscoveryDataQueue.take();
     }
 
     @Override
