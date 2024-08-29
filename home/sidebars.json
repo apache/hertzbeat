@@ -357,9 +357,10 @@
             "help/alert_smn"
           ]
         },
-        "help/issue",
+        "help/bulletin",
         "help/plugin",
-        "help/time_expression"
+        "help/time_expression",
+        "help/issue"
       ]
     },
     {
