@@ -31,8 +31,8 @@ grafana:
 ### 在HertzBeat监控中上传Grafana监控模板json文件
 
 在`HertzBeat`新建或编辑`Prometheus`类型监控时,点击启用Grafana模板,选择Grafana模板json文件上传。
-监控模板json文件可以在 https://grafana.com/grafana/dashboards/ 下载。
-比如,在`HertzBeat`中新建一个关于`VictoriaMetrics`单节点的监控,然后打开 https://grafana.com/grafana/dashboards/10229-victoriametrics-single-node/ ,点击右侧 `Download JSON`按钮,下载模板json文件。在`HertzBeat`监控中上传模板json文件,保存。
+监控模板json文件可以在 <https://grafana.com/grafana/dashboards/> 下载。
+比如,在`HertzBeat`中新建一个关于`VictoriaMetrics`单节点的监控,然后打开 <https://grafana.com/grafana/dashboards/10229-victoriametrics-single-node/> ,点击右侧 `Download JSON`按钮,下载模板json文件。在`HertzBeat`监控中上传模板json文件,保存。
     ![grafana_1.png](/img/docs/help/grafana_1.png)
 
 ### 查看Grafana历史图表
