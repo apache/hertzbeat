@@ -74,6 +74,9 @@ params:
 metrics:
   # metrics - Server
     - name: Server
+      i18n:
+        zh-CN: RegionServer 服务信息
+        en-US: RegionServer Service Info
       # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
       # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
       priority: 0
@@ -435,6 +438,9 @@ metrics:
         parseScript: '$.beans[?(@.name == "Hadoop:service=HBase,name=RegionServer,sub=Server")]'
   # metrics - IPC
     - name: IPC
+      i18n:
+        zh-CN: RegionServer IPC 信息
+        en-US: RegionServer IPC Info
       # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
       # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
       priority: 0
@@ -490,6 +496,9 @@ metrics:
         parseScript: '$.beans[?(@.name == "Hadoop:service=HBase,name=RegionServer,sub=IPC")]'
   # metrics - JVM
     - name: JVM
+      i18n:
+        zh-CN: RegionServer JVM 信息
+        en-US: RegionServer JVM Info
       # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
       # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
       priority: 0
