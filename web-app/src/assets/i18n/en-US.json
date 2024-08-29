@@ -48,7 +48,7 @@
       "new": "Add New Bulletin Item",
       "edit": "Edit Bulletin Item",
       "delete": "Delete Bulletin Item",
-      "batch.delete": "Batch delete Bulletin Item",
+      "batch.delete": "Batch delete Bulletin Items",
       "name": "Bulletin Name",
       "name.placeholder": "Please enter a custom bulletin name",
       "monitor.type": "Monitor Type",
