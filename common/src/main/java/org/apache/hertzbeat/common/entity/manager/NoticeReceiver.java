@@ -28,6 +28,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -63,7 +64,7 @@ public class NoticeReceiver {
     @Schema(title = "Recipient name", description = "Recipient name",
             example = "tom", accessMode = READ_WRITE)
     @Size(max = 100)
-    @NotNull
+    @NotBlank(message = "name can not null")
     private String name;
 
     @Schema(title = "Notification information method: 0-SMS 1-Email 2-webhook 3-WeChat Official Account 4-Enterprise WeChat Robot "
@@ -75,7 +76,7 @@ public class NoticeReceiver {
                     + "WeChat app message",
             accessMode = READ_WRITE)
     @Min(0)
-    @NotNull
+    @NotNull(message = "type can not null")
     private Byte type;
 
     @Schema(title = "Mobile number: Valid when the notification method is SMS",

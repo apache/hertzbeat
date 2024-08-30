@@ -23,7 +23,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.manager.service.TagService;
@@ -52,11 +51,6 @@ public class TagController {
     @PostMapping
     @Operation(summary = "Add Tag", description = "Add Tag")
     public ResponseEntity<Message<Void>> addNewTags(@Valid @RequestBody List<Tag> tags) {
-        // Verify request data
-        tags = tags.stream().peek(tag -> {
-            tag.setType((byte) 1);
-            tag.setId(null);
-        }).distinct().collect(Collectors.toList());
         tagService.addTags(tags);
         return ResponseEntity.ok(Message.success("Add success"));
     }
@@ -65,8 +59,8 @@ public class TagController {
     @Operation(summary = "Modify an existing tag", description = "Modify an existing tag")
     public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody Tag tag) {
         // Verify request data
-        if (tag.getId() == null || tag.getName() == null) {
-            throw new IllegalArgumentException("The Tag not exist.");
+        if (tag.getId() == null) {
+            throw new IllegalArgumentException("ID cannot be null.");
         }
         tagService.modifyTag(tag);
         return ResponseEntity.ok(Message.success("Modify success"));
@@ -79,18 +73,14 @@ public class TagController {
             @Parameter(description = "Tag type", example = "0") @RequestParam(required = false) Byte type,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        Page<Tag> alertPage = tagService.getTags(search, type, pageIndex, pageSize);
-        Message<Page<Tag>> message = Message.success(alertPage);
-        return ResponseEntity.ok(message);
+        return ResponseEntity.ok(Message.success(tagService.getTags(search, type, pageIndex, pageSize)));
     }
 
     @DeleteMapping()
     @Operation(summary = "Delete tags based on ID", description = "Delete tags based on ID")
     public ResponseEntity<Message<Void>> deleteTags(
             @Parameter(description = "TAG IDs ", example = "6565463543") @RequestParam(required = false) List<Long> ids) {
-        if (ids != null && !ids.isEmpty()) {
-            tagService.deleteTags(new HashSet<>(ids));
-        }
+        tagService.deleteTags(new HashSet<>(ids));
         return ResponseEntity.ok(Message.success("Delete success"));
     }
 }
