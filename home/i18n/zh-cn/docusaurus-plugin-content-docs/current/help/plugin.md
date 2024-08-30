@@ -27,6 +27,7 @@ sidebar_label: 自定义插件
    ![plugin-1.png](/img/docs/help/plugin-1.png)
 2. 在`org.apache.hertzbeat.plugin.impl`目录下（如果没有请自行创建）, 新建一个 `org.apache.hertzbeat.plugin.PostAlertPlugin` 实现类，如`org.apache.hertzbeat.plugin.impl.DemoPlugin`,在实现类中接收`Alert`
    类作为参数，实现`execute`方法，逻辑由用户自定义，这里我们简单打印一下对象。
+
    ```java
      package org.apache.hertzbeat.plugin.impl;
      
@@ -48,15 +49,20 @@ sidebar_label: 自定义插件
          }
      }
    ```
+   
 3. 在 `META-INF/services/org.apache.hertzbeat.plugin.PostAlertPlugin` （如果没有请自行创建） 文件中增加接口实现类的全限定名，每个实现类全限定名单独成行。
+   
    ```shell
    org.apache.hertzbeat.plugin.impl.DemoPluginImpl
    ```
+
 4. 打包 `hertzbeat-plugin` 模块。
+
    ```shell
    cd plugin
    mvn package
    ```
+
 5. 通过 `插件管理`-`上传插件` 功能，上传以 `-jar-with-lib.jar` 结尾的插件包，启用插件即可在告警后执行自定义操作。
 
 ### 定义插件参数
@@ -66,6 +72,7 @@ sidebar_label: 自定义插件
 
 1. 在 `define` 目录下增加参数定义文件 ，注意参数定义文件必须是名称为 define 开头的 yml 文件，例如 `define-demo.yml`;
 2. 在 `define-demo.yml` 中定义参数，如下所示：
+
     ```yaml
    params:
      - field: host
@@ -88,7 +95,9 @@ sidebar_label: 自定义插件
        # when type is number, range is required
        range: '[0,65535]'
     ```
+
 3. 在插件逻辑中使用参数
+
    ```java
     @Override
     public void execute(Alert alert, PluginContext pluginContext) {

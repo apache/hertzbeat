@@ -24,6 +24,7 @@ If you want to set trigger methods during collection, program startup, etc., ple
 1. Clone the main branch code `git clone https://github.com/apache/hertzbeat.git`, and locate the `Plugin` interface in the `plugin` module.
    ![plugin-1.png](/img/docs/help/plugin-1.png)
 2. In the `org.apache.hertzbeat.plugin.impl` directory (create it if it does not exist), create an implementation class of `org.apache.hertzbeat.plugin.PostAlertPlugin`, such as `org.apache.hertzbeat.plugin.impl.DemoPlugin`. In the implementation class, receive the `Alert` class as a parameter, implement the `execute` method, and define custom logic. Here, we simply print the object.
+
    ```java
      package org.apache.hertzbeat.plugin.impl;
      
@@ -44,15 +45,20 @@ If you want to set trigger methods during collection, program startup, etc., ple
          }
      }
    ```
+
 3. Add the fully qualified name of the implementation class to the `META-INF/services/org.apache.hertzbeat.plugin.PostAlertPlugin` file (create it if it does not exist). Each fully qualified name should be on a separate line.
+
    ```shell
    org.apache.hertzbeat.plugin.impl.DemoPluginImpl
    ```
+
 4. Package the `hertzbeat-plugin` module.
+
    ```shell
    cd plugin
    mvn package
    ```
+
 5. Use the `Plugin Management` - `Upload Plugin` feature to upload the plugin package ending with `-jar-with-lib.jar`, and enable the plugin to execute custom operations after an alert.
 
 ### Defining Plugin Parameters
@@ -62,6 +68,7 @@ Below is an example of defining a plugin with two parameters, detailing the proc
 
 1. Add a parameter definition file in the `define` directory. Note that the parameter definition file must be a YAML file starting with `define`, such as `define-demo.yml`.
 2. Define parameters in `define-demo.yml` as shown below:
+
     ```yaml
    params:
      - field: host
@@ -84,7 +91,9 @@ Below is an example of defining a plugin with two parameters, detailing the proc
        # when type is number, range is required
        range: '[0,65535]'
     ```
+
 3. Use the parameters in the plugin logic
+
    ```java
     @Override
     public void execute(Alert alert, PluginContext pluginContext) {
