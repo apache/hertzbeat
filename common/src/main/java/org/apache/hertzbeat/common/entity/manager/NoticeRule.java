@@ -28,7 +28,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -67,13 +68,13 @@ public class NoticeRule {
             description = "Policy name",
             example = "dispatch-1", accessMode = READ_WRITE)
     @Size(max = 100)
-    @NotNull
+    @NotBlank(message = "name can not null")
     private String name;
 
     @Schema(title = "Recipient ID",
             description = "Recipient ID",
             example = "4324324", accessMode = READ_WRITE)
-    @NotNull
+    @NotEmpty(message = "receiverId can not empty")
     @Convert(converter = JsonLongListAttributeConverter.class)
     private List<Long> receiverId;
 

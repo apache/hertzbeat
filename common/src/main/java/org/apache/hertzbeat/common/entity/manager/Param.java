@@ -30,7 +30,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -75,7 +75,7 @@ public class Param {
      */
     @Schema(title = "Parameter identifier field", example = "port", accessMode = READ_WRITE)
     @Size(max = 100)
-    @NotNull
+    @NotBlank(message = "field can not null")
     private String field;
 
     /**
