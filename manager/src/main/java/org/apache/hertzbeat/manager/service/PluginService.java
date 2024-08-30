@@ -22,8 +22,8 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
-import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.apache.hertzbeat.common.entity.plugin.PluginContext;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
 import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.springframework.data.domain.Page;
@@ -63,7 +63,18 @@ public interface PluginService {
      * @param execute run plugin logic
      * @param <T> plugin type
      */
-    <T> void pluginExecute(Class<T> clazz, Consumer<T> execute, BiConsumer<T, List<Configmap>> biConsumer);
+    <T> void pluginExecute(Class<T> clazz, Consumer<T> execute);
+
+
+    /**
+     * execute plugin
+     *
+     * @param clazz   plugin interface
+     * @param execute run plugin logic
+     * @param <T>     plugin type
+     */
+    <T> void pluginExecute(Class<T> clazz, BiConsumer<T, PluginContext> execute);
+
 
     /**
      * delete plugin

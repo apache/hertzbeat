@@ -29,10 +29,11 @@ import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.manager.service.NoticeConfigService;
-import org.apache.hertzbeat.manager.service.PluginService;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.apache.hertzbeat.manager.support.exception.IgnoreException;
+import org.apache.hertzbeat.plugin.PostAlertPlugin;
 import org.apache.hertzbeat.plugin.Plugin;
+import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Component;
 
@@ -50,18 +51,18 @@ public class DispatcherAlarm implements InitializingBean {
     private final NoticeConfigService noticeConfigService;
     private final AlertStoreHandler alertStoreHandler;
     private final Map<Byte, AlertNotifyHandler> alertNotifyHandlerMap;
-    private final PluginService pluginService;
+    private final PluginRunner pluginRunner;
 
     public DispatcherAlarm(AlerterWorkerPool workerPool,
         CommonDataQueue dataQueue,
         NoticeConfigService noticeConfigService,
         AlertStoreHandler alertStoreHandler,
-        List<AlertNotifyHandler> alertNotifyHandlerList, PluginService pluginService) {
+        List<AlertNotifyHandler> alertNotifyHandlerList, PluginRunner pluginRunner) {
         this.workerPool = workerPool;
         this.dataQueue = dataQueue;
         this.noticeConfigService = noticeConfigService;
         this.alertStoreHandler = alertStoreHandler;
-        this.pluginService = pluginService;
+        this.pluginRunner = pluginRunner;
         alertNotifyHandlerMap = Maps.newHashMapWithExpectedSize(alertNotifyHandlerList.size());
         alertNotifyHandlerList.forEach(r -> alertNotifyHandlerMap.put(r.type(), r));
     }
@@ -130,8 +131,11 @@ public class DispatcherAlarm implements InitializingBean {
                         alertStoreHandler.store(alert);
                         // Notice distribution
                         sendNotify(alert);
-                        // Execute the plugin if enable
-                        pluginService.pluginExecute(Plugin.class, plugin -> plugin.alert(alert), (plugin, configMapList) -> plugin.alert(alert, configMapList));
+                        // Execute the plugin if enable (Compatible with old version plugins, will be removed in later versions)
+                        pluginRunner.pluginExecute(Plugin.class, plugin -> plugin.alert(alert));
+                        // Execute the plugin if enable with params
+                        pluginRunner.pluginExecute(PostAlertPlugin.class, (afterAlertPlugin, pluginContext) -> afterAlertPlugin.execute(alert, pluginContext));
+
                     }
                 } catch (IgnoreException ignored) {
                 } catch (InterruptedException e) {

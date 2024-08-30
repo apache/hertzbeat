@@ -15,19 +15,32 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.plugin.runner;
+
+
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import org.apache.hertzbeat.common.entity.plugin.PluginContext;
 
 /**
- * plugin type
+ * plugin runner
  */
-public enum PluginType {
+public interface PluginRunner {
 
     /**
-     * do something after alter
+     * execute plugin
+     * @param clazz plugin class
+     * @param execute plugin execution logic
+     * @param <T> plugin type
      */
-    POST_ALERT,
+    <T> void pluginExecute(Class<T> clazz, Consumer<T> execute);
+
     /**
-     * do something after collect
+     * execute plugin with params
+     * @param clazz plugin class
+     * @param execute plugin execution logic
+     * @param <T> plugin type
      */
-    POST_COLLECT
+    <T> void pluginExecute(Class<T> clazz, BiConsumer<T, PluginContext> execute);
+
 }
