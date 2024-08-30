@@ -17,9 +17,7 @@
 
 package org.apache.hertzbeat.plugin;
 
-import java.util.List;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.job.Configmap;
 
 /**
  * Plugin
@@ -30,10 +28,4 @@ public interface Plugin {
      * execute when alert
      */
     void alert(Alert alert);
-
-    /**
-     * Supports user-defined parameters
-     */
-    void alert(Alert alert, List<Configmap> params);
-
 }
