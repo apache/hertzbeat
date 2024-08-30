@@ -17,13 +17,21 @@
 
 package org.apache.hertzbeat.warehouse.store.history.greptime;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * GrepTimeDB configuration information
  */
-@ConfigurationProperties(prefix = "warehouse.store.greptime")
+
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+		+ SignConstants.DOT
+		+ WarehouseConstants.STORE
+		+ SignConstants.DOT
+		+ WarehouseConstants.HistoryName.GREPTIME)
 public record GreptimeProperties(@DefaultValue("false") boolean enabled,
 	@DefaultValue("127.0.0.1:4001") String grpcEndpoints,
 	@DefaultValue("jdbc:mysql://127.0.0.1:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true") String url,

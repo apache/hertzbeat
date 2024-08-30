@@ -1,0 +1,237 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<app-help-message-show
+  [help_message_content]="'bulletin.help.message.content' | i18n"
+  [guild_link]="'bulletin.help.link' | i18n"
+  [module_name]="'menu.monitor.bulletin'"
+  [icon_name]="'calculator'"
+></app-help-message-show>
+
+<nz-divider></nz-divider>
+
+<app-toolbar>
+  <ng-template #left>
+    <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
+      <i nz-icon nzType="sync" nzTheme="outline"></i>
+    </button>
+    <button nz-button nzType="primary" (click)="onNewBulletinDefine()">
+      <i nz-icon nzType="appstore-add" nzTheme="outline"></i>
+      {{ 'bulletin.new' | i18n }}
+    </button>
+    <!--TODO: Wait until the backend interface is improved before releasing it.-->
+    <!--<button *ngIf="currentDefine" nz-button nzType="primary" (click)="onEditBulletinDefine()">
+      <i nz-icon nzType="edit" nzTheme="outline"></i>
+      {{ 'bulletin.edit' | i18n }}
+    </button>-->
+    <button *ngIf="currentDefine" nz-button nzType="primary" nzDanger (click)="onDeleteBulletinDefines()">
+      <i nz-icon nzType="delete" nzTheme="outline"></i>
+      {{ 'bulletin.delete' | i18n }}
+    </button>
+    <button *ngIf="currentDefine" nz-button nzType="primary" nzDanger (click)="onBatchDeleteBulletinDefines()">
+      <i nz-icon nzType="delete" nzTheme="outline"></i>
+      {{ 'bulletin.batch.delete' | i18n }}
+    </button>
+  </ng-template>
+</app-toolbar>
+
+<nz-tabset nzType="card" (nzSelectedIndexChange)="onTabChange($event)">
+  <nz-tab *ngFor="let tab of tabs" [nzTitle]="tab">
+    <ng-container *ngIf="metricsData">
+      <nz-table
+        #fixedTable
+        [nzData]="metricsData"
+        [nzPageIndex]="pageIndex"
+        [nzPageSize]="pageSize"
+        [nzTotal]="total"
+        nzFrontPagination="false"
+        [nzLoading]="tableLoading"
+        nzShowSizeChanger
+        [nzPageSizeOptions]="[10, 20, 50]"
+        (nzQueryParams)="onTablePageChange($event)"
+        nzShowPagination="true"
+        [nzScroll]="{ x: 'auto' }"
+        nzBordered
+        class="table"
+      >
+        <thead>
+          <tr>
+            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
+            <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
+            <ng-container *ngFor="let metric of metrics">
+              <th nzAlign="center" [colSpan]="getKeys(metric).length">
+                {{ metric }}
+              </th>
+            </ng-container>
+          </tr>
+          <tr>
+            <ng-container *ngFor="let metric of metrics">
+              <ng-container *ngFor="let field of getKeys(metric)">
+                <th nzAlign="center" [colSpan]="1">
+                  {{ field }}
+                </th>
+              </ng-container>
+            </ng-container>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let content of fixedTable.data">
+            <tr>
+              <td nzAlign="center" [rowSpan]="1">{{ content.monitorName }}</td>
+              <td nzAlign="center" [rowSpan]="1">{{ content.host }}</td>
+              <ng-container *ngFor="let metric of content.metrics">
+                <ng-container *ngFor="let field of metric.fields">
+                  <ng-container *ngFor="let item of field">
+                    <td nzAlign="center">
+                      <ng-container *ngIf="item.value === 'NO_DATA'; else hasData">
+                        <nz-tag nzColor="warning">No Data Available</nz-tag>
+                      </ng-container>
+                      <ng-template #hasData>
+                        {{ item.value }}
+                        <nz-tag *ngIf="item.unit !== ''" nzColor="success">{{ item.unit }}</nz-tag>
+                      </ng-template>
+                    </td>
+                  </ng-container>
+                </ng-container>
+              </ng-container>
+            </tr>
+          </ng-container>
+        </tbody>
+      </nz-table>
+    </ng-container>
+  </nz-tab>
+</nz-tabset>
+
+<!-- new bulletin modal -->
+<nz-modal
+  [(nzVisible)]="isManageModalVisible"
+  [nzTitle]="(isManageModalAdd ? 'bulletin.new' : 'bulletin.edit') | i18n"
+  (nzOnCancel)="onManageModalCancel()"
+  (nzOnOk)="onManageModalOk()"
+  nzMaskClosable="false"
+  nzWidth="70%"
+  [nzOkLoading]="isManageModalOkLoading"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #defineForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="textInput" nzRequired="true">{{ 'bulletin.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <input nz-input placeholder="{{ 'bulletin.name.placeholder' | i18n }}" [(ngModel)]="define.name" name="inputText" required />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.type' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            nzAllowClear
+            nzShowSearch
+            name="appDefines"
+            [(ngModel)]="define.app"
+            (nzOnSearch)="onSearchAppDefines()"
+            (ngModelChange)="onAppChange($event)"
+            required
+          >
+            <ng-container *ngFor="let app of appEntries">
+              <nz-option *ngIf="isAppListLoading" [nzValue]="app.key" [nzLabel]="app.key + '/' + app.value"></nz-option>
+            </ng-container>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            nzAllowClear
+            nzShowSearch
+            name="monitors"
+            [(ngModel)]="define.monitorIds"
+            (nzOnSearch)="onSearchMonitorsByApp(define.app)"
+            nzMode="multiple"
+            required
+          >
+            <ng-container *ngFor="let monitor of monitors">
+              <nz-option *ngIf="isMonitorListLoading" [nzValue]="monitor.id" [nzLabel]="monitor.name"></nz-option>
+            </ng-container>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="dropdown" nzRequired="true">{{ 'bulletin.monitor.metrics' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-transfer [nzDataSource]="hierarchies" [nzRenderList]="[leftRenderList, null]" (nzChange)="transferChange($event)">
+            <ng-template #leftRenderList let-items let-onItemSelect="onItemSelect">
+              <nz-tree
+                [nzData]="treeNodes"
+                nzExpandAll
+                nzBlockNode
+                nzCheckable
+                nzCheckStrictly
+                [(ngModel)]="tempMetrics"
+                name="metrics"
+                (nzCheckBoxChange)="treeCheckBoxChange($event, onItemSelect)"
+              >
+                <ng-template let-node>
+                  <span
+                    (click)="checkBoxChange(node, onItemSelect)"
+                    class="ant-tree-node-content-wrapper ant-tree-node-content-wrapper-open"
+                  >
+                    {{ node.title }}
+                  </span>
+                </ng-template>
+              </nz-tree>
+            </ng-template>
+          </nz-transfer>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>
+
+<!-- delete bulletin modal -->
+<nz-modal
+  [(nzVisible)]="isBatchDeleteModalVisible"
+  [nzTitle]="'bulletin.batch.delete' | i18n"
+  (nzOnCancel)="onBatchDeleteModalCancel()"
+  (nzOnOk)="onBatchDeleteModalOk()"
+  nzMaskClosable="false"
+  nzWidth="70%"
+>
+  <div *nzModalContent class="-inner-content">
+    <form nz-form #defineForm="ngForm">
+      <nz-form-item>
+        <nz-form-label [nzSpan]="7" nzFor="textInput" nzRequired="true">{{ 'bulletin.name' | i18n }}</nz-form-label>
+        <nz-form-control [nzSpan]="12" [nzErrorTip]="'validation.required' | i18n">
+          <nz-select
+            nzMode="multiple"
+            nzPlaceHolder="Please select"
+            [(ngModel)]="this.deleteBulletinNames"
+            [nzShowSearch]="true"
+            name="delete"
+          >
+            <nz-option *ngFor="let tab of tabs" [nzLabel]="tab" [nzValue]="tab"></nz-option>
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+    </form>
+  </div>
+</nz-modal>

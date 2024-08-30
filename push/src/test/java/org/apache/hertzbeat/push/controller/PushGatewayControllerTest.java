@@ -19,6 +19,11 @@
 
 package org.apache.hertzbeat.push.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.io.InputStream;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.push.service.PushGatewayService;
@@ -32,12 +37,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * test case for {@link PushGatewayController}
  */
@@ -45,47 +44,47 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(MockitoExtension.class)
 class PushGatewayControllerTest {
 
-	private MockMvc mockMvc;
+    private MockMvc mockMvc;
 
-	@Mock
-	private PushGatewayService pushGatewayService;
+    @Mock
+    private PushGatewayService pushGatewayService;
 
-	@InjectMocks
-	private PushGatewayController gatewayController;
+    @InjectMocks
+    private PushGatewayController gatewayController;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		mockMvc = MockMvcBuilders.standaloneSetup(gatewayController).build();
-	}
+        mockMvc = MockMvcBuilders.standaloneSetup(gatewayController).build();
+    }
 
-	@Test
-	void testPushMetricsSuccess() throws Exception {
+    @Test
+    void testPushMetricsSuccess() throws Exception {
 
-		String mockData = "some metric data";
+        String mockData = "some metric data";
 
-		when(pushGatewayService.pushMetricsData(any(InputStream.class))).thenReturn(true);
+        when(pushGatewayService.pushMetricsData(any(InputStream.class))).thenReturn(true);
 
-		mockMvc.perform(post("/api/push/pushgateway")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(mockData))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-				.andExpect(jsonPath("$.msg").value("Push success"));
-	}
+        mockMvc.perform(post("/api/push/pushgateway")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mockData))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Push success"));
+    }
 
-	@Test
-	void testPushMetricsFailure() throws Exception {
+    @Test
+    void testPushMetricsFailure() throws Exception {
 
-		String mockData = "some metric data";
+        String mockData = "some metric data";
 
-		when(pushGatewayService.pushMetricsData(any(InputStream.class))).thenReturn(false);
+        when(pushGatewayService.pushMetricsData(any(InputStream.class))).thenReturn(false);
 
-		mockMvc.perform(post("/api/push/pushgateway")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(mockData))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.msg").value("Push failed"));
-	}
+        mockMvc.perform(post("/api/push/pushgateway")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mockData))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.msg").value("Push failed"));
+    }
 
 }

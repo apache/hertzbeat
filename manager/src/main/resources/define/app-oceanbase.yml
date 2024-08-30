@@ -24,11 +24,11 @@ name:
 # The description and help of this monitoring type
 help:
   zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 OceanBase 数据库的通用性能指标(系统信息、性能状态、Innodb、缓存、事物、用户线程、慢SQL等)进行采集监控，支持版本为 OceanBase 4.0+。<br>您可以点击“<i>新建 OceanBase 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
-  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of OceanBase database (system information, performance status, Innodb, cache, things, user threads, slow SQL, etc.). Supported version is OceanBase 4.0+. <br>You can click "<i>New Mysql Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of OceanBase database (system information, performance status, Innodb, cache, things, user threads, slow SQL, etc.). Supported version is OceanBase 4.0+. <br>You can click "<i>New OceanBase Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
   zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 OceanBase 數據庫的通用性能指標(系統信息、性能狀態、Innodb、緩存、事物、用戶線程、慢SQL等)進行采集監控，支持版本爲 OceanBase 4.0+。<br>您可以點擊“<i>新建 OceanBase 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/OceanBase
-  en-US: https://hertzbeat.apache.org/docs/help/OceanBase
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/oceanbase
+  en-US: https://hertzbeat.apache.org/docs/help/oceanbase
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key

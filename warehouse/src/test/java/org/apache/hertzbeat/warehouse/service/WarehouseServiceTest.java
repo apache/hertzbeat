@@ -17,9 +17,14 @@
 
 package org.apache.hertzbeat.warehouse.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
-
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.warehouse.service.impl.WarehouseServiceImpl;
 import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage;
@@ -31,13 +36,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link WarehouseServiceImpl}
  */
@@ -45,43 +43,43 @@ import static org.mockito.Mockito.when;
 @ExtendWith(SpringExtension.class)
 class WarehouseServiceTest {
 
-	@Mock
-	private AbstractRealTimeDataStorage realTimeDataStorage;
+    @Mock
+    private AbstractRealTimeDataStorage realTimeDataStorage;
 
-	@InjectMocks
-	private WarehouseServiceImpl warehouseService;
+    @InjectMocks
+    private WarehouseServiceImpl warehouseService;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
-	}
+        MockitoAnnotations.openMocks(this);
+    }
 
-	@Test
-	void testQueryMonitorMetricsData() {
+    @Test
+    void testQueryMonitorMetricsData() {
 
-		Long monitorId = 1L;
-		List<CollectRep.MetricsData> expectedData = Collections.emptyList();
+        Long monitorId = 1L;
+        List<CollectRep.MetricsData> expectedData = Collections.emptyList();
 
-		when(realTimeDataStorage.isServerAvailable()).thenReturn(true);
-		when(realTimeDataStorage.getCurrentMetricsData(monitorId)).thenReturn(expectedData);
+        when(realTimeDataStorage.isServerAvailable()).thenReturn(true);
+        when(realTimeDataStorage.getCurrentMetricsData(monitorId)).thenReturn(expectedData);
 
-		List<CollectRep.MetricsData> result = warehouseService.queryMonitorMetricsData(monitorId);
+        List<CollectRep.MetricsData> result = warehouseService.queryMonitorMetricsData(monitorId);
 
-		assertEquals(expectedData, result);
-		verify(realTimeDataStorage, never()).isServerAvailable();
-	}
+        assertEquals(expectedData, result);
+        verify(realTimeDataStorage, never()).isServerAvailable();
+    }
 
-	@Test
-	void testQueryMonitorMetricsDataNotAvailable() {
+    @Test
+    void testQueryMonitorMetricsDataNotAvailable() {
 
-		Long monitorId = 1L;
+        Long monitorId = 1L;
 
-		when(realTimeDataStorage.isServerAvailable()).thenReturn(false);
+        when(realTimeDataStorage.isServerAvailable()).thenReturn(false);
 
-		List<CollectRep.MetricsData> result = warehouseService.queryMonitorMetricsData(monitorId);
+        List<CollectRep.MetricsData> result = warehouseService.queryMonitorMetricsData(monitorId);
 
-		assertTrue(result.isEmpty());
-		verify(realTimeDataStorage, never()).getCurrentMetricsData(anyLong());
-	}
+        assertTrue(result.isEmpty());
+        verify(realTimeDataStorage, never()).getCurrentMetricsData(anyLong());
+    }
 }

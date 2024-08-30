@@ -17,16 +17,16 @@ keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 
 2. 修改 Kafka 启动脚本
 
-修改 Kafka 安装目录下的启动脚本 `/bin/kafka-server-start.sh`
-在脚本正文（即非注释行）的第一行前添加如下内容, ⚠️注意替换您自己的端口和对外 IP 地址
+    修改 Kafka 安装目录下的启动脚本 `/bin/kafka-server-start.sh`  
+    在脚本正文（即非注释行）的第一行前添加如下内容, ⚠️注意替换您自己的端口和对外 IP 地址
 
-```shell
-export JMX_PORT=9999;
-export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.jmxremote.rmi.port=9999 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false";
-
-#  这是最后一行本来就存在的
-# exec $base_dir/kafka-run-class.sh $EXTRA_ARGS kafka.Kafka "$@"
-```
+    ```shell
+    export JMX_PORT=9999;
+    export KAFKA_JMX_OPTS="-Djava.rmi.server.hostname=ip地址 -Dcom.sun.management.jmxremote.rmi.port=9999 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false";
+    
+    #  这是最后一行本来就存在的
+    # exec $base_dir/kafka-run-class.sh $EXTRA_ARGS kafka.Kafka "$@"
+    ```
 
 3. 重启 Kafka 服务
 

@@ -21,13 +21,13 @@ import jakarta.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.StringUtils;
 
 /**
  * unit test case for WeChatAppAlertNotifyHandlerImpl
@@ -43,7 +43,7 @@ public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrati
         String corpId = System.getenv("CORP_ID");
         String agentId = System.getenv("AGENT_ID");
         String appSecret = System.getenv("APP_SECRET");
-        if (!StringUtils.hasText(corpId) || !StringUtils.hasText(agentId) || !StringUtils.hasText(appSecret)) {
+        if (StringUtils.isBlank(corpId) || StringUtils.isBlank(agentId) || StringUtils.isBlank(appSecret)) {
             log.warn("Please provide environment variables CORP_ID, TG_USER_ID APP_SECRET");
             return;
         }
@@ -56,7 +56,7 @@ public class WeChatAppAlertNotifyHandlerImplTest extends AbstractSpringIntegrati
         Alert alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");
-        NoticeTemplate noticeTemplate=new NoticeTemplate();
+        NoticeTemplate noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("WeChatApp");
         noticeTemplate.setContent("");

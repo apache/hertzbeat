@@ -12,7 +12,7 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
 
 > In many scenarios, we need to monitor the provided HTTP API interface and obtain the index value returned by the interface. In this article, we use the http custom protocol to parse our common http interface response structure, and obtain the fields in the returned body as metric data.
 
-```
+```json
 {
    "code": 200,
    "msg": "success",
@@ -24,7 +24,7 @@ Before reading this tutorial, we hope that you are familiar with how to customiz
 As above, usually our background API interface will design such a general return. The same is true for the background of the hertzbeat system. Today, we will use the hertzbeat API as an example, add a new monitoring type **hertzbeat**, and monitor and collect its system summary statistics API
 `http://localhost:1157/api/summary`, the response data is:
 
-```
+```json
 {
    "msg": null,
    "code": 0,

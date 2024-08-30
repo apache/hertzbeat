@@ -46,67 +46,67 @@ import org.springframework.data.jpa.domain.Specification;
 @ExtendWith(MockitoExtension.class)
 class AlertConvergeServiceTest {
 
-	@Mock
-	private AlertConvergeDao alertConvergeDao;
+    @Mock
+    private AlertConvergeDao alertConvergeDao;
 
-	@InjectMocks
-	private AlertConvergeServiceImpl alertConvergeService;
+    @InjectMocks
+    private AlertConvergeServiceImpl alertConvergeService;
 
-	@Test
-	public void testAddAlertConverge() {
+    @Test
+    public void testAddAlertConverge() {
 
-		AlertConverge alertConverge = new AlertConverge();
-		alertConvergeService.addAlertConverge(alertConverge);
+        AlertConverge alertConverge = new AlertConverge();
+        alertConvergeService.addAlertConverge(alertConverge);
 
-		verify(alertConvergeDao, times(1)).save(alertConverge);
-	}
+        verify(alertConvergeDao, times(1)).save(alertConverge);
+    }
 
-	@Test
-	public void testModifyAlertConverge() {
+    @Test
+    public void testModifyAlertConverge() {
 
-		AlertConverge alertConverge = new AlertConverge();
-		alertConvergeService.modifyAlertConverge(alertConverge);
+        AlertConverge alertConverge = new AlertConverge();
+        alertConvergeService.modifyAlertConverge(alertConverge);
 
-		verify(alertConvergeDao, times(1)).save(alertConverge);
-	}
+        verify(alertConvergeDao, times(1)).save(alertConverge);
+    }
 
-	@Test
-	public void testGetAlertConverge() {
+    @Test
+    public void testGetAlertConverge() {
 
-		long convergeId = 1L;
-		AlertConverge alertConverge = new AlertConverge();
-		when(alertConvergeDao.findById(convergeId)).thenReturn(Optional.of(alertConverge));
-		AlertConverge result = alertConvergeService.getAlertConverge(convergeId);
+        long convergeId = 1L;
+        AlertConverge alertConverge = new AlertConverge();
+        when(alertConvergeDao.findById(convergeId)).thenReturn(Optional.of(alertConverge));
+        AlertConverge result = alertConvergeService.getAlertConverge(convergeId);
 
-		verify(alertConvergeDao, times(1)).findById(convergeId);
-		assertEquals(alertConverge, result);
-	}
+        verify(alertConvergeDao, times(1)).findById(convergeId);
+        assertEquals(alertConverge, result);
+    }
 
-	@Test
-	public void testDeleteAlertConverges() {
+    @Test
+    public void testDeleteAlertConverges() {
 
-		Set<Long> convergeIds = Set.of(1L, 2L, 3L);
-		alertConvergeService.deleteAlertConverges(convergeIds);
+        Set<Long> convergeIds = Set.of(1L, 2L, 3L);
+        alertConvergeService.deleteAlertConverges(convergeIds);
 
-		verify(alertConvergeDao, times(1)).deleteAlertConvergesByIdIn(convergeIds);
-	}
+        verify(alertConvergeDao, times(1)).deleteAlertConvergesByIdIn(convergeIds);
+    }
 
-	@Test
-	public void testGetAlertConverges() {
+    @Test
+    public void testGetAlertConverges() {
 
-		Page<AlertConverge> page = new PageImpl<>(Collections.emptyList());
-		when(alertConvergeDao.findAll(
-				any(Specification.class),
-				any(Pageable.class))
-		).thenReturn(page);
+        Page<AlertConverge> page = new PageImpl<>(Collections.emptyList());
+        when(alertConvergeDao.findAll(
+                any(Specification.class),
+                any(Pageable.class))
+        ).thenReturn(page);
 
-		Page<AlertConverge> result = alertConvergeService.getAlertConverges(null, null, "id", "desc", 1, 10);
+        Page<AlertConverge> result = alertConvergeService.getAlertConverges(null, null, "id", "desc", 1, 10);
 
-		verify(alertConvergeDao, times(1)).findAll(
-				any(Specification.class),
-				any(PageRequest.class)
-		);
-		assertEquals(page, result);
-	}
+        verify(alertConvergeDao, times(1)).findAll(
+                any(Specification.class),
+                any(PageRequest.class)
+        );
+        assertEquals(page, result);
+    }
 
 }

@@ -168,6 +168,8 @@ $ svn ci -m "add gpg key for muchunjin"
 
 ## 3. 准备物料 & 发布
 
+### 准备发布物料
+
 #### 3.1 基于 master 分支，创建一个名为 release-${release_version}-rcx 的分支，例如 release-1.6.0-rc1。并基于 release-1.6.0-rc1 分支创建一个名为 v1.6.0-rc1 的标签，并将此标签设置为预发布
 
 ```shell
@@ -228,6 +230,8 @@ release-1.6.0-rc1
 
 生成的代码归档文件在 `dist/apache-hertzbeat-1.6.0-incubating-src.tar.gz`
 
+### 签名发布物料
+
 #### 3.5 对二进制和源码包进行签名
 
 将上步骤生成的三个文件包放到`dist`目录下(若无则新建目录)，然后对文件包进行签名和SHA512校验和生成。
@@ -248,7 +252,7 @@ for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
 
 > 最终文件列表如下
 
-```
+```text
 apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
@@ -335,7 +339,7 @@ svn commit -m "release for HertzBeat 1.6.0-RC1"
 
 ## 4. 进入社区投票阶段
 
-#### 4.1 发送社区投票邮件
+### 4.1 发送社区投票邮件
 
 发送社区投票邮件需要至少三个`+1`，且无`-1`。
 
@@ -343,7 +347,7 @@ svn commit -m "release for HertzBeat 1.6.0-RC1"
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
 > `Body`:
 
-```
+```text
 Hello HertzBeat Community:
 
 This is a call for vote to release Apache HertzBeat (incubating) version release-1.6.0-RC1.
@@ -399,7 +403,7 @@ Thanks!
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Dear HertzBeat community,
 
 Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
@@ -426,7 +430,7 @@ ChunJin Mu
 
 邮件内容中的一项是`Vote thread`，在 <https://lists.apache.org/list.html?dev@hertzbeat.apache.org> 查看获取
 
-#### 3.2 发送孵化社区投票邮件
+### 3.2 发送孵化社区投票邮件
 
 发送孵化社区投票邮件需要至少三个`+1`，且无`-1`。
 
@@ -435,7 +439,7 @@ ChunJin Mu
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Hello Incubator Community:
 
 This is a call for a vote to release Apache HertzBeat (incubating) version 1.6.0-RC1.
@@ -488,7 +492,7 @@ ChunJin Mu
 > `Send to`: <general@incubator.apache.org> <br />
 > `Body`:
 
-```
+```text
 Thanks everyone for review and vote, 72H passed. I'll announce the vote result soon.
 
 Best,
@@ -501,7 +505,7 @@ Chunjin Mu
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Hi Incubator Community,
 
 The vote to release Apache HertzBeat (incubating) 1.6.0-rc4 has passed with 3 +1 binding and no +0 or -1 votes.
@@ -529,13 +533,13 @@ ChunJin Mu
 
 ## 4. 完成最终发布步骤
 
-#### 4.1 迁移源代码和二进制包
+### 4.1 迁移源代码和二进制包
 
 ```shell
 svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 https://dist.apache.org/repos/dist/release/incubator/hertzbeat/1.6.0  -m "transfer packages for 1.6.0-RC1"
 ```
 
-#### 4.2 添加新版本下载地址到官网
+### 4.2 添加新版本下载地址到官网
 
 <https://github.com/apache/hertzbeat/blob/master/home/docs/download.md>
 <https://github.com/apache/hertzbeat/blob/master/home/i18n/zh-cn/docusaurus-plugin-content-docs/current/download.md>
@@ -544,7 +548,7 @@ svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 http
 
 > 需要注意的是，下载链接可能需要一个小时后才会生效，请注意。
 
-#### 4.3 Github 生成 Release
+### 4.3 Github 生成 Release
 
 基于 release-1.6.0-rc1 分支修改创建一个名为 v1.6.0 的标签，并将此标签设置为 latest release。
 
@@ -556,13 +560,13 @@ svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 http
 
 - 发版标题:
 
-```
+```text
 v1.6.0
 ```
 
 - 描述:
 
-```
+```text
 xxx
 release note: xxx
 ```
@@ -571,14 +575,14 @@ release note: xxx
 
 然后将 release-1.6.0-rc1 分支重命名 为 release-1.6.0。
 
-#### 4.4 发送新版本公告邮件
+### 4.4 发送新版本公告邮件
 
 > `Send to`: <general@incubator.apache.org> <br />
 > `cc`: <dev@hertzbeat.apache.org> <br />
 > `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
-```
+```text
 Hi Community,
 
 We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.
