@@ -39,6 +39,7 @@ import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
+import org.apache.hertzbeat.manager.dao.PluginParamDao;
 import org.apache.hertzbeat.manager.service.impl.PluginServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,8 +61,12 @@ class PluginServiceTest {
 
     @InjectMocks
     private PluginServiceImpl pluginService;
+
     @Mock
     private PluginMetadataDao metadataDao;
+
+    @Mock
+    private PluginParamDao pluginParamDao;
 
     @Mock
     private PluginItemDao itemDao;
@@ -69,7 +74,7 @@ class PluginServiceTest {
 
     @BeforeEach
     void setUp() {
-        pluginService = new PluginServiceImpl(metadataDao, itemDao);
+        pluginService = new PluginServiceImpl(metadataDao, itemDao, pluginParamDao);
     }
 
     @Test

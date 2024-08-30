@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.plugin;
+
+import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.plugin.PluginContext;
 
 /**
- * plugin type
+ * Post-alarm plug-in
  */
-public enum PluginType {
+public interface PostAlertPlugin {
 
     /**
-     * do something after alter
+     * Supports user-defined parameters
      */
-    POST_ALERT,
-    /**
-     * do something after collect
-     */
-    POST_COLLECT
+    void execute(Alert alert, PluginContext pluginContext);
+
 }
