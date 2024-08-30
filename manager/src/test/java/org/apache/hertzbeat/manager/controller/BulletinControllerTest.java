@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
- package org.apache.hertzbeat.manager.controller;
+package org.apache.hertzbeat.manager.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
