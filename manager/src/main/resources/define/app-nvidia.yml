@@ -193,7 +193,6 @@ metrics:
       timeout: ^_^timeout^_^
       reuseConnection: ^_^reuseConnection^_^
       # ssh run collect script
-      #script: nvidia-smi --query-gpu=index,name,utilization.gpu,utilization.memory,memory.total,memory.used,memory.free,temperature.gpu --format=csv,nounits | sed 's/ / /g' | sed 's/,/ /g'
       script: nvidia-smi --query-gpu=index,name,utilization.gpu,utilization.memory,memory.total,memory.used,memory.free,temperature.gpu --format=csv,nounits | sed 's/ *, */,/g' | sed 's/ / /g' | sed 's/,/ /g'
       # ssh response data parse type: oneRow, multiRow
       parseType: multiRow
