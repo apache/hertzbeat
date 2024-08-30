@@ -56,6 +56,11 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public void addTags(List<Tag> tags) {
+        // Verify request data
+        tags = tags.stream().peek(tag -> {
+            tag.setType((byte) 1);
+            tag.setId(null);
+        }).distinct().collect(Collectors.toList());
         tagDao.saveAll(tags);
     }
 
@@ -108,6 +113,9 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public void deleteTags(HashSet<Long> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return;
+        }
         if (tagMonitorBindDao.countByTagIdIn(ids) != 0) {
             throw new CommonException("The tag is in use and cannot be deleted.");
         }

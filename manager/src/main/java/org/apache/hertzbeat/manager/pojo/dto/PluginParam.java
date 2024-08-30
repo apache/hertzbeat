@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.manager;
+package org.apache.hertzbeat.manager.pojo.dto;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
@@ -30,7 +30,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -42,18 +42,18 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
- * Monitor parameter values
+ * PluginParam
  */
 @Entity
-@Table(name = "hzb_param", indexes = { @Index(columnList = "monitorId") },
-        uniqueConstraints = @UniqueConstraint(columnNames = {"monitorId", "field"}))
+@Table(name = "hzb_plugin_param", indexes = { @Index(columnList = "pluginMetadataId") },
+        uniqueConstraints = @UniqueConstraint(columnNames = {"pluginMetadataId", "field"}))
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Schema(description = "Parameter Entity")
 @EntityListeners(AuditingEntityListener.class)
-public class Param {
+public class PluginParam {
 
     /**
      * Parameter primary key index ID
@@ -62,19 +62,19 @@ public class Param {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(title = "Parameter primary key index ID", example = "87584674384", accessMode = READ_ONLY)
     private Long id;
-
     /**
      * Monitor ID
      */
-    @Schema(title = "Monitor task ID", example = "875846754543", accessMode = READ_WRITE)
-    private Long monitorId;
+    @Schema(title = "Plugin task ID", example = "875846754543", accessMode = READ_WRITE)
+    @NotNull
+    private Long pluginMetadataId;
 
     /**
      * Parameter Field Identifier
      */
     @Schema(title = "Parameter identifier field", example = "port", accessMode = READ_WRITE)
     @Size(max = 100)
-    @NotBlank(message = "field can not null")
+    @NotNull
     private String field;
 
     /**

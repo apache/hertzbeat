@@ -25,7 +25,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -53,7 +53,7 @@ public class GeneralConfig {
     @Id
     @Schema(title = "Config type: email sms, primary key ", description = "Config type: email sms, primary key ",
             accessMode = READ_WRITE)
-    @NotNull
+    @NotBlank(message = "ip can not null")
     private String type;
 
     @Schema(title = "Config content", description = "Config content，formatjson", accessMode = READ_WRITE)

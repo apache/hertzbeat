@@ -48,7 +48,7 @@
       "new": "Add New Bulletin Item",
       "edit": "Edit Bulletin Item",
       "delete": "Delete Bulletin Item",
-      "batch.delete": "Batch delete Bulletin Item",
+      "batch.delete": "Batch delete Bulletin Items",
       "name": "Bulletin Name",
       "name.placeholder": "Please enter a custom bulletin name",
       "monitor.type": "Monitor Type",
@@ -56,7 +56,7 @@
       "monitor.metrics": "Monitor Metrics",
       "help.message.content": "Custom Monitoring Bulletin",
       "help.content": "Custom monitoring bulletin, displaying selected metrics of a specific monitor in table form",
-      "help.link": ""
+      "help.link": "https://hertzbeat.apache.org/docs/help/bulletin"
     },
     "advanced": {
       "": "Advanced",
@@ -580,7 +580,9 @@
   "plugin.jar.file": "Jar File",
   "plugin.delete": "Delete Plugin",
   "plugin.type.POST_ALERT": "POST ALERT",
+  "plugin.type.POST_COLLECT": "POST COLLECT",
   "plugin.search": "Search plugins",
+  "plugin.edit": "Edit plugin",
   "define.help": "The monitor templates define each monitoring type, parameter variable, metrics info, collection protocol, etc. You can select an existing monitoring template from the drop-down menu then make modifications according to your own needs. The bottom-left area is the compare area and the bottom-right area is the editing place. <br> You can also click \"New Monitor Type\" to custom define an new type. Currently supported protocols include<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-http'> HTTP</a>, <a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jdbc'>JDBC</a>, <a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-ssh'>SSH</a>, <a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'>JMX</a>, <a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-snmp'> SNMP</a>. <a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/template'>Monitor Templates</a>.",
   "define.help.link": "https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-point/",
   "define.save-apply": "Save And Apply",
