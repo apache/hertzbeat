@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.plugin;
+
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.plugin.PluginContext;
 
 /**
- * plugin type
+ * Post-collect plug-in
  */
-public enum PluginType {
+public interface PostCollectPlugin {
 
-    /**
-     * do something after alter
-     */
-    POST_ALERT,
     /**
      * do something after collect
      */
-    POST_COLLECT
+    void execute(CollectRep.MetricsData metricsData, PluginContext pluginContext);
+
 }
