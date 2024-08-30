@@ -1,6 +1,6 @@
 ---
-id: plugin  
-title: 自定义插件      
+id: plugin
+title: 自定义插件
 sidebar_label: 自定义插件 
 ---
 
@@ -49,7 +49,7 @@ sidebar_label: 自定义插件
          }
      }
    ```
-   
+
 3. 在 `META-INF/services/org.apache.hertzbeat.plugin.PostAlertPlugin` （如果没有请自行创建） 文件中增加接口实现类的全限定名，每个实现类全限定名单独成行。
    
    ```shell
