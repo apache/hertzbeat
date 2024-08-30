@@ -57,7 +57,7 @@ public class GrafanaConfiguration {
     public String getPrefix() {
         if (url.startsWith(HTTP)) {
             return HTTP;
-        }else if (url.startsWith(HTTPS)) {
+        } else if (url.startsWith(HTTPS)) {
             return HTTPS;
         }
         return HTTP;
@@ -69,7 +69,7 @@ public class GrafanaConfiguration {
     public String getUrl() {
         if (getPrefix().equals(HTTP)) {
             return url.replace(HTTP, "");
-        }else if (getPrefix().equals(HTTPS)) {
+        } else if (getPrefix().equals(HTTPS)) {
             return url.replace(HTTPS, "");
         }
         return url;
