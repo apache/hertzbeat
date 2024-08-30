@@ -23,15 +23,6 @@
         <groupId>org.apache.hertzbeat</groupId>
         <version>2.0-SNAPSHOT</version>
     </parent>
-    <properties>
-        <common.version>1.0</common.version>
-        <iotdb-session.version>0.13.3</iotdb-session.version>
-        <influxdb.version>2.23</influxdb.version>
-        <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
-        <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
-        <greptimedb.version>0.7.3</greptimedb.version>
-        <mysql-jdbcdriver.version>8.0.33</mysql-jdbcdriver.version>
-    </properties>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>hertzbeat-warehouse</artifactId>
@@ -42,6 +33,12 @@
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <!-- plugin -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-plugin</artifactId>
             <scope>provided</scope>
         </dependency>
         <!-- util -->

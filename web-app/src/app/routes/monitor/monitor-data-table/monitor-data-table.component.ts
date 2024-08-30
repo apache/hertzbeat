@@ -36,7 +36,8 @@ export class MonitorDataTableComponent implements OnInit {
   set monitorId(monitorId: number) {
     this._monitorId = monitorId;
     if (this._monitorId && this.metrics) {
-      // 需将monitorId作为输入参数的最后一个  这样在执行loadData时其它入参才有值
+      // Make sure the monitorId is the last input parameter
+      // So that other input parameters are filled in before loadData is executed
       this.loadData();
     }
   }
@@ -52,6 +53,7 @@ export class MonitorDataTableComponent implements OnInit {
   @Input()
   height: string = '100%';
 
+  showModal!: boolean;
   time!: any;
   fields!: any[];
   valueRows!: any[];
@@ -68,7 +70,7 @@ export class MonitorDataTableComponent implements OnInit {
 
   loadData() {
     this.loading = true;
-    // 读取实时指标数据
+    // Read real-time metrics data
     let metricData$ = this.monitorSvc
       .getMonitorMetricsData(this.monitorId, this.metrics)
       .pipe(finalize(() => (this.loading = false)))

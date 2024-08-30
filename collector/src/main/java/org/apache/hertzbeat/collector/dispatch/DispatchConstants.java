@@ -132,6 +132,16 @@ public interface DispatchConstants {
      */
     String PROTOCOL_IMAP = "imap";
 
+    /**
+     * protocol script
+     */
+    String PROTOCOL_SCRIPT = "script";
+
+    /**
+     * protocol mqtt
+     */
+    String PROTOCOL_MQTT = "mqtt";
+
     // Protocol type related - end
 
     // http protocol related - start should reuse HttpHeaders as much as possible

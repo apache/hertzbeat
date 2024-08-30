@@ -17,17 +17,22 @@
 
 package org.apache.hertzbeat.common.config;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * common module config
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.common")
+
+@AutoConfiguration
+@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
+        + SignConstants.DOT
+        + ConfigConstants.FunctionModuleConstants.COMMON)
 @EnableConfigurationProperties(CommonProperties.class)
-@Configuration
 public class CommonConfig {
 
     public CommonConfig(CommonProperties commonProperties) {

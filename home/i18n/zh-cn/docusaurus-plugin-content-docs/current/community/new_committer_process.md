@@ -5,20 +5,20 @@ sidebar_position: 4
 ---
 
 <!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
 
-       https://www.apache.org/licenses/LICENSE-2.0
+https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 
 [官方指南](https://community.apache.org/newcommitter.html#new-committer-process)
@@ -49,7 +49,6 @@ sidebar_position: 4
 
   - 等待root告诉我们已经完成
   - [Roster](https://whimsy.apache.org/roster/ppmc/hertzbeat) 添加新的 committer
-
 - Announce New Committer
 
   参见 **Announce New Committer Template**
@@ -58,11 +57,15 @@ sidebar_position: 4
 
 请注意，模板中有三个占位符在使用之前应该替换：
 
-- NEW_COMMITTER_NAME
+- NEW_COMMITTER_NAME 这须是真实名字，而非 Github 名称或 Id
 - NEW_COMMITTER_EMAIL
 - NEW_COMMITTER_APACHE_NAME
 
 ### Committer投票模板
+
+:::note
+NEW_COMMITTER_NAME 这须是真实名字，而非 Github 名称或 Id
+:::
 
 ```text
 To: private@hertzbeat.apache.org
@@ -104,7 +107,7 @@ ttt
 ```
 
 注意，投票将在今天一周后结束，即
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
 [Apache投票指南](https://community.apache.org/newcommitter.html)
 
 ### 关闭投票模板
@@ -141,6 +144,7 @@ Hello ${NEW_COMMITTER_NAME},
 
 The HertzBeat Project Management Committee (PMC) 
 hereby offers you committer privileges to the project.
+
 These privileges are offered on the understanding that
 you'll use them reasonably and with common sense.
 We like to work on trust rather than unnecessary constraints. 
@@ -157,30 +161,53 @@ probably find that you spend more time here.
 Of course, you can decline and instead remain as a 
 contributor, participating as you do now.
 
-A. This personal invitation is a chance for you to 
-accept or decline in private.  Either way, please 
-let us know in reply to the private@hertzbeat.apache.org
-address only.
+This personal invitation is a chance for you to accept or decline in private.
+Please let us know in reply to this message whether you accept or decline.
 
-B. If you accept, the next step is to register an iCLA:
-    1. Details of the iCLA and the forms are found 
+If you accept, you will need an Apache account (id) with privileges.
+Please follow these instructions.
+
+A. If you already have an ICLA on file:
+
+    1. If you already have an Apache account, let us know your id and we
+will grant you privileges on the project repositories.
+
+    2. If you have previously sent an ICLA, let us know the email address
+and public name used on the ICLA and your preferred Apache id, and
+we will request your account.
+
+    3. If the email address on the previously submitted ICLA is no longer
+valid, let us know the email address and public name used on the new ICLA,
+and your preferred Apache id. Continue to step B below and file your new ICLA.
+
+Look to see if your preferred ID is already taken at
+https://people.apache.org/committer-index.html
+
+B. If there is not already an ICLA on file, you need to submit an ICLA:
+
+    1. Details of the ICLA and the forms are found
     through this link: https://www.apache.org/licenses/#clas
 
-    2. Instructions for its completion and return to 
+    2. Instructions for its completion and return to
     the Secretary of the ASF are found at
-    https://www.apache.org/licenses/#submitting
+    https://www.apache.org/licenses/contributor-agreements.html#submitting
 
-    3. When you transmit the completed iCLA, request 
-    to notify the Apache HertzBeat and choose a 
-    unique Apache ID. Look to see if your preferred 
-    ID is already taken at 
+    Do not copy the project or any other individual on your message
+    to Secretary, as the form contains Personally Identifiable Information
+    that should be kept private.
+
+    3. When you complete the ICLA form, be sure to include in the form
+    the Apache [Project] project and choose a
+    unique Apache ID. Look to see if your preferred
+    ID is already taken at
     https://people.apache.org/committer-index.html
-    This will allow the Secretary to notify the PMC 
-    when your iCLA has been recorded.
+    This will allow the Secretary to notify the PMC
+    when your ICLA has been recorded.
 
-When recording of your iCLA is noted, you will 
-receive a follow-up message with the next steps for 
+When recording of your ICLA is noted, you will
+receive a follow-up message with the next steps for
 establishing you as a committer.
+
 ```
 
 ### Committer接受模板
@@ -257,8 +284,10 @@ Best Wishes!
 ## 详细步骤
 
 ### 接受邀请
+
 当通过PMC内部投票后，PMC会向您索要个人邮箱，之后您会收到一封邮件，邮件会指引您进行下一步操作，内容为:
-```
+
+```text
 Hello xxxx,
 
 The HertzBeat Project Management Committee (PPMC)
@@ -307,7 +336,7 @@ establishing you as a committer.
 
 如果您接受邀请，请回复该邮件，记住要**回复全部**，回复内容为:
 
-```
+```text
 hi, i accept. Thanks for invitaion.
 ```
 
@@ -319,70 +348,73 @@ hi, i accept. Thanks for invitaion.
 
 1. 下载iCLA申请表
 
-打开访问:[https://www.apache.org/licenses/#clas](https://www.apache.org/licenses/#clas)
+    打开访问:[https://www.apache.org/licenses/#clas](https://www.apache.org/licenses/#clas)
 
-找到`CLAs`点击进入页面
+    找到`CLAs`点击进入页面
 
-![](/img/docs/community/clas-web.png)
+    ![](/img/docs/community/clas-web.png)
 
-找到`ICLA(个人贡献者许可协议)`，点击[Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf)
+    找到`ICLA(个人贡献者许可协议)`，点击[Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf)
 
-![](/img/docs/community/icla-web.png)
+    ![](/img/docs/community/icla-web.png)
 
-跳转后，会显示需要签署的协议，这里可以在网页上直接填写，也可以下载后填写。
+    跳转后，会显示需要签署的协议，这里可以在网页上直接填写，也可以下载后填写。
 
-![](/img/docs/community/icla-pdf.png)
+    ![](/img/docs/community/icla-pdf.png)
 
 2. 填写iCLA
 
-> tips: 签名时需要手写签名，其他的可以直接填写后打印。
+    > tips: 签名时需要手写签名，其他的可以直接填写后打印。
 
-需要填写的内容：
+    需要填写的内容：
 
-![](/img/docs/community/icla-content-1.png)
-![](/img/docs/community/icla-content-2.png)
+    ![](/img/docs/community/icla-content-1.png)
+    ![](/img/docs/community/icla-content-2.png)
 
-在PDF中需要填写的字段：
- - `Full name`
- - `Public name`
- - `Postal Address`
- - `Country`
- - `E-Mail`
- - `(optional) preferred Apache id(s)`
- - `(optional) notify project`
- - `Date`
+    在PDF中需要填写的字段：
 
-> 填写样例
-> ![](/img/docs/community/icla-content-3.png)
-> ![](/img/docs/community/icla-content-4.png)
+   - `Full name`
+   - `Public name`
+   - `Postal Address`
+   - `Country`
+   - `E-Mail`
+   - `(optional) preferred Apache id(s)`
+   - `(optional) notify project`
+   - `Date`
+
+    > 填写样例
+    > ![](/img/docs/community/icla-content-3.png)
+    > ![](/img/docs/community/icla-content-4.png)
 
 3. 打印并签署
 
-![](/img/docs/community/icla-content-5.png)
+    ![](/img/docs/community/icla-content-5.png)
 
-`Please sign`字段需要将文件打印出来然后手写签名，内容为自己姓名的全拼。
+    `Please sign`字段需要将文件打印出来然后手写签名，内容为自己姓名的全拼。
 
 4. 将签名后的文件拍照或扫描转为PDF，并重命名为`姓名拼音-icla.pdf`
 
 5. 发送邮件到指定邮箱
 
-邮件发送到`secretary@apache.org`，抄送到`private@hertzbeat.apache.org`。
+  邮件发送到`secretary@apache.org`，抄送到`private@hertzbeat.apache.org`。
 
-**发送模板**
+  注意⚠️此邮件内容需要附加上之前的 committer 邀请邮件信息, 建议在之前的往来邮件点击回复然后修改标题和收件人等。
 
-主题：`Accept to become a Hertzbeat(incubating) committer`
+  **发送模板**
 
-正文:
+  主题：`Accept to become a Hertzbeat(incubating) committer`
 
-```
-Hello Apache,
-    I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
-Thanks !
-```
+  正文:
 
-大概1-5个工作日你就会收到一封来自`root@apache.org`的邮件。
+  ```text
+  Hello Apache,
+      I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
+  Thanks !
+  ```
 
-当您收到邮件标题为：`Welcome to the Apache Software Foundation`的邮件，恭喜你，你已经获取到Apache ID了！
+  大概1-5个工作日你就会收到一封来自`root@apache.org`的邮件。
+
+  当您收到邮件标题为：`Welcome to the Apache Software Foundation`的邮件，恭喜你，你已经获取到Apache ID了！
 
 ### 设置Apache密码
 
@@ -396,7 +428,8 @@ Thanks !
 
 ### 将Apache账号和GitHub账号关联
 
-访问: https://whimsy.apache.org/roster/committer/${APACHE_ID}
+访问: <https://whimsy.apache.org/roster/committer/${APACHE_ID}>
+
 - `${APACHE_ID}`替换成你的Apache ID
 
 登录后可以看到这个内容`Link GitHub username to ASF id`，点击跳转
@@ -420,6 +453,7 @@ Thanks !
 ![](/img/docs/community/account-6.png)
 
 邮箱中会收到一封邮件，点击`Join @apache`
+
 > 这里邮箱指的是您提供给PMC的那个邮箱地址
 
 ![](/img/docs/community/account-7.png)
@@ -430,6 +464,7 @@ Thanks !
 ![](/img/docs/community/account-9.png)
 
 回到Apache页面，提示GitHub启用多重身份认证，在GitHub页面启用双重身份认证
+
 > GitHub双重身份认证介绍，[点击跳转官方文档](https://docs.github.com/zh/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication)
 
 ![](/img/docs/community/account-10.png)
@@ -441,7 +476,6 @@ Thanks !
 至此您的GitHub账号与Apache账号就绑定完成了。
 
 最后一步，联系PMC主席开启svn和其他访问权限。
-
 
 ## 邮箱绑定
 
@@ -465,4 +499,4 @@ Thanks !
 
 配置完成。
 
-最后一步，别忘了订阅开发邮箱。
+最后一步，别忘了订阅[开发者邮箱列表](./mailing_lists.md)。

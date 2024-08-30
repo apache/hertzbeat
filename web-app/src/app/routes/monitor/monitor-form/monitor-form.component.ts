@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnChanges, SimpleChanges } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 import { Collector } from '../../../pojo/Collector';
@@ -29,7 +29,7 @@ import { ParamDefine } from '../../../pojo/ParamDefine';
   templateUrl: './monitor-form.component.html',
   styleUrls: ['./monitor-form.component.less']
 })
-export class MonitorFormComponent {
+export class MonitorFormComponent implements OnChanges {
   @Input() monitor!: any;
   @Input() loading!: boolean;
   @Input() loadingTip!: string;
@@ -40,13 +40,37 @@ export class MonitorFormComponent {
   @Input() advancedParams!: Param[];
   @Input() paramDefines!: ParamDefine[];
   @Input() advancedParamDefines!: ParamDefine[];
+  @Input() paramValueMap!: Map<String, Param>;
 
   @Output() readonly formSubmit = new EventEmitter<any>();
   @Output() readonly formCancel = new EventEmitter<any>();
   @Output() readonly formDetect = new EventEmitter<any>();
   @Output() readonly hostChange = new EventEmitter<string>();
+  @Output() readonly collectorChange = new EventEmitter<string>();
+
+  hasAdvancedParams: boolean = false;
 
   constructor() {}
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.advancedParams && changes.advancedParams.currentValue !== changes.advancedParams.previousValue) {
+      for (const advancedParam of changes.advancedParams.currentValue) {
+        if (advancedParam.display !== false) {
+          this.hasAdvancedParams = true;
+          break;
+        }
+      }
+    }
+    if (changes.paramDefines && changes.paramDefines.currentValue !== changes.paramDefines.previousValue) {
+      changes.paramDefines.currentValue.forEach((paramDefine: any) => {
+        if (paramDefine.type == 'radio') {
+          this.onDependChanged(this.paramValueMap?.get(paramDefine.field)?.paramValue, paramDefine.field);
+        } else if (paramDefine.type == 'boolean') {
+          this.onParamBooleanChanged(this.paramValueMap?.get(paramDefine.field)?.paramValue, paramDefine.field);
+        }
+      });
+    }
+  }
 
   onDetect(formGroup: FormGroup) {
     if (formGroup.invalid) {
@@ -60,7 +84,7 @@ export class MonitorFormComponent {
     }
     this.monitor.host = this.monitor.host.trim();
     this.monitor.name = this.monitor.name.trim();
-    // todo 暂时单独设置host属性值
+    // todo Set the host property value separately for now
     this.params.forEach(param => {
       if (param.field === 'host') {
         param.paramValue = this.monitor.host;
@@ -74,7 +98,7 @@ export class MonitorFormComponent {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
+    this.formDetect.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
   }
 
   onSubmit(formGroup: FormGroup) {
@@ -87,9 +111,9 @@ export class MonitorFormComponent {
       });
       return;
     }
-    this.monitor.host = this.monitor.host.trim();
-    this.monitor.name = this.monitor.name.trim();
-    // todo 暂时单独设置host属性值
+    this.monitor.host = this.monitor.host?.trim();
+    this.monitor.name = this.monitor.name?.trim();
+    // todo Set the host property value separately for now
     this.params.forEach(param => {
       if (param.field === 'host') {
         param.paramValue = this.monitor.host;
@@ -103,7 +127,7 @@ export class MonitorFormComponent {
         param.paramValue = (param.paramValue as string).trim();
       }
     });
-    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams });
+    this.formSubmit.emit({ monitor: this.monitor, params: this.params, advancedParams: this.advancedParams, collector: this.collector });
   }
 
   onCancel() {
@@ -115,17 +139,17 @@ export class MonitorFormComponent {
   }
 
   onParamBooleanChanged(booleanValue: boolean, field: string) {
-    // 对SSL的端口联动处理, 不开启SSL默认80端口，开启SSL默认443
+    // For SSL port linkage, port 80 by default is not enabled, but port 443 by default is enabled
     if (field === 'ssl') {
-      this.params.forEach(param => {
-        if (param.field === 'port') {
-          if (booleanValue) {
-            param.paramValue = '443';
-          } else {
-            param.paramValue = '80';
-          }
+      const portParam = this.params.find(param => param.field === 'port');
+      if (portParam) {
+        if (booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 80)) {
+          portParam.paramValue = 443;
         }
-      });
+        if (!booleanValue && (portParam.paramValue == null || parseInt(portParam.paramValue) === 443)) {
+          portParam.paramValue = 80;
+        }
+      }
     }
   }
 

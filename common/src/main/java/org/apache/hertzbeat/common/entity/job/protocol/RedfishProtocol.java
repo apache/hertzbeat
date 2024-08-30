@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -59,4 +60,6 @@ public class RedfishProtocol {
      * Redfish Resource Name and Corresponding Collection URI
      */
     private String schema;
+
+    private List<String> jsonPath;
 }

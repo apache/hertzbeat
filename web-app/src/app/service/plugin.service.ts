@@ -42,7 +42,7 @@ export class PluginService {
   ): Observable<Message<Page<Plugin>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
-    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+    // HttpParams is unmodifiable, so we need to save the return value of append/set
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
       pageIndex: pageIndex,
@@ -64,20 +64,6 @@ export class PluginService {
     return this.http.put<Message<any>>(plugin_uri, body);
   }
 
-  public newTags(body: Tag[]): Observable<Message<any>> {
-    return this.http.post<Message<any>>(plugin_uri, body);
-  }
-
-  public newTag(body: Tag): Observable<Message<any>> {
-    const tags = [];
-    tags.push(body);
-    return this.http.post<Message<any>>(plugin_uri, tags);
-  }
-
-  public editTag(body: Tag): Observable<Message<any>> {
-    return this.http.put<Message<any>>(plugin_uri, body);
-  }
-
   public deletePlugins(pluginIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     pluginIds.forEach(pluginId => {
@@ -85,5 +71,18 @@ export class PluginService {
     });
     const options = { params: httpParams };
     return this.http.delete<Message<any>>(plugin_uri, options);
+  }
+
+  public getPluginParamDefine(pluginId: number): Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      pluginMetadataId: pluginId
+    });
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(`${plugin_uri}/params/define`, options);
+  }
+
+  public savePluginParamDefine(body: any): Observable<Message<any>> {
+    return this.http.post<Message<any>>(`${plugin_uri}/params`, body);
   }
 }

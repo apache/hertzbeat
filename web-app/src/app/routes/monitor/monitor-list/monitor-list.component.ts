@@ -67,7 +67,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   exportJsonButtonLoading = false;
   exportYamlButtonLoading = false;
   exportExcelButtonLoading = false;
-  // 过滤搜索
   filterContent!: string;
   filterStatus: number = 9;
   // app type search filter
@@ -107,7 +106,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     // Set up an interval to refresh the table every 2 minutes
     this.intervalId = setInterval(() => {
       this.sync();
-    }, 12000); // 120000 ms = 2 minutes
+    }, 120000); // 120000 ms = 2 minutes
   }
 
   ngOnDestroy(): void {
@@ -180,26 +179,28 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
-    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.tag, this.pageIndex - 1, this.pageSize, sortField, sortOrder).subscribe(
-      message => {
-        this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedMonitorIds.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.monitors = page.content;
-          this.pageIndex = page.number + 1;
-          this.total = page.totalElements;
-        } else {
-          console.warn(message.msg);
+    let monitorInit$ = this.monitorSvc
+      .searchMonitors(this.app, this.tag, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize, sortField, sortOrder)
+      .subscribe(
+        message => {
+          this.tableLoading = false;
+          this.checkedAll = false;
+          this.checkedMonitorIds.clear();
+          if (message.code === 0) {
+            let page = message.data;
+            this.monitors = page.content;
+            this.pageIndex = page.number + 1;
+            this.total = page.totalElements;
+          } else {
+            console.warn(message.msg);
+          }
+          monitorInit$.unsubscribe();
+        },
+        error => {
+          this.tableLoading = false;
+          monitorInit$.unsubscribe();
         }
-        monitorInit$.unsubscribe();
-      },
-      error => {
-        this.tableLoading = false;
-        monitorInit$.unsubscribe();
-      }
-    );
+      );
   }
   changeMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
@@ -233,8 +234,6 @@ export class MonitorListComponent implements OnInit, OnDestroy {
       return;
     }
     this.router.navigateByUrl(`/monitors/${monitorId}/edit`);
-    // 参数样例
-    // this.router.navigate(['/monitors/new'],{queryParams: {app: "linux"}});
   }
 
   onDeleteOneMonitor(monitorId: number) {
@@ -470,7 +469,7 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     );
   }
 
-  // begin: 列表多选逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
 
   onAllChecked(checked: boolean) {
@@ -489,16 +488,16 @@ export class MonitorListComponent implements OnInit, OnDestroy {
     }
   }
 
-  // end: 列表多选逻辑
+  // end: List multiple choice paging
 
   notifyCopySuccess() {
     this.messageSvc.success(this.i18nSvc.fanyi('common.notify.copy-success'), { nzDuration: 800 });
   }
 
   /**
-   * 分页回调
+   * Paging callback
    *
-   * @param params 页码信息
+   * @param params page info
    */
   onTablePageChange(params: NzTableQueryParams) {
     const { pageSize, pageIndex, sort, filter } = params;

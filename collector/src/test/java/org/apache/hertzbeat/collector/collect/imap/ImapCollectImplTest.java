@@ -68,31 +68,25 @@ public class ImapCollectImplTest {
 
     @Test
     void preCheck() {
-        assertDoesNotThrow(() -> {
-            imapCollect.preCheck(metrics);
-        });
-        assertThrows(NullPointerException.class, () -> {
-            imapCollect.preCheck(null);
-        });
+        assertDoesNotThrow(() -> imapCollect.preCheck(metrics));
+        assertThrows(NullPointerException.class, () -> imapCollect.preCheck(null));
         metrics.setImap(null);
-        assertThrows(NullPointerException.class, () -> {
-            imapCollect.preCheck(null);
-        });
+        assertThrows(NullPointerException.class, () -> imapCollect.preCheck(null));
     }
 
     @Test
     void enableSslCollect() {
         String response = "* STATUS \"testFolder\" (MESSAGES 3 RECENT 2 UNSEEN 1)";
         MockedConstruction<IMAPSClient> mocked = Mockito.mockConstruction(IMAPSClient.class,
-            (imapsClient, context) -> {
-                Mockito.doNothing().when(imapsClient).connect(Mockito.anyString(), Mockito.anyInt());
-                Mockito.doAnswer(invocationOnMock -> true).when(imapsClient).login(Mockito.anyString(), Mockito.anyString());
-                Mockito.doAnswer(invocationOnMock -> true).when(imapsClient).isConnected();
-                Mockito.when(imapsClient.sendCommand(Mockito.anyString())).thenReturn(0);
-                Mockito.when(imapsClient.getReplyString()).thenReturn(response);
-                Mockito.doAnswer(invocationOnMock -> true).when(imapsClient).logout();
-                Mockito.doNothing().when(imapsClient).disconnect();
-            });
+                (imapsClient, context) -> {
+                    Mockito.doNothing().when(imapsClient).connect(Mockito.anyString(), Mockito.anyInt());
+                    Mockito.doAnswer(invocationOnMock -> true).when(imapsClient).login(Mockito.anyString(), Mockito.anyString());
+                    Mockito.doAnswer(invocationOnMock -> true).when(imapsClient).isConnected();
+                    Mockito.when(imapsClient.sendCommand(Mockito.anyString())).thenReturn(0);
+                    Mockito.when(imapsClient.getReplyString()).thenReturn(response);
+                    Mockito.doAnswer(invocationOnMock -> true).when(imapsClient).logout();
+                    Mockito.doNothing().when(imapsClient).disconnect();
+                });
 
         imapCollect.preCheck(metrics);
         imapCollect.collect(builder, 1L, "testIMAP", metrics);

@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.warehouse.store.realtime.memory;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.warehouse.constants.WarehouseConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
@@ -25,7 +28,12 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param enabled Whether memory data storage is enabled
  * @param initSize Memory storage map initialization size
  */
-@ConfigurationProperties(prefix = "warehouse.store.memory")
+
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
+		+ SignConstants.DOT
+		+ WarehouseConstants.REAL_TIME
+		+ SignConstants.DOT
+		+ WarehouseConstants.RealTimeName.MEMORY)
 public record MemoryProperties(@DefaultValue("true") boolean enabled,
                                @DefaultValue("1024") Integer initSize) {
 }

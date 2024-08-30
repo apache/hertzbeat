@@ -38,17 +38,21 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.pojo.dto.Hierarchy;
@@ -67,7 +71,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StreamUtils;
-import org.springframework.util.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -89,6 +92,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Resource
     private ParamDao paramDao;
+
+    @Resource
+    private DefineDao defineDao;
     
     @Resource
     private WarehouseService warehouseService;
@@ -100,15 +106,13 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public List<ParamDefine> getAppParamDefines(String app) {
-        if (!StringUtils.hasText(app)) {
-            return Collections.emptyList();
+        if (StringUtils.isNotBlank(app)){
+            var appDefine = appDefines.get(app.toLowerCase());
+            if (appDefine != null && appDefine.getParams() != null) {
+                return appDefine.getParams();
+            }
         }
-        var appDefine = appDefines.get(app.toLowerCase());
-        if (appDefine != null && appDefine.getParams() != null) {
-            return appDefine.getParams();
-        } else {
-            return Collections.emptyList();
-        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -124,7 +128,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 List<Param> params = paramDao.findParamsByMonitorId(monitorId);
                 List<Configmap> configmaps = params.stream()
                         .map(param -> new Configmap(param.getField(), param.getParamValue(),
-                                param.getType())).collect(Collectors.toList());
+                                param.getType())).toList();
                 Map<String, Configmap> configmap = configmaps.stream().collect(Collectors.toMap(Configmap::getKey, item -> item, (key1, key2) -> key1));
                 CollectUtil.replaceFieldsForPushStyleMonitor(metric, configmap);
                 metricsTmp.add(metric);
@@ -164,7 +168,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Job getAppDefine(String app) throws IllegalArgumentException {
-        if (!StringUtils.hasText(app)) {
+        if (StringUtils.isBlank(app)) {
             throw new IllegalArgumentException("The app can not null.");
         }
         var appDefine = appDefines.get(app.toLowerCase());
@@ -176,7 +180,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     @Override
     public Optional<Job> getAppDefineOption(String app) {
-        if (StringUtils.hasText(app)) {
+        if (StringUtils.isNotBlank(app)) {
             Job appDefine = appDefines.get(app.toLowerCase());
             return Optional.ofNullable(appDefine);
         }
@@ -186,15 +190,15 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public List<String> getAppDefineMetricNames(String app) {
         List<String> metricNames = new ArrayList<>(16);
-        if (StringUtils.hasLength(app)) {
+        if (StringUtils.isNotBlank(app)) {
             var appDefine = appDefines.get(app.toLowerCase());
             if (appDefine == null) {
                 throw new IllegalArgumentException("The app " + app + " not support.");
             }
-            metricNames.addAll(appDefine.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList()));
+            metricNames.addAll(appDefine.getMetrics().stream().map(Metrics::getName).toList());
         } else {
             appDefines.forEach((k, v) ->
-                    metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).collect(Collectors.toList())));
+                    metricNames.addAll(v.getMetrics().stream().map(Metrics::getName).toList()));
         }
         return metricNames;
     }
@@ -207,7 +211,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             var name = job.getName();
             var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
             if (i18nName != null) {
-                i18nMap.put("monitor.app." + job.getApp(), i18nName);
+                i18nMap.put("monitor.app." + job.getApp().toLowerCase(), i18nName);
             }
             var help = job.getHelp();
             var i18nHelp = CommonUtil.getLangMappingValueFromI18nMap(lang, help);
@@ -250,6 +254,20 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     }
 
     @Override
+    public Map<String, String> getI18nApps(String lang) {
+        Map<String, String> i18nMap = new HashMap<>(128);
+        for (var job : appDefines.values()) {
+            var name = job.getName();
+            var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, name);
+            if (i18nName != null) {
+                i18nMap.put(job.getApp(), i18nName);
+            }
+        }
+        return i18nMap;
+    }
+
+
+    @Override
     public List<Hierarchy> getAllAppHierarchy(String lang) {
         LinkedList<Hierarchy> hierarchies = new LinkedList<>();
         for (var job : appDefines.values()) {
@@ -257,82 +275,104 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
                 continue;
             }
-            var hierarchyApp = new Hierarchy();
-            hierarchyApp.setCategory(job.getCategory());
-            hierarchyApp.setValue(job.getApp());
-            hierarchyApp.setHide(job.isHide());
-            var nameMap = job.getName();
-            if (nameMap != null && !nameMap.isEmpty()) {
-                var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, nameMap);
-                if (i18nName != null) {
-                    hierarchyApp.setLabel(i18nName);
-                }
-            }
-            List<Hierarchy> hierarchyMetricList = new LinkedList<>();
-            if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(job.getApp())) {
-                List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp());
-                for (Monitor monitor : monitors) {
-                    List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(monitor.getId());
-                    for (CollectRep.MetricsData metricsData : metricsDataList) {
-                        var hierarchyMetric = new Hierarchy();
-                        hierarchyMetric.setValue(metricsData.getMetrics());
-                        hierarchyMetric.setLabel(metricsData.getMetrics());
-                        List<Hierarchy> hierarchyFieldList = metricsData.getFieldsList().stream()
-                                .map(item -> {
-                                    var hierarchyField = new Hierarchy();
-                                    hierarchyField.setValue(item.getName());
-                                    hierarchyField.setLabel(item.getName());
-                                    hierarchyField.setIsLeaf(true);
-                                    hierarchyField.setType((byte) item.getType());
-                                    hierarchyField.setUnit(item.getUnit());
-                                    return hierarchyField;
-                                }).collect(Collectors.toList());
-                        hierarchyMetric.setChildren(hierarchyFieldList);
-                        // combine Hierarchy Metrics
-                        combineHierarchyMetrics(hierarchyMetricList, hierarchyMetric);
-                    }
-                }
-                hierarchyApp.setChildren(hierarchyMetricList);
-                hierarchies.addFirst(hierarchyApp);
-            } else {
-                if (job.getMetrics() != null) {
-                    for (var metrics : job.getMetrics()) {
-                        var hierarchyMetric = new Hierarchy();
-                        hierarchyMetric.setValue(metrics.getName());
-                        var metricsI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, metrics.getI18n());
-                        hierarchyMetric.setLabel(metricsI18nName != null ? metricsI18nName : metrics.getName());
-                        List<Hierarchy> hierarchyFieldList = new LinkedList<>();
-                        if (metrics.getFields() != null) {
-                            for (var field : metrics.getFields()) {
-                                var hierarchyField = new Hierarchy();
-                                hierarchyField.setValue(field.getField());
-                                var metricI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, field.getI18n());
-                                hierarchyField.setLabel(metricI18nName != null ? metricI18nName : field.getField());
-                                hierarchyField.setIsLeaf(true);
-                                // for metric
-                                hierarchyField.setType(field.getType());
-                                hierarchyField.setUnit(field.getUnit());
-                                hierarchyFieldList.add(hierarchyField);
-                            }
-                            hierarchyMetric.setChildren(hierarchyFieldList);
-                        }
-                        hierarchyMetricList.add(hierarchyMetric);
-                    }
-                }
-                hierarchyApp.setChildren(hierarchyMetricList);
-                hierarchies.add(hierarchyApp);
-            }
+            queryAppHierarchy(lang, hierarchies, job);
         }
         return hierarchies;
     }
 
+    @Override
+    public List<Hierarchy> getAppHierarchy(String app, String lang) {
+        LinkedList<Hierarchy> hierarchies = new LinkedList<>();
+        Job job = appDefines.get(app.toLowerCase());
+        // TODO temporarily filter out push to solve the front-end problem, and open it after the subsequent design optimization
+        if (DispatchConstants.PROTOCOL_PUSH.equalsIgnoreCase(job.getApp())) {
+            return hierarchies;
+        }
+        queryAppHierarchy(lang, hierarchies, job);
+        return hierarchies;
+    }
+
+    private void queryAppHierarchy(String lang, LinkedList<Hierarchy> hierarchies, Job job) {
+        var hierarchyApp = new Hierarchy();
+        hierarchyApp.setCategory(job.getCategory());
+        hierarchyApp.setValue(job.getApp());
+        hierarchyApp.setHide(job.isHide());
+        var nameMap = job.getName();
+        if (nameMap != null && !nameMap.isEmpty()) {
+            var i18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, nameMap);
+            if (i18nName != null) {
+                hierarchyApp.setLabel(i18nName);
+            }
+        }
+        List<Hierarchy> hierarchyMetricList = new LinkedList<>();
+        if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(job.getApp())) {
+            List<Monitor> monitors = monitorDao.findMonitorsByAppEquals(job.getApp());
+            for (Monitor monitor : monitors) {
+                List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(monitor.getId());
+                for (CollectRep.MetricsData metricsData : metricsDataList) {
+                    var hierarchyMetric = new Hierarchy();
+                    hierarchyMetric.setValue(metricsData.getMetrics());
+                    hierarchyMetric.setLabel(metricsData.getMetrics());
+                    List<Hierarchy> hierarchyFieldList = metricsData.getFieldsList().stream()
+                            .map(item -> {
+                                var hierarchyField = new Hierarchy();
+                                hierarchyField.setValue(item.getName());
+                                hierarchyField.setLabel(item.getName());
+                                hierarchyField.setIsLeaf(true);
+                                hierarchyField.setType((byte) item.getType());
+                                hierarchyField.setUnit(item.getUnit());
+                                return hierarchyField;
+                            }).collect(Collectors.toList());
+                    hierarchyMetric.setChildren(hierarchyFieldList);
+                    // combine Hierarchy Metrics
+                    combineHierarchyMetrics(hierarchyMetricList, hierarchyMetric);
+                }
+            }
+            hierarchyApp.setChildren(hierarchyMetricList);
+            hierarchies.addFirst(hierarchyApp);
+        } else {
+            if (job.getMetrics() != null) {
+                for (var metrics : job.getMetrics()) {
+                    var hierarchyMetric = new Hierarchy();
+                    hierarchyMetric.setValue(metrics.getName());
+                    var metricsI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, metrics.getI18n());
+                    hierarchyMetric.setLabel(metricsI18nName != null ? metricsI18nName : metrics.getName());
+                    List<Hierarchy> hierarchyFieldList = new LinkedList<>();
+                    if (metrics.getFields() != null) {
+                        for (var field : metrics.getFields()) {
+                            var hierarchyField = new Hierarchy();
+                            hierarchyField.setValue(field.getField());
+                            var metricI18nName = CommonUtil.getLangMappingValueFromI18nMap(lang, field.getI18n());
+                            hierarchyField.setLabel(metricI18nName != null ? metricI18nName : field.getField());
+                            hierarchyField.setIsLeaf(true);
+                            // for metric
+                            hierarchyField.setType(field.getType());
+                            hierarchyField.setUnit(field.getUnit());
+                            hierarchyFieldList.add(hierarchyField);
+                        }
+                        hierarchyMetric.setChildren(hierarchyFieldList);
+                    }
+                    hierarchyMetricList.add(hierarchyMetric);
+                }
+            }
+            hierarchyApp.setChildren(hierarchyMetricList);
+            hierarchies.add(hierarchyApp);
+        }
+    }
+
+
     private void combineHierarchyMetrics(List<Hierarchy> hierarchyMetricList, Hierarchy hierarchyMetric) {
         Optional<Hierarchy> preHierarchyOptional = hierarchyMetricList.stream()
-                .filter(item -> item.getValue().equals(hierarchyMetric.getValue())).findFirst();
+                .filter(item -> item.getValue().equals(hierarchyMetric.getValue()))
+                .findFirst();
+
         if (preHierarchyOptional.isPresent()) {
             Hierarchy preHierarchy = preHierarchyOptional.get();
             List<Hierarchy> children = preHierarchy.getChildren();
-            Set<String> childrenKey = children.stream().map(Hierarchy::getValue).collect(Collectors.toSet());
+            Set<String> childrenKey = children.stream()
+                    .map(Hierarchy::getValue)
+                    .collect(Collectors.toSet());
+
             for (Hierarchy child : hierarchyMetric.getChildren()) {
                 if (!childrenKey.contains(child.getValue())) {
                     children.add(child);
@@ -342,6 +382,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             hierarchyMetricList.add(hierarchyMetric);
         }
     }
+
 
     @Override
     public Map<String, Job> getAllAppDefines() {
@@ -397,6 +438,21 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         Assert.notEmpty(app.getMetrics(), "monitoring template require attributes metrics");
         var hasAvailableMetrics = app.getMetrics().stream().anyMatch(item -> item.getPriority() == 0);
         Assert.isTrue(hasAvailableMetrics, "monitoring template metrics list must have one priority 0 metrics");
+        CommonUtil.validDefineI18n(app.getName(), "name");
+        CommonUtil.validDefineI18n(app.getHelp(), "help");
+        CommonUtil.validDefineI18n(app.getHelpLink(), "helpLink");
+        for (ParamDefine param : app.getParams()) {
+            CommonUtil.validDefineI18n(param.getName(),  param.getField() + " param");
+        }
+        for (Metrics metric : app.getMetrics()) {
+            CommonUtil.validDefineI18n(metric.getI18n(), metric.getName() + " metric");
+            if (metric.getFields() == null){
+                continue;
+            }
+            for (Metrics.Field field : metric.getFields()) {
+                CommonUtil.validDefineI18n(field.getI18n(), metric.getName() + " metric " + field.getField() + " field");
+            }
+        }
         if (!isModify) {
             Assert.isNull(appDefines.get(app.getApp().toLowerCase()),
                     "monitoring template name " + app.getApp() + " already exists.");
@@ -422,13 +478,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         if (monitors != null && !monitors.isEmpty()) {
             throw new IllegalArgumentException("Can not delete define which has monitoring instances.");
         }
-        var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
-        var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
-        var defineAppFile = new File(defineAppPath);
-        if (defineAppFile.exists() && defineAppFile.isFile()) {
-            defineAppFile.delete();
-        }
-        appDefines.remove(app.toLowerCase());
+        appDefineStore.delete(app);
     }
 
     @Override
@@ -476,6 +526,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         } else {
             if (objectStoreConfig.getType() == ObjectStoreDTO.Type.OBS) {
                 appDefineStore = new ObjectStoreAppDefineStoreImpl();
+            } else if (objectStoreConfig.getType() == ObjectStoreDTO.Type.DATABASE){
+                appDefineStore = new DatabaseAppDefineStoreImpl();
             } else {
                 appDefineStore = new LocalFileAppDefineStoreImpl();
             }
@@ -504,6 +556,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
         void save(String app, String ymlContent);
 
+        void delete(String app);
     }
 
     private class JarAppDefineStoreImpl implements AppDefineStore {
@@ -548,6 +601,11 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         @Override
         public void save(String app, String ymlContent) {
             throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void delete(String app) {
+            throw new UnsupportedOperationException("define yml inside jars cannot be deleted");
         }
 
     }
@@ -626,6 +684,22 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 throw new RuntimeException("flush file " + defineAppPath + " error: " + e.getMessage());
             }
         }
+
+        @Override
+        public void delete(String app) {
+            var classpath = Objects.requireNonNull(this.getClass().getClassLoader().getResource("")).getPath();
+            var defineAppPath = classpath + "define" + File.separator + "app-" + app + ".yml";
+            var defineAppFile = new File(defineAppPath);
+
+            if (!defineAppFile.exists() && appDefines.containsKey(app.toLowerCase())){
+                throw new CommonException("the app define file is not in current file server provider");
+            }
+
+            if (defineAppFile.exists() && defineAppFile.isFile()) {
+                defineAppFile.delete();
+            }
+            appDefines.remove(app.toLowerCase());
+        }
     }
 
     private class ObjectStoreAppDefineStoreImpl implements AppDefineStore {
@@ -667,6 +741,20 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             objectStoreService.upload(getDefineAppPath(app), IOUtils.toInputStream(ymlContent, StandardCharsets.UTF_8));
         }
 
+        @Override
+        public void delete(String app) {
+            var objectStoreService = getObjectStoreService();
+            String defineAppPath = getDefineAppPath(app);
+            boolean exist = objectStoreService.isExist(defineAppPath);
+            if (!exist && appDefines.containsKey(app.toLowerCase())){
+                throw new CommonException("the app define file is not in current file server provider");
+            }
+            if (exist){
+                objectStoreService.remove(defineAppPath);
+            }
+            appDefines.remove(app.toLowerCase());
+        }
+
         private ObjectStoreService getObjectStoreService() {
             return SpringContextHolder.getBean(ObsObjectStoreServiceImpl.class);
         }
@@ -677,4 +765,46 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
     }
 
+    private class DatabaseAppDefineStoreImpl implements AppDefineStore {
+
+        @Override
+        public boolean loadAppDefines() {
+            Yaml yaml = new Yaml();
+            List<Define> defines = defineDao.findAll();
+            for (Define define : defines) {
+                var app = yaml.loadAs(define.getContent(), Job.class);
+                if (app != null){
+                    appDefines.put(define.getApp().toLowerCase(), app);
+                }
+            }
+            // merge define yml files inside jars
+            return false;
+        }
+
+        @Override
+        public String loadAppDefine(String app) {
+            Optional<Define> defineOptional = defineDao.findById(app);
+            return defineOptional.map(Define::getContent).orElse(null);
+        }
+
+        @Override
+        public void save(String app, String ymlContent) {
+            Define define = new Define();
+            define.setApp(app);
+            define.setContent(ymlContent);
+            defineDao.save(define);
+        }
+
+        @Override
+        public void delete(String app) {
+            Optional<Define> defineOptional = defineDao.findById(app);
+            if (defineOptional.isEmpty() && appDefines.containsKey(app.toLowerCase())){
+                throw new CommonException("the app define file is not in current file server provider");
+            }
+            if (defineOptional.isPresent()){
+                defineDao.deleteById(app);
+            }
+            appDefines.remove(app.toLowerCase());
+        }
+    }
 }

@@ -68,23 +68,23 @@ Of course, if you have a good idea, you can also propose it directly on GitHub D
 
 1. First you need to fork your target [hertzbeat repository](https://github.com/apache/hertzbeat).   
 2. Then download the code locally with git command:
-```shell
-git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
-```
+    ```shell
+    git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
+    ```
 3. After the download is complete, please refer to the getting started guide or README file of the target repository to initialize the project.  
 4. Then, you can refer to the following command to submit the code:
-```shell
-git checkout -b a-feature-branch #Recommended  
-```
+    ```shell
+    git checkout -b a-feature-branch #Recommended  
+    ```
 5. Submit the coed as a commit, the commit message format specification required: [module name or type name]feature or bugfix or doc: custom message.  
-```shell
-git add <modified file/path> 
-git commit -m '[docs]feature: necessary instructions' #Recommended 
-```
+    ```shell
+    git add <modified file/path> 
+    git commit -m '[docs]feature: necessary instructions' #Recommended 
+    ```
 6. Push to the remote repository   
-```shell
-git push origin a-feature-branch   
-```
+    ```shell
+    git push origin a-feature-branch   
+    ```
 7. Then you can initiate a new PR (Pull Request) on GitHub.  
 
 Please note that the title of the PR needs to conform to our spec, and write the necessary description in the PR to facilitate code review by Committers and other contributors.   
@@ -127,7 +127,7 @@ With the above steps, you are a contributor to HertzBeat. Repeat the previous st
 
 [Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
-Add WeChat account `tan-cloud` to pull you into the WeChat group.
+Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 ## 🥐 Architecture
 
@@ -218,23 +218,23 @@ Add WeChat account `tan-cloud` to pull you into the WeChat group.
 
 1. 首先您需要 Fork 目标仓库 [hertzbeat repository](https://github.com/apache/hertzbeat).
 2. 然后 用git命令 将代码下载到本地:  
-```shell
-git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
-```
+    ```shell
+    git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
+    ```
 3. 下载完成后，请参考目标仓库的入门指南或者 README 文件对项目进行初始化。
 4. 接着，您可以参考如下命令进行代码的提交, 切换新的分支, 进行开发:  
-```shell
-git checkout -b a-feature-branch #Recommended  
-```
+    ```shell
+    git checkout -b a-feature-branch #Recommended  
+    ```
 5. 提交 commit , commit 描述信息需要符合约定格式: [module name or type name]feature or bugfix or doc: custom message. 
-```shell
-git add <modified file/path> 
-git commit -m '[docs]feature: necessary instructions' #Recommended 
-```
+    ```shell
+    git add <modified file/path> 
+    git commit -m '[docs]feature: necessary instructions' #Recommended 
+    ```
 6. 推送到远程仓库   
-```shell
-git push origin a-feature-branch   
-```
+    ```shell
+    git push origin a-feature-branch   
+    ```
 7. 然后您就可以在 GitHub 上发起新的 PR (Pull Request)。
 
 请注意 PR 的标题需要符合我们的规范，并且在 PR 中写上必要的说明，来方便 Committer 和其他贡献者进行代码审查。 
@@ -277,7 +277,7 @@ git pull upstream master
 
 [Join the Mailing Lists](https://lists.apache.org/list.html?dev@hertzbeat.apache.org) : Mail to `dev-subscribe@hertzbeat.apache.org` to subscribe mailing lists.
 
-Add WeChat account `tan-cloud` to pull you into the WeChat group.
+Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 ### 模块
 

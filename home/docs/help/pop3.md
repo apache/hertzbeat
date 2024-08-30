@@ -16,18 +16,17 @@ If you want to monitor information in 'POP3' with this monitoring type, you just
 **1、Open `POP3` Service:**
 
 ```text
-以qq邮箱为例【其它邮箱类似】：
-    1. 点击`设置`选项
-    2. 选择`账号`
-    3. 找到开启SMTP/POP3/IMAP选项，并开启
-    4. 得到POP3服务器域名，端口号，以及授权码【开启SMTP/POP3/IMAP服务后，qq邮箱提供】
-    5. 通过POP3服务器域名，端口号，qq邮箱账号以及授权码连接POP3服务器，采集监控指标
+Using QQ Mail as an example [similar for other email services]:
+    1. Click the "Settings" option
+    2. Select "Account"
+    3. Find the option to enable SMTP/POP3/IMAP, and turn it on
+    4. Obtain the POP3 server domain name, port number, and authorization code [provided by QQ Mail after enabling SMTP/POP3/IMAP services]
+    5. Connect to the POP3 server using the POP3 server domain name, port number, QQ email account, and authorization code to collect monitoring metrics
 ```
-
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -42,9 +41,7 @@ If you want to monitor information in 'POP3' with this monitoring type, you just
 
 #### Metrics Set：email_status
 
-| Metric name  | Metric unit | Metric help description                  |
-|--------------|-------------|------------------------------------------|
-| email_count  |             | Number of emails                         |
-| mailbox_size | kb          | The total size of emails in the mailbox  |
-
-
+| Metric name  | Metric unit |         Metric help description         |
+|--------------|-------------|-----------------------------------------|
+| email_count  |             | Number of emails                        |
+| mailbox_size | kb          | The total size of emails in the mailbox |

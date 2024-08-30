@@ -38,6 +38,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
@@ -48,6 +49,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
@@ -220,6 +222,14 @@ public class Metrics {
      * Monitoring configuration information using the public imap protocol
      */
     private ImapProtocol imap;
+    /**
+     * Monitoring configuration information using the public script protocol
+     */
+    private ScriptProtocol script;
+    /**
+     * Monitoring configuration information using the public mqtt protocol
+     */
+    private MqttProtocol mqtt;
 
     /**
      * collector use - Temporarily store subTask metrics response data
@@ -317,10 +327,6 @@ public class Metrics {
          * Metric type 0-number: number 1-string: string
          */
         private byte type = 1;
-        /**
-         * Whether this field is the instance
-         */
-        private boolean instance = false;
         /**
          * Whether this field is the label
          */

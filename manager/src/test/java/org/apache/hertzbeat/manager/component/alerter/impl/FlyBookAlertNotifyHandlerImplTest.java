@@ -21,13 +21,13 @@ import jakarta.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.StringUtils;
 
 /**
  * Test case for {@link FlyBookAlertNotifyHandlerImpl}
@@ -41,7 +41,7 @@ class FlyBookAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
     @Test
     void send() {
         String flyBookId = System.getenv("FLY_BOOK_ID");
-        if (!StringUtils.hasText(flyBookId)) {
+        if (StringUtils.isBlank(flyBookId)) {
             log.warn("Please provide environment variables FLY_BOOK_ID");
             return;
         }
@@ -52,13 +52,14 @@ class FlyBookAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTest {
         NoticeTemplate noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("FlyBook");
-        noticeTemplate.setContent("{targetLabel} : ${target}\n"
-                + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
-                + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
-                + "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n"
-                + "${priorityLabel} : ${priority}\n"
-                + "${triggerTimeLabel} : ${triggerTime}\n"
-                + "${contentLabel} : ${content}");
+        noticeTemplate.setContent("""
+                {targetLabel} : ${target}
+                <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+                <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+                <#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>
+                ${priorityLabel} : ${priority}
+                ${triggerTimeLabel} : ${triggerTime}
+                ${contentLabel} : ${content}""");
         Alert alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");

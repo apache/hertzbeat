@@ -95,6 +95,9 @@
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
+        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
+        
 
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -139,6 +142,32 @@
         <commons-jexl3>3.2.1</commons-jexl3>
         <commons-net>3.10.0</commons-net>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
+        <spotless.version>2.40.0</spotless.version>
+        
+        <easy-poi.version>4.3.0</easy-poi.version>
+        <poi.version>4.1.1</poi.version>
+        <concurrentlinkedhashmap-lru.version>1.4.2</concurrentlinkedhashmap-lru.version>
+        <sshd-core.version>2.13.1</sshd-core.version>
+        <eddsa.version>0.3.0</eddsa.version>
+        <snmp4j.version>3.6.7</snmp4j.version>
+        <rocketmq-tools.version>4.9.4</rocketmq-tools.version>
+        <dnsjava.version>3.5.2</dnsjava.version>
+        <consul-api.version>1.4.5</consul-api.version>
+        <nacos-client.version>2.2.1</nacos-client.version>
+        <vesoft-client.version>3.6.0</vesoft-client.version>
+        <eclipse-jpa.version>4.0.2</eclipse-jpa.version>
+        <jutf7.version>1.0.0</jutf7.version>
+        <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
+        <huawei.sdk.version>3.1.37</huawei.sdk.version>
+        <huawei.obs.version>3.23.5</huawei.obs.version>
+        
+        
+        <iotdb-session.version>0.13.3</iotdb-session.version>
+        <influxdb.version>2.23</influxdb.version>
+        <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
+        <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
+        <greptimedb.version>0.7.3</greptimedb.version>
+        <mysql-jdbcdriver.version>8.0.33</mysql-jdbcdriver.version>
     </properties>
 
     <dependencyManagement>
@@ -378,7 +407,7 @@
                 <artifactId>okhttp</artifactId>
                 <version>${okhttp.version}</version>
             </dependency>
-            <!-- caffeine -->
+            <!-- caffeine-->
             <dependency>
                 <groupId>com.github.ben-manes.caffeine</groupId>
                 <artifactId>caffeine</artifactId>

@@ -11,7 +11,7 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                               |
+|   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6. Note⚠️Without protocol header (eg: https://, http://).                                             |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique.                                                       |
@@ -28,7 +28,7 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 
 #### Metrics Set：Header
 
-| Metric name             | Metric unit | Metric help description                           |
+|       Metric name       | Metric unit |              Metric help description              |
 |-------------------------|-------------|---------------------------------------------------|
 | Response Time           | ms          | Time taken for DNS server to respond to requests. |
 | Opcode                  | none        | Type of the current message.                      |
@@ -41,13 +41,13 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 
 ### Metrics Set: Question
 
-| Metric name | Metric unit | Metric help description                                                                                                           |
+| Metric name | Metric unit |                                                      Metric help description                                                      |
 |-------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------|
 | Section     | none        | Question record information, including the queried domain name, resource type, resource record class, and additional information. |
 
 ### Metrics Set: Answer
 
-| Metric name | Metric unit | Metric help description                                                                                                    |
+| Metric name | Metric unit |                                                  Metric help description                                                   |
 |-------------|-------------|----------------------------------------------------------------------------------------------------------------------------|
 | Section0    | none        | Answer record information, including the queried domain name, TTL, resource record class, resource type, and query result. |
 
@@ -55,7 +55,7 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 
 ### Metrics Set: Authority
 
-| Metric name | Metric unit | Metric help description                                                                                                                               |
+| Metric name | Metric unit |                                                                Metric help description                                                                |
 |-------------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Section0    | none        | SOA (Start of Authority) record for the domain name, including queried domain name, TTL, resource type, resource record class, and other information. |
 
@@ -63,7 +63,7 @@ keywords: [ open source monitoring tool, open source DNS monitoring tool, monito
 
 ### Metrics Set: Additional
 
-| Metric name | Metric unit | Metric help description                 |
+| Metric name | Metric unit |         Metric help description         |
 |-------------|-------------|-----------------------------------------|
 | Section0    | none        | Additional information for DNS queries. |
 

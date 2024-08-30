@@ -123,7 +123,7 @@ public class CalculateAlarm {
                         calculate(metricsData);
                     }
                 } catch (InterruptedException ignored) {
-
+                    Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     log.error("calculate alarm error: {}.", e.getMessage(), e);
                 }

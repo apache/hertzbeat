@@ -19,38 +19,39 @@ keywords: [open source monitoring tool, open source jetty web server monitoring 
 
 1. Start the JMX JMX-REMOTE module in Jetty
 
-```shell
-java -jar $JETTY_HOME/start.jar --add-module=jmx
-java -jar $JETTY_HOME/start.jar --add-module=jmx-remote
-```
-Successful command execution will create `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file
+    ```shell
+    java -jar $JETTY_HOME/start.jar --add-module=jmx
+    java -jar $JETTY_HOME/start.jar --add-module=jmx-remote
+    ```
+
+    Successful command execution will create `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file
 
 2. Edit the `${JETTY_BASE}/start.d/jmx-remote.ini` configuration file to modify the JMX IP port and other parameters.
 
-**`localhost` needs to be modified to expose the IP**
+    **`localhost` needs to be modified to expose the IP**
 
-```text
-## The host/address to bind the RMI server to.
-# jetty.jmxremote.rmiserverhost=localhost
-
-## The port the RMI server listens to (0 means a random port is chosen).
-# jetty.jmxremote.rmiserverport=1099
-
-## The host/address to bind the RMI registry to.
-# jetty.jmxremote.rmiregistryhost=localhost
-
-## The port the RMI registry listens to.
-# jetty.jmxremote.rmiregistryport=1099
-
-## The host name exported in the RMI stub.
--Djava.rmi.server.hostname=localhost
-```
+    ```text
+    ## The host/address to bind the RMI server to.
+    # jetty.jmxremote.rmiserverhost=localhost
+    
+    ## The port the RMI server listens to (0 means a random port is chosen).
+    # jetty.jmxremote.rmiserverport=1099
+    
+    ## The host/address to bind the RMI registry to.
+    # jetty.jmxremote.rmiregistryhost=localhost
+    
+    ## The port the RMI registry listens to.
+    # jetty.jmxremote.rmiregistryport=1099
+    
+    ## The host name exported in the RMI stub.
+    -Djava.rmi.server.hostname=localhost
+    ```
 
 3. Restart Jetty Server.
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -73,19 +74,17 @@ Successful command execution will create `${JETTY_BASE}/start.d/jmx-remote.ini` 
 | max         | kb          | max size                |
 | used        | kb          | used size               |
 
-
 #### Metrics Set：class_loading
 
-| Metric name           | Metric unit | Metric help description  |
+|      Metric name      | Metric unit | Metric help description  |
 |-----------------------|-------------|--------------------------|
 | LoadedClassCount      |             | Loaded Class Count       |
 | TotalLoadedClassCount |             | Total Loaded Class Count |
 | UnloadedClassCount    |             | Unloaded Class Count     |
 
-
 #### Metrics Set：thread
 
-| Metric name             | Metric unit | Metric help description    |
+|       Metric name       | Metric unit |  Metric help description   |
 |-------------------------|-------------|----------------------------|
 | TotalStartedThreadCount |             | Total Started Thread Count |
 | ThreadCount             |             | Thread Count               |
@@ -93,4 +92,3 @@ Successful command execution will create `${JETTY_BASE}/start.d/jmx-remote.ini` 
 | DaemonThreadCount       |             | Daemon Thread Count        |
 | CurrentThreadUserTime   | ms          | Current Thread User Time   |
 | CurrentThreadCpuTime    | ms          | Current Thread Cpu Time    |
-

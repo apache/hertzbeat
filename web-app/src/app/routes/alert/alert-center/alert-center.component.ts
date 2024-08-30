@@ -47,7 +47,6 @@ export class AlertCenterComponent implements OnInit {
   alerts!: Alert[];
   tableLoading: boolean = false;
   checkedAlertIds = new Set<number>();
-  // 搜索过滤相关属性
   filterStatus: number = 9;
   filterPriority: number = 9;
   filterContent: string | undefined;
@@ -274,7 +273,7 @@ export class AlertCenterComponent implements OnInit {
     );
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
   onAllChecked(checked: boolean) {
     if (checked) {
@@ -296,7 +295,7 @@ export class AlertCenterComponent implements OnInit {
     this.pageSize = pageSize;
     this.loadAlertsTable();
   }
-  // end: 列表多选分页逻辑
+  // end: List multiple choice paging
 
   sliceTagName(tag: Tag): string {
     if (tag.tagValue != undefined && tag.tagValue.trim() != '') {

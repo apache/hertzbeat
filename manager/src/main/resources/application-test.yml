@@ -86,13 +86,14 @@ scheduler:
     enabled: true
     port: 1158
 
-#AI config
+# AI config
+# See the documentation for details : https://hertzbeat.apache.org/zh-cn/docs/help/aiConfig
 ai:
-  #AI Type:zhiPu
-  type: zhiPu
-  #Model name：glm-4
-  model: glm-4
-  #api key
-  api-key: xxx
+  # AI Type:zhiPu、alibabaAi、kimiAi、sparkDesk
+  type:
+  # Model name：glm-4、qwen-turboo、moonshot-v1-8k、generalv3.5
+  model:
+  # api key
+  api-key:
   #At present, only IFLYTEK large model needs to be filled in
-  api-secret: xxx
+  api-secret:

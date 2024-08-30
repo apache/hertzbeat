@@ -71,7 +71,7 @@ public enum DataUnit {
     private final String unit;
     private final long scale;
 
-    private DataUnit(String unit, long scale) {
+    DataUnit(String unit, long scale) {
         this.unit = unit;
         this.scale = scale;
     }

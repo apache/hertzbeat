@@ -1,14 +1,13 @@
 ---
 id: development  
 title: 如何将 HertzBeat 运行编译?    
-sidebar_label: 运行编译    
+sidebar_label: 运行编译
 ---
 
 ## 让 HertzBeat 运行起来
 
-> 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。   
+> 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。
 > 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
-
 
 ### 后端启动
 
@@ -38,7 +37,7 @@ sidebar_label: 运行编译
 
 ## 生成二进制包
 
-> 需要 `maven3+`, `java17`, `node` 和 `yarn` 环境. 
+> 需要 `maven3+`, `java17`, `node` 和 `yarn` 环境.
 
 ### 前端打包
 
@@ -51,7 +50,6 @@ sidebar_label: 运行编译
 4. 安装本项目依赖: `yarn install` 或 `yarn install --registry=https://registry.npmmirror.com`
 
 5. 打包: `yarn package`
-
 
 ### 后端打包
 

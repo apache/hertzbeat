@@ -79,7 +79,7 @@ public class ServerChanAlertNotifyHandlerImpl extends AbstractAlertNotifyHandler
     }
 
     @Data
-    private static class ServerChanWebHookDto {
+    protected static class ServerChanWebHookDto {
         private static final String MARKDOWN = "markdown";
 
         /**

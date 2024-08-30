@@ -24,3 +24,5 @@ org.apache.hertzbeat.collector.collect.httpsd.HttpsdImpl
 org.apache.hertzbeat.collector.collect.redfish.RedfishCollectImpl
 org.apache.hertzbeat.collector.collect.nebulagraph.NgqlCollectImpl
 org.apache.hertzbeat.collector.collect.imap.ImapCollectImpl
+org.apache.hertzbeat.collector.collect.script.ScriptCollectImpl
+org.apache.hertzbeat.collector.collect.mqtt.MqttCollectImpl

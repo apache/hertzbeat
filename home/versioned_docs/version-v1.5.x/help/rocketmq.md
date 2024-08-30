@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool, monitoring Apache RocketMQ metrics ]
 
 ### Configuration parameters
 
-| Parameter name      | Parameter help description                                                                                               |
+|   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Namesrv Host        | IPV4,IPV6 of RocketMQ name server(eg: https://, http://)。                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique.                                                       |
@@ -24,7 +24,7 @@ keywords: [ open source monitoring tool, monitoring Apache RocketMQ metrics ]
 
 #### Metric set：cluster
 
-| Metric name             | Metric unit | Metric help description               |
+|       Metric name       | Metric unit |        Metric help description        |
 |-------------------------|-------------|---------------------------------------|
 | BrokerId                | none        | Broker id                             |
 | Address                 | none        | Broker address                        |
@@ -38,7 +38,7 @@ keywords: [ open source monitoring tool, monitoring Apache RocketMQ metrics ]
 
 #### Metric set：Consumer
 
-| Metric name     | Metric unit | Metric help description |
+|   Metric name   | Metric unit | Metric help description |
 |-----------------|-------------|-------------------------|
 | Consumer_group  | none        | Consumer group          |
 | Client_quantity | none        | Number of clients       |

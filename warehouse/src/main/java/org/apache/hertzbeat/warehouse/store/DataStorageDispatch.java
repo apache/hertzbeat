@@ -21,6 +21,8 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.apache.hertzbeat.plugin.PostCollectPlugin;
+import org.apache.hertzbeat.plugin.runner.PluginRunner;
 import org.apache.hertzbeat.warehouse.WarehouseWorkerPool;
 import org.apache.hertzbeat.warehouse.store.history.HistoryDataWriter;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataWriter;
@@ -39,14 +41,18 @@ public class DataStorageDispatch {
     private final RealTimeDataWriter realTimeDataWriter;
     private final Optional<HistoryDataWriter> historyDataWriter;
 
+    private final PluginRunner pluginRunner;
+
     public DataStorageDispatch(CommonDataQueue commonDataQueue,
                                WarehouseWorkerPool workerPool,
                                Optional<HistoryDataWriter> historyDataWriter,
-                               RealTimeDataWriter realTimeDataWriter) {
+                               RealTimeDataWriter realTimeDataWriter,
+                               PluginRunner pluginRunner) {
         this.commonDataQueue = commonDataQueue;
         this.workerPool = workerPool;
         this.realTimeDataWriter = realTimeDataWriter;
         this.historyDataWriter = historyDataWriter;
+        this.pluginRunner = pluginRunner;
         startPersistentDataStorage();
         startRealTimeDataStorage();
     }
@@ -61,6 +67,9 @@ public class DataStorageDispatch {
                         continue;
                     }
                     realTimeDataWriter.saveData(metricsData);
+                    pluginRunner.pluginExecute(PostCollectPlugin.class, ((postCollectPlugin, pluginContext) -> postCollectPlugin.execute(metricsData, pluginContext)));
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -78,9 +87,9 @@ public class DataStorageDispatch {
                     if (metricsData == null) {
                         continue;
                     }
-                    if (historyDataWriter.isPresent()) {
-                        historyDataWriter.get().saveData(metricsData);
-                    }
+                    historyDataWriter.ifPresent(dataWriter -> dataWriter.saveData(metricsData));
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }

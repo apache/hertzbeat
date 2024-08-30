@@ -22,8 +22,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 /**
  * jackson config
@@ -31,15 +33,23 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 @Configuration
 public class JacksonConfig {
-    @Bean
-    public ObjectMapper objectMapper() {
-        JavaTimeModule javaTimeModule = new JavaTimeModule();
-        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-        simpleDateFormat.setTimeZone(TimeZone.getDefault());
 
-        return new ObjectMapper()
-                .registerModule(javaTimeModule)
-                .setTimeZone(TimeZone.getDefault())
-                .setDateFormat(simpleDateFormat);
+    @Bean
+    public Jackson2ObjectMapperBuilderCustomizer customizer() {
+        return builder -> {
+            JavaTimeModule javaTimeModule = new JavaTimeModule();
+            final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+            simpleDateFormat.setTimeZone(TimeZone.getDefault());
+
+            builder.modules(javaTimeModule)
+                    .timeZone(TimeZone.getDefault())
+                    .dateFormat(simpleDateFormat);
+        };
     }
+
+    @Bean
+    public ObjectMapper objectMapper(Jackson2ObjectMapperBuilder builder) {
+        return builder.build();
+    }
+
 }

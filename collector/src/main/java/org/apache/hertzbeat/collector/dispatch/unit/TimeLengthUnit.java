@@ -53,7 +53,7 @@ public enum TimeLengthUnit {
     private final String unit;
     private final long scale;
 
-    private TimeLengthUnit(String unit, long scale) {
+    TimeLengthUnit(String unit, long scale) {
         this.unit = unit;
         this.scale = scale;
     }

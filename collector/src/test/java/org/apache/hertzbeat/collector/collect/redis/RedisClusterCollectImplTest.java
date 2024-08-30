@@ -31,6 +31,7 @@ import java.util.List;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  */
 @ExtendWith(MockitoExtension.class)
 public class RedisClusterCollectImplTest {
-    
+
     @InjectMocks
     private RedisCommonCollectImpl redisClusterCollect;
 
@@ -62,10 +63,14 @@ public class RedisClusterCollectImplTest {
     void setUp() {
     }
 
-
+    @AfterEach
+    void setDown() {
+        connection.close();
+        client.shutdown();
+    }
 
     @Test
-    void testCollect(){
+    void testCollect() {
         RedisProtocol redisProtocol = RedisProtocol.builder()
                 .host("127.0.0.1")
                 .port("6379")
@@ -106,7 +111,7 @@ public class RedisClusterCollectImplTest {
         metrics.setFields(fields);
 
 
-        Mockito.mockStatic(RedisClusterClient.class).when(()->RedisClusterClient.create(Mockito.any(ClientResources.class),
+        Mockito.mockStatic(RedisClusterClient.class).when(() -> RedisClusterClient.create(Mockito.any(ClientResources.class),
                 Mockito.any(RedisURI.class))).thenReturn(client);
         Mockito.when(client.connect()).thenReturn(connection);
 

@@ -57,7 +57,7 @@ export class MonitorEditComponent implements OnInit {
   params!: Param[];
   advancedParamDefines!: ParamDefine[];
   advancedParams!: Param[];
-  paramValueMap = new Map<String, Param>();
+  paramValueMap!: Map<String, Param>;
   monitor = new Monitor();
   collectors!: Collector[];
   collector: string = '';
@@ -72,20 +72,22 @@ export class MonitorEditComponent implements OnInit {
           this.isSpinning = true;
           let id = paramMap.get('monitorId');
           this.monitor.id = Number(id);
-          // 查询监控信息
+          // query monitor by id
           return this.monitorSvc.getMonitor(this.monitor.id);
         })
       )
       .pipe(
         switchMap((message: Message<any>) => {
           if (message.code === 0) {
+            let paramValueMap = new Map<String, Param>();
             this.monitor = message.data.monitor;
             this.collector = message.data.collector == null ? '' : message.data.collector;
             this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
             if (message.data.params != null) {
               message.data.params.forEach((item: Param) => {
-                this.paramValueMap.set(item.field, item);
+                paramValueMap.set(item.field, item);
               });
+              this.paramValueMap = paramValueMap;
             }
             this.detected = false;
             if (this.monitor.tags == undefined) {
@@ -102,10 +104,10 @@ export class MonitorEditComponent implements OnInit {
       .pipe(
         switchMap(message => {
           if (message.code === 0) {
-            this.params = [];
-            this.advancedParams = [];
-            this.paramDefines = [];
-            this.advancedParamDefines = [];
+            let params: Param[] = [];
+            let advancedParams: Param[] = [];
+            let paramDefines: ParamDefine[] = [];
+            let advancedParamDefines: ParamDefine[] = [];
             message.data.forEach(define => {
               let param = this.paramValueMap.get(define.field);
               if (param === undefined) {
@@ -144,11 +146,11 @@ export class MonitorEditComponent implements OnInit {
               }
               define.name = this.i18nSvc.fanyi(`monitor.app.${this.monitor.app}.param.${define.field}`);
               if (define.hide) {
-                this.advancedParams.push(param);
-                this.advancedParamDefines.push(define);
+                advancedParams.push(param);
+                advancedParamDefines.push(define);
               } else {
-                this.params.push(param);
-                this.paramDefines.push(define);
+                params.push(param);
+                paramDefines.push(define);
               }
               if (
                 define.field == 'host' &&
@@ -158,8 +160,10 @@ export class MonitorEditComponent implements OnInit {
                 this.hostName = define.name;
               }
             });
-            this.onPageInit();
-            this.detectDepend();
+            this.params = [...params];
+            this.advancedParams = [...advancedParams];
+            this.paramDefines = [...paramDefines];
+            this.advancedParamDefines = [...advancedParamDefines];
           } else {
             console.warn(message.msg);
           }
@@ -182,53 +186,11 @@ export class MonitorEditComponent implements OnInit {
       );
   }
 
-  onPageInit() {
-    this.paramDefines.forEach((paramDefine, index) => {
-      this.params[index].display = true;
-    });
-    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
-      this.advancedParams[index].display = true;
-    });
-  }
-
-  detectDepend() {
-    this.paramDefines.forEach((paramDefine, index) => {
-      if (paramDefine.type == 'radio') {
-        this.onDependChanged(this.paramValueMap.get(paramDefine.field)?.paramValue, paramDefine.field);
-      }
-    });
-  }
-
-  onDependChanged(dependValue: string, dependField: string) {
-    this.paramDefines.forEach((paramDefine, index) => {
-      if (paramDefine.depend) {
-        let fieldValues = new Map(Object.entries(paramDefine.depend)).get(dependField);
-        if (fieldValues) {
-          this.params[index].display = false;
-          if (fieldValues.map(String).includes(dependValue)) {
-            this.params[index].display = true;
-          }
-        }
-      }
-    });
-    this.advancedParamDefines.forEach((advancedParamDefine, index) => {
-      if (advancedParamDefine.depend) {
-        let fieldValues = new Map(Object.entries(advancedParamDefine.depend)).get(dependField);
-        if (fieldValues) {
-          this.advancedParams[index].display = false;
-          if (fieldValues.map(String).includes(dependValue)) {
-            this.advancedParams[index].display = true;
-          }
-        }
-      }
-    });
-  }
-
   onSubmit(info: any) {
     let addMonitor = {
       detected: this.detected,
       monitor: info.monitor,
-      collector: this.collector,
+      collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
     if (this.detected) {
@@ -258,7 +220,7 @@ export class MonitorEditComponent implements OnInit {
     let detectMonitor = {
       detected: this.detected,
       monitor: info.monitor,
-      collector: this.collector,
+      collector: info.collector,
       params: info.params.concat(info.advancedParams)
     };
     this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');

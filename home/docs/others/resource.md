@@ -1,19 +1,19 @@
 ---
 id: resource  
 title: Related resources    
-sidebar_label: Related resources     
+sidebar_label: Related resources
 ---
 
-## Icon Resources 
+## Icon Resources
 
-### HertzBeat Logo   
+### HertzBeat Logo
 
-![logo](/img/hertzbeat-logo.svg)  
+![logo](/img/hertzbeat-logo.svg)
 
-Download: [SVG](/img/hertzbeat-logo.svg)  [PNG](/img/hertzbeat-logo.png)     
+Download: [SVG](/img/hertzbeat-logo.svg)  [PNG](/img/hertzbeat-logo.png)
 
-### HertzBeat Brand Logo  
+### HertzBeat Brand Logo
 
-![logo](/img/hertzbeat-brand.svg)  
+![logo](/img/hertzbeat-brand.svg)
 
-Download: [SVG](/img/hertzbeat-brand.svg)  [PNG](/img/hertzbeat-brand.png)     
+Download: [SVG](/img/hertzbeat-brand.svg)  [PNG](/img/hertzbeat-brand.png)

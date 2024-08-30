@@ -25,7 +25,11 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 /**
  * timezone util
  */
-public class TimeZoneUtil {
+public final class TimeZoneUtil {
+
+    private TimeZoneUtil() {
+    }
+
     private static final Integer LANG_REGION_LENGTH = 2;
 
     public static void setTimeZoneAndLocale(String timeZoneId, String locale) {

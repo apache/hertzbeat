@@ -13,13 +13,10 @@ keywords: [open source monitoring tool, open source java spark monitoring tool, 
 
 1. Add Spark `VM options` When Start Server ⚠️ customIP
 
-Refer: https://spark.apache.org/docs/latest/spark-standalone.html
-
+Refer: <https://spark.apache.org/docs/latest/spark-standalone.html>
 
 **监控配置spark的监控主要分为Master、Worker、driver、executor监控。Master和Worker的监控在spark集群运行时即可监控，Driver和Excutor的监控需要针对某一个app来进行监控。**
 **如果都要监控，需要根据以下步骤来配置**
-
-
 
 ## 第一步
 
@@ -36,8 +33,6 @@ export SPARK_DAEMON_JAVA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.manageme
 语句中有$JMX_PORT，这个的值可以自定义，也可以获取一个随机数作为端口号。
 如果端口自定义为一个具体的值，而 spark 的 Master 和其中之一的 Worker 在同一台机器上，会出现端口冲突的情况。
 
-
-
 ## 第二步
 
 **vim $SPARK_HOME/conf/metrics.properties 添加如下内容**
@@ -49,10 +44,6 @@ worker.source.jvm.class=org.apache.spark.metrics.source.JvmSource
 driver.source.jvm.class=org.apache.spark.metrics.source.JvmSource
 executor.source.jvm.class=org.apache.spark.metrics.source.JvmSource
 ```
-
-
-
-
 
 ## 第三步
 
@@ -69,11 +60,9 @@ gement.jmxremote.port=8711
 
 在spark的Master和Worker正常运行以及spark-submit提交了一个程序的情况下，可以从linux中查询出端口号码。
 
-
-
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                                                                                |
+|   Parameter name    |                                                                        Parameter help description                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                                                                                |
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
@@ -107,16 +96,15 @@ gement.jmxremote.port=8711
 
 #### Metrics Set：class_loading
 
-| Metric name           | Metric unit | Metric help description  |
+|      Metric name      | Metric unit | Metric help description  |
 |-----------------------|-------------|--------------------------|
 | LoadedClassCount      |             | Loaded Class Count       |
 | TotalLoadedClassCount |             | Total Loaded Class Count |
 | UnloadedClassCount    |             | Unloaded Class Count     |
 
-
 #### Metrics Set：thread
 
-| Metric name             | Metric unit | Metric help description    |
+|       Metric name       | Metric unit |  Metric help description   |
 |-------------------------|-------------|----------------------------|
 | TotalStartedThreadCount |             | Total Started Thread Count |
 | ThreadCount             |             | Thread Count               |
@@ -124,5 +112,3 @@ gement.jmxremote.port=8711
 | DaemonThreadCount       |             | Daemon Thread Count        |
 | CurrentThreadUserTime   | ms          | Current Thread User Time   |
 | CurrentThreadCpuTime    | ms          | Current Thread Cpu Time    |
-
-

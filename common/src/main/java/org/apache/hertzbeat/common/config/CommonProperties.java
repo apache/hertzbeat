@@ -17,12 +17,19 @@
 
 package org.apache.hertzbeat.common.config;
 
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * common module properties
  */
-@ConfigurationProperties(prefix = "common")
+
+@Getter
+@Setter
+@ConfigurationProperties(prefix =
+        ConfigConstants.FunctionModuleConstants.COMMON)
 public class CommonProperties {
 
     /**
@@ -40,54 +47,19 @@ public class CommonProperties {
      */
     private SmsProperties sms;
 
-    public String getSecret() {
-        return secret;
-    }
-
-    public DataQueueProperties getQueue() {
-        return queue;
-    }
-
-    public SmsProperties getSms() {
-        return sms;
-    }
-
-    public void setSecret(String secret) {
-        this.secret = secret;
-    }
-
-    public void setQueue(DataQueueProperties queue) {
-        this.queue = queue;
-    }
-
-    public void setSms(SmsProperties sms) {
-        this.sms = sms;
-    }
-
     /**
      * data queue properties
      */
+    @Getter
+    @Setter
     public static class DataQueueProperties {
 
         private QueueType type = QueueType.Memory;
 
         private KafkaProperties kafka;
 
-        public QueueType getType() {
-            return type;
-        }
+        private RedisProperties redis;
 
-        public void setType(QueueType type) {
-            this.type = type;
-        }
-
-        public KafkaProperties getKafka() {
-            return kafka;
-        }
-
-        public void setKafka(KafkaProperties kafka) {
-            this.kafka = kafka;
-        }
     }
 
     /**
@@ -101,17 +73,57 @@ public class CommonProperties {
         /** with netty connect **/
         Netty,
         /** rabbit mq **/
-        Rabbit_Mq
+        Rabbit_Mq,
+        /** redis **/
+        Redis
+    }
+
+    /**
+     * redis data queue properties
+     */
+    @Getter
+    @Setter
+    public static class RedisProperties {
+
+        /**
+         * redis server host.
+         */
+        private String redisHost;
+
+        /**
+         * redis server port.
+         */
+        private int redisPort;
+
+        /**
+         * Queue name for metrics data to alerter
+         */
+        private String metricsDataQueueNameToAlerter;
+
+        /**
+         * Queue name for metrics data to persistent storage
+         */
+        private String metricsDataQueueNameToPersistentStorage;
+
+        /**
+         * Queue name for metrics data to real-time storage
+         */
+        private String metricsDataQueueNameToRealTimeStorage;
+
+        /**
+         * Queue name for alerts data
+         */
+        private String alertsDataQueueName;
+
     }
 
     /**
      * kafka data queue properties
      */
-    public static class KafkaProperties {
-        /**
-         * kafka's connection server url
-         */
-        private String servers;
+    @Getter
+    @Setter
+    public static class KafkaProperties extends BaseKafkaProperties {
+
         /**
          * metrics data topic
          */
@@ -120,61 +132,25 @@ public class CommonProperties {
          * alerts data topic
          */
         private String alertsDataTopic;
-
-        public String getServers() {
-            return servers;
-        }
-
-        public void setServers(String servers) {
-            this.servers = servers;
-        }
-
-        public String getMetricsDataTopic() {
-            return metricsDataTopic;
-        }
-
-        public void setMetricsDataTopic(String metricsDataTopic) {
-            this.metricsDataTopic = metricsDataTopic;
-        }
-
-        public String getAlertsDataTopic() {
-            return alertsDataTopic;
-        }
-
-        public void setAlertsDataTopic(String alertsDataTopic) {
-            this.alertsDataTopic = alertsDataTopic;
-        }
     }
 
     /**
      * sms properties
      */
+    @Getter
+    @Setter
     public static class SmsProperties {
         //Tencent cloud SMS configuration
         private TencentSmsProperties tencent;
         //Ali cloud SMS configuration
         private AliYunSmsProperties aliYun;
-
-        public TencentSmsProperties getTencent() {
-            return tencent;
-        }
-
-        public void setTencent(TencentSmsProperties tencent) {
-            this.tencent = tencent;
-        }
-
-        public AliYunSmsProperties getAliYun() {
-            return aliYun;
-        }
-
-        public void setAliYun(AliYunSmsProperties aliYun) {
-            this.aliYun = aliYun;
-        }
     }
 
     /**
      * tencent sms properties
      */
+    @Getter
+    @Setter
     public static class TencentSmsProperties {
 
         /**
@@ -201,51 +177,13 @@ public class CommonProperties {
          * SMS template ID
          */
         private String templateId;
-
-        public String getSecretId() {
-            return secretId;
-        }
-
-        public void setSecretId(String secretId) {
-            this.secretId = secretId;
-        }
-
-        public String getSecretKey() {
-            return secretKey;
-        }
-
-        public void setSecretKey(String secretKey) {
-            this.secretKey = secretKey;
-        }
-
-        public String getAppId() {
-            return appId;
-        }
-
-        public void setAppId(String appId) {
-            this.appId = appId;
-        }
-
-        public String getSignName() {
-            return signName;
-        }
-
-        public void setSignName(String signName) {
-            this.signName = signName;
-        }
-
-        public String getTemplateId() {
-            return templateId;
-        }
-
-        public void setTemplateId(String templateId) {
-            this.templateId = templateId;
-        }
     }
 
     /**
      * aliYun sms properties
      */
+    @Getter
+    @Setter
     public static class AliYunSmsProperties {
 
         /**
@@ -272,45 +210,6 @@ public class CommonProperties {
          * ID of the SMS template
          */
         private String templateId;
-
-        public String getAppId() {
-            return appId;
-        }
-
-        public void setAppId(String appId) {
-            this.appId = appId;
-        }
-
-        public String getSecretId() {
-            return secretId;
-        }
-
-        public void setSecretId(String secretId) {
-            this.secretId = secretId;
-        }
-
-        public String getSecretKey() {
-            return secretKey;
-        }
-
-        public void setSecretKey(String secretKey) {
-            this.secretKey = secretKey;
-        }
-
-        public String getSignName() {
-            return signName;
-        }
-
-        public void setSignName(String signName) {
-            this.signName = signName;
-        }
-
-        public String getTemplateId() {
-            return templateId;
-        }
-
-        public void setTemplateId(String templateId) {
-            this.templateId = templateId;
-        }
     }
+
 }

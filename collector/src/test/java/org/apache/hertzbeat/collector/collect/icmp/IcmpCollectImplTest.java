@@ -62,9 +62,9 @@ class IcmpCollectImplTest {
     @BeforeEach
     void setUp() {
         icmpProtocol = IcmpProtocol.builder()
-            .host("127.0.0.1")
-            .timeout("3000")
-            .build();
+                .host("127.0.0.1")
+                .timeout("3000")
+                .build();
         List<String> aliasField = new ArrayList<>();
         aliasField.add("responseTime");
         metrics = new Metrics();
@@ -76,16 +76,10 @@ class IcmpCollectImplTest {
 
     @Test
     void testPreCheck() {
-        assertDoesNotThrow(() -> {
-            icmpCollect.preCheck(metrics);
-        });
-        assertThrows(IllegalArgumentException.class, () -> {
-            icmpCollect.preCheck(null);
-        });
+        assertDoesNotThrow(() -> icmpCollect.preCheck(metrics));
+        assertThrows(IllegalArgumentException.class, () -> icmpCollect.preCheck(null));
         metrics.setIcmp(null);
-        assertThrows(IllegalArgumentException.class, () -> {
-            icmpCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> icmpCollect.preCheck(null));
     }
 
     @Test

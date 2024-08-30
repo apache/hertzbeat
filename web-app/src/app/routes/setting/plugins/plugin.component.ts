@@ -27,6 +27,7 @@ import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzUploadFile } from 'ng-zorro-antd/upload';
 import { finalize } from 'rxjs/operators';
 
+import { ParamDefine } from '../../../pojo/ParamDefine';
 import { Plugin } from '../../../pojo/Plugin';
 import { PluginService } from '../../../service/plugin.service';
 
@@ -47,8 +48,10 @@ export class SettingPluginsComponent implements OnInit {
       jarFile: [null, [Validators.required]],
       enableStatus: [true, [Validators.required]]
     });
+    this.lang = this.i18nSvc.defaultLang;
   }
 
+  lang: string;
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
@@ -74,6 +77,13 @@ export class SettingPluginsComponent implements OnInit {
       jarFile: file
     });
     return false;
+  };
+
+  fileRemove = (): boolean => {
+    this.pluginForm.patchValue({
+      jarFile: null
+    });
+    return true;
   };
 
   loadPluginsTable() {
@@ -186,7 +196,7 @@ export class SettingPluginsComponent implements OnInit {
     this.pageIndex = this.pageIndex > lastPage ? lastPage : this.pageIndex;
   }
 
-  // begin: 列表多选分页逻辑
+  // begin: List multiple choice paging
   checkedAll: boolean = false;
 
   onAllChecked(checked: boolean) {
@@ -232,17 +242,24 @@ export class SettingPluginsComponent implements OnInit {
       formData.append('name', this.pluginForm.get('name')?.value);
       formData.append('jarFile', this.fileList[0] as any);
       formData.append('enableStatus', this.pluginForm.get('enableStatus')?.value);
-      this.pluginService.uploadPlugin(formData).subscribe((message: any) => {
-        if (message.code === 0) {
-          this.isManageModalVisible = false;
-          this.resetForm();
-          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
-          this.loadPluginsTable();
-        } else {
-          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
-        }
-        this.isManageModalOkLoading = false;
-      });
+      const uploadPlugin$ = this.pluginService
+        .uploadPlugin(formData)
+        .pipe(
+          finalize(() => {
+            uploadPlugin$.unsubscribe();
+            this.isManageModalOkLoading = false;
+          })
+        )
+        .subscribe((message: any) => {
+          if (message.code === 0) {
+            this.isManageModalVisible = false;
+            this.resetForm();
+            this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
+            this.loadPluginsTable();
+          } else {
+            this.notifySvc.error(this.i18nSvc.fanyi('common.notify.new-fail'), message.msg);
+          }
+        });
     } else {
       Object.values(this.pluginForm.controls).forEach(control => {
         if (control.invalid) {
@@ -250,6 +267,7 @@ export class SettingPluginsComponent implements OnInit {
           control.updateValueAndValidity({ onlySelf: true });
         }
       });
+      this.isManageModalOkLoading = false;
     }
   }
 
@@ -259,5 +277,64 @@ export class SettingPluginsComponent implements OnInit {
       enableStatus: true
     });
     this.fileList = [];
+  }
+
+  params: any = {};
+  paramDefines!: ParamDefine[];
+  isEditPluginParamDefineModalVisible = false;
+
+  onEditPluginParamDefine(pluginId: number) {
+    const getPluginParamDefine$ = this.pluginService
+      .getPluginParamDefine(pluginId)
+      .pipe(
+        finalize(() => {
+          getPluginParamDefine$.unsubscribe();
+        })
+      )
+      .subscribe((message: any) => {
+        if (message.code === 0) {
+          this.paramDefines = message.data.paramDefines.map((i: any) => {
+            this.params[i.field] = {
+              pluginMetadataId: pluginId,
+              // Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
+              type: i.type === 'number' ? 0 : i.type === 'text' || i.type === 'string' ? 1 : i.type === 'json' ? 3 : 2,
+              field: i.field,
+              paramValue: this.getParamValue(message.data.pluginParams, i.field)
+            };
+            i.name = i.name[this.lang];
+            return i;
+          });
+          this.isEditPluginParamDefineModalVisible = true;
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+        }
+      });
+  }
+
+  onEditPluginParamDefineModalCancel() {
+    this.isEditPluginParamDefineModalVisible = false;
+  }
+
+  onEditPluginParamDefineModalOk() {
+    const savePluginParamDefine$ = this.pluginService
+      .savePluginParamDefine(Object.values(this.params))
+      .pipe(
+        finalize(() => {
+          savePluginParamDefine$.unsubscribe();
+        })
+      )
+      .subscribe((message: any) => {
+        if (message.code === 0) {
+          this.isEditPluginParamDefineModalVisible = false;
+          this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
+        } else {
+          this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
+        }
+      });
+  }
+
+  getParamValue(pluginParams: any[], field: string) {
+    const pluginParam = (pluginParams || []).filter((i: any) => i.field === field);
+    return pluginParam.length > 0 ? pluginParam[0].paramValue : null;
   }
 }
