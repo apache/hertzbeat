@@ -15,19 +15,29 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.constants;
+package org.apache.hertzbeat.manager.pojo.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.manager.ParamDefine;
+import java.util.List;
 
 /**
- * plugin type
+ * Popup rendering and parameter values
  */
-public enum PluginType {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class PluginParametersVO {
 
     /**
-     * do something after alter
+     * Stencil rendering
      */
-    POST_ALERT,
+    private List<ParamDefine> paramDefines;
+
     /**
-     * do something after collect
+     * specific parameter
      */
-    POST_COLLECT
+    private List<PluginParam> pluginParams;
 }
