@@ -54,3 +54,6 @@ node_modules
 application-dev.yml
 application-mysql.yml
 application-pg.yml
+
+# package.json
+package.json
