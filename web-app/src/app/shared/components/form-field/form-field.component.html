@@ -18,7 +18,7 @@
 -->
 
 <app-multi-func-input
-  *ngIf="item.type === 'text' || item.type === 'array'"
+  *ngIf="item.type === 'text' || item.type === 'string' || item.type === 'array'"
   [(value)]="value"
   (valueChange)="onChange($event)"
   [required]="item.required"
