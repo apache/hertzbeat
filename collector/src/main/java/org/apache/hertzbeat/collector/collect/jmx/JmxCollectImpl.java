@@ -69,10 +69,14 @@ public class JmxCollectImpl extends AbstractCollect {
     private static final String IGNORED_STUB = "/stub/";
 
     private static final String SUB_ATTRIBUTE = "->";
+    
     private final ConnectionCommonCache<CacheIdentifier, JmxConnect> connectionCommonCache;
 
+    private final ClassLoader jmxClassLoader;
+    
     public JmxCollectImpl() {
         connectionCommonCache = new ConnectionCommonCache<>();
+        jmxClassLoader = new JmxClassLoader(ClassLoader.getSystemClassLoader());
     }
 
     @Override
@@ -87,7 +91,8 @@ public class JmxCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-
+        ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
             JmxProtocol jmxProtocol = metrics.getJmx();
 
@@ -129,6 +134,8 @@ public class JmxCollectImpl extends AbstractCollect {
             log.error("JMX Error :{}", errorMsg);
             builder.setCode(CollectRep.Code.FAIL);
             builder.setMsg(errorMsg);
+        } finally {
+            Thread.currentThread().setContextClassLoader(currentClassLoader);
         }
     }
 
