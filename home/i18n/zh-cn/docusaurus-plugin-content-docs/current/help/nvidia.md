@@ -6,6 +6,7 @@ keywords: [开源监控系统, NVIDIA监控]
 ---
 
 > 对NVIDIA操作系统的通用性能指标进行采集监控。
+> NVIDIA监控需要用到 nvidia-smi 命令，nvidia-smi 是与 NVIDIA GPU 驱动程序一起安装的。所以在监控NVIDIA时，我们需要安装 NVIDIA GPU 驱动程序。
 
 ### 配置参数
 

@@ -6,6 +6,7 @@ keywords: [Open Source Monitoring System, NVIDIA Monitoring]
 ---
 
 > Collect and monitor general performance metrics of NVIDIA operating systems.
+> NVIDIA monitoring requires the nvidia-smi command, which is installed together with the NVIDIA GPU driver. So when monitoring NVIDIA, we need to install the NVIDIA GPU driver.
 
 ### Configuration Parameters
 
