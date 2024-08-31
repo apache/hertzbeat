@@ -217,7 +217,8 @@
             "help/nebulagraph_cluster",
             "help/tidb",
             "help/mongodb",
-            "help/mongodb_atlas"
+            "help/mongodb_atlas",
+            "help/oceanbase"
           ]
         },
         {
@@ -225,7 +226,8 @@
           "label": "cache",
           "items": [
             "help/redis",
-            "help/memcached"
+            "help/memcached",
+            "help/valkey"
           ]
         },
         {
@@ -356,9 +358,11 @@
             "help/alert_smn"
           ]
         },
-        "help/issue",
+        "help/bulletin",
         "help/plugin",
-        "help/time_expression"
+        "help/time_expression",
+        "help/grafana_dashboard",
+        "help/issue"
       ]
     },
     {

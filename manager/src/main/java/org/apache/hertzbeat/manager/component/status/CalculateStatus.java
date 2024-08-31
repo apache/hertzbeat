@@ -37,6 +37,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
@@ -51,7 +52,6 @@ import org.apache.hertzbeat.manager.dao.StatusPageHistoryDao;
 import org.apache.hertzbeat.manager.dao.StatusPageOrgDao;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 /**
  * calculate component status for status page
@@ -115,7 +115,7 @@ public class CalculateStatus {
                                     ListJoin<Monitor, Tag> tagJoin = root
                                             .join(root.getModel()
                                                     .getList("tags", Tag.class), JoinType.LEFT);
-                                    if (StringUtils.hasText(tagItem.getValue())) {
+                                    if (StringUtils.isNotBlank(tagItem.getValue())) {
                                         andList.add(criteriaBuilder.equal(tagJoin.get("name"), tagItem.getName()));
                                         andList.add(criteriaBuilder.equal(tagJoin.get("tagValue"), tagItem.getValue()));
                                     } else {

@@ -64,20 +64,6 @@ export class PluginService {
     return this.http.put<Message<any>>(plugin_uri, body);
   }
 
-  public newTags(body: Tag[]): Observable<Message<any>> {
-    return this.http.post<Message<any>>(plugin_uri, body);
-  }
-
-  public newTag(body: Tag): Observable<Message<any>> {
-    const tags = [];
-    tags.push(body);
-    return this.http.post<Message<any>>(plugin_uri, tags);
-  }
-
-  public editTag(body: Tag): Observable<Message<any>> {
-    return this.http.put<Message<any>>(plugin_uri, body);
-  }
-
   public deletePlugins(pluginIds: Set<number>): Observable<Message<any>> {
     let httpParams = new HttpParams();
     pluginIds.forEach(pluginId => {
@@ -85,5 +71,18 @@ export class PluginService {
     });
     const options = { params: httpParams };
     return this.http.delete<Message<any>>(plugin_uri, options);
+  }
+
+  public getPluginParamDefine(pluginId: number): Observable<Message<any>> {
+    let httpParams = new HttpParams();
+    httpParams = httpParams.appendAll({
+      pluginMetadataId: pluginId
+    });
+    const options = { params: httpParams };
+    return this.http.get<Message<any>>(`${plugin_uri}/params/define`, options);
+  }
+
+  public savePluginParamDefine(body: any): Observable<Message<any>> {
+    return this.http.post<Message<any>>(`${plugin_uri}/params`, body);
   }
 }

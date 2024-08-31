@@ -48,8 +48,8 @@ public class WarehouseWorkerPool {
                 .setDaemon(true)
                 .setNameFormat("warehouse-worker-%d")
                 .build();
-        workerExecutor = new ThreadPoolExecutor(6,
-                10,
+        workerExecutor = new ThreadPoolExecutor(2,
+                Integer.MAX_VALUE,
                 10,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>(),

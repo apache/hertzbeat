@@ -50,8 +50,10 @@ public class WorkerPool implements DisposableBean {
                 .setDaemon(true)
                 .setNameFormat("collect-worker-%d")
                 .build();
-        workerExecutor = new ThreadPoolExecutor(100,
-                1024,
+        int coreSize = Math.max(2, Runtime.getRuntime().availableProcessors());
+        int maxSize = Runtime.getRuntime().availableProcessors() * 16;
+        workerExecutor = new ThreadPoolExecutor(coreSize,
+                maxSize,
                 10,
                 TimeUnit.SECONDS,
                 new SynchronousQueue<>(),
