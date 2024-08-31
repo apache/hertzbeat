@@ -30,7 +30,6 @@ import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
 import org.apache.hertzbeat.manager.service.BulletinService;
-import org.apache.hertzbeat.manager.service.MonitorService;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -57,9 +56,6 @@ public class BulletinController {
 
     @Autowired
     private RealTimeDataReader realTimeDataReader;
-
-    @Autowired
-    private MonitorService monitorService;
 
     /**
      * add a new bulletin
