@@ -44,6 +44,24 @@ git clone git@github.com:<your-github-user-name>/hertzbeat.git
 5. 在`home`目录下运行 `npm run start-zh-cn`，您可以访问 <http://localhost:3000> 查看站点的中文模式预览
 6. 若要生成静态网站资源文件，请运行 `npm run build`。构建的静态资源位于 build 目录中。
 
+## 文档格式检验
+
+在 Apache Hertzbeat 中，所有的 MD 文章都要通过 MD 的 [CI](https://github.com/apache/hertzbeat/blob/master/.github/workflows/doc-build-test.yml) 检测才能够合并，目的是为了保持文档官网的美观和文章格式的一致性。
+
+在您编写了相关 MD 文章之后，您可以在本地执行以下命令，预先检查 MD 的文章内容是否符合要求，减少 review 的工作量，节省您的时间：
+
+```shell
+cd home && yarn
+
+yarn md-lint
+
+# 如果文档错误，您可以使用 yarn md-lint-fix 修复
+yarn md-lint-fix
+```
+
+MD 文章的相关格式规则您可以参考：[Markdown-lint-rules](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)
+项目中的 MD 格式配置文件：[.markdownlint-cli2.jsonc](https://github.com/apache/hertzbeat/blob/master/.markdownlint-cli2.jsonc)
+
 ## 目录结构
 
 ```html
