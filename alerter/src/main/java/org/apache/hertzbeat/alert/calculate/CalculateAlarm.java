@@ -69,6 +69,8 @@ import org.springframework.util.CollectionUtils;
 public class CalculateAlarm {
 
     private static final String SYSTEM_VALUE_ROW_COUNT = "system_value_row_count";
+    
+    private static final int CALCULATE_THREADS = 3;
 
     /**
      * The alarm in the process is triggered
@@ -129,9 +131,9 @@ public class CalculateAlarm {
                 }
             }
         };
-        workerPool.executeJob(runnable);
-        workerPool.executeJob(runnable);
-        workerPool.executeJob(runnable);
+        for (int i = 0; i < CALCULATE_THREADS; i++) {
+            workerPool.executeJob(runnable);
+        }
     }
 
     private void calculate(CollectRep.MetricsData metricsData) {

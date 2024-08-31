@@ -85,7 +85,7 @@ class AccountControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/auth/form")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(loginDto)))
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_LOGIN_FAILED_CODE))
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.LOGIN_FAILED_CODE))
                 .andReturn();
     }
 
@@ -95,7 +95,7 @@ class AccountControllerTest {
         Mockito.when(accountService.refreshToken(refreshToken)).thenThrow(new AuthenticationException());
         this.mockMvc.perform(MockMvcRequestBuilders.get("/api/account/auth/refresh/{refreshToken}",
                         refreshToken))
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_LOGIN_FAILED_CODE))
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.LOGIN_FAILED_CODE))
                 .andReturn();
     }
 }

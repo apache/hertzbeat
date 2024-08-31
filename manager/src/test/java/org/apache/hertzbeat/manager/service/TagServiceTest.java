@@ -23,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 import java.util.Collections;
@@ -83,14 +82,14 @@ class TagServiceTest {
 
     @Test
     void deleteTags() {
-        doNothing().when(tagDao).deleteTagsByIdIn(anySet());
-        when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(0L);
         assertDoesNotThrow(() -> tagService.deleteTags(new HashSet<>(1)));
     }
 
     @Test
     void deleteUsingTags() {
         when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(1L);
-        assertThrows(CommonException.class, () -> tagService.deleteTags(new HashSet<>(1)));
+        HashSet<Long> set = new HashSet<>(1);
+        set.add(1L);
+        assertThrows(CommonException.class, () -> tagService.deleteTags(set));
     }
 }
