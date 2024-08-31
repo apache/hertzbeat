@@ -19,7 +19,10 @@
 
 package org.apache.hertzbeat.common.entity.plugin;
 
-import static org.junit.jupiter.api.Assertions.*;
+
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -42,7 +45,7 @@ class PluginContextTest {
 
         List<Configmap> params = Arrays.asList(host,
             new Configmap("port", "80", (byte) 0),
-            new Configmap("enableSSL", "true", (byte) 1),
+            new Configmap("enableSsl", "true", (byte) 1),
             new Configmap("max", "1725116706000", (byte) 1)
         );
         pluginContext = PluginContext.builder().params(params).build();
@@ -74,8 +77,8 @@ class PluginContextTest {
 
     @Test
     void getBoolean() {
-        boolean enableSSL = pluginContext.param().getBoolean("enableSSL", false);
-        assertTrue(enableSSL);
+        boolean enableSsl = pluginContext.param().getBoolean("enableSsl", false);
+        assertTrue(enableSsl);
     }
 
     @Test

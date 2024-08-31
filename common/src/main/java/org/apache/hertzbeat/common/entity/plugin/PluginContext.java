@@ -50,6 +50,9 @@ public class PluginContext {
         return paramHolder;
     }
 
+    /**
+     * management parameter operations
+     */
     public static class ParamHolder {
 
         private final Map<String, Configmap> paramsMap;
