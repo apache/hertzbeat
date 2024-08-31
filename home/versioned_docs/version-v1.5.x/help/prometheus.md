@@ -9,7 +9,7 @@ keywords: [ open source monitoring tool,  Prometheus protocol monitoring ]
 
 ### Configuration parameter
 
-| Parameter name      | Parameter help description                                                                                               |
+|   Parameter name    |                                                Parameter help description                                                |
 |---------------------|--------------------------------------------------------------------------------------------------------------------------|
 | Target Host         | Monitored IPV4, IPV6 or domain name. Note⚠️Without protocol header (eg: https://, http://)                               |
 | Task Name           | Identify the name of this monitoring. The name needs to be unique.                                                       |
@@ -39,6 +39,3 @@ You can use the following configuration:
 - Endpoint Path: `/actuator/prometheus`
 
 Keep the rest of the settings default.
-
-
-

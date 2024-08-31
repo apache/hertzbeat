@@ -24,12 +24,10 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +39,7 @@ import org.apache.hertzbeat.common.entity.manager.PluginItem;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
 import org.apache.hertzbeat.manager.dao.PluginItemDao;
 import org.apache.hertzbeat.manager.dao.PluginMetadataDao;
+import org.apache.hertzbeat.manager.dao.PluginParamDao;
 import org.apache.hertzbeat.manager.service.impl.PluginServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,8 +61,12 @@ class PluginServiceTest {
 
     @InjectMocks
     private PluginServiceImpl pluginService;
+
     @Mock
     private PluginMetadataDao metadataDao;
+
+    @Mock
+    private PluginParamDao pluginParamDao;
 
     @Mock
     private PluginItemDao itemDao;
@@ -71,11 +74,11 @@ class PluginServiceTest {
 
     @BeforeEach
     void setUp() {
-        pluginService = new PluginServiceImpl(metadataDao, itemDao);
+        pluginService = new PluginServiceImpl(metadataDao, itemDao, pluginParamDao);
     }
 
     @Test
-    void testSavePlugin(){
+    void testSavePlugin() {
 
         List<PluginItem> pluginItems = Collections.singletonList(new PluginItem("org.apache.hertzbear.PluginTest", PluginType.POST_ALERT));
         PluginServiceImpl service = spy(pluginService);
@@ -123,13 +126,9 @@ class PluginServiceTest {
 
     @Test
     void testGetPlugins() {
-        Specification<PluginMetadata> spec = mock(Specification.class);
-        PageRequest pageRequest = PageRequest.of(0, 10);
         Page<PluginMetadata> page = new PageImpl<>(Collections.singletonList(new PluginMetadata()));
-
         when(metadataDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
-
-        Page<PluginMetadata> result = pluginService.getPlugins(spec, pageRequest);
+        Page<PluginMetadata> result = pluginService.getPlugins(null, 0, 10);
         assertFalse(result.isEmpty());
         verify(metadataDao, times(1)).findAll(any(Specification.class), any(PageRequest.class));
     }

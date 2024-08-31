@@ -74,6 +74,8 @@ metrics:
     protocol: script
     # the config content when protocol is ssh
     script:
+      # script tool
+      scriptTool: bash
       # OS charset
       charset: UTF-8
       # script working directory
@@ -95,7 +97,7 @@ metrics:
           zh-CN: 型号
           en-US: Info
       - field: cores
-        type: 0
+        type: 1
         i18n:
           zh-CN: 核数
           en-US: Cores
@@ -139,6 +141,7 @@ metrics:
       - usage=100-idle
     protocol: script
     script:
+      scriptTool: bash
       charset: UTF-8
       scriptCommand:
         |
@@ -152,7 +155,7 @@ metrics:
     priority: 2
     fields:
       - field: total
-        type: 0
+        type: 1
         unit: Mb
         i18n:
           zh-CN: 总内存容量
@@ -202,6 +205,7 @@ metrics:
       - usage=(used / total) * 100
     protocol: script
     script:
+      scriptTool: bash
       charset: UTF-8
       scriptCommand: free -m | awk 'BEGIN{print "total used free buff_cache available"} NR==2{print $2,$3,$4,$6,$7}'
       parseType: multiRow
@@ -213,12 +217,12 @@ metrics:
     priority: 3
     fields:
       - field: disk_num
-        type: 0
+        type: 1
         i18n:
           zh-CN: 磁盘总数
           en-US: Disk Num
       - field: partition_num
-        type: 0
+        type: 1
         i18n:
           zh-CN: 分区总数
           en-US: Partition Num
@@ -240,6 +244,7 @@ metrics:
           en-US: Write Rate
     protocol: script
     script:
+      scriptTool: bash
       charset: UTF-8
       scriptCommand: vmstat -D | awk 'NR==1{print $1}';vmstat -D | awk 'NR==2{print $1}';vmstat 1 1 | awk 'NR==3{print $10}';vmstat 1 1 | awk 'NR==3{print $9}';vmstat 1 1 | awk 'NR==3{print $16}'
       parseType: oneRow
@@ -273,6 +278,7 @@ metrics:
       - transmit_bytes=B->MB
     protocol: script
     script:
+      scriptTool: bash
       charset: UTF-8
       scriptCommand: cat /proc/net/dev | tail -n +3 | awk 'BEGIN{ print "interface_name receive_bytes transmit_bytes"} {print $1,$2,$10}'
       parseType: multiRow
@@ -314,6 +320,7 @@ metrics:
           en-US: Mounted
     protocol: script
     script:
+      scriptTool: bash
       charset: UTF-8
       scriptCommand: df -mP | tail -n +2 | awk 'BEGIN{ print "filesystem used available usage mounted"} {print $1,$3,$4,$5,$6}'
       parseType: multiRow
@@ -349,6 +356,7 @@ metrics:
           en-US: Command
     protocol: script
     script:
+      scriptTool: bash
       charset: UTF-8
       scriptCommand: ps aux | sort -k3nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11
       parseType: multiRow
@@ -384,6 +392,7 @@ metrics:
           en-US: Command
     protocol: script
     script:
+      scriptTool: bash
       charset: UTF-8
       scriptCommand: ps aux | sort -k4nr | awk 'BEGIN{ print "pid cpu_usage mem_usage command" } {printf "%s %s %s ", $2, $3, $4; for (i=11; i<=NF; i++) { printf "%s", $i; if (i < NF) printf " "; } print ""}' | head -n 11
       parseType: multiRow

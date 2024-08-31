@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import jakarta.persistence.criteria.Predicate;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +56,11 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public void addTags(List<Tag> tags) {
+        // Verify request data
+        tags = tags.stream().peek(tag -> {
+            tag.setType((byte) 1);
+            tag.setId(null);
+        }).distinct().collect(Collectors.toList());
         tagDao.saveAll(tags);
     }
 
@@ -69,12 +76,46 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public Page<Tag> getTags(Specification<Tag> specification, PageRequest pageRequest) {
+    public Page<Tag> getTags(String search, Byte type, int pageIndex, int pageSize) {
+        // Get tag information
+        Specification<Tag> specification = (root, query, criteriaBuilder) -> {
+            List<Predicate> andList = new ArrayList<>();
+            if (type != null) {
+                Predicate predicateApp = criteriaBuilder.equal(root.get("type"), type);
+                andList.add(predicateApp);
+            }
+            Predicate[] andPredicates = new Predicate[andList.size()];
+            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
+
+            List<Predicate> orList = new ArrayList<>();
+            if (StringUtils.isNotBlank(search)) {
+                Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
+                orList.add(predicateName);
+                Predicate predicateValue = criteriaBuilder.like(root.get("tagValue"), "%" + search + "%");
+                orList.add(predicateValue);
+            }
+            Predicate[] orPredicates = new Predicate[orList.size()];
+            Predicate orPredicate = criteriaBuilder.or(orList.toArray(orPredicates));
+
+            if (andPredicates.length == 0 && orPredicates.length == 0) {
+                return query.where().getRestriction();
+            } else if (andPredicates.length == 0) {
+                return orPredicate;
+            } else if (orPredicates.length == 0) {
+                return andPredicate;
+            } else {
+                return query.where(andPredicate, orPredicate).getRestriction();
+            }
+        };
+        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
         return tagDao.findAll(specification, pageRequest);
     }
 
     @Override
     public void deleteTags(HashSet<Long> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return;
+        }
         if (tagMonitorBindDao.countByTagIdIn(ids) != 0) {
             throw new CommonException("The tag is in use and cannot be deleted.");
         }

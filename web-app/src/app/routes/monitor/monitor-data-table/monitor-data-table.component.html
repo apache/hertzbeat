@@ -17,152 +17,159 @@
   ~ under the License.
 -->
 
-<nz-card
-  nzHoverable
-  [style]="{ height: height || '100%', display: 'flex', flexDirection: 'column' }"
-  [nzBordered]="true"
-  [nzBodyStyle]="{ overflow: !monitor ? 'hidden' : 'auto' }"
-  [nzTitle]="card_title"
-  [nzLoading]="!app || loading"
-  [nzExtra]="!monitor ? metrics_card_extra : monitor_card_extra"
->
-  <div *ngIf="!!monitor">
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"><p style="text-align: right">ID</p></div>
-      <div nz-col nzSpan="16"
-        ><p style="text-align: left">{{ monitorId }}</p></div
-      >
-    </div>
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"
-        ><p style="text-align: right">{{ 'monitors.detail.name' | i18n }}</p></div
-      >
-      <div nz-col nzSpan="16"
-        ><p style="text-align: left">{{ monitor.name }}</p></div
-      >
-    </div>
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"><p style="text-align: right">HOST</p></div>
-      <div nz-col nzSpan="16"
-        ><p style="text-align: left">{{ monitor.host }}</p></div
-      >
-    </div>
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"
-        ><p style="text-align: right">{{ 'monitors.detail.port' | i18n }}</p></div
-      >
-      <div nz-col nzSpan="16"
-        ><p style="text-align: left">{{ port }}</p></div
-      >
-    </div>
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"
-        ><p style="text-align: right">{{ 'monitors.detail.description' | i18n }}</p></div
-      >
-      <div nz-col nzSpan="16"
-        ><p style="text-align: left">{{ monitor.description }}</p></div
-      >
-    </div>
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"
-        ><p style="text-align: right">{{ 'monitors.detail.status' | i18n }}</p></div
-      >
-      <div nz-col nzSpan="16">
-        <nz-tag *ngIf="monitor.status == 0" nzColor="default">
-          <i nz-icon nzType="meh" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.paused' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="monitor.status == 1" nzColor="success">
-          <i nz-icon nzType="smile" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.up' | i18n }}</span>
-        </nz-tag>
-        <nz-tag *ngIf="monitor.status == 2" nzColor="error">
-          <i nz-icon nzType="frown" nzTheme="outline"></i>
-          <span>{{ 'monitor.status.down' | i18n }}</span>
-        </nz-tag>
+<ng-container *ngTemplateOutlet="main; context: { hoverable: true, height: height, card: true }"></ng-container>
+
+<ng-template #main let-card="card" let-hoverable="hoverable" let-height="height">
+  <nz-card
+    [nzHoverable]="hoverable"
+    [style]="{ height: height || '100%', display: 'flex', flexDirection: 'column' }"
+    [nzBordered]="true"
+    [nzBodyStyle]="{ overflow: !monitor ? 'hidden' : 'auto' }"
+    [nzTitle]="card ? card_title : ''"
+    [nzLoading]="!app || loading"
+    [nzExtra]="card ? (!monitor ? metrics_card_extra : monitor_card_extra) : ''"
+  >
+    <div *ngIf="!!monitor">
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"><p style="text-align: right">ID</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitorId }}</p></div
+        >
+      </div>
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitors.detail.name' | i18n }}</p></div
+        >
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor.name }}</p></div
+        >
+      </div>
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"><p style="text-align: right">HOST</p></div>
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor.host }}</p></div
+        >
+      </div>
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitors.detail.port' | i18n }}</p></div
+        >
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ port }}</p></div
+        >
+      </div>
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitors.detail.description' | i18n }}</p></div
+        >
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor.description }}</p></div
+        >
+      </div>
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitors.detail.status' | i18n }}</p></div
+        >
+        <div nz-col nzSpan="16">
+          <nz-tag *ngIf="monitor.status == 0" nzColor="default">
+            <i nz-icon nzType="meh" nzTheme="outline"></i>
+            <span>{{ 'monitor.status.paused' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="monitor.status == 1" nzColor="success">
+            <i nz-icon nzType="smile" nzTheme="outline"></i>
+            <span>{{ 'monitor.status.up' | i18n }}</span>
+          </nz-tag>
+          <nz-tag *ngIf="monitor.status == 2" nzColor="error">
+            <i nz-icon nzType="frown" nzTheme="outline"></i>
+            <span>{{ 'monitor.status.down' | i18n }}</span>
+          </nz-tag>
+        </div>
+      </div>
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'monitor.intervals' | i18n }}</p></div
+        >
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor.intervals }}s</p></div
+        >
+      </div>
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'common.new-time' | i18n }}</p></div
+        >
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
+        >
+      </div>
+      <div nz-row nzGutter="16">
+        <div nz-col nzSpan="8"
+          ><p style="text-align: right">{{ 'common.edit-time' | i18n }}</p></div
+        >
+        <div nz-col nzSpan="16"
+          ><p style="text-align: left">{{ monitor.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
+        >
       </div>
     </div>
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"
-        ><p style="text-align: right">{{ 'monitor.intervals' | i18n }}</p></div
-      >
-      <div nz-col nzSpan="16"
-        ><p style="text-align: left">{{ monitor.intervals }}s</p></div
-      >
-    </div>
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"
-        ><p style="text-align: right">{{ 'common.new-time' | i18n }}</p></div
-      >
-      <div nz-col nzSpan="16"
-        ><p style="text-align: left">{{ monitor.gmtCreate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
-      >
-    </div>
-    <div nz-row nzGutter="16">
-      <div nz-col nzSpan="8"
-        ><p style="text-align: right">{{ 'common.edit-time' | i18n }}</p></div
-      >
-      <div nz-col nzSpan="16"
-        ><p style="text-align: left">{{ monitor.gmtUpdate | date : 'YYYY-MM-dd HH:mm:ss' }}</p></div
-      >
-    </div>
-  </div>
-  <nz-table
-    *ngIf="!monitor && isTable"
-    nzSize="small"
-    nzNoResult="No Metrics Data"
-    [nzFrontPagination]="false"
-    [nzShowPagination]="false"
-    [nzData]="valueRows"
-    [nzScroll]="{ y: scrollY }"
-    #smallTable
-  >
-    <thead>
-      <tr>
-        <th style="text-align: center" *ngFor="let field of fields">
-          {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let valueRow of smallTable.data">
-        <td *ngFor="let value of valueRow.values; let i = index">
-          {{ value.origin }}
-          <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
-          <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
-        </td>
-      </tr>
-    </tbody>
-  </nz-table>
-  <nz-table
-    *ngIf="!monitor && !isTable"
-    nzSize="small"
-    nzNoResult="No Metrics Data"
-    [nzFrontPagination]="false"
-    [nzShowPagination]="false"
-    [nzData]="valueRows"
-    [nzScroll]="{ y: scrollY }"
-  >
-    <thead>
-      <tr>
-        <th style="text-align: center">{{ 'common.name' | i18n }}</th>
-        <th style="text-align: center">{{ 'common.value' | i18n }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let field of fields; let i = index">
-        <td>
-          {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
-        </td>
-        <td
-          >{{ rowValues[i].origin }}
-          <nz-tag *ngIf="rowValues[i].origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
-          <nz-tag *ngIf="field.unit" nzColor="success">{{ field.unit }}</nz-tag>
-        </td>
-      </tr>
-    </tbody>
-  </nz-table>
-</nz-card>
+    <nz-table
+      *ngIf="!monitor && isTable"
+      nzSize="small"
+      nzNoResult="No Metrics Data"
+      [nzFrontPagination]="false"
+      [nzShowPagination]="false"
+      [nzData]="valueRows"
+      [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
+      #smallTable
+    >
+      <thead>
+        <tr>
+          <th style="text-align: center" *ngFor="let field of fields" nzWidth="100px">
+            {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let valueRow of smallTable.data">
+          <td *ngFor="let value of valueRow.values; let i = index" nzEllipsis nz-tooltip [nzTooltipTitle]="contentTemplate">
+            <ng-container *ngTemplateOutlet="contentTemplate"></ng-container>
+            <ng-template #contentTemplate>
+              {{ value.origin }}
+              <nz-tag *ngIf="value.origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+              <nz-tag *ngIf="fields[i].unit" nzColor="success">{{ fields[i].unit }}</nz-tag>
+            </ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+    <nz-table
+      *ngIf="!monitor && !isTable"
+      nzSize="small"
+      nzNoResult="No Metrics Data"
+      [nzFrontPagination]="false"
+      [nzShowPagination]="false"
+      [nzData]="valueRows"
+      [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
+    >
+      <thead>
+        <tr>
+          <th style="text-align: center">{{ 'common.name' | i18n }}</th>
+          <th style="text-align: center">{{ 'common.value' | i18n }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let field of fields; let i = index">
+          <td>
+            {{ 'monitor.app.' + app + '.metrics.' + metrics + '.metric.' + field.name | i18nElse : field.name }}
+          </td>
+          <td
+            >{{ rowValues[i].origin }}
+            <nz-tag *ngIf="rowValues[i].origin == null" nzColor="warning">{{ 'monitors.detail.value.null' | i18n }}</nz-tag>
+            <nz-tag *ngIf="field.unit" nzColor="success">{{ field.unit }}</nz-tag>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </nz-card>
+</ng-template>
 
 <ng-template #card_title>
   <p style="font-size: small; text-align: left">
@@ -175,10 +182,41 @@
 </ng-template>
 
 <ng-template #metrics_card_extra>
-  <div nz-popover [nzPopoverContent]="('monitors.collect.time.tip' | i18n) + ': ' + (time | _date : 'yyyy-MM-dd HH:mm:ss')">
-    <a><i nz-icon nzType="field-time" nzTheme="outline"></i></a>
-    <i style="font-size: 13px; font-weight: normal; color: rgba(112, 112, 112, 0.89)">
-      {{ 'monitors.collect.time' | i18n }}: {{ time | _date : 'HH:mm:ss' }}
-    </i>
+  <div style="display: flex; gap: 10px">
+    <div nz-popover [nzPopoverContent]="('monitors.collect.time.tip' | i18n) + ': ' + (time | _date : 'yyyy-MM-dd HH:mm:ss')">
+      <a><i nz-icon nzType="field-time" nzTheme="outline"></i></a>
+      <i style="font-size: 13px; font-weight: normal; color: rgba(112, 112, 112, 0.89)">
+        {{ 'monitors.collect.time' | i18n }}: {{ time | _date : 'HH:mm:ss' }}
+      </i>
+    </div>
+    <div>
+      <a (click)="showModal = true"><i nz-icon nzType="fullscreen" nzTheme="outline"></i></a>
+    </div>
   </div>
 </ng-template>
+
+<ng-template #modal_title>
+  <div style="display: flex; justify-content: space-between">
+    <ng-container *ngTemplateOutlet="card_title"></ng-container>
+    <div style="display: flex; justify-content: space-between; gap: 10px">
+      <div>
+        <i nz-icon nzType="field-time" nzTheme="outline"></i>
+        <i style="font-size: 13px; font-weight: normal; color: rgba(112, 112, 112, 0.89)">
+          {{ ('monitors.collect.time.tip' | i18n) + ': ' + (time | _date : 'yyyy-MM-dd HH:mm:ss') }}
+        </i>
+      </div>
+      <div style="cursor: pointer" (click)="showModal = false"><i nz-icon nzType="close"></i></div>
+    </div>
+  </div>
+</ng-template>
+
+<nz-modal
+  [nzTitle]="modal_title"
+  [nzClosable]="false"
+  [nzStyle]="{ width: '90%', height: '90%' }"
+  [nzFooter]="null"
+  [nzContent]="main"
+  [(nzVisible)]="showModal"
+  (nzOnCancel)="showModal = false"
+>
+</nz-modal>

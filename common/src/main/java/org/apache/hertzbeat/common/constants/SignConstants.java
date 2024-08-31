@@ -24,6 +24,8 @@ public interface SignConstants {
 
     String DOUBLE_MARK = ":";
 
+    String SINGLE_MARK = ";";
+
     String WELL_NO = "#";
 
     String LINE_FEED = "\n";
@@ -33,4 +35,8 @@ public interface SignConstants {
     String RIGHT_DASH = "/";
 
     String COMMA = ",";
+
+    String BLANK = " ";
+
+    String DOT = ".";
 }

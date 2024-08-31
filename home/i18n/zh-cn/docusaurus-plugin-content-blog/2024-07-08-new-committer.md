@@ -8,9 +8,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-
 ![hertzBeat](/img/blog/new-committer.png)
-
 
 ### 初识 Apache Hertzbeat
 
@@ -23,7 +21,6 @@ keywords: [open source monitoring system, alerting system]
 ### 深入参与
 
 随着对项目的理解加深，我开始挑战一些更复杂的问题。我阅读了大量的代码，参与了社区的日常讨论，月例会讨论，并在issue/pr中活跃发言。这些活动不仅帮助我提升了技术能力，还让我对项目的发展方向有了更好的把握。我开始提出自己的想法和建议，积极参与设计讨论，并提出了一些新的功能。
-
 
 ### 被提名为 Committer
 

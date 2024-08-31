@@ -5,22 +5,21 @@ sidebar_position: 2
 ---
 
 <!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
 
-       https://www.apache.org/licenses/LICENSE-2.0
-    
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+https://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
-
 
 ## 成为 Apache HertzBeat™ 的 Committer
 
@@ -33,7 +32,7 @@ sidebar_position: 2
 
 Apache HertzBeat 社区努力追求基于功绩的原则。因此，一旦有人在 CoPDoC 的任何领域有了足够的贡献，他们就可以成为 Committer 的候选人，最终被投票选为 HertzBeat 的 Committer。成为 Apache HertzBeat 的 Committer 并不一定意味着你必须使用你的提交权限向代码库提交代码；它意味着你致力于 HertzBeat 项目并为我们社区的成功做出了积极的贡献。
 
-## Committer 的要求：
+## Committer 的要求
 
 没有成为 Committer 或 PPMC 成员的严格规则。新的 Committer 的候选人通常是积极的贡献者和社区成员。但是，如果能稍微明确一些规则，就可以在一定程度上消除贡献者的疑虑，使社区更加透明、合理和公平。
 

@@ -20,19 +20,17 @@ package org.apache.hertzbeat.manager.controller;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.apache.hertzbeat.manager.service.PluginService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,26 +66,8 @@ public class PluginController {
         @Parameter(description = "plugin name search", example = "status") @RequestParam(required = false) String search,
         @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
         @Parameter(description = "Number of list pagination", example = "8") @RequestParam(defaultValue = "8") int pageSize) {
-        // Get tag information
-        Specification<PluginMetadata> specification = (root, query, criteriaBuilder) -> {
-            List<Predicate> andList = new ArrayList<>();
-            if (search != null && !search.isEmpty()) {
-                Predicate predicateApp = criteriaBuilder.like(root.get("name"), "%" + search + "%");
-                andList.add(predicateApp);
-            }
-            Predicate[] andPredicates = new Predicate[andList.size()];
-            Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
-
-            if (andPredicates.length == 0) {
-                return query.where().getRestriction();
-            } else {
-                return andPredicate;
-            }
-        };
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize);
-        Page<PluginMetadata> alertPage = pluginService.getPlugins(specification, pageRequest);
-        Message<Page<PluginMetadata>> message = Message.success(alertPage);
-        return ResponseEntity.ok(message);
+        Page<PluginMetadata> alertPage = pluginService.getPlugins(search, pageIndex, pageSize);
+        return ResponseEntity.ok(Message.success(alertPage));
     }
 
     @DeleteMapping()
@@ -107,4 +87,19 @@ public class PluginController {
         pluginService.updateStatus(plugin);
         return ResponseEntity.ok(Message.success("Update success"));
     }
+
+    @GetMapping("/params/define")
+    @Operation(summary = "get param define", description = "get param define by jar path")
+    public ResponseEntity<Message<PluginParametersVO>> getParamDefine(@RequestParam Long pluginMetadataId) {
+        PluginParametersVO plugins = pluginService.getParamDefine(pluginMetadataId);
+        return ResponseEntity.ok(Message.success(plugins));
+    }
+
+    @PostMapping("/params")
+    @Operation(summary = "get param define", description = "get param define by jar path")
+    public ResponseEntity<Message<Boolean>> saveParams(@RequestBody List<PluginParam> pluginParams) {
+        pluginService.savePluginParam(pluginParams);
+        return ResponseEntity.ok(Message.success(true));
+    }
+
 }

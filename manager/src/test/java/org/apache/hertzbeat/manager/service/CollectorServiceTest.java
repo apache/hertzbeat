@@ -17,8 +17,12 @@
 
 package org.apache.hertzbeat.manager.service;
 
-
-import org.apache.hertzbeat.common.entity.manager.Collector;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
@@ -33,14 +37,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 
 /**
  * Test case for {@link CollectorService}
@@ -67,9 +63,8 @@ public class CollectorServiceTest {
 
     @Test
     public void getCollectors() {
-        Specification<Collector> specification = mock(Specification.class);
-        when(collectorDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
-        assertDoesNotThrow(() -> collectorService.getCollectors(specification, PageRequest.of(1, 1)));
+        when(collectorDao.findAll(any(Specification.class), eq(PageRequest.of(1, 1)))).thenReturn(Page.empty());
+        assertDoesNotThrow(() -> collectorService.getCollectors("test", 1, 1));
     }
 
     @Test

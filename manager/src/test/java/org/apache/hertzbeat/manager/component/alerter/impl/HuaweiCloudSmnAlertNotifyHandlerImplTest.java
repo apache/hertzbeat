@@ -18,13 +18,13 @@ package org.apache.hertzbeat.manager.component.alerter.impl;
 import jakarta.annotation.Resource;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.StringUtils;
 
 /**
  * Test case for {@link HuaweiCloudSmnAlertNotifyHandlerImpl}
@@ -38,27 +38,27 @@ class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegration
     @Test
     void send() throws InterruptedException {
         var smnProjectId = System.getenv("SMN_PROJECT_ID");
-        if (!StringUtils.hasText(smnProjectId)) {
+        if (StringUtils.isBlank(smnProjectId)) {
             log.warn("Please provide environment variables SMN_PROJECT_ID");
             return;
         }
         var smnAk = System.getenv("SMN_AK");
-        if (!StringUtils.hasText(smnAk)) {
+        if (StringUtils.isBlank(smnAk)) {
             log.warn("Please provide environment variables SMN_AK");
             return;
         }
         var smnSk = System.getenv("SMN_SK");
-        if (!StringUtils.hasText(smnSk)) {
+        if (StringUtils.isBlank(smnSk)) {
             log.warn("Please provide environment variables SMN_SK");
             return;
         }
         var smnRegion = System.getenv("SMN_REGION");
-        if (!StringUtils.hasText(smnRegion)) {
+        if (StringUtils.isBlank(smnRegion)) {
             log.warn("Please provide environment variables SMN_REGION");
             return;
         }
         var smnTopicUrn = System.getenv("SMN_TOPIC_URN");
-        if (!StringUtils.hasText(smnTopicUrn)) {
+        if (StringUtils.isBlank(smnTopicUrn)) {
             log.warn("Please provide environment variables SMN_TOPIC_URN");
             return;
         }
@@ -73,14 +73,15 @@ class HuaweiCloudSmnAlertNotifyHandlerImplTest extends AbstractSpringIntegration
         var noticeTemplate = new NoticeTemplate();
         noticeTemplate.setId(1L);
         noticeTemplate.setName("HuaWeiCloud");
-        noticeTemplate.setContent("[${title}]\n"
-                + "${targetLabel} : ${target}\n"
-                + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
-                + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
-                + "<#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>\n"
-                + "${priorityLabel} : ${priority}\n"
-                + "${triggerTimeLabel} : ${triggerTime}\n"
-                + "${contentLabel} : ${content}");
+        noticeTemplate.setContent("""
+                [${title}]
+                ${targetLabel} : ${target}
+                <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+                <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+                <#if (monitorHost??)>${monitorHostLabel} : ${monitorHost} </#if>
+                ${priorityLabel} : ${priority}
+                ${triggerTimeLabel} : ${triggerTime}
+                ${contentLabel} : ${content}""");
         var alert = new Alert();
         alert.setId(1L);
         alert.setTarget("Mock Target");

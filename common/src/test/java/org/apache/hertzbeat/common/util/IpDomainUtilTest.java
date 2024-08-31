@@ -17,24 +17,22 @@
 
 package org.apache.hertzbeat.common.util;
 
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.Collections;
-import java.util.Enumeration;
-
-import org.apache.hertzbeat.common.constants.CollectorConstants;
-import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Collections;
+import java.util.Enumeration;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * Test case for {@link IpDomainUtil}
@@ -97,10 +95,10 @@ class IpDomainUtilTest {
         }
 
         // no network interface
-        Enumeration<NetworkInterface> noNetworkIFNetworkInterfaces = Collections.enumeration(Collections.emptyList());
+        Enumeration<NetworkInterface> noNetworkNetworkInterfaces = Collections.enumeration(Collections.emptyList());
 
         try (MockedStatic<NetworkInterface> mockedStaticNetworkInterface = Mockito.mockStatic(NetworkInterface.class)) {
-            mockedStaticNetworkInterface.when(NetworkInterface::getNetworkInterfaces).thenReturn(noNetworkIFNetworkInterfaces);
+            mockedStaticNetworkInterface.when(NetworkInterface::getNetworkInterfaces).thenReturn(noNetworkNetworkInterfaces);
             String localhostIp = IpDomainUtil.getLocalhostIp();
 
             assertNull(localhostIp);
@@ -119,15 +117,15 @@ class IpDomainUtilTest {
     @Test
     void testCheckIpAddressType() {
 
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType("192.168.1.1"));
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType("127.0.0.1"));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType("192.168.1.1"));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType("127.0.0.1"));
 
-        assertEquals(CollectorConstants.IPV6, IpDomainUtil.checkIpAddressType("2001:0db8:85a3:0000:0000:8a2e:0370:7334"));
-        assertEquals(CollectorConstants.IPV6, IpDomainUtil.checkIpAddressType("::1"));
+        assertEquals(NetworkConstants.IPV6, IpDomainUtil.checkIpAddressType("2001:0db8:85a3:0000:0000:8a2e:0370:7334"));
+        assertEquals(NetworkConstants.IPV6, IpDomainUtil.checkIpAddressType("::1"));
 
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType(""));
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType(null));
-        assertEquals(CollectorConstants.IPV4, IpDomainUtil.checkIpAddressType("invalid-ip"));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType(""));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType(null));
+        assertEquals(NetworkConstants.IPV4, IpDomainUtil.checkIpAddressType("invalid-ip"));
 
     }
 }

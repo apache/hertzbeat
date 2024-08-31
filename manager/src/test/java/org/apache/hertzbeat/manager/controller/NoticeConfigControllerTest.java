@@ -17,15 +17,21 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
@@ -60,7 +66,7 @@ class NoticeConfigControllerTest {
     private NoticeConfigController noticeConfigController;
 
 
-    public NoticeRule getNoticeRule(){
+    public NoticeRule getNoticeRule() {
         List<TagItem> tags = new ArrayList<>();
         TagItem tagItem = new TagItem();
         tagItem.setName("key1");
@@ -81,7 +87,7 @@ class NoticeConfigControllerTest {
         return noticeRule;
     }
 
-    public NoticeReceiver getNoticeReceiver(){
+    public NoticeReceiver getNoticeReceiver() {
 
         NoticeReceiver noticeReceiver = new NoticeReceiver();
         noticeReceiver.setName("tom");
@@ -90,22 +96,22 @@ class NoticeConfigControllerTest {
         noticeReceiver.setEmail("2762242004@qq.com");
         noticeReceiver.setHookUrl("https://www.tancloud.cn");
         noticeReceiver.setType((byte) 5);
-
         return noticeReceiver;
 
     }
 
-    public NoticeTemplate getNoticeTemplate(){
+    public NoticeTemplate getNoticeTemplate() {
         NoticeTemplate template = new NoticeTemplate();
         template.setId(5L);
         template.setName("Dingding");
-        template.setContent("[${title}]\n"
-                + "${targetLabel} : ${target}\n"
-                + "<#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>\n"
-                + "<#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>\n"
-                + "${priorityLabel} : ${priority}\n"
-                + "${triggerTimeLabel} : ${triggerTime}\n"
-                + "${contentLabel} : ${content}");
+        template.setContent("""
+                [${title}]
+                ${targetLabel} : ${target}
+                <#if (monitorId??)>${monitorIdLabel} : ${monitorId} </#if>
+                <#if (monitorName??)>${monitorNameLabel} : ${monitorName} </#if>
+                ${priorityLabel} : ${priority}
+                ${triggerTimeLabel} : ${triggerTime}
+                ${contentLabel} : ${content}""");
         template.setType((byte) 5);
 
         return template;
@@ -263,7 +269,6 @@ class NoticeConfigControllerTest {
                         .content(JsonUtil.toJson(noticeReceiver)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                //.andExpect(jsonPath("$.msg").value("Notify service not available, please check config!"))
                 .andReturn();
     }
 
@@ -359,7 +364,6 @@ class NoticeConfigControllerTest {
 
         verify(noticeConfigService, times(1)).sendTestMsg(noticeReceiver);
     }
-
 
 
 }

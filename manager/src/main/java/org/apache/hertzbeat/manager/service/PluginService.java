@@ -17,13 +17,16 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
 import org.apache.hertzbeat.common.entity.manager.PluginMetadata;
+import org.apache.hertzbeat.common.entity.plugin.PluginContext;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParam;
+import org.apache.hertzbeat.manager.pojo.dto.PluginParametersVO;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * plugin service
@@ -47,11 +50,12 @@ public interface PluginService {
     /**
      * get plugin page list
      *
-     * @param specification Query condition
-     * @param pageRequest   Paging condition
+     * @param search        plugin name search
+     * @param pageIndex     List current page
+     * @param pageSize      Number of list pagination
      * @return Plugins
      */
-    Page<PluginMetadata> getPlugins(Specification<PluginMetadata> specification, PageRequest pageRequest);
+    Page<PluginMetadata> getPlugins(String search, int pageIndex, int pageSize);
 
     /**
      * execute plugin
@@ -61,6 +65,17 @@ public interface PluginService {
      */
     <T> void pluginExecute(Class<T> clazz, Consumer<T> execute);
 
+
+    /**
+     * execute plugin
+     *
+     * @param clazz   plugin interface
+     * @param execute run plugin logic
+     * @param <T>     plugin type
+     */
+    <T> void pluginExecute(Class<T> clazz, BiConsumer<T, PluginContext> execute);
+
+
     /**
      * delete plugin
      *
@@ -69,5 +84,17 @@ public interface PluginService {
     void deletePlugins(Set<Long> ids);
 
     void updateStatus(PluginMetadata plugin);
+
+    /**
+     * get param define
+     * @param pluginMetadataId plugin id
+     */
+    PluginParametersVO getParamDefine(Long pluginMetadataId);
+
+    /**
+     * save plugin param
+     * @param params params
+     */
+    void savePluginParam(List<PluginParam> params);
 
 }

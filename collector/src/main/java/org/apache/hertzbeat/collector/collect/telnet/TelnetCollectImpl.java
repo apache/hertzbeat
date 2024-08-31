@@ -27,11 +27,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.telnet.TelnetClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
@@ -116,7 +117,7 @@ public class TelnetCollectImpl extends AbstractCollect {
     }
 
     private static Map<String, String> execCmdAndParseResult(TelnetClient telnetClient, String cmd, String app) throws IOException {
-        if (cmd == null || cmd.trim().length() == 0) {
+        if (cmd == null || StringUtils.isEmpty(cmd.trim())) {
             return new HashMap<>(16);
         }
         OutputStream outputStream = telnetClient.getOutputStream();

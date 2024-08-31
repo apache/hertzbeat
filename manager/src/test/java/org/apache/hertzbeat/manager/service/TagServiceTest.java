@@ -22,11 +22,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anySet;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -78,21 +76,20 @@ class TagServiceTest {
 
     @Test
     void getTags() {
-        Specification<Tag> specification = mock(Specification.class);
-        when(tagDao.findAll(specification, PageRequest.of(1, 1))).thenReturn(Page.empty());
-        assertNotNull(tagService.getTags(specification, PageRequest.of(1, 1)));
+        when(tagDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
+        assertNotNull(tagService.getTags(null, null, 1, 10));
     }
 
     @Test
     void deleteTags() {
-        doNothing().when(tagDao).deleteTagsByIdIn(anySet());
-        when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(0L);
         assertDoesNotThrow(() -> tagService.deleteTags(new HashSet<>(1)));
     }
 
     @Test
     void deleteUsingTags() {
         when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(1L);
-        assertThrows(CommonException.class,() -> tagService.deleteTags(new HashSet<>(1)));
+        HashSet<Long> set = new HashSet<>(1);
+        set.add(1L);
+        assertThrows(CommonException.class, () -> tagService.deleteTags(set));
     }
 }

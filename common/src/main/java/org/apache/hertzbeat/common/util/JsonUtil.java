@@ -100,11 +100,15 @@ public final class JsonUtil {
      * @param jsonStr json string
      * @return true if the string is a json string
      */
+
+
     public static boolean isJsonStr(String jsonStr) {
-        if (!StringUtils.hasText(jsonStr)) {
+        if (jsonStr == null || jsonStr.trim().isEmpty()) {
             return false;
         }
-        if (!jsonStr.startsWith("{") || !jsonStr.endsWith("}")) {
+        jsonStr = jsonStr.trim();
+        if (!(jsonStr.startsWith("{") && jsonStr.endsWith("}"))
+                && !(jsonStr.startsWith("[") && jsonStr.endsWith("]"))) {
             return false;
         }
         try {

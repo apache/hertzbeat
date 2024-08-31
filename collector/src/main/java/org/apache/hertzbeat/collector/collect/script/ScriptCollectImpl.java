@@ -26,11 +26,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectorConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
@@ -44,12 +45,13 @@ import org.springframework.util.StringUtils;
  */
 @Slf4j
 public class ScriptCollectImpl extends AbstractCollect {
-    public static final String WINDOWS_SCRIPT = "windows_script";
-    public static final String LINUX_SCRIPT = "linux_script";
-    private static final String CMD = "cmd.exe";
+    private static final String CMD = "cmd";
     private static final String BASH = "bash";
+    private static final String POWERSHELL = "powershell";
     private static final String CMD_C = "/c";
     private static final String BASH_C = "-c";
+    private static final String POWERSHELL_C = "-Command";
+    private static final String POWERSHELL_FILE = "-File";
     private static final String PARSE_TYPE_ONE_ROW = "oneRow";
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
@@ -62,6 +64,7 @@ public class ScriptCollectImpl extends AbstractCollect {
         Assert.notNull(scriptProtocol, "Script collect must has Imap params");
         Assert.notNull(scriptProtocol.getCharset(), "Script charset is required");
         Assert.notNull(scriptProtocol.getParseType(), "Script parse type is required");
+        Assert.notNull(scriptProtocol.getScriptTool(), "Script tool is required");
         if (!(StringUtils.hasText(scriptProtocol.getScriptCommand()) || StringUtils.hasText(scriptProtocol.getScriptPath()))) {
             throw new IllegalArgumentException("At least one script command or script path is required.");
         }
@@ -72,35 +75,50 @@ public class ScriptCollectImpl extends AbstractCollect {
         ScriptProtocol scriptProtocol = metrics.getScript();
         long startTime = System.currentTimeMillis();
         ProcessBuilder processBuilder;
-        if (WINDOWS_SCRIPT.equalsIgnoreCase(app)) {
-            if (StringUtils.hasText(scriptProtocol.getScriptCommand())) {
-                processBuilder = new ProcessBuilder(CMD, CMD_C, scriptProtocol.getScriptCommand().trim());
-            } else {
-                processBuilder = new ProcessBuilder(CMD, scriptProtocol.getScriptPath().trim());
+        // use command
+        if (StringUtils.hasText(scriptProtocol.getScriptCommand())) {
+            switch (scriptProtocol.getScriptTool()) {
+                case BASH -> processBuilder = new ProcessBuilder(BASH, BASH_C, scriptProtocol.getScriptCommand().trim());
+                case CMD -> processBuilder = new ProcessBuilder(CMD, CMD_C, scriptProtocol.getScriptCommand().trim());
+                case POWERSHELL -> processBuilder = new ProcessBuilder("powershell.exe", POWERSHELL_C, scriptProtocol.getScriptCommand().trim());
+                default -> {
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg("Not support script tool:" + scriptProtocol.getScriptTool());
+                    return;
+                }
             }
-
-        } else if (LINUX_SCRIPT.equalsIgnoreCase(app)) {
-            if (StringUtils.hasText(scriptProtocol.getScriptCommand())) {
-                processBuilder = new ProcessBuilder(BASH, BASH_C, scriptProtocol.getScriptCommand().trim());
-            } else {
-                processBuilder = new ProcessBuilder(BASH, scriptProtocol.getScriptPath().trim());
+        // use command file
+        } else if (StringUtils.hasText((scriptProtocol.getScriptPath()))) {
+            switch (scriptProtocol.getScriptTool()) {
+                case BASH -> processBuilder = new ProcessBuilder(BASH, scriptProtocol.getScriptPath().trim());
+                case CMD -> processBuilder = new ProcessBuilder(CMD,  scriptProtocol.getScriptPath().trim());
+                case POWERSHELL -> processBuilder = new ProcessBuilder(POWERSHELL, POWERSHELL_FILE, scriptProtocol.getScriptPath().trim());
+                default -> {
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg("Not support script tool:" + scriptProtocol.getScriptTool());
+                    return;
+                }
             }
         } else {
             builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Not support OS:" + app);
+            builder.setMsg("At least one script command or script path is required.");
             return;
         }
+        // set work directory
         String workDirectory = scriptProtocol.getWorkDirectory();
         if (StringUtils.hasText(workDirectory)) {
             processBuilder.directory(new File(workDirectory));
         }
+        // execute command
         try {
             Process process = processBuilder.start();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), Charset.forName(scriptProtocol.getCharset())));
             StringBuilder response = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
-                response.append(line).append("\n");
+                if (StringUtils.hasText(line)) {
+                    response.append(line).append("\n");
+                }
             }
             process.waitFor();
             Long responseTime = System.currentTimeMillis() - startTime;
@@ -183,11 +201,7 @@ public class ScriptCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = mapValue.get(field);
-            if (fieldValue == null) {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            } else {
-                valueRowBuilder.addColumns(fieldValue);
-            }
+            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
         }
         builder.addValues(valueRowBuilder.build());
     }
@@ -224,13 +238,13 @@ public class ScriptCollectImpl extends AbstractCollect {
             log.error("ssh response data only has header: {}", result);
             return;
         }
-        String[] fields = lines[0].split(" ");
+        String[] fields = lines[0].split("\\s+");
         Map<String, Integer> fieldMapping = new HashMap<>(fields.length);
         for (int i = 0; i < fields.length; i++) {
             fieldMapping.put(fields[i].trim().toLowerCase(), i);
         }
         for (int i = 1; i < lines.length; i++) {
-            String[] values = lines[i].split(" ");
+            String[] values = lines[i].split("\\s+");
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {

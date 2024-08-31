@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.Objects;
 import org.apache.hertzbeat.alert.service.AlertConvergeService;
 import org.apache.hertzbeat.common.entity.alerter.AlertConverge;
 import org.apache.hertzbeat.common.entity.dto.Message;
@@ -69,11 +70,10 @@ public class AlertConvergeController {
     public ResponseEntity<Message<AlertConverge>> getAlertConverge(
             @Parameter(description = "Alarm Converge ID", example = "6565463543") @PathVariable("id") long id) {
         AlertConverge alertConverge = alertConvergeService.getAlertConverge(id);
-        if (alertConverge == null) {
-            return ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertConverge not exist."));
-        } else {
-            return ResponseEntity.ok(Message.success(alertConverge));
-        }
+
+        return Objects.isNull(alertConverge)
+                ? ResponseEntity.ok(Message.fail(MONITOR_NOT_EXIST_CODE, "AlertConverge not exist."))
+                : ResponseEntity.ok(Message.success(alertConverge));
     }
 
 }
