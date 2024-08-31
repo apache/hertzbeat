@@ -9,58 +9,59 @@ sidebar_label: Docker Compose方式安装
 :::
 
 :::note
-需您的环境中已经拥有 Docker 环境 和 Docker Compose 环境 ，若未安装请参考 [Docker官网文档](https://docs.docker.com/compose/install/)     
+需您的环境中已经拥有 Docker 环境 和 Docker Compose 环境 ，若未安装请参考 [Docker官网文档](https://docs.docker.com/compose/install/)
 执行命令 `docker compose version` 检查是否拥有 Docker Compose 环境。
 :::
 
 1. 下载启动脚本包
 
-从 [下载地址](https://github.com/apache/hertzbeat/releases/download/v1.6.0/apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz) 下载安装脚本包 `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz`
+   从 [下载地址](https://github.com/apache/hertzbeat/releases/download/v1.6.0/apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz) 下载安装脚本包 `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz`
 
 2. 选择使用 HertzBeat + PostgreSQL + VictoriaMetrics 方案
 
-:::tip
-- `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz` 解压后包含多个部署方案，这里我们推荐选择 `hertzbeat-postgresql-victoria-metrics` 方案。    
-- 其它部署方式请详细阅读各个部署方案的 README.md 文件, MySQL 方案需要自行准备 MySQL 驱动包。
-:::
+   :::tip
 
-- 解压脚本包
+   - `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz` 解压后包含多个部署方案，这里我们推荐选择 `hertzbeat-postgresql-victoria-metrics` 方案。
+   - 其它部署方式请详细阅读各个部署方案的 README.md 文件, MySQL 方案需要自行准备 MySQL 驱动包。
 
-```
-$ tar zxvf apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
-```
+   :::
 
-- 进入解压目录, 选择 `HertzBeat + PostgreSQL + VictoriaMetrics` 一键部署
+   - 解压脚本包
 
-```
-$ cd apache-hertzbeat-1.6.0-incubating-docker-compose    
-$ cd hertzbeat-postgresql-victoria-metrics
-```
+   ```shell
+   tar zxvf apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz
+   ```
 
-- 一键启动
+   - 进入解压目录, 选择 `HertzBeat + PostgreSQL + VictoriaMetrics` 一键部署
 
-> 在 `hertzbeat-postgresql-victoria-metrics` 目录下执行以下命令
+   ```shell
+   cd apache-hertzbeat-1.6.0-incubating-docker-compose    
+   cd hertzbeat-postgresql-victoria-metrics
+   ```
 
-```
-docker-compose up -d
-```
+   - 一键启动
 
-- 查看服务状态
+   > 在 `hertzbeat-postgresql-victoria-metrics` 目录下执行以下命令
 
-> 查看各个容器的运行状态，up 为正常运行状态
+   ```shell
+   docker-compose up -d
+   ```
 
-```
-docker-compose ps
-```
+   - 查看服务状态
 
-4. 开始探索 HertzBeat   
-   浏览器访问 http://ip:1157/ 即可开始探索使用，默认账户密码 admin/hertzbeat。
+   > 查看各个容器的运行状态，up 为正常运行状态
+
+   ```shell
+   docker-compose ps
+   ```
+
+3. 开始探索 HertzBeat
+   浏览器访问 <http://ip:1157/> 即可开始探索使用，默认账户密码 admin/hertzbeat。
 
 **HAVE FUN**
 
----- 
+----
 
 ### 部署常见问题
 
 **最多的问题就是容器网络问题，请先提前排查**
-

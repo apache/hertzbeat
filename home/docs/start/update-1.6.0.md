@@ -4,7 +4,7 @@ title: How to update to 1.6.0
 sidebar_label: Update to 1.6.0 guide
 ---
 
-# HertzBeat 1.6.0 Upgrade Guide
+## HertzBeat 1.6.0 Upgrade Guide
 
 **Note: This guide is applicable for upgrading from 1.5.0 to 1.6.0 to version 1.6.0.**
 **If you are using an older version, it is recommended to reinstall using the export function, or upgrade to 1.5.0 and then follow this guide to 1.6.0.**
@@ -27,7 +27,7 @@ Go to [https://github.com/apache/hertzbeat/tree/master/manager/src/main/resource
 
 Due to significant changes in `application.yml` and `sureness.yml`, it is recommended to directly use the new `yml` configuration files and then modify them based on your own needs.
 
-#### `application.yml` generally needs to modify the following parts:
+#### `application.yml` generally needs to modify the following parts
 
 Default is:
 
@@ -71,7 +71,7 @@ If you change to a MySQL database, here is an example:
           level: SEVERE
 ```
 
-#### `sureness.yml` modification is optional, usually when you need to change account passwords:
+#### `sureness.yml` modification is optional, usually when you need to change account passwords
 
 ```yaml
 # account info config
@@ -112,9 +112,10 @@ Next, run the start-up script as before to experience the latest HertzBeat 1.6.0
 
 - Stop the HertzBeat container:
 
-  ```
+  ```shell
   docker stop hertzbeat
   ```
+
 - Upgrade the database script:
   - Go to [https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration), choose the directory of your database and execute the corresponding `V160__update_column.sql` file in MySQL.
 - Upgrade the configuration files:
@@ -128,17 +129,19 @@ Next, run HertzBeat using Docker as before to experience the latest HertzBeat 1.
 
 - Stop the HertzBeat container:
 
-  ```
+  ```shell
   docker stop hertzbeat
   ```
+
 - Edit the H2 database files:
   - Assuming you have mounted the H2 database files in the `data` directory to the local system, or copied the `/opt/hertzbeat/data` directory from the old container manually.
   - Download the H2 driver jar from [https://mvnrepository.com/artifact/com.h2database/h2/2.2.220](https://mvnrepository.com/artifact/com.h2database/h2/2.2.220).
   - Start the database locally using the H2 driver jar:
 
-    ```
+    ```shell
     java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
     ```
+
 - Upgrade the configuration files:
   - As mentioned, due to significant changes in `application.yml` and `sureness.yml`, it is recommended to directly mount and use the new `yml` configuration files, and then modify them based on your own needs.
 - Add the corresponding database drivers:
@@ -152,4 +155,3 @@ If you do not want to go through the tedious script upgrade method mentioned abo
 
 - Deploy a new environment with the latest version.
 - Export the monitoring tasks and threshold information from the old environment on the page
-

@@ -63,4 +63,3 @@ keywords: [open source monitoring system, open source database monitoring, Influ
 |-------------|-------------|-------------------------|
 | result      | N/A         | Result                  |
 | org         | N/A         | Organization identifier |
-

@@ -13,9 +13,9 @@
 - 高性能，支持多采集器集群横向扩展，支持多隔离网络监控，云边协同。
 - 自由的告警阈值规则，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` `Server酱` 等方式消息及时送达。
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ## 什么是开源之夏？
 
@@ -81,10 +81,7 @@
 **要求：**
 
 1. 使⽤ Java 基于 UDP 协议实现原⽣的 IPMI2 协议(查询部分),不依赖任何第三⽅包。
-2. 利⽤实现的 IPMI2 协议查询开启 IPMI 的服务器的各项指标信息,包括主板信息、⽹卡信息、电源信息、⻛扇信
-
-息、温度传感器信息和时钟信息。
-
+2. 利⽤实现的 IPMI2 协议查询开启 IPMI 的服务器的各项指标信息,包括主板信息、⽹卡信息、电源信息、⻛扇信息、温度传感器信息和时钟信息。
 3. 对查询到的指标信息进⾏抽象和规范化处理,实现配置化管理(可选)。
 4. 输出详细的项⽬⽂档,包括设计思路、实现细节、使⽤说明等。
 

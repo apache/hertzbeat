@@ -31,4 +31,3 @@ keywords: [ 开源监控系统,  Websocket监控 ]
 | statusMessage | 无    | 状态消息    |
 | connection    | 无    | 表示连接方式  |
 | upgrade       | 无    | 升级后的协议  |
-

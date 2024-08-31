@@ -42,7 +42,7 @@ Windows Monitor is coming:
 
 ⚠️ ⚠️⚠️⚠️Please note that upgrading to v1.1.0 from other versions requires running the following SQL script. Now, our table names have a unified prefix hzb_prefix.
 
-```
+```properties
 ALTER  TABLE alert RENAME TO hzb_alert;
 ALTER  TABLE alert_define RENAME TO hzb_alert_define;
 ALTER  TABLE alert_define_monitor_bind RENAME TO hzb_alert_define_monitor_bind;
@@ -58,13 +58,13 @@ commit;
 
 Have Fun!
 
----- 
+---
 
 ## V1.1.0
 
 Home: hertzbeat.com | tancloud.cn
 
-Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.      
+Hi guys! HertzBeat v1.1.0 is coming. This version we support snmp protocol and use snmp to collect windows metrics.
 Another major change is that we use the H2 database by default to replace the MYSQL database as storage to facilitate the installation and deployment of users. Now only one docker command is needed to install and experience hertzbeat： `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 Let's Try It!
 
@@ -86,7 +86,7 @@ Bugfix.
 3. [[monitor] bugfix: fix elasticsearch collect error when need basic auth #174](https://github.com/apache/hertzbeat/pull/174) contribute by @weifuqing
 4. [Change the Oracle database name to the service name to reduce ambiguity #182](https://github.com/apache/hertzbeat/pull/182) @zklmcookle
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
 ---
 
@@ -96,7 +96,7 @@ Windows Monitor coming：
 
 ⚠️ ⚠️⚠️⚠️Attention other version upgrade to v1.1.0 need run sql script.  Now the tables name has hzb_ prefix.
 
-```
+```properties
 ALTER  TABLE alert RENAME TO hzb_alert;
 ALTER  TABLE alert_define RENAME TO hzb_alert_define;
 ALTER  TABLE alert_define_monitor_bind RENAME TO hzb_alert_define_monitor_bind;
@@ -126,5 +126,5 @@ Have Fun!
 
 **Repository Addresses**
 
-[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
-[Gitee](https://gitee.com/hertzbeat/hertzbeat) https://gitee.com/hertzbeat/hertzbeat
+[Github](https://github.com/apache/hertzbeat) <https://github.com/apache/hertzbeat>
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) <https://gitee.com/hertzbeat/hertzbeat>

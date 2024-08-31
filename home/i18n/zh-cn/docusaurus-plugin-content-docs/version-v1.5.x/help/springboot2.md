@@ -94,4 +94,3 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 |----------|------|-----------|
 | space    | 无    | 内存空间名称    |
 | mem_used | MB   | 此空间占用内存大小 |
-

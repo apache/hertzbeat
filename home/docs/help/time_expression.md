@@ -11,7 +11,7 @@ HertzBeat supports using expressions to calculate relative time during monitorin
 
 ### Syntax
 
-```
+```shell
 ${FORMATTER [{ + | - }<DURATION> <TIME_UNIT>]}
 ```
 
@@ -62,4 +62,3 @@ ${FORMATTER [{ + | - }<DURATION> <TIME_UNIT>]}
    - `${time+1h+15s+30s}` calculates the time one hour, 15 minutes, and 30 seconds from now and formats it as `HH:mm:ss`
 2. Complex expression template (if the built-in formatter does not meet your needs, you can combine multiple expressions)
    - `${@year}年${@month}月${@day}日` returns the current date formatted as yyyy年MM月dd日
-

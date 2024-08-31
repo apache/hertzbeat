@@ -51,7 +51,7 @@ Bugfix.
 8. [[script] add startup log and optimize port service judgment #321](https://github.com/apache/hertzbeat/pull/321)
 9. [[web-app] fix echarts y-axis value tip overflow #325](https://github.com/apache/hertzbeat/pull/325)
 10. [[webapp] fix interceptor http resp common error-msg when error #329](https://github.com/apache/hertzbeat/pull/329)
-    Online https://console.tancloud.cn.
+    Online <https://console.tancloud.cn>.
 
 Have Fun!
 
@@ -59,7 +59,7 @@ Have Fun!
 
 Need Convert `application.yml`
 
-```
+```yaml
 spring:
   resources:
     static-locations:
@@ -69,7 +69,7 @@ spring:
 
 To
 
-```
+```yaml
 spring:
   web:
     resources:
@@ -78,7 +78,7 @@ spring:
         - classpath:../dist/
 ```
 
-----     
+----
 
 ## V1.2.0
 
@@ -125,7 +125,7 @@ Bugfix.
 9. [[web-app] fix echarts y-axis value tip overflow #325](https://github.com/apache/hertzbeat/pull/325)
 10. [[webapp] fix interceptor http resp common error-msg when error #329](https://github.com/apache/hertzbeat/pull/329)
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
 Have Fun!
 
@@ -133,7 +133,7 @@ Have Fun!
 
 需要将配置文件内容 `application.yml`
 
-```
+```yaml
 spring:
   resources:
     static-locations:
@@ -143,7 +143,7 @@ spring:
 
 变更为
 
-```
+```yaml
 spring:
   web:
     resources:
@@ -152,5 +152,4 @@ spring:
         - classpath:../dist/
 ```
 
-----     
-
+----

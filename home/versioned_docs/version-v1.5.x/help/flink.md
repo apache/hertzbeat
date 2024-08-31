@@ -33,4 +33,3 @@ keywords: [open source monitoring tool, open source flink monitoring tool]
 | task_total   | Units       | Total number of tasks.  |
 | jobs_running | Units       | Number of jobs running. |
 | jobs_failed  | Units       | Number of jobs failed.  |
-

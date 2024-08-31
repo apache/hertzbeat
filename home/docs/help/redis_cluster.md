@@ -11,7 +11,7 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
 
    *redis.config*
 
-   ```
+   ```shell
      port 6379
      cluster-enabled yes
      cluster-config-file nodes.conf
@@ -85,6 +85,7 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
        external:
          name: hertzbeat-redis-cluster
    ```
+
 2. View the IP addresses of all containers from the network, which is required when building a cluster.
 
    ```bash
@@ -92,7 +93,7 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
    docker network inspect hertzbeat-redis-cluste
    ```
 
-   ```
+   ```json
    "Containers": {
                "187b879f73c473b3cbb82ff95f668e65af46115ddaa27f3ff1a712332b981531": {
                    ...
@@ -132,6 +133,7 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
                }
            },
    ```
+
 3. Go inside the container to build a Redis cluster.
 
    ```bash
@@ -148,6 +150,7 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
    192.168.117.2:6379 \
    --cluster-replicas 1
    ```
+
 4. Specific operations.
 
    Add a redis monitor center, fill require parameters.
@@ -158,7 +161,6 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
 
    ![](/img/docs/help/redis-cluster-view.png)
 
-   ### Configuration Parameters
+### Configuration Parameters
 
    Please see [REDIS](https://hertzbeat.apache.org/docs/help/redis) doc.
-

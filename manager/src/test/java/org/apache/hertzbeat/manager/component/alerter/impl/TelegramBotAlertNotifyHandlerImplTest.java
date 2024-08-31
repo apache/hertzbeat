@@ -21,16 +21,17 @@ import jakarta.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.StringUtils;
 
 /**
  * Test case for {@link TelegramBotAlertNotifyHandlerImpl}
+ *
  * @version 2.1
  */
 @Slf4j
@@ -43,7 +44,7 @@ class TelegramBotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationTes
     void send() {
         String tgBotToken = System.getenv("TG_BOT_TOKEN");
         String tgUserId = System.getenv("TG_USER_ID");
-        if (!StringUtils.hasText(tgBotToken) || !StringUtils.hasText(tgUserId)) {
+        if (StringUtils.isBlank(tgBotToken) || StringUtils.isBlank(tgUserId)) {
             log.warn("Please provide environment variables TG_BOT_TOKEN, TG_USER_ID");
             return;
         }

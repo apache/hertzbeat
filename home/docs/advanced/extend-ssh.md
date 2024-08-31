@@ -21,21 +21,21 @@ We can obtain the corresponding Metric data through the data fields queried by t
 
 > Query out a column of data, return the field value (one value per row) of the result set through query and map them to the field.
 
-eg：     
-Metrics of Linux to be queried hostname-host name，uptime-start time     
-Host name original query command：`hostname`     
-Start time original query command：`uptime | awk -F "," '{print $1}'`   
-Then the query script of the two Metrics in hertzbeat is(Use `;` Connect them together)：       
-`hostname; uptime | awk -F "," '{print $1}'`     
+eg：
+Metrics of Linux to be queried hostname-host name，uptime-start time
+Host name original query command：`hostname`
+Start time original query command：`uptime | awk -F "," '{print $1}'`
+Then the query script of the two Metrics in hertzbeat is(Use `;` Connect them together)：
+`hostname; uptime | awk -F "," '{print $1}'`
 The data responded by the terminal is：
 
-```
+```shell
 tombook
 14:00:15 up 72 days  
 ```
 
-At last collected Metric data is mapped one by one as：   
-hostname is `tombook`   
+At last collected Metric data is mapped one by one as：
+hostname is `tombook`
 uptime is `14:00:15 up 72 days`
 
 Here the Metric field and the response data can be mapped into a row of collected data one by one
@@ -44,8 +44,8 @@ Here the Metric field and the response data can be mapped into a row of collecte
 
 > Query multiple rows of data, return the column names of the result set through the query, and map them to the Metric field of the query.
 
-eg：   
-Linux memory related Metric fields queried：total-Total memory, used-Used memory,free-Free memory, buff-cache-Cache size, available-Available memory   
+eg：
+Linux memory related Metric fields queried：total-Total memory, used-Used memory,free-Free memory, buff-cache-Cache size, available-Available memory
 Memory metrics original query command：`free -m`, Console response：
 
 ```shell
@@ -55,7 +55,7 @@ Swap:          8191          33        8158
 ```
 
 In hertzbeat multiRow format parsing requires a one-to-one mapping between the column name of the response data  and the indicaotr value, so the corresponding query SHELL script is:
-`free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`     
+`free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'`
 Console response is：
 
 ```shell
@@ -69,7 +69,7 @@ Here the Metric field and the response data can be mapped into collected data on
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-------- 
+-------
 
 Configuration usages of the monitoring templates yml are detailed below.
 
@@ -212,4 +212,3 @@ metrics:
       script: free -m | grep Mem | awk 'BEGIN{print "total used free buff_cache available"} {print $2,$3,$4,$6,$7}'
       parseType: multiRow
 ```
-

@@ -40,8 +40,8 @@ git clone git@github.com:<your-github-user-name>/hertzbeat.git
 1. 下载并安装 nodejs (版本 18.8.0)
 2. 将代码克隆到本地 `git clone git@github.com:apache/hertzbeat.git`
 3. 在`home`目录下运行 `npm install` 来安装所需的依赖库。
-4. 在`home`目录下运行 `npm run start`，您可以访问 http://localhost:3000 查看站点的英文模式预览
-5. 在`home`目录下运行 `npm run start-zh-cn`，您可以访问 http://localhost:3000 查看站点的中文模式预览
+4. 在`home`目录下运行 `npm run start`，您可以访问 <http://localhost:3000> 查看站点的英文模式预览
+5. 在`home`目录下运行 `npm run start-zh-cn`，您可以访问 <http://localhost:3000> 查看站点的中文模式预览
 6. 若要生成静态网站资源文件，请运行 `npm run build`。构建的静态资源位于 build 目录中。
 
 ## 目录结构
@@ -93,4 +93,3 @@ css 和其他样式文件放在 `src/css` 目录中。
 ### 页面内容修改
 
 > 所有页面文档都可以通过底部的'编辑此页面'按钮直接跳转到相应的 github 资源修改页面。
-

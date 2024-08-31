@@ -5,7 +5,7 @@ sidebar_label: DNS服务器
 keywords: [ 开源监控系统, 开源DNS监控工具, 监控DNS指标 ]
 ---
 
-# 监控：DNS服务器
+## 监控：DNS服务器
 
 > 收集和监控DNS的常规性能指标。
 
@@ -70,4 +70,3 @@ keywords: [ 开源监控系统, 开源DNS监控工具, 监控DNS指标 ]
 | Section0 | 无    | DNS查询的附加信息。 |
 
 > Additional 指标集最多会采集10条响应记录，指标名称从 Section0 到 Section9。
-

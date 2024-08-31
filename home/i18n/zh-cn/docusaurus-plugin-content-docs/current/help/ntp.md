@@ -7,7 +7,7 @@ keywords: [ open source monitoring tool, open source NTP monitoring tool, monito
 
 NTP监控的中文文档如下：
 
-# NTP监控
+## NTP监控
 
 > 收集和监控NTP的常规性能指标。
 
@@ -39,4 +39,3 @@ NTP监控的中文文档如下：
 | 层级   |      | NTP服务器的层级，表示其与参考时钟的距离。   |
 | 参考ID |      | 指示NTP服务器使用的参考时钟或时间源的标识符。 |
 | 精度   |      | NTP服务器时钟的精度，表示其准确性。      |
-

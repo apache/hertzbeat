@@ -12,7 +12,7 @@ sidebar_label: 教程案例
 
 > 很多场景我们需要对提供的 HTTP API 接口进行监控，获取接口返回的指标值。这篇文章我们通过http自定义协议来解析我们常见的http接口响应结构，获取返回体中的字段作为指标数据。
 
-```
+```json
 {
   "code": 200,
   "msg": "success",
@@ -24,7 +24,7 @@ sidebar_label: 教程案例
 如上，通常我们的后台API接口会设计这这样一个通用返回。hertzbeat系统的后台也是如此，我们今天就用hertzbeat的 API 做样例，新增适配一款新的监控类型 **hertzbeat**，监控采集它的系统摘要统计API
 `http://localhost:1157/api/summary`, 其响应数据为:
 
-```
+```json
 {
   "msg": null,
   "code": 0,
@@ -247,7 +247,6 @@ metrics:
 
 ----  
 
-#### 完！
+#### 完
 
 HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数 `headers,params` 等，我们可以像用postman一样去定义它，可玩性也非常高！
-

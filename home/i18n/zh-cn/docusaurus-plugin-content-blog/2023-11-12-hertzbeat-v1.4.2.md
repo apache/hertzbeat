@@ -12,7 +12,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/home/0.png)
 
-### 总结起来如下：
+### 总结起来如下
 
 - **消息通知模版特性，开源之夏课题**
 - **支持华为云OBS存储监控模版文件**
@@ -39,38 +39,39 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**Github: https://github.com/apache/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
 
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ### 尝试部署
 
 1. `docker` 环境仅需一条命令即可开始
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat```
 
-```或者使用 quay.io (若 dockerhub 网络链接超时)```
+    ```或者使用 quay.io (若 dockerhub 网络链接超时)```
 
-```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
+    ```docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat quay.io/tancloud/hertzbeat```
 
 2. 浏览器访问 `http://localhost:1157` 即可开始，默认账号密码 `admin/hertzbeat`
 
 3. 部署采集器集群
 
-```
-docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
-```
+    ```shell
+    docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MANAGER_PORT=1158 --name hertzbeat-collector apache/hertzbeat-collector
+    ```
 
-- `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
-- `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
-- `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
+   - `-e IDENTITY=custom-collector-name` : 配置此采集器的唯一性标识符名称，多个采集器名称不能相同，建议自定义英文名称。
+   - `-e MANAGER_HOST=127.0.0.1` : 配置连接主HertzBeat服务的对外IP。
+   - `-e MANAGER_PORT=1158` : 配置连接主HertzBeat服务的对外端口，默认1158。
 
 更多配置详细步骤参考 [通过Docker方式安装HertzBeat](https://hertzbeat.com/docs/start/docker-deploy)
 
 ---
+
 ## ⛄ 已支持
 
-> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!    
+> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!
 > 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
 
 - Site Monitor, Port Availability, Http Api, Ping Connectivity, Jvm, SiteMap Full Site, Ssl Certificate, SpringBoot, FTP Server
@@ -86,8 +87,8 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 
 ---
 
-**Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ### **下载链接**
 
@@ -110,4 +111,3 @@ docker run -d -e IDENTITY=custom-collector-name -e MANAGER_HOST=127.0.0.1 -e MAN
 - ⬇️ [hertzbeat-collector-macos_arm64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_arm64_1.4.2.tar.gz)
 - ⬇️ [hertzbeat-collector-macos_amd64_1.4.2.tar.gz](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-macos_amd64_1.4.2.tar.gz)
 - ⬇️ [hertzbeat-collector-windows64_1.4.2.zip](https://github.com/apache/hertzbeat/releases/download/v1.4.2/hertzbeat-collector-windows64_1.4.2.zip)
-

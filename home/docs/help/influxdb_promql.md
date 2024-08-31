@@ -59,4 +59,3 @@ keywords: [ Open Source Monitoring System, InfluxDB Monitoring, InfluxDB-PromQL 
 | instance    | None        | Instance to which the metric belongs |
 | timestamp   | None        | Timestamp of metric collection       |
 | value       | None        | Metric value                         |
-

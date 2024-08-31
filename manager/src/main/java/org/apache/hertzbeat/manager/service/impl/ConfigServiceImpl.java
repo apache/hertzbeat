@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.ConfigService;
 import org.apache.hertzbeat.manager.service.GeneralConfigService;
@@ -39,7 +40,7 @@ public class ConfigServiceImpl implements ConfigService {
 
     public ConfigServiceImpl(List<GeneralConfigService> generalConfigServices){
         configServiceMap = new ConcurrentHashMap<>(8);
-        if (generalConfigServices != null) {
+        if (CollectionUtils.isNotEmpty(generalConfigServices)) {
             generalConfigServices.forEach(config -> configServiceMap.put(config.type(), config));
         }
     }

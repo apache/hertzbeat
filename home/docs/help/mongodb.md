@@ -93,4 +93,3 @@ keywords: [ open source monitoring tool, open source database monitoring tool, m
 | pageSize        | none        | Size of a memory page in bytes.                        |
 | numPages        | none        | Total number of memory pages.                          |
 | maxOpenFiles    | none        | Maximum number of open files allowed.                  |
-

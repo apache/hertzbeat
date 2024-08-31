@@ -8,7 +8,7 @@ tags: [opensource, practice]
 keywords: [开源监控系统, 操作系统监控, Linux监控]
 ---
 
-## 使用开源实时监控工具 HertzBeat 对 Linux 操作系统的监控告警实践，5分钟搞定！
+## 使用开源实时监控工具 HertzBeat 对 Linux 操作系统的监控告警实践，5分钟搞定
 
 ### HertzBeat 介绍
 
@@ -18,11 +18,11 @@ keywords: [开源监控系统, 操作系统监控, Linux监控]
 - 其将Http, Jmx, Ssh, Snmp, Jdbc, Prometheus等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？
 - HertzBeat 的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
-Github: https://github.com/apache/hertzbeat
+Github: <https://github.com/apache/hertzbeat>
 
 ### 在 HertzBeat 5分钟搞定对 Linux 的监控
 
-#### 操作前提，您已拥有 Linux 环境和 HertzBeat 环境。
+#### 操作前提，您已拥有 Linux 环境和 HertzBeat 环境
 
 - HertzBeat [安装部署文档](https://hertzbeat.com/docs/start/docker-deploy)
 
@@ -30,32 +30,32 @@ Github: https://github.com/apache/hertzbeat
 
 1. 点击新增 Linux 监控
 
-路径：菜单 -> 操作系统监控 -> Linux操作系统 -> 新增Linux操作系统监控
+    路径：菜单 -> 操作系统监控 -> Linux操作系统 -> 新增Linux操作系统监控
 
-![hertzbeat](/img/blog/monitor-linux-1.png)
+    ![hertzbeat](/img/blog/monitor-linux-1.png)
 
 2. 配置新增监控 Linux 所需参数
 
-在监控页面填写 Linux **对端IP**，**SSH端口**(默认22)，**账户密码等**，最后点击确定添加即可。   
-其他参数如**采集间隔**，**超时时间**等可以参考帮助文档 https://hertzbeat.com/docs/help/mysql/
+    在监控页面填写 Linux **对端IP**，**SSH端口**(默认22)，**账户密码等**，最后点击确定添加即可。
+    其他参数如**采集间隔**，**超时时间**等可以参考帮助文档 <https://hertzbeat.com/docs/help/mysql/>
 
-![hertzbeat](/img/blog/monitor-linux-2.png)
+    ![hertzbeat](/img/blog/monitor-linux-2.png)
 
 3. 完成✅,现在我们已经添加好对 Linux 的监控了，查看监控列表即可看到我们的添加项。
 
-![hertzbeat](/img/blog/monitor-linux-3.png)
+    ![hertzbeat](/img/blog/monitor-linux-3.png)
 
 4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 Linux 的实时监控指标数据。
 
-![hertzbeat](/img/blog/monitor-linux-4.png)
+    ![hertzbeat](/img/blog/monitor-linux-4.png)
 
-![hertzbeat](/img/blog/monitor-linux-7.png)
+    ![hertzbeat](/img/blog/monitor-linux-7.png)
 
 5. 点击**监控历史详情TAB** 即可浏览 Linux 的历史监控指标数据图表📈。
 
-![hertzbeat](/img/blog/monitor-linux-5.png)
+    ![hertzbeat](/img/blog/monitor-linux-5.png)
 
-![hertzbeat](/img/blog/monitor-linux-6.png)
+    ![hertzbeat](/img/blog/monitor-linux-6.png)
 
 **DONE！完成啦！不需要我们去部署agent或者各种繁琐操作，是不是很简单**
 
@@ -132,39 +132,39 @@ Github: https://github.com/apache/hertzbeat
 
 1. 对某个重要指标配置告警阈值
 
-路径：菜单 -> 阈值规则 -> 新增阈值
+    路径：菜单 -> 阈值规则 -> 新增阈值
 
-- 选择配置的指标对象，Linux 监控主要是cpu 内存 磁盘 网络性能等相关指标，我们举例对 `CPU利用率` `cpu` -> `usage` 这个指标进行阈值设置， 当Linux cpu利用率大于90%时发出告警。
-- 这里我们就配置当此指标`cpu` 的 `usage>90` 时发出告警，告警级别为**警告告警**，三次即触发，具体如下图。
+   - 选择配置的指标对象，Linux 监控主要是cpu 内存 磁盘 网络性能等相关指标，我们举例对 `CPU利用率` `cpu` -> `usage` 这个指标进行阈值设置， 当Linux cpu利用率大于90%时发出告警。
+   - 这里我们就配置当此指标`cpu` 的 `usage>90` 时发出告警，告警级别为**警告告警**，三次即触发，具体如下图。
 
-![hertzbeat](/img/blog/monitor-linux-8.png)
+    ![hertzbeat](/img/blog/monitor-linux-8.png)
 
-![hertzbeat](/img/blog/monitor-linux-9.png)
+    ![hertzbeat](/img/blog/monitor-linux-9.png)
 
 2. 新增消息通知接收人
 
-> 配置接收人，让告警消息知道要发给谁，用什么方式发。
+    > 配置接收人，让告警消息知道要发给谁，用什么方式发。
 
-路径：菜单 -> 告警通知 -> 告警接收人 -> 新增接收人
+    路径：菜单 -> 告警通知 -> 告警接收人 -> 新增接收人
 
-消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。
+    消息通知方式支持 **邮件，钉钉，企业微信，飞书，WebHook，短信**等，我们这里以常用的钉钉为例。
 
-- 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) https://hertzbeat.com/docs/help/alert_dingtalk 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
-- 在 HertzBeat 配置接收人参数如下。
+   - 参照此[帮助文档](https://hertzbeat.com/docs/help/alert_dingtalk) <https://hertzbeat.com/docs/help/alert_dingtalk> 在钉钉端配置机器人，设置安全自定义关键词`HertzBeat`，获取对应`access_token`值。
+   - 在 HertzBeat 配置接收人参数如下。
 
-【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
+    【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
 
-![hertzbeat](/img/blog/alert-notice-1.png)
+    ![hertzbeat](/img/blog/alert-notice-1.png)
 
 3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】
 
-> 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
+    > 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
 
-![hertzbeat](/img/blog/alert-notice-2.png)
+    ![hertzbeat](/img/blog/alert-notice-2.png)
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 
-```
+```text
 [HertzBeat告警通知]
 告警目标对象 : linux.cpu.usage
 所属监控任务ID : 483783444839382
@@ -188,13 +188,13 @@ Github: https://github.com/apache/hertzbeat
 
 > [HertzBeat赫兹跳动](https://github.com/apache/hertzbeat) 是一个拥有强大自定义监控能力，无需Agent的实时监控告警工具。应用服务，数据库，操作系统，中间件，云原生等监控，阈值告警，告警通知(邮件微信钉钉飞书短信 Discord Slack Telegram)。
 >
-> 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。    
+> 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，只需配置YML就能使用这些协议去自定义采集任何您想要采集的指标。
 > 您相信只需配置YML就能立刻适配一个K8s或Docker等新的监控类型吗？
 >
 > `HertzBeat`的强大自定义，多类型支持，易扩展，低耦合，希望能帮助开发者和中小团队快速搭建自有监控系统。
 
-**Github: https://github.com/apache/hertzbeat**        
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ## ⛄ Supported
 
@@ -205,4 +205,3 @@ Github: https://github.com/apache/hertzbeat
 - Kubernetes, Docker
 - 和更多您的自定义监控。
 - 通知支持 `Discord` `Slack` `Telegram` `邮件` `钉钉` `微信` `飞书` `短信` `Webhook`。
-

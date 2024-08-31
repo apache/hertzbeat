@@ -11,7 +11,7 @@ keywords: [开源监控系统, 开源数据库监控, RedisCluster数据库监�
 
    *redis.config*
 
-   ```
+   ```properties
      port 6379
      cluster-enabled yes
      cluster-config-file nodes.conf
@@ -85,6 +85,7 @@ keywords: [开源监控系统, 开源数据库监控, RedisCluster数据库监�
        external:
          name: hertzbeat-redis-cluster
    ```
+
 2. 查看所有容器的 IP 地址，搭建 Redis 集群时需要用到这些.
 
    ```bash
@@ -92,7 +93,7 @@ keywords: [开源监控系统, 开源数据库监控, RedisCluster数据库监�
    docker network inspect hertzbeat-redis-cluste
    ```
 
-   ```
+   ```json
    "Containers": {
                "187b879f73c473b3cbb82ff95f668e65af46115ddaa27f3ff1a712332b981531": {
                    ...
@@ -132,6 +133,7 @@ keywords: [开源监控系统, 开源数据库监控, RedisCluster数据库监�
                }
            },
    ```
+
 3. 进入容器, 然后构建集群.
 
    ```bash
@@ -148,6 +150,7 @@ keywords: [开源监控系统, 开源数据库监控, RedisCluster数据库监�
    192.168.117.2:6379 \
    --cluster-replicas 1
    ```
+
 4. 最终的效果.
 
    添加监控节点时填入所需要的参数.
@@ -158,7 +161,6 @@ keywords: [开源监控系统, 开源数据库监控, RedisCluster数据库监�
 
    ![](/img/docs/help/redis-cluster-view.png)
 
-   ### Configuration Parameters
+### Configuration Parameters
 
    查看 [REDIS](https://hertzbeat.apache.org/docs/help/redis) 文档.
-

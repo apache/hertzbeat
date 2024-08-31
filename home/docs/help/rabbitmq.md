@@ -14,11 +14,11 @@ keywords: [open source monitoring tool, open source rabbitmq monitoring tool, mo
 
 1. Open the Management plugin, or use the self-opening version
 
-```shell
-rabbitmq-plugins enable rabbitmq_management
-```
+    ```shell
+    rabbitmq-plugins enable rabbitmq_management
+    ```
 
-2. Access http://ip:15672/ with a browser, and the default account password is `guest/guest`. Successful login means that it is successfully opened.
+2. Access <http://ip:15672/> with a browser, and the default account password is `guest/guest`. Successful login means that it is successfully opened.
 
 3. Just add the corresponding RabbitMQ monitoring in HertzBeat, the parameters use the IP port of Management, and the default account password.
 
@@ -123,4 +123,3 @@ rabbitmq-plugins enable rabbitmq_management
 | message_bytes_unacknowledged | B           | Like message_bytes but counting only those messages delivered to clients but not yet acknowledged                                    |
 | message_bytes_ram            | B           | Like message_bytes but counting only those messages which are currently held in RAM                                                  |
 | message_bytes_persistent     | B           | Like message_bytes but counting only those messages which are persistent                                                             |
-

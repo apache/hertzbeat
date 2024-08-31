@@ -17,15 +17,6 @@
 
 package org.apache.hertzbeat.common.support;
 
-import java.lang.reflect.Field;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,6 +24,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import java.lang.reflect.Field;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * test for {@link CommonThreadPool}
@@ -40,71 +38,71 @@ import static org.mockito.Mockito.verify;
 
 class CommonThreadPoolTest {
 
-	private CommonThreadPool commonThreadPool;
+    private CommonThreadPool commonThreadPool;
 
-	private ThreadPoolExecutor executorMock;
+    private ThreadPoolExecutor executorMock;
 
-	@BeforeEach
-	public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() throws Exception {
 
-		commonThreadPool = new CommonThreadPool();
+        commonThreadPool = new CommonThreadPool();
 
-		Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
-		workerExecutorField.setAccessible(true);
-		executorMock = mock(ThreadPoolExecutor.class);
-		workerExecutorField.set(commonThreadPool, executorMock);
-	}
+        Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
+        workerExecutorField.setAccessible(true);
+        executorMock = mock(ThreadPoolExecutor.class);
+        workerExecutorField.set(commonThreadPool, executorMock);
+    }
 
-	@Test
-	public void testExecuteTask() {
+    @Test
+    public void testExecuteTask() {
 
-		Runnable task = mock(Runnable.class);
-		commonThreadPool.execute(task);
-		verify(executorMock).execute(task);
-	}
+        Runnable task = mock(Runnable.class);
+        commonThreadPool.execute(task);
+        verify(executorMock).execute(task);
+    }
 
-	@Test
-	public void testExecuteTaskThrowsEX() {
+    @Test
+    public void testExecuteTaskThrowsEx() {
 
-		Runnable task = mock(Runnable.class);
-		doThrow(RejectedExecutionException.class).when(executorMock).execute(task);
+        Runnable task = mock(Runnable.class);
+        doThrow(RejectedExecutionException.class).when(executorMock).execute(task);
 
-		assertThrows(
-				RejectedExecutionException.class,
-				() -> commonThreadPool.execute(task)
-		);
-	}
+        assertThrows(
+                RejectedExecutionException.class,
+                () -> commonThreadPool.execute(task)
+        );
+    }
 
-	@Test
-	public void testDestroy() throws Exception {
+    @Test
+    public void testDestroy() throws Exception {
 
-		commonThreadPool.destroy();
-		verify(executorMock).shutdownNow();
-	}
+        commonThreadPool.destroy();
+        verify(executorMock).shutdownNow();
+    }
 
-	@Test
-	public void testDestroyWithNull() throws Exception {
+    @Test
+    public void testDestroyWithNull() throws Exception {
 
-		Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
-		workerExecutorField.setAccessible(true);
-		workerExecutorField.set(commonThreadPool, null);
+        Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
+        workerExecutorField.setAccessible(true);
+        workerExecutorField.set(commonThreadPool, null);
 
-		commonThreadPool.destroy();
-	}
+        commonThreadPool.destroy();
+    }
 
-	@Test
-	public void testInitialization() throws Exception {
-		CommonThreadPool pool = new CommonThreadPool();
+    @Test
+    public void testInitialization() throws Exception {
+        CommonThreadPool pool = new CommonThreadPool();
 
-		Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
-		workerExecutorField.setAccessible(true);
-		ThreadPoolExecutor workerExecutor = (ThreadPoolExecutor) workerExecutorField.get(pool);
+        Field workerExecutorField = CommonThreadPool.class.getDeclaredField("workerExecutor");
+        workerExecutorField.setAccessible(true);
+        ThreadPoolExecutor workerExecutor = (ThreadPoolExecutor) workerExecutorField.get(pool);
 
-		assertNotNull(workerExecutor);
-		assertEquals(2, workerExecutor.getCorePoolSize());
-		assertEquals(Integer.MAX_VALUE, workerExecutor.getMaximumPoolSize());
-		assertEquals(10, workerExecutor.getKeepAliveTime(TimeUnit.SECONDS));
-		assertTrue(workerExecutor.getQueue() instanceof SynchronousQueue);
-	}
+        assertNotNull(workerExecutor);
+        assertEquals(1, workerExecutor.getCorePoolSize());
+        assertEquals(Integer.MAX_VALUE, workerExecutor.getMaximumPoolSize());
+        assertEquals(10, workerExecutor.getKeepAliveTime(TimeUnit.SECONDS));
+        assertTrue(workerExecutor.getQueue() instanceof SynchronousQueue);
+    }
 
 }

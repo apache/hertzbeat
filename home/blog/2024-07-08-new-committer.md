@@ -16,7 +16,8 @@ I first came into contact with the Apache Hertzbeat project by chance. At that t
 
 ### Start contributing
 
-After having a preliminary understanding of the project, I found that it needed to complete the monitoring scope of the big data field, so I decided to start contributing some code. I started with supplementing big data monitoring. This not only helped me understand the project more deeply, but also gradually let other members of the community know me. I remember that the first Pull Request I submitted was to add a new Hbase cluster monitoring template. Although it seems insignificant, I was very excited when it was merged. This was a real interaction between me and the open source community and my first step towards greater contribution.
+After having a preliminary understanding of the project, I found that it needed to complete the monitoring scope of the big data field, so I decided to start contributing some code. I started with supplementing big data monitoring. This not only helped me understand the project more deeply, but also gradually let other members of the community know me.  
+I remember that the first Pull Request I submitted was to add a new Hbase cluster monitoring template. Although it seems insignificant, I was very excited when it was merged. This was a real interaction between me and the open source community and my first step towards greater contribution.
 
 ### In-depth participation
 
@@ -46,5 +47,5 @@ This process made me understand the importance of cooperation and made me feel t
 
 ### Conclusion
 
-Becoming a Committer of the Apache Hertzbeat project is a challenging and rewarding journey. Through continuous learning and contribution, I have not only improved my technical ability, but also found a sense of belonging and accomplishment in the community. I hope that my experience can inspire more people to participate in the open source community and jointly promote the progress and development of technology. To borrow the words of Tom: Participating in open source should not affect everyone's work and life, otherwise it will go against the original intention. Everyone should participate in the free time after get off work.
-
+Becoming a Committer of the Apache Hertzbeat project is a challenging and rewarding journey. Through continuous learning and contribution, I have not only improved my technical ability, but also found a sense of belonging and accomplishment in the community.  
+I hope that my experience can inspire more people to participate in the open source community and jointly promote the progress and development of technology. To borrow the words of Tom: Participating in open source should not affect everyone's work and life, otherwise it will go against the original intention. Everyone should participate in the free time after get off work.

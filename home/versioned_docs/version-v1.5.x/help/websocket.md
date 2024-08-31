@@ -31,4 +31,3 @@ keywords: [ open source monitoring tool,  Websocket监控 ]
 | statusMessage | none        | Status messages         |
 | connection    | none        | Connect type            |
 | upgrade       | none        | Upgraded protocols      |
-

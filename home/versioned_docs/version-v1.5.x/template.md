@@ -6,14 +6,15 @@ sidebar_label: Monitoring Template
 
 > Apache HertzBeat (incubating) is an open source, real-time monitoring tool with custom-monitor and agentLess.
 >
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 
 Here is the architecture.
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**We define all monitoring collection types (mysql, website, jvm, k8s) as yml templates, and users can import these templates into the hertzbeat system to support corresponding types of monitoring, which is very convenient!**
+**We define all monitoring collection types (mysql, website, jvm, k8s) as yml templates**  
+**Users can import these templates into the hertzbeat system to support corresponding types of monitoring, which is very convenient!**
 
 ![](/img/docs/advanced/extend-point-1.png)
 

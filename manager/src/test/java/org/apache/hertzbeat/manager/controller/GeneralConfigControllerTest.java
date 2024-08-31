@@ -17,6 +17,16 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.impl.ConfigServiceImpl;
@@ -29,17 +39,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
-
 /**
  * Test case for {@link GeneralConfigController}
  */
@@ -47,54 +46,54 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 @ExtendWith(MockitoExtension.class)
 class GeneralConfigControllerTest {
 
-	private MockMvc mockMvc;
+    private MockMvc mockMvc;
 
-	@Mock
-	private ConfigServiceImpl configService;
+    @Mock
+    private ConfigServiceImpl configService;
 
-	@InjectMocks
-	private GeneralConfigController generalConfigController;
+    @InjectMocks
+    private GeneralConfigController generalConfigController;
 
-	@BeforeEach
-	public void setup() {
+    @BeforeEach
+    public void setup() {
 
-		mockMvc = standaloneSetup(generalConfigController).build();
-	}
+        mockMvc = standaloneSetup(generalConfigController).build();
+    }
 
-	@Test
-	public void testSaveOrUpdateConfig() throws Exception {
+    @Test
+    public void testSaveOrUpdateConfig() throws Exception {
 
-		doNothing().when(configService).saveConfig(anyString(), any());
+        doNothing().when(configService).saveConfig(anyString(), any());
 
-		mockMvc.perform(post("/api/config/email")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("{\"key\":\"value\"}"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-				.andExpect(jsonPath("$.msg").value("Update config success"));
-	}
+        mockMvc.perform(post("/api/config/email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"key\":\"value\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andExpect(jsonPath("$.msg").value("Update config success"));
+    }
 
-	@Test
-	public void testGetConfig() throws Exception {
+    @Test
+    public void testGetConfig() throws Exception {
 
-		when(configService.getConfig(anyString())).thenReturn(any());
+        when(configService.getConfig(anyString())).thenReturn(any());
 
-		mockMvc.perform(get("/api/config/email")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(get("/api/config/email")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 
-	@Test
-	public void testUpdateTemplateAppConfig() throws Exception {
+    @Test
+    public void testUpdateTemplateAppConfig() throws Exception {
 
-		doNothing().when(configService).updateTemplateAppConfig(anyString(), any(TemplateConfig.AppTemplate.class));
+        doNothing().when(configService).updateTemplateAppConfig(anyString(), any(TemplateConfig.AppTemplate.class));
 
-		mockMvc.perform(put("/api/config/template/appName")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content("{\"templateKey\":\"templateValue\"}"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-	}
+        mockMvc.perform(put("/api/config/template/appName")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"templateKey\":\"templateValue\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+    }
 
 }

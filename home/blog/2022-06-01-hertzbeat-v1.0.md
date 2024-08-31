@@ -7,7 +7,8 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]
 ---
 
-HertzBeat, incubated by Dromara and open-sourced by TanCloud, is an open-source monitoring and alerting project that supports a variety of monitoring types including websites, APIs, PING, ports, databases, full-site, operating systems, middleware, etc. It supports threshold alarms and notification alerts (email, webhook, DingTalk, WeCom, Feishu robots) and has an easy-to-use, friendly visual operation interface.
+HertzBeat, incubated by Dromara and open-sourced by TanCloud, is an open-source monitoring and alerting project that supports a variety of monitoring types including websites, APIs, PING, ports, databases, full-site, operating systems, middleware, etc.  
+It supports threshold alarms and notification alerts (email, webhook, DingTalk, WeCom, Feishu robots) and has an easy-to-use, friendly visual operation interface.
 
 Official Website: hertzbeat.com | tancloud.cn
 
@@ -52,11 +53,11 @@ Bug fix.
 5. [[collector]bugfix: fix warehouse data queue consume error #153](https://github.com/apache/hertzbeat/pull/153).  issue by @daqianxiaoyao
 6. [[web-app]bugfix:fix input blocking when input error in dark theme #157](https://github.com/apache/hertzbeat/pull/157). issue by @ConradWen
 
-**Full Changelog**: https://github.com/apache/hertzbeat/compare/v1.0-beta.8...v1.0
+**Full Changelog**: <https://github.com/apache/hertzbeat/compare/v1.0-beta.8...v1.0>
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
------------------------    
+-----------------------
 
 Redis monitor is coming：
 
@@ -77,6 +78,5 @@ Redis monitor is coming：
 
 **Repository url**
 
-[Github](https://github.com/apache/hertzbeat) https://github.com/apache/hertzbeat      
-[Gitee](https://gitee.com/hertzbeat/hertzbeat) https://gitee.com/hertzbeat/hertzbeat
-
+[Github](https://github.com/apache/hertzbeat) <https://github.com/apache/hertzbeat>
+[Gitee](https://gitee.com/hertzbeat/hertzbeat) <https://gitee.com/hertzbeat/hertzbeat>

@@ -57,4 +57,3 @@ keywords: [开源监控系统, 开源数据库监控, HbaseMaster监控]
 | receivedBytes           | MB   | 集群接收数据量            |
 | sentBytes               | MB   | 集群发送数据量(MB)        |
 | clusterRequests         | 无    | 集群总请求数量            |
-

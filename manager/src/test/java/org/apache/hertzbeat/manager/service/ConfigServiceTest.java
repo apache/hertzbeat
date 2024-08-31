@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
@@ -57,9 +58,9 @@ public class ConfigServiceTest {
     @BeforeEach
     public void setUp() {
         List<GeneralConfigService> generalConfigServices = new ArrayList<>();
-        when(objectStoreConfigService.type()).thenReturn("oss");
-        when(templateConfigService.type()).thenReturn("template");
-        when(mailGeneralConfigService.type()).thenReturn("mail");
+        when(objectStoreConfigService.type()).thenReturn(GeneralConfigTypeEnum.oss.name());
+        when(templateConfigService.type()).thenReturn(GeneralConfigTypeEnum.template.name());
+        when(mailGeneralConfigService.type()).thenReturn(GeneralConfigTypeEnum.email.name());
         generalConfigServices.add(objectStoreConfigService);
         generalConfigServices.add(templateConfigService);
         generalConfigServices.add(mailGeneralConfigService);
@@ -68,10 +69,10 @@ public class ConfigServiceTest {
 
     @Test
     public void testSaveConfig() {
-        configService.saveConfig("oss", new ObjectStoreDTO<>());
+        configService.saveConfig(GeneralConfigTypeEnum.oss.name(), new ObjectStoreDTO<>());
         verify(objectStoreConfigService, times(1)).saveConfig(any(ObjectStoreDTO.class));
 
-        configService.saveConfig("mail", new EmailNoticeSender());
+        configService.saveConfig(GeneralConfigTypeEnum.email.name(), new EmailNoticeSender());
         verify(mailGeneralConfigService, times(1)).saveConfig(any(EmailNoticeSender.class));
     }
 
@@ -79,16 +80,16 @@ public class ConfigServiceTest {
     public void testGetConfig() {
         ObjectStoreDTO ossConfig = new ObjectStoreDTO<>();
         when(objectStoreConfigService.getConfig()).thenReturn(ossConfig);
-        assertNotNull(configService.getConfig("oss"));
+        assertNotNull(configService.getConfig(GeneralConfigTypeEnum.oss.name()));
 
         EmailNoticeSender emailNoticeSender = new EmailNoticeSender();
         when(mailGeneralConfigService.getConfig()).thenReturn(emailNoticeSender);
-        configService.getConfig("mail");
+        configService.getConfig(GeneralConfigTypeEnum.email.name());
         verify(mailGeneralConfigService, times(1)).getConfig();
     }
 
     @Test
-    public void testUpdateTemplateAppConfig(){
+    public void testUpdateTemplateAppConfig() {
         TemplateConfig templateConfig = new TemplateConfig();
         when(templateConfigService.getConfig()).thenReturn(templateConfig);
         configService.updateTemplateAppConfig("custom", new TemplateConfig.AppTemplate());
@@ -98,7 +99,7 @@ public class ConfigServiceTest {
     }
 
     @Test
-    public void testException(){
+    public void testException() {
         assertThrows(IllegalArgumentException.class, () -> configService.saveConfig("test", new ObjectStoreDTO<>()));
         assertThrows(IllegalArgumentException.class, () -> configService.getConfig("test2"), "Not supported this config type: test2");
     }

@@ -27,7 +27,7 @@ limitations under the License.
 
    - 新建 `PR` 后需要在 `PR` 页面的 Github Development 按钮处关联已存在的对应 `ISSUE`(若无建议新建对应ISSUE)
 
-   - 标题命名格式(英文，小写)   
+   - 标题命名格式(英文，小写)
      `[feature/bugfix/doc/improve/refactor/bug/cleanup] title`
 
 2. 添加描述信息
@@ -70,6 +70,7 @@ limitations under the License.
    ```java
    Cache<String> publicKeyCache;
    ```
+
 2. 变量的拼音缩写是禁止的（排除地名等名词），例如chengdu。
 3. 推荐的变量名以 `类型` 结尾。
    对于 `Collection/List` 类型的变量，取 `xxxx` （复数表示多个元素）或以 `xxxList` （特定类型）结束。
@@ -79,6 +80,7 @@ limitations under the License.
    Map<Long, User> idUserMap;
    Map<Long, String> userIdNameMap;
    ```
+
 4. 通过其名称直观地知道变量的类型和含义。
    方法名称应首先以动词开始，如下所示：
 
@@ -114,6 +116,7 @@ limitations under the License.
          return resp;
      }
      ```
+
    - 正面示例：
 
      > 字符串提取为常量引用。
@@ -139,11 +142,12 @@ limitations under the License.
            return resp;
        }
      ```
+
 2. 确保代码的可读性和直观性
 
-- `annotation` 符号中的字符串不需要提取为常量。
+   - `annotation` 符号中的字符串不需要提取为常量。
 
-- 被引用的 `package` 或 `resource` 名称不需要提取为常量。
+   - 被引用的 `package` 或 `resource` 名称不需要提取为常量。
 
 3. 未被重新分配的变量也必须声明为 <mark> final </mark> 类型。
 
@@ -185,24 +189,25 @@ limitations under the License.
    - 如果使用 `HashSet`，则返回 <mark> Set </mark>
 2. 如果存在多线程，可以使用以下声明或返回类型：
 
-```java
-private CurrentHashMap map;
-public CurrentHashMap funName();
-```
+    ```java
+    private CurrentHashMap map;
+    public CurrentHashMap funName();
+    ```
 
 3. 使用 `isEmpty()` 而不是 `length() == 0` 或者 `size() == 0`
    - 负面示例：
 
      ```java
      if (pathPart.length() == 0) {
-       return;
+         return;
      }
      ```
+
    - 正面示例：
 
      ```java
      if (pathPart.isEmpty()) {
-       return;
+         return;
      }
      ```
 
@@ -220,92 +225,97 @@ public CurrentHashMap funName();
    - 多个代码行的 `深度` 为 `n+1`
    - 多余的行
 
-一般来说，如果一个方法的代码行深度由于连续嵌套的 `if... else..` 超过了 `2+ Tabs`，那么应该考虑试图
-- `合并分支`，
-- `反转分支条件`
-- `提取私有方法`
+    一般来说，如果一个方法的代码行深度由于连续嵌套的 `if... else..` 超过了 `2+ Tabs`，那么应该考虑试图
 
-以减少代码行深度并提高可读性，例如：
-- 联合或将逻辑合并到下一级调用中
-- 负面示例：
+   - `合并分支`，
+   - `反转分支条件`
+   - `提取私有方法`
 
-```java
-if (isInsert) {
-save(platform);
-} else {
-updateById(platform);
-}
-```
+    以减少代码行深度并提高可读性，例如：
 
-- 正面示例：
+   - 联合或将逻辑合并到下一级调用中
+     - 负面示例：
 
-```java
-saveOrUpdate(platform);
-```
+        ```java
+        if (isInsert) {
+            save(platform);
+        } else {
+            updateById(platform);
+        }
+        ```
 
-- 合并条件
-- 负面示例：
+     - 正面示例：
 
-```java
-if (expression1) {
-if(expression2) {
-......
-}
-}
+        ```java
+        saveOrUpdate(platform);
+        ```
 
-```
+   - 合并条件
+     - 负面示例：
 
-- 正面示例：
+        ```java
+        if (expression1) {
+            if(expression2) {
+                // ......
+            }
+        }
+        ```
 
-  ```java
-  if (expression1 && expression2) {
-    ......
-  }
-  ```
-- 反转条件
-- 负面示例：
+     - 正面示例：
 
-  ```java
-  public void doSomething() {
-   // 忽略更深的代码块行
-   // .....
-   if (condition1) {
-      ...
-   } else {
-      ...
-   }
-  }
-  ```
-- 正面示例：
+       ```java
+       if (expression1 && expression2) {
+          // ......
+       }
+       ```
 
-  ```java
-  public void doSomething() {
-   // 忽略更深的代码块行
-   // .....
-   if (!condition1) {
-      ...
-      return;
-   }
-   // ...
-  }
-  ```
-- 使用单一变量或方法减少复杂的条件表达式
-- 负面示例：
+   - 反转条件
+     - 负面示例：
 
-  ```java
-  if (dbType.indexOf("sqlserver") >= 0 || dbType.indexOf("sql server") >= 0) {
-   ...
-  }
-  ```
-- 正面示例：
+       ```java
+       public void doSomething() {
+           // 忽略更深的代码块行
+           // .....
+           if (condition1) {
+               // ...
+           } else {
+               // ...
+           }
+       }
+       ```
 
-  ```java
-  if (containsSqlServer(dbType)) {
-    ....
-  }
-  //.....
-  // containsSqlServer的定义
-  ```
+     - 正面示例：
+
+       ```java
+       public void doSomething() {
+           // 忽略更深的代码块行
+           // .....
+           if (!condition1) {
+               // ...
+               return;
+           }
+           // ...
+       }
+       ```
+
+   - 使用单一变量或方法减少复杂的条件表达式
+     - 负面示例：
+
+       ```java
+       if (dbType.indexOf("sqlserver") >= 0 || dbType.indexOf("sql server") >= 0) {
+            // ...
+       }
+       ```
+
+     - 正面示例：
+
+       ```java
+       if (containsSqlServer(dbType)) {
+            // ....
+       }
+       //.....
+       // containsSqlServer的定义
+       ```
 
 > 在未来，使用 `sonarlint` 和 `better highlights` 检查代码深度看起来是个不错的选择。
 
@@ -313,20 +323,20 @@ if(expression2) {
 
 1. 方法缺少注释：
 
-- `When`：该方法何时可以被调用
-- `How`：如何使用此方法以及如何传递参数等
-- `What`：此方法实现了哪些功能
-- `Note`：在调用此方法时开发人员应注意什么
+   - `When`：该方法何时可以被调用
+   - `How`：如何使用此方法以及如何传递参数等
+   - `What`：此方法实现了哪些功能
+   - `Note`：在调用此方法时开发人员应注意什么
 
 2. 缺少必要的类头部描述注释。
 
-添加 `What`，`Note` 等，如上述 `1` 中提到的。
+    添加 `What`，`Note` 等，如上述 `1` 中提到的。
 
 3. 在接口中的方法声明必须被注释。
 
-- 如果实现的语义和接口声明的注释内容不一致，则具体的实现方法也需要用注释重写。
+   - 如果实现的语义和接口声明的注释内容不一致，则具体的实现方法也需要用注释重写。
 
-- 如果方法实现的语义与接口声明的注释内容一致，则建议不写注释以避免重复的注释。
+   - 如果方法实现的语义与接口声明的注释内容一致，则建议不写注释以避免重复的注释。
 
 4. 在注释行中的第一个词需要大写，如 `param` 行，`return` 行。
    如果特殊引用作为主题不需要大写，需要注意特殊符号，例如引号。
@@ -336,29 +346,31 @@ if(expression2) {
 1. 更倾向于使用 `non-capturing` lambda（不包含对外部范围的引用的lambda）。
    Capturing lambda 在每次调用时都需要创建一个新的对象实例。`Non-capturing` lambda 可以为每次调用使用相同的实例。
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  map.computeIfAbsent(key, x -> key.toLowerCase())
-  ```
-- 正面示例：
+     ```java
+     map.computeIfAbsent(key, x -> key.toLowerCase())
+     ```
 
-  ```java
-  map.computeIfAbsent(key, k -> k.toLowerCase());
-  ```
+   - 正面示例：
+
+     ```java
+     map.computeIfAbsent(key, k -> k.toLowerCase());
+     ```
 
 2. 考虑使用方法引用而不是内联lambda
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  map.computeIfAbsent(key, k-> Loader.load(k));
-  ```
-- 正面示例：
+     ```java
+     map.computeIfAbsent(key, k-> Loader.load(k));
+     ```
 
-  ```java
-  map.computeIfAbsent(key, Loader::load);
-  ```
+   - 正面示例：
+
+     ```java
+     map.computeIfAbsent(key, Loader::load);
+     ```
 
 ### 3.9 Java Streams
 
@@ -376,120 +388,127 @@ if(expression2) {
 
 1. 使用 `StringUtils.isBlank` 而不是 `StringUtils.isEmpty`
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  if (StringUtils.isEmpty(name)) {
-  return;
-  }
-  ```
-- 正面示例：
+     ```java
+     if (StringUtils.isEmpty(name)) {
+        return;
+     }
+     ```
 
-  ```java
-  if (StringUtils.isBlank(name)) {
-  return;
-  }
-  ```
+   - 正面示例：
+
+     ```java
+     if (StringUtils.isBlank(name)) {
+       return;
+     }
+     ```
 
 2. 使用 `StringUtils.isNotBlank` 而不是 `StringUtils.isNotEmpty`
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  if (StringUtils.isNotEmpty(name)) {
-    return;
-  }
-  ```
-- 正面示例：
+     ```java
+     if (StringUtils.isNotEmpty(name)) {
+        return;
+     }
+     ```
 
-  ```java
-  if (StringUtils.isNotBlank(name)) {
-    return;
-  }
-  ```
+   - 正面示例：
+
+     ```java
+     if (StringUtils.isNotBlank(name)) {
+        return;
+     }
+     ```
 
 3. 使用 `StringUtils.isAllBlank` 而不是 `StringUtils.isAllEmpty`
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  if (StringUtils.isAllEmpty(name, age)) {
-    return;
-  }
-  ```
-- 正面示例：
+     ```java
+     if (StringUtils.isAllEmpty(name, age)) {
+        return;
+     }
+     ```
 
-  ```java
-  if (StringUtils.isAllBlank(name, age)) {
-    return;
-  }
-  ```
+   - 正面示例：
+
+     ```java
+     if (StringUtils.isAllBlank(name, age)) {
+        return;
+     }
+     ```
 
 ### 3.12 `Enum` 类
 
 1. 枚举值比较
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  if (status.equals(JobStatus.RUNNING)) {
-    return;
-  }
-  ```
-- 正面示例：
+     ```java
+     if (status.equals(JobStatus.RUNNING)) {
+        return;
+     }
+     ```
 
-  ```java
-  if (status == JobStatus.RUNNING) {
-    return;
-  }
-  ```
+   - 正面示例：
+
+     ```java
+     if (status == JobStatus.RUNNING) {
+        return;
+     }
+     ```
 
 2. 枚举类不需要实现 Serializable
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  public enum JobStatus implements Serializable {
-    ...
-  }
-  ```
-- 正面示例：
+     ```java
+     public enum JobStatus implements Serializable {
+        // ...
+     }
+     ```
 
-  ```java
-  public enum JobStatus {
-    ...
-  }
-  ```
+   - 正面示例：
+
+     ```java
+     public enum JobStatus {
+        // ...
+     }
+     ```
 
 3. 使用 `Enum.name()` 而不是 `Enum.toString()`
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  System.out.println(JobStatus.RUNNING.toString());
-  ```
-- 正面示例：
+     ```java
+     System.out.println(JobStatus.RUNNING.toString());
+     ```
 
-  ```java
-  System.out.println(JobStatus.RUNNING.name());
-  ```
+   - 正面示例：
+
+     ```java
+     System.out.println(JobStatus.RUNNING.name());
+     ```
 
 4. 枚举类名称统一使用 Enum 后缀
 
-- 负面示例：
+   - 负面示例：
 
-  ```java
-  public enum JobStatus {
-    ...
-  }
-  ```
-- 正面示例：
+     ```java
+     public enum JobStatus {
+        // ...
+     }
+     ```
 
-  ```java
-  public enum JobStatusEnum {
-    ...
-  }
-  ```
+   - 正面示例：
+
+     ```java
+     public enum JobStatusEnum {
+        // ...
+     }
+     ```
 
 ### 3.13 `Deprecated` 注解
 
@@ -498,7 +517,7 @@ if(expression2) {
 ```java
 @deprecated
 public void process(String input) {
-  ...
+    // ...
 }
 ```
 
@@ -507,7 +526,7 @@ public void process(String input) {
 ```java
 @Deprecated
 public void process(String input) {
-  ...
+    // ...
 }
 ```
 
@@ -515,41 +534,43 @@ public void process(String input) {
 
 1. 使用 `占位符` 进行日志输出：
 
-- 负面示例
+   - 负面示例
 
-  ```java
-  log.info("Deploy cluster request " + deployRequest);
-  ```
-- 正面示例
+     ```java
+     log.info("Deploy cluster request " + deployRequest);
+     ```
 
-  ```java
-  log.info("load plugin:{} to {}", file.getName(), appPlugins);
-  ```
+   - 正面示例
+
+     ```java
+     log.info("load plugin:{} to {}", file.getName(), appPlugins);
+     ```
 
 2. 打印日志时，注意选择 `日志级别`
 
-当打印日志内容时，如果传递了日志占位符的实际参数，必须避免过早评估，以避免由日志级别导致的不必要评估。
+    当打印日志内容时，如果传递了日志占位符的实际参数，必须避免过早评估，以避免由日志级别导致的不必要评估。
 
-- 负面示例：
+   - 负面示例：
 
-  假设当前日志级别为 `INFO`：
+     假设当前日志级别为 `INFO`：
 
-  ```java
-  // 忽略声明行。
-  List<User> userList = getUsersByBatch(1000);
-  LOG.debug("All users: {}", getAllUserIds(userList));
-  ```
-- 正面示例：
+     ```java
+     // 忽略声明行。
+     List<User> userList = getUsersByBatch(1000);
+     LOG.debug("All users: {}", getAllUserIds(userList));
+     ```
 
-  在这种情况下，我们应该在进行实际的日志调用之前提前确定日志级别，如下所示：
+   - 正面示例：
 
-  ```java
-  // 忽略声明行。
-  List<User> userList = getUsersByBatch(1000);
-  if (LOG.isDebugEnabled()) {
-    LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList));	
-  }
-  ```
+     在这种情况下，我们应该在进行实际的日志调用之前提前确定日志级别，如下所示：
+
+     ```java
+     // 忽略声明行。
+     List<User> userList = getUsersByBatch(1000);
+     if (LOG.isDebugEnabled()) {
+       LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList)); 
+     }
+     ```
 
 ## 5 测试
 
@@ -559,13 +580,8 @@ public void process(String input) {
 
 ## 参考资料
 
-- https://site.mockito.org/
-- https://alibaba.github.io/p3c/
-- https://rules.sonarsource.com/java/
-- https://junit.org/junit5/
-- https://streampark.apache.org/
-
-```
-
-```
-
+- <https://site.mockito.org/>
+- <https://alibaba.github.io/p3c/>
+- <https://rules.sonarsource.com/java/>
+- <https://junit.org/junit5/>
+- <https://streampark.apache.org/>

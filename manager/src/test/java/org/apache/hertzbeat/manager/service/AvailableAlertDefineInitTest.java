@@ -17,6 +17,11 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,73 +36,67 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link AvailableAlertDefineInit}
  */
 
 class AvailableAlertDefineInitTest {
 
-	@Mock
-	private AlertDefineDao alertDefineDao;
+    @Mock
+    private AlertDefineDao alertDefineDao;
 
-	@Mock
-	private AppService appService;
+    @Mock
+    private AppService appService;
 
-	@InjectMocks
-	private AvailableAlertDefineInit availableAlertDefineInit;
+    @InjectMocks
+    private AvailableAlertDefineInit availableAlertDefineInit;
 
-	private Map<String, Job> map;
+    private Map<String, Job> map;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		map = new HashMap<>();
-		map.put("testApp", new Job());
-	}
+        map = new HashMap<>();
+        map.put("testApp", new Job());
+    }
 
-	@Test
-	void testRunAlertDefineIsEmpty() throws Exception {
+    @Test
+    void testRunAlertDefineIsEmpty() throws Exception {
 
 
-		when(appService.getAllAppDefines()).thenReturn(map);
+        when(appService.getAllAppDefines()).thenReturn(map);
 
-		when(alertDefineDao.queryAlertDefineByAppAndMetric("testApp", CommonConstants.AVAILABILITY))
-				.thenReturn(Collections.emptyList());
+        when(alertDefineDao.queryAlertDefineByAppAndMetric("testApp", CommonConstants.AVAILABILITY))
+                .thenReturn(Collections.emptyList());
 
-		availableAlertDefineInit.run();
+        availableAlertDefineInit.run();
 
-		verify(alertDefineDao, times(1)).save(any(AlertDefine.class));
-	}
+        verify(alertDefineDao, times(1)).save(any(AlertDefine.class));
+    }
 
-	@Test
-	void testRunAlertDefineExists() throws Exception {
+    @Test
+    void testRunAlertDefineExists() throws Exception {
 
-		when(appService.getAllAppDefines()).thenReturn(map);
-		when(alertDefineDao.queryAlertDefineByAppAndMetric("testApp", CommonConstants.AVAILABILITY))
-				.thenReturn(List.of(new AlertDefine()));
-		availableAlertDefineInit.run();
+        when(appService.getAllAppDefines()).thenReturn(map);
+        when(alertDefineDao.queryAlertDefineByAppAndMetric("testApp", CommonConstants.AVAILABILITY))
+                .thenReturn(List.of(new AlertDefine()));
+        availableAlertDefineInit.run();
 
-		verify(alertDefineDao, never()).save(any(AlertDefine.class));
-	}
+        verify(alertDefineDao, never()).save(any(AlertDefine.class));
+    }
 
-	@Test
-	void testRunExceptionHandling() throws Exception {
+    @Test
+    void testRunExceptionHandling() throws Exception {
 
-		when(appService.getAllAppDefines()).thenReturn(map);
-		when(alertDefineDao.queryAlertDefineByAppAndMetric("testApp", CommonConstants.AVAILABILITY))
-				.thenThrow(new RuntimeException("Database error"));
+        when(appService.getAllAppDefines()).thenReturn(map);
+        when(alertDefineDao.queryAlertDefineByAppAndMetric("testApp", CommonConstants.AVAILABILITY))
+                .thenThrow(new RuntimeException("Database error"));
 
-		availableAlertDefineInit.run();
+        availableAlertDefineInit.run();
 
-		verify(alertDefineDao, never()).save(any(AlertDefine.class));
-	}
+        verify(alertDefineDao, never()).save(any(AlertDefine.class));
+    }
 
 }

@@ -12,7 +12,7 @@ sidebar_label: 教程一:适配一款HTTP协议监控
 
 > 很多场景我们需要对提供的 HTTP API 接口进行监控，获取接口返回的指标值。这篇文章我们通过http自定义协议来解析我们常见的http接口响应结构，获取返回体中的字段作为指标数据。
 
-```
+```json
 {
   "code": 200,
   "msg": "success",
@@ -24,7 +24,7 @@ sidebar_label: 教程一:适配一款HTTP协议监控
 如上，通常我们的后台API接口会设计这这样一个通用返回。hertzbeat系统的后台也是如此，我们今天就用hertzbeat的 API 做样例，新增适配一款新的监控类型 **hertzbeat**，监控采集它的系统摘要统计API
 `http://localhost:1157/api/summary`, 其响应数据为:
 
-```
+```json
 {
   "msg": null,
   "code": 0,
@@ -61,7 +61,7 @@ sidebar_label: 教程一:适配一款HTTP协议监控
 
 **HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
-> 监控模版YML用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
+> 监控模版YML用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。
 > 即我们通过自定义这个监控模版，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
 
 样例：自定义一个名称为`hertzbeat`的自定义监控类型，其使用HTTP协议采集指标数据。
@@ -206,10 +206,10 @@ metrics:
 
 ----  
 
-#### 完！
+#### 完
 
 HTTP协议的自定义监控的实践就到这里，HTTP协议还带其他参数headers,params等，我们可以像用postman一样去定义它，可玩性也非常高！
 
 如果您觉得hertzbeat这个开源项目不错的话欢迎给我们在GitHub Gitee star哦，灰常感谢。感谢老铁们的支持。笔芯！
 
-**github: https://github.com/apache/hertzbeat**
+**github: <https://github.com/apache/hertzbeat>**

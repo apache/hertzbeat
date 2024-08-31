@@ -4,7 +4,7 @@ title: SNMP协议自定义监控
 sidebar_label: SNMP协议自定义监控
 ---
 
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用 SNMP 协议自定义指标监控。    
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用 SNMP 协议自定义指标监控。
 > SNMP 协议自定义监控可以让我们很方便的通过配置 Mib OID信息 就能监控采集到我们想监控的OID指标
 
 ### SNMP协议采集流程
@@ -23,13 +23,13 @@ sidebar_label: SNMP协议自定义监控
 
 ![](/img/docs/advanced/extend-point-1.png)
 
-------- 
+-------
 
 下面详细介绍下文件的配置用法，请注意看使用注释。
 
 ### 监控模版YML
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
+> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。
 > 即我们通过自定义这个YML，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
 
 样例：自定义一个名称为 example_windows 的自定义监控类型，其使用 SNMP 协议采集指标数据。
@@ -162,7 +162,7 @@ metrics:
     # 具体监控指标列表
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-if is metrics label
-      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), instance-是否是指标集合唯一标识符字段
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标集合唯一标识符字段
       - field: name
         type: 1
       - field: descr
@@ -207,4 +207,3 @@ metrics:
         processes: 1.3.6.1.2.1.25.1.6.0
         location: 1.3.6.1.2.1.1.6.0
 ```
-

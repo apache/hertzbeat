@@ -79,4 +79,3 @@ keywords: [开源监控系统, 开源操作系统监控, Linux操作系统监控
 | available  | Mb   | 可用磁盘大小  |
 | usage      | %    | 使用率     |
 | mounted    | 无    | 挂载点目录   |
-

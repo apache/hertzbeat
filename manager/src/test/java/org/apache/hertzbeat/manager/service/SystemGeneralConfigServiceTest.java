@@ -17,8 +17,11 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemConfig;
 import org.apache.hertzbeat.manager.service.impl.SystemGeneralConfigServiceImpl;
@@ -28,45 +31,42 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 /**
  * test case for {@link SystemGeneralConfigServiceImpl}
  */
 
 class SystemGeneralConfigServiceTest {
 
-	@Mock
-	private GeneralConfigDao generalConfigDao;
+    @Mock
+    private GeneralConfigDao generalConfigDao;
 
-	@Mock
-	private ObjectMapper objectMapper;
+    @Mock
+    private ObjectMapper objectMapper;
 
-	@InjectMocks
-	private SystemGeneralConfigServiceImpl service;
+    @InjectMocks
+    private SystemGeneralConfigServiceImpl service;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		service = new SystemGeneralConfigServiceImpl(generalConfigDao, objectMapper);
-	}
+        service = new SystemGeneralConfigServiceImpl(generalConfigDao, objectMapper);
+    }
 
-	@Test
-	void testType() {
+    @Test
+    void testType() {
 
-		String result = service.type();
-		assertEquals("system", result);
-	}
+        String result = service.type();
+        assertEquals(GeneralConfigTypeEnum.system.name(), result);
+    }
 
-	@Test
-	void testGetTypeReference() {
+    @Test
+    void testGetTypeReference() {
 
-		TypeReference<SystemConfig> typeReference = service.getTypeReference();
-		assertNotNull(typeReference);
-		assertEquals(SystemConfig.class, typeReference.getType());
-	}
+        TypeReference<SystemConfig> typeReference = service.getTypeReference();
+        assertNotNull(typeReference);
+        assertEquals(SystemConfig.class, typeReference.getType());
+    }
 
 }

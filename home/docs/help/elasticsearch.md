@@ -61,4 +61,3 @@ keywords: [ open source monitoring tool, monitoring ElasticSearch metrics ]
 | disk_free         | GB          | Disk Free               |
 | disk_total        | GB          | Disk Total              |
 | disk_used_percent | %           | Disk Used Percent       |
-

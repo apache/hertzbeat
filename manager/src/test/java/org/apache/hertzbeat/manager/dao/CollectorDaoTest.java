@@ -17,17 +17,15 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.annotation.Resource;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test case for {@link CollectorDao}

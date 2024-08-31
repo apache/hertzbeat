@@ -17,7 +17,13 @@
 
 package org.apache.hertzbeat.manager.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
@@ -29,12 +35,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 /**
  * test case for {@link TemplateConfigServiceImpl}
  */
@@ -42,53 +42,53 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class TemplateConfigServiceTest {
 
-	@Mock
-	private GeneralConfigDao generalConfigDao;
+    @Mock
+    private GeneralConfigDao generalConfigDao;
 
-	@Mock
-	private ObjectMapper objectMapper;
+    @Mock
+    private ObjectMapper objectMapper;
 
-	@Mock
-	private AppService appService;
+    @Mock
+    private AppService appService;
 
-	@InjectMocks
-	private TemplateConfigServiceImpl templateConfigServiceImpl;
+    @InjectMocks
+    private TemplateConfigServiceImpl templateConfigServiceImpl;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		templateConfigServiceImpl = new TemplateConfigServiceImpl(generalConfigDao, objectMapper);
-		ReflectionTestUtils.setField(templateConfigServiceImpl, "appService", appService);
-	}
+        templateConfigServiceImpl = new TemplateConfigServiceImpl(generalConfigDao, objectMapper);
+        ReflectionTestUtils.setField(templateConfigServiceImpl, "appService", appService);
+    }
 
-	@Test
-	void testHandlerValidTemplateConfig() {
+    @Test
+    void testHandlerValidTemplateConfig() {
 
-		TemplateConfig templateConfig = mock(TemplateConfig.class);
-		templateConfigServiceImpl.handler(templateConfig);
+        TemplateConfig templateConfig = mock(TemplateConfig.class);
+        templateConfigServiceImpl.handler(templateConfig);
 
-		verify(
-				appService,
-				times(1)
-		).updateCustomTemplateConfig(templateConfig);
-	}
+        verify(
+                appService,
+                times(1)
+        ).updateCustomTemplateConfig(templateConfig);
+    }
 
-	@Test
-	void testHandlerNullTemplateConfig() {
+    @Test
+    void testHandlerNullTemplateConfig() {
 
-		templateConfigServiceImpl.handler(null);
+        templateConfigServiceImpl.handler(null);
 
-		verify(
-				appService,
-				times(0)
-		).updateCustomTemplateConfig(any());
-	}
+        verify(
+                appService,
+                times(0)
+        ).updateCustomTemplateConfig(any());
+    }
 
-	@Test
-	void testType() {
+    @Test
+    void testType() {
 
-		String type = templateConfigServiceImpl.type();
-		assertEquals("template", type);
-	}
+        String type = templateConfigServiceImpl.type();
+        assertEquals(GeneralConfigTypeEnum.template.name(), type);
+    }
 
 }

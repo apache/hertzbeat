@@ -14,23 +14,23 @@ keywords: [开源监控系统, Zookeeper监控监控]
 
 1. 加白名单步骤
 
-> 1.找到我们 zookeeper 的配置文件，一般是 `zoo.cfg`
->
-> 2.配置文件中加入以下命令
+    1. 找到我们 zookeeper 的配置文件，一般是 `zoo.cfg`
 
-```shell
-# 将需要的命令添加到白名单中
-4lw.commands.whitelist=stat, ruok, conf, isro
+    2. 配置文件中加入以下命令
 
-# 将所有命令添加到白名单中
-4lw.commands.whitelist=*
-```
+        ```shell
+        # 将需要的命令添加到白名单中
+        4lw.commands.whitelist=stat, ruok, conf, isro
+        
+        # 将所有命令添加到白名单中
+        4lw.commands.whitelist=*
+        ```
 
-> 3.重启服务
+    3. 重启服务
 
-```shell
-zkServer.sh restart
-```
+        ```shell
+        zkServer.sh restart
+        ```
 
 2. netcat 协议
 
@@ -97,4 +97,3 @@ Complete!
 | zk_max_latency                | ms   | 最大延时       |
 | zk_ephemerals_count           | 个    | 临时节点数      |
 | zk_min_latency                | ms   | 最小延时       |
-

@@ -14,9 +14,9 @@ keywords: [open source monitoring tool, open source middleware monitoring tool, 
 1. Deploy the Nacos cluster according to [deployment document](https://nacos.io/en-us/docs/deployment.html).
 2. Configure the application. properties file to expose metrics data.
 
-```
-management.endpoints.web.exposure.include=*
-```
+    ```properties
+    management.endpoints.web.exposure.include=*
+    ```
 
 3. Access ```{ip}:8848/nacos/actuator/prometheus``` to see if metrics data can be accessed.
 
@@ -92,4 +92,3 @@ More information see [Nacos monitor guide](https://nacos.io/en-us/docs/monitor-g
 | nacos_monitor{name='configListenSize'} | none        | listened configuration file count |
 | nacos_client_request_seconds_count     | none        | request count                     |
 | nacos_client_request_seconds_sum       | second      | request time                      |
-

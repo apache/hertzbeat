@@ -61,6 +61,67 @@ limitations under the License.
 - Frontend code formatting plugin `eslint`
   Just run `npm run lint:fix` in web-app
 
+### 2.2 Document style check
+
+1. Install `markdownlint-cli2` and run `npm install markdownlint-cli2 --global`
+2. Run `markdownlint "home/**/*.md"` in the project to automatically detect the Markdown file format.
+3. Run `markdownlint --fix "home/**/*.md"` in the project to automatically format the Markdown file format to ensure that all documents meet the specifications.
+
+Error code description:
+
+| **Error code**                           | **description**                                                     |
+|--------------------------------------------| ------------------------------------------------------------ |
+| **MD001 heading-increment**                | Heading levels should only increment by one level at a time  |
+| **MD003 heading-style**                    | Heading style                                                |
+| **MD004 ul-style**                         | Unordered list style                                         |
+| **MD005 list-indent**                      | Inconsistent indentation for list items at the same level    |
+| **MD007 ul-indent**                        | Unordered list indentation                                   |
+| **MD009 no-trailing-spaces**               | Trailing spaces                                              |
+| **MD010 no-hard-tabs**                     | Hard tabs                                                    |
+| **MD011 no-reversed-links**                | Reversed link syntax                                         |
+| **MD012 no-multiple-blanks**               | Multiple consecutive blank lines                             |
+| **MD013 line-length**                      | Line length                                                  |
+| **MD014 commands-show-output**             | Dollar signs used before commands without showing output     |
+| **MD018 no-missing-space-atx**             | No space after hash on atx style heading                     |
+| **MD019 no-multiple-space-atx**            | Multiple spaces after hash on atx style heading              |
+| **MD020 no-missing-space-closed-atx**      | No space inside hashes on closed atx style heading           |
+| **MD021 no-multiple-space-closed-atx**     | Multiple spaces inside hashes on closed atx style heading    |
+| **MD022 blanks-around-headings**           | Headings should be surrounded by blank lines                 |
+| **MD023 heading-start-left**               | Headings must start at the beginning of the line             |
+| **MD024 no-duplicate-heading**             | Multiple headings with the same content                      |
+| **MD025 single-title/single-h1**           | Multiple top-level headings in the same document             |
+| **MD026 no-trailing-punctuation**          | Trailing punctuation in heading                              |
+| **MD027 no-multiple-space-blockquote**     | Multiple spaces after blockquote symbol                      |
+| **MD028 no-blanks-blockquote**             | Blank line inside blockquote                                 |
+| **MD029 ol-prefix**                        | Ordered list item prefix                                     |
+| **MD030 list-marker-space**                | Spaces after list markers                                    |
+| **MD031 blanks-around-fences**             | Fenced code blocks should be surrounded by blank lines       |
+| **MD032 blanks-around-lists**              | Lists should be surrounded by blank lines                    |
+| **MD033 no-inline-html**                   | Inline HTML                                                  |
+| **MD034 no-bare-urls**                     | Bare URL used                                                |
+| **MD035 hr-style**                         | Horizontal rule style                                        |
+| **MD036 no-emphasis-as-heading**           | Emphasis used instead of a heading                           |
+| **MD037 no-space-in-emphasis**             | Spaces inside emphasis markers                               |
+| **MD038 no-space-in-code**                 | Spaces inside code span elements                             |
+| **MD039 no-space-in-links**                | Spaces inside link text                                      |
+| **MD040 fenced-code-language**             | Fenced code blocks should have a language specified          |
+| **MD041 first-line-heading/first-line-h1** | First line in a file should be a top-level heading           |
+| **MD042 no-empty-links**                   | No empty links                                               |
+| **MD043 required-headings**                | Required heading structure                                   |
+| **MD044 proper-names**                     | Proper names should have the correct capitalization          |
+| **MD045 no-alt-text**                      | Images should have alternate text (alt text)                 |
+| **MD046 code-block-style**                 | Code block style                                             |
+| **MD047 single-trailing-newline**          | Files should end with a single newline character             |
+| **MD048 code-fence-style**                 | Code fence style                                             |
+| **MD049 emphasis-style**                   | Emphasis style                                               |
+| **MD050 strong-style**                     | Strong style                                                 |
+| **MD051 link-fragments**                   | Link fragments should be valid                               |
+| **MD052 reference-links-images**           | Reference links and images should use a label that is defined |
+| **MD053 link-image-reference-definitions** | Link and image reference definitions should be needed        |
+| **MD054 link-image-style**                 | Link and image style                                         |
+| **MD055 table-pipe-style**                 | Table pipe style                                             |
+| **MD056 table-column-count**               | Table column count                                           |
+
 ## 3 Programming Specification
 
 ### 3.1 Naming Style
@@ -70,6 +131,7 @@ limitations under the License.
    ```java
    Cache<String> publicKeyCache;
    ```
+
 2. Pinyin abbreviations are prohibited for variables (excluding nouns such as place names), such as chengdu.
 3. It is recommended to end variable names with a `type`.  
    For variables of type `Collection/List`, take `xxxx` (plural representing multiple elements) or end with `xxxList` (specific type).  
@@ -79,6 +141,7 @@ limitations under the License.
    Map<Long, User> idUserMap;
    Map<Long, String> userIdNameMap;
    ```
+
 4. That can intuitively know the type and meaning of the variable through its name.  
    Method names should start with a verb first as follows:
 
@@ -114,6 +177,7 @@ limitations under the License.
          return resp;
      }
      ```
+
    - Positive demo:
 
      > Strings are extracted as constant references.
@@ -139,11 +203,12 @@ limitations under the License.
            return resp;
        }
      ```
+
 2. Ensure code readability and intuitiveness
 
-- The string in the `annotation` symbol doesn't need to be extracted as constant.
+   - The string in the `annotation` symbol doesn't need to be extracted as constant.
 
-- The referenced `package` or `resource` name doesn't need to be extracted as constant.
+   - The referenced `package` or `resource` name doesn't need to be extracted as constant.
 
 3. Variables that have not been reassigned must also be declared as <mark> final </mark> types.
 
@@ -185,24 +250,25 @@ limitations under the License.
    - returns <mark> Set </mark> if use `HashSet`
 2. If there are multiple threads, the following declaration or returned types can be used:
 
-```java
-private CurrentHashMap map;
-public CurrentHashMap funName();
-```
+    ```java
+    private CurrentHashMap map;
+    public CurrentHashMap funName();
+    ```
 
 3. Use `isEmpty()` instead of `length() == 0` or `size() == 0`
    - Negative demo：
 
      ```java
      if (pathPart.length() == 0) {
-       return;
+        return;
      }
      ```
+
    - Positive demo：
 
      ```java
      if (pathPart.isEmpty()) {
-       return;
+        return;
      }
      ```
 
@@ -221,91 +287,97 @@ public CurrentHashMap funName();
    - Redundant lines
 
 Generally speaking, if a method's code line depth exceeds `2+ Tabs` due to continuous nested `if... else..`, it should be considered to try
+
 - `merging branches`,
 - `inverting branch conditions`
 - `extracting private methods`
 
 to reduce code line depth and improve readability like follows:
+
 - Union or merge the logic into the next level calling
-- Negative demo:
+  - Negative demo:
 
-```java
-if (isInsert) {
-save(platform);
-} else {
-updateById(platform);
-}
-```
+      ```java
+      if (isInsert) {
+          save(platform);
+      } else {
+          updateById(platform);
+      }
+      ```
 
-- Positive demo:
+  - Positive demo:
 
-```java
-saveOrUpdate(platform);
-```
+      ```java
+      saveOrUpdate(platform);
+      ```
 
 - Merge the conditions
-- Negative demo:
+  - Negative demo:
 
-```java
-if (expression1) {
-if(expression2) {
-......
-}
-}
+      ```java
+      if (expression1) {
+          if (expression2) {
+          ......
+          }
+      }
+    
+      ```
 
-```
+  - Positive demo:
 
-- Positive demo:
+      ```java
+      if (expression1 && expression2) {
+      ......
+      }
+      ```
 
-  ```java
-  if (expression1 && expression2) {
-    ......
-  }
-  ```
 - Reverse the condition
-- Negative demo:
+  - Negative demo:
 
-  ```java
-  public void doSomething() {
-   // Ignored more deeper block lines
-   // .....
-   if (condition1) {
-      ...
-   } else {
-      ...
-   }
-  }
-  ```
-- Positive demo:
+    ```java
+    public void doSomething() {
+        // Ignored more deeper block lines
+        // .....
+        if (condition1) {
+            // ...
+        } else {
+            // ...
+        }
+    }
+    ```
 
-  ```java
-  public void doSomething() {
-   // Ignored more deeper block lines
-   // .....
-   if (!condition1) {
-      ...
-      return;
-   }
-   // ...
-  }
-  ```
+  - Positive demo:
+
+    ```java
+    public void doSomething() {
+        // Ignored more deeper block lines
+        // .....
+        if (!condition1) {
+            // ...
+            return;
+        }
+        // ...
+    }
+    ```
+
 - Using a single variable or method to reduce the complex conditional expression
-- Negative demo:
+  - Negative demo:
 
-  ```java
-  if (dbType.indexOf("sqlserver") >= 0 || dbType.indexOf("sql server") >= 0) {
-   ...
-  }
-  ```
-- Positive demo:
+    ```java
+    if (dbType.indexOf("sqlserver") >= 0 || dbType.indexOf("sql server") >= 0) {
+        // ...
+    }
+    ```
 
-  ```java
-  if (containsSqlServer(dbType)) {
-    ....
-  }
-  //.....
-  // definition of the containsSqlServer
-  ```
+  - Positive demo:
+
+    ```java
+    if (containsSqlServer(dbType)) {
+        // ....
+    }
+    //.....
+    // definition of the containsSqlServer
+    ```
 
 > Using `sonarlint` and `better highlights` to check code depth looks like good in the future.
 
@@ -313,20 +385,20 @@ if(expression2) {
 
 1. Method lacks comments:
 
-- `When`: When can the method be called
-- `How`: How to use this method and how to pass parameters, etc.
-- `What`: What functions does this method achieve
-- `Note`: What should developers pay attention to when calling this method
+   - `When`: When can the method be called
+   - `How`: How to use this method and how to pass parameters, etc.
+   - `What`: What functions does this method achieve
+   - `Note`: What should developers pay attention to when calling this method
 
 2. Missing necessary class header description comments.
 
-Add `What`, `Note`, etc. like mentioned in the `1`.
+    Add `What`, `Note`, etc. like mentioned in the `1`.
 
 3. The method declaration in the interface must be annotated.
 
-- If the semantics of the implementation and the annotation content at the interface declaration are inconsistent, the specific implementation method also needs to be rewritten with annotations.
+   - If the semantics of the implementation and the annotation content at the interface declaration are inconsistent, the specific implementation method also needs to be rewritten with annotations.
 
-- If the semantics of the method implementation are consistent with the annotation content at the interface declaration, it is not recommended to write annotations to avoid duplicate annotations.
+   - If the semantics of the method implementation are consistent with the annotation content at the interface declaration, it is not recommended to write annotations to avoid duplicate annotations.
 
 4. The first word in the comment lines need to be capitalized, like `param` lines, `return` lines.
    If a special reference as a subject does not need to be capitalized, special symbols such as quotation marks need to be noted.
@@ -336,29 +408,31 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
 1. Prefer `non-capturing` lambdas (lambdas that do not contain references to the outer scope).
    Capturing lambdas need to create a new object instance for every call. `Non-capturing` lambdas can use the same instance for each invocation.
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  map.computeIfAbsent(key, x -> key.toLowerCase())
-  ```
-- Positive demo:
+     ```java
+     map.computeIfAbsent(key, x -> key.toLowerCase())
+     ```
 
-  ```java
-  map.computeIfAbsent(key, k -> k.toLowerCase());
-  ```
+   - Positive demo:
+
+     ```java
+     map.computeIfAbsent(key, k -> k.toLowerCase());
+     ```
 
 2. Consider method references instead of inline lambdas
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  map.computeIfAbsent(key, k-> Loader.load(k));
-  ```
-- Positive demo:
+     ```java
+     map.computeIfAbsent(key, k-> Loader.load(k));
+     ```
 
-  ```java
-  map.computeIfAbsent(key, Loader::load);
-  ```
+   - Positive demo:
+
+     ```java
+     map.computeIfAbsent(key, Loader::load);
+     ```
 
 ### 3.9 Java Streams
 
@@ -376,120 +450,127 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
 
 1. Use `StringUtils.isBlank` instead of `StringUtils.isEmpty`
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  if (StringUtils.isEmpty(name)) {
-  return;
-  }
-  ```
-- Positive demo:
+     ```java
+     if (StringUtils.isEmpty(name)) {
+        return;
+     }
+     ```
 
-  ```java
-  if (StringUtils.isBlank(name)) {
-  return;
-  }
-  ```
+   - Positive demo:
+
+     ```java
+     if (StringUtils.isBlank(name)) {
+        return;
+     }
+     ```
 
 2. Use `StringUtils.isNotBlank` instead of `StringUtils.isNotEmpty`
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  if (StringUtils.isNotEmpty(name)) {
-    return;
-  }
-  ```
-- Positive demo:
+     ```java
+     if (StringUtils.isNotEmpty(name)) {
+        return;
+     }
+     ```
 
-  ```java
-  if (StringUtils.isNotBlank(name)) {
-    return;
-  }
-  ```
+   - Positive demo:
+
+     ```java
+     if (StringUtils.isNotBlank(name)) {
+        return;
+     }
+     ```
 
 3. Use `StringUtils.isAllBlank` instead of `StringUtils.isAllEmpty`
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  if (StringUtils.isAllEmpty(name, age)) {
-    return;
-  }
-  ```
-- Positive demo:
+     ```java
+     if (StringUtils.isAllEmpty(name, age)) {
+        return;
+     }
+     ```
 
-  ```java
-  if (StringUtils.isAllBlank(name, age)) {
-    return;
-  }
-  ```
+   - Positive demo:
+
+     ```java
+     if (StringUtils.isAllBlank(name, age)) {
+        return;
+     }
+     ```
 
 ### 3.12 `Enum` Class
 
 1. Enumeration value comparison
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  if (status.equals(JobStatus.RUNNING)) {
-    return;
-  }
-  ```
-- Positive demo:
+     ```java
+     if (status.equals(JobStatus.RUNNING)) {
+        return;
+     }
+     ```
 
-  ```java
-  if (status == JobStatus.RUNNING) {
-    return;
-  }
-  ```
+   - Positive demo:
+
+     ```java
+     if (status == JobStatus.RUNNING) {
+        return;
+     }
+     ```
 
 2. Enumeration classes do not need to implement Serializable
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  public enum JobStatus implements Serializable {
-    ...
-  }
-  ```
-- Positive demo:
+     ```java
+     public enum JobStatus implements Serializable {
+        // ...
+     }
+     ```
 
-  ```java
-  public enum JobStatus {
-    ...
-  }
-  ```
+   - Positive demo:
+
+     ```java
+     public enum JobStatus {
+        // ...
+     }
+     ```
 
 3. Use `Enum.name()` instead of `Enum.toString()`
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  System.out.println(JobStatus.RUNNING.toString());
-  ```
-- Positive demo:
+     ```java
+     System.out.println(JobStatus.RUNNING.toString());
+     ```
 
-  ```java
-  System.out.println(JobStatus.RUNNING.name());
-  ```
+   - Positive demo:
+
+     ```java
+     System.out.println(JobStatus.RUNNING.name());
+     ```
 
 4. Enumeration class names uniformly use the Enum suffix
 
-- Negative demo:
+   - Negative demo:
 
-  ```java
-  public enum JobStatus {
-    ...
-  }
-  ```
-- Positive demo:
+     ```java
+     public enum JobStatus {
+        // ...
+     }
+     ```
 
-  ```java
-  public enum JobStatusEnum {
-    ...
-  }
-  ```
+   - Positive demo:
+
+     ```java
+     public enum JobStatusEnum {
+        // ...
+     }
+     ```
 
 ### 3.13 `Deprecated` Annotation
 
@@ -498,7 +579,7 @@ Add `What`, `Note`, etc. like mentioned in the `1`.
 ```java
 @deprecated
 public void process(String input) {
-  ...
+    // ...
 }
 ```
 
@@ -507,7 +588,7 @@ public void process(String input) {
 ```java
 @Deprecated
 public void process(String input) {
-  ...
+    // ...
 }
 ```
 
@@ -515,41 +596,43 @@ public void process(String input) {
 
 1. Use `placeholders` for log output:
 
-- Negative demo
+   - Negative demo
 
-  ```java
-  log.info("Deploy cluster request " + deployRequest);
-  ```
-- Positive demo
+     ```java
+     log.info("Deploy cluster request " + deployRequest);
+     ```
 
-  ```java
-  log.info("load plugin:{} to {}", file.getName(), appPlugins);
-  ```
+   - Positive demo
+
+     ```java
+     log.info("load plugin:{} to {}", file.getName(), appPlugins);
+     ```
 
 2. Pay attention to the selection of `log level` when printing logs
 
-When printing the log content, if the actual parameters of the log placeholder are passed, it is necessary to avoid premature evaluation to avoid unnecessary evaluation caused by the log level.
+    When printing the log content, if the actual parameters of the log placeholder are passed, it is necessary to avoid premature evaluation to avoid unnecessary evaluation caused by the log level.
 
-- Negative demo:
+   - Negative demo:
 
-  Assuming the current log level is `INFO`:
+     Assuming the current log level is `INFO`:
 
-  ```java
-  // ignored declaration lines.
-  List<User> userList = getUsersByBatch(1000);
-  LOG.debug("All users: {}", getAllUserIds(userList));
-  ```
-- Positive demo:
+     ```java
+     // ignored declaration lines.
+     List<User> userList = getUsersByBatch(1000);
+     LOG.debug("All users: {}", getAllUserIds(userList));
+     ```
 
-  In this case, we should determine the log level in advance before making actual log calls as follows:
+   - Positive demo:
 
-  ```java
-  // ignored declaration lines.
-  List<User> userList = getUsersByBatch(1000);
-  if (LOG.isDebugEnabled()) {
-    LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList));	
-  }
-  ```
+     In this case, we should determine the log level in advance before making actual log calls as follows:
+
+     ```java
+     // ignored declaration lines.
+     List<User> userList = getUsersByBatch(1000);
+     if (LOG.isDebugEnabled()) {
+       LOG.debug("All ids of users: {}", getAllIDsOfUsers(userList)); 
+     }
+     ```
 
 ## 5 Testing
 
@@ -559,13 +642,8 @@ When printing the log content, if the actual parameters of the log placeholder a
 
 ## References
 
-- https://site.mockito.org/
-- https://alibaba.github.io/p3c/
-- https://rules.sonarsource.com/java/
-- https://junit.org/junit5/
-- https://streampark.apache.org/
-
-```
-
-```
-
+- <https://site.mockito.org/>
+- <https://alibaba.github.io/p3c/>
+- <https://rules.sonarsource.com/java/>
+- <https://junit.org/junit5/>
+- <https://streampark.apache.org/>

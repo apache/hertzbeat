@@ -237,4 +237,3 @@ keywords: [开源监控系统, 开源数据库监控, Redis数据库监控]
 | cmdstat_lpop  | 无    | lpop命令的统计信息                                                                                                               |
 | cmdstat_rpop  | 无    | rpop命令的统计信息                                                                                                               |
 | cmdstat_llen  | 无    | llen命令的统计信息                                                                                                               |
-
