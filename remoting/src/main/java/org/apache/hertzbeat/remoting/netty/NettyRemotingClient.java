@@ -50,6 +50,8 @@ import org.apache.hertzbeat.remoting.event.NettyEventListener;
 @Slf4j
 public class NettyRemotingClient extends NettyRemotingAbstract implements RemotingClient {
 
+    private static final int DEFAULT_WORKER_THREAD_NUM = Math.min(4, Runtime.getRuntime().availableProcessors());
+    
     private final NettyClientConfig nettyClientConfig;
 
     private final CommonThreadPool threadPool;
@@ -79,7 +81,9 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
                     .setDaemon(true)
                     .setNameFormat("netty-client-worker-%d")
                     .build();
-            this.workerGroup = new NioEventLoopGroup(threadFactory);
+            String envThreadNum = System.getProperty("hertzbeat.client.worker.thread.num"); 
+            int workerThreadNum = envThreadNum != null ? Integer.parseInt(envThreadNum) : DEFAULT_WORKER_THREAD_NUM;
+            this.workerGroup = new NioEventLoopGroup(workerThreadNum, threadFactory);
             this.bootstrap.group(workerGroup)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.nettyClientConfig.getConnectTimeoutMillis())
                     .channel(NioSocketChannel.class)

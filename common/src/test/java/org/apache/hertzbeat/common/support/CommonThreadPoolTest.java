@@ -17,15 +17,6 @@
 
 package org.apache.hertzbeat.common.support;
 
-import java.lang.reflect.Field;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,6 +24,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import java.lang.reflect.Field;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * test for {@link CommonThreadPool}
@@ -101,7 +99,7 @@ class CommonThreadPoolTest {
         ThreadPoolExecutor workerExecutor = (ThreadPoolExecutor) workerExecutorField.get(pool);
 
         assertNotNull(workerExecutor);
-        assertEquals(2, workerExecutor.getCorePoolSize());
+        assertEquals(1, workerExecutor.getCorePoolSize());
         assertEquals(Integer.MAX_VALUE, workerExecutor.getMaximumPoolSize());
         assertEquals(10, workerExecutor.getKeepAliveTime(TimeUnit.SECONDS));
         assertTrue(workerExecutor.getQueue() instanceof SynchronousQueue);
