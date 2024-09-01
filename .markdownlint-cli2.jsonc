@@ -18,7 +18,7 @@
   "config": {
     "default": true,
     "MD001": true,
-    "MD003": false,
+    "MD003": true,
     "MD013": {
         "line_length": 600,
         "code_blocks": false,
