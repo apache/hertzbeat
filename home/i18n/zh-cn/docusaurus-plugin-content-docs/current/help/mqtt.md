@@ -41,4 +41,3 @@ keywords: [ 开源监控系统, MQTT连接监控 ]
 | responseTime | 无    | 响应时间          |
 | canPublish   | 无    | 是否可以正常推送消息到主题 |
 | canDescribe  | 无    | 主题是否可以正常被订阅   |
-
