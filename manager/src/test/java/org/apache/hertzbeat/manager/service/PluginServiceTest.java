@@ -80,7 +80,7 @@ class PluginServiceTest {
     @Test
     void testSavePlugin() {
 
-        List<PluginItem> pluginItems = Collections.singletonList(new PluginItem("org.apache.hertzbear.PluginTest", PluginType.POST_ALERT));
+        List<PluginItem> pluginItems = Collections.singletonList(new PluginItem("org.apache.hertzbeat.PluginTest", PluginType.POST_ALERT));
         PluginServiceImpl service = spy(pluginService);
         doReturn(pluginItems).when(service).validateJarFile(any());
 
