@@ -32,7 +32,7 @@ enabled = true
 
 ### 在HertzBeat中配置Grafana
 
-在`HertzBeat`的配置文件`hertzbeat.yml`中，配置`Grafana`数据源:
+在`HertzBeat`的配置文件`application.yml`中，配置`Grafana`数据源:
 
 ```yaml
 grafana:
