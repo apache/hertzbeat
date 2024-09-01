@@ -30,7 +30,6 @@ allow_embedding = true
 enabled = true
 ```
 
-
 ### Configuring Grafana in HertzBeat
 
 In the configuration file `hertzbeat.yml` in `HertzBeat`, configure the `Grafana` data source.
