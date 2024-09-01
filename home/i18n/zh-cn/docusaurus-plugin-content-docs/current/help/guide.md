@@ -25,6 +25,7 @@ sidebar_label: 帮助入门
 &emsp;&#x1F449;&emsp;[DNS服务器](dns) <br />
 &emsp;&#x1F449;&emsp;[FTP服务器](ftp) <br />
 &emsp;&#x1F449;&emsp;[Websocket](websocket) <br />
+&emsp;&#x1F449;&emsp;[MQTT连接](mqtt) <br />
 
 ### 应用程序监控
 
