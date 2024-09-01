@@ -55,7 +55,7 @@ public interface CommonConstants {
     /**
      * Response status code: Incorrect login account password
      */
-    byte MONITOR_LOGIN_FAILED_CODE = 0x05;
+    byte LOGIN_FAILED_CODE = 0x05;
     
     /**
      * Monitoring status 0: Paused, 1: Up, 2: Down

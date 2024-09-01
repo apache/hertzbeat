@@ -18,7 +18,6 @@
   "config": {
     "default": true,
     "MD001": true,
-    "MD052": false,
     "MD003": false,
     "MD013": {
         "line_length": 600,
@@ -35,7 +34,8 @@
     "MD040": true,
     "MD045": false,
     "MD046": true,
-    "MD047": true
+    "MD047": true,
+    "MD052": false
   },
   "ignore": [
     "node_modules/",
