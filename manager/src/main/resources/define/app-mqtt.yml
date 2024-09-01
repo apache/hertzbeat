@@ -26,6 +26,9 @@ help:
   zh-CN: HertzBeat 对 MQTT 连接进行监测。<br>您可以点击 “<i>新建 MQTT 连接</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
   en-US: HertzBeat monitors MQTT connections. <br>You can click "<i>New MQTT connection</i>" and configure it, or select "<i>More actions</i>" to import an existing configuration.
   zh-TW: HertzBeat 對 MQTT 連接進行監測。 <br>您可以點選 “<i>新建 MQTT 連線</i>” 並進行配置，或選擇“<i>更多操作</i>”，匯入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/mqtt
+  en-US: https://hertzbeat.apache.org/docs/help/mqtt
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
