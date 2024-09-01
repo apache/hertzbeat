@@ -11,7 +11,7 @@ keywords: [Grafana, Historical Dashboard]
 
 - The `Grafana` version 8.1.0 or later is installed and running.
 - The `Grafana` service is started and the account password is configured.
-- The `HertzBeat` service is started and the `VictoriaMetrics` timeseries database is configured (note: the `VictoriaMetrics` data source is required).
+- The `HertzBeat` service is started and the `VictoriaMetrics` time-series database is configured (note: the `VictoriaMetrics` data source is required).
 
 :::caution Caution.
 `Grafana` can only show historical data for `Prometheus` type of monitoring, currently it does not support monitoring data defined by `yml` in `HertzBeat`.
@@ -20,7 +20,16 @@ keywords: [Grafana, Historical Dashboard]
 ### enable Grafana embedded url
 
 ref: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>
-In the `Grafana` configuration file `grafana.ini`, set the `allow_embedding` option to `true`.
+In the `Grafana` configuration file `grafana.ini`, set the `allow_embedding = true`.
+In the `Grafana` configuration file `grafana.ini`, set the `[auth.anonymous]` option to `true`.
+
+```ini
+allow_embedding = true
+[auth.anonymous]
+# enable anonymous access
+enabled = true
+```
+
 
 ### Configuring Grafana in HertzBeat
 
