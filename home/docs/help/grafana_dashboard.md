@@ -32,7 +32,7 @@ enabled = true
 
 ### Configuring Grafana in HertzBeat
 
-In the configuration file `hertzbeat.yml` in `HertzBeat`, configure the `Grafana` data source.
+In the configuration file `application.yml` in `HertzBeat`, configure the `Grafana` data source.
 
 ```yaml
 grafana:
