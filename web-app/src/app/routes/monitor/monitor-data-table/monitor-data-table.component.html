@@ -117,7 +117,7 @@
       [nzFrontPagination]="false"
       [nzShowPagination]="false"
       [nzData]="valueRows"
-      [nzScroll]="height ? { y: scrollY } : {}"
+      [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
       #smallTable
     >
       <thead>
@@ -147,7 +147,7 @@
       [nzFrontPagination]="false"
       [nzShowPagination]="false"
       [nzData]="valueRows"
-      [nzScroll]="height ? { y: scrollY } : {}"
+      [nzScroll]="height ? { y: scrollY } : { x: '100%' }"
     >
       <thead>
         <tr>
