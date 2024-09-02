@@ -185,7 +185,8 @@
             "help/ntp",
             "help/dns",
             "help/ftp",
-            "help/websocket"
+            "help/websocket",
+            "help/mqtt"
           ]
         },
         {
