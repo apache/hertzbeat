@@ -75,11 +75,9 @@ public class DatasourceService {
     }
 
     /**
-     * Creates a new datasource in Grafana.
-     *
-     * @return ResponseEntity containing the response from Grafana
+     * Create a new datasource in Grafana.
      */
-    public ResponseEntity<String> createDatasource() {
+    public void createDatasource() {
         String url = String.format(prefix + CREATE_DATASOURCE_API, username, password, grafanaUrl);
 
         HttpHeaders headers = createHeaders();
@@ -96,7 +94,6 @@ public class DatasourceService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Create datasource success");
             }
-            return response;
         } catch (Exception ex) {
             log.error("Create datasource error", ex);
             throw new RuntimeException("Create datasource error", ex);
@@ -104,11 +101,9 @@ public class DatasourceService {
     }
 
     /**
-     * Deletes a datasource in Grafana.
-     *
-     * @return ResponseEntity containing the response from Grafana
+     * Delete a datasource in Grafana.
      */
-    public ResponseEntity<String> deleteDatasource() {
+    public void deleteDatasource() {
         String url = String.format(prefix + DELETE_DATASOURCE_API, username, password, grafanaUrl, DATASOURCE_NAME);
 
         HttpHeaders headers = createHeaders();
@@ -120,10 +115,9 @@ public class DatasourceService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Delete datasource success");
             }
-            return response;
+
         } catch (Exception ex) {
             log.error("Delete datasource error", ex);
-            throw new RuntimeException("Delete datasource error", ex);
         }
     }
 
