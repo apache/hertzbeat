@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import {PluginItem} from './PluginItem';
+import { PluginItem } from './PluginItem';
 
 export class Plugin {
   id!: number;
