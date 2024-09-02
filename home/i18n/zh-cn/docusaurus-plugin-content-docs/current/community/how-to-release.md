@@ -252,7 +252,7 @@ for i in *.tar.gz; do echo $i; sha512sum $i > $i.sha512 ; done
 
 > 最终文件列表如下
 
-```
+```text
 apache-hertzbeat-1.6.0-incubating-src.tar.gz
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.asc
 apache-hertzbeat-1.6.0-incubating-src.tar.gz.sha512
@@ -347,7 +347,7 @@ svn commit -m "release for HertzBeat 1.6.0-RC1"
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0 rc1 <br />
 > `Body`:
 
-```
+```text
 Hello HertzBeat Community:
 
 This is a call for vote to release Apache HertzBeat (incubating) version release-1.6.0-RC1.
@@ -403,7 +403,7 @@ Thanks!
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Dear HertzBeat community,
 
 Thanks for your review and vote for "Release Apache HertzBeat (incubating) 1.6.0-rc1"
@@ -439,7 +439,7 @@ ChunJin Mu
 > `Title`: [VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Hello Incubator Community:
 
 This is a call for a vote to release Apache HertzBeat (incubating) version 1.6.0-RC1.
@@ -492,7 +492,7 @@ ChunJin Mu
 > `Send to`: <general@incubator.apache.org> <br />
 > `Body`:
 
-```
+```text
 Thanks everyone for review and vote, 72H passed. I'll announce the vote result soon.
 
 Best,
@@ -505,7 +505,7 @@ Chunjin Mu
 > `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
-```
+```text
 Hi Incubator Community,
 
 The vote to release Apache HertzBeat (incubating) 1.6.0-rc4 has passed with 3 +1 binding and no +0 or -1 votes.
@@ -560,13 +560,13 @@ svn mv https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/1.6.0-RC1 http
 
 - 发版标题:
 
-```
+```text
 v1.6.0
 ```
 
 - 描述:
 
-```
+```text
 xxx
 release note: xxx
 ```
@@ -582,7 +582,7 @@ release note: xxx
 > `Title`: [ANNOUNCE] Apache HertzBeat (incubating) 1.6.0 released <br />
 > `Body`:
 
-```
+```text
 Hi Community,
 
 We are glad to announce the release of Apache HertzBeat (incubating) 1.6.0.

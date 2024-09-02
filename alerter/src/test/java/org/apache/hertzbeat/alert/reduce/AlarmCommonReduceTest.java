@@ -17,21 +17,6 @@
 
 package org.apache.hertzbeat.alert.reduce;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
-import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.common.entity.manager.Tag;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +25,19 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
+import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.manager.Tag;
+import org.apache.hertzbeat.common.queue.CommonDataQueue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * test case for {@link AlarmCommonReduce}
@@ -48,88 +46,89 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class AlarmCommonReduceTest {
 
-	@Mock
-	private AlarmSilenceReduce alarmSilenceReduce;
+    @Mock
+    private AlarmSilenceReduce alarmSilenceReduce;
 
-	@Mock
-	private AlarmConvergeReduce alarmConvergeReduce;
+    @Mock
+    private AlarmConvergeReduce alarmConvergeReduce;
 
-	@Mock
-	private CommonDataQueue dataQueue;
+    @Mock
+    private CommonDataQueue dataQueue;
 
-	@Mock
-	private AlertMonitorDao alertMonitorDao;
+    @Mock
+    private AlertMonitorDao alertMonitorDao;
 
-	private AlarmCommonReduce alarmCommonReduce;
+    private AlarmCommonReduce alarmCommonReduce;
 
-	private Alert testAlert;
+    private Alert testAlert;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		testAlert = Alert.builder().build();
-		alarmCommonReduce = new AlarmCommonReduce(
-				alarmSilenceReduce,
-				alarmConvergeReduce,
-				dataQueue,
-				alertMonitorDao
-		);
-	}
+        testAlert = Alert.builder().build();
+        alarmCommonReduce = new AlarmCommonReduce(
+                alarmSilenceReduce,
+                alarmConvergeReduce,
+                dataQueue,
+                alertMonitorDao
+        );
+    }
 
-	@Test
-	void testReduceAndSendAlarmNoMonitorId() {
+    @Test
+    void testReduceAndSendAlarmNoMonitorId() {
 
-		when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(true);
-		when(alarmSilenceReduce.filterSilence(testAlert)).thenReturn(true);
+        when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(true);
+        when(alarmSilenceReduce.filterSilence(testAlert)).thenReturn(true);
 
-		alarmCommonReduce.reduceAndSendAlarm(testAlert);
+        alarmCommonReduce.reduceAndSendAlarm(testAlert);
 
-		verify(dataQueue).sendAlertsData(testAlert);
-		verify(alertMonitorDao, never()).findMonitorIdBindTags(anyLong());
-	}
-	@Test
-	void testReduceAndSendAlarmWithMonitorId() {
+        verify(dataQueue).sendAlertsData(testAlert);
+        verify(alertMonitorDao, never()).findMonitorIdBindTags(anyLong());
+    }
 
-		Map<String, String> tags = new HashMap<>();
-		tags.put(CommonConstants.TAG_MONITOR_ID, "123");
-		testAlert.setTags(tags);
+    @Test
+    void testReduceAndSendAlarmWithMonitorId() {
 
-		doReturn(Collections.singletonList(
-				Tag.builder()
-						.name("newTag")
-						.tagValue("tagValue")
-						.build())
-		).when(alertMonitorDao).findMonitorIdBindTags(123L);
-		when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(true);
-		when(alarmSilenceReduce.filterSilence(testAlert)).thenReturn(true);
+        Map<String, String> tags = new HashMap<>();
+        tags.put(CommonConstants.TAG_MONITOR_ID, "123");
+        testAlert.setTags(tags);
 
-		alarmCommonReduce.reduceAndSendAlarm(testAlert);
+        doReturn(Collections.singletonList(
+                Tag.builder()
+                        .name("newTag")
+                        .tagValue("tagValue")
+                        .build())
+        ).when(alertMonitorDao).findMonitorIdBindTags(123L);
+        when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(true);
+        when(alarmSilenceReduce.filterSilence(testAlert)).thenReturn(true);
 
-		assertTrue(testAlert.getTags().containsKey("newTag"));
-		assertEquals("tagValue", testAlert.getTags().get("newTag"));
-		verify(dataQueue).sendAlertsData(testAlert);
-	}
+        alarmCommonReduce.reduceAndSendAlarm(testAlert);
 
-	@Test
-	void testReduceAndSendAlarmConvergeFilterFail() {
+        assertTrue(testAlert.getTags().containsKey("newTag"));
+        assertEquals("tagValue", testAlert.getTags().get("newTag"));
+        verify(dataQueue).sendAlertsData(testAlert);
+    }
 
-		when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(false);
+    @Test
+    void testReduceAndSendAlarmConvergeFilterFail() {
 
-		alarmCommonReduce.reduceAndSendAlarm(testAlert);
+        when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(false);
 
-		verify(dataQueue, never()).sendAlertsData(testAlert);
-		verify(alarmSilenceReduce, never()).filterSilence(any(Alert.class));
-	}
+        alarmCommonReduce.reduceAndSendAlarm(testAlert);
 
-	@Test
-	void testReduceAndSendAlarmSilenceFilterFail() {
+        verify(dataQueue, never()).sendAlertsData(testAlert);
+        verify(alarmSilenceReduce, never()).filterSilence(any(Alert.class));
+    }
 
-		when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(true);
-		when(alarmSilenceReduce.filterSilence(testAlert)).thenReturn(false);
+    @Test
+    void testReduceAndSendAlarmSilenceFilterFail() {
 
-		alarmCommonReduce.reduceAndSendAlarm(testAlert);
+        when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(true);
+        when(alarmSilenceReduce.filterSilence(testAlert)).thenReturn(false);
 
-		verify(dataQueue, never()).sendAlertsData(testAlert);
-	}
+        alarmCommonReduce.reduceAndSendAlarm(testAlert);
+
+        verify(dataQueue, never()).sendAlertsData(testAlert);
+    }
 
 }

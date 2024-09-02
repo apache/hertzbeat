@@ -21,6 +21,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.Data;
@@ -40,7 +41,7 @@ public class MonitorDto {
     private Monitor monitor;
     
     @Schema(description = "Monitor Params", accessMode = READ_WRITE)
-    @NotNull
+    @NotEmpty
     @Valid
     private List<Param> params;
     

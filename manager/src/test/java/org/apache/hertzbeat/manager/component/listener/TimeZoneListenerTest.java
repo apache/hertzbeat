@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.manager.component.listener;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,10 +32,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
  * test case for {@link TimeZoneListener}
  */
@@ -40,37 +39,37 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TimeZoneListenerTest {
 
-	@Mock
-	private ObjectMapper objectMapper;
+    @Mock
+    private ObjectMapper objectMapper;
 
-	@InjectMocks
-	private TimeZoneListener timeZoneListener;
+    @InjectMocks
+    private TimeZoneListener timeZoneListener;
 
-	@Mock
-	private SystemConfigChangeEvent event;
+    @Mock
+    private SystemConfigChangeEvent event;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		ReflectionTestUtils.setField(timeZoneListener, "objectMapper", objectMapper);
-	}
+        ReflectionTestUtils.setField(timeZoneListener, "objectMapper", objectMapper);
+    }
 
-	@Test
-	void testOnEvent() {
+    @Test
+    void testOnEvent() {
 
-		when(objectMapper.setTimeZone(any(TimeZone.class))).thenReturn(objectMapper);
-		when(objectMapper.setDateFormat(any(SimpleDateFormat.class))).thenReturn(objectMapper);
+        when(objectMapper.setTimeZone(any(TimeZone.class))).thenReturn(objectMapper);
+        when(objectMapper.setDateFormat(any(SimpleDateFormat.class))).thenReturn(objectMapper);
 
-		Object eventSource = new Object();
-		when(event.getSource()).thenReturn(eventSource);
+        Object eventSource = new Object();
+        when(event.getSource()).thenReturn(eventSource);
 
-		timeZoneListener.onEvent(event);
+        timeZoneListener.onEvent(event);
 
-		SimpleDateFormat expectedDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-		expectedDateFormat.setTimeZone(TimeZone.getDefault());
+        SimpleDateFormat expectedDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+        expectedDateFormat.setTimeZone(TimeZone.getDefault());
 
-		verify(objectMapper).setTimeZone(TimeZone.getDefault());
-		verify(objectMapper).setDateFormat(expectedDateFormat);
-	}
+        verify(objectMapper).setTimeZone(TimeZone.getDefault());
+        verify(objectMapper).setDateFormat(expectedDateFormat);
+    }
 
 }

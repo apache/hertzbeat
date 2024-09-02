@@ -44,6 +44,24 @@ This website is compiled using node, using Docusaurus framework components
 5. In `home` directory run `npm run start-zh-cn`, you can visit <http://localhost:3000> to view the Chinese mode preview of the site
 6. To generate static website resource files, run `npm run build`. The static resources of the build are in the build directory.
 
+## Document Format Inspection
+
+In Apache Hertzbeat, all MD articles have to pass MD's [CI](https://github.com/apache/hertzbeat/blob/master/.github/workflows/doc-build-test.yml) inspection before they can be merged. The purpose is to keep the website looking nice and the formatting of the articles consistent.
+
+After you have written an MD article, you can execute the following command locally to check whether the content of the MD article meets the requirements, so as to reduce the workload of review and save your time:
+
+```shell
+cd home && yarn
+
+yarn md-lint
+
+# If the documentation is wrong, you can use yarn md-lint-fix to fix it.
+yarn md-lint-fix
+```
+
+For formatting rules for MD articles you can refer to: [Markdown-lint-rules](https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md)
+MD format configuration file in the project: [.markdownlint-cli2.jsonc](https://github.com/apache/hertzbeat/blob/master/.markdownlint-cli2.jsonc)
+
 ## Directory structure
 
 ```html

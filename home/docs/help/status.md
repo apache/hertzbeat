@@ -1,7 +1,4 @@
-Here is the English translation of the provided text:
-
 ---
-
 id: status  
 title: Status Page  
 sidebar_label: Status Page  

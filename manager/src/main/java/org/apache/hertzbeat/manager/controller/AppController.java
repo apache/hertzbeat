@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
@@ -155,6 +156,35 @@ public class AppController {
             @Parameter(description = "en: language type",
                     example = "zh-CN")
             @RequestParam(name = "lang", required = false) String lang) {
+        lang = getLang(lang);
+        List<Hierarchy> appHierarchies = appService.getAllAppHierarchy(lang);
+        return ResponseEntity.ok(Message.success(appHierarchies));
+    }
+
+    @GetMapping(path = "/hierarchy/{app}")
+    @Operation(summary = "Query all monitor metrics level, output in a hierarchical structure", description = "Query all monitor metrics level, output in a hierarchical structure")
+    public ResponseEntity<Message<List<Hierarchy>>> queryAppsHierarchyByApp(
+            @Parameter(description = "en: language type",
+                    example = "zh-CN")
+            @RequestParam(name = "lang", required = false) String lang,
+            @Parameter(description = "en: Monitoring type name", example = "api") @PathVariable("app") final String app) {
+        lang = getLang(lang);
+        List<Hierarchy> appHierarchies = appService.getAppHierarchy(app, lang);
+        return ResponseEntity.ok(Message.success(appHierarchies));
+    }
+
+    @GetMapping(path = "/defines")
+    @Operation(summary = "Query all monitor types", description = "Query all monitor types")
+    public ResponseEntity<Message<Map<String, String>>> getAllAppDefines(
+            @Parameter(description = "en: language type",
+                    example = "zh-CN")
+            @RequestParam(name = "lang", required = false) String lang) {
+        lang = getLang(lang);
+        Map<String, String> allAppDefines = appService.getI18nApps(lang);
+        return ResponseEntity.ok(Message.success(allAppDefines));
+    }
+
+    private String getLang(@RequestParam(name = "lang", required = false) @Parameter(description = "en: language type", example = "zh-CN") String lang) {
         if (lang == null || lang.isEmpty()) {
             lang = "zh-CN";
         }
@@ -165,7 +195,6 @@ public class AppController {
         } else {
             lang = "en-US";
         }
-        List<Hierarchy> appHierarchies = appService.getAllAppHierarchy(lang);
-        return ResponseEntity.ok(Message.success(appHierarchies));
+        return lang;
     }
 }

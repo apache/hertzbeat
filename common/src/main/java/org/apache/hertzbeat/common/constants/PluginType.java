@@ -25,5 +25,9 @@ public enum PluginType {
     /**
      * do something after alter
      */
-    POST_ALERT
+    POST_ALERT,
+    /**
+     * do something after collect
+     */
+    POST_COLLECT
 }

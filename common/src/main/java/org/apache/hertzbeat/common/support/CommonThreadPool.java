@@ -49,7 +49,7 @@ public class CommonThreadPool implements DisposableBean {
                 .setDaemon(true)
                 .setNameFormat("common-worker-%d")
                 .build();
-        workerExecutor = new ThreadPoolExecutor(2,
+        workerExecutor = new ThreadPoolExecutor(1,
                 Integer.MAX_VALUE,
                 10,
                 TimeUnit.SECONDS,

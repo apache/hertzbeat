@@ -17,27 +17,27 @@ keywords: [开源监控系统, 开源消息中间件监控, ShenYu网关监控�
 
 1. 在网关的 pom.xml 文件中添加 metrics 的依赖。
 
-```xml
-<dependency>
-    <groupId>org.apache.shenyu</groupId>
-    <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
-    <version>${project.version}</version>
-</dependency>
-```
+    ```xml
+    <dependency>
+        <groupId>org.apache.shenyu</groupId>
+        <artifactId>shenyu-spring-boot-starter-plugin-metrics</artifactId>
+        <version>${project.version}</version>
+    </dependency>
+    ```
 
 2. 在网关的配置yaml文件中编辑如下内容：
 
-```yaml
-shenyu:
-  metrics:
-    enabled: true  #设置为 true 表示开启
-    name : prometheus 
-    host: 127.0.0.1 #暴露的ip
-    port: 8090 #暴露的端口
-    jmxConfig: #jmx配置
-    props:
-      jvm_enabled: true #开启jvm的监控指标
-```
+    ```yaml
+    shenyu:
+      metrics:
+        enabled: true  #设置为 true 表示开启
+        name : prometheus 
+        host: 127.0.0.1 #暴露的ip
+        port: 8090 #暴露的端口
+        jmxConfig: #jmx配置
+        props:
+          jvm_enabled: true #开启jvm的监控指标
+    ```
 
 最后重启访问网关指标接口 `http://ip:8090` 响应 prometheus 格式数据即可。
 
