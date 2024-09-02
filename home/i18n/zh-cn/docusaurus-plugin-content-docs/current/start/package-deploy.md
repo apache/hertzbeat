@@ -63,7 +63,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 通过部署多个 HertzBeat Collector 可以实现数据的高可用，负载均衡和云边协同。
 :::
 
-![hertzbeat](/img/docs/cluster-arch.png)
+![HertzBeat](/img/docs/cluster-arch.png)
 
 1. 下载安装包
 

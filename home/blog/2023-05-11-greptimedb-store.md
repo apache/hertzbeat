@@ -112,11 +112,11 @@ See the [official documentation](https://hertzbeat.com/zh-cn/docs/start/docker-d
 
 Here's the picture: !
 
-![1](/img/blog/greptime-1.png)
+![HertzBeat](/img/blog/greptime-1.png)
 
-![1](/img/blog/greptime-2.png)
+![HertzBeat](/img/blog/greptime-2.png)
 
-![1](/img/blog/greptime-3.png)
+![HertzBeat](/img/blog/greptime-3.png)
 
 ## Summary
 
