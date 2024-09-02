@@ -9,6 +9,7 @@ keywords: [Grafana, 历史图表]
 
 ### 前提条件
 
+- `Grafana`版本为8.1.0或以上。
 - `Grafana`服务已经启动，并配置好了账号密码。
 - `HertzBeat`服务已经启动，并配置好了`VictoriaMetrics`时序数据库(注意: `VictoriaMetrics`数据源是必须的)。
 
@@ -16,9 +17,22 @@ keywords: [Grafana, 历史图表]
 `Grafana`只能展示`Prometheus`类型监控的历史数据,目前并不支持`HertzBeat`中`yml`定义的监控数据。
 :::
 
+### 启用Grafana 可嵌入功能, 并开启匿名访问
+
+参考: <https://grafana.com/blog/2023/10/10/how-to-embed-grafana-dashboards-into-web-applications/>
+修改配置文件`grafana.ini`中的`allow_embedding = true`
+修改配置文件`grafana.ini`中的`[auth.anonymous]` 为 `true`
+
+```ini
+allow_embedding = true
+[auth.anonymous]
+# enable anonymous access
+enabled = true
+```
+
 ### 在HertzBeat中配置Grafana
 
-在`HertzBeat`的配置文件`hertzbeat.yml`中，配置`Grafana`数据源:
+在`HertzBeat`的配置文件`application.yml`中，配置`Grafana`数据源:
 
 ```yaml
 grafana:
