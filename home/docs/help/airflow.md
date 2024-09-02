@@ -1,38 +1,41 @@
 ---
 id: airflow  
-title: 监控：Apache Airflow监控      
-sidebar_label: Apache Airflow  
-keywords: [开源监控系统, 开源数据库监控, Apache Airflow监控]
+title: Monitoring Apache Airflow Monitoring  
+sidebar_label: Apache Airflow
+keywords: [open source monitoring system, open source database monitoring, Apache Airflow monitoring]
 ---
 
-> 对Apache Airflow通用性能指标进行采集监控。
+> Collect and monitor general performance metrics for the Apache Airflow.
 
-### 配置参数
+### Configuration Parameters
 
-|  参数名称  |                       参数帮助描述                        |
-|--------|-----------------------------------------------------|
-| 监控Host | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://) |
-| 任务名称   | 标识此监控的名称，名称需要保证唯一性                                  |
-| 端口     | 数据库对外提供的端口，默认为8080                                  |
-| 查询超时时间 | 设置连接未响应的超时时间，单位ms毫秒，默认3000毫秒                        |
-| HTTPS  | 是否启用HTTPS                                           |
-| 采集间隔   | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒                      |
-| 是否探测   | 新增监控前是否先探测检查监控可用性，探测成功才会继续新增修改操作                    |
-| 描述备注   | 更多标识和描述此监控的备注信息，用户可以在这里备注信息                         |
+| Parameter Name      | Parameter Description                                                                                                           |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| Monitor Host        | IP address, IPV4, IPV6, or domain name of the host being monitored. Note ⚠️ without protocol prefix (e.g., https://, http://).  |
+| Task Name           | Name identifying this monitoring, ensuring uniqueness.                                                                          |
+| Port                | Port number of the database exposed to the outside, default is 8080.                                                            |
+| Query Timeout       | Set timeout for unresponsive connections, in milliseconds (ms), default is 3000ms.                                              |
+| HTTPS               | Whether to enable HTTPS.                                                                                                        |                                                                          |
+| Collection Interval | Interval for periodic data collection during monitoring, in seconds, with a minimum interval of 30 seconds.                     |
+| Whether to detect   | Whether to perform a probe check for monitoring availability before adding a new monitor; operations proceed if successful.     |                                                                               |
+| Description         | Additional information to identify and describe this monitoring, where users can add remarks.                                   |
 
-### 采集指标
 
-#### 指标集合：airflow_health
+### Collection Metrics
 
-|     指标名称     | 指标单位 |      指标帮助描述      |
-|--------------|------|------------------|
-| metadatabase | 无    | metadatabase健康情况 |
-| scheduler    | 无    | scheduler健康情况    |
-| triggerer    | 无    | triggerer健康情况    |
 
-#### 指标集合：airflow_version
+#### Metric Set: airflow_health
 
-|    指标名称     | 指标单位 |    指标帮助描述     |
-|-------------|------|---------------|
-| value       | 无    | Airflow版本     |
-| git_version | 无    | Airflow git版本 |
+| Metric Name  | Metric Unit | Metric Description |
+|--------------|-------------|--------------------|
+| metadatabase | N/A         | Response time      |
+| scheduler    | N/A         | scheduler health   |
+| triggerer    | N/A         | triggerer health   |
+
+#### Metric Set: airflow_version
+
+| Metric Name | Metric Unit | Metric Description  |
+|-------------|-------------|---------------------|
+| value       | N/A         | Airflow version     |
+| git_version | N/A         | Airflow git version |
+
