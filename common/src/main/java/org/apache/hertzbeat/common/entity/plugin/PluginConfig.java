@@ -22,6 +22,7 @@
 
 package org.apache.hertzbeat.common.entity.plugin;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
@@ -33,4 +34,8 @@ import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 public class PluginConfig {
 
     private List<ParamDefine> params;
+
+    public PluginConfig() {
+        this.params = new ArrayList<>();
+    }
 }
