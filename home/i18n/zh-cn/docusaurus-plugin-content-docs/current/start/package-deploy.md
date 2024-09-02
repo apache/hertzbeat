@@ -6,7 +6,12 @@ sidebar_label: 安装包方式安装
 
 :::tip
 Apache HertzBeat (incubating) 支持在Linux Windows Mac系统安装运行，CPU支持X86/ARM64。
-安装包方式依赖 Java 运行环境，需您的环境中已经拥有 Java17 环境，若未安装请参考 [官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+由于1.6.0及以后版本使用Java17，且安装包不再提供内置jdk的版本，参考以下情况使用新版Hertzbeat。
+
+- 当你的服务器中默认环境变量为Java17时，这一步你无需任何操作。
+- 当你的服务器中默认环境变量不为Java17时，如Java8、Java11，若你服务器中**没有**其他应用需要低版本Java，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并在搜索引擎搜索如何设置新的环境变量指向新的Java17。
+- 当你的服务器中默认环境变量不为Java17时，如Java8、Java11，若你服务器中**有**其他应用需要低版本Java，你不想更改环境变量，根据你的系统，到 [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) 选择相应的发行版下载，并将解压后的文件夹重命名为java，复制到Hertzbeat的解压目录下。
+
 :::
 
 ### 部署 HertzBeat Server
