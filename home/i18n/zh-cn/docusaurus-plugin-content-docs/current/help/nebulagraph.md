@@ -14,8 +14,6 @@ keywords: [ 开源监控工具, 开源 NebulaGraph 监控工具, 监控 NebulaGr
 nebulaGraph_stats 是 NebulaGraph 的统计信息，rocksdb_stats 是 RocksDB 的统计信息。
 ```
 
-###
-
 **1、通过 stats 和 rocksdb stats 接口获取可用参数。**
 
 1.1、如果只需要获取 nebulaGraph_stats，需要确保可以访问 stats，否则会出现错误。
