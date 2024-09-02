@@ -14,8 +14,6 @@ The default YML configuration for the memcache version is in compliance with 1.4
 You need to use the stats command to view the parameters that your memcache can monitor
 ```
 
-###
-
 **1、Obtain usable parameter indicators through commands such as stats、stats setting、stats settings.
 
 ```shell
