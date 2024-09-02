@@ -400,7 +400,7 @@ Thanks!
 在72小时后，将统计投票结果，并发送投票结果邮件，如下所示。
 
 > `Send to`: <dev@hertzbeat.apache.org> <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
+> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```text
@@ -502,7 +502,7 @@ Chunjin Mu
 然后将统计投票结果，并发送投票结果邮件，如下所示。
 
 > `Send to`: <general@incubator.apache.org> <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
+> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```text
