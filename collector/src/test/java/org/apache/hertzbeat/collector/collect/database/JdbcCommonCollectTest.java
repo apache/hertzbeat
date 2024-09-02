@@ -17,6 +17,14 @@
 
 package org.apache.hertzbeat.collector.collect.database;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,12 +32,100 @@ import org.junit.jupiter.api.Test;
  * Test case for {@link JdbcCommonCollect}
  */
 class JdbcCommonCollectTest {
+    private JdbcCommonCollect jdbcCommonCollect;
 
     @BeforeEach
-    void setUp() {
+    void setup() {
+        jdbcCommonCollect = new JdbcCommonCollect();
     }
 
     @Test
-    void getInstance() {
+    void preCheck() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            jdbcCommonCollect.preCheck(null);
+        });
+        assertThrows(IllegalArgumentException.class, () -> {
+            Metrics metrics = new Metrics();
+            jdbcCommonCollect.preCheck(metrics);
+        });
+
+        assertDoesNotThrow(() -> {
+            JdbcProtocol jdbc = new JdbcProtocol();
+            jdbc.setUrl("jdbc:mysql://localhost:3306/test");
+
+            Metrics metrics = new Metrics();
+            metrics.setJdbc(jdbc);
+            jdbcCommonCollect.preCheck(metrics);
+        });
+
+        String[] invalidKeywords = new String[]{
+            "allowLoadLocalInfile", "allowLoadLocalInfileInPath", "useLocalInfile"
+        };
+        for (String keyword : invalidKeywords) {
+            // contains not allowed keywords
+            assertThrows(IllegalArgumentException.class, () -> {
+                JdbcProtocol jdbc = new JdbcProtocol();
+                jdbc.setUrl("jdbc:mysql://localhost:3306/test?" + keyword);
+    
+                Metrics metrics = new Metrics();
+                metrics.setJdbc(jdbc);
+                jdbcCommonCollect.preCheck(metrics);
+            });
+        }
+    }
+
+    @Test
+    void collect() {
+        assertDoesNotThrow(() -> {
+            JdbcProtocol jdbc = new JdbcProtocol();
+            jdbc.setUrl("jdbc:mysql://localhost:3306/test");
+            jdbc.setUsername("root");
+            jdbc.setPassword("123456");
+            jdbc.setQueryType("select");
+
+            Metrics metrics = new Metrics();
+            metrics.setJdbc(jdbc);
+
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            jdbcCommonCollect.collect(builder, 1, "test", metrics);
+        });
+
+        String[] platforms = new String[]{
+            "mysql", "mariadb",
+            "postgresql",
+            "clickhouse",
+            "sqlserver",
+            "oracle",
+            "dm"
+        };
+        for (String platform : platforms) {
+            assertDoesNotThrow(() -> {
+                JdbcProtocol jdbc = new JdbcProtocol();
+                jdbc.setPlatform(platform);
+    
+                Metrics metrics = new Metrics();
+                metrics.setJdbc(jdbc);
+    
+                CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+                jdbcCommonCollect.collect(builder, 1,"test", metrics);
+            });
+        }
+        // invalid platform
+        assertThrows(IllegalArgumentException.class, () -> {
+            JdbcProtocol jdbc = new JdbcProtocol();
+            jdbc.setPlatform("invalid");
+
+            Metrics metrics = new Metrics();
+            metrics.setJdbc(jdbc);
+
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            jdbcCommonCollect.collect(builder, 1,"test", metrics);
+        });
+    }
+
+    @Test
+    void supportProtocol() {
+        String protocol = jdbcCommonCollect.supportProtocol();
+        assertEquals(DispatchConstants.PROTOCOL_JDBC, protocol);
     }
 }
