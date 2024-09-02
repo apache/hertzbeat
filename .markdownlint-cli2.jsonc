@@ -35,7 +35,7 @@
     "MD045": false,
     "MD046": true,
     "MD047": true,
-    "MD052": false
+    "MD052": true
   },
   "ignore": [
     "node_modules/",
