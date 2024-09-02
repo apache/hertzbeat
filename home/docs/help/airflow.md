@@ -15,14 +15,12 @@ keywords: [open source monitoring system, open source database monitoring, Apach
 | Task Name           | Name identifying this monitoring, ensuring uniqueness.                                                                          |
 | Port                | Port number of the database exposed to the outside, default is 8080.                                                            |
 | Query Timeout       | Set timeout for unresponsive connections, in milliseconds (ms), default is 3000ms.                                              |
-| HTTPS               | Whether to enable HTTPS.                                                                                                        |                                                                          |
+| HTTPS               | Whether to enable HTTPS.                                                                                                        |
 | Collection Interval | Interval for periodic data collection during monitoring, in seconds, with a minimum interval of 30 seconds.                     |
-| Whether to detect   | Whether to perform a probe check for monitoring availability before adding a new monitor; operations proceed if successful.     |                                                                               |
+| Whether to detect   | Whether to perform a probe check for monitoring availability before adding a new monitor; operations proceed if successful.     |
 | Description         | Additional information to identify and describe this monitoring, where users can add remarks.                                   |
 
-
 ### Collection Metrics
-
 
 #### Metric Set: airflow_health
 
@@ -38,4 +36,3 @@ keywords: [open source monitoring system, open source database monitoring, Apach
 |-------------|-------------|---------------------|
 | value       | N/A         | Airflow version     |
 | git_version | N/A         | Airflow git version |
-
