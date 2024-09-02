@@ -14,8 +14,6 @@ The monitoring has two parts,nebulaGraph_stats and rocksdb_stats.
 nebulaGraph_stats is nebulaGraph's statistics, and rocksdb_stats is rocksdb's statistics.
 ```
 
-###
-
 **1、Obtain available parameters through the stats and rocksdb stats interfaces.**
 
 1.1、 If you only need to get nebulaGraph_stats, you need to ensure that you have access to stats, or you'll get errors.
