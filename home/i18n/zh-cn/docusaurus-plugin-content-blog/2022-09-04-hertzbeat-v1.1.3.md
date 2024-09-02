@@ -36,8 +36,7 @@ Bugfix.
 
 Online <https://console.tancloud.cn>.
 
-Have Fun
----
+## Have Fun
 
 ## V1.1.3
 
@@ -71,4 +70,3 @@ Bugfix.
 Online <https://console.tancloud.cn>.
 
 Have Fun
----

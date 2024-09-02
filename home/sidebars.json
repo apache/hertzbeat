@@ -185,7 +185,8 @@
             "help/ntp",
             "help/dns",
             "help/ftp",
-            "help/websocket"
+            "help/websocket",
+            "help/mqtt"
           ]
         },
         {
@@ -206,6 +207,8 @@
             "help/mysql",
             "help/mariadb",
             "help/postgresql",
+            "help/greenplum",
+            "help/vastbase",
             "help/kingbase",
             "help/sqlserver",
             "help/oracle",
@@ -215,7 +218,8 @@
             "help/nebulagraph_cluster",
             "help/tidb",
             "help/mongodb",
-            "help/mongodb_atlas"
+            "help/mongodb_atlas",
+            "help/oceanbase"
           ]
         },
         {
@@ -223,7 +227,8 @@
           "label": "cache",
           "items": [
             "help/redis",
-            "help/memcached"
+            "help/memcached",
+            "help/valkey"
           ]
         },
         {
@@ -354,9 +359,11 @@
             "help/alert_smn"
           ]
         },
-        "help/issue",
+        "help/bulletin",
         "help/plugin",
-        "help/time_expression"
+        "help/time_expression",
+        "help/grafana_dashboard",
+        "help/issue"
       ]
     },
     {

@@ -4,7 +4,7 @@ title: How to update to 1.6.0
 sidebar_label: Update to 1.6.0 guide
 ---
 
-# HertzBeat 1.6.0 Upgrade Guide
+## HertzBeat 1.6.0 Upgrade Guide
 
 **Note: This guide is applicable for upgrading from 1.5.0 to 1.6.0 to version 1.6.0.**
 **If you are using an older version, it is recommended to reinstall using the export function, or upgrade to 1.5.0 and then follow this guide to 1.6.0.**
@@ -112,7 +112,7 @@ Next, run the start-up script as before to experience the latest HertzBeat 1.6.0
 
 - Stop the HertzBeat container:
 
-  ```
+  ```shell
   docker stop hertzbeat
   ```
 
@@ -129,7 +129,7 @@ Next, run HertzBeat using Docker as before to experience the latest HertzBeat 1.
 
 - Stop the HertzBeat container:
 
-  ```
+  ```shell
   docker stop hertzbeat
   ```
 
@@ -138,7 +138,7 @@ Next, run HertzBeat using Docker as before to experience the latest HertzBeat 1.
   - Download the H2 driver jar from [https://mvnrepository.com/artifact/com.h2database/h2/2.2.220](https://mvnrepository.com/artifact/com.h2database/h2/2.2.220).
   - Start the database locally using the H2 driver jar:
 
-    ```
+    ```shell
     java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
     ```
 

@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.common.serialize;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.common.header.Headers;
@@ -25,76 +28,72 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 /**
  * test case for {@link KafkaMetricsDataSerializer}
  */
 
 class KafkaMetricsDataSerializerTest {
 
-	private KafkaMetricsDataSerializer serializer;
+    private KafkaMetricsDataSerializer serializer;
 
-	@Mock
-	private Map<String, ?> configs;
+    @Mock
+    private Map<String, ?> configs;
 
-	@Mock
-	private Headers headers;
+    @Mock
+    private Headers headers;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		serializer = new KafkaMetricsDataSerializer();
-	}
+        serializer = new KafkaMetricsDataSerializer();
+    }
 
-	@Test
-	void testConfigure() {
+    @Test
+    void testConfigure() {
 
-		serializer.configure(configs, false);
-	}
+        serializer.configure(configs, false);
+    }
 
-	@Test
-	void testSerializeWithMetricsData() {
+    @Test
+    void testSerializeWithMetricsData() {
 
-		CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
-				.setMetrics("someValue")
-				.setApp("linux")
-				.build();
-		byte[] bytes = serializer.serialize("", metricsData);
+        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setMetrics("someValue")
+                .setApp("linux")
+                .build();
+        byte[] bytes = serializer.serialize("", metricsData);
 
-		assertNotNull(bytes);
-		assertArrayEquals(metricsData.toByteArray(), bytes);
-	}
+        assertNotNull(bytes);
+        assertArrayEquals(metricsData.toByteArray(), bytes);
+    }
 
-	@Test
-	void testSerializeWithNullMetricsData() {
+    @Test
+    void testSerializeWithNullMetricsData() {
 
-		byte[] bytes = serializer.serialize("", null);
+        byte[] bytes = serializer.serialize("", null);
 
-		assertNull(bytes);
-	}
+        assertNull(bytes);
+    }
 
-	@Test
-	void testSerializeWithHeaders() {
+    @Test
+    void testSerializeWithHeaders() {
 
-		CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
-				.setMetrics("someValue")
-				.setApp("linux")
-				.build();
-		byte[] expectedBytes = metricsData.toByteArray();
-		byte[] bytes = serializer.serialize("topic", headers, metricsData);
+        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setMetrics("someValue")
+                .setApp("linux")
+                .build();
+        byte[] expectedBytes = metricsData.toByteArray();
+        byte[] bytes = serializer.serialize("topic", headers, metricsData);
 
-		assertArrayEquals(expectedBytes, bytes);
-	}
+        assertArrayEquals(expectedBytes, bytes);
+    }
 
-	@Test
-	void testClose() {
+    @Test
+    void testClose() {
 
-		serializer.close();
-	}
+        serializer.close();
+    }
 
 }

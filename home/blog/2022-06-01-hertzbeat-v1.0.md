@@ -7,7 +7,8 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]
 ---
 
-HertzBeat, incubated by Dromara and open-sourced by TanCloud, is an open-source monitoring and alerting project that supports a variety of monitoring types including websites, APIs, PING, ports, databases, full-site, operating systems, middleware, etc. It supports threshold alarms and notification alerts (email, webhook, DingTalk, WeCom, Feishu robots) and has an easy-to-use, friendly visual operation interface.
+HertzBeat, incubated by Dromara and open-sourced by TanCloud, is an open-source monitoring and alerting project that supports a variety of monitoring types including websites, APIs, PING, ports, databases, full-site, operating systems, middleware, etc.  
+It supports threshold alarms and notification alerts (email, webhook, DingTalk, WeCom, Feishu robots) and has an easy-to-use, friendly visual operation interface.
 
 Official Website: hertzbeat.com | tancloud.cn
 

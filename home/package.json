@@ -13,7 +13,9 @@
     "serve": "docusaurus serve",
     "clear": "docusaurus clear",
     "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids"
+    "write-heading-ids": "docusaurus write-heading-ids",
+    "md-lint": "markdownlint-cli2 --config ../.markdownlint-cli2.jsonc \"./**/*.md\" \"#node_modules\"",
+    "md-lint-fix": "yarn md-lint --fix"
   },
   "dependencies": {
     "@docusaurus/core": "2.3.1",
@@ -39,7 +41,8 @@
     "swiper": "7.4.1",
     "url-loader": "4.1.1",
     "workbox-routing": "6.5.3",
-    "workbox-strategies": "6.5.3"
+    "workbox-strategies": "6.5.3",
+    "markdownlint-cli2": "^0.13.0"
   },
   "browserslist": {
     "production": [

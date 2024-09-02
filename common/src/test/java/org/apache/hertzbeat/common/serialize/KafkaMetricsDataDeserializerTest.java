@@ -17,8 +17,9 @@
 
 package org.apache.hertzbeat.common.serialize;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.Map;
-
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.common.header.Headers;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,77 +27,74 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 /**
  * test case for {@link KafkaMetricsDataDeserializer}
  */
 
 class KafkaMetricsDataDeserializerTest {
 
-	private KafkaMetricsDataDeserializer deserializer;
+    private KafkaMetricsDataDeserializer deserializer;
 
-	@Mock
-	private Map<String, ?> configs;
+    @Mock
+    private Map<String, ?> configs;
 
-	@Mock
-	private Headers headers;
+    @Mock
+    private Headers headers;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		MockitoAnnotations.openMocks(this);
+        MockitoAnnotations.openMocks(this);
 
-		deserializer = new KafkaMetricsDataDeserializer();
-	}
+        deserializer = new KafkaMetricsDataDeserializer();
+    }
 
-	@Test
-	void testConfigure() {
+    @Test
+    void testConfigure() {
 
-		deserializer.configure(configs, false);
-	}
+        deserializer.configure(configs, false);
+    }
 
-	@Test
-	void testDeserializeWithBytes() {
+    @Test
+    void testDeserializeWithBytes() {
 
-		CollectRep.MetricsData expectedMetricsData = CollectRep.MetricsData.newBuilder()
-				.setMetrics("someValue")
-				.setApp("linux")
-				.build();
-		byte[] bytes = expectedMetricsData.toByteArray();
+        CollectRep.MetricsData expectedMetricsData = CollectRep.MetricsData.newBuilder()
+                .setMetrics("someValue")
+                .setApp("linux")
+                .build();
+        byte[] bytes = expectedMetricsData.toByteArray();
 
-		CollectRep.MetricsData actualMetricsData = deserializer.deserialize("", bytes);
+        CollectRep.MetricsData actualMetricsData = deserializer.deserialize("", bytes);
 
-		assertEquals(expectedMetricsData, actualMetricsData);
-	}
+        assertEquals(expectedMetricsData, actualMetricsData);
+    }
 
-	@Test
-	void testDeserializeWithInvalidBytes() {
+    @Test
+    void testDeserializeWithInvalidBytes() {
 
-		byte[] invalidBytes = "invalid data".getBytes();
+        byte[] invalidBytes = "invalid data".getBytes();
 
-		assertThrows(RuntimeException.class, () -> deserializer.deserialize("", invalidBytes));
-	}
+        assertThrows(RuntimeException.class, () -> deserializer.deserialize("", invalidBytes));
+    }
 
-	@Test
-	void testDeserializeWithHeaders() {
+    @Test
+    void testDeserializeWithHeaders() {
 
-		CollectRep.MetricsData expectedMetricsData = CollectRep.MetricsData.newBuilder()
-				.setMetrics("someValue")
-				.setApp("linux")
-				.build();
-		byte[] bytes = expectedMetricsData.toByteArray();
+        CollectRep.MetricsData expectedMetricsData = CollectRep.MetricsData.newBuilder()
+                .setMetrics("someValue")
+                .setApp("linux")
+                .build();
+        byte[] bytes = expectedMetricsData.toByteArray();
 
-		CollectRep.MetricsData actualMetricsData = deserializer.deserialize("topic", headers, bytes);
+        CollectRep.MetricsData actualMetricsData = deserializer.deserialize("topic", headers, bytes);
 
-		assertEquals(expectedMetricsData, actualMetricsData);
-	}
+        assertEquals(expectedMetricsData, actualMetricsData);
+    }
 
-	@Test
-	void testClose() {
+    @Test
+    void testClose() {
 
-		deserializer.close();
-	}
+        deserializer.close();
+    }
 
 }

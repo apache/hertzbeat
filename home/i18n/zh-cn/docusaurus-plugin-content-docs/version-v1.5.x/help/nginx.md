@@ -17,45 +17,45 @@ keywords: [开源监控工具, 开源Java监控工具, 监控Nginx指标]
 
 1. 检查是否已添加 `ngx_http_stub_status_module`
 
-```shell
-nginx -V
-```
+    ```shell
+    nginx -V
+    ```
 
-查看是否包含 `--with-http_stub_status_module`，如果没有则需要重新编译安装 Nginx。
+    查看是否包含 `--with-http_stub_status_module`，如果没有则需要重新编译安装 Nginx。
 
 2. 编译安装 Nginx, 添加 `ngx_http_stub_status_module` 模块
 
-下载 Nginx 并解压，在目录下执行
+    下载 Nginx 并解压，在目录下执行
 
-```shell
-./configure --prefix=/usr/local/nginx --with-http_stub_status_module
-
-make && make install
-```
+    ```shell
+    ./configure --prefix=/usr/local/nginx --with-http_stub_status_module
+    
+    make && make install
+    ```
 
 3. 修改 Nginx 配置文件
 
-修改 `nginx.conf` 文件，添加监控模块暴露端点，如下配置：
+    修改 `nginx.conf` 文件，添加监控模块暴露端点，如下配置：
 
-```shell
-# modify nginx.conf
-server {
-        listen 80; # port
-        server_name localhost;
-        location /nginx-status {
-                stub_status     on;
-                access_log      on;
-                #allow 127.0.0.1; #only allow requests from localhost
-              #deny all;  #deny all other hosts
-        }
-}
-```
+    ```shell
+    # modify nginx.conf
+    server {
+            listen 80; # port
+            server_name localhost;
+            location /nginx-status {
+                    stub_status     on;
+                    access_log      on;
+                    #allow 127.0.0.1; #only allow requests from localhost
+                  #deny all;  #deny all other hosts
+            }
+    }
+    ```
 
 4. 重新加载 Nginx
 
-```shell
-nginx -s reload
-```
+    ```shell
+    nginx -s reload
+    ```
 
 5. 在浏览器访问 `http://localhost/nginx-status` 即可查看 Nginx 监控状态信息。
 
@@ -63,48 +63,48 @@ nginx -s reload
 
 1. 安装 `ngx_http_reqstat_module` 模块
 
-```shell
-# install `ngx_http_reqstat_module`
-wget https://github.com/zls0424/ngx_req_status/archive/master.zip -O ngx_req_status.zip
-
-unzip ngx_req_status.zip
-
-patch -p1 < ../ngx_req_status-master/write_filter.patch
-
-./configure --prefix=/usr/local/nginx --add-module=/path/to/ngx_req_status-master
-
-make -j2
-
-make install
-```
+    ```shell
+    # install `ngx_http_reqstat_module`
+    wget https://github.com/zls0424/ngx_req_status/archive/master.zip -O ngx_req_status.zip
+    
+    unzip ngx_req_status.zip
+    
+    patch -p1 < ../ngx_req_status-master/write_filter.patch
+    
+    ./configure --prefix=/usr/local/nginx --add-module=/path/to/ngx_req_status-master
+    
+    make -j2
+    
+    make install
+    ```
 
 2. 修改 Nginx 配置文件
 
-修改 `nginx.conf` 文件，添加状态模块暴露端点，如下配置：
+    修改 `nginx.conf` 文件，添加状态模块暴露端点，如下配置：
 
-```shell
-# modify nginx.conf
-http {
-    req_status_zone server_name $server_name 256k;
-    req_status_zone server_addr $server_addr 256k;
-
-    req_status server_name server_addr;
-
-    server {
-        location /req-status {
-            req_status_show on;
-            #allow 127.0.0.1; #only allow requests from localhost
-          #deny all;  #deny all other hosts
+    ```shell
+    # modify nginx.conf
+    http {
+        req_status_zone server_name $server_name 256k;
+        req_status_zone server_addr $server_addr 256k;
+    
+        req_status server_name server_addr;
+    
+        server {
+            location /req-status {
+                req_status_show on;
+                #allow 127.0.0.1; #only allow requests from localhost
+              #deny all;  #deny all other hosts
+            }
         }
     }
-}
-```
+    ```
 
 3. 重新加载 Nginx
 
-```shell
-nginx -s reload
-```
+    ```shell
+    nginx -s reload
+    ```
 
 4. 在浏览器访问 `http://localhost/req-status` 即可查看 Nginx 监控状态信息。
 

@@ -18,8 +18,8 @@
 package org.apache.hertzbeat.alert;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -50,11 +50,11 @@ public class AlerterWorkerPool {
                 .setDaemon(true)
                 .setNameFormat("alerter-worker-%d")
                 .build();
-        workerExecutor = new ThreadPoolExecutor(6,
+        workerExecutor = new ThreadPoolExecutor(10,
                 10,
                 10,
                 TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
+                new LinkedBlockingQueue<>(),
                 threadFactory,
                 new ThreadPoolExecutor.AbortPolicy());
     }
@@ -69,10 +69,10 @@ public class AlerterWorkerPool {
                 .setNameFormat("notify-worker-%d")
                 .build();
         notifyExecutor = new ThreadPoolExecutor(6,
-                10,
+                6,
                 10,
                 TimeUnit.SECONDS,
-                new SynchronousQueue<>(),
+                new LinkedBlockingQueue<>(),
                 threadFactory,
                 new ThreadPoolExecutor.AbortPolicy());
     }

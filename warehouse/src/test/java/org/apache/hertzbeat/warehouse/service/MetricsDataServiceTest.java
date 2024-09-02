@@ -59,12 +59,12 @@ public class MetricsDataServiceTest {
     private HistoryDataReader historyDataReader;
 
     @BeforeEach
-    public void setUp(){
+    public void setUp() {
         metricsDataService = new MetricsDataServiceImpl(realTimeDataReader, Optional.of(historyDataReader));
     }
 
     @Test
-    public void testGetWarehouseStorageServerStatus(){
+    public void testGetWarehouseStorageServerStatus() {
         when(historyDataReader.isServerAvailable()).thenReturn(false);
         assertFalse(metricsDataService.getWarehouseStorageServerStatus());
 
@@ -73,12 +73,12 @@ public class MetricsDataServiceTest {
     }
 
     @Test
-    public void testGetMetricsData(){
+    public void testGetMetricsData() {
         Long monitorId = 1L;
         String metrics = "disk";
 
         when(realTimeDataReader.isServerAvailable()).thenReturn(false);
-        assertThrows(CommonException.class, ()-> metricsDataService.getMetricsData(monitorId, metrics), "real time store not available");
+        assertThrows(CommonException.class, () -> metricsDataService.getMetricsData(monitorId, metrics), "real time store not available");
 
 
         when(realTimeDataReader.isServerAvailable()).thenReturn(true);
@@ -97,7 +97,7 @@ public class MetricsDataServiceTest {
     }
 
     @Test
-    public void testGetMetricHistoryData(){
+    public void testGetMetricHistoryData() {
         Long monitorId = 1L;
         String app = "linux";
         String metrics = "disk";
