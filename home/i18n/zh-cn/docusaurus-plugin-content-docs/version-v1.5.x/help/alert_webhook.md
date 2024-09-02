@@ -11,13 +11,13 @@ keywords: [告警 Webhook 回调通知, 开源告警系统, 开源监控告警�
 
 1. **【告警通知】->【新增接收人】 ->【选择WebHook通知方式】-> 【设置WebHook回调地址】 -> 【确定】**
 
-![email](/img/docs/help/alert-notice-5.png)
+    ![email](/img/docs/help/alert-notice-5.png)
 
 2. **配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】**
 
-> **注意⚠️ 新增了接收人并不代表已经生效可以接收告警信息，还需配置关联的告警通知策略，即指定哪些消息发给哪些接收人**。
+    > **注意⚠️ 新增了接收人并不代表已经生效可以接收告警信息，还需配置关联的告警通知策略，即指定哪些消息发给哪些接收人**。
 
-![email](/img/docs/help/alert-notice-4.png)
+    ![email](/img/docs/help/alert-notice-4.png)
 
 ### WebHook回调POST请求体BODY内容
 
@@ -60,7 +60,7 @@ keywords: [告警 Webhook 回调通知, 开源告警系统, 开源监控告警�
 
 1. WebHook回调未生效
 
-> 请查看告警中心是否已经产生此条告警信息
-> 请排查配置的WebHook回调地址是否正确
+   > 请查看告警中心是否已经产生此条告警信息  
+   > 请排查配置的WebHook回调地址是否正确
 
 其它问题可以通过交流群ISSUE反馈哦！

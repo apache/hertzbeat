@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.TimeZoneUtil;
@@ -40,7 +41,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 /**
  * Common CommandLineRunner class
@@ -106,7 +106,7 @@ public class CommonCommandLineRunner implements CommandLineRunner {
         if (DEFAULT_JWT_SECRET.equals(currentJwtSecret)) {
             // use the random jwt secret
             SystemSecret systemSecret = systemSecretService.getConfig();
-            if (systemSecret == null || !StringUtils.hasText(systemSecret.getJwtSecret())) {
+            if (systemSecret == null || StringUtils.isBlank(systemSecret.getJwtSecret())) {
                 char[] chars = DEFAULT_JWT_SECRET.toCharArray();
                 Random rand = new Random();
                 for (int i = 0; i < chars.length; i++) {

@@ -17,19 +17,18 @@
 
 package org.apache.hertzbeat.common.util;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mockStatic;
+import java.util.Locale;
+import java.util.MissingResourceException;
+import java.util.ResourceBundle;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import java.util.Locale;
-import java.util.MissingResourceException;
-import java.util.ResourceBundle;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.mockStatic;
 
 /**
  * Test case for {@link ResourceBundleUtil}
@@ -51,8 +50,8 @@ class ResourceBundleUtilTest {
 
             mockedResourceBundle.when(
                     () -> ResourceBundle.getBundle(
-                        Mockito.eq(BUNDLE_NAME),
-                        Mockito.any(ResourceBundle.Control.class)
+                            Mockito.eq(BUNDLE_NAME),
+                            Mockito.any(ResourceBundle.Control.class)
                     )
             ).thenReturn(mockBundle);
 
@@ -68,8 +67,8 @@ class ResourceBundleUtilTest {
         try (MockedStatic<ResourceBundle> mockedResourceBundle = mockStatic(ResourceBundle.class)) {
             mockedResourceBundle.when(
                     () -> ResourceBundle.getBundle(
-                        Mockito.eq(BUNDLE_NAME),
-                        Mockito.any(ResourceBundle.Control.class)
+                            Mockito.eq(BUNDLE_NAME),
+                            Mockito.any(ResourceBundle.Control.class)
                     )
             ).thenThrow(new MissingResourceException("Missing bundle", "ResourceBundle", BUNDLE_NAME));
 

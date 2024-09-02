@@ -21,13 +21,13 @@ import jakarta.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.StringUtils;
 
 /**
  * Test case for {@link DingTalkRobotAlertNotifyHandlerImpl}
@@ -41,7 +41,7 @@ class DingTalkRobotAlertNotifyHandlerImplTest extends AbstractSpringIntegrationT
     @Test
     void send() {
         String ddAccessToken = System.getenv("DD_ACCESS_TOKEN");
-        if (!StringUtils.hasText(ddAccessToken)) {
+        if (StringUtils.isBlank(ddAccessToken)) {
             log.warn("Please provide environment variables DD_ACCESS_TOKEN");
             return;
         }

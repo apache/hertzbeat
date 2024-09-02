@@ -17,9 +17,13 @@
 
 package org.apache.hertzbeat.manager.controller;
 
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.apache.hertzbeat.common.queue.impl.InMemoryCommonDataQueue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,12 +34,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
-
 /**
  * Test case for {@link MetricsController}
  */
@@ -43,35 +41,35 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 @ExtendWith(MockitoExtension.class)
 class MetricsControllerTest {
 
-	private MockMvc mockMvc;
+    private MockMvc mockMvc;
 
-	@Mock
-	private InMemoryCommonDataQueue commonDataQueue;
+    @Mock
+    private InMemoryCommonDataQueue commonDataQueue;
 
-	@InjectMocks
-	private MetricsController metricsController;
+    @InjectMocks
+    private MetricsController metricsController;
 
-	@BeforeEach
-	public void setup() {
+    @BeforeEach
+    public void setup() {
 
-		mockMvc = standaloneSetup(metricsController).build();
-	}
+        mockMvc = standaloneSetup(metricsController).build();
+    }
 
-	@Test
-	public void testGetMetricsInfo() throws Exception {
+    @Test
+    public void testGetMetricsInfo() throws Exception {
 
-		Map<String, Integer> queueInfo = new HashMap<>();
-		queueInfo.put("metric1", 100);
-		queueInfo.put("metric2", 200);
+        Map<String, Integer> queueInfo = new HashMap<>();
+        queueInfo.put("metric1", 100);
+        queueInfo.put("metric2", 200);
 
-		when(commonDataQueue.getQueueSizeMetricsInfo()).thenReturn(queueInfo);
+        when(commonDataQueue.getQueueSizeMetricsInfo()).thenReturn(queueInfo);
 
-		mockMvc.perform(get("/api/metrics")
-						.accept(MediaType.APPLICATION_JSON))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value(0))
-				.andExpect(jsonPath("$.data.metric1").value(100))
-				.andExpect(jsonPath("$.data.metric2").value(200));
-	}
+        mockMvc.perform(get("/api/metrics")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.metric1").value(100))
+                .andExpect(jsonPath("$.data.metric2").value(200));
+    }
 
 }

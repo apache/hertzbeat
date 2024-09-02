@@ -41,20 +41,20 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  */
 @ExtendWith(MockitoExtension.class)
 class AlertReportControllerTest {
-    
+
     private MockMvc mockMvc;
 
     @Mock
     private AlertService alertService;
-    
+
     @InjectMocks
     private AlertReportController alertReportController;
-    
+
     @BeforeEach
     void setUp() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(alertReportController).build();
     }
-    
+
     @Test
     void addNewAlertReportTencent() throws Exception {
         TenCloudAlertReport.Dimensions dimensions = new TenCloudAlertReport.Dimensions();
@@ -86,14 +86,14 @@ class AlertReportControllerTest {
         alarmPolicyInfo.setConditions(conditions);
 
         TenCloudAlertReport report = TenCloudAlertReport.builder()
-                                             .sessionId("123")
-                                             .alarmStatus("1")
-                                             .alarmType("event")
-                                             .durationTime(2)
-                                             .firstOccurTime("2023-08-14 11:11:11")
-                                             .alarmObjInfo(alarmObjInfo)
-                                             .alarmPolicyInfo(alarmPolicyInfo)
-                                             .build();
+                .sessionId("123")
+                .alarmStatus("1")
+                .alarmType("event")
+                .durationTime(2)
+                .firstOccurTime("2023-08-14 11:11:11")
+                .alarmObjInfo(alarmObjInfo)
+                .alarmPolicyInfo(alarmPolicyInfo)
+                .build();
         mockMvc.perform(
                         MockMvcRequestBuilders
                                 .post("/api/alerts/report/tencloud")
@@ -105,16 +105,16 @@ class AlertReportControllerTest {
                 .andExpect(content().json("{\"data\":null,\"msg\":\"Add report success\",\"code\":0}"))
                 .andReturn();
     }
-    
+
     @Test
     void addNewAlertReport() throws Exception {
         GeneralCloudAlertReport generalCloudAlertReport = new GeneralCloudAlertReport();
         generalCloudAlertReport.setAlertDateTime("2023-02-22T07:27:15.404000000Z");
 
         mockMvc.perform(MockMvcRequestBuilders
-                                .post("/api/alerts/report")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(JsonUtil.toJson(generalCloudAlertReport))
+                        .post("/api/alerts/report")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(generalCloudAlertReport))
                 )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))

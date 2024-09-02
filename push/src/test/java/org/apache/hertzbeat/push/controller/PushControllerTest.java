@@ -19,6 +19,10 @@
 
 package org.apache.hertzbeat.push.controller;
 
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.push.PushMetricsDto;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -33,11 +37,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standaloneSetup;
-
 /**
  * test case for {@link PushController}
  */
@@ -45,50 +44,50 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.standal
 @ExtendWith(MockitoExtension.class)
 class PushControllerTest {
 
-	private MockMvc mockMvc;
+    private MockMvc mockMvc;
 
-	@Mock
-	private PushService pushService;
+    @Mock
+    private PushService pushService;
 
-	@InjectMocks
-	private PushController pushController;
+    @InjectMocks
+    private PushController pushController;
 
-	private PushMetricsDto mockPushMetricsDto;
+    private PushMetricsDto mockPushMetricsDto;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		this.mockMvc = standaloneSetup(this.pushController).build();
+        this.mockMvc = standaloneSetup(this.pushController).build();
 
-		mockPushMetricsDto = PushMetricsDto.builder().build();
-	}
+        mockPushMetricsDto = PushMetricsDto.builder().build();
+    }
 
-	@Test
-	void testPushMetrics() throws Exception {
+    @Test
+    void testPushMetrics() throws Exception {
 
-		this.mockMvc.perform(MockMvcRequestBuilders.post("/api/push")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(JsonUtil.toJson(mockPushMetricsDto)))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-				.andReturn();
-	}
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/push")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(mockPushMetricsDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+    }
 
-	@Test
-	void testGetMetrics() throws Exception {
+    @Test
+    void testGetMetrics() throws Exception {
 
-		Long id = 6565463543L;
-		Long time = 6565463543L;
+        Long id = 6565463543L;
+        Long time = 6565463543L;
 
-		when(pushService.getPushMetricData(id, time)).thenReturn(mockPushMetricsDto);
+        when(pushService.getPushMetricData(id, time)).thenReturn(mockPushMetricsDto);
 
-		this.mockMvc.perform(MockMvcRequestBuilders.get("/api/push")
-						.contentType(MediaType.APPLICATION_JSON)
-						.param("id", id.toString())
-						.param("time", time.toString()))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-				.andReturn();
-	}
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/push")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("id", id.toString())
+                        .param("time", time.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
+                .andReturn();
+    }
 
 }

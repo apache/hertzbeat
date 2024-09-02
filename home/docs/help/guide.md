@@ -23,6 +23,7 @@ sidebar_label: Help Center
 &emsp;&#x1F449;&emsp;[DNS monitoring](dns) <br />
 &emsp;&#x1F449;&emsp;[FTP monitoring](ftp) <br />
 &emsp;&#x1F449;&emsp;[Websocket monitoring](websocket) <br />
+&emsp;&#x1F449;&emsp;[MQTT connection monitoring](mqtt) <br />
 
 ### Program monitoring
 

@@ -29,7 +29,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -61,7 +61,7 @@ public class Tag {
     private Long id;
 
     @Schema(title = "Tag Field", example = "app", accessMode = READ_WRITE)
-    @NotNull
+    @NotBlank(message = "name can not null")
     private String name;
 
     @Schema(title = "Tag Value", example = "23", accessMode = READ_WRITE)
@@ -78,7 +78,7 @@ public class Tag {
             accessMode = READ_WRITE)
     @Min(0)
     @Max(3)
-    private byte type;
+    private Byte type;
 
     @Schema(title = "The creator of this record", example = "tom", accessMode = READ_ONLY)
     @CreatedBy

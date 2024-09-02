@@ -20,6 +20,7 @@ package org.apache.hertzbeat.common.util;
 import static org.apache.hertzbeat.common.util.JsonUtil.isJsonStr;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +67,7 @@ class JsonUtilTest {
         assertFalse(isJsonStr(jsonString));
 
         String jsonStringArrays = "[{\"name\":\"John\"}, {\"name\":\"Doe\"}]";
-        assertFalse(isJsonStr(jsonStringArrays));
+        assertTrue(isJsonStr(jsonStringArrays));
     }
 
 }

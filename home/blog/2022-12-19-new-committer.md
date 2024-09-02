@@ -9,7 +9,7 @@ tags: [opensource]
 
 > 非常高兴 HertzBeat 迎来了两位新晋社区Committer, 两位都是来自互联网公司的开发工程师，让我们来了解下他们的开源经历吧！
 
-# 第一位 花城
+## 第一位 花城
 
 姓名：王庆华
 
@@ -19,15 +19,15 @@ HertzBeat Committer
 
 github：[wang1027-wqh](https://github.com/wang1027-wqh)
 
-## 初识hertzbeat
+### 初识hertzbeat
 
 说起来挺偶然的，结识hertzbeat是因为我大学的毕业设计，当时在一家互联网公司实习，那个时候第一次看到了企业是怎么监控项目的，不管是系统监控、业务监控还是物联网iot监控，那个时候见世面不广，只知道Prometheus + Grafana，但是学起来、用起来成本比较高，那个时候就觉得应该有其他类型的监控，恰好，到了大学毕业设计选题，我就开始寻找这方面的开源项目，那个时候我们小组正在使用Shen Yu网关，我就看了下社区，发现了hertzbeat，自此我便于它结缘了。
 
-## 开始提交PR
+### 开始提交PR
 
 到了2022-02-18 我开始提交了我第一个pr，当时只是为了优化一些controller入参的格式，没有什么技术含量，但是这是我接触开源的第一步，让我在从理论学习跨出了实践的一步
 
-## 持续的开源贡献与收获
+### 持续的开源贡献与收获
 
 到目前为止，参与hertzbeat开源项目已有半年多时间，贡献了许多，也成长收获了许多。具体如下：
 
@@ -37,11 +37,11 @@ github：[wang1027-wqh](https://github.com/wang1027-wqh)
 4. 参与了开源之夏并顺利结项
 5. 增加了监控系统的基础告警功能: 钉钉、飞书、企业微信、邮箱等
 
-## 感谢社区小伙伴
+### 感谢社区小伙伴
 
 感谢无偿帮助过我或给过我启发的小伙伴(排名不分先后)：tomsun28，MaxKeyTop，阿超
 
-## 对新人的一点建议
+### 对新人的一点建议
 
 1. 不要觉得自己一上手就能接触到核心，心急吃不了热豆腐
 2. 不要只注重看代码，要上手搭建、使用
@@ -51,7 +51,7 @@ github：[wang1027-wqh](https://github.com/wang1027-wqh)
 ---
 ---
 
-# 第二位 星辰
+## 第二位 星辰
 
 姓名：郑晨鑫
 
@@ -63,11 +63,11 @@ Hertzbeat Committer
 
 github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 
-## 初识Hertzbeat
+### 初识Hertzbeat
 
 2022年8月开始接触Hertzbeat，由于公司监控elasticsearch使用的cerebro，虽然有非常强大的数据监控，但缺少告警通知的功能；就去github上浏览监控类的项目，刚好看到Hertzbeat，对此非常感兴趣，在了解完整个项目结构和实现后，刚好elasticsearch的监控部分做的不够完善，我就根据cerebro完善了这部分监控数据并提交了pull request。后面在tom老哥的帮助下也开始其他部分的实现。
 
-## 开始提交PR
+### 开始提交PR
 
 从2022年9月至今提交了好几个pr，主要包括：
 
@@ -78,7 +78,7 @@ github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 + 一些bug的修复。。。
 + promethues exporter 协议解析
 
-## 持续的开源贡献与收获
+### 持续的开源贡献与收获
 
 到目前为止，参与Hertzbeat社区开源已有半年多时间，贡献了许多，也成长收获了许多。
 
@@ -86,17 +86,17 @@ github：[Ceilzcx (zcx) (github.com)](https://github.com/Ceilzcx)
 
 同时在社区群里，看到别人提的问题和帮助别人可以学到很多新的知识，很多问题你目前不一定会遇到，其他人遇到的时候你可以思考并收获很多知识。
 
-## 感谢社区小伙伴
+### 感谢社区小伙伴
 
 感谢无偿帮助过我或给过我启发的小伙伴：[tomsun28](https://github.com/tomsun28)
 
-## 对新人的一点建议
+### 对新人的一点建议
 
 + 使用者可以先看官网，官网基本能够解决你的问题。部分简单或者常见的问题其他可以自己解决，对自己也是一种锻炼
 + 可以尝试阅读源码，大部分源码都是包含注释的，并不难；不懂的地方也可以通过运行test，debug看一下整个流程
 + 有想法或者bug，可以前往gitee或者github提交issues，也可以在群里询问，不要怕，都是从菜逼过来的
 
-## 如何参与Hertzbeat
+### 如何参与Hertzbeat
 
 + 官网有非常完善的贡献者指南：[贡献者指南 | HertzBeat](https://hertzbeat.com/docs/community/contribution)
 
