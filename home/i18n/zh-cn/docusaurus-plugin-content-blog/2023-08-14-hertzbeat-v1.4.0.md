@@ -43,7 +43,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 - 监控任务在采集器集群中自调度，单采集器挂掉无感知故障迁移采集任务，新加入采集器节点自动调度分担采集压力。
 - 单机模式与集群模式相互切换部署非常方便，无需额外组件部署。
 
-![hertzbeat](/img/docs/cluster-arch.png)
+![HertzBeat](/img/docs/cluster-arch.png)
 
 #### 云边协同
 
@@ -53,7 +53,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 HertzBeat 提供云边协同能力，可以在多个隔离网络部署边缘采集器，添加监控时指定采集器，采集器在隔离网络内部进行监控任务采集，采集数据上报，由主 HertzBeat 服务统一调度管理展示。  
 这多用于多个隔离数据中心或不同厂商云资源和云下资源的统一监控场景。
 
-![hertzbeat](/img/docs/cluster-arch.png)
+![HertzBeat](/img/docs/cluster-arch.png)
 
 ### 为什么要开源集群版?
 

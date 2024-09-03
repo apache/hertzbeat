@@ -14,7 +14,7 @@ sidebar_label: Rainbond方式部署
 
 登录 Rainbond 后，点击左侧菜单中的 `应用市场`，切换到开源应用商店，在搜索框中搜索 `HertzBeat`，点击安装按钮。
 
-![](/img/docs/start/install-to-rainbond.png)
+![HertzBeat](/img/docs/start/install-to-rainbond.png)
 
 填写以下信息，然后点击确认按钮进行安装。
 
@@ -25,7 +25,7 @@ sidebar_label: Rainbond方式部署
 
 等待安装完成，即可访问 HertzBeat 应用。
 
-![](/img/docs/start/hertzbeat-topology.png)
+![HertzBeat](/img/docs/start/hertzbeat-topology.png)
 
 :::tip
 通过 Rainbond 安装的 HertzBeat，默认使用了外部的 Mysql 数据库 和 Redis 以及 IoTDB。同时也挂载了 HertzBeat 的配置文件，可以在 `组件 -> 环境配置 -> 配置文件设置` 中修改配置文件。
