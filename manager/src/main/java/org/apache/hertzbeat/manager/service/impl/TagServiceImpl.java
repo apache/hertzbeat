@@ -18,9 +18,11 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import jakarta.persistence.criteria.Predicate;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -130,7 +132,7 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteMonitorSystemTags(Monitor monitor) {
         if (CollectionUtils.isNotEmpty(monitor.getTags())) {
-            List<Tag> tags = monitor.getTags().stream().filter(tag -> tag.getType() == (byte) 0).collect(Collectors.toList());
+            List<Tag> tags = monitor.getTags().stream().filter(tag ->  Objects.nonNull(tag.getType()) && tag.getType() == (byte) 0).collect(Collectors.toList());
             tagDao.deleteAll(tags);
         }
     }
