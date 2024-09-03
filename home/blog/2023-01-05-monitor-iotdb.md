@@ -49,26 +49,26 @@ tags: [opensource, practice]
 
     Path: Menu -> Database Monitoring -> IoTDB Monitoring -> Add IoTDB Monitoring
 
-    ![hertzbeat](/img/blog/monitor-iotdb-1.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-1.png)
 
 2. Configure the parameters required for monitoring IoTDB
 
     Fill in the IoTDB **service IP** and **monitoring port** (default 9091) on the monitoring page, and finally click OK to add.
     For other parameters such as **collection interval**, **timeout period**, etc., please refer to [Help Documentation](https://hertzbeat.com/docs/help/iotdb/) <https://hertzbeat.com/docs/help> /iotdb/
 
-    ![hertzbeat](/img/blog/monitor-iotdb-2.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-2.png)
 
 3. Complete ✅, now we have added the monitoring of IoTDB, check the monitoring list to see our added items.
 
-    ![hertzbeat](/img/blog/monitor-iotdb-3.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-3.png)
 
 4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of IoTDB.
 
-    ![hertzbeat](/img/blog/monitor-iotdb-4.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-4.png)
 
 5. Click **Monitoring History Details TAB** to browse IoTDB's historical monitoring metric data chart📈.
 
-    ![hertzbeat](/img/blog/monitor-iotdb-5.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-5.png)
 
 **Complete DONE! Through the above steps, it is actually two steps to sum up**
 
@@ -88,7 +88,7 @@ tags: [opensource, practice]
    - Select the configured metric object. IotDB monitors many metrics, one of which is related to the status of the node `cluster_node_status` -> `status` (node status, 1=online 2=offline).
    - Here we configure to send an alarm when the metric `status==2`, the alarm level is **Critical Alarm**, which is triggered once, as shown in the figure below.
 
-    ![hertzbeat](/img/blog/monitor-iotdb-6.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-6.png)
 
 2. Add message notification recipients
 
@@ -101,11 +101,11 @@ tags: [opensource, practice]
 
     【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
 
-    ![hertzbeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](/img/blog/alert-notice-1.png)
 
 3. Configure the associated alarm notification strategy ⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]
 
-    ![hertzbeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](/img/blog/alert-notice-2.png)
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 

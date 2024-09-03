@@ -219,19 +219,19 @@ metrics:
 
 **点击保存并应用。我们可以看到系统页面的自定义监控菜单已经多了一个`hertzbeat`监控类型了。**
 
-![](/img/docs/advanced/extend-http-example-1.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-1.png)
 
 ### 页面添加对`hertzbeat`监控类型的监控
 
 > 我们点击新增 `HertzBeat监控系统`，配置监控IP，端口，采集周期，高级设置里的账户密码等, 点击确定添加监控。
 
-![](/img/docs/advanced/extend-http-example-2.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-2.png)
 
-![](/img/docs/advanced/extend-http-example-3.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-3.png)
 
 > 过一定时间(取决于采集周期)我们就可以在监控详情看到具体的指标数据和历史图表啦！
 
-![](/img/docs/advanced/extend-http-example-4.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-4.png)
 
 ### 设置阈值告警通知
 

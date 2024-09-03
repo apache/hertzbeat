@@ -21,7 +21,7 @@ sidebar_label: SNMP协议自定义监控
 
 **HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
 -------
 

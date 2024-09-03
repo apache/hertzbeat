@@ -8,7 +8,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-![hertzBeat](/img/blog/new-committer.png)
+![HertzBeat](/img/blog/new-committer.png)
 
 > 🎉 I am very pleased to become a Committer for the Apache HertzBeat project, and I have been invited by the community to introduce myself 🥰.
 

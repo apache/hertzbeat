@@ -64,7 +64,7 @@ HertzBeat Collector is a lightweight data collector used to collect and send dat
 Deploying multiple HertzBeat Collectors can achieve high availability, load balancing, and cloud-edge collaboration of data.
 :::
 
-![hertzbeat](/img/docs/cluster-arch.png)
+![HertzBeat](/img/docs/cluster-arch.png)
 
 1. Download installation package
 

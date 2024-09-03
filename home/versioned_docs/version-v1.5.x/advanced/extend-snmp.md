@@ -21,7 +21,7 @@ By configuring the metrics `field`, `aliasFields`, and `oids` under the `snmp` p
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
 -------
 
