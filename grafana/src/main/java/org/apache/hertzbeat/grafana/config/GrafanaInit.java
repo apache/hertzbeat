@@ -39,7 +39,7 @@ public class GrafanaInit implements CommandLineRunner {
 
     //1. Determine whether the configuration is filled out completely
     //2. Determine whether there is an account, if not, create and ensure that the account is unique
-    //2. Determine whether there is a token, if not, create and ensure that the account is unique.
+    //3. Determine whether there is a token, if not, create and ensure that the account is unique.
     @Override
     public void run(String... args) throws Exception {
         if (grafanaConfiguration.isEnabled() && grafanaConfiguration.getUrl() != null && grafanaConfiguration.getUsername() != null && grafanaConfiguration.getPassword() != null) {

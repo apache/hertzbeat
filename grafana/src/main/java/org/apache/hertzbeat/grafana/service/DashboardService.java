@@ -19,6 +19,7 @@ package org.apache.hertzbeat.grafana.service;
 
 import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DASHBOARD_API;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.CommonConstants.INSTANCE;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.KIOSK;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.REFRESH;
 import java.util.HashMap;
@@ -87,7 +88,7 @@ public class DashboardService {
                 GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(response.getBody(), GrafanaDashboard.class);
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
-                    grafanaDashboard.setUrl(grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH);
+                    grafanaDashboard.setUrl(grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH + INSTANCE + monitorId);
                     grafanaDashboard.setMonitorId(monitorId);
                     dashboardDao.save(grafanaDashboard);
                     log.info("create dashboard success, token: {}", response.getBody());
@@ -121,18 +122,19 @@ public class DashboardService {
         headers.setBearerAuth(token);
 
         HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+        dashboardDao.deleteByMonitorId(monitorId);
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                dashboardDao.deleteByMonitorId(monitorId);
                 log.info("delete dashboard success");
                 return response;
             } else {
                 log.error("delete dashboard error: {}", response.getStatusCode());
                 throw new RuntimeException("delete dashboard error");
             }
+
         } catch (Exception ex) {
             log.error("delete dashboard error", ex);
             throw new RuntimeException("delete dashboard error", ex);
