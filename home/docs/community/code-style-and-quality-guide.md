@@ -229,7 +229,7 @@ Error code description:
 
    For example, if the parameter cannot be null, it is best to add a `@Nonnull` annotation. If the returned value can be null, the `@Nullable` annotation should be added first.
 
-   <mark> Note: that the package name is <code>javax.validation.requirements </code> </mark>
+   <mark> Note: that the package name is <b>javax.validation.requirements</b> </mark>
 
 3. If there are too many lines of code in the method, please have a try on using multiple sub methods at appropriate points to segment the method body.
 
