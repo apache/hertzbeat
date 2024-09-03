@@ -50,7 +50,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 * add dependency license doc
 * [feature]Hertzbeat custom plugin. by @zqr10159 in #1973
 * [feature] add apache hugegraph monitor by @zhangshenghang in #1972
-* [improve][HIP] HIP-01: Implement refactoring AbstractCollect by @crossoverJie in #1966
+* [improve]\[HIP\] HIP-01: Implement refactoring AbstractCollect by @crossoverJie in #1966
 * [feature] Support monitoring of OpenAI accounts by @zuobiao-zhou in #1947
 * [feature] add apache yarn monitor by @zhangshenghang in #1937
 * [featrue]add apache hdfs monitor by @zhangshenghang in #1920
@@ -172,7 +172,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 * [doc] Add help document for elasticsearch monitoring and ftp monitoring by @LiuTianyou in <https://github.com/apache/hertzbeat/pull/1815>
 * [doc] add help documentation for huawei switch monitoring  by @Alanxtl in <https://github.com/apache/hertzbeat/pull/1813>
 * chore: upgrade the api-testing (e2e) to v0.0.16 by @LinuxSuRen in <https://github.com/apache/hertzbeat/pull/1817>
-* [Remove][Improve]Mail config by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1819>
+* [Remove]\[Improve\]Mail config by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1819>
 * Remove and translate chinese to english in code by @dukbong in <https://github.com/apache/hertzbeat/pull/1816>
 * [feature]Add monitoring for Hbase Master by @zhangshenghang in <https://github.com/apache/hertzbeat/pull/1820>
 * [doc] resolve code conflicts and coverage caused by pr(#1813) merge by @LiuTianyou in <https://github.com/apache/hertzbeat/pull/1821>
@@ -217,7 +217,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 * [feature] support the VictoriaMetrics cluster by @xuziyang in <https://github.com/apache/hertzbeat/pull/1880>
 * [improve] Refactor common cache code by @crossoverJie in <https://github.com/apache/hertzbeat/pull/1881>
 * Eliminate Unnecessary Unboxing and Generics by @handy-git in <https://github.com/apache/hertzbeat/pull/1882>
-* [bugfix][doc]Add kafka sidebar. by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1883>
+* [bugfix]\[doc\]Add kafka sidebar. by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1883>
 * [doc] I18n for monitoring template yml metrics  by @zuobiao-zhou in <https://github.com/apache/hertzbeat/pull/1888>
 * [refactor] StoreProperties is no longer useful, delete it by @xuziyang in <https://github.com/apache/hertzbeat/pull/1887>
 * bugfix statistical metrics data matching fails by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1884>
@@ -268,7 +268,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 * [test] add test for NgqlCollectImpl by @LiuTianyou in <https://github.com/apache/hertzbeat/pull/1953>
 * [bugfix]Replace monitors to alert. by @zqr10159 in <https://github.com/apache/hertzbeat/pull/1954>
 * [improve] add llm, server menu and update doc by @tomsun28 in <https://github.com/apache/hertzbeat/pull/1955>
-* [improve][HIP] HIP-01: Refactoring AbstractCollect by @crossoverJie in <https://github.com/apache/hertzbeat/pull/1930>
+* [improve]\[HIP\] HIP-01: Refactoring AbstractCollect by @crossoverJie in <https://github.com/apache/hertzbeat/pull/1930>
 * [bugfix] fix ConnectionCommonCache possible npe by @crossoverJie in <https://github.com/apache/hertzbeat/pull/1959>
 * [doc] add help document for eulerOS monitoring by @LiuTianyou in <https://github.com/apache/hertzbeat/pull/1960>
 * [fixbug] Fix the problem of no data for springboot3 monitoring by @zhangshenghang in <https://github.com/apache/hertzbeat/pull/1961>
@@ -276,9 +276,9 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 * [fixbug] expression rule adaptation by @zhangshenghang in <https://github.com/apache/hertzbeat/pull/1963>
 * [doc] add  help doc for influxdb-promql and kafka-promql monitoring by @LiuTianyou in <https://github.com/apache/hertzbeat/pull/1965>
 * [doc]: update readme-cn docs by @yuluo-yx in <https://github.com/apache/hertzbeat/pull/1964>
-* [improve][HIP] HIP-01: Implement refactoring AbstractCollect by @crossoverJie in <https://github.com/apache/hertzbeat/pull/1966>
+* [improve]\[HIP\] HIP-01: Implement refactoring AbstractCollect by @crossoverJie in <https://github.com/apache/hertzbeat/pull/1966>
 * [chore] update .gitignore to save .idea/icon.png by @yuluo-yx in <https://github.com/apache/hertzbeat/pull/1971>
-* [improve][bugfix]: fix AlertTemplateUtilTest test exception and update code style by @yuluo-yx in <https://github.com/apache/hertzbeat/pull/1969>
+* [improve]\[bugfix\]: fix AlertTemplateUtilTest test exception and update code style by @yuluo-yx in <https://github.com/apache/hertzbeat/pull/1969>
 * [feature] add apache hugegraph monitor by @zhangshenghang in <https://github.com/apache/hertzbeat/pull/1972>
 * [improve] Implement cascading parameter list for SNMP protocol by @zuobiao-zhou in <https://github.com/apache/hertzbeat/pull/1976>
 * [improve] optimize DateUtil and add test case by @yuluo-yx in <https://github.com/apache/hertzbeat/pull/1974>
