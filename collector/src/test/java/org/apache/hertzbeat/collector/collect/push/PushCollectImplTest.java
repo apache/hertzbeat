@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.ssh;
+package org.apache.hertzbeat.collector.collect.push;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,55 +23,50 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test case for {@link SshCollectImpl}
+ * Test case for {@link PushCollectImpl}
  */
-class SshCollectImplTest {
-    private SshCollectImpl sshCollect;
+public class PushCollectImplTest {
+    private PushCollectImpl pushCollect;
+    private PushProtocol push;
     private CollectRep.MetricsData.Builder builder;
 
     @BeforeEach
-    void setUp() {
-        sshCollect = new SshCollectImpl();
+    public void setup() {
+        pushCollect = new PushCollectImpl();
+        push = PushProtocol.builder().uri("/metrics").host("example.com").port("60").build();
         builder = CollectRep.MetricsData.newBuilder();
     }
 
     @Test
-    void preCheck() {
+    void preCheck() throws Exception {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> {
-            sshCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> pushCollect.preCheck(null));
 
-        // ssh protocol is null
-        assertThrows(IllegalArgumentException.class, () -> {
-            Metrics metrics = Metrics.builder().build();
-            sshCollect.preCheck(metrics);
-        });
+        // protocol is null
+        assertThrows(IllegalArgumentException.class, () -> pushCollect.preCheck(new Metrics()));
 
-        // everything is ok
+        // everyting is ok
         assertDoesNotThrow(() -> {
-            Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
-            sshCollect.preCheck(metrics);
+            pushCollect.preCheck(Metrics.builder().push(push).build());
         });
     }
 
     @Test
-    void collect() {
+    void collect() throws Exception {
         assertDoesNotThrow(() -> {
-            Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
-            sshCollect.collect(builder, 1L, "app", metrics);
+            pushCollect.collect(builder, 1L, "app", Metrics.builder().push(push).build());
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }
 
     @Test
     void supportProtocol() {
-        assertEquals(DispatchConstants.PROTOCOL_SSH, sshCollect.supportProtocol());
+        assertEquals(DispatchConstants.PROTOCOL_PUSH, pushCollect.supportProtocol());
     }
 }

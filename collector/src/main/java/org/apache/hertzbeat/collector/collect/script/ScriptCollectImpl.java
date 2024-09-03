@@ -59,8 +59,8 @@ public class ScriptCollectImpl extends AbstractCollect {
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
-        ScriptProtocol scriptProtocol = metrics.getScript();
         Assert.notNull(metrics, "Script collect must has Imap params");
+        ScriptProtocol scriptProtocol = metrics.getScript();
         Assert.notNull(scriptProtocol, "Script collect must has Imap params");
         Assert.notNull(scriptProtocol.getCharset(), "Script charset is required");
         Assert.notNull(scriptProtocol.getParseType(), "Script parse type is required");
