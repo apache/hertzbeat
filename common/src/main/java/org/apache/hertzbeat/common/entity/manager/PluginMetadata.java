@@ -100,4 +100,8 @@ public class PluginMetadata {
     @JoinColumn(name = "metadata_id", referencedColumnName = "id")
     private List<PluginItem> items;
 
+    @Schema(title = "Param count", example = "1", accessMode = READ_WRITE)
+    private Integer paramCount;
+
+
 }
