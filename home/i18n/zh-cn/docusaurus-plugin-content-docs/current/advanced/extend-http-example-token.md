@@ -221,13 +221,13 @@ metrics:
 }
 ```
 
-![](/img/docs/advanced/extend-http-example-5.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-5.png)
 
 **新增成功后我们就可以在详情页面看到我们采集的 `token`, `refreshToken`指标数据。**
 
-![](/img/docs/advanced/extend-http-example-6.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-6.png)
 
-![](/img/docs/advanced/extend-http-example-7.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-7.png)
 
 ### 将`token`作为变量参数给后面的监控指标采集使用
 
@@ -381,9 +381,9 @@ metrics:
 
 **配置完成后，再次重启 `hertzbeat` 系统，查看监控详情页面**
 
-![](/img/docs/advanced/extend-http-example-8.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-8.png)
 
-![](/img/docs/advanced/extend-http-example-9.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-9.png)
 
 ### 设置阈值告警通知
 

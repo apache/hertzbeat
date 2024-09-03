@@ -23,4 +23,4 @@ HertzBeat页面 -> 应用服务监控 -> 推送方式监控 -> 新建推送方�
 
 ### 监控配置示例
 
-![](/img/docs/advanced/extend-push-example-1.png)
+![HertzBeat](/img/docs/advanced/extend-push-example-1.png)

@@ -8,7 +8,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system, Linux monitoring]
 ---
 
-![hertzBeat](/img/home/0.png)
+![HertzBeat](/img/home/0.png)
 
 ### What is HertzBeat?
 
@@ -24,7 +24,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help developers and teams quickly build their own monitoring system.
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](/img/docs/hertzbeat-arch.png)
 
 **Github: <https://github.com/apache/hertzbeat>**
 

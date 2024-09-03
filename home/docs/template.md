@@ -11,11 +11,11 @@ sidebar_label: Monitoring Template
 
 Here is the architecture.
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](/img/docs/hertzbeat-arch.png)
 
 **We define all monitoring collection types (mysql, website, jvm, k8s) as yml templates, and users can import these templates into the hertzbeat system to support corresponding types of monitoring, which is very convenient!**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
 **Welcome everyone to contribute your customized general monitoring type YML template during use. The available templates are as follows:**
 
