@@ -130,7 +130,7 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteMonitorSystemTags(Monitor monitor) {
         if (CollectionUtils.isNotEmpty(monitor.getTags())) {
-            List<Tag> tags = monitor.getTags().stream().filter(tag -> tag.getType() == (byte) 0).collect(Collectors.toList());
+            List<Tag> tags = monitor.getTags().stream().filter(tag -> tag.getType() != null && tag.getType() == (byte) 0).collect(Collectors.toList());
             tagDao.deleteAll(tags);
         }
     }
