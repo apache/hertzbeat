@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
