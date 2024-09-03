@@ -85,26 +85,26 @@ Github: <https://github.com/apache/hertzbeat>
 
     路径：菜单 -> 应用服务监控 -> SpringBoot2 -> 新增SpringBoot2监控
 
-    ![hertzbeat](/img/blog/monitor-springboot2-1.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-1.png)
 
 2. 配置新增监控 SpringBoot2 所需参数
 
     在监控页面填写 SpringBoot2应用 **对端IP**，**服务端口**(默认8080)，**账户密码等**，最后点击确定添加即可。
     其他参数如**采集间隔**，**超时时间**等可以参考帮助文档 <https://hertzbeat.com/docs/help/>
 
-    ![hertzbeat](/img/blog/monitor-springboot2-2.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-2.png)
 
 3. 完成✅,现在我们已经添加好对 SpringBoot2应用 的监控了，查看监控列表即可看到我们的添加项。
 
-    ![hertzbeat](/img/blog/monitor-springboot2-3.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-3.png)
 
 4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 SpringBoot2应用 的实时监控指标数据。
 
-    ![hertzbeat](/img/blog/monitor-springboot2-4.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-4.png)
 
 5. 点击**监控历史详情TAB** 即可浏览 SpringBoot2应用 的历史监控指标数据图表📈。
 
-    ![hertzbeat](/img/blog/monitor-springboot2-5.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-5.png)
 
 **DONE！完成啦！不需要我们去部署agent或者各种繁琐操作，是不是很简单**
 
@@ -126,9 +126,9 @@ Github: <https://github.com/apache/hertzbeat>
    - 选择配置的指标对象，SpringBoot2应用 监控主要是 堆栈内存 线程等相关指标，我们举例对 `状态线程数` `threads` -> `threads` 这个指标进行阈值设置， 当`runnable`状态的线程数量大于300时发出告警。
    - 这里我们就配置当此指标`size`,`state` 的 `equals(state,"runnable"") && size>300` 时发出告警，告警级别为**警告告警**，三次即触发，具体如下图。
 
-    ![hertzbeat](/img/blog/monitor-springboot2-6.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-6.png)
 
-    ![hertzbeat](/img/blog/monitor-springboot2-7.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-7.png)
 
 2. 新增消息通知接收人
 
@@ -143,13 +143,13 @@ Github: <https://github.com/apache/hertzbeat>
 
     【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
 
-    ![hertzbeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](/img/blog/alert-notice-1.png)
 
 3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】
 
     > 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
 
-    ![hertzbeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](/img/blog/alert-notice-2.png)
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 
@@ -177,7 +177,7 @@ Github: <https://github.com/apache/hertzbeat>
 
 > 通过上面的简单步骤我们实现了对SpringBoot2的监控，但里面的内置指标固定不满足需要，是否能自定义监控更多SpringBoot2的指标呢？答案当然是可以的，通过在页面上的**监控定义**->**SpringBoot2**随时通过编辑如下的YML配置文件自定义添加修改想要监控的性能指标。
 
-![hertzbeat](/img/blog/monitor-springboot2-8.png)
+![HertzBeat](/img/blog/monitor-springboot2-8.png)
 
 ## What is HertzBeat?
 

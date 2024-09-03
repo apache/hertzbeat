@@ -155,11 +155,11 @@ keywords: [开源监控系统, 开源数据库监控, RedisCluster数据库监�
 
    添加监控节点时填入所需要的参数.
 
-   ![](/img/docs/help/redis-cluster-add.png)
+   ![HertzBeat](/img/docs/help/redis-cluster-add.png)
 
    最终的效果.
 
-   ![](/img/docs/help/redis-cluster-view.png)
+   ![HertzBeat](/img/docs/help/redis-cluster-view.png)
 
 ### Configuration Parameters
 

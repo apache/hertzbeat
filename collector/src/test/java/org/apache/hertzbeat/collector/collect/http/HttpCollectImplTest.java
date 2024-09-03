@@ -17,7 +17,11 @@
 
 package org.apache.hertzbeat.collector.collect.http;
 
-import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,20 +29,40 @@ import org.junit.jupiter.api.Test;
  * Test case for {@link HttpCollectImpl}
  */
 class HttpCollectImplTest {
+    private HttpCollectImpl httpCollectImpl;
 
     @BeforeEach
     void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
+        httpCollectImpl = new HttpCollectImpl();
     }
 
     @Test
-    void getInstance() {
+    void preCheck() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            httpCollectImpl.preCheck(null);
+        });
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            Metrics metrics = Metrics.builder().build();
+            httpCollectImpl.preCheck(metrics);
+        });
     }
 
     @Test
     void collect() {
+        HttpProtocol http = HttpProtocol.builder().build();
+        http.setMethod("POST");
+        Metrics metrics = Metrics.builder()
+                .http(http)
+                .build();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+
+        httpCollectImpl.collect(builder, 1L, "app", metrics);
+    }
+
+    @Test
+    void supportProtocol() {
+        String protocol = httpCollectImpl.supportProtocol();
+        assert "http".equals(protocol);
     }
 }
