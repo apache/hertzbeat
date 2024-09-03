@@ -23,6 +23,7 @@ import static org.apache.hertzbeat.grafana.common.CommonConstants.INSTANCE;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.KIOSK;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.REFRESH;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -109,35 +110,34 @@ public class DashboardService {
      * Deletes a dashboard in Grafana by monitor ID.
      *
      * @param monitorId the ID of the monitor associated with the dashboard
-     * @return ResponseEntity containing the response from Grafana
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<String> deleteDashboard(Long monitorId) {
+    public void deleteDashboard(Long monitorId) {
         GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
-        String token = serviceAccountService.getToken();
-        String url = grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + String.format(DELETE_DASHBOARD_API, grafanaDashboard.getUid());
+        String uid = grafanaDashboard.getUid();
+        List<GrafanaDashboard> grafanaDashboards = dashboardDao.findByUid(uid);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(token);
+        if (grafanaDashboards.size() > 1) {
+            dashboardDao.deleteByMonitorId(monitorId);
+        } else {
+            String token = serviceAccountService.getToken();
+            String url = grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + String.format(DELETE_DASHBOARD_API, uid);
 
-        HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
-        dashboardDao.deleteByMonitorId(monitorId);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(token);
 
-        try {
+            HttpEntity<Void> requestEntity = new HttpEntity<>(headers);
+            dashboardDao.deleteByMonitorId(monitorId);
+
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, requestEntity, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("delete dashboard success");
-                return response;
             } else {
                 log.error("delete dashboard error: {}", response.getStatusCode());
                 throw new RuntimeException("delete dashboard error");
             }
-
-        } catch (Exception ex) {
-            log.error("delete dashboard error", ex);
-            throw new RuntimeException("delete dashboard error", ex);
         }
     }
 

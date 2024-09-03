@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.grafana.dao;
 
+import java.util.List;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -37,4 +38,11 @@ public interface DashboardDao extends JpaRepository<GrafanaDashboard, Long>, Jpa
      * @param monitorId monitor id
      */
     void deleteByMonitorId(Long monitorId);
+
+    /**
+     * find by dashboard uid
+     * @param dashboardUid dashboard uid
+     * @return dashboard
+     */
+    List<GrafanaDashboard> findByUid(String dashboardUid);
 }

@@ -101,10 +101,7 @@ public class DashboardController {
     @DeleteMapping
     public ResponseEntity<Message<String>> deleteDashboardByMonitorId(@RequestParam Long monitorId) {
         try {
-            ResponseEntity<String> response = dashboardService.deleteDashboard(monitorId);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                return ResponseEntity.ok(Message.success("delete dashboard success"));
-            }
+            dashboardService.deleteDashboard(monitorId);
         } catch (Exception e) {
             log.error("delete dashboard error", e);
             return ResponseEntity.ok(Message.fail(FAIL_CODE, "delete dashboard fail"));
