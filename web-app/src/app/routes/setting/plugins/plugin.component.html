@@ -92,7 +92,14 @@
       <!--      <td nzAlign="center">{{ data.enableStatus }}</td>-->
       <td nzAlign="center">
         <div class="actions">
-          <button nz-button nzType="primary" (click)="onEditPluginParamDefine(data.id)" nz-tooltip [nzTooltipTitle]="'plugin.edit' | i18n">
+          <button
+            *ngIf="data.paramCount !== 0"
+            nz-button
+            nzType="primary"
+            (click)="onEditPluginParamDefine(data.id)"
+            nz-tooltip
+            [nzTooltipTitle]="'plugin.param.edit' | i18n"
+          >
             <i nz-icon nzType="edit" nzTheme="outline"></i>
           </button>
           <button
@@ -111,7 +118,7 @@
   </tbody>
 </nz-table>
 
-<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }} </ng-template>
+<ng-template #rangeTemplate> {{ 'common.total' | i18n }} {{ total }}</ng-template>
 
 <!-- upload plugin pop-up window -->
 <nz-modal
@@ -174,7 +181,7 @@
     <form nz-form #form="ngForm">
       <ng-container *ngFor="let paramDefine of paramDefines; let i = index">
         <nz-form-item>
-          <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field">{{ paramDefine.name }} </nz-form-label>
+          <nz-form-label nzSpan="7" [nzRequired]="paramDefine.required" [nzFor]="paramDefine.field">{{ paramDefine.name }}</nz-form-label>
           <nz-form-control nzSpan="8" [nzErrorTip]="'validation.required' | i18n">
             <app-form-field [item]="paramDefine" [name]="paramDefine.field" [(ngModel)]="params[paramDefine.field].paramValue" />
           </nz-form-control>
