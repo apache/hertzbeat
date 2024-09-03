@@ -25,6 +25,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -64,6 +65,7 @@ export class MonitorNewComponent implements OnInit {
   ) {
     this.monitor = new Monitor();
     this.monitor.tags = [];
+    this.monitor.grafanaDashboard = new GrafanaDashboard();
   }
 
   ngOnInit(): void {
