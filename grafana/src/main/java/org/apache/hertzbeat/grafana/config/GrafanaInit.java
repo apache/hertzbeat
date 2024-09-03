@@ -31,7 +31,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class GrafanaInit implements CommandLineRunner {
     @Autowired
-    private GrafanaConfiguration grafanaConfiguration;
+    private GrafanaProperties grafanaProperties;
     @Autowired
     private ServiceAccountService serviceAccountService;
     @Autowired
@@ -42,7 +42,7 @@ public class GrafanaInit implements CommandLineRunner {
     //3. Determine whether there is a token, if not, create and ensure that the account is unique.
     @Override
     public void run(String... args) throws Exception {
-        if (grafanaConfiguration.isEnabled() && grafanaConfiguration.getUrl() != null && grafanaConfiguration.getUsername() != null && grafanaConfiguration.getPassword() != null) {
+        if (grafanaProperties.enabled() && grafanaProperties.url() != null && grafanaProperties.username() != null && grafanaProperties.password() != null) {
             serviceAccountService.reload();
             try {
                 serviceAccountService.getAccount();

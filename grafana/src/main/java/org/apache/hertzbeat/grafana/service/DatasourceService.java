@@ -26,7 +26,7 @@ import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DATASOU
 import jakarta.annotation.PostConstruct;
 import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
+import org.apache.hertzbeat.grafana.config.GrafanaProperties;
 import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -50,27 +50,27 @@ public class DatasourceService {
     private String prefix;
     private String victoriaMetricsUrl;
 
-    private final GrafanaConfiguration grafanaConfiguration;
+    private final GrafanaProperties grafanaProperties;
     private final VictoriaMetricsProperties warehouseProperties;
     private final RestTemplate restTemplate;
 
     @Autowired
     public DatasourceService(
-            GrafanaConfiguration grafanaConfiguration,
+            GrafanaProperties grafanaProperties,
             VictoriaMetricsProperties warehouseProperties,
             RestTemplate restTemplate
     ) {
-        this.grafanaConfiguration = grafanaConfiguration;
+        this.grafanaProperties = grafanaProperties;
         this.warehouseProperties = warehouseProperties;
         this.restTemplate = restTemplate;
     }
 
     @PostConstruct
     public void init() {
-        this.grafanaUrl = grafanaConfiguration.getUrl();
-        this.username = grafanaConfiguration.getUsername();
-        this.password = grafanaConfiguration.getPassword();
-        this.prefix = grafanaConfiguration.getPrefix();
+        this.grafanaUrl = grafanaProperties.getUrl();
+        this.username = grafanaProperties.username();
+        this.password = grafanaProperties.password();
+        this.prefix = grafanaProperties.getPrefix();
         this.victoriaMetricsUrl = warehouseProperties.url();
     }
 

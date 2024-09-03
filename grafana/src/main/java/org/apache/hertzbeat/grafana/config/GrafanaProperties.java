@@ -19,38 +19,19 @@ package org.apache.hertzbeat.grafana.config;
 
 import static org.apache.hertzbeat.grafana.common.CommonConstants.HTTP;
 import static org.apache.hertzbeat.grafana.common.CommonConstants.HTTPS;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
 /**
  * grafana configuration
  */
 @Slf4j
-@Setter
-@Getter
-@Configuration
 @ConfigurationProperties(prefix = "grafana")
-public class GrafanaConfiguration {
-    /**
-     * grafana is enabled
-     */
-    private boolean enabled;
-    /**
-     * grafana url
-     */
-    private String url;
-    /**
-     * grafana username
-     */
-    private String username;
-    /**
-     * grafana password
-     */
-    private String password;
-
+public record GrafanaProperties(@DefaultValue("false") boolean enabled,
+                                @DefaultValue("http://127.0.0.1:3000") String url,
+                                @DefaultValue("admin") String username,
+                                @DefaultValue("admin") String password) {
     /**
      * get the prefix of the grafana url, such as http or https
      */

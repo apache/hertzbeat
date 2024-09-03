@@ -24,6 +24,6 @@ import org.springframework.context.annotation.ComponentScan;
  * Grafana auto configuration.
  */
 @ComponentScan(basePackages = "org.apache.hertzbeat.grafana")
-@EnableConfigurationProperties(GrafanaConfiguration.class)
+@EnableConfigurationProperties(GrafanaProperties.class)
 public class GrafanaAutoConfiguration {
 }

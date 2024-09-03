@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
+import org.apache.hertzbeat.grafana.config.GrafanaProperties;
 import org.apache.hertzbeat.grafana.dao.DashboardDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -55,7 +55,7 @@ public class DashboardService {
     private DashboardDao dashboardDao;
 
     @Autowired
-    private GrafanaConfiguration grafanaConfiguration;
+    private GrafanaProperties grafanaProperties;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -70,7 +70,7 @@ public class DashboardService {
     @Transactional(rollbackFor = Exception.class)
     public ResponseEntity<?> createDashboard(String dashboardJson, Long monitorId) {
         String token = serviceAccountService.getToken();
-        String url = grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + CREATE_DASHBOARD_API;
+        String url = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + CREATE_DASHBOARD_API;
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -89,8 +89,8 @@ public class DashboardService {
                 GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(response.getBody(), GrafanaDashboard.class);
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
-                    grafanaDashboard.setUrl(grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl()
-                            + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH + INSTANCE + monitorId);
+                    grafanaDashboard.setUrl(grafanaProperties.getPrefix() + grafanaProperties.getUrl()
+                            + grafanaDashboard.getUrl().replace(grafanaProperties.getUrl(), "") + KIOSK + REFRESH + INSTANCE + monitorId);
                     grafanaDashboard.setMonitorId(monitorId);
                     dashboardDao.save(grafanaDashboard);
                     log.info("create dashboard success, token: {}", response.getBody());
@@ -122,7 +122,7 @@ public class DashboardService {
             dashboardDao.deleteByMonitorId(monitorId);
         } else {
             String token = serviceAccountService.getToken();
-            String url = grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + String.format(DELETE_DASHBOARD_API, uid);
+            String url = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + String.format(DELETE_DASHBOARD_API, uid);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

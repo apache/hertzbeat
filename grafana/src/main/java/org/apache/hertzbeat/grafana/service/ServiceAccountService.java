@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.grafana.ServiceAccount;
 import org.apache.hertzbeat.common.entity.grafana.ServiceToken;
 import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.grafana.config.GrafanaConfiguration;
+import org.apache.hertzbeat.grafana.config.GrafanaProperties;
 import org.apache.hertzbeat.grafana.dao.ServiceAccountDao;
 import org.apache.hertzbeat.grafana.dao.ServiceTokenDao;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +55,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class ServiceAccountService {
 
-    private final GrafanaConfiguration grafanaConfiguration;
+    private final GrafanaProperties grafanaProperties;
     private final ServiceAccountDao serviceAccountDao;
     private final ServiceTokenDao serviceTokenDao;
     private final RestTemplate restTemplate;
@@ -67,12 +67,12 @@ public class ServiceAccountService {
 
     @Autowired
     public ServiceAccountService(
-            GrafanaConfiguration grafanaConfiguration,
+            GrafanaProperties grafanaProperties,
             ServiceAccountDao serviceAccountDao,
             ServiceTokenDao serviceTokenDao,
             RestTemplate restTemplate
     ) {
-        this.grafanaConfiguration = grafanaConfiguration;
+        this.grafanaProperties = grafanaProperties;
         this.serviceAccountDao = serviceAccountDao;
         this.serviceTokenDao = serviceTokenDao;
         this.restTemplate = restTemplate;
@@ -80,10 +80,10 @@ public class ServiceAccountService {
 
     @PostConstruct
     public void init() {
-        this.url = grafanaConfiguration.getUrl();
-        this.username = grafanaConfiguration.getUsername();
-        this.password = grafanaConfiguration.getPassword();
-        this.prefix = grafanaConfiguration.getPrefix();
+        this.url = grafanaProperties.getUrl();
+        this.username = grafanaProperties.username();
+        this.password = grafanaProperties.password();
+        this.prefix = grafanaProperties.getPrefix();
         ServiceToken serviceToken = serviceTokenDao.findByName(ACCOUNT_TOKEN_NAME);
         if (serviceToken == null) {
             log.error("Service token {} not found", ACCOUNT_TOKEN_NAME);
