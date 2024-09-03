@@ -215,8 +215,8 @@ public class BulletinServiceImpl implements BulletinService {
                         fieldsList = Collections.singletonList(fields.stream()
                                 .map(field -> BulletinMetricsData.Field.builder()
                                         .key(field)
-                                        .unit("")
-                                        .value("NO_DATA")
+                                        .unit(EMPTY_STRING)
+                                        .value(NO_DATA)
                                         .build())
                                 .toList());
                     }
