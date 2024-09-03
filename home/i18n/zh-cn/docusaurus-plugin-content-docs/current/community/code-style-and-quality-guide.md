@@ -231,7 +231,7 @@ limitations under the License.
 
    例如，如果参数不能为 null，最好添加一个 `@Nonnull` 注释。如果返回值可以为 null，则应首先添加 `@Nullable` 注释。
 
-   <mark> 注意：包名为 <code>javax.validation.requirements </code> </mark>
+   <mark> 注意：包名为 <b>javax.validation.requirements</b> </mark>
 
 3. 如果方法中的代码行数太多，请尝试在适当的点上使用多个子方法来分段方法体。
 
