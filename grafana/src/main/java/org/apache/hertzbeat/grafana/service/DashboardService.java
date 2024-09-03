@@ -89,7 +89,8 @@ public class DashboardService {
                 GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(response.getBody(), GrafanaDashboard.class);
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
-                    grafanaDashboard.setUrl(grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl() + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH + INSTANCE + monitorId);
+                    grafanaDashboard.setUrl(grafanaConfiguration.getPrefix() + grafanaConfiguration.getUrl()
+                            + grafanaDashboard.getUrl().replace(grafanaConfiguration.getUrl(), "") + KIOSK + REFRESH + INSTANCE + monitorId);
                     grafanaDashboard.setMonitorId(monitorId);
                     dashboardDao.save(grafanaDashboard);
                     log.info("create dashboard success, token: {}", response.getBody());

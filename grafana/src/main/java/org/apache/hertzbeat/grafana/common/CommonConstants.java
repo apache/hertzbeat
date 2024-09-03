@@ -29,7 +29,7 @@ public interface CommonConstants {
 
     String REFRESH = "&refresh=15s";
 
-    String INSTANCE= "&var-instance=";
+    String INSTANCE = "&var-instance=";
 
     String AUTHORIZATION = "Authorization";
     
