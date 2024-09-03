@@ -29,9 +29,9 @@ Feature：
 4. [[collector] support trigger and grading multiple subtasks through -_- placeholder expression #418](https://github.com/apache/hertzbeat/pull/418)
 5. [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
 6. [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
-7. [[#406][warehose] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
-8. [[#358][manager] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
-9. [[#356][manager] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
+7. [[#406]\[warehose\] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
+8. [[#358]\[manager\] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
+9. [[#356]\[manager\] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
 10. [[manager,collector] support docker metrics monitor #438](https://github.com/apache/hertzbeat/pull/438) @TJxiaobao
 11. [[alerter] implement AlertDefineControllerTest unit case #448](https://github.com/apache/hertzbeat/pull/448) @Ceilzcx
 12. [[collector] support spi load AbstractCollect Impl instance #449](https://github.com/apache/hertzbeat/pull/449)
@@ -78,9 +78,9 @@ Feature：
 4. [[collector] support trigger and grading multiple subtasks through -_- placeholder expression #418](https://github.com/apache/hertzbeat/pull/418)
 5. [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
 6. [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
-7. [[#406][warehose] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
-8. [[#358][manager] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
-9. [[#356][manager] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
+7. [[#406]\[warehose\] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
+8. [[#358]\[manager\] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
+9. [[#356]\[manager\] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
 10. [[manager,collector] support docker metrics monitor #438](https://github.com/apache/hertzbeat/pull/438) @TJxiaobao
 11. [[alerter] implement AlertDefineControllerTest unit case #448](https://github.com/apache/hertzbeat/pull/448) @Ceilzcx
 12. [[collector] support spi load AbstractCollect Impl instance #449](https://github.com/apache/hertzbeat/pull/449)
