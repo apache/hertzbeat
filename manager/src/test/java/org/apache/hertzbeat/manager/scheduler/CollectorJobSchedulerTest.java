@@ -33,6 +33,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * Test case for {@link CollectorJobScheduler}
+ */
 @ExtendWith(MockitoExtension.class)
 public class CollectorJobSchedulerTest {
     @InjectMocks

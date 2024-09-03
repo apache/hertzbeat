@@ -54,7 +54,7 @@ public class DefaultPluginRunnerTest {
                 return null;
             }).when(pluginService).pluginExecute(any(Class.class), any(BiConsumer.class));
             defaultPluginRunner.pluginExecute(String.class, (s) -> {});
-            defaultPluginRunner.pluginExecute(String.class, (a,b)->{});
+            defaultPluginRunner.pluginExecute(String.class, (a, b)->{});
         });
         
         assertDoesNotThrow(() -> {
@@ -65,7 +65,7 @@ public class DefaultPluginRunnerTest {
                 throw new RuntimeException("sample");
             }).when(pluginService).pluginExecute(any(Class.class), any(BiConsumer.class));
             defaultPluginRunner.pluginExecute(String.class, (s) -> {});
-            defaultPluginRunner.pluginExecute(String.class, (a,b)->{});
+            defaultPluginRunner.pluginExecute(String.class, (a, b)->{});
         });
     }
 }
