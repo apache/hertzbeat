@@ -24,4 +24,5 @@ export class Plugin {
   name!: string;
   enableStatus!: boolean;
   items!: PluginItem[];
+  paramCount!: number;
 }
