@@ -400,7 +400,7 @@ Thanks!
 After 72 hours, the voting results will be counted, and the voting result email will be sent, as follows.
 
 > `Send to`: <dev@hertzbeat.apache.org> <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
+> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```text
@@ -502,7 +502,7 @@ Chunjin Mu
 Then the voting results will be counted, and the voting result email will be sent, as follows.
 
 > `Send to`: <general@incubator.apache.org> <br />
-> `Title`: [RESULT][VOTE] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
+> `Title`: [RESULT]\[VOTE\] Release Apache HertzBeat (incubating) 1.6.0-rc1 <br />
 > `Body`:
 
 ```text

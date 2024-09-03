@@ -81,8 +81,11 @@ class PluginServiceTest {
     void testSavePlugin() {
 
         List<PluginItem> pluginItems = Collections.singletonList(new PluginItem("org.apache.hertzbeat.PluginTest", PluginType.POST_ALERT));
+        PluginMetadata metadata = new PluginMetadata();
+        metadata.setItems(pluginItems);
+        metadata.setParamCount(0);
         PluginServiceImpl service = spy(pluginService);
-        doReturn(pluginItems).when(service).validateJarFile(any());
+        doReturn(metadata).when(service).validateJarFile(any());
 
         MockMultipartFile mockFile = new MockMultipartFile("file", "test-plugin.jar", "application/java-archive", "plugin-content".getBytes());
         PluginUpload pluginUpload = new PluginUpload(mockFile, "Test Plugin", true);
