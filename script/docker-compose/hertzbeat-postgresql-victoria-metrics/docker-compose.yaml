@@ -39,8 +39,7 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - ./dbdata/pgdata/data:/var/lib/postgresql/data
-      - ./conf/sql:/docker-entrypoint-initdb.d/
-      - ./ext-lib:/opt/hertzbeat/ext-lib
+      - ./conf/sql:/docker-entrypoint-initdb.d/      
     networks:
       - hertzbeat
 
@@ -81,6 +80,7 @@ services:
       - ./conf/application.yml:/opt/hertzbeat/config/application.yml
       - ./conf/sureness.yml:/opt/hertzbeat/config/sureness.yml
       - ./logs:/opt/hertzbeat/logs
+      - ./ext-lib:/opt/hertzbeat/ext-lib
     ports:
       - "1157:1157"
       - "1158:1158"
