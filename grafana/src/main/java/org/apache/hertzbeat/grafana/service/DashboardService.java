@@ -17,11 +17,11 @@
 
 package org.apache.hertzbeat.grafana.service;
 
-import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DASHBOARD_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DASHBOARD_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.INSTANCE;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.KIOSK;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.REFRESH;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.INSTANCE;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.KIOSK;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.REFRESH;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +68,7 @@ public class DashboardService {
      * @return ResponseEntity containing the response from Grafana
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<?> createDashboard(String dashboardJson, Long monitorId) {
+    public ResponseEntity<?> createOrUpdateDashboard(String dashboardJson, Long monitorId) {
         String token = serviceAccountService.getToken();
         String url = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + CREATE_DASHBOARD_API;
 
@@ -105,8 +105,7 @@ public class DashboardService {
             throw new RuntimeException("create dashboard error", ex);
         }
     }
-
-
+    
     /**
      * Deletes a dashboard in Grafana by monitor ID.
      *
@@ -141,8 +140,7 @@ public class DashboardService {
             }
         }
     }
-
-
+    
     /**
      * Retrieves a dashboard by monitor ID.
      *
@@ -162,19 +160,6 @@ public class DashboardService {
         GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
         if (grafanaDashboard != null) {
             grafanaDashboard.setEnabled(false);
-            dashboardDao.save(grafanaDashboard);
-        }
-    }
-
-    /**
-     * Enables a Grafana dashboard by monitor ID.
-     *
-     * @param monitorId the ID of the monitor associated with the dashboard
-     */
-    public void openGrafanaDashboard(Long monitorId) {
-        GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
-        if (grafanaDashboard != null) {
-            grafanaDashboard.setEnabled(true);
             dashboardDao.save(grafanaDashboard);
         }
     }

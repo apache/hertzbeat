@@ -20,7 +20,7 @@ package org.apache.hertzbeat.grafana.common;
 /**
  * Grafana Common Constants
  */
-public interface CommonConstants {
+public interface GrafanaConstants {
     String HTTP = "http://";
 
     String HTTPS = "https://";

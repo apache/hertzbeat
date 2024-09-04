@@ -43,7 +43,6 @@ public class GrafanaInit implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         if (grafanaProperties.enabled() && grafanaProperties.url() != null && grafanaProperties.username() != null && grafanaProperties.password() != null) {
-            serviceAccountService.reload();
             try {
                 serviceAccountService.getAccount();
             } catch (RuntimeException e) {

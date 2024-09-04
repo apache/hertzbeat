@@ -17,15 +17,15 @@
 
 package org.apache.hertzbeat.grafana.service;
 
-import static org.apache.hertzbeat.grafana.common.CommonConstants.ACCOUNT_NAME;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.ACCOUNT_ROLE;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.ACCOUNT_TOKEN_NAME;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_SERVICE_ACCOUNT_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_SERVICE_TOKEN_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_SERVICE_ACCOUNT_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.GET_SERVICE_ACCOUNTS_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.GET_SERVICE_TOKENS_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.HERTZBEAT_TOKEN;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.ACCOUNT_NAME;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.ACCOUNT_ROLE;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.ACCOUNT_TOKEN_NAME;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_SERVICE_ACCOUNT_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_SERVICE_TOKEN_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_SERVICE_ACCOUNT_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.GET_SERVICE_ACCOUNTS_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.GET_SERVICE_TOKENS_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.HERTZBEAT_TOKEN;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.PostConstruct;
 import java.util.Base64;
@@ -282,18 +282,6 @@ public class ServiceAccountService {
             throw new RuntimeException("Service account not found");
         }
         serviceAccountDao.delete(hertzbeat);
-    }
-
-    /**
-     * Reloads the service accounts and tokens, clearing existing data.
-     */
-    public void reload() {
-        List<JsonNode> idList = Objects.requireNonNull(JsonUtil.fromJson(getAccounts().getBody())).path("serviceAccounts").findValues("id");
-        for (JsonNode jsonNode : idList) {
-            deleteAccount(jsonNode.asLong());
-        }
-        serviceAccountDao.truncate();
-        serviceTokenDao.truncate();
     }
 
     private HttpHeaders createHeaders() {

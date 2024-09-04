@@ -168,11 +168,4 @@ public class Monitor {
         joinColumns = {@JoinColumn(name = "monitor_id", referencedColumnName = "id")},
         inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
     private List<Tag> tags;
-
-    /**
-     * grafana dashboard
-     */
-    @Schema(title = "grafana dashboard")
-    @Transient
-    private GrafanaDashboard grafanaDashboard;
 }

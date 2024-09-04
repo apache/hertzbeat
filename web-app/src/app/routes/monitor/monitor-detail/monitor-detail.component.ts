@@ -30,6 +30,7 @@ import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
+import {GrafanaDashboard} from "../../../pojo/GrafanaDashboard";
 
 @Component({
   selector: 'app-monitor-detail',
@@ -50,6 +51,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   monitorId!: number;
   app!: string;
   monitor: Monitor = new Monitor();
+  grafanaDashboard: GrafanaDashboard = new GrafanaDashboard();
   options: any;
   port: number | undefined;
   metrics!: string[];
@@ -203,10 +205,8 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   getGrafana() {
     this.monitorSvc.getGrafanaDashboard(this.monitorId).subscribe(
       message => {
-        if (message.code === 0 && message.msg != null) {
-          this.monitor.grafanaDashboard = message.data;
-        } else {
-          console.warn(message.msg);
+        if (message.code === 0 && message.data != null) {
+          this.grafanaDashboard = message.data;
         }
       },
       error => {

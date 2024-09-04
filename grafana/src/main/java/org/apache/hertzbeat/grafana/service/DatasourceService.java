@@ -18,11 +18,11 @@
 package org.apache.hertzbeat.grafana.service;
 
 
-import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DATASOURCE_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_ACCESS;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_NAME;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.DATASOURCE_TYPE;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DATASOURCE_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_DATASOURCE_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_ACCESS;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_NAME;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_TYPE;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_DATASOURCE_API;
 import jakarta.annotation.PostConstruct;
 import java.util.Base64;
 import lombok.extern.slf4j.Slf4j;

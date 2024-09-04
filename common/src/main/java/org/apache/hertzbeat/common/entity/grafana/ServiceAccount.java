@@ -27,8 +27,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 
-
-
 /**
  * Grafana service account entity
  */
@@ -40,21 +38,29 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "Grafana service account entity")
 public class ServiceAccount {
+
     @Id
     @Schema(description = "Service account id")
     private Long id;
+
     @Schema(description = "Service account name")
     private String name;
+
     @Schema(description = "Service account role")
     private String role;
+    
     @Schema(description = "Service account is disabled")
     private Boolean isDisabled;
+    
     @Schema(description = "Service account tokens")
     private Integer tokens;
+    
     @Schema(description = "Service account avatar url")
     private String avatarUrl;
+    
     @Schema(description = "Service account login")
     private String login;
+    
     @Schema(description = "Service account orgId")
     private Integer orgId;
 

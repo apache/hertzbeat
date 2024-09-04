@@ -84,6 +84,7 @@ export class MonitorEditComponent implements OnInit {
           if (message.code === 0) {
             let paramValueMap = new Map<String, Param>();
             this.monitor = message.data.monitor;
+            this.grafanaDashboard = message.data.grafanaDashboard != undefined ? message.data.grafanaDashboard : new GrafanaDashboard();
             this.collector = message.data.collector == null ? '' : message.data.collector;
             this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
             if (message.data.params != null) {
@@ -194,7 +195,8 @@ export class MonitorEditComponent implements OnInit {
       detected: this.detected,
       monitor: info.monitor,
       collector: info.collector,
-      params: info.params.concat(info.advancedParams)
+      params: info.params.concat(info.advancedParams),
+      grafanaDashboard: info.grafanaDashboard
     };
     if (this.detected) {
       this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
@@ -250,17 +252,4 @@ export class MonitorEditComponent implements OnInit {
     this.router.navigateByUrl(`/monitors?app=${app}`);
   }
 
-  //start grafana
-  handleTemplateInput(event: any): any {
-    if (event.file && event.file.originFileObj) {
-      const fileReader = new FileReader();
-      fileReader.readAsText(event.file.originFileObj, 'UTF-8');
-      fileReader.onload = () => {
-        this.grafanaDashboard.template = fileReader.result as string;
-      };
-      fileReader.onerror = error => {
-        console.log(error);
-      };
-    }
-  }
 }

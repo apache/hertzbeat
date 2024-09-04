@@ -39,11 +39,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "Grafana service token entity")
 public class ServiceToken {
+    
     @Id
     @Schema(description = "Service token id")
     private Long id;
+    
     @Schema(description = "Service token name")
     private String name;
+    
     @Schema(description = "Service token key")
     @Column(name = "`key`")
     private String key;

@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import java.security.SignatureException;
 import java.util.Map;
 import javax.naming.AuthenticationException;
 import lombok.extern.slf4j.Slf4j;

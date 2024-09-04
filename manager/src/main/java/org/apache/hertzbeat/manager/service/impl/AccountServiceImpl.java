@@ -86,7 +86,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public RefreshTokenResponse refreshToken(String refreshToken) throws AuthenticationException {
+    public RefreshTokenResponse refreshToken(String refreshToken) throws Exception {
         Claims claims = JsonWebTokenUtil.parseJwt(refreshToken);
         String userId = String.valueOf(claims.getSubject());
         boolean isRefresh = claims.get("refresh", Boolean.class);
