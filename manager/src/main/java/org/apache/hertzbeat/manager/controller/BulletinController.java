@@ -80,7 +80,7 @@ public class BulletinController {
             bulletinService.validate(bulletinDto);
             bulletinService.editBulletin(bulletinDto);
         } catch (Exception e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Edit failed! " + e.getMessage()));
         }
         return ResponseEntity.ok(Message.success("Add success!"));
     }
@@ -93,7 +93,7 @@ public class BulletinController {
         try {
             return ResponseEntity.ok(Message.success(bulletinService.getBulletinByName(name)));
         } catch (Exception e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Get failed! " + e.getMessage()));
         }
     }
 
