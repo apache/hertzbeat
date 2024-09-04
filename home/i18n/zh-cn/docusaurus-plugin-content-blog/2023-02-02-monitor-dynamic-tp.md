@@ -84,28 +84,28 @@ tags: [opensource, practice]
 
     路径：菜单 -> 中间件监控 -> DynamicTp监控 -> 新增DynamicTp监控
 
-    ![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)
+    ![HertzBeat](/img/blog/monitor-dynamic-tp-1.png)
 
 2. 配置监控 DynamicTp 所需参数
 
     在监控页面填写 DynamicTp **服务IP**，**监控端口**(默认8080)，最后点击确定添加即可。
     其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/dynamic_tp/) <https://hertzbeat.com/docs/help/dynamic_tp/>
 
-    ![hertzbeat](/img/blog/monitor-dynamic-tp-2.png)
+    ![HertzBeat](/img/blog/monitor-dynamic-tp-2.png)
 
 3. 完成✅,现在我们已经添加好对 DynamicTp 的监控了，查看监控列表即可看到我们的添加项。
 
-    ![hertzbeat](/img/blog/monitor-dynamic-tp-1.png)
+    ![HertzBeat](/img/blog/monitor-dynamic-tp-1.png)
 
 4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 DynamicTp线程池 的实时监控指标数据。
 
-    ![hertzbeat](/img/blog/monitor-dynamic-tp-3.png)
+    ![HertzBeat](/img/blog/monitor-dynamic-tp-3.png)
 
 5. 点击**监控历史详情TAB** 即可浏览 DynamicTp线程池 的历史监控指标数据图表📈。
 
-    ![hertzbeat](/img/blog/monitor-dynamic-tp-4.png)
+    ![HertzBeat](/img/blog/monitor-dynamic-tp-4.png)
 
-    ![hertzbeat](/img/blog/monitor-dynamic-tp-5.png)
+    ![HertzBeat](/img/blog/monitor-dynamic-tp-5.png)
 
 **DONE！完成啦！通过上面几步，总结起来其实也就只用两步**  
 
@@ -128,7 +128,7 @@ tags: [opensource, practice]
    - 选择配置的指标对象，DynamicTp监控主要是一些线程池相关指标，我们举例对 `运行超时线程数量` `thread_pool_running` -> `run_timeout_count` 这个指标进行阈值设置， 当线程运行超时数量大于1时发出告警。
    - 这里我们就配置当此指标`thread_pool_running` 的 `run_timeout_count>1` 时发出告警，告警级别为**严重告警**，三次即触发，具体如下图。
 
-    ![hertzbeat](/img/blog/monitor-dynamic-tp-6.png)
+    ![HertzBeat](/img/blog/monitor-dynamic-tp-6.png)
 
 2. 新增消息通知接收人
 
@@ -143,13 +143,13 @@ tags: [opensource, practice]
 
     【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
 
-    ![hertzbeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](/img/blog/alert-notice-1.png)
 
 3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】
 
     > 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
 
-    ![hertzbeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](/img/blog/alert-notice-2.png)
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 

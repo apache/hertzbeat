@@ -245,7 +245,9 @@
             "help/freebsd",
             "help/redhat",
             "help/rockylinux",
-            "help/euleros"
+            "help/euleros",
+            "help/linux_script",
+            "help/windows_script"
           ]
         },
         {

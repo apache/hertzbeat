@@ -8,7 +8,7 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-![hertzBeat](/img/blog/new-committer.png)
+![HertzBeat](/img/blog/new-committer.png)
 
 ### First acquaintance with Apache Hertzbeat
 
