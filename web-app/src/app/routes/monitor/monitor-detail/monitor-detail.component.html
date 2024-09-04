@@ -91,7 +91,7 @@
             ></app-monitor-data-chart>
           </div>
         </nz-tab>
-        <nz-tab *ngIf="monitor.grafanaDashboard.enabled" [nzTitle]="title3Template">
+        <nz-tab *ngIf="monitor.grafanaDashboard && monitor.grafanaDashboard.enabled" [nzTitle]="title3Template">
           <ng-template #title3Template>
             <i nz-icon nzType="line-chart" style="margin-left: 10px"></i>
             Grafana
