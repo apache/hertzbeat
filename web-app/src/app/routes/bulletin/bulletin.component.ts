@@ -125,6 +125,8 @@ export class BulletinComponent implements OnInit {
 
   onManageModalCancel() {
     this.isManageModalVisible = false;
+    // clear fields
+    this.fields = {};
   }
 
   resetManageModalData() {
@@ -132,11 +134,15 @@ export class BulletinComponent implements OnInit {
     this.define.monitorIds = [];
     this.hierarchies = [];
     this.treeNodes = [];
+    // clear fields
+    this.fields = {};
   }
 
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.define.fields = this.fields;
+    // clear fields
+    this.fields = {};
     if (this.isManageModalAdd) {
       const modalOk$ = this.bulletinDefineSvc
         .newBulletinDefine(this.define)
