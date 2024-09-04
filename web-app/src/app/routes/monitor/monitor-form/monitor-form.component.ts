@@ -177,4 +177,18 @@ export class MonitorFormComponent implements OnChanges {
       }
     });
   }
+
+  //start grafana
+  handleTemplateInput(event: any): any {
+    if (event.file && event.file.originFileObj) {
+      const fileReader = new FileReader();
+      fileReader.readAsText(event.file.originFileObj, 'UTF-8');
+      fileReader.onload = () => {
+        this.monitor.grafanaDashboard.template = fileReader.result as string;
+      };
+      fileReader.onerror = error => {
+        console.log(error);
+      };
+    }
+  }
 }

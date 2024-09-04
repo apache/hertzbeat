@@ -6,7 +6,12 @@ sidebar_label: Install via Package
 
 :::tip
 You can install and run Apache HertzBeat (incubating) on Linux Windows Mac system, and CPU supports X86/ARM64.
-Deployment via package relies on Java runtime environment, ensure you have Java17 environment installed, if not please refer to [official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+Since version 1.6.0 uses `Java 17` and the installation package no longer provides a built-in JDK version, use the new Hertzbeat according to the following situations:
+
+- When the default environment variable on your server is `Java 17`, you do not need to take any action for this step.
+- When the default environment variable on your server is not `Java 17`, such as `Java 8` or `Java 11`, and if there are no other applications on your server that require a lower version of Java, download the appropriate version from [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) according to your system, and search the engine for how to set a new environment variable pointing to the new `Java 17`.
+- When the default environment variable on your server is not `Java 17`, such as `Java 8` or `Java 11`,and you don't want to change the environment variable because if there are other applications on your server that require a lower version of Java, download the appropriate version from [https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html) according to your system, and rename the extracted folder to `java`, then copy it to the Hertzbeat extraction directory.
+
 :::
 
 ### Deploy HertzBeat Server
@@ -59,7 +64,7 @@ HertzBeat Collector is a lightweight data collector used to collect and send dat
 Deploying multiple HertzBeat Collectors can achieve high availability, load balancing, and cloud-edge collaboration of data.
 :::
 
-![hertzbeat](/img/docs/cluster-arch.png)
+![HertzBeat](/img/docs/cluster-arch.png)
 
 1. Download installation package
 

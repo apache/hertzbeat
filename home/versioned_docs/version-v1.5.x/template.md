@@ -16,7 +16,7 @@ Here is the architecture.
 **We define all monitoring collection types (mysql, website, jvm, k8s) as yml templates**  
 **Users can import these templates into the hertzbeat system to support corresponding types of monitoring, which is very convenient!**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
 **Welcome everyone to contribute your customized general monitoring type YML template during use. The available templates are as follows:**
 

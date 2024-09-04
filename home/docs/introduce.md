@@ -42,11 +42,11 @@ slug: /
 
 HertzBeat itself did not create a data collection protocol for the monitoring client to adapt to. Instead, HertzBeat makes full use of the existing ecosystem, `SNMP protocol` to collect information from network switches and routers, `JMX specification` to collect information from Java applications, `JDBC specification` to collect information from datasets, `SSH` to directly connect to scripts to get the display information, `HTTP+ (JsonPath | prometheus, etc.)` to parse the information from API interfaces, `IPMI protocol` to collect server information, and so on.
 HertzBeat uses these existing standard protocols or specifications, makes them abstractly configurable, and finally makes them all available in the form of YML format monitoring templates that can be written to create templates that use these protocols to collect any desired metrics data.
-![hertzbeat](/img/blog/multi-protocol.png)
+![HertzBeat](/img/blog/multi-protocol.png)
 
 Do you believe that users can just write a monitoring template on the UI page, click save and immediately adapt a new monitoring type like `K8s` or `Docker`?
 
-![hertzbeat](/img/home/9.png)
+![HertzBeat](/img/home/9.png)
 
 ### Built-in Monitoring Types
 
@@ -97,7 +97,7 @@ Do you believe that users can just write a monitoring template on the UI page, c
 > Each monitor type is considered as a monitor template, no matter it is built-in or user-defined. You can easily add, modify and delete indicators by modifying the monitoring template.
 > The templates contain a series of functions such as protocol configuration, environment variables, metrics conversion, metrics calculation, units conversion, metrics collection, etc., which help users to collect the metrics they want.
 
-![hertzbeat](/img/docs/custom-arch.png)
+![HertzBeat](/img/docs/custom-arch.png)
 
 ### No Agent Required
 
@@ -120,7 +120,7 @@ The principle of `HertzBeat` is to use different protocols to connect directly t
 * Monitoring tasks are self-scheduled in the collector cluster, single collector hangs without sensing the failure to migrate the collection tasks, and the newly added collector nodes are automatically scheduled to share the collection pressure.
 * It is very easy to switch between stand-alone mode and cluster mode without additional component deployment.
 
-![hertzbeat](/img/docs/cluster-arch.png)
+![HertzBeat](/img/docs/cluster-arch.png)
 
 ### Cloud Edge Collaboration
 
@@ -129,7 +129,7 @@ The principle of `HertzBeat` is to use different protocols to connect directly t
 In an isolated network where multiple networks are not connected, we need to deploy a monitoring system in each network in the previous solution, which leads to data non-interoperability and inconvenient management, deployment and maintenance.
 `HertzBeat` provides the ability of cloud edge collaboration, can be deployed in multiple isolated networks edge collector, collector in the isolated network within the monitoring task collection, collection of data reported by the main service unified scheduling management display.
 
-![hertzbeat](/img/docs/cluster-arch.png)
+![HertzBeat](/img/docs/cluster-arch.png)
 
 ### Easy to Use
 
@@ -165,7 +165,7 @@ Browser access `http://localhost:1157` default account password `admin/hertzbeat
 
 * HertzBeat's user management is unified by the configuration file `sureness.yml`, which allows users to add, delete, and modify user information, user role permissions, and so on. Default password admin/hertzbeat
 
-![hertzbeat](/img/home/0.png)
+![HertzBeat](/img/home/0.png)
 
 ### Overview Page
 
@@ -173,7 +173,7 @@ Browser access `http://localhost:1157` default account password `admin/hertzbeat
 * Show the status of currently registered collector clusters, including collector on-line status, monitoring tasks, startup time, IP address, name and so on.
 * Show the list of recent alarm messages, alarm level distribution and alarm processing rate.
 
-![hertzbeat](/img/home/1.png)
+![HertzBeat](/img/home/1.png)
 
 ### Monitoring Center
 
@@ -220,7 +220,7 @@ Built-in support for monitoring types include:
   [HuaweiSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-huawei_switch.yml), [TpLinkSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-tplink_switch.yml),
   [H3cSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-h3c_switch.yml)
 
-![hertzbeat](/img/home/2.png)
+![HertzBeat](/img/home/2.png)
 
 ### Add and Modify Surveillance
 
@@ -228,7 +228,7 @@ Built-in support for monitoring types include:
 * The monitoring parameters configured on the page are defined by the monitoring template of the corresponding monitoring type, and users can modify the configuration parameters on the page by modifying the monitoring template.
 * Support associated tags to manage monitoring grouping, alarm matching, and so on.
 
-![hertzbeat](/img/home/10.png)
+![HertzBeat](/img/home/10.png)
 
 ### Monitor Details
 
@@ -237,16 +237,16 @@ Built-in support for monitoring types include:
 * Monitor Historical Data Report displays the historical values of the currently monitored metrics in the form of trend charts, supports querying hourly, daily and monthly historical data, and supports configuring the page refresh time.
 * ⚠️ Note that the monitoring history charts need to be configured with an external timing database in order to get the full functionality, timing database support: IOTDB, TDengine, InfluxDB, GreptimeDB
 
-![hertzbeat](/img/home/3.png)
+![HertzBeat](/img/home/3.png)
 
-![hertzbeat](/img/home/4.png)
+![HertzBeat](/img/home/4.png)
 
 ### Alarm Center
 
 * The management display page of triggered alarm messages enables users to visualize the current alarm situation.
 * Support alarm processing, alarm marking unprocessed, alarm deletion, clearing and other batch operations.
 
-![hertzbeat](/img/home/7.png)
+![HertzBeat](/img/home/7.png)
 
 ### Threshold Rules
 
@@ -255,18 +255,18 @@ Built-in support for monitoring types include:
 * Threshold rules support visual page configuration or expression rule configuration for more flexibility.
 * It supports configuring the number of triggers, alarm levels, notification templates, associated with a specific monitor and so on.
 
-![hertzbeat](/img/home/6.png)
+![HertzBeat](/img/home/6.png)
 
-![hertzbeat](/img/home/11.png)
+![HertzBeat](/img/home/11.png)
 
 ### Alarm Convergence
 
 * When the alarm is triggered by the threshold rule, it will enter into the alarm convergence, the alarm convergence will be based on the rules of the specific time period of the duplicate alarm message de-emphasis convergence, to avoid a large number of repetitive alarms lead to the receiver alarm numbness.
 * Alarm convergence rules support duplicate alarm effective time period, label matching and alarm level matching filter.
 
-![hertzbeat](/img/home/12.png)
+![HertzBeat](/img/home/12.png)
 
-![hertzbeat](/img/home/13.png)
+![HertzBeat](/img/home/13.png)
 
 ### Alarm Silence
 
@@ -274,9 +274,9 @@ Built-in support for monitoring types include:
 * This application scenario, such as users in the system maintenance, do not need to send known alarms. Users will only receive alarm messages on weekdays, and users need to avoid disturbances at night.
 * Alarm silence rules support one-time time period or periodic time period, support label matching and alarm level matching.
 
-![hertzbeat](/img/home/14.png)
+![HertzBeat](/img/home/14.png)
 
-![hertzbeat](/img/home/15.png)
+![HertzBeat](/img/home/15.png)
 
 ### Message Notification
 
@@ -286,18 +286,18 @@ Built-in support for monitoring types include:
 * The notification policy supports tag matching and alert level matching, which makes it convenient to assign alerts with different tags and alert levels to different receivers and handlers.
 * Support notification templates, users can customize the content format of the templates to meet their own personalized notification display needs.
 
-![hertzbeat](/img/home/16.png)
+![HertzBeat](/img/home/16.png)
 
-![hertzbeat](/img/home/17.png)
+![HertzBeat](/img/home/17.png)
 
-![hertzbeat](/img/home/8.png)
+![HertzBeat](/img/home/8.png)
 
 ### Monitoring Templates
 
 * HertzBeat makes `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` and other protocols configurable so that you can customize the metrics you want to collect using these protocols by simply configuring the monitoring template `YML` in your browser. Would you believe that you can instantly adapt a new monitoring type such as `K8s` or `Docker` just by configuring it?
 * All our built-in monitoring types (mysql, website, jvm, k8s) are also mapped to corresponding monitoring templates, so you can add and modify monitoring templates to customize your monitoring functions.
 
-![hertzbeat](/img/home/9.png)
+![HertzBeat](/img/home/9.png)
 
 ---
 

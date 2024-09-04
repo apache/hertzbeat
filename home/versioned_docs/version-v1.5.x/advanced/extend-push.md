@@ -23,4 +23,4 @@ HertzBeat DashBoard -> Service Monitor -> Push Style Monitor -> New Push Style M
 
 ### Monitor Configuration Example
 
-![](/img/docs/advanced/extend-push-example-1.png)
+![HertzBeat](/img/docs/advanced/extend-push-example-1.png)

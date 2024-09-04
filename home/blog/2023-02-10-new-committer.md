@@ -7,7 +7,7 @@ author_image_url: https://avatars.githubusercontent.com/u/24788200?s=400&v=4
 tags: [opensource]
 ---
 
-![hertzBeat](/img/blog/new-committer.png)
+![HertzBeat](/img/blog/new-committer.png)
 
 ## Welcome two new Committers from HertzBeat
 

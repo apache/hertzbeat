@@ -39,6 +39,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
@@ -48,6 +49,7 @@ import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.hertzbeat.common.constants.PluginType;
 import org.apache.hertzbeat.common.entity.dto.PluginUpload;
@@ -71,7 +73,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
@@ -216,37 +217,42 @@ public class PluginServiceImpl implements PluginService {
      * verify the type of the jar package
      *
      * @param jarFile jar file
-     * @return return the full path of the Plugin interface implementation class
+     * @return return the result of jar package parsed
      */
-    public List<PluginItem> validateJarFile(File jarFile) {
+    public PluginMetadata validateJarFile(File jarFile) {
+        PluginMetadata metadata = new PluginMetadata();
         List<PluginItem> pluginItems = new ArrayList<>();
+        AtomicInteger pluginImplementationCount = new AtomicInteger(0);
         try {
             URL jarUrl = new URL("file:" + jarFile.getAbsolutePath());
             try (URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl}, this.getClass().getClassLoader());
                 JarFile jar = new JarFile(jarFile)) {
                 Enumeration<JarEntry> entries = jar.entries();
-                Yaml yaml = new Yaml();
                 while (entries.hasMoreElements()) {
                     JarEntry entry = entries.nextElement();
                     if (entry.getName().endsWith(".class")) {
                         String className = entry.getName().replace("/", ".").replace(".class", "");
                         try {
                             Class<?> cls = classLoader.loadClass(className);
-                            if (!cls.isInterface()) {
-                                PLUGIN_TYPE_MAPPING.forEach((clazz, type) -> {
-                                    if (clazz.isAssignableFrom(cls)) {
-                                        pluginItems.add(new PluginItem(className, type));
-                                    }
-                                });
+                            if (cls.isInterface()) {
+                                continue;
                             }
+                            if (pluginImplementationCount.get() >= 1) {
+                                throw new CommonException("A plugin package can only contain one plugin implementation class");
+                            }
+                            PLUGIN_TYPE_MAPPING.forEach((clazz, type) -> {
+                                if (clazz.isAssignableFrom(cls)) {
+                                    pluginItems.add(new PluginItem(className, type));
+                                    pluginImplementationCount.incrementAndGet();
+                                }
+                            });
                         } catch (ClassNotFoundException e) {
                             System.err.println("Failed to load class: " + className);
                         }
                     }
                     if ((entry.getName().contains("define")) && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
-                        try (InputStream ymlInputStream = jar.getInputStream(entry)) {
-                            yaml.loadAs(ymlInputStream, List.class);
-                        }
+                        PluginConfig config = readPluginConfig(jar, entry);
+                        metadata.setParamCount(CollectionUtils.size(config.getParams()));
                     }
                 }
                 if (pluginItems.isEmpty()) {
@@ -262,7 +268,8 @@ public class PluginServiceImpl implements PluginService {
         } catch (YAMLException e) {
             throw new CommonException("YAML the file format is incorrect");
         }
-        return pluginItems;
+        metadata.setItems(pluginItems);
+        return metadata;
     }
 
     private void validateMetadata(PluginMetadata metadata) {
@@ -290,10 +297,12 @@ public class PluginServiceImpl implements PluginService {
         List<PluginItem> pluginItems;
         PluginMetadata pluginMetadata;
         try {
-            pluginItems = validateJarFile(destFile);
+            PluginMetadata parsed = validateJarFile(destFile);
+            pluginItems = parsed.getItems();
             pluginMetadata = PluginMetadata.builder()
                 .name(pluginUpload.getName())
                 .enableStatus(true)
+                .paramCount(parsed.getParamCount())
                 .items(pluginItems).jarFilePath(destFile.getAbsolutePath())
                 .gmtCreate(LocalDateTime.now())
                 .build();
@@ -424,7 +433,6 @@ public class PluginServiceImpl implements PluginService {
         List<URL> libUrls = new ArrayList<>();
         try (JarFile jarFile = new JarFile(pluginJarPath)) {
             Enumeration<JarEntry> entries = jarFile.entries();
-            Yaml yaml = new Yaml();
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 File file = new File(libDir, entry.getName());
@@ -447,14 +455,28 @@ public class PluginServiceImpl implements PluginService {
                     }
                 }
                 if ((entry.getName().contains("define")) && (entry.getName().endsWith(".yml") || entry.getName().endsWith(".yaml"))) {
-                    try (InputStream ymlInputStream = jarFile.getInputStream(entry)) {
-                        PluginConfig config = yaml.loadAs(ymlInputStream, PluginConfig.class);
-                        PARAMS_CONFIG_MAP.put(pluginMetadataId, config);
-                    }
+                    PluginConfig config = readPluginConfig(jarFile, entry);
+                    PARAMS_CONFIG_MAP.put(pluginMetadataId, config);
                 }
             }
         }
         return libUrls;
+    }
+
+    /**
+     * Read the plugin configuration file from the jar package
+     *
+     * @return plugin config
+     */
+    private PluginConfig readPluginConfig(JarFile jarFile, JarEntry entry) throws IOException {
+        Yaml yaml = new Yaml();
+        try (InputStream ymlInputStream = jarFile.getInputStream(entry)) {
+            PluginConfig config = yaml.loadAs(ymlInputStream, PluginConfig.class);
+            if (config == null) {
+                return new PluginConfig();
+            }
+            return config;
+        }
     }
 
     @Override
