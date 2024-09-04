@@ -352,15 +352,15 @@ hi, i accept. Thanks for invitaion.
 
     找到`CLAs`点击进入页面
 
-    ![](/img/docs/community/clas-web.png)
+    ![HertzBeat](/img/docs/community/clas-web.png)
 
     找到`ICLA(个人贡献者许可协议)`，点击[Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf)
 
-    ![](/img/docs/community/icla-web.png)
+    ![HertzBeat](/img/docs/community/icla-web.png)
 
     跳转后，会显示需要签署的协议，这里可以在网页上直接填写，也可以下载后填写。
 
-    ![](/img/docs/community/icla-pdf.png)
+    ![HertzBeat](/img/docs/community/icla-pdf.png)
 
 2. 填写iCLA
 
@@ -368,8 +368,8 @@ hi, i accept. Thanks for invitaion.
 
     需要填写的内容：
 
-    ![](/img/docs/community/icla-content-1.png)
-    ![](/img/docs/community/icla-content-2.png)
+    ![HertzBeat](/img/docs/community/icla-content-1.png)
+    ![HertzBeat](/img/docs/community/icla-content-2.png)
 
     在PDF中需要填写的字段：
 
@@ -383,12 +383,12 @@ hi, i accept. Thanks for invitaion.
    - `Date`
 
     > 填写样例
-    > ![](/img/docs/community/icla-content-3.png)
-    > ![](/img/docs/community/icla-content-4.png)
+    > ![HertzBeat](/img/docs/community/icla-content-3.png)
+    > ![HertzBeat](/img/docs/community/icla-content-4.png)
 
 3. 打印并签署
 
-    ![](/img/docs/community/icla-content-5.png)
+    ![HertzBeat](/img/docs/community/icla-content-5.png)
 
     `Please sign`字段需要将文件打印出来然后手写签名，内容为自己姓名的全拼。
 
@@ -420,7 +420,7 @@ hi, i accept. Thanks for invitaion.
 
 在网站 [https://id.apache.org/reset/enter](https://id.apache.org/reset/enter) 输入您的Apache ID
 
-![](/img/docs/community/account-1.png)
+![HertzBeat](/img/docs/community/account-1.png)
 
 点击`Send Email`后会提示发送成功。
 
@@ -434,44 +434,44 @@ hi, i accept. Thanks for invitaion.
 
 登录后可以看到这个内容`Link GitHub username to ASF id`，点击跳转
 
-![](/img/docs/community/account-2.png)
+![HertzBeat](/img/docs/community/account-2.png)
 
 输入您的Apache的账号和密码并登录
 
-![](/img/docs/community/account-3.png)
+![HertzBeat](/img/docs/community/account-3.png)
 
 点击 `Authenticate with GitHub`
 
-![](/img/docs/community/account-4.png)
+![HertzBeat](/img/docs/community/account-4.png)
 
 点击`Authorize apache`授权给Apache
 
-![](/img/docs/community/account-5.png)
+![HertzBeat](/img/docs/community/account-5.png)
 
 点击`Send GitHub Invitation!` 发送GitHub邀请邮件
 
-![](/img/docs/community/account-6.png)
+![HertzBeat](/img/docs/community/account-6.png)
 
 邮箱中会收到一封邮件，点击`Join @apache`
 
 > 这里邮箱指的是您提供给PMC的那个邮箱地址
 
-![](/img/docs/community/account-7.png)
+![HertzBeat](/img/docs/community/account-7.png)
 
 点击`Join The Apache Software Foundation`，加入GitHub加入Apache组织，会自动跳转到GitHub页面
 
-![](/img/docs/community/account-8.png)
-![](/img/docs/community/account-9.png)
+![HertzBeat](/img/docs/community/account-8.png)
+![HertzBeat](/img/docs/community/account-9.png)
 
 回到Apache页面，提示GitHub启用多重身份认证，在GitHub页面启用双重身份认证
 
 > GitHub双重身份认证介绍，[点击跳转官方文档](https://docs.github.com/zh/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication)
 
-![](/img/docs/community/account-10.png)
+![HertzBeat](/img/docs/community/account-10.png)
 
 启动完成之后等几分钟，提示已经绑定完成
 
-![](/img/docs/community/account-11.png)
+![HertzBeat](/img/docs/community/account-11.png)
 
 至此您的GitHub账号与Apache账号就绑定完成了。
 
@@ -485,17 +485,17 @@ hi, i accept. Thanks for invitaion.
 
 进入设置页面，并点击`添加其他电子邮件地址``
 
-![](/img/docs/community/email-1.png)
+![HertzBeat](/img/docs/community/email-1.png)
 
 填写您的apache邮箱，按照指引点击下一步
 
-![](/img/docs/community/email-2.png)
-![](/img/docs/community/email-3.png)
-![](/img/docs/community/email-4.png)
+![HertzBeat](/img/docs/community/email-2.png)
+![HertzBeat](/img/docs/community/email-3.png)
+![HertzBeat](/img/docs/community/email-4.png)
 
 设置为默认发送邮箱(可选)
 
-![](/img/docs/community/email-5.png)
+![HertzBeat](/img/docs/community/email-5.png)
 
 配置完成。
 

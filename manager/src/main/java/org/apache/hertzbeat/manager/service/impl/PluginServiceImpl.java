@@ -39,6 +39,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
@@ -221,6 +222,7 @@ public class PluginServiceImpl implements PluginService {
     public PluginMetadata validateJarFile(File jarFile) {
         PluginMetadata metadata = new PluginMetadata();
         List<PluginItem> pluginItems = new ArrayList<>();
+        AtomicInteger pluginImplementationCount = new AtomicInteger(0);
         try {
             URL jarUrl = new URL("file:" + jarFile.getAbsolutePath());
             try (URLClassLoader classLoader = new URLClassLoader(new URL[]{jarUrl}, this.getClass().getClassLoader());
@@ -232,13 +234,18 @@ public class PluginServiceImpl implements PluginService {
                         String className = entry.getName().replace("/", ".").replace(".class", "");
                         try {
                             Class<?> cls = classLoader.loadClass(className);
-                            if (!cls.isInterface()) {
-                                PLUGIN_TYPE_MAPPING.forEach((clazz, type) -> {
-                                    if (clazz.isAssignableFrom(cls)) {
-                                        pluginItems.add(new PluginItem(className, type));
-                                    }
-                                });
+                            if (cls.isInterface()) {
+                                continue;
                             }
+                            if (pluginImplementationCount.get() >= 1) {
+                                throw new CommonException("A plugin package can only contain one plugin implementation class");
+                            }
+                            PLUGIN_TYPE_MAPPING.forEach((clazz, type) -> {
+                                if (clazz.isAssignableFrom(cls)) {
+                                    pluginItems.add(new PluginItem(className, type));
+                                    pluginImplementationCount.incrementAndGet();
+                                }
+                            });
                         } catch (ClassNotFoundException e) {
                             System.err.println("Failed to load class: " + className);
                         }
