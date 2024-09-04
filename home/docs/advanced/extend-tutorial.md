@@ -203,19 +203,19 @@ metrics:
 
 **The addition is complete, now we restart the hertzbeat system. We can see that the system page has added a `hertzbeat` monitoring type.**
 
-![](/img/docs/advanced/extend-http-example-1.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-1.png)
 
 ### The system page adds the monitoring of `hertzbeat` monitoring type
 
 > We click Add `HertzBeat Monitoring Tool`, configure monitoring IP, port, collection cycle, account password in advanced settings, etc., click OK to add monitoring.
 
-![](/img/docs/advanced/extend-http-example-2.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-2.png)
 
-![](/img/docs/advanced/extend-http-example-3.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-3.png)
 
 > After a certain period of time (depending on the collection cycle), we can see the specific metric data and historical charts in the monitoring details!
 
-![](/img/docs/advanced/extend-http-example-4.png)
+![HertzBeat](/img/docs/advanced/extend-http-example-4.png)
 
 ### Set threshold alarm notification
 

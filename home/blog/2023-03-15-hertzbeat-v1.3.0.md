@@ -10,7 +10,7 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 Website: hertzbeat.com | tancloud.cn
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
+![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
 
 ### What is HertzBeat?
 
@@ -22,7 +22,7 @@ Website: hertzbeat.com | tancloud.cn
 >
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by defining YML?
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
+![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
 
 **Github: <https://github.com/apache/hertzbeat>**
 
@@ -34,7 +34,7 @@ After a month of iterations, HertzBeat v1.3.0 was officially released last weeke
 
 - Hertzbeat has powerful custom monitoring capabilities, all our supported monitoring types are mapped to a YML. This time we bring custom monitoring pagination, welcome to use and share your own monitoring type definition.
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b5c9dd3e28c54c72b49a7470012a0c36~tplv-k3u1fbpfcp-zoom-1.image)
+![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b5c9dd3e28c54c72b49a7470012a0c36~tplv-k3u1fbpfcp-zoom-1.image)
 
 - **support for monitoring network switches**.
   hertzbeat supported snmp protocol long time ago, windows monitoring is monitored by snmp protocol, this version we not only support more windows performance metrics, but also support snmp walk, adapt several common network switches monitoring, welcome to contribute more types and metrics to the community.

@@ -24,7 +24,7 @@ keywords: [开源监控系统, 开源网站监控, 状态页面]
 
 填写完组织信息后，点击 `确定`。
 
-![](/img/docs/help/status-3.png)
+![HertzBeat](/img/docs/help/status-3.png)
 
 ## 2. 新增组件
 
@@ -51,7 +51,7 @@ status:
     interval: 60
 ```
 
-![](/img/docs/help/status-4.png)
+![HertzBeat](/img/docs/help/status-4.png)
 
 ## 3. 维护事件
 
@@ -59,7 +59,7 @@ status:
 
 点击 `发布事件`
 
-![](/img/docs/help/status-1.png)
+![HertzBeat](/img/docs/help/status-1.png)
 
 | 字段名称 |                    字段说明                     |                                  举例                                  |
 |------|---------------------------------------------|----------------------------------------------------------------------|
@@ -70,4 +70,4 @@ status:
 
 > 提示：可以多次发布消息，及时向团队汇报当前状态。
 
-![](/img/docs/help/status-2.png)
+![HertzBeat](/img/docs/help/status-2.png)

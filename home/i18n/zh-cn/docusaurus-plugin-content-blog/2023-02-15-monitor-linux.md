@@ -32,30 +32,30 @@ Github: <https://github.com/apache/hertzbeat>
 
     路径：菜单 -> 操作系统监控 -> Linux操作系统 -> 新增Linux操作系统监控
 
-    ![hertzbeat](/img/blog/monitor-linux-1.png)
+    ![HertzBeat](/img/blog/monitor-linux-1.png)
 
 2. 配置新增监控 Linux 所需参数
 
     在监控页面填写 Linux **对端IP**，**SSH端口**(默认22)，**账户密码等**，最后点击确定添加即可。
     其他参数如**采集间隔**，**超时时间**等可以参考帮助文档 <https://hertzbeat.com/docs/help/mysql/>
 
-    ![hertzbeat](/img/blog/monitor-linux-2.png)
+    ![HertzBeat](/img/blog/monitor-linux-2.png)
 
 3. 完成✅,现在我们已经添加好对 Linux 的监控了，查看监控列表即可看到我们的添加项。
 
-    ![hertzbeat](/img/blog/monitor-linux-3.png)
+    ![HertzBeat](/img/blog/monitor-linux-3.png)
 
 4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 Linux 的实时监控指标数据。
 
-    ![hertzbeat](/img/blog/monitor-linux-4.png)
+    ![HertzBeat](/img/blog/monitor-linux-4.png)
 
-    ![hertzbeat](/img/blog/monitor-linux-7.png)
+    ![HertzBeat](/img/blog/monitor-linux-7.png)
 
 5. 点击**监控历史详情TAB** 即可浏览 Linux 的历史监控指标数据图表📈。
 
-    ![hertzbeat](/img/blog/monitor-linux-5.png)
+    ![HertzBeat](/img/blog/monitor-linux-5.png)
 
-    ![hertzbeat](/img/blog/monitor-linux-6.png)
+    ![HertzBeat](/img/blog/monitor-linux-6.png)
 
 **DONE！完成啦！不需要我们去部署agent或者各种繁琐操作，是不是很简单**
 
@@ -137,9 +137,9 @@ Github: <https://github.com/apache/hertzbeat>
    - 选择配置的指标对象，Linux 监控主要是cpu 内存 磁盘 网络性能等相关指标，我们举例对 `CPU利用率` `cpu` -> `usage` 这个指标进行阈值设置， 当Linux cpu利用率大于90%时发出告警。
    - 这里我们就配置当此指标`cpu` 的 `usage>90` 时发出告警，告警级别为**警告告警**，三次即触发，具体如下图。
 
-    ![hertzbeat](/img/blog/monitor-linux-8.png)
+    ![HertzBeat](/img/blog/monitor-linux-8.png)
 
-    ![hertzbeat](/img/blog/monitor-linux-9.png)
+    ![HertzBeat](/img/blog/monitor-linux-9.png)
 
 2. 新增消息通知接收人
 
@@ -154,13 +154,13 @@ Github: <https://github.com/apache/hertzbeat>
 
     【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
 
-    ![hertzbeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](/img/blog/alert-notice-1.png)
 
 3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】
 
     > 配置告警通知策略，让告警消息与接收人绑定，这样就能决定哪些告警发给哪个人。
 
-    ![hertzbeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](/img/blog/alert-notice-2.png)
 
 ### 完毕，现在坐等告警消息过来啦。叮叮叮叮
 

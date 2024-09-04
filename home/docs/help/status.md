@@ -24,7 +24,7 @@ The fields that need to be filled in are as follows:
 
 After filling in the organization information, click `Confirm`.
 
-![](/img/docs/help/status-3.png)
+![HertzBeat](/img/docs/help/status-3.png)
 
 ## 2. Add Component
 
@@ -51,7 +51,7 @@ status:
     interval: 60
 ```
 
-![](/img/docs/help/status-4.png)
+![HertzBeat](/img/docs/help/status-4.png)
 
 ## 3. Maintain Events
 
@@ -59,7 +59,7 @@ When an event occurs, you can publish a notification on the status page.
 
 Click `Publish Event`
 
-![](/img/docs/help/status-1.png)
+![HertzBeat](/img/docs/help/status-1.png)
 
 |     Field Name     |                                                         Field Description                                                         |                                                                                                               Example                                                                                                               |
 |--------------------|-----------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -70,4 +70,4 @@ Click `Publish Event`
 
 > Note: You can publish messages multiple times to keep the team updated on the current status.
 
-![](/img/docs/help/status-2.png)
+![HertzBeat](/img/docs/help/status-2.png)
