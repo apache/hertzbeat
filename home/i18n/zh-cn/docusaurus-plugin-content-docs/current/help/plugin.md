@@ -18,6 +18,10 @@ sidebar_label: 自定义插件
     - 作用：在采集后执行自定义操作
     - 实现接口：`org.apache.hertzbeat.plugin.PostCollectPlugin`
 
+:::tip
+为了保证插件功能清晰，易于管理，我们建议且只支持一个插件中只包含一种插件类型接口的一个实现。
+:::
+
 如需在采集、启动程序等时机设置触发方法，请在`https://github.com/apache/hertzbeat/issues/new/choose` 提`Task`
 
 ### 开发步骤 （以实现一个告警后插件为例）

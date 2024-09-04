@@ -17,6 +17,10 @@ In the current usage of `HertzBeat`, interaction with external systems only occu
     - Purpose: Execute custom operations after data collection
     - Implementing Interface: `org.apache.hertzbeat.plugin.PostCollectPlugin`
 
+:::tip
+To ensure that plugin functionality is clear and easy to manage, we recommend and only support one implementation of one plugin type interface in a plugin.
+:::
+
 If you want to set trigger methods during collection, program startup, etc., please submit a `Task` at `https://github.com/apache/hertzbeat/issues/new/choose`.
 
 ### Development Steps (Example: Implementing a Post-Alert Plugin)

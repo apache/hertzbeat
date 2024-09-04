@@ -38,52 +38,52 @@ gitee: <https://gitee.com/hertzbeat/hertzbeat>
 
    > System Page -> Monitor Menu -> SSL Certificates -> New SSL Certificate  
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bd53f343a5b54feab62e71458d076441~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/bd53f343a5b54feab62e71458d076441~tplv-k3u1fbpfcp-zoom-1.image)
 
 2. Configure monitoring website
 
    > Here is an example to monitor Baidu website, configure the host domain name, name, collection interval, etc. > Click OK.
    > Click OK. Note that ⚠️ will test the connectivity of the website before adding it by default, and it will add it only if the connection is successful, of course, you can also gray out the **Whether to test** button.
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ad1154670648413bb82c8bdeb5b13609~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ad1154670648413bb82c8bdeb5b13609~tplv-k3u1fbpfcp-zoom-1.image)
 
 3. Viewing Test Indicator Data
 
    > You can view the task status in the monitor list, and go into the monitor details to view the metrics data graphs etc.
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f874b45e909c4bb0acdd28b3fb034a61~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f874b45e909c4bb0acdd28b3fb034a61~tplv-k3u1fbpfcp-zoom-1.image)
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ef5d7443f8c04818ae5aa28d421203be~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ef5d7443f8c04818ae5aa28d421203be~tplv-k3u1fbpfcp-zoom-1.image)
 
 4. Set the threshold (triggered when the certificate expires)
 
    > System Page -> Alarms -> Alarm Thresholds -> Add Thresholds
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8d6205172d43463aa34e534477f132f1~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8d6205172d43463aa34e534477f132f1~tplv-k3u1fbpfcp-zoom-1.image)
 
    > Configure thresholds, select SSL certificate indicator object, configure alert expression - triggered when indicator `expired` is `true`, i.e. `equals(expired, "true")` , set alert level notification template message etc.
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/83d17b381d994f26a6240e01915b2001~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/83d17b381d994f26a6240e01915b2001~tplv-k3u1fbpfcp-zoom-1.image)
 
    > Associate thresholds with monitors, set which monitors this threshold should be applied to in the threshold list.
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9b9063d7bcf9454387be0491fc382bd1~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9b9063d7bcf9454387be0491fc382bd1~tplv-k3u1fbpfcp-zoom-1.image)
 
 5. set the threshold (triggered one week before certificate expiration)
 
    > Same as above, add a new configuration threshold, configure the alert expression - when the indicator validity timestamp `end_timestamp`, `now()` function for the current timestamp, if you configure to trigger the alert one week in advance i.e.: `end_timestamp <= (now() + 604800000)` , where `604800000` is the total time difference of 7 days. milliseconds.
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0d6f837f57c247e09f668f60eff4a0ff~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0d6f837f57c247e09f668f60eff4a0ff~tplv-k3u1fbpfcp-zoom-1.image)
 
    > Eventually you can see the triggered alarms in the alarm center.
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5a61b23127524976b2c209ce0ca6a339~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5a61b23127524976b2c209ce0ca6a339~tplv-k3u1fbpfcp-zoom-1.image)
 
 6. Alarm notification (timely notification via NailWeChatFlysheet, etc.)
 
    > Monitoring System -> Alert Notification -> Add Recipients
 
-      ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7f36956060ef410a82bbecafcbb2957f~tplv-k3u1fbpfcp-zoom-1.image)
+      ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/7f36956060ef410a82bbecafcbb2957f~tplv-k3u1fbpfcp-zoom-1.image)
 
       You can refer to the help file for the token configuration of Nail WeChat Flying Book, etc.
 
@@ -92,7 +92,7 @@ gitee: <https://gitee.com/hertzbeat/hertzbeat>
 
    > Alert Notification -> Add new alert notification policy -> Enable notification for the recipients you just configured
 
-   ![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d976343e81f843138344a039f3aff8a3~tplv-k3u1fbpfcp-zoom-1.image)
+   ![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d976343e81f843138344a039f3aff8a3~tplv-k3u1fbpfcp-zoom-1.image)
 
 7. OK When the threshold is triggered, we can receive the corresponding alarm message, if there is no notification, you can also view the alarm information in the alarm center.
 
