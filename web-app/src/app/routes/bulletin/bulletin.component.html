@@ -93,7 +93,11 @@
         <tbody>
           <ng-container *ngFor="let content of fixedTable.data">
             <tr>
-              <td nzAlign="center" [rowSpan]="1">{{ content.monitorName }}</td>
+              <td nzAlign="center" [rowSpan]="1">
+                <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + content.monitorId]">
+                  {{ content.monitorName }}
+                </button>
+              </td>
               <td nzAlign="center" [rowSpan]="1">{{ content.host }}</td>
               <ng-container *ngFor="let metric of content.metrics">
                 <ng-container *ngFor="let field of metric.fields">
