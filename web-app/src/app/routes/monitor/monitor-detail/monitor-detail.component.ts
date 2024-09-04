@@ -63,6 +63,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.countDownTime = this.deadline;
     this.loadRealTimeMetric();
+    this.getGrafana();
   }
 
   loadMetricChart() {
@@ -197,6 +198,21 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     this.deadline = deadlineTime;
     this.countDownTime = this.deadline;
     this.cdr.detectChanges();
+  }
+
+  getGrafana() {
+    this.monitorSvc.getGrafanaDashboard(this.monitorId).subscribe(
+      message => {
+        if (message.code === 0 && message.msg != null) {
+          this.monitor.grafanaDashboard = message.data;
+        } else {
+          console.warn(message.msg);
+        }
+      },
+      error => {
+        console.error(error.msg);
+      }
+    );
   }
 
   ngOnDestroy(): void {

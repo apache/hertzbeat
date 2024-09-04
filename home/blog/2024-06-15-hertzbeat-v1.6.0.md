@@ -37,7 +37,7 @@ Upgrade Guide: <https://hertzbeat.apache.org/blog/2024/06/11/hertzbeat-v1.6.0-up
 
 > HertzBeat's powerful customization, multi-type support, high performance, easy expansion, and low coupling, aims to help users quickly build their own monitoring system.
 
-![hertzBeat](/img/docs/hertzbeat-arch.png)
+![HertzBeat](/img/docs/hertzbeat-arch.png)
 
 **Github: <https://github.com/apache/hertzbeat>**
 

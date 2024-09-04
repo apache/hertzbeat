@@ -50,26 +50,26 @@ keywords: [开源监控系统, 开源数据库监控, IotDB数据库监控]
 
     路径：菜单 -> 数据库监控 -> IoTDB监控 -> 新增IoTDB监控
 
-    ![hertzbeat](/img/blog/monitor-iotdb-1.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-1.png)
 
 2. 配置监控IoTDB所需参数
 
     在监控页面填写 IoTDB **服务IP**，**监控端口**(默认9091)，最后点击确定添加即可。
     其他参数如**采集间隔**，**超时时间**等可以参考[帮助文档](https://hertzbeat.com/docs/help/iotdb/) <https://hertzbeat.com/docs/help/iotdb/>
 
-    ![hertzbeat](/img/blog/monitor-iotdb-2.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-2.png)
 
 3. 完成✅,现在我们已经添加好对 IoTDB 的监控了，查看监控列表即可看到我们的添加项。
 
-    ![hertzbeat](/img/blog/monitor-iotdb-3.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-3.png)
 
 4. 点击监控列表项的**操作**->**监控详情图标** 即可浏览 IoTDB的实时监控指标数据。
 
-    ![hertzbeat](/img/blog/monitor-iotdb-4.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-4.png)
 
 5. 点击**监控历史详情TAB** 即可浏览 IoTDB的历史监控指标数据图表📈。
 
-    ![hertzbeat](/img/blog/monitor-iotdb-5.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-5.png)
 
 **完成DONE！通过上面几步，总结起来其实也就是两步**  
 
@@ -89,7 +89,7 @@ keywords: [开源监控系统, 开源数据库监控, IotDB数据库监控]
    - 选择配置的指标对象，IotDB监控有非常多的指标，其中有个指标关系到节点的状态 `cluster_node_status` -> `status` (节点状态，1=online 2=offline)。
    - 这里我们就配置当此指标 `status==2` 时发出告警，告警级别为**紧急告警**，一次即触发，具体如下图。
 
-    ![hertzbeat](/img/blog/monitor-iotdb-6.png)
+    ![HertzBeat](/img/blog/monitor-iotdb-6.png)
 
 2. 新增消息通知接收人
 
@@ -102,11 +102,11 @@ keywords: [开源监控系统, 开源数据库监控, IotDB数据库监控]
 
     【告警通知】->【新增接收人】 ->【选择钉钉机器人通知方式】->【设置钉钉机器人ACCESS_TOKEN】-> 【确定】
 
-    ![hertzbeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](/img/blog/alert-notice-1.png)
 
 3. 配置关联的告警通知策略⚠️ 【新增通知策略】-> 【将刚设置的接收人关联】-> 【确定】
 
-    ![hertzbeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](/img/blog/alert-notice-2.png)
 
 ### 完毕，现在坐等告警消息过来了。叮叮叮叮
 
