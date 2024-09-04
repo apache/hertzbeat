@@ -185,7 +185,8 @@
             "help/ntp",
             "help/dns",
             "help/ftp",
-            "help/websocket"
+            "help/websocket",
+            "help/mqtt"
           ]
         },
         {
@@ -244,7 +245,9 @@
             "help/freebsd",
             "help/redhat",
             "help/rockylinux",
-            "help/euleros"
+            "help/euleros",
+            "help/linux_script",
+            "help/windows_script"
           ]
         },
         {

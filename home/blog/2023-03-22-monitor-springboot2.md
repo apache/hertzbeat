@@ -89,26 +89,26 @@ Github: <https://github.com/apache/hertzbeat>
 
     Path: Menu -> Application Service Monitoring -> SpringBoot2 -> Add SpringBoot2 Monitoring
 
-    ![hertzbeat](/img/blog/monitor-springboot2-1.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-1.png)
 
 2. Configure the parameters required for new monitoring SpringBoot2
 
     Fill in the SpringBoot2 application **peer IP**, **service port** (default 8080), **account password, etc.** on the monitoring page, and finally click OK to add.
     For other parameters such as **collection interval**, **timeout period**, etc., please refer to the help document <https://hertzbeat.com/docs/help/>
 
-    ![hertzbeat](/img/blog/monitor-springboot2-2.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-2.png)
 
 3. Complete ✅, now we have added the monitoring of the SpringBoot2 application, check the monitoring list to see our additions.
 
-    ![hertzbeat](/img/blog/monitor-springboot2-3.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-3.png)
 
 4. Click **Operation**->**Monitoring Details Icon** of the monitoring list item to browse the real-time monitoring metric data of the SpringBoot2 application.
 
-    ![hertzbeat](/img/blog/monitor-springboot2-4.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-4.png)
 
 5. Click **Monitoring History Details TAB** to browse the historical monitoring metric data chart of the SpringBoot2 application📈.
 
-    ![hertzbeat](/img/blog/monitor-springboot2-5.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-5.png)
 
 **DONE! Done! It doesn't require us to deploy agents or various cumbersome operations, isn't it very simple**
 
@@ -130,9 +130,9 @@ Of course, it is impossible to manually check the metrics in real time. Monitori
    - Select the configured metric object. SpringBoot2 application monitoring mainly focuses on stack memory threads and other related metrics. For example, we set the threshold for the metric `threads` -> `threads`. When the number of threads in the `runnable` state is greater than At 300 an alert is issued.
    - Here we configure to send an alarm when `size`, `state` of `equals(state, "runnable"") && size>300` of this metric, the alarm level is **warning alarm**, which will be triggered three times, specifically As shown below.
 
-    ![hertzbeat](/img/blog/monitor-springboot2-6.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-6.png)
 
-    ![hertzbeat](/img/blog/monitor-springboot2-7.png)
+    ![HertzBeat](/img/blog/monitor-springboot2-7.png)
 
 2. Add message notification recipients
 
@@ -147,13 +147,13 @@ Of course, it is impossible to manually check the metrics in real time. Monitori
 
     【Alarm Notification】->【New Recipient】->【Select DingTalk Robot Notification Method】->【Set DingTalk Robot ACCESS_TOKEN】->【OK】
 
-    ![hertzbeat](/img/blog/alert-notice-1.png)
+    ![HertzBeat](/img/blog/alert-notice-1.png)
 
 3. Configure the associated alarm notification strategy ⚠️ [Add notification strategy] -> [Associate the recipient just set] -> [OK]
 
     > Configure the alarm notification policy to bind the alarm message with the receiver, so that you can decide which alarms to send to whom.
 
-    ![hertzbeat](/img/blog/alert-notice-2.png)
+    ![HertzBeat](/img/blog/alert-notice-2.png)
 
 ### Finished, now wait for the warning message to come. ding ding ding ding
 
@@ -181,7 +181,7 @@ This practical article took us to experience how to use the open source real-tim
 
 > Through the simple steps above, we have realized the monitoring of SpringBoot2, but the built-in metrics in it do not meet the needs. Can we customize and monitor more metrics of SpringBoot2? The answer is of course yes, through **Monitoring Definition**->**SpringBoot2** on the page, you can customize and modify the performance metrics you want to monitor by editing the following YML configuration file at any time.
 
-![hertzbeat](/img/blog/monitor-springboot2-8.png)
+![HertzBeat](/img/blog/monitor-springboot2-8.png)
 
 ## What is HertzBeat?
 

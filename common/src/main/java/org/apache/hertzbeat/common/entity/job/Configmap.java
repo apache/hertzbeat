@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.common.entity.job;
 
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,7 +32,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Configmap {
+public class Configmap implements Serializable {
 
     /**
      * Parameter key, replace the content with the identifier ^^_key_^^ in the protocol

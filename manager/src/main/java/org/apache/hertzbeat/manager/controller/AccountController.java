@@ -17,8 +17,9 @@
 
 package org.apache.hertzbeat.manager.controller;
 
-import static org.apache.hertzbeat.common.constants.CommonConstants.MONITOR_LOGIN_FAILED_CODE;
+import static org.apache.hertzbeat.common.constants.CommonConstants.LOGIN_FAILED_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -58,7 +59,7 @@ public class AccountController {
         try {
             return ResponseEntity.ok(Message.success(accountService.authGetToken(loginDto)));
         } catch (AuthenticationException e) {
-            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, e.getMessage()));
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, e.getMessage()));
         }
     }
 
@@ -70,10 +71,13 @@ public class AccountController {
         try {
             return ResponseEntity.ok(Message.success(accountService.refreshToken(refreshToken)));
         } catch (AuthenticationException e) {
-            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, e.getMessage()));
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, e.getMessage()));
+        } catch (ExpiredJwtException expiredJwtException) {
+            log.warn("{}", expiredJwtException.getMessage());
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "Refresh Token Expired"));
         } catch (Exception e) {
             log.error("Exception occurred during token refresh: {}", e.getClass().getName(), e);
-            return ResponseEntity.ok(Message.fail(MONITOR_LOGIN_FAILED_CODE, "Refresh Token Expired or Error"));
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "Refresh Token Error"));
         }
     }
 }

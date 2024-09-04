@@ -18,11 +18,18 @@
 package org.apache.hertzbeat.manager.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
+import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
@@ -76,6 +83,29 @@ public class CollectorServiceTest {
 
     @Test
     public void hasCollector() {
-        collectorService.hasCollector("test");
+        when(collectorDao.findCollectorByName("test")).thenReturn(Optional.empty());
+        assertFalse(collectorService.hasCollector("test"));
+    }
+
+    @Test
+    public void testGenerateCollectorDeployInfo() {
+        when(collectorDao.findCollectorByName("test")).thenReturn(Optional.of(new Collector()));
+        assertThrows(CommonException.class, ()->{
+            collectorService.generateCollectorDeployInfo("test");
+        });
+    }
+
+    @Test
+    public void testMakeCollectorsOffline() {
+        assertDoesNotThrow(() -> {
+            collectorService.makeCollectorsOffline(new ArrayList<>());
+        });
+    }
+
+    @Test
+    public void testMakeCollectorsOnline() {
+        assertDoesNotThrow(() -> {
+            collectorService.makeCollectorsOnline(new ArrayList<>());
+        });
     }
 }

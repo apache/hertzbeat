@@ -1,31 +1,107 @@
 ---
-id: plugin  
-title: Custom plugin      
+id: plugin
+title: Custom plugin
 sidebar_label: Custom plugin
 ---
 
-## Custom plugins
-
 ### Introduction
 
-Currently, `Hertzbeat` relies on the `alert` module to notify the user, and then the user can take actions such as sending requests, executing `sql`, executing `shell` scripts, etc. However, this can only be automated manually or by `webhook` to receive the alert message.
-However, at present, it is only possible to automate the process by receiving alert messages manually or through a `webhook`. For this reason, `HertzBeat` has added a new `plugin` module, which has a generic interface `Plugin`, which allows users to implement the `alert` method of this interface and receive the `Alert` class as a parameter to customize the operation.
-After adding the customized code, you only need to package the `plugin` module, copy it to the `/ext-lib` folder under the installation directory, restart the `HertzBeat` main program, and then you can execute the customized function after the alert, without having to re-package and deploy the whole program by yourself.
-Currently, `HertzBeat` only set up the trigger `alert` method after alarm, if you need to set up the trigger method at the time of acquisition, startup program, etc., please mention `Task` in `https://github.com/apache/hertzbeat/issues/new/choose`.
+In the current usage of `HertzBeat`, interaction with external systems only occurs after an alert through the notification feature. The plugin functionality allows users to add custom operations at various stages of the `HertzBeat` lifecycle, such as executing `SQL` or `shell` scripts after an alert, or sending collected monitoring data to other systems. Users can develop plugins following the custom plugin development process, package them, and then upload and enable them using the `Plugin Management` - `Upload Plugin` feature, thereby adding custom functionality without restarting `HertzBeat`.
 
-### Specific uses
+### Supported Plugin Types
 
-1. Pull the master branch code `git clone https://github.com/apache/hertzbeat.git` and locate the `plugin` module's
-   `Plugin` interface.
+1. `Post-Alert` Plugin
+    - Purpose: Execute custom operations after an alert
+    - Implementing Interface: `org.apache.hertzbeat.plugin.PostAlertPlugin`
+2. `Post-Collect` Plugin
+    - Purpose: Execute custom operations after data collection
+    - Implementing Interface: `org.apache.hertzbeat.plugin.PostCollectPlugin`
+
+:::tip
+To ensure that plugin functionality is clear and easy to manage, we recommend and only support one implementation of one plugin type interface in a plugin.
+:::
+
+If you want to set trigger methods during collection, program startup, etc., please submit a `Task` at `https://github.com/apache/hertzbeat/issues/new/choose`.
+
+### Development Steps (Example: Implementing a Post-Alert Plugin)
+
+1. Clone the main branch code `git clone https://github.com/apache/hertzbeat.git`, and locate the `Plugin` interface in the `plugin` module.
    ![plugin-1.png](/img/docs/help/plugin-1.png)
-2. In the `org.apache.hertzbeat.plugin.impl` directory, create a new interface implementation class, such as `org.apache.hertzbeat.plugin.impl.DemoPluginImpl`, and receive the `Alert` class as a parameter, implement the `alert` method, the logic is customized by the user, here we simply print the object.
-   ![plugin-2.png](/img/docs/help/plugin-2.png)
-3. Add the fully qualified names of the interface implementation classes to the `META-INF/services/org.apache.hertzbeat.plugin.Plugin` file, with each implementation class name on a separate line.
+2. In the `org.apache.hertzbeat.plugin.impl` directory (create it if it does not exist), create an implementation class of `org.apache.hertzbeat.plugin.PostAlertPlugin`, such as `org.apache.hertzbeat.plugin.impl.DemoPlugin`. In the implementation class, receive the `Alert` class as a parameter, implement the `execute` method, and define custom logic. Here, we simply print the object.
+
+   ```java
+     package org.apache.hertzbeat.plugin.impl;
+     
+     import org.apache.hertzbeat.common.entity.alerter.Alert;
+     import org.apache.hertzbeat.common.entity.plugin.PluginContext;
+     import org.apache.hertzbeat.plugin.PostAlertPlugin;
+     import org.slf4j.Logger;
+     import org.slf4j.LoggerFactory;
+     
+     public class DemoPlugin implements PostAlertPlugin {
+     
+         private static final Logger log = LoggerFactory.getLogger(DemoPlugin.class);
+     
+         @Override
+         public void execute(Alert alert, PluginContext pluginContext) {
+             log.info("DemoPlugin alert: {}", alert);
+             log.info("DemoPlugin pluginContext: {}", pluginContext);
+         }
+     }
+   ```
+
+3. Add the fully qualified name of the implementation class to the `META-INF/services/org.apache.hertzbeat.plugin.PostAlertPlugin` file (create it if it does not exist). Each fully qualified name should be on a separate line.
+
+   ```shell
+   org.apache.hertzbeat.plugin.impl.DemoPluginImpl
+   ```
+
 4. Package the `hertzbeat-plugin` module.
 
-   ![plugin-3.png](/img/docs/help/plugin-3.png)
+   ```shell
+   cd plugin
+   mvn package
+   ```
 
-5. Copy the packaged `jar` package to the `ext-lib` directory under the installation directory (for `docker` installations, mount the `ext-lib` directory first, then copy it there).
-   ![plugin-4.png](/img/docs/help/plugin-4.png)
+5. Use the `Plugin Management` - `Upload Plugin` feature to upload the plugin package ending with `-jar-with-lib.jar`, and enable the plugin to execute custom operations after an alert.
 
-6. Then restart `HertzBeat` to enable the customized post-alert handling policy.
+### Defining Plugin Parameters
+
+The plugin feature supports custom parameters, and you can fill in the required parameters for the plugin during runtime using the `Plugin Management` - `Edit Parameters` feature.
+Below is an example of defining a plugin with two parameters, detailing the process of defining plugin parameters:
+
+1. Add a parameter definition file in the `define` directory. Note that the parameter definition file must be a YAML file starting with `define`, such as `define-demo.yml`.
+2. Define parameters in `define-demo.yml` as shown below:
+
+    ```yaml
+   params:
+     - field: host
+       # name-param field display i18n name
+       name:
+         zh-CN: 目标 Host
+         en-US: Target Host
+       # type-param field type(most mapping the html input type)
+       type: text
+       # required-true or false
+       required: true
+     # field-param field key
+     - field: port
+       # name-param field display i18n name
+       name:
+         zh-CN: 端口
+         en-US: Port
+       # type-param field type(most mapping the html input type)
+       type: number
+       # when type is number, range is required
+       range: '[0,65535]'
+    ```
+
+3. Use the parameters in the plugin logic
+
+   ```java
+    @Override
+    public void execute(Alert alert, PluginContext pluginContext) {
+        log.info("param host:{}",pluginContext.getString("host"));
+        log.info("param port:{}",pluginContext.getInteger("port"));
+    }
+   ```
