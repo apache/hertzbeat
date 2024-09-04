@@ -70,7 +70,7 @@ public class Bulletin {
 
 
     @Schema(description = "Monitor Fields")
-    @Column(length = 4096, columnDefinition = "json")
+    @Column(length = 4096)
     private String fields;
 
     @Schema(description = "Tags(status:success,env:prod)", example = "{name: key1, value: value1}",
