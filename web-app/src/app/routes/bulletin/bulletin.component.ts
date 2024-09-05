@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -39,7 +39,7 @@ import { MonitorService } from '../../service/monitor.service';
   templateUrl: './bulletin.component.html',
   styleUrls: ['./bulletin.component.less']
 })
-export class BulletinComponent implements OnInit {
+export class BulletinComponent implements OnInit, OnDestroy {
   constructor(
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
@@ -69,9 +69,19 @@ export class BulletinComponent implements OnInit {
   pageSize: number = 8;
   total: number = 0;
   currentTab: number = 0;
+  refreshInterval: any;
 
   ngOnInit() {
     this.loadTabs();
+    this.refreshInterval = setInterval(() => {
+      this.loadTabs();
+    }, 30000); // every 30 seconds refresh the tabs
+  }
+
+  ngOnDestroy() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   sync() {
