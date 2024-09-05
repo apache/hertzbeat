@@ -25,12 +25,12 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
 import { AppDefineService } from '../../../service/app-define.service';
 import { MonitorService } from '../../../service/monitor.service';
-import {GrafanaDashboard} from "../../../pojo/GrafanaDashboard";
 
 @Component({
   selector: 'app-monitor-detail',

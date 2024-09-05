@@ -251,5 +251,4 @@ export class MonitorEditComponent implements OnInit {
     app = app ? app : '';
     this.router.navigateByUrl(`/monitors?app=${app}`);
   }
-
 }
