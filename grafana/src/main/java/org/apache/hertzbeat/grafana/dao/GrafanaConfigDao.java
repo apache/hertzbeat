@@ -17,21 +17,20 @@
 
 package org.apache.hertzbeat.grafana.dao;
 
-import org.apache.hertzbeat.common.entity.grafana.ServiceToken;
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
- * ServiceAccount Dao
+ * Public server configuration Dao
+ * <p>This interface inherits the two interfaces JpaRepository and JpaSpecificationExecutor, providing basic CRUD operations and specification query capabilities.</p>
  */
-public interface ServiceTokenDao extends JpaRepository<ServiceToken, Long>, JpaSpecificationExecutor<ServiceToken> {
-    ServiceToken findByName(String name);
-
-    @Transactional
-    @Modifying
-    @Query(value = "truncate table hzb_grafana_service_token", nativeQuery = true)
-    void truncate();
+public interface GrafanaConfigDao extends JpaRepository<GeneralConfig, Long>, JpaSpecificationExecutor<GeneralConfig> {
+    
+    /**
+     * Query by type
+     * @param type type
+     * @return Return the queried configuration information
+     */
+    GeneralConfig findByType(String type);
 }

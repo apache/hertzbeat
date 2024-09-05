@@ -22,9 +22,7 @@ import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_DATASO
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_ACCESS;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_NAME;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_TYPE;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_DATASOURCE_API;
-import jakarta.annotation.PostConstruct;
-import java.util.Base64;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.QUERY_DATASOURCE_API;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.grafana.config.GrafanaProperties;
 import org.apache.hertzbeat.warehouse.store.history.vm.VictoriaMetricsProperties;
@@ -35,20 +33,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Service for managing Grafana datasources.
+ * Service for managing Grafana datasource.
  */
 @Service
 @Slf4j
 public class DatasourceService {
-
-    private String grafanaUrl;
-    private String username;
-    private String password;
-    private String prefix;
-    private String victoriaMetricsUrl;
 
     private final GrafanaProperties grafanaProperties;
     private final VictoriaMetricsProperties warehouseProperties;
@@ -65,70 +58,39 @@ public class DatasourceService {
         this.restTemplate = restTemplate;
     }
 
-    @PostConstruct
-    public void init() {
-        this.grafanaUrl = grafanaProperties.getUrl();
-        this.username = grafanaProperties.username();
-        this.password = grafanaProperties.password();
-        this.prefix = grafanaProperties.getPrefix();
-        this.victoriaMetricsUrl = warehouseProperties.url();
-    }
-
     /**
      * Create a new datasource in Grafana.
      */
-    public void createDatasource() {
-        String url = String.format(prefix + CREATE_DATASOURCE_API, username, password, grafanaUrl);
-
-        HttpHeaders headers = createHeaders();
-
-        String body = String.format(
-                "{\"name\":\"%s\",\"type\":\"%s\",\"access\":\"%s\",\"url\":\"%s\",\"basicAuth\":%s}",
-                DATASOURCE_NAME, DATASOURCE_TYPE, DATASOURCE_ACCESS, victoriaMetricsUrl, false
-        );
-
-        HttpEntity<String> entity = new HttpEntity<>(body, headers);
-
-        try {
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("Create datasource success");
-            }
-        } catch (Exception ex) {
-            log.error("Create datasource error", ex);
-            throw new RuntimeException("Create datasource error", ex);
-        }
-    }
-
-    /**
-     * Delete a datasource in Grafana.
-     */
-    public void deleteDatasource() {
-        String url = String.format(prefix + DELETE_DATASOURCE_API, username, password, grafanaUrl, DATASOURCE_NAME);
-
-        HttpHeaders headers = createHeaders();
-
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("Delete datasource success");
-            }
-
-        } catch (Exception ex) {
-            log.error("Delete datasource error", ex);
-        }
-    }
-
-    private HttpHeaders createHeaders() {
-        String auth = username + ":" + password;
-        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
-        String authHeader = "Basic " + new String(encodedAuth);
-
+    public void existOrCreateDatasource(String token) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", authHeader);
-        return headers;
+        headers.setBearerAuth(token);
+        // query if exist this datasource
+        String queryUrl = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + QUERY_DATASOURCE_API;
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(queryUrl, HttpMethod.GET, entity, String.class);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("{} datasource exist", DATASOURCE_NAME);
+            }
+        } catch (HttpClientErrorException.NotFound notFound) {
+            String createUrl = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + CREATE_DATASOURCE_API;
+            String body = String.format(
+                    "{\"name\":\"%s\",\"type\":\"%s\",\"access\":\"%s\",\"url\":\"%s\",\"basicAuth\":%s}",
+                    DATASOURCE_NAME, DATASOURCE_TYPE, DATASOURCE_ACCESS, warehouseProperties.url(), false
+            );
+            HttpEntity<String> createEntity = new HttpEntity<>(body, headers);
+            try {
+                ResponseEntity<String> createResponse = restTemplate.postForEntity(createUrl, createEntity, String.class);
+                if (createResponse.getStatusCode().is2xxSuccessful()) {
+                    log.info("Create datasource success");
+                }
+            } catch (Exception e) {
+                log.error("Create datasource error", e);
+            }
+        } catch (Exception e) {
+            log.error("Query datasource error", e);
+        }
+        
     }
 }

@@ -22,6 +22,7 @@ import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_DASHBO
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.INSTANCE;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.KIOSK;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.REFRESH;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.USE_DATASOURCE;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,8 @@ public class DashboardService {
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
                     grafanaDashboard.setUrl(grafanaProperties.getPrefix() + grafanaProperties.getUrl()
-                            + grafanaDashboard.getUrl().replace(grafanaProperties.getUrl(), "") + KIOSK + REFRESH + INSTANCE + monitorId);
+                            + grafanaDashboard.getUrl().replace(grafanaProperties.getUrl(), "")
+                            + KIOSK + REFRESH + INSTANCE + monitorId + USE_DATASOURCE);
                     grafanaDashboard.setMonitorId(monitorId);
                     dashboardDao.save(grafanaDashboard);
                     log.info("create dashboard success, token: {}", response.getBody());
