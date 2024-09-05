@@ -17,8 +17,11 @@
 
 package org.apache.hertzbeat.collector.collect.telnet;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.net.telnet.TelnetClient;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -149,5 +153,29 @@ class TelnetCollectImplTest {
             assertEquals(valueRow.getColumns(3), "YetAnotherValue");
         }
         mocked.close();
+    }
+
+    @Test
+    void preCheck() throws IllegalArgumentException {
+        // metrics is null
+        assertThrows(IllegalArgumentException.class, () -> telnetCollect.preCheck(null));
+
+        // protocol is null
+        assertThrows(IllegalArgumentException.class, () -> {
+            Metrics metrics = new Metrics();
+            telnetCollect.preCheck(metrics);
+        });
+
+        // everyting is ok
+        assertDoesNotThrow(() -> {
+            Metrics metrics = new Metrics();
+            metrics.setTelnet(TelnetProtocol.builder().build());
+            telnetCollect.preCheck(metrics);
+        });
+    }
+
+    @Test
+    void supportProtocol() {
+        assertEquals(DispatchConstants.PROTOCOL_TELNET, telnetCollect.supportProtocol());
     }
 }

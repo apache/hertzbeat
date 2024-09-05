@@ -37,5 +37,10 @@ public interface BulletinDao extends JpaRepository<Bulletin, Long>, JpaSpecifica
      */
     Bulletin findByName(String name);
 
+    /**
+     * Count Bulletin by name
+     */
+    int countByName(String name);
+
 
 }
