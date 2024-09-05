@@ -68,6 +68,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
+  currentTab: number = 0;
   refreshInterval: any;
 
   ngOnInit() {
@@ -357,7 +358,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
   transferChange(ret: TransferChange): void {
     // add
     if (ret.to === 'right') {
-      this.checkedNodeList.forEach(node => {
+      ret.list.forEach(node => {
         node.isDisabled = true;
         node.isChecked = true;
         this.tempMetrics.add(node.key);
@@ -365,20 +366,20 @@ export class BulletinComponent implements OnInit, OnDestroy {
         if (!this.fields[node.key]) {
           this.fields[node.key] = [];
         }
-        if (!this.fields[node.key].includes(node.origin.value)) {
-          this.fields[node.key].push(node.origin.value);
+        if (!this.fields[node.key].includes(node.value)) {
+          this.fields[node.key].push(node.value);
         }
       });
     }
     // delete
     else if (ret.to === 'left') {
-      this.checkedNodeList.forEach(node => {
+      ret.list.forEach(node => {
         node.isDisabled = false;
         node.isChecked = false;
         this.tempMetrics.delete(node.key);
 
         if (this.fields[node.key]) {
-          const index = this.fields[node.key].indexOf(node.origin.value);
+          const index = this.fields[node.key].indexOf(node.value);
           if (index > -1) {
             this.fields[node.key].splice(index, 1);
           }
@@ -398,7 +399,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
         if (message.code === 0) {
           this.tabs = message.data;
           if (this.tabs != null) {
-            this.bulletinName = this.tabs[0];
+            this.bulletinName = this.tabs[this.currentTab];
           }
           this.loadData(this.pageIndex - 1, this.pageSize);
         } else {
@@ -517,7 +518,8 @@ export class BulletinComponent implements OnInit, OnDestroy {
   protected readonly Array = Array;
 
   onTabChange($event: number) {
-    this.bulletinName = this.tabs[$event];
+    this.currentTab = $event;
+    this.bulletinName = this.tabs[this.currentTab];
     this.metricsData = [];
     this.loadData(this.pageIndex - 1, this.pageSize);
     console.log(this.metricsData);
