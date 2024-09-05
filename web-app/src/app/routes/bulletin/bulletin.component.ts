@@ -347,7 +347,7 @@ export class BulletinComponent implements OnInit {
   transferChange(ret: TransferChange): void {
     // add
     if (ret.to === 'right') {
-      this.checkedNodeList.forEach(node => {
+      ret.list.forEach(node => {
         node.isDisabled = true;
         node.isChecked = true;
         this.tempMetrics.add(node.key);
@@ -355,20 +355,20 @@ export class BulletinComponent implements OnInit {
         if (!this.fields[node.key]) {
           this.fields[node.key] = [];
         }
-        if (!this.fields[node.key].includes(node.origin.value)) {
-          this.fields[node.key].push(node.origin.value);
+        if (!this.fields[node.key].includes(node.value)) {
+          this.fields[node.key].push(node.value);
         }
       });
     }
     // delete
     else if (ret.to === 'left') {
-      this.checkedNodeList.forEach(node => {
+      ret.list.forEach(node => {
         node.isDisabled = false;
         node.isChecked = false;
         this.tempMetrics.delete(node.key);
 
         if (this.fields[node.key]) {
-          const index = this.fields[node.key].indexOf(node.origin.value);
+          const index = this.fields[node.key].indexOf(node.value);
           if (index > -1) {
             this.fields[node.key].splice(index, 1);
           }
