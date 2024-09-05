@@ -169,7 +169,7 @@
         </nz-form-control>
       </nz-form-item>
       <!-- upload grafana dashboard json -->
-      <nz-form-item *ngIf="monitor.grafanaDashboard.enabled && monitor.app === 'prometheus'">
+      <nz-form-item *ngIf="monitor.grafanaDashboard && monitor.grafanaDashboard.enabled && monitor.app === 'prometheus'">
         <nz-form-label nzSpan="7" nzFor="grafanaJson" [nzTooltipTitle]="'monitor.grafana.upload.tip' | i18n">
           {{ 'monitor.grafana.upload.label' | i18n }}
         </nz-form-label>
