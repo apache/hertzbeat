@@ -19,6 +19,8 @@ package org.apache.hertzbeat.collector.collect.nginx;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.TYPE_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -70,6 +73,23 @@ public class NginxCollectImplTest {
     public void setup() {
     }
 
+    @Test
+    void preCheck() {
+        // metrics is null
+        assertThrows(IllegalArgumentException.class, () -> {
+            nginxCollect.preCheck(null);
+        });
+
+        // nginx protocol is null
+        assertThrows(IllegalArgumentException.class, () -> {
+            nginxCollect.preCheck(Metrics.builder().build());
+        });
+
+        // nginx protocol is invalid
+        assertThrows(IllegalArgumentException.class, () -> {
+            nginxCollect.preCheck(Metrics.builder().nginx(NginxProtocol.builder().build()).build());
+        });
+    }
 
     @Test
     public void testNginxCollectFail() throws IOException {
@@ -238,6 +258,11 @@ public class NginxCollectImplTest {
             }
 
         }
+    }
+
+    @Test
+    void supportProtocol() {
+        assertEquals(DispatchConstants.PROTOCOL_NGINX, nginxCollect.supportProtocol());
     }
 
     static class CustomHttpEntity implements HttpEntity {
