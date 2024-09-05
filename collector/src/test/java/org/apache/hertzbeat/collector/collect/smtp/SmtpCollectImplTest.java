@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.ssh;
+package org.apache.hertzbeat.collector.collect.smtp;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,21 +23,21 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Test case for {@link SshCollectImpl}
+ * Test case for {@link SmtpCollectImpl}
  */
-class SshCollectImplTest {
-    private SshCollectImpl sshCollect;
+public class SmtpCollectImplTest {
+    private SmtpCollectImpl smtpCollect;
     private CollectRep.MetricsData.Builder builder;
 
     @BeforeEach
-    void setUp() {
-        sshCollect = new SshCollectImpl();
+    void setup() {
+        smtpCollect = new SmtpCollectImpl();
         builder = CollectRep.MetricsData.newBuilder();
     }
 
@@ -45,33 +45,36 @@ class SshCollectImplTest {
     void preCheck() {
         // metrics is null
         assertThrows(IllegalArgumentException.class, () -> {
-            sshCollect.preCheck(null);
+            smtpCollect.preCheck(null);
         });
 
-        // ssh protocol is null
+        // stmp protocol is null
         assertThrows(IllegalArgumentException.class, () -> {
-            Metrics metrics = Metrics.builder().build();
-            sshCollect.preCheck(metrics);
+            smtpCollect.preCheck(new Metrics());
         });
 
-        // everything is ok
+        // everthing is ok
         assertDoesNotThrow(() -> {
-            Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
-            sshCollect.preCheck(metrics);
+            Metrics metrics = Metrics.builder()
+                .smtp(new SmtpProtocol())
+                .build();
+            smtpCollect.preCheck(metrics);
         });
     }
 
     @Test
     void collect() {
         assertDoesNotThrow(() -> {
-            Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
-            sshCollect.collect(builder, 1L, "app", metrics);
+            Metrics metrics = Metrics.builder()
+                .smtp(new SmtpProtocol())
+                .build();
+            smtpCollect.collect(builder, 0, null, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }
 
     @Test
     void supportProtocol() {
-        assertEquals(DispatchConstants.PROTOCOL_SSH, sshCollect.supportProtocol());
+        assertEquals(DispatchConstants.PROTOCOL_SMTP, smtpCollect.supportProtocol());
     }
 }
