@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.udp;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,6 +27,8 @@ import java.net.PortUnreachableException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -52,6 +55,17 @@ class UdpCollectImplTest {
         Metrics metrics = new Metrics();
         metrics.setAliasFields(aliasField);
         assertThrows(IllegalArgumentException.class, () -> udpCollect.preCheck(metrics));
+
+        // metrics is null
+        assertThrows(IllegalArgumentException.class, () -> {
+            udpCollect.preCheck(null);
+        });
+
+        // everything is ok
+        assertDoesNotThrow(() -> {
+            UdpProtocol udpProtocol = UdpProtocol.builder().timeout("10").port("21").host("127.0.0.1").build();
+            udpCollect.preCheck(Metrics.builder().udp(udpProtocol).build());
+        });
     }
 
     @Test
@@ -135,5 +149,10 @@ class UdpCollectImplTest {
         assertEquals(builder.getCode(), CollectRep.Code.UN_REACHABLE);
 
         socketMockedConstruction.close();
+    }
+
+    @Test
+    void supportProtocol() {
+        assertEquals(DispatchConstants.PROTOCOL_UDP, udpCollect.supportProtocol());
     }
 }

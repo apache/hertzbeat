@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.collect.nebulagraph;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,6 +26,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -197,4 +200,8 @@ class NgqlCollectImplTest {
         mocked.close();
     }
 
+    @Test
+    void supportProtocol() {
+        assertEquals(DispatchConstants.PROTOCOL_NGQL, ngqlCollect.supportProtocol());
+    }
 }
