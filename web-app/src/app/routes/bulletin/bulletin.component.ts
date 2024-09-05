@@ -68,6 +68,7 @@ export class BulletinComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
+  currentTab: number = 0;
 
   ngOnInit() {
     this.loadTabs();
@@ -388,7 +389,7 @@ export class BulletinComponent implements OnInit {
         if (message.code === 0) {
           this.tabs = message.data;
           if (this.tabs != null) {
-            this.bulletinName = this.tabs[0];
+            this.bulletinName = this.tabs[this.currentTab];
           }
           this.loadData(this.pageIndex - 1, this.pageSize);
         } else {
@@ -507,7 +508,8 @@ export class BulletinComponent implements OnInit {
   protected readonly Array = Array;
 
   onTabChange($event: number) {
-    this.bulletinName = this.tabs[$event];
+    this.currentTab = $event;
+    this.bulletinName = this.tabs[this.currentTab];
     this.metricsData = [];
     this.loadData(this.pageIndex - 1, this.pageSize);
     console.log(this.metricsData);
