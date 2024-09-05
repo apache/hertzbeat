@@ -270,12 +270,12 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
                                 continue;
                             }
                             if (value.get(3) != null) {
-                                valueBuilder.min(this.parseDoubleValue(value.get(3).toString()));
+                                valueBuilder.max(this.parseDoubleValue(value.get(3).toString()));
                             } else {
                                 continue;
                             }
                             if (value.get(4) != null) {
-                                valueBuilder.max(this.parseDoubleValue(value.get(4).toString()));
+                                valueBuilder.min(this.parseDoubleValue(value.get(4).toString()));
                             } else {
                                 continue;
                             }
