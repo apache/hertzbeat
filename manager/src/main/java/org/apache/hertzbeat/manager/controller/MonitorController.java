@@ -55,7 +55,7 @@ public class MonitorController {
     public ResponseEntity<Message<Void>> addNewMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // Verify request data
         monitorService.validate(monitorDto, false);
-        monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
+        monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
         return ResponseEntity.ok(Message.success("Add success"));
     }
 
@@ -64,7 +64,7 @@ public class MonitorController {
     public ResponseEntity<Message<Void>> modifyMonitor(@Valid @RequestBody MonitorDto monitorDto) {
         // Verify request data
         monitorService.validate(monitorDto, true);
-        monitorService.modifyMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
+        monitorService.modifyMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
         return ResponseEntity.ok(Message.success("Modify success"));
     }
 
