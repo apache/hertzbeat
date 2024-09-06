@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
@@ -46,12 +47,14 @@ public interface MonitorService {
 
     /**
      * Add monitoring
-     * @param monitor   Monitoring Entity
-     * @param params    Parameter information
-     * @param collector collector pinned
+     *
+     * @param monitor          Monitoring Entity
+     * @param params           Parameter information
+     * @param collector        collector pinned
+     * @param dashboard       grafana dashboard
      * @throws RuntimeException Add process exception throw
      */
-    void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException;
+    void addMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard dashboard) throws RuntimeException;
 
     /**
      * Verify the correctness of request data parameters
@@ -63,12 +66,14 @@ public interface MonitorService {
 
     /**
      * Modify update monitoring
-     * @param monitor   Monitor Entity
-     * @param params    Parameter information
-     * @param collector collector pinned
+     *
+     * @param monitor          Monitor Entity
+     * @param params           Parameter information
+     * @param collector        collector pinned
+     * @param dashboard        grafana dashboard
      * @throws RuntimeException Exception thrown during modification
      */
-    void modifyMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException;
+    void modifyMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard dashboard) throws RuntimeException;
 
     /**
      * Delete Monitor
