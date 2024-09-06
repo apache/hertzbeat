@@ -44,6 +44,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -192,7 +193,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
+    public void addMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard) throws RuntimeException {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         // Init Set Default Tags: monitorId monitorName app
@@ -236,8 +237,8 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
             // create grafana dashboard
-            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && monitor.getGrafanaDashboard().isEnabled()) {
-                dashboardService.createDashboard(monitor.getGrafanaDashboard().getTemplate(), monitorId);
+            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null && grafanaDashboard.isEnabled()) {
+                dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
             }
             monitorDao.save(monitor);
             paramDao.saveAll(params);
@@ -511,7 +512,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void modifyMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
+    public void modifyMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard) throws RuntimeException {
         long monitorId = monitor.getId();
         // Check to determine whether the monitor corresponding to the monitor id exists
         Optional<Monitor> queryOption = monitorDao.findById(monitorId);
@@ -572,17 +573,13 @@ public class MonitorServiceImpl implements MonitorService {
             }
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
-            // create or open grafana dashboard
-            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && monitor.getGrafanaDashboard().isEnabled()) {
-                if (dashboardService.getDashboardByMonitorId(monitorId) == null) {
-                    dashboardService.createDashboard(monitor.getGrafanaDashboard().getTemplate(), monitorId);
+            // update or open grafana dashboard
+            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null) {
+                if (grafanaDashboard.isEnabled()) {
+                    dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
                 } else {
-                    dashboardService.openGrafanaDashboard(monitorId);
+                    dashboardService.closeGrafanaDashboard(monitorId);
                 }
-            }
-            // close grafana dashboard
-            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && !monitor.getGrafanaDashboard().isEnabled()) {
-                dashboardService.closeGrafanaDashboard(monitorId);
             }
             monitorDao.save(monitor);
             if (params != null) {
@@ -647,7 +644,7 @@ public class MonitorServiceImpl implements MonitorService {
                 List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
                 List<String> metrics = metricsDataList.stream().map(CollectRep.MetricsData::getMetrics).collect(Collectors.toList());
                 monitorDto.setMetrics(metrics);
-                monitor.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
+                monitorDto.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
             } else {
                 Job job = appService.getAppDefine(monitor.getApp());
                 List<String> metrics = job.getMetrics().stream()
@@ -918,7 +915,7 @@ public class MonitorServiceImpl implements MonitorService {
         monitor.setTags(newTags);
 
         monitor.setName(String.format("%s - copy", monitor.getName()));
-        addMonitor(monitor, params, null);
+        addMonitor(monitor, params, null, null);
     }
 
     private List<Tag> filterTags(List<Tag> tags) {

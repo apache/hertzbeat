@@ -15,36 +15,22 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.grafana;
+package org.apache.hertzbeat.grafana.dao;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * Grafana service token entity
+ * Public server configuration Dao
+ * <p>This interface inherits the two interfaces JpaRepository and JpaSpecificationExecutor, providing basic CRUD operations and specification query capabilities.</p>
  */
-@Entity
-@Table(name = "hzb_grafana_service_token")
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@Schema(description = "Grafana service token entity")
-public class ServiceToken {
-    @Id
-    @Schema(description = "Service token id")
-    private Long id;
-    @Schema(description = "Service token name")
-    private String name;
-    @Schema(description = "Service token key")
-    @Column(name = "`key`")
-    private String key;
+public interface GrafanaConfigDao extends JpaRepository<GeneralConfig, Long>, JpaSpecificationExecutor<GeneralConfig> {
+    
+    /**
+     * Query by type
+     * @param type type
+     * @return Return the queried configuration information
+     */
+    GeneralConfig findByType(String type);
 }

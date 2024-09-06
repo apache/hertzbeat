@@ -42,22 +42,17 @@ public class GrafanaInit implements CommandLineRunner {
     //3. Determine whether there is a token, if not, create and ensure that the account is unique.
     @Override
     public void run(String... args) throws Exception {
-        if (grafanaProperties.enabled() && grafanaProperties.url() != null && grafanaProperties.username() != null && grafanaProperties.password() != null) {
-            serviceAccountService.reload();
+        if (grafanaProperties.enabled()) {
+            log.info("grafana init start");
             try {
-                serviceAccountService.getAccount();
-            } catch (RuntimeException e) {
-                log.error("service account is not exist, create service account");
-                serviceAccountService.createServiceAccount();
+                String token = serviceAccountService.getToken();
+                if (token == null) {
+                    token = serviceAccountService.applyForToken();
+                }
+                datasourceService.existOrCreateDatasource(token);   
+            } catch (Exception e) {
+                log.error("grafana init error", e);
             }
-            try {
-                serviceAccountService.getToken();
-            } catch (RuntimeException e) {
-                log.error("service token is not exist, create service token");
-                serviceAccountService.createToken();
-            }
-            datasourceService.deleteDatasource();
-            datasourceService.createDatasource();
         }
     }
 
