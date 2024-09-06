@@ -45,7 +45,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
     /**
      * Title color corresponding to the alarm priority
      */
-    private final String[] TITLE_COLOR = {"red", "yellow", "orange"};
+    private static final String[] TITLE_COLOR = {"red", "yellow", "orange"};
 
 
     @Override
@@ -85,7 +85,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
      * @return message
      */
     private String createLarkMessage(String userId, String notificationContent, byte priority) {
-        String LARK_CARD_MESSAGE = """
+        String larkCardMessage = """
             {
                 "msg_type": "interactive",
                 "card": {
@@ -170,7 +170,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                         "zh_cn": {
                             "title": {
                                 "tag": "plain_text",
-                                "content": "HertzBeat 告警"
+                                "content": "hertzbeat 告警"
                             },
                             "template": "%s"
                         }
@@ -196,7 +196,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             atUserElement = String.format(atUserElement, atUserId);
         }
 
-        return String.format(LARK_CARD_MESSAGE, notificationContent, atUserElement, alerterProperties.getConsoleUrl(), TITLE_COLOR[priority]);
+        return String.format(larkCardMessage, notificationContent, atUserElement, alerterProperties.getConsoleUrl(), TITLE_COLOR[priority]);
     }
 
     @Override
