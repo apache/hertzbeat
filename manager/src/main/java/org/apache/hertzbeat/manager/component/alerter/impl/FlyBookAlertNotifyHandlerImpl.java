@@ -184,7 +184,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             String atUserId = Arrays.stream(userId.split(","))
                 .map(id -> "<at id=" + id + "></at>")
                 .collect(Collectors.joining(" "));
-            atUserElement = """
+            atUserElement = String.format("""
                 {
                     "tag": "div",
                     "text": {
@@ -192,10 +192,8 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                         "tag": "lark_md"
                     }
                 },
-                """;
-            atUserElement = String.format(atUserElement, atUserId);
+                """, atUserId);
         }
-
         return String.format(larkCardMessage, notificationContent, atUserElement, alerterProperties.getConsoleUrl(), TITLE_COLOR[priority]);
     }
 
