@@ -152,7 +152,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                                         "tag": "button",
                                         "text": {
                                             "tag": "plain_text",
-                                            "content": "登录控制台"
+                                            "content": "登入控制台"
                                         },
                                         "type": "default",
                                         "complex_interaction": true,
@@ -170,7 +170,7 @@ final class FlyBookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                         "zh_cn": {
                             "title": {
                                 "tag": "plain_text",
-                                "content": "hertzbeat 告警"
+                                "content": "HertzBeat 告警"
                             },
                             "template": "%s"
                         }
