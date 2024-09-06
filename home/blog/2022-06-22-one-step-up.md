@@ -38,7 +38,7 @@ Online at [https://console.tancloud.cn](https://console.tancloud.cn).
 ---
 Windows Monitor is coming:
 
-![2022-06-19 11:30:57](https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png)
+![HertzBeat](https://user-images.githubusercontent.com/24788200/174481159-b8a73c87-aff5-4c4c-befb-bd0d26685d71.png)
 
 ⚠️ ⚠️⚠️⚠️Please note that upgrading to v1.1.0 from other versions requires running the following SQL script. Now, our table names have a unified prefix hzb_prefix.
 

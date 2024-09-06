@@ -25,6 +25,7 @@ import jakarta.annotation.Resource;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.pojo.dto.TemplateConfig;
 import org.apache.hertzbeat.manager.service.ConfigService;
 import org.springframework.http.ResponseEntity;
@@ -63,7 +64,7 @@ public class GeneralConfigController {
     public ResponseEntity<Message<Object>> getConfig(
             @Parameter(description = "Config Type", example = "email")
             @PathVariable("type") @NotNull final String type) {
-        return ResponseEntity.ok(Message.success(configService.getConfig(type)));
+        return ResponseUtil.handle(() -> configService.getConfig(type));
     }
 
     @PutMapping(path = "/template/{app}")
@@ -71,7 +72,6 @@ public class GeneralConfigController {
     public ResponseEntity<Message<Void>> updateTemplateAppConfig(
             @PathVariable("app") @NotNull final String app,
             @RequestBody TemplateConfig.AppTemplate template) {
-        configService.updateTemplateAppConfig(app, template);
-        return ResponseEntity.ok(Message.success());
+        return ResponseUtil.handle(() -> configService.updateTemplateAppConfig(app, template));
     }
 }

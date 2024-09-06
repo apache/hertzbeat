@@ -46,6 +46,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.ExportFileConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
+import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -66,7 +67,9 @@ import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SdMonitorOperator;
+import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
+import org.apache.hertzbeat.grafana.service.DashboardService;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
@@ -151,6 +154,9 @@ public class MonitorServiceImpl implements MonitorService {
     @Autowired
     private WarehouseService warehouseService;
 
+    @Autowired
+    private DashboardService dashboardService;
+
     private final Map<String, ImExportService> imExportServiceMap = new HashMap<>();
 
     public MonitorServiceImpl(List<ImExportService> imExportServiceList) {
@@ -171,14 +177,14 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
+    public void addMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard) throws RuntimeException {
         final Optional<Param> sdParam = SdMonitorOperator.getSdParam(params);
         if (sdParam.isPresent()) {
-            addAndSaveMonitorJob(monitor.clone(), params, collector, SdMonitorParam.builder().sdParam(sdParam.get()).build());
+            addAndSaveMonitorJob(monitor.clone(), params, collector, SdMonitorParam.builder().sdParam(sdParam.get()).build(), grafanaDashboard);
             return;
         }
 
-        addAndSaveMonitorJob(monitor, params, collector, null);
+        addAndSaveMonitorJob(monitor, params, collector, null, grafanaDashboard);
     }
 
     @Override
@@ -455,7 +461,7 @@ public class MonitorServiceImpl implements MonitorService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void modifyMonitor(Monitor monitor, List<Param> params, String collector) throws RuntimeException {
+    public void modifyMonitor(Monitor monitor, List<Param> params, String collector, GrafanaDashboard grafanaDashboard) throws RuntimeException {
         final Optional<Param> sdParam = SdMonitorOperator.getSdParam(params);
         long monitorId = monitor.getId();
         // Check to determine whether the monitor corresponding to the monitor id exists
@@ -516,9 +522,11 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
-            List<Configmap> configmaps = params.stream().map(param ->
-                    new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
-            appDefine.setConfigmap(configmaps);
+            if (params != null) {
+                List<Configmap> configmaps = params.stream().map(param ->
+                        new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
+                appDefine.setConfigmap(configmaps);
+            }
             long newJobId;
             if (collector == null) {
                 newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
@@ -543,6 +551,14 @@ public class MonitorServiceImpl implements MonitorService {
             }
             // force update gmtUpdate time, due the case: monitor not change, param change. we also think monitor change
             monitor.setGmtUpdate(LocalDateTime.now());
+            // update or open grafana dashboard
+            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null) {
+                if (grafanaDashboard.isEnabled()) {
+                    dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
+                } else {
+                    dashboardService.closeGrafanaDashboard(monitorId);
+                }
+            }
             monitorDao.save(monitor);
 
             // delete all sub monitor if sd param is removed
@@ -601,13 +617,13 @@ public class MonitorServiceImpl implements MonitorService {
         if (monitorOptional.isPresent()) {
             Monitor monitor = monitorOptional.get();
             MonitorDto monitorDto = new MonitorDto();
-            monitorDto.setMonitor(monitor);
             List<Param> params = paramDao.findParamsByMonitorId(id);
             monitorDto.setParams(params);
             if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())) {
                 List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
                 List<String> metrics = metricsDataList.stream().map(CollectRep.MetricsData::getMetrics).collect(Collectors.toList());
                 monitorDto.setMetrics(metrics);
+                monitorDto.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
             } else {
                 Job job = appService.getAppDefine(monitor.getApp());
                 List<String> metrics = job.getMetrics().stream()
@@ -615,6 +631,7 @@ public class MonitorServiceImpl implements MonitorService {
                         .map(Metrics::getName).collect(Collectors.toList());
                 monitorDto.setMetrics(metrics);   
             }
+            monitorDto.setMonitor(monitor);
             Optional<CollectorMonitorBind> bindOptional = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitor.getId());
             bindOptional.ifPresent(bind -> monitorDto.setCollector(bind.getCollector()));
             return monitorDto;
@@ -904,7 +921,7 @@ public class MonitorServiceImpl implements MonitorService {
         monitor.setTags(newTags);
 
         monitor.setName(String.format("%s - copy", monitor.getName()));
-        addMonitor(monitor, params, null);
+        addMonitor(monitor, params, null, null);
     }
 
     private List<Tag> filterTags(List<Tag> tags) {
@@ -989,7 +1006,8 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public long addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector, SdMonitorParam sdMonitorParam) {
+    public long addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector,
+                                     SdMonitorParam sdMonitorParam, GrafanaDashboard grafanaDashboard) {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
         // Init Set Default Tags: monitorId monitorName app
@@ -1044,6 +1062,10 @@ public class MonitorServiceImpl implements MonitorService {
             monitor.setId(monitorId);
             monitor.setJobId(jobId);
             monitor.setStatus(CommonConstants.MONITOR_UP_CODE);
+            // create grafana dashboard
+            if (monitor.getApp().equals(CommonConstants.PROMETHEUS) && grafanaDashboard != null && grafanaDashboard.isEnabled()) {
+                dashboardService.createOrUpdateDashboard(grafanaDashboard.getTemplate(), monitorId);
+            }
             monitorDao.saveAndFlush(monitor);
             if (Objects.nonNull(monitorBind)) {
                 monitorBindDao.saveAndFlush(monitorBind);

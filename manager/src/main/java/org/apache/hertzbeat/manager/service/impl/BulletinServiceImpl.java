@@ -85,6 +85,9 @@ public class BulletinServiceImpl implements BulletinService {
         if (bulletinDto.getMonitorIds() == null || bulletinDto.getMonitorIds().isEmpty()) {
             throw new IllegalArgumentException("Bulletin monitorIds cannot be null or empty");
         }
+        if (bulletinDao.countByName(bulletinDto.getName()) > 0) {
+            throw new IllegalArgumentException("Bulletin name duplicated");
+        }
     }
 
 
@@ -208,15 +211,15 @@ public class BulletinServiceImpl implements BulletinService {
                                     for (int i = 0; i < fieldList.size(); i++) {
                                         fieldList.get(i).setValue(valueRow.getColumns(i));
                                     }
-                                    return fieldList;
+                                    return fieldList.stream().filter(field -> fields.contains(field.getKey())).toList();
                                 })
                                 .toList();
                     } else {
                         fieldsList = Collections.singletonList(fields.stream()
                                 .map(field -> BulletinMetricsData.Field.builder()
                                         .key(field)
-                                        .unit("")
-                                        .value("NO_DATA")
+                                        .unit(EMPTY_STRING)
+                                        .value(NO_DATA)
                                         .build())
                                 .toList());
                     }

@@ -68,6 +68,9 @@ public class PushCollectImpl extends AbstractCollect {
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
+        if (metrics == null || metrics.getPush() == null) {
+            throw new IllegalArgumentException("Push collect must has Push params");
+        }
     }
 
     @Override

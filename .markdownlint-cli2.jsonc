@@ -29,10 +29,12 @@
     },
     "MD025": true,
     "MD029": true,
-    "MD033": false,
+    "MD033": {
+      "allowed_elements": ["table", "tr", "td", "a", "img", "sub", "b", "br", "img", "tbody", "mark", "font"]
+    },
     "MD036": false,
     "MD040": true,
-    "MD045": false,
+    "MD045": true,
     "MD046": true,
     "MD047": true,
     "MD052": true

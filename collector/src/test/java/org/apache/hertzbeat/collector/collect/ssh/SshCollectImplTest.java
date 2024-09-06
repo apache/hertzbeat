@@ -17,7 +17,14 @@
 
 package org.apache.hertzbeat.collector.collect.ssh;
 
-import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,20 +32,46 @@ import org.junit.jupiter.api.Test;
  * Test case for {@link SshCollectImpl}
  */
 class SshCollectImplTest {
+    private SshCollectImpl sshCollect;
+    private CollectRep.MetricsData.Builder builder;
 
     @BeforeEach
     void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
+        sshCollect = new SshCollectImpl();
+        builder = CollectRep.MetricsData.newBuilder();
     }
 
     @Test
-    void getInstance() {
+    void preCheck() {
+        // metrics is null
+        assertThrows(IllegalArgumentException.class, () -> {
+            sshCollect.preCheck(null);
+        });
+
+        // ssh protocol is null
+        assertThrows(IllegalArgumentException.class, () -> {
+            Metrics metrics = Metrics.builder().build();
+            sshCollect.preCheck(metrics);
+        });
+
+        // everything is ok
+        assertDoesNotThrow(() -> {
+            Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
+            sshCollect.preCheck(metrics);
+        });
     }
 
     @Test
     void collect() {
+        assertDoesNotThrow(() -> {
+            Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
+            sshCollect.collect(builder, 1L, "app", metrics);
+            assertEquals(CollectRep.Code.FAIL, builder.getCode());
+        });
+    }
+
+    @Test
+    void supportProtocol() {
+        assertEquals(DispatchConstants.PROTOCOL_SSH, sshCollect.supportProtocol());
     }
 }

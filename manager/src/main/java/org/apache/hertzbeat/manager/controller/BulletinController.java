@@ -29,6 +29,7 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
 import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
+import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.service.BulletinService;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +81,7 @@ public class BulletinController {
             bulletinService.validate(bulletinDto);
             bulletinService.editBulletin(bulletinDto);
         } catch (Exception e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Edit failed! " + e.getMessage()));
         }
         return ResponseEntity.ok(Message.success("Add success!"));
     }
@@ -93,7 +94,7 @@ public class BulletinController {
         try {
             return ResponseEntity.ok(Message.success(bulletinService.getBulletinByName(name)));
         } catch (Exception e) {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Add failed! " + e.getMessage()));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE, "Get failed! " + e.getMessage()));
         }
     }
 
@@ -103,8 +104,7 @@ public class BulletinController {
     @Operation(summary = "Get All Bulletin Names", description = "Get All Bulletin Names")
     @GetMapping("/names")
     public ResponseEntity<Message<List<String>>> getAllNames() {
-        List<String> names = bulletinService.getAllNames();
-        return ResponseEntity.ok(Message.success(names));
+        return ResponseUtil.handle(() -> bulletinService.getAllNames());
     }
 
     /**
