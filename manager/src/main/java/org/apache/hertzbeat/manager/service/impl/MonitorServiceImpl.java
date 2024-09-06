@@ -67,7 +67,6 @@ import org.apache.hertzbeat.common.util.IntervalExpressionUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.common.util.SdMonitorOperator;
-import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.common.util.SnowFlakeIdGenerator;
 import org.apache.hertzbeat.grafana.service.DashboardService;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
@@ -522,11 +521,9 @@ public class MonitorServiceImpl implements MonitorService {
             appDefine.setInterval(monitor.getIntervals());
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
-            if (params != null) {
-                List<Configmap> configmaps = params.stream().map(param ->
-                        new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
-                appDefine.setConfigmap(configmaps);
-            }
+            List<Configmap> configmaps = params.stream().map(param ->
+                    new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
+            appDefine.setConfigmap(configmaps);
             long newJobId;
             if (collector == null) {
                 newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
@@ -773,7 +770,7 @@ public class MonitorServiceImpl implements MonitorService {
                     new Configmap(param.getField(), param.getParamValue(), param.getType())).collect(Collectors.toList());
             List<ParamDefine> paramDefaultValue = appDefine.getParams().stream()
                     .filter(item -> StringUtils.isNotBlank(item.getDefaultValue()))
-                    .collect(Collectors.toList());
+                    .toList();
             paramDefaultValue.forEach(defaultVar -> {
                 if (configmaps.stream().noneMatch(item -> item.getKey().equals(defaultVar.getField()))) {
                     Configmap configmap = new Configmap(defaultVar.getField(), defaultVar.getDefaultValue(), CommonConstants.TYPE_STRING);
@@ -933,7 +930,7 @@ public class MonitorServiceImpl implements MonitorService {
                 .collect(Collectors.toList());
     }
 
-    private List<CollectRep.MetricsData> collectOneTimeSdData(Monitor monitor, String collector, Param sdParam) {
+    private void collectOneTimeSdData(Monitor monitor, String collector, Param sdParam) {
         Long monitorId = monitor.getId();
         if (monitorId == null || monitorId == 0) {
             monitorId = MONITOR_ID_TMP;
@@ -964,7 +961,6 @@ public class MonitorServiceImpl implements MonitorService {
             throw new MonitorDetectException(collectRep.get(0).getMsg());
         }
 
-        return collectRep;
     }
 
     private void detectMonitorDirectly(Monitor monitor, List<Param> params, String collector) {
@@ -1006,7 +1002,7 @@ public class MonitorServiceImpl implements MonitorService {
     }
 
     @Override
-    public long addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector,
+    public void addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector,
                                      SdMonitorParam sdMonitorParam, GrafanaDashboard grafanaDashboard) {
         // Apply for monitor id
         long monitorId = SnowFlakeIdGenerator.generateId();
@@ -1076,8 +1072,6 @@ public class MonitorServiceImpl implements MonitorService {
             collectJobScheduling.cancelAsyncCollectJob(jobId);
             throw new MonitorDatabaseException(e.getMessage());
         }
-
-        return monitorId;
     }
 
     private void resetMetricsCommonField(Monitor monitor, Job appDefine, SdMonitorParam sdMonitorParam) {

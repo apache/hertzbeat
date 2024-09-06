@@ -197,5 +197,5 @@ public interface MonitorService {
      */
     void updateAppCollectJob(Job job);
 
-    long addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector, SdMonitorParam sdMonitorParam);
+    void addAndSaveMonitorJob(Monitor monitor, List<Param> params, String collector, SdMonitorParam sdMonitorParam, GrafanaDashboard grafanaDashboard);
 }

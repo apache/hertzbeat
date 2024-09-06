@@ -115,7 +115,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                                             .detectedHost(host)
                                             .detectedPort(port)
                                             .bizId(mainMonitor.getId())
-                                            .build());
+                                            .build(), null);
                             continue;
                         }
 
@@ -131,7 +131,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                                                 .detectedHost(host)
                                                 .detectedPort(port)
                                                 .bizId(mainMonitor.getId())
-                                                .build());
+                                                .build(), null);
                             } else {
                                 monitorService.enableManageMonitors(Sets.newHashSet(monitor.getId()));
                             }
