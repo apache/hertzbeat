@@ -28,9 +28,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
-
-
 /**
  * Grafana dashboard entity
  */
@@ -42,23 +39,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Schema(description = "Grafana dashboard entity")
 public class GrafanaDashboard implements Serializable {
-    @Schema(description = "Dashboard folderUid")
-    private String folderUid;
-    @Schema(description = "Dashboard slug")
-    private String slug;
-    @Schema(description = "Dashboard status")
-    private String status;
-    @Schema(description = "Dashboard uid")
-    private String uid;
-    @Schema(description = "Dashboard url")
-    private String url;
-    @Schema(description = "Dashboard version")
-    private Long version;
+
     @Id
     @Schema(description = "Monitor id")
     private Long monitorId;
+    
+    @Schema(description = "Dashboard folderUid")
+    private String folderUid;
+    
+    @Schema(description = "Dashboard slug")
+    private String slug;
+    
+    @Schema(description = "Dashboard status")
+    private String status;
+    
+    @Schema(description = "Dashboard uid")
+    private String uid;
+    
+    @Schema(description = "Dashboard url")
+    private String url;
+    
+    @Schema(description = "Dashboard version")
+    private Long version;
+    
     @Schema(description = "is enabled")
     private boolean enabled;
+    
     @Schema(description = "template")
     @Transient
     private String template;

@@ -50,6 +50,7 @@ export class MonitorNewComponent implements OnInit {
   collectors!: Collector[];
   collector: string = '';
   detected: boolean = false;
+  grafanaDashboard!: GrafanaDashboard;
   // whether it is loading
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
@@ -65,7 +66,7 @@ export class MonitorNewComponent implements OnInit {
   ) {
     this.monitor = new Monitor();
     this.monitor.tags = [];
-    this.monitor.grafanaDashboard = new GrafanaDashboard();
+    this.grafanaDashboard = new GrafanaDashboard();
   }
 
   ngOnInit(): void {
@@ -165,7 +166,8 @@ export class MonitorNewComponent implements OnInit {
       detected: this.detected,
       monitor: info.monitor,
       collector: info.collector,
-      params: info.params.concat(info.advancedParams)
+      params: info.params.concat(info.advancedParams),
+      grafanaDashboard: info.grafanaDashboard
     };
     if (this.detected) {
       this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
