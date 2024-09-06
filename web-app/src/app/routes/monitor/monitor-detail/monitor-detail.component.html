@@ -91,13 +91,13 @@
             ></app-monitor-data-chart>
           </div>
         </nz-tab>
-        <nz-tab *ngIf="monitor.grafanaDashboard.enabled" [nzTitle]="title3Template">
+        <nz-tab *ngIf="grafanaDashboard.enabled" [nzTitle]="title3Template">
           <ng-template #title3Template>
-            <i nz-icon nzType="line-chart" style="margin-left: 10px"></i>
+            <i nz-icon nzType="radar-chart" style="margin-left: 10px"></i>
             Grafana
           </ng-template>
           <div style="width: 100%; height: 1200px; margin-bottom: 6px">
-            <iframe [src]="monitor.grafanaDashboard.url | safe : 'resourceUrl'" width="100%" height="100%" style="border: none"> </iframe>
+            <iframe [src]="grafanaDashboard.url | safe : 'resourceUrl'" width="100%" height="100%" style="border: none"> </iframe>
           </div>
         </nz-tab>
       </nz-tabset>

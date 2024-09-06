@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.grafana.config;
 
-import static org.apache.hertzbeat.grafana.common.CommonConstants.HTTP;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.HTTPS;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.HTTP;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.HTTPS;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;

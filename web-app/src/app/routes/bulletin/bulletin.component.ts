@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -39,7 +39,7 @@ import { MonitorService } from '../../service/monitor.service';
   templateUrl: './bulletin.component.html',
   styleUrls: ['./bulletin.component.less']
 })
-export class BulletinComponent implements OnInit {
+export class BulletinComponent implements OnInit, OnDestroy {
   constructor(
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
@@ -68,9 +68,20 @@ export class BulletinComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
+  currentTab: number = 0;
+  refreshInterval: any;
 
   ngOnInit() {
     this.loadTabs();
+    this.refreshInterval = setInterval(() => {
+      this.loadTabs();
+    }, 30000); // every 30 seconds refresh the tabs
+  }
+
+  ngOnDestroy() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   sync() {
@@ -125,6 +136,8 @@ export class BulletinComponent implements OnInit {
 
   onManageModalCancel() {
     this.isManageModalVisible = false;
+    // clear fields
+    this.fields = {};
   }
 
   resetManageModalData() {
@@ -132,11 +145,15 @@ export class BulletinComponent implements OnInit {
     this.define.monitorIds = [];
     this.hierarchies = [];
     this.treeNodes = [];
+    // clear fields
+    this.fields = {};
   }
 
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.define.fields = this.fields;
+    // clear fields
+    this.fields = {};
     if (this.isManageModalAdd) {
       const modalOk$ = this.bulletinDefineSvc
         .newBulletinDefine(this.define)
@@ -341,7 +358,7 @@ export class BulletinComponent implements OnInit {
   transferChange(ret: TransferChange): void {
     // add
     if (ret.to === 'right') {
-      this.checkedNodeList.forEach(node => {
+      ret.list.forEach(node => {
         node.isDisabled = true;
         node.isChecked = true;
         this.tempMetrics.add(node.key);
@@ -349,20 +366,20 @@ export class BulletinComponent implements OnInit {
         if (!this.fields[node.key]) {
           this.fields[node.key] = [];
         }
-        if (!this.fields[node.key].includes(node.origin.value)) {
-          this.fields[node.key].push(node.origin.value);
+        if (!this.fields[node.key].includes(node.value)) {
+          this.fields[node.key].push(node.value);
         }
       });
     }
     // delete
     else if (ret.to === 'left') {
-      this.checkedNodeList.forEach(node => {
+      ret.list.forEach(node => {
         node.isDisabled = false;
         node.isChecked = false;
         this.tempMetrics.delete(node.key);
 
         if (this.fields[node.key]) {
-          const index = this.fields[node.key].indexOf(node.origin.value);
+          const index = this.fields[node.key].indexOf(node.value);
           if (index > -1) {
             this.fields[node.key].splice(index, 1);
           }
@@ -382,7 +399,7 @@ export class BulletinComponent implements OnInit {
         if (message.code === 0) {
           this.tabs = message.data;
           if (this.tabs != null) {
-            this.bulletinName = this.tabs[0];
+            this.bulletinName = this.tabs[this.currentTab];
           }
           this.loadData(this.pageIndex - 1, this.pageSize);
         } else {
@@ -501,7 +518,8 @@ export class BulletinComponent implements OnInit {
   protected readonly Array = Array;
 
   onTabChange($event: number) {
-    this.bulletinName = this.tabs[$event];
+    this.currentTab = $event;
+    this.bulletinName = this.tabs[this.currentTab];
     this.metricsData = [];
     this.loadData(this.pageIndex - 1, this.pageSize);
     console.log(this.metricsData);
