@@ -117,7 +117,7 @@ class AccountServiceTest {
     }
 
     @Test
-    void testRefreshTokenWithValidToken() throws AuthenticationException {
+    void testRefreshTokenWithValidToken() throws Exception {
 
         String userId = "admin";
         String refreshToken = JsonWebTokenUtil.issueJwt(userId, 3600L, Collections.singletonMap("refresh", true));
