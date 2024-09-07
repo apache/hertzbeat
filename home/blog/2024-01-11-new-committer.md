@@ -16,7 +16,6 @@ keywords: [open source monitoring system, alerting system]
 
 **Name: Leo**
 
-
 **Github ID: leo-934**
 
 ### Getting to know Hertzbeat for the first time
