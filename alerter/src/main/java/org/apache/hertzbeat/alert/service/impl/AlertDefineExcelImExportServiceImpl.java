@@ -153,24 +153,19 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
 
     private AlertDefineDTO extractAlertDefineDataFromRow(Row row) {
-
-        if (Objects.isNull(row)) {
-            return null;
-        }
-
-        return AlertDefineDTO.builder()
-                .app(getCellValueAsString(row.getCell(0)))
-                .metric(getCellValueAsString(row.getCell(1)))
-                .field(getCellValueAsString(row.getCell(2)))
-                .preset(getCellValueAsBoolean(row.getCell(3)))
-                .expr(getCellValueAsString(row.getCell(4)))
-                .priority(getCellValueAsByte(row.getCell(5)))
-                .times(getCellValueAsInteger(row.getCell(6)))
-                .tags(extractTagDataFromRow(row.getCell(7)))
-                .enable(getCellValueAsBoolean(row.getCell(8)))
-                .recoverNotice(getCellValueAsBoolean(row.getCell(9)))
-                .template(getCellValueAsString(row.getCell(10)))
-                .build();
+        AlertDefineDTO alertDefineDTO = new AlertDefineDTO();
+        alertDefineDTO.setApp(getCellValueAsString(row.getCell(0)));
+        alertDefineDTO.setMetric(getCellValueAsString(row.getCell(1)));
+        alertDefineDTO.setField(getCellValueAsString(row.getCell(2)));
+        alertDefineDTO.setPreset(getCellValueAsBoolean(row.getCell(3)));
+        alertDefineDTO.setExpr(getCellValueAsString(row.getCell(4)));
+        alertDefineDTO.setPriority(getCellValueAsByte(row.getCell(5)));
+        alertDefineDTO.setTimes(getCellValueAsInteger(row.getCell(6)));
+        alertDefineDTO.setTags(extractTagDataFromRow(row.getCell(7)));
+        alertDefineDTO.setEnable(getCellValueAsBoolean(row.getCell(8)));
+        alertDefineDTO.setRecoverNotice(getCellValueAsBoolean(row.getCell(9)));
+        alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(10)));
+        return alertDefineDTO;
     }
 
 
