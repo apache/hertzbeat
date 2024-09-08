@@ -180,7 +180,7 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
             Workbook workbook = new HSSFWorkbook();
             String sheetName = "Export AlertDefine";
-            Sheet sheet = ExcelExportUtils.setSheet(sheetName, workbook, ExportAlertDefineDTO.class);
+            Sheet sheet = ExcelExportUtils.setSheet(sheetName, workbook, AlertDefineDTO.class);
             // set cell style
             CellStyle cellStyle = ExcelExportUtils.setCellStyle(workbook);
 
