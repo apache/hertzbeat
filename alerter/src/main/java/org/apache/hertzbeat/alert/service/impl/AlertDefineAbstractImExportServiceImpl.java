@@ -83,7 +83,7 @@ public abstract class AlertDefineAbstractImExportServiceImpl implements AlertDef
 
     private ExportAlertDefineDTO convert(AlertDefine alertDefine) {
         var exportAlertDefine = new ExportAlertDefineDTO();
-        var alertDefineDTO = new AlertDefineDTO();
+        var alertDefineDTO = AlertDefineDTO.builder().build();
         BeanUtils.copyProperties(alertDefine, alertDefineDTO);
         exportAlertDefine.setAlertDefine(alertDefineDTO);
         return exportAlertDefine;
