@@ -24,7 +24,7 @@ export class StatusPageHistory {
   timestamp!: number;
   uptime!: number;
   abnormal!: number;
-  unknown!: number;
+  unknowing!: number;
   normal!: number;
   creator!: string;
   modifier!: string;
