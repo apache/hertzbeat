@@ -12,13 +12,11 @@ keywords: [open source monitoring system, alerting system]
 
 > Welcome to HertzBeat's three new community committeers, let's learn more about their open source experience!
 
-## New Committer - vinci
+## New Committer - leo
 
-**Name: Wang Jianing**
+**Name: Leo**
 
-**First year graduate student, School of Computer Science, Zhejiang University**
-
-**Github ID: vinci-897**
+**Github ID: leo-934**
 
 ### Getting to know Hertzbeat for the first time
 
