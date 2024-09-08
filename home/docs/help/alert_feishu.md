@@ -33,6 +33,6 @@ keywords: [open source monitoring tool, open source alerter, open source feishu 
 
 2. How to @someone in alarm notification
 
-    > In the form for adding recipients, fill in the `User ID`. If you need to @everyone, you can enter `all` in the `User ID` field. Multiple user IDs are also supported, separated by commas `,`. For detailed instructions on how to get the Feishu user ID, please refer to: https://open.feishu.cn/document/faq/trouble-shooting/how-to-get-internal-user-id.
+    > In the form for adding recipients, fill in the `User ID`. If you need to @everyone, you can enter `all` in the `User ID` field. Multiple user IDs are also supported, separated by commas `,`. For detailed instructions on how to get the Feishu user ID, please refer to: [Get feishu user id](https://open.feishu.cn/document/faq/trouble-shooting/how-to-get-internal-user-id).
 
 Other issues can be fed back through the communication group ISSUE!

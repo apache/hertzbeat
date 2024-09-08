@@ -34,6 +34,6 @@ keywords: [告警飞书机器人通知, 开源告警系统, 开源监控告警�
 
 2. 如何在告警通知中@某人
 
-    > 在新增接收人的表单中，填写 `用户ID` 。如果需要 @所有人，可以在 `用户ID` 字段中填入 `all`。同时支持填写多个用户id，用逗号 `,` 分隔。获取飞书用户id的具体方法，请参考：https://open.feishu.cn/document/faq/trouble-shooting/how-to-get-internal-user-id
+    > 在新增接收人的表单中，填写 `用户ID` 。如果需要 @所有人，可以在 `用户ID` 字段中填入 `all`。同时支持填写多个用户id，用逗号 `,` 分隔。获取飞书用户id的具体方法，请参考：[获取飞书用户ID](https://open.feishu.cn/document/faq/trouble-shooting/how-to-get-internal-user-id)
 
 其它问题可以通过交流群ISSUE反馈哦！
