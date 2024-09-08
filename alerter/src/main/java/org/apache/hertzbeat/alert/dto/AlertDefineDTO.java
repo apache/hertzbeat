@@ -22,8 +22,6 @@ import cn.afterturn.easypoi.excel.annotation.ExcelTarget;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
-
-import lombok.Builder;
 import lombok.Data;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 
