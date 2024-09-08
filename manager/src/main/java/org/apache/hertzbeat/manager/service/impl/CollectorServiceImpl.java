@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
+import org.apache.hertzbeat.common.support.event.CollectorDeletedEvent;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
@@ -36,6 +37,7 @@ import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -61,6 +63,9 @@ public class CollectorServiceImpl implements CollectorService {
     
     @Autowired(required = false)
     private ManageServer manageServer;
+
+    @Autowired(required = false)
+    private ApplicationContext applicationContext;
     
     @Override
     @Transactional(readOnly = true)
@@ -108,6 +113,7 @@ public class CollectorServiceImpl implements CollectorService {
         collectors.forEach(collector -> {
             this.manageServer.closeChannel(collector);
             this.collectorDao.deleteCollectorByName(collector);
+            this.applicationContext.publishEvent(new CollectorDeletedEvent(this, collector));
         });
     }
 

@@ -138,7 +138,13 @@
               {{ sliceTagName(tag) }}
             </nz-tag>
           </a>
-          <nz-tag *ngIf="tag.name != 'monitorId'" style="margin-top: 2px">
+          <a [routerLink]="['/setting/collector']" *ngIf="tag.name == 'collectorName'">
+            <nz-tag class="hoverClass" nzColor="green" style="margin-top: 2px">
+              <span nz-icon nzType="area-chart"></span>
+              {{ sliceTagName(tag) }}
+            </nz-tag>
+          </a>
+          <nz-tag *ngIf="tag.name != 'monitorId' && tag.name != 'collectorName'" style="margin-top: 2px">
             {{ sliceTagName(tag) }}
           </nz-tag>
         </span>

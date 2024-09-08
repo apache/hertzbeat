@@ -20,21 +20,18 @@ package org.apache.hertzbeat.common.support.event;
 import org.springframework.context.ApplicationEvent;
 
 /**
- * the event for monitor delete
+ * the event for collector delete
  */
-public class MonitorDeletedEvent extends ApplicationEvent {
-    
-    /**
-     * monitoring id
-     */
-    private final Long monitorId;
-    
-    public MonitorDeletedEvent(Object source, Long monitorId) {
+public class CollectorDeletedEvent extends ApplicationEvent {
+
+    private final String identity;
+
+    public CollectorDeletedEvent(Object source, String identity) {
         super(source);
-        this.monitorId = monitorId;
+        this.identity = identity;
     }
-    
-    public Long getMonitorId() {
-        return monitorId;
+
+    public String getIdentity() {
+        return identity;
     }
 }

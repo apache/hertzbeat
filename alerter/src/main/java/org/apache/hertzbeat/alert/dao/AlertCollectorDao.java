@@ -15,26 +15,30 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.support.event;
+package org.apache.hertzbeat.alert.dao;
 
-import org.springframework.context.ApplicationEvent;
+import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+import java.util.List;
 
 /**
- * the event for monitor delete
+ * Alert Collector Dao
  */
-public class MonitorDeletedEvent extends ApplicationEvent {
-    
+public interface AlertCollectorDao extends JpaRepository<Collector, Long>, JpaSpecificationExecutor<Collector> {
+
     /**
-     * monitoring id
+     * Query the collector in the specified state
+     * @param status status value
+     * @return collector list
      */
-    private final Long monitorId;
-    
-    public MonitorDeletedEvent(Object source, Long monitorId) {
-        super(source);
-        this.monitorId = monitorId;
-    }
-    
-    public Long getMonitorId() {
-        return monitorId;
-    }
+    List<Collector> findCollectorsByStatus(Byte status);
+
+    /**
+     * Query collector by name
+     * @param name collector name
+     * @return collector
+     */
+    Collector findCollectorByName(String name);
 }
