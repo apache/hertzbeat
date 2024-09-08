@@ -31,12 +31,11 @@ import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -154,19 +153,24 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
 
 
     private AlertDefineDTO extractAlertDefineDataFromRow(Row row) {
-        AlertDefineDTO alertDefineDTO = new AlertDefineDTO();
-        alertDefineDTO.setApp(getCellValueAsString(row.getCell(0)));
-        alertDefineDTO.setMetric(getCellValueAsString(row.getCell(1)));
-        alertDefineDTO.setField(getCellValueAsString(row.getCell(2)));
-        alertDefineDTO.setPreset(getCellValueAsBoolean(row.getCell(3)));
-        alertDefineDTO.setExpr(getCellValueAsString(row.getCell(4)));
-        alertDefineDTO.setPriority(getCellValueAsByte(row.getCell(5)));
-        alertDefineDTO.setTimes(getCellValueAsInteger(row.getCell(6)));
-        alertDefineDTO.setTags(extractTagDataFromRow(row.getCell(7)));
-        alertDefineDTO.setEnable(getCellValueAsBoolean(row.getCell(8)));
-        alertDefineDTO.setRecoverNotice(getCellValueAsBoolean(row.getCell(9)));
-        alertDefineDTO.setTemplate(getCellValueAsString(row.getCell(10)));
-        return alertDefineDTO;
+
+        if (Objects.isNull(row)) {
+            return null;
+        }
+
+        return AlertDefineDTO.builder()
+                .app(getCellValueAsString(row.getCell(0)))
+                .metric(getCellValueAsString(row.getCell(1)))
+                .field(getCellValueAsString(row.getCell(2)))
+                .preset(getCellValueAsBoolean(row.getCell(3)))
+                .expr(getCellValueAsString(row.getCell(4)))
+                .priority(getCellValueAsByte(row.getCell(5)))
+                .times(getCellValueAsInteger(row.getCell(6)))
+                .tags(extractTagDataFromRow(row.getCell(7)))
+                .enable(getCellValueAsBoolean(row.getCell(8)))
+                .recoverNotice(getCellValueAsBoolean(row.getCell(9)))
+                .template(getCellValueAsString(row.getCell(10)))
+                .build();
     }
 
 
@@ -178,30 +182,12 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
     @Override
     public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
         try {
+
             Workbook workbook = new HSSFWorkbook();
             String sheetName = "Export AlertDefine";
-            Sheet sheet = workbook.createSheet(sheetName);
-            sheet.setDefaultColumnWidth(20);
-            sheet.setColumnWidth(9, 40 * 256);
-            sheet.setColumnWidth(10, 40 * 256);
-            // set header style
-            CellStyle headerCellStyle = workbook.createCellStyle();
-            Font headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerCellStyle.setFont(headerFont);
-            headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+            Sheet sheet = ExcelExportUtils.setSheet(sheetName, workbook, ExportAlertDefineDTO.class);
             // set cell style
-            CellStyle cellStyle = workbook.createCellStyle();
-            cellStyle.setAlignment(HorizontalAlignment.CENTER);
-            // set header
-            String[] headers = {"app", "metric", "field", "preset", "expr", "priority", "times", "tags",
-                    "enable", "recoverNotice", "template"};
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerCellStyle);
-            }
+            CellStyle cellStyle = ExcelExportUtils.setCellStyle(workbook);
 
             // Traverse the threshold rule list, each threshold rule object corresponds to a row of data
             int rowIndex = 1;
