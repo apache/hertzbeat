@@ -117,7 +117,7 @@ export class AlertCenterComponent implements OnInit {
       return this.i18nSvc.fanyi('monitor.availability');
     }
     if (target == 'collectorAvailability') {
-      return this.i18nSvc.fanyi('monitor.collector.availability')
+      return this.i18nSvc.fanyi('monitor.collector.availability');
     }
     return target;
   }
