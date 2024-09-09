@@ -28,9 +28,6 @@
     <artifactId>hertzbeat-alerter</artifactId>
     <name>${project.artifactId}</name>
 
-    <properties>
-    </properties>
-
     <dependencies>
         <!-- common -->
         <dependency>
@@ -74,18 +71,6 @@
             <groupId>cn.afterturn</groupId>
             <artifactId>easypoi-annotation</artifactId>
             <version>${easy-poi.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>${poi.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>${poi.version}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
