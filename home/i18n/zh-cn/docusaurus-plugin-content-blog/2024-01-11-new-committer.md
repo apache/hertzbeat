@@ -12,13 +12,11 @@ keywords: [open source monitoring system, alerting system]
 
 > 热烈欢迎 HertzBeat 有三位小伙伴新晋社区 Committer, 让我们来了解下他们的开源经历吧！
 
-## New Committer - vinci
+## New Committer - leo
 
-**姓名：王佳宁**
+**姓名：Leo**
 
-**浙江大学计算机学院研究生一年级**
-
-**Github ID: vinci-897**
+**Github ID: leo-934**
 
 ### 初识Hertzbeat
 
