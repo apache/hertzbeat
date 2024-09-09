@@ -9,7 +9,7 @@ keywords: [open source monitoring tool, open source alerter, open source feishu 
 
 ### Operation steps
 
-1. **【FeiShu client】-> 【Group settings】-> 【Group robot】-> 【Add new robot】-> 【Set robot name and avatar】-> 【Copy its webhook address after adding successfully】**
+1. **【FeiShu client】-> 【Group settings】-> 【Bots】-> 【Add Bot】-> 【Custom  Bot】 -> 【Set robot name and avatar】-> 【Copy its webhook URL after adding successfully】**
 
 2. **【Save the key value of the WebHook address of the robot】**
 
@@ -30,5 +30,9 @@ keywords: [open source monitoring tool, open source alerter, open source feishu 
 
     > Please check whether there is any triggered alarm information in the alarm center.  
     > Please check whether the robot key is configured correctly and whether the alarm strategy association is configured.
+
+2. How to @someone in alarm notification
+
+    > In the form for adding recipients, fill in the `User ID`. If you need to @everyone, you can enter `all` in the `User ID` field. Multiple user IDs are also supported, separated by commas `,`. For detailed instructions on how to get the Feishu user ID, please refer to: [Get feishu user id](https://open.feishu.cn/document/faq/trouble-shooting/how-to-get-internal-user-id).
 
 Other issues can be fed back through the communication group ISSUE!
