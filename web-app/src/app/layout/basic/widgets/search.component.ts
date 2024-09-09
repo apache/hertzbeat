@@ -10,8 +10,9 @@ import {
   OnDestroy,
   Output
 } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, tap, filter } from 'rxjs/operators';
 
 import { Monitor } from '../../../pojo/Monitor';
 import { MonitorService } from '../../../service/monitor.service';
@@ -38,12 +39,7 @@ import { MonitorService } from '../../../service/monitor.service';
       />
     </nz-input-group>
     <nz-autocomplete nzBackfill="false" nzDefaultActiveFirstOption #auto>
-      <nz-auto-option
-        *ngFor="let option of options"
-        [nzValue]="option.id"
-        [nzLabel]="option.name"
-        [routerLink]="['/monitors/' + option.id]"
-      >
+      <nz-auto-option *ngFor="let option of options" [nzValue]="option.id" [nzLabel]="option.name" (click)="onOptionSelect(option)">
         <a>
           {{ 'monitor.name' | i18n }} : {{ option.name }}
           <span style="left:50% ; position: absolute;">{{ 'monitor.host' | i18n }} : {{ option.host }}</span>
@@ -79,10 +75,23 @@ export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
   }
   @Output() readonly toggleChangeChange = new EventEmitter<boolean>();
 
-  constructor(private el: ElementRef<HTMLElement>, private cdr: ChangeDetectorRef, private monitorSvc: MonitorService) {}
+  constructor(
+    private router: Router,
+    private el: ElementRef<HTMLElement>,
+    private cdr: ChangeDetectorRef,
+    private monitorSvc: MonitorService
+  ) {
+    this.router.events.pipe(filter(event => event instanceof NavigationEnd)).subscribe(() => {
+      this.resetSearch();
+    });
+  }
 
   ngAfterViewInit(): void {
     this.qIpt = this.el.nativeElement.querySelector('.ant-input') as HTMLInputElement;
+    this.initOptions();
+  }
+
+  initOptions() {
     this.search$
       .pipe(
         debounceTime(500),
@@ -133,6 +142,22 @@ export class HeaderSearchComponent implements AfterViewInit, OnDestroy {
 
   search(ev: Event): void {
     this.search$.next((ev.target as HTMLInputElement).value);
+  }
+
+  onOptionSelect(option: any) {
+    this.router.navigate([`/monitors/${option.id}`]);
+    this.resetSearch();
+    if (this.qIpt) {
+      this.qIpt.blur();
+    }
+    this.qBlur();
+  }
+
+  resetSearch() {
+    if (this.qIpt) {
+      this.qIpt!.value = '';
+    }
+    this.initOptions();
   }
 
   ngOnDestroy(): void {
