@@ -31,12 +31,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -218,29 +217,12 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
     @Override
     public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
         try {
+
             Workbook workbook = WorkbookFactory.create(true);
             String sheetName = "Export Monitor";
-            Sheet sheet = workbook.createSheet(sheetName);
-            sheet.setDefaultColumnWidth(20);
-            sheet.setColumnWidth(9, 40 * 256);
-            sheet.setColumnWidth(10, 40 * 256);
-            // set header style
-            CellStyle headerCellStyle = workbook.createCellStyle();
-            Font headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerCellStyle.setFont(headerFont);
-            headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+            Sheet sheet = ExcelExportUtils.setSheet(sheetName, workbook, ExportMonitorDTO.class);
             // set cell style
-            CellStyle cellStyle = workbook.createCellStyle();
-            cellStyle.setAlignment(HorizontalAlignment.CENTER);
-            // set header
-            String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "collector(default null if system dispatch)", "field", "type", "value", "metrics", "detected" };
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerCellStyle);
-            }
+            CellStyle cellStyle = ExcelExportUtils.setCellStyle(workbook);
 
             // foreach monitor, each monitor object corresponds to a row of data
             int rowIndex = 1;
