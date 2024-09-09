@@ -28,7 +28,7 @@ import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.alert.service.impl.AlertDefineExcelImExportServiceImpl;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
-import org.apache.poi.ss.usermodel.Cell;
+import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -56,13 +56,7 @@ public class AlertDefineExcelImExportServiceTest {
     public void setUp() throws IOException {
 
         Workbook initialWorkbook = WorkbookFactory.create(true);
-        Sheet initialSheet = initialWorkbook.createSheet();
-        Row headerRow = initialSheet.createRow(0);
-        String[] headers = {"app", "metric", "field", "preset", "expr", "priority", "times", "tags", "enable", "recoverNotice", "template"};
-        for (int i = 0; i < headers.length; i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(headers[i]);
-        }
+        Sheet initialSheet = ExcelExportUtils.setSheet("Test sheet", initialWorkbook, AlertDefineDTO.class);
 
         Row row = initialSheet.createRow(1);
         row.createCell(0).setCellValue("app1");
