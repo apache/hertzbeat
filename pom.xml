@@ -161,7 +161,7 @@
         <spring-boot-starter-sureness.version>1.1.0</spring-boot-starter-sureness.version>
         <huawei.sdk.version>3.1.37</huawei.sdk.version>
         <huawei.obs.version>3.23.5</huawei.obs.version>
-        
+        <commons-net>3.8.0</commons-net>
         
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <influxdb.version>2.23</influxdb.version>
@@ -221,6 +221,12 @@
                 <artifactId>hertzbeat-grafana</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
+            <!-- collector-basic -->
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-collector</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
             <!-- spring -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
@@ -264,6 +270,12 @@
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
+            </dependency>
+            <!-- commons-net -->
+            <dependency>
+                <groupId>commons-net</groupId>
+                <artifactId>commons-net</artifactId>
+                <version>${commons-net}</version>
             </dependency>
             <dependency>
                 <groupId>commons-net</groupId>
@@ -330,6 +342,12 @@
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver-core</artifactId>
                 <version>${mongodb-driver.version}</version>
+            </dependency>
+            <!-- rocketmq -->
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-tools</artifactId>
+                <version>${rocketmq-tools.version}</version>
             </dependency>
             <!-- clickhouse -->
             <dependency>
