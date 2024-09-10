@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -46,6 +46,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
     private bulletinDefineSvc: BulletinDefineService,
+    private cdr: ChangeDetectorRef,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
   search!: string;
@@ -70,12 +71,14 @@ export class BulletinComponent implements OnInit, OnDestroy {
   total: number = 0;
   currentTab: number = 0;
   refreshInterval: any;
+  deadline = 30;
+  countDownTime: number = 0;
 
   ngOnInit() {
     this.loadTabs();
     this.refreshInterval = setInterval(() => {
-      this.loadTabs();
-    }, 30000); // every 30 seconds refresh the tabs
+      this.countDown();
+    }, 1000); // every 30 seconds refresh the tabs
   }
 
   ngOnDestroy() {
@@ -86,6 +89,24 @@ export class BulletinComponent implements OnInit, OnDestroy {
 
   sync() {
     this.loadData(this.pageIndex - 1, this.pageSize);
+  }
+
+  configRefreshDeadline(deadlineTime: number) {
+    this.deadline = deadlineTime;
+    this.countDownTime = this.deadline;
+    this.cdr.detectChanges();
+  }
+
+  countDown() {
+    if (this.deadline > 0) {
+      this.countDownTime = Math.max(0, this.countDownTime - 1);
+      this.cdr.detectChanges();
+      if (this.countDownTime == 0) {
+        this.loadTabs();
+        this.countDownTime = this.deadline;
+        this.cdr.detectChanges();
+      }
+    }
   }
 
   onNewBulletinDefine() {
@@ -523,5 +544,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
     this.metricsData = [];
     this.loadData(this.pageIndex - 1, this.pageSize);
     console.log(this.metricsData);
+    this.countDownTime = this.deadline;
+    this.cdr.detectChanges();
   }
 }
