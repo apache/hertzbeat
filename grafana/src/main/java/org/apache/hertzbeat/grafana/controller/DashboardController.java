@@ -19,7 +19,6 @@ package org.apache.hertzbeat.grafana.controller;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.FAIL_CODE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +40,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @Tag(name = "Dashboard API")
 @RestController
-@RequestMapping(path = "/api/grafana/dashboard", produces = {APPLICATION_JSON_VALUE})
+@RequestMapping(path = "/api/grafana/dashboard",
+        produces = {APPLICATION_JSON_VALUE})
 public class DashboardController {
 
     @Autowired
