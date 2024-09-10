@@ -20,7 +20,6 @@ package org.apache.hertzbeat.manager.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.reset;
@@ -59,7 +58,7 @@ class TagServiceTest {
 
     @Test
     void addTags() {
-        when(tagDao.saveAll(anyList())).thenReturn(anyList());
+        when(tagDao.save(any())).thenReturn(any());
         assertDoesNotThrow(() -> tagService.addTags(Collections.singletonList(new Tag())));
     }
 
