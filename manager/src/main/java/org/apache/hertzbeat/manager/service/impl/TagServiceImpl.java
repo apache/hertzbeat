@@ -60,6 +60,10 @@ public class TagServiceImpl implements TagService {
     public void addTags(List<Tag> tags) {
         // Verify request data
         tags = tags.stream().peek(tag -> {
+            Optional<Tag> tagOptional = tagDao.findTagByNameAndTagValue(tag.getName(), tag.getTagValue());
+            if (tagOptional.isPresent()) {
+                throw new IllegalArgumentException("The tag already exists.");
+            }
             tag.setType((byte) 1);
             tag.setId(null);
         }).distinct().collect(Collectors.toList());
