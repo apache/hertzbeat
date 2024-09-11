@@ -28,6 +28,8 @@ import jakarta.annotation.PostConstruct;
 import java.util.Base64;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -42,7 +44,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 
 /**
  * Service for managing Grafana service accounts and tokens.
@@ -189,13 +190,14 @@ public class ServiceAccountService {
     }
 
     private HttpHeaders createHeaders() {
-        String auth = username + ":" + password;
+        String auth = username + SignConstants.DOUBLE_MARK + password;
         byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes());
-        String authHeader = "Basic " + new String(encodedAuth);
+        String authHeader = NetworkConstants.BASIC
+                + SignConstants.BLANK + new String(encodedAuth);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", authHeader);
+        headers.set(NetworkConstants.AUTHORIZATION, authHeader);
         return headers;
     }
 }
