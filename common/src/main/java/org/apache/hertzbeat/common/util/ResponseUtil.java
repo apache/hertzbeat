@@ -72,9 +72,7 @@ public class ResponseUtil {
     public interface Runnable {
 
         /**
-         * Gets a result.
-         *
-         * @return a result
+         * Run target method.
          */
         void run() throws Exception;
     }
