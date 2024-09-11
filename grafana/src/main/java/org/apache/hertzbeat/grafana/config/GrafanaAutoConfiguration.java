@@ -17,13 +17,18 @@
 
 package org.apache.hertzbeat.grafana.config;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 
 /**
  * Grafana auto configuration.
  */
-@ComponentScan(basePackages = "org.apache.hertzbeat.grafana")
+@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
+		+ SignConstants.DOT
+		+ ConfigConstants.FunctionModuleConstants.GRAFANA
+)
 @EnableConfigurationProperties(GrafanaProperties.class)
 public class GrafanaAutoConfiguration {
 }
