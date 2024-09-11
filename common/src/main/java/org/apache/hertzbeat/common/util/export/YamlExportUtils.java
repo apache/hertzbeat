@@ -5,9 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,20 +13,32 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.grafana.config;
+package org.apache.hertzbeat.common.util.export;
 
-import org.apache.hertzbeat.common.constants.ConfigConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 /**
- * Grafana auto configuration.
+ * Yaml Export Utils
  */
-@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
-		+ SignConstants.DOT
-		+ ConfigConstants.FunctionModuleConstants.GRAFANA
-)
-@EnableConfigurationProperties(GrafanaProperties.class)
-public class GrafanaAutoConfiguration {
+
+public final class YamlExportUtils {
+
+    private YamlExportUtils() {
+    }
+
+    public static <T> void exportWriteOs(List<T> list, OutputStream os) {
+
+        var options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setIndent(2);
+        options.setPrettyFlow(true);
+        Yaml yaml = new Yaml(options);
+        yaml.dump(list, new OutputStreamWriter(os, StandardCharsets.UTF_8));
+    }
+
 }

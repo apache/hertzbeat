@@ -39,6 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
@@ -75,13 +77,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
     private static final String EXPORT_PATH = "/api/v1/export";
     private static final String QUERY_RANGE_PATH = "/api/v1/query_range";
     private static final String STATUS_PATH = "/api/v1/status/tsdb";
-    private static final String STATUS = "status";
-    private static final String STATUS_SUCCESS = "success";
     private static final String LABEL_KEY_NAME = "__name__";
     private static final String LABEL_KEY_JOB = "job";
     private static final String LABEL_KEY_INSTANCE = "instance";
     private static final String SPILT = "_";
-    private static final String BASIC = "Basic";
     private static final String MONITOR_METRICS_KEY = "__metrics__";
     private static final String MONITOR_METRIC_KEY = "__metric__";
 
@@ -105,9 +104,9 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
             HttpHeaders headers = new HttpHeaders();
             if (StringUtils.hasText(victoriaMetricsProp.username())
                     && StringUtils.hasText(victoriaMetricsProp.password())) {
-                String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
+                String authStr = victoriaMetricsProp.username() + SignConstants.DOUBLE_MARK + victoriaMetricsProp.password();
                 String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + " " + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             ResponseEntity<String> responseEntity = restTemplate.exchange(victoriaMetricsProp.url() + STATUS_PATH,
@@ -185,9 +184,10 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         headers.setContentType(MediaType.APPLICATION_JSON);
                         if (StringUtils.hasText(victoriaMetricsProp.username())
                                 && StringUtils.hasText(victoriaMetricsProp.password())) {
-                            String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
+                            String authStr = victoriaMetricsProp.username() + SignConstants.DOUBLE_MARK + victoriaMetricsProp.password();
                             String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                            headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+                            headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC
+                                    + SignConstants.BLANK + encodedAuth);
                         }
                         HttpEntity<VictoriaMetricsContent> httpEntity = new HttpEntity<>(content, headers);
                         ResponseEntity<String> responseEntity = restTemplate.postForEntity(victoriaMetricsProp.url() + IMPORT_PATH,
@@ -227,7 +227,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                     && StringUtils.hasText(victoriaMetricsProp.password())) {
                 String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
                 String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + EXPORT_PATH)
@@ -321,7 +321,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                     && StringUtils.hasText(victoriaMetricsProp.password())) {
                 String authStr = victoriaMetricsProp.username() + ":" + victoriaMetricsProp.password();
                 String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
-                headers.add(HttpHeaders.AUTHORIZATION,  BASIC + " " + encodedAuth);
+                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC
+                        + SignConstants.BLANK + encodedAuth);
             }
             HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
             URI uri = UriComponentsBuilder.fromHttpUrl(victoriaMetricsProp.url() + QUERY_RANGE_PATH)

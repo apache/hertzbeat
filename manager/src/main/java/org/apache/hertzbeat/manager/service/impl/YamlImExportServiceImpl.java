@@ -21,12 +21,10 @@ import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile
 import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile.TYPE;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.DumperOptions;
+import org.apache.hertzbeat.common.util.export.YamlExportUtils;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -74,11 +72,8 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      */
     @Override
     public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setIndent(2);
-        options.setPrettyFlow(true);
-        Yaml yaml = new Yaml(options);
-        yaml.dump(monitorList, new OutputStreamWriter(os, StandardCharsets.UTF_8));
+
+        YamlExportUtils.exportWriteOs(monitorList, os);
     }
+
 }

@@ -47,6 +47,10 @@ public interface NetworkConstants {
 
     String LOCATION = "Location";
 
+    String BASIC = "Basic";
+
+    String AUTHORIZATION = "Authorization";
+
     /**
      * HttpClient Configuration Constants.
      */

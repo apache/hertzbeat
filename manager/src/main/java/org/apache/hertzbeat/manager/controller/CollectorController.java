@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.dto.Message;
+import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.service.CollectorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -56,8 +57,7 @@ public class CollectorController {
             @Parameter(description = "collector name", example = "tom") @RequestParam(required = false) final String name,
             @Parameter(description = "List current page", example = "0") @RequestParam(defaultValue = "0") int pageIndex,
             @Parameter(description = "Number of list pagination", example = "8") @RequestParam(required = false) Integer pageSize) {
-        Page<CollectorSummary> receivers = collectorService.getCollectors(name, pageIndex, pageSize);
-        return ResponseEntity.ok(Message.success(receivers));
+        return ResponseUtil.handle(() -> collectorService.getCollectors(name, pageIndex, pageSize));
     }
 
     @PutMapping("/online")
@@ -92,7 +92,7 @@ public class CollectorController {
     public ResponseEntity<Message<Map<String, String>>> generateCollectorDeployInfo(
             @Parameter(description = "collector name", example = "demo-collector")
             @PathVariable() String collector) {
-        return ResponseEntity.ok(Message.success(collectorService.generateCollectorDeployInfo(collector)));
+        return ResponseUtil.handle(() -> collectorService.generateCollectorDeployInfo(collector));
     }
 
 }

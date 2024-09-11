@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.grafana.service;
 
-
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_DATASOURCE_API;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_ACCESS;
 import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DATASOURCE_NAME;
