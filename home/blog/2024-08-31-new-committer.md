@@ -18,7 +18,7 @@ Besides work, I am also passionate about the open-source community. Participatin
 
 ## Participating in the Apache Community
 
-The first Apache project I participated in was Apache ShenYu (https://github.com/apache/shenyu). As an API gateway project, ShenYu provided me with an opportunity to gain a deep understanding of microservice architecture and gateway technology. Through my involvement in ShenYu's development, I not only enhanced my technical skills but also learned about the collaboration methods and open-source spirit of the Apache community.
+The first Apache project I participated in was Apache ShenYu (<https://github.com/apache/shenyu>). As an API gateway project, ShenYu provided me with an opportunity to gain a deep understanding of microservice architecture and gateway technology. Through my involvement in ShenYu's development, I not only enhanced my technical skills but also learned about the collaboration methods and open-source spirit of the Apache community.
 
 This experience gave me a deeper understanding of the Apache community and laid the foundation for my later participation in other Apache projects, such as HertzBeat. From ShenYu to HertzBeat, I gradually deepened my understanding and contribution to Apache projects, eventually becoming a Committer for HertzBeat.
 

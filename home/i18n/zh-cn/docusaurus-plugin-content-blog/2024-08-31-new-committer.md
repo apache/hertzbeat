@@ -25,7 +25,7 @@ keywords:
 
 ## 参与 Apache 社区
 
-我参与的第一个 Apache 项目是 Apache ShenYu(https://github.com/apache/shenyu) 。作为一个 API 网关项目，ShenYu 为我提供了深入了解微服务架构和网关技术的机会。通过参与 ShenYu 的开发，我不仅提升了自己的技术能力，还学习到了 Apache 社区的协作方式和开源精神。
+我参与的第一个 Apache 项目是 Apache ShenYu(<https://github.com/apache/shenyu>) 。作为一个 API 网关项目，ShenYu 为我提供了深入了解微服务架构和网关技术的机会。通过参与 ShenYu 的开发，我不仅提升了自己的技术能力，还学习到了 Apache 社区的协作方式和开源精神。
 
 这次经历让我对 Apache 社区有了更深入的认识，也为我后来参与其他 Apache 项目，如 HertzBeat，奠定了基础。从 ShenYu 到 HertzBeat，我逐步加深了对 Apache 项目的理解和贡献，最终成为了 HertzBeat 的 Committer。
 
