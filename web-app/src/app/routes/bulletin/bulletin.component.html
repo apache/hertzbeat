@@ -28,6 +28,10 @@
 
 <app-toolbar>
   <ng-template #left>
+    <button nz-button nz-dropdown [nzDropdownMenu]="time_menu" nzPlacement="bottomLeft">
+      <span *ngIf="deadline > 0"> {{ 'monitors.detail.auto-refresh' | i18n : { time: countDownTime } }} </span>
+      <span *ngIf="deadline <= 0"> {{ 'monitors.detail.close-refresh' | i18n }} </span>
+    </button>
     <button nz-button nzType="primary" (click)="sync()" nz-tooltip [nzTooltipTitle]="'common.refresh' | i18n">
       <i nz-icon nzType="sync" nzTheme="outline"></i>
     </button>
@@ -48,6 +52,15 @@
       <i nz-icon nzType="delete" nzTheme="outline"></i>
       {{ 'bulletin.batch.delete' | i18n }}
     </button>
+    <nz-dropdown-menu #time_menu="nzDropdownMenu">
+      <ul nz-menu>
+        <li nz-menu-item (click)="configRefreshDeadline(10)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 10 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(30)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 30 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(60)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 60 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(300)"> {{ 'monitors.detail.config-refresh' | i18n : { time: 300 } }} </li>
+        <li nz-menu-item (click)="configRefreshDeadline(-1)"> {{ 'monitors.detail.close-refresh' | i18n }}</li>
+      </ul>
+    </nz-dropdown-menu>
   </ng-template>
 </app-toolbar>
 
@@ -93,7 +106,11 @@
         <tbody>
           <ng-container *ngFor="let content of fixedTable.data">
             <tr>
-              <td nzAlign="center" [rowSpan]="1">{{ content.monitorName }}</td>
+              <td nzAlign="center" [rowSpan]="1">
+                <button nz-button nzSize="default" nzType="link" [routerLink]="['/monitors/' + content.monitorId]">
+                  {{ content.monitorName }}
+                </button>
+              </td>
               <td nzAlign="center" [rowSpan]="1">{{ content.host }}</td>
               <ng-container *ngFor="let metric of content.metrics">
                 <ng-container *ngFor="let field of metric.fields">

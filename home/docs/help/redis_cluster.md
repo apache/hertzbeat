@@ -155,11 +155,11 @@ keywords: [ open source monitoring tool, open source Redis Cluster monitoring to
 
    Add a redis monitor center, fill require parameters.
 
-   ![](/img/docs/help/redis-cluster-add.png)
+   ![HertzBeat](/img/docs/help/redis-cluster-add.png)
 
    final effect.
 
-   ![](/img/docs/help/redis-cluster-view.png)
+   ![HertzBeat](/img/docs/help/redis-cluster-view.png)
 
 ### Configuration Parameters
 

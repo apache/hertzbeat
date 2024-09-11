@@ -38,7 +38,7 @@ public interface AccountService {
      * Use refresh TOKEN to re-acquire TOKEN
      * @param refreshToken refreshToken
      * @return token and refresh token
-     * @throws AuthenticationException failed to refresh
+     * @throws Exception failed to refresh
      */
-    RefreshTokenResponse refreshToken(String refreshToken) throws AuthenticationException;
+    RefreshTokenResponse refreshToken(String refreshToken) throws Exception;
 }

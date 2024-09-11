@@ -28,7 +28,7 @@ github: <https://github.com/apache/hertzbeat>
 
     > 系统页面 -> 监控菜单 -> SSL证书 -> 新增SSL证书
 
-    ![](/img/docs/start/ssl_1.png)
+    ![HertzBeat](/img/docs/start/ssl_1.png)
 
 2. 配置监控网站
 
@@ -36,45 +36,45 @@ github: <https://github.com/apache/hertzbeat>
     >
     > 点击确定 注意⚠️新增前默认会先去测试网站连接性，连接成功才会新增，当然也可以把**是否测试**按钮置灰。
 
-    ![](/img/docs/start/ssl_2.png)
+    ![HertzBeat](/img/docs/start/ssl_2.png)
 
 3. 查看检测指标数据
 
     > 在监控列表可以查看任务状态，进监控详情可以查看指标数据图表等。
 
-    ![](/img/docs/start/ssl_3.png)
+    ![HertzBeat](/img/docs/start/ssl_3.png)
 
-    ![](/img/docs/start/ssl_11.png)
+    ![HertzBeat](/img/docs/start/ssl_11.png)
 
 4. 设置阈值(证书过期时触发)
 
     > 系统页面 -> 告警 -> 告警阈值 -> 新增阈值
 
-    ![](/img/docs/start/ssl_4.png)
+    ![HertzBeat](/img/docs/start/ssl_4.png)
 
     > 配置阈值，选择SSL证书指标对象，配置告警表达式-当指标`expired`为`true`触发，即`equals(expired,"true")` , 设置告警级别通知模版信息等。
 
-    ![](/img/docs/start/ssl_5.png)
+    ![HertzBeat](/img/docs/start/ssl_5.png)
 
     > 关联阈值与监控, 在阈值列表设置此阈值应用于哪些监控。
 
-    ![](/img/docs/start/ssl_6.png)
+    ![HertzBeat](/img/docs/start/ssl_6.png)
 
 5. 设置阈值(证书过期前一周触发)
 
     > 同理如上，新增配置阈值，配置告警表达式-当指标有效期时间戳 `end_timestamp`，`now()`函数为当前时间戳，若配置提前一周触发告警即：`end_timestamp <= (now()  + 604800000)` , 其中 `604800000` 为7天总时间差毫秒值。
 
-    ![](/img/docs/start/ssl_7.png)
+    ![HertzBeat](/img/docs/start/ssl_7.png)
 
     > 最终可以在告警中心看到已触发的告警。
 
-    ![](/img/docs/start/ssl_8.png)
+    ![HertzBeat](/img/docs/start/ssl_8.png)
 
 6. 告警通知(通过钉钉微信飞书等及时通知)
 
     > 监控系统 -> 告警通知 -> 新增接收人
 
-    ![](/img/docs/start/ssl_9.png)
+    ![HertzBeat](/img/docs/start/ssl_9.png)
 
     钉钉微信飞书等token配置可以参考帮助文档
 
@@ -83,7 +83,7 @@ github: <https://github.com/apache/hertzbeat>
 
     > 告警通知 -> 新增告警通知策略 -> 将刚才配置的接收人启用通知
 
-    ![](/img/docs/start/ssl_10.png)
+    ![HertzBeat](/img/docs/start/ssl_10.png)
 
 7. OK 当阈值触发后我们就可以收到对应告警消息啦，如果没有配通知，也可以在告警中心查看告警信息。
 

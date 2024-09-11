@@ -17,7 +17,13 @@
 
 package org.apache.hertzbeat.collector.collect.jmx;
 
-import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,20 +31,41 @@ import org.junit.jupiter.api.Test;
  * Test case for {@link JmxCollectImpl}
  */
 class JmxCollectImplTest {
+    private JmxCollectImpl jmxCollect;
 
     @BeforeEach
-    void setUp() {
-    }
-
-    @AfterEach
-    void tearDown() {
+    void setUp() throws Exception {
+        jmxCollect = new JmxCollectImpl();
     }
 
     @Test
-    void getInstance() {
+    void preCheck() throws IllegalArgumentException {
+        // metrics is null, will throw exception
+        assertThrows(IllegalArgumentException.class, () -> {
+            jmxCollect.preCheck(null);
+        });
+
+        // should not contain /stub/
+        assertThrows(IllegalArgumentException.class, () -> {
+            JmxProtocol jmx = JmxProtocol.builder().build();
+            jmx.setUrl("/stub/");
+            Metrics metrics = Metrics.builder().jmx(jmx).build();
+            
+            jmxCollect.preCheck(metrics);
+        });
     }
 
     @Test
     void collect() {
+        // metrics is null
+        assertDoesNotThrow(() -> {
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            jmxCollect.collect(builder, 1L, "app", null);
+        });
+    }
+
+    @Test
+    void supportProtocol() {
+        assert DispatchConstants.PROTOCOL_JMX.equals(jmxCollect.supportProtocol());
     }
 }

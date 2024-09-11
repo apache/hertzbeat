@@ -24,6 +24,13 @@ package org.apache.hertzbeat.common.constants;
 public interface ConfigConstants {
 
     /**
+     * System Constant: hertzbeat
+     */
+    interface SystemConstant {
+        String PROJECT_NAME = "hertzbeat";
+    }
+
+    /**
      * Package name constant.
      */
     interface PkgConstant {
@@ -56,6 +63,8 @@ public interface ConfigConstants {
         String DISPATCH = "dispatch";
 
         String INFO = "info";
+
+        String GRAFANA = "grafana";
     }
 
 }

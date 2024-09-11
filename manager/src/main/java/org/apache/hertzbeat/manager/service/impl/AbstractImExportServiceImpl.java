@@ -69,7 +69,7 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 if (monitorDto.isDetected()) {
                     monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
                 }
-                monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
+                monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
             });
         }
     }

@@ -25,6 +25,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -49,6 +50,7 @@ export class MonitorNewComponent implements OnInit {
   collectors!: Collector[];
   collector: string = '';
   detected: boolean = false;
+  grafanaDashboard!: GrafanaDashboard;
   // whether it is loading
   isSpinning: boolean = false;
   spinningTip: string = 'Loading...';
@@ -64,6 +66,7 @@ export class MonitorNewComponent implements OnInit {
   ) {
     this.monitor = new Monitor();
     this.monitor.tags = [];
+    this.grafanaDashboard = new GrafanaDashboard();
   }
 
   ngOnInit(): void {
@@ -163,7 +166,8 @@ export class MonitorNewComponent implements OnInit {
       detected: this.detected,
       monitor: info.monitor,
       collector: info.collector,
-      params: info.params.concat(info.advancedParams)
+      params: info.params.concat(info.advancedParams),
+      grafanaDashboard: info.grafanaDashboard
     };
     if (this.detected) {
       this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
