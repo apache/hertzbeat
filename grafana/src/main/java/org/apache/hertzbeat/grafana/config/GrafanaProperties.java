@@ -17,9 +17,10 @@
 
 package org.apache.hertzbeat.grafana.config;
 
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.HTTP;
-import static org.apache.hertzbeat.grafana.common.GrafanaConstants.HTTPS;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+import org.apache.hertzbeat.common.constants.NetworkConstants;
+import org.apache.hertzbeat.grafana.common.GrafanaConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
@@ -27,31 +28,31 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * grafana configuration
  */
 @Slf4j
-@ConfigurationProperties(prefix = "grafana")
+@ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.GRAFANA)
 public record GrafanaProperties(@DefaultValue("false") boolean enabled,
                                 @DefaultValue("http://127.0.0.1:3000") String url,
-                                @DefaultValue("admin") String username,
-                                @DefaultValue("admin") String password) {
+                                @DefaultValue(GrafanaConstants.ADMIN) String username,
+                                @DefaultValue(GrafanaConstants.ADMIN) String password) {
     /**
      * get the prefix of the grafana url, such as http or https
      */
     public String getPrefix() {
-        if (url.startsWith(HTTP)) {
-            return HTTP;
-        } else if (url.startsWith(HTTPS)) {
-            return HTTPS;
+        if (url.startsWith(NetworkConstants.HTTP_HEADER)) {
+            return NetworkConstants.HTTP_HEADER;
+        } else if (url.startsWith(NetworkConstants.HTTPS_HEADER)) {
+            return NetworkConstants.HTTPS_HEADER;
         }
-        return HTTP;
+        return NetworkConstants.HTTP_HEADER;
     }
 
     /**
      * get the grafana url without the prefix, such as localhost:3000
      */
     public String getUrl() {
-        if (getPrefix().equals(HTTP)) {
-            return url.replace(HTTP, "");
-        } else if (getPrefix().equals(HTTPS)) {
-            return url.replace(HTTPS, "");
+        if (getPrefix().equals(NetworkConstants.HTTP_HEADER)) {
+            return url.replace(NetworkConstants.HTTP_HEADER, "");
+        } else if (getPrefix().equals(NetworkConstants.HTTPS_HEADER)) {
+            return url.replace(NetworkConstants.HTTPS_HEADER, "");
         }
         return url;
     }
