@@ -15,20 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.grafana.config;
+package org.apache.hertzbeat.common.util;
 
-import org.apache.hertzbeat.common.constants.ConfigConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+import org.junit.jupiter.api.Test;
 
 /**
- * Grafana auto configuration.
+ * Test for {@link NetworkUtil}
  */
-@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
-		+ SignConstants.DOT
-		+ ConfigConstants.FunctionModuleConstants.GRAFANA
-)
-@EnableConfigurationProperties(GrafanaProperties.class)
-public class GrafanaAutoConfiguration {
+public class NetworkUtilTest {
+    @Test
+    void common() {
+        assertFalse(NetworkUtil.isLinuxPlatform() && NetworkUtil.isWindowsPlatform());
+    }
 }

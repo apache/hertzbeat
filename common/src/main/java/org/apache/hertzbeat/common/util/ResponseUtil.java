@@ -66,4 +66,14 @@ public class ResponseUtil {
         T get() throws E;
     }
     
+    /**
+     * Runnable interface for running
+     */
+    public interface Runnable {
+
+        /**
+         * Run target method.
+         */
+        void run() throws Exception;
+    }
 }

@@ -15,20 +15,20 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.grafana.config;
+package org.apache.hertzbeat.common.cache;
 
-import org.apache.hertzbeat.common.constants.ConfigConstants;
-import org.apache.hertzbeat.common.constants.SignConstants;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.Test;
 
 /**
- * Grafana auto configuration.
+ * Test case for {@link CacheFactory}
  */
-@ComponentScan(basePackages = ConfigConstants.PkgConstant.PKG
-		+ SignConstants.DOT
-		+ ConfigConstants.FunctionModuleConstants.GRAFANA
-)
-@EnableConfigurationProperties(GrafanaProperties.class)
-public class GrafanaAutoConfiguration {
+public class CacheFactoryTest {
+    @Test
+    void common() {
+        assertNotNull(CacheFactory.getAlertConvergeCache());
+        assertNotNull(CacheFactory.getAlertSilenceCache());
+        assertNotNull(CacheFactory.getNoticeCache());
+    }
 }

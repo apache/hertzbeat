@@ -27,7 +27,7 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
 
    use```$ docker ps```to check if the database started successfully
 
-3. Create database in container manually or with [script](https://github.com/apache/hertzbeat/tree/master/script/docker-compose/hertzbeat-postgresql-iotdb/conf/sql/schema.sql).
+3. Create database in container manually or with [script](https://github.com/apache/hertzbeat/blob/v1.5.0/script/docker-compose/hertzbeat-postgresql-iotdb/conf/sql/schema.sql).
 
 ### Database creation
 
