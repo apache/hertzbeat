@@ -17,15 +17,15 @@
 
 package org.apache.hertzbeat.grafana.common;
 
+import org.apache.hertzbeat.common.constants.ConfigConstants;
+
 /**
  * Grafana Common Constants
  */
 public interface GrafanaConstants {
-    
-    String HTTP = "http://";
 
-    String HTTPS = "https://";
-    
+    String ADMIN = "admin";
+
     String KIOSK = "?kiosk=tv";
 
     String REFRESH = "&refresh=15s";
@@ -50,17 +50,13 @@ public interface GrafanaConstants {
     
     String GET_SERVICE_ACCOUNTS_API = "%s:%s@%s/api/serviceaccounts/search";
 
-    String ACCOUNT_NAME = "hertzbeat";
+    String ACCOUNT_NAME = ConfigConstants.SystemConstant.PROJECT_NAME;
     
     String ACCOUNT_ROLE = "Admin";
     
     String CREATE_SERVICE_ACCOUNT_API = "%s:%s@%s/api/serviceaccounts";
     
     String CREATE_SERVICE_TOKEN_API = "%s:%s@%s/api/serviceaccounts/%d/tokens";
-
-    String APPLICATION_JSON = "application/json";
-
-    String URL = "url";
 
     String GRAFANA_CONFIG = "grafanaConfig";
 }

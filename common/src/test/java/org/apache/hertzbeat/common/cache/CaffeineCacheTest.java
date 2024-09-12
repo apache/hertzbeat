@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.common.cache;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import java.time.Duration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,4 +65,9 @@ class CaffeineCacheTest {
         }
     }
 
+    @Test
+    void weekCache() {
+        CommonCacheService<String, String> cache = new CaffeineCacheServiceImpl<>(10, 100, Duration.ofMillis(3000), true);
+        assertNotNull(cache);
+    }
 }

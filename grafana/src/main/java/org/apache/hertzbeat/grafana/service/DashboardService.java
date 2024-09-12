@@ -41,7 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
 
-
 /**
  * Service for managing Grafana dashboards.
  */
