@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
@@ -94,8 +95,6 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         Assert.hasText(mongodbProtocol.getCommand(), "Mongodb Protocol command is required.");
         Assert.hasText(mongodbProtocol.getHost(), "Mongodb Protocol host is required.");
         Assert.hasText(mongodbProtocol.getPort(), "Mongodb Protocol port is required.");
-        Assert.hasText(mongodbProtocol.getUsername(), "Mongodb Protocol username is required.");
-        Assert.hasText(mongodbProtocol.getPassword(), "Mongodb Protocol password is required.");
     }
 
     @Override
@@ -191,17 +190,29 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         }
 
         String url = null;
-        if (CollectorConstants.MONGO_DB_ATLAS_MODEL.equals(mongodbProtocol.getModel())){
-            url = String.format("mongodb+srv://%s:%s@%s/%s?authSource=%s", mongodbProtocol.getUsername(),
-                    URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(),
-                    mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
+        if (CollectorConstants.MONGO_DB_ATLAS_MODEL.equals(mongodbProtocol.getModel())) {
+            if (StringUtils.isBlank(mongodbProtocol.getUsername()) && StringUtils.isBlank(mongodbProtocol.getPassword())) {
+                // Anonymous access for MongoDB Atlas
+                url = String.format("mongodb+srv://%s/%s", mongodbProtocol.getHost(), mongodbProtocol.getDatabase());
+            } else {
+                url = String.format("mongodb+srv://%s:%s@%s/%s?authSource=%s", mongodbProtocol.getUsername(),
+                        URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(),
+                        mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
+            }
         } else {
             // If the multiplexing fails, create a new connection to connect to mongodb
             // Passwords may contain special characters and need to be encoded using JS-like encodeURIComponent, which uses java URLEncoder
-            url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
-                    URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
-                    mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
+            if (StringUtils.isBlank(mongodbProtocol.getUsername()) && StringUtils.isBlank(mongodbProtocol.getPassword())) {
+                // Anonymous access for standalone MongoDB
+                url = String.format("mongodb://%s:%s/%s", mongodbProtocol.getHost(), mongodbProtocol.getPort(),
+                        mongodbProtocol.getDatabase());
+            } else {
+                url = String.format("mongodb://%s:%s@%s:%s/%s?authSource=%s", mongodbProtocol.getUsername(),
+                        URLEncoder.encode(mongodbProtocol.getPassword(), StandardCharsets.UTF_8), mongodbProtocol.getHost(), mongodbProtocol.getPort(),
+                        mongodbProtocol.getDatabase(), mongodbProtocol.getAuthenticationDatabase());
+            }
         }
+
 
         // Use the Mongo Client Settings builder to configure timeouts and other configurations
         MongoClientSettings settings = MongoClientSettings.builder()
