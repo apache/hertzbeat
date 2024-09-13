@@ -20,14 +20,18 @@ package org.apache.hertzbeat.manager.service;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.dao.TagDao;
@@ -47,22 +51,30 @@ import org.springframework.data.jpa.domain.Specification;
  */
 @ExtendWith(MockitoExtension.class)
 class TagServiceTest {
-
+    
     @InjectMocks
     private TagServiceImpl tagService;
-
+    
     @Mock
     private TagDao tagDao;
-
+    
     @Mock
     private TagMonitorBindDao tagMonitorBindDao;
-
+    
     @Test
     void addTags() {
-        when(tagDao.saveAll(anyList())).thenReturn(anyList());
-        assertDoesNotThrow(() -> tagService.addTags(Collections.singletonList(new Tag())));
+        // Prepare test data
+        List<Tag> tags = Collections.singletonList(
+                Tag.builder().id(1L).name("tagname").tagValue("tagvalue").build()
+        );
+        when(tagDao.findTagByNameAndTagValue(anyString(), anyString())).thenReturn(Optional.empty());
+        
+        tagService.addTags(tags);
+        
+        verify(tagDao).saveAll(tags);
+        
     }
-
+    
     @Test
     void modifyTag() {
         Tag tag = Tag.builder().id(1L).build();
@@ -73,18 +85,18 @@ class TagServiceTest {
         when(tagDao.findById(1L)).thenReturn(Optional.empty());
         assertThrows(IllegalArgumentException.class, () -> tagService.modifyTag(tag));
     }
-
+    
     @Test
     void getTags() {
         when(tagDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(Page.empty());
         assertNotNull(tagService.getTags(null, null, 1, 10));
     }
-
+    
     @Test
     void deleteTags() {
         assertDoesNotThrow(() -> tagService.deleteTags(new HashSet<>(1)));
     }
-
+    
     @Test
     void deleteUsingTags() {
         when(tagMonitorBindDao.countByTagIdIn(anySet())).thenReturn(1L);
