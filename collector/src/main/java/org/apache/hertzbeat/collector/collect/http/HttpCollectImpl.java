@@ -326,6 +326,35 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByXmlPath(String resp, List<String> aliasFields, HttpProtocol http,
                                         CollectRep.MetricsData.Builder builder) {
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builderFactory = factory.newDocumentBuilder();
+
+            Document document = builderFactory.parse(new ByteArrayInputStream(resp.getBytes(StandardCharsets.UTF_8)));
+            document.getDocumentElement().normalize();
+
+            for (String alias : aliasFields) {
+                NodeList nodeList = document.getElementsByTagName(alias);
+                if (nodeList.getLength() > 0) {
+                    Node node = nodeList.item(0);
+                    String value = node.getTextContent();
+
+                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                    valueRowBuilder.addColumns(value);
+                    builder.addValues(valueRowBuilder.build());
+                } else {
+                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    builder.addValues(valueRowBuilder.build());
+                }
+            }
+
+        } catch (Exception e) {
+            String errorMsg = "Error parsing XML response: " + e.getMessage();
+            log.error(errorMsg, e);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
+        }
     }
 
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,

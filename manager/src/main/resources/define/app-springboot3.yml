@@ -172,6 +172,56 @@ metrics:
       parseType: jsonPath
       parseScript: '$.availableTags[?(@.tag == "state")].values[*]'
 
+  - name: status
+    i18n:
+      zh-CN: 状态
+      en-US: Status
+    priority: 6
+    fields:
+      - field: activeThreads
+        i18n:
+          zh-CN: 活跃线程数
+          en-US: Active Threads
+        type: 0
+      - field: inactiveThreads
+        i18n:
+          zh-CN: 非活跃线程数
+          en-US: Inactive Threads
+        type: 0
+      - field: usedMemory
+        i18n:
+          zh-CN: 已用内存
+          en-US: Used Memory
+        type: 0
+        unit: MB
+      - field: totalMemory
+        i18n:
+          zh-CN: 总内存
+          en-US: Total Memory
+        type: 0
+        unit: MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^/metrics/status.xml
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: Basic Auth
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+      parseType: xmlPath
+      parseScript:
+        - alias: activeThreads
+          path: /status/threads/active
+        - alias: inactiveThreads
+          path: /status/threads/inactive
+        - alias: usedMemory
+          path: /status/memory/used
+        - alias: totalMemory
+          path: /status/memory/total
+
   - name: threads
     i18n:
       zh-CN: 线程
