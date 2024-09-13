@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.Random;
 import java.util.TimeZone;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
@@ -37,46 +38,48 @@ import org.apache.hertzbeat.manager.service.impl.SystemGeneralConfigServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.SystemSecretServiceImpl;
 import org.apache.hertzbeat.manager.service.impl.TemplateConfigServiceImpl;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.SmartLifecycle;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * Common CommandLineRunner class
+ * Config Initializer
  */
 @Component
 @Order(value = Ordered.HIGHEST_PRECEDENCE + 2)
-public class CommonCommandLineRunner implements CommandLineRunner {
+public class ConfigInitializer implements SmartLifecycle {
 
-    private static final String DEFAULT_JWT_SECRET = "CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R " 
+    private boolean running = false;
+
+    private static final String DEFAULT_JWT_SECRET = "CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R "
             + "LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9 "
             + "8tVt4bisXQ13rbN0oxhUZR73M6EByXIO+SV5 "
             + "dKhaX0csgOCTlCxq20yhmUea6H6JIpSE2Rwp";
-    
+
     @Value("${sureness.jwt.secret:" + DEFAULT_JWT_SECRET + "}")
     private String currentJwtSecret;
-    
+
     @Resource
     private SystemGeneralConfigServiceImpl systemGeneralConfigService;
-    
+
     @Resource
     private SystemSecretServiceImpl systemSecretService;
-    
+
     @Resource
     private TemplateConfigServiceImpl templateConfigService;
-    
+
     @Resource
     private AppService appService;
-    
+
     @Resource
     protected GeneralConfigDao generalConfigDao;
-    
+
     @Resource
     protected ObjectMapper objectMapper;
 
-    @Override
-    public void run(String... args) throws Exception {
+    @SneakyThrows
+    public void initConfig() {
         // for system config
         SystemConfig systemConfig = systemGeneralConfigService.getConfig();
         if (systemConfig != null) {
@@ -89,7 +92,7 @@ public class CommonCommandLineRunner implements CommandLineRunner {
         } else {
             // init system config data
             systemConfig = SystemConfig.builder().timeZoneId(TimeZone.getDefault().getID())
-                                   .locale(Locale.getDefault().getLanguage() + CommonConstants.LOCALE_SEPARATOR 
+                                   .locale(Locale.getDefault().getLanguage() + CommonConstants.LOCALE_SEPARATOR
                                                    + Locale.getDefault().getCountry())
                                    .build();
             String contentJson = objectMapper.writeValueAsString(systemConfig);
@@ -125,5 +128,26 @@ public class CommonCommandLineRunner implements CommandLineRunner {
         // else use the user custom jwt secret
         // set the jwt secret token in util
         JsonWebTokenUtil.setDefaultSecretKey(currentJwtSecret);
+    }
+
+    @Override
+    public void start() {
+        initConfig();
+        running = true;
+    }
+
+    @Override
+    public void stop() {
+        running = false;
+    }
+
+    @Override
+    public boolean isRunning() {
+        return running;
+    }
+
+    @Override
+    public int getPhase() {
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 }
