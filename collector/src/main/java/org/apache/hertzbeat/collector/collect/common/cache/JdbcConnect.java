@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.collect.common.cache;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -40,7 +41,23 @@ public class JdbcConnect extends AbstractConnection<Connection> {
     }
 
     @Override
+    public void check() throws SQLException {
+
+        if (connection.isClosed()) {
+            throw new SQLException("Connection is closed");
+        }
+    }
+
+    @Override
     public Connection getConnection() {
+
+        try {
+            this.check();
+        }
+        catch (SQLException e) {
+            log.error(e.getMessage());
+            return null;
+        }
         return connection;
     }
 }
