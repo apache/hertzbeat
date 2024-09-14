@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.manager.bulletin;
+package org.apache.hertzbeat.manager.pojo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;

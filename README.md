@@ -180,10 +180,6 @@ Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hert
 
 **HAVE FUN**
 
-## 🥐 Roadmap
-
-![hertzBeat](home/static/img/docs/hertzbeat-roadmap.png) 
-
 ## ✨ Contributors
 
 Thanks to these wonderful people, welcome to join us:     
@@ -524,21 +520,6 @@ HertzBeat is built on so many great open source projects, thanks to them!
 HertzBeat has been included in the <a href="https://landscape.cncf.io/guide?item=observability-and-analysis--monitoring--hertzbeat#observability-and-analysis--monitoring">
 CNCF Observability And Analysis - Monitoring Landscape.</a>
 </p>
-
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=apache/hertzbeat&type=Date)](https://star-history.com/#apache/hertzbeat&Date)
-
-## Contributors
-
-### Monthly Active Contributors
-
-[![Monthly Active Contributors](https://contributor-overtime-api.git-contributor.com/contributors-svg?chart=contributorMonthlyActivity&repo=apache/hertzbeat)](https://git-contributor.com?chart=contributorMonthlyActivity&repo=apache/hertzbeat)
-
-### GitHub Contributor Over Time
-
-[![GitHub Contributor Over Time](https://contributor-overtime-api.git-contributor.com/contributors-svg?chart=contributorOverTime&repo=apache/hertzbeat)](https://git-contributor.com?chart=contributorOverTime&repo=apache/hertzbeat)
 
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)
