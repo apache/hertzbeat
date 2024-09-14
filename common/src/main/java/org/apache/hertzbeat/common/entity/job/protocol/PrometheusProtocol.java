@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PrometheusProtocol {
+public class PrometheusProtocol implements CommonRequestProtocol {
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */

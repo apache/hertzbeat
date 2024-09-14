@@ -86,7 +86,8 @@ public class MonitorsController {
         if (ids != null && !ids.isEmpty()) {
             monitorService.deleteMonitors(new HashSet<>(ids));
         }
-        return ResponseEntity.ok(Message.success());
+        Message<Void> message = Message.success();
+        return ResponseEntity.ok(message);
     }
 
     @DeleteMapping("manage")
@@ -98,7 +99,8 @@ public class MonitorsController {
         if (ids != null && !ids.isEmpty()) {
             monitorService.cancelManageMonitors(new HashSet<>(ids));
         }
-        return ResponseEntity.ok(Message.success());
+        Message<Void> message = Message.success();
+        return ResponseEntity.ok(message);
     }
 
     @GetMapping("manage")

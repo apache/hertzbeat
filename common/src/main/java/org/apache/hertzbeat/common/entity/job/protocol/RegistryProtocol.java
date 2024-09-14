@@ -26,13 +26,13 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * Httpsd protocol
+ * Registry protocol
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class HttpsdProtocol {
+public class RegistryProtocol implements CommonRequestProtocol {
     private String host;
     private String port;
     private String discoveryClientTypeName;

@@ -30,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MongodbProtocol {
+public class MongodbProtocol implements CommonRequestProtocol {
 
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
