@@ -15,38 +15,31 @@
  * limitations under the License.
  */
 
+package org.apache.hertzbeat.common.entity.manager;
 
-package org.apache.hertzbeat.common.entity.manager.bulletin;
-
+import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 import java.util.List;
 import java.util.Map;
-import lombok.Data;
+import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.stereotype.Component;
 
 /**
- * Bulletin DTO
+ * json map list str converter
  */
-@Data
-public class BulletinDto {
+@Converter
+@Component
+public class JsonMapListAttributeConverter implements AttributeConverter<Map<String, List<String>>, String> {
 
-    /**
-     * Bulletin name
-     */
-    private String name;
+    @Override
+    public String convertToDatabaseColumn(Map<String, List<String>> attribute) {
+        return JsonUtil.toJson(attribute);
+    }
 
-    /**
-     * Monitor type eg: jvm, tomcat
-     */
-    private String app;
-
-
-    /**
-     * Monitor fields
-     */
-    private Map<String, List<String>> fields;
-
-    /**
-     * Monitor ids
-     */
-    private List<Long> monitorIds;
-
+    @Override
+    public Map<String, List<String>> convertToEntityAttribute(String dbData) {
+        TypeReference<Map<String, List<String>>> typeReference = new TypeReference<>() {};
+        return JsonUtil.fromJson(dbData, typeReference);
+    }
 }
