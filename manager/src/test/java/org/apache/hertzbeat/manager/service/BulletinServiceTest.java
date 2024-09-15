@@ -22,8 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
@@ -33,9 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
-import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
-import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
+import org.apache.hertzbeat.common.entity.manager.Bulletin;
+import org.apache.hertzbeat.manager.pojo.dto.BulletinMetricsData;
 import org.apache.hertzbeat.manager.dao.BulletinDao;
 import org.apache.hertzbeat.manager.service.impl.BulletinServiceImpl;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
@@ -73,11 +70,11 @@ public class BulletinServiceTest {
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
-            bulletinService.validate(new BulletinDto());
+            bulletinService.validate(new Bulletin());
         });
 
         assertThrows(IllegalArgumentException.class, () -> {
-            BulletinDto obj = new BulletinDto();
+            Bulletin obj = new Bulletin();
             obj.setApp("app");
             bulletinService.validate(obj);
         });
@@ -86,7 +83,7 @@ public class BulletinServiceTest {
             Map<String, List<String>> fields = new HashMap<String, List<String>>();
             fields.put("field1", null);
 
-            BulletinDto obj = new BulletinDto();
+            Bulletin obj = new Bulletin();
             obj.setApp("app");
             obj.setFields(fields);
             bulletinService.validate(obj);
@@ -99,7 +96,7 @@ public class BulletinServiceTest {
             List<Long> ids = new ArrayList<Long>();
             ids.add((long) 1);
 
-            BulletinDto obj = new BulletinDto();
+            Bulletin obj = new Bulletin();
             obj.setApp("app");
             obj.setFields(fields);
             obj.setMonitorIds(ids);
@@ -108,34 +105,11 @@ public class BulletinServiceTest {
     }
 
     @Test
-    public void testGetBulletinByName() throws Exception {
-        Bulletin bulletin = new Bulletin();
-
-        when(bulletinDao.findByName("test")).thenReturn(bulletin);
-        assertEquals(bulletin, bulletinService.getBulletinByName("test"));
-    }
-
-    @Test
-    public void testGetAllNames() throws Exception {
-        Bulletin bulletin = new Bulletin();
-        bulletin.setName("test");
-
-        List<Bulletin> items = new ArrayList<Bulletin>();
-        items.add(bulletin);
-
-        List<String> names = new ArrayList<String>();
-        names.add("test");
-
-        when(bulletinDao.findAll()).thenReturn(items);
-        assertEquals(names, bulletinService.getAllNames());
-    }
-
-    @Test
     public void testAddBulletin() throws Exception {
         Map<String, List<String>> fields = new HashMap<String, List<String>>();
         fields.put("field1", null);
 
-        BulletinDto bulletinDto = new BulletinDto();
+        Bulletin bulletinDto = new Bulletin();
         bulletinDto.setApp("app");
         bulletinDto.setFields(fields);
 
@@ -157,28 +131,28 @@ public class BulletinServiceTest {
         Page<Bulletin> items = new PageImpl<Bulletin>(content, pageRequest, total);
 
         when(bulletinDao.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(items);
-        assertNotNull(bulletinService.getBulletins(null, pageRequest));
+        assertNotNull(bulletinService.getBulletins(null, null, null));
     }
 
     @Test
     public void testBuildBulletinMetricsData() throws Exception {
         List<Long> ids = new ArrayList<Long>();
         ids.add((long) 1);
-
         Bulletin bulletin = new Bulletin();
         bulletin.setId((long) 1);
         bulletin.setMonitorIds(ids);
-        bulletin.setFields("""
-            {"1": ["1", "2"]}
-            """);
+        HashMap<String, List<String>> fields = new HashMap<>();
+        fields.put("1", List.of("1", "2"));
+        bulletin.setFields(fields);
 
         BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder = BulletinMetricsData.builder();
 
         Monitor monitor = new Monitor();
 
+        when(bulletinDao.findById(any(Long.class))).thenReturn(java.util.Optional.of(bulletin));
         when(realTimeDataReader.getCurrentMetricsData(any(), any(String.class))).thenReturn(null);
         when(monitorService.getMonitor(any(Long.class))).thenReturn(monitor);
-        assertNotNull(bulletinService.buildBulletinMetricsData(contentBuilder, bulletin));
+        assertNotNull(bulletinService.buildBulletinMetricsData(any(Long.class)));
     }
 
     @Test
@@ -188,23 +162,5 @@ public class BulletinServiceTest {
 
         when(bulletinDao.findById((long) 1)).thenReturn(java.util.Optional.of(bulletin));
         assertEquals(bulletin, bulletinService.getBulletinById((long) 1).get());
-    }
-
-    @Test
-    public void testDeleteBulletinByName() throws Exception {
-        List<String> names = new ArrayList<String>();
-        names.add("test");
-
-        assertDoesNotThrow(() -> {
-            bulletinService.deleteBulletinByName(names);
-        });
-
-        assertThrows(RuntimeException.class, () -> {
-            doAnswer(invocation -> {
-                throw new RuntimeException("test");
-            }).when(bulletinDao).deleteByNameIn(anyList());
-
-            bulletinService.deleteBulletinByName(null);
-        });
     }
 }
