@@ -19,13 +19,9 @@ package org.apache.hertzbeat.manager.service;
 
 import java.util.List;
 import java.util.Optional;
-import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
-import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
-import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
-import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinVo;
+import org.apache.hertzbeat.common.entity.manager.Bulletin;
+import org.apache.hertzbeat.manager.pojo.dto.BulletinMetricsData;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 /**
  * Bulletin Service
@@ -35,50 +31,40 @@ public interface BulletinService {
     /**
      * validate Bulletin
      */
-    void validate(BulletinDto bulletindto) throws IllegalArgumentException;
-
-    /**
-     * Get Bulletin by name
-     */
-    Bulletin getBulletinByName(String name);
-
+    void validate(Bulletin bulletin) throws IllegalArgumentException;
+    
     /**
      * Get Bulletin by id
      */
     Optional<Bulletin> getBulletinById(Long id);
 
     /**
-     * Get all names
-     */
-    List<String> getAllNames();
-
-
-    /**
-     * delete Bulletin by id
-     */
-    void deleteBulletinByName(List<String> names);
-
-
-    /**
      * Save Bulletin
      */
-    void editBulletin(BulletinDto bulletinDto);
+    void editBulletin(Bulletin bulletin);
 
     /**
      * Add Bulletin
      */
-    void addBulletin(BulletinDto bulletinDto);
-
-    /**
-     * Dynamic conditional query
-     * @param specification Query conditions
-     * @param pageRequest Paging parameters
-     * @return The query results
-     */
-    Page<BulletinVo> getBulletins(Specification<Bulletin> specification, PageRequest pageRequest);
-
+    void addBulletin(Bulletin bulletin);
+    
     /**
      * deal with the bulletin
      */
-    BulletinMetricsData buildBulletinMetricsData(BulletinMetricsData.BulletinMetricsDataBuilder contentBuilder, Bulletin bulletin);
+    BulletinMetricsData buildBulletinMetricsData(Long id);
+
+    /**
+     * query bulletins
+     * @param search search name
+     * @param pageIndex page index
+     * @param pageSize page size
+     * @return bulletins
+     */
+    Page<Bulletin> getBulletins(String search, Integer pageIndex, Integer pageSize);
+
+    /**
+     * delete bulletins
+     * @param ids bulletin ids
+     */
+    void deleteBulletins(List<Long> ids);
 }

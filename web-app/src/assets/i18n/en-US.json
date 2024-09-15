@@ -44,20 +44,6 @@
       "silence": "Alarm Silence",
       "dispatch": "Notification"
     },
-    "bulletin": {
-      "new": "Add New Bulletin Item",
-      "edit": "Edit Bulletin Item",
-      "delete": "Delete Bulletin Item",
-      "batch.delete": "Batch delete Bulletin Items",
-      "name": "Bulletin Name",
-      "name.placeholder": "Please enter a custom bulletin name",
-      "monitor.type": "Monitor Type",
-      "monitor.name": "Monitor Task Name",
-      "monitor.metrics": "Monitor Metrics",
-      "help.message.content": "Custom Monitoring Bulletin",
-      "help.content": "Custom monitoring bulletin, displaying selected metrics of a specific monitor in table form",
-      "help.link": "https://hertzbeat.apache.org/docs/help/bulletin"
-    },
     "advanced": {
       "": "Advanced",
       "collector": "Collector Cluster",
@@ -153,10 +139,10 @@
     }
   },
   "bulletin": {
-    "new": "Add New Bulletin Item",
-    "edit": "Edit Bulletin Item",
-    "delete": "Delete Bulletin Item",
-    "batch.delete": "Batch delete Bulletin Item",
+    "new": "New Bulletin",
+    "edit": "Edit Bulletin",
+    "delete": "Delete Bulletin",
+    "batch.delete": "Batch Delete Bulletin",
     "name": "Bulletin Name",
     "name.placeholder": "Please enter a custom bulletin name",
     "monitor.type": "Monitor Type",

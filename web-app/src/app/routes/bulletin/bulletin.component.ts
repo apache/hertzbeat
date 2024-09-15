@@ -50,11 +50,12 @@ export class BulletinComponent implements OnInit, OnDestroy {
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
   search!: string;
-  tabs!: string[];
+  bulletins!: BulletinDefine[];
+  currentTab: number = 0;
+  currentBulletin!: BulletinDefine;
   metricsData!: any;
   tableLoading: boolean = true;
-  bulletinName!: string;
-  deleteBulletinNames: string[] = [];
+  deleteBulletinIds: number[] = [];
   isAppListLoading = false;
   isMonitorListLoading = false;
   treeNodes!: NzTreeNodeOptions[];
@@ -69,7 +70,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
-  currentTab: number = 0;
   refreshInterval: any;
   deadline = 30;
   countDownTime: number = 0;
@@ -88,7 +88,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
   }
 
   sync() {
-    this.loadData(this.pageIndex - 1, this.pageSize);
+    this.loadCurrentBulletinData();
   }
 
   configRefreshDeadline(deadlineTime: number) {
@@ -102,7 +102,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
       this.countDownTime = Math.max(0, this.countDownTime - 1);
       this.cdr.detectChanges();
       if (this.countDownTime == 0) {
-        this.loadTabs();
+        this.loadCurrentBulletinData();
         this.countDownTime = this.deadline;
         this.cdr.detectChanges();
       }
@@ -117,8 +117,8 @@ export class BulletinComponent implements OnInit, OnDestroy {
   }
 
   onEditBulletinDefine() {
-    if (this.currentDefine) {
-      this.define = this.currentDefine;
+    if (this.currentBulletin) {
+      this.define = this.currentBulletin;
       this.onAppChange(this.define.app);
       // this.tempMetrics.add(...this.define.fields.keys());
       this.isManageModalAdd = false;
@@ -127,12 +127,12 @@ export class BulletinComponent implements OnInit, OnDestroy {
     }
   }
 
-  deleteBulletinDefines(defineNames: string[]) {
-    if (defineNames == null || defineNames.length == 0) {
+  deleteBulletinDefines(defineIds: number[]) {
+    if (defineIds == null || defineIds.length == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
-    const deleteDefines$ = this.bulletinDefineSvc.deleteBulletinDefines(defineNames).subscribe(
+    const deleteDefines$ = this.bulletinDefineSvc.deleteBulletinDefines(defineIds).subscribe(
       message => {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
@@ -153,7 +153,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
   isManageModalOkLoading = false;
   isManageModalAdd = true;
   define: BulletinDefine = new BulletinDefine();
-  currentDefine!: BulletinDefine | null;
 
   onManageModalCancel() {
     this.isManageModalVisible = false;
@@ -173,8 +172,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.define.fields = this.fields;
-    // clear fields
-    this.fields = {};
     if (this.isManageModalAdd) {
       const modalOk$ = this.bulletinDefineSvc
         .newBulletinDefine(this.define)
@@ -189,6 +186,8 @@ export class BulletinComponent implements OnInit, OnDestroy {
             if (message.code === 0) {
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.isManageModalVisible = false;
+              // clear fields
+              this.fields = {};
               this.resetManageModalData();
               this.loadTabs();
             } else {
@@ -213,7 +212,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-              this.loadData(this.pageIndex - 1, this.pageSize);
+              this.loadTabs();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
@@ -414,15 +413,21 @@ export class BulletinComponent implements OnInit, OnDestroy {
   }
 
   loadTabs() {
-    const allNames$ = this.bulletinDefineSvc.getAllNames().subscribe(
+    const allNames$ = this.bulletinDefineSvc.queryBulletins().subscribe(
       message => {
         allNames$.unsubscribe();
         if (message.code === 0) {
-          this.tabs = message.data;
-          if (this.tabs != null) {
-            this.bulletinName = this.tabs[this.currentTab];
+          let page = message.data;
+          this.bulletins = page.content;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
+          if (this.bulletins != null) {
+            if (this.currentTab >= this.bulletins.length) {
+              this.currentTab = 0;
+            }
+            this.currentBulletin = this.bulletins[this.currentTab];
+            this.loadCurrentBulletinData();
           }
-          this.loadData(this.pageIndex - 1, this.pageSize);
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), message.msg);
         }
@@ -434,51 +439,34 @@ export class BulletinComponent implements OnInit, OnDestroy {
     );
   }
 
-  loadData(page: number, size: number) {
+  loadCurrentBulletinData() {
     this.tableLoading = true;
     this.metricsData = [];
-    this.currentDefine = null;
     this.metrics = new Set<string>();
-    if (this.bulletinName != null) {
-      const defineData$ = this.bulletinDefineSvc.getBulletinDefine(this.bulletinName).subscribe(
-        message => {
-          if (message.code === 0) {
-            this.currentDefine = message.data;
-
-            const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(this.bulletinName, page, size).subscribe(
-              message => {
-                metricData$.unsubscribe();
-                if (message.code === 0 && message.data) {
-                  (this.metricsData = message.data.content).forEach((item: any) => {
-                    item.metrics.forEach((metric: any) => {
-                      this.metrics.add(metric.name);
-                    });
-                  });
-                } else if (message.code !== 0) {
-                  this.notifySvc.warning(`${message.msg}`, '');
-                  console.info(`${message.msg}`);
-                }
-                this.tableLoading = false;
-              },
-              error => {
-                console.error(error.msg);
-                metricData$.unsubscribe();
-                this.tableLoading = false;
-              }
-            );
-          } else {
-            this.notifySvc.warning(`${message.msg}`, '');
-            console.info(`${message.msg}`);
-          }
-        },
-        error => {
-          console.error(error.msg);
-          defineData$.unsubscribe();
-          this.tableLoading = false;
-        }
-      );
+    if (this.currentBulletin == null || this.currentBulletin.id == null) {
+      return;
     }
-    this.tableLoading = false;
+    const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(this.currentBulletin?.id).subscribe(
+      message => {
+        metricData$.unsubscribe();
+        if (message.code === 0 && message.data) {
+          (this.metricsData = message.data.content).forEach((item: any) => {
+            item.metrics.forEach((metric: any) => {
+              this.metrics.add(metric.name);
+            });
+          });
+        } else if (message.code !== 0) {
+          this.notifySvc.warning(`${message.msg}`, '');
+          console.info(`${message.msg}`);
+        }
+        this.tableLoading = false;
+      },
+      error => {
+        console.error(error.msg);
+        metricData$.unsubscribe();
+        this.tableLoading = false;
+      }
+    );
   }
 
   getKeys(metricName: string): string[] {
@@ -503,7 +491,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
     if (pageIndex !== this.pageIndex || pageSize !== this.pageSize) {
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
-      this.loadData(pageIndex - 1, pageSize);
+      this.loadTabs();
     }
   }
 
@@ -518,7 +506,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.deleteBulletinDefines([this.bulletinName])
+      nzOnOk: () => this.deleteBulletinDefines([this.currentBulletin.id])
     });
   }
 
@@ -531,7 +519,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
   }
 
   onBatchDeleteModalOk() {
-    this.deleteBulletinDefines(this.deleteBulletinNames);
+    this.deleteBulletinDefines(this.deleteBulletinIds);
     this.isBatchDeleteModalOkLoading = false;
     this.isBatchDeleteModalVisible = false;
   }
@@ -540,10 +528,9 @@ export class BulletinComponent implements OnInit, OnDestroy {
 
   onTabChange($event: number) {
     this.currentTab = $event;
-    this.bulletinName = this.tabs[this.currentTab];
+    this.currentBulletin = this.bulletins[this.currentTab];
     this.metricsData = [];
-    this.loadData(this.pageIndex - 1, this.pageSize);
-    console.log(this.metricsData);
+    this.loadTabs();
     this.countDownTime = this.deadline;
     this.cdr.detectChanges();
   }
