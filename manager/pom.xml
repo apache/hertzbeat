@@ -56,7 +56,7 @@
         <!-- collector -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-collector</artifactId>
+            <artifactId>hertzbeat-collector-collector</artifactId>
             <exclusions>
                 <exclusion>
                     <artifactId>commons-logging</artifactId>

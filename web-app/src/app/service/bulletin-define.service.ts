@@ -42,46 +42,24 @@ export class BulletinDefineService {
     return this.http.put<Message<any>>(bulletin_define_uri, body);
   }
 
-  public getBulletinDefine(name: string) {
-    return this.http.get<Message<any>>(`${bulletin_define_uri}/${name}`);
-  }
-
-  public deleteBulletinDefines(names: string[]): Observable<Message<any>> {
+  public deleteBulletinDefines(ids: number[]): Observable<Message<any>> {
     let params = new HttpParams();
-    names.forEach(name => {
-      params = params.append('names', name);
+    ids.forEach(name => {
+      params = params.append('ids', name);
     });
-
     return this.http.delete<Message<any>>(bulletin_define_uri, { params });
   }
 
-  public getMonitorMetricsData(
-    name: string,
-    pageIndex: number,
-    pageSize: number,
-    sortField?: string | null,
-    sortOrder?: string | null
-  ): Observable<Message<Page<Monitor>>> {
-    pageIndex = pageIndex ? pageIndex : 0;
-    pageSize = pageSize ? pageSize : 8;
-    // 注意HttpParams是不可变对象 需要保存set后返回的对象为最新对象
+  public getMonitorMetricsData(id: number): Observable<Message<Page<Monitor>>> {
     let httpParams = new HttpParams();
     httpParams = httpParams.appendAll({
-      name: name,
-      pageIndex: pageIndex,
-      pageSize: pageSize
+      id: id
     });
-    if (sortField != null && sortOrder != null) {
-      httpParams = httpParams.appendAll({
-        sort: sortField,
-        order: sortOrder == 'ascend' ? 'asc' : 'desc'
-      });
-    }
     const options = { params: httpParams };
     return this.http.get<Message<any>>(`${bulletin_define_uri}/metrics`, options);
   }
 
-  public getAllNames(): Observable<Message<string[]>> {
-    return this.http.get<Message<string[]>>(`${bulletin_define_uri}/names`);
+  public queryBulletins(): Observable<Message<any>> {
+    return this.http.get<Message<string[]>>(`${bulletin_define_uri}`);
   }
 }
