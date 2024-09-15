@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.manager.bulletin;
+package org.apache.hertzbeat.common.entity.manager;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,17 +23,17 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.manager.JsonLongListAttributeConverter;
-import org.apache.hertzbeat.common.entity.manager.JsonTagListAttributeConverter;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -54,6 +54,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class Bulletin {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(description = "Bulletin ID", example = "1")
     private Long id;
 
@@ -61,17 +62,17 @@ public class Bulletin {
     private String name;
 
     @Schema(description = "Monitor IDs", example = "1")
-    @Column(name = "monitor_ids", length = 5000)
+    @Column(name = "monitor_ids", length = 4096)
     @Convert(converter = JsonLongListAttributeConverter.class)
     private List<Long> monitorIds;
 
     @Schema(description = "Monitor Type eg: jvm, tomcat", example = "jvm", accessMode = READ_WRITE)
     private String app;
 
-
     @Schema(description = "Monitor Fields")
-    @Column(length = 4096)
-    private String fields;
+    @Column(name = "fields", length = 4096)
+    @Convert(converter = JsonMapListAttributeConverter.class)
+    private Map<String, List<String>> fields;
 
     @Schema(description = "Tags(status:success,env:prod)", example = "{name: key1, value: value1}",
             accessMode = READ_WRITE)
