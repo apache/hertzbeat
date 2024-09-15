@@ -17,21 +17,22 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.impl;
+package org.apache.colletcor.collect.discovery.impl;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.agent.model.Check;
 import com.ecwid.consul.v1.agent.model.Self;
 import com.ecwid.consul.v1.agent.model.Service;
 import com.google.common.collect.Lists;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ConnectConfig;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;
+import org.apache.hertzbeat.collector.collect.discovery.DiscoveryClient;
+import org.apache.hertzbeat.collector.collect.discovery.entity.ConnectConfig;
+import org.apache.hertzbeat.collector.collect.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.discovery.entity.ServiceInstance;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 
 /**

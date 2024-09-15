@@ -17,27 +17,21 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.colletcor.collect.discovery.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 
 /**
- * Httpsd protocol
+ * Server Info
  */
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class HttpsdProtocol {
-    private String host;
+@AllArgsConstructor
+public class ServerInfo {
+    private String address;
     private String port;
-    private String discoveryClientTypeName;
-
-    public boolean isInvalid() {
-        return StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
-    }
 }

@@ -17,9 +17,10 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery;
+package org.apache.colletcor.collect.discovery;
 
 import java.util.Objects;
+
 import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientInstance;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.ConsulDiscoveryClient;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.NacosDiscoveryClient;

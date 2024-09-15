@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.constant;
+package org.apache.colletcor.collect.discovery.constant;
 
 import java.util.Arrays;
 import org.apache.commons.lang3.StringUtils;

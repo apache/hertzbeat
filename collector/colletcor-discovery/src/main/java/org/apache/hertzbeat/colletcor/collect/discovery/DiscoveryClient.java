@@ -17,9 +17,10 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery;
+package org.apache.colletcor.collect.discovery;
 
 import java.util.List;
+
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ConnectConfig;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;

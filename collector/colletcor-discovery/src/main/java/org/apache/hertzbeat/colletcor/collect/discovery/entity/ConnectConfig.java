@@ -17,21 +17,19 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
+package org.apache.colletcor.collect.discovery.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * Server Info
+ * Discovery Client Connect Config
  */
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class ServerInfo {
-    private String address;
-    private String port;
+public class ConnectConfig {
+    private String host;
+    private int port;
 }

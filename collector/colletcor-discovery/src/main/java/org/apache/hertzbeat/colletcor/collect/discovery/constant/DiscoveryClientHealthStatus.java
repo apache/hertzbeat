@@ -17,25 +17,21 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
-
-import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+package org.apache.colletcor.collect.discovery.constant;
 
 /**
- * Service Instance
+ * Discovery client instance status.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class ServiceInstance {
-    private String serviceId;
-    private String serviceName;
-    private String address;
-    private double weight;
-    private Map<String, String> metadata;
-    private int port;
-    private String healthStatus;
+public final class DiscoveryClientHealthStatus {
+
+    /**
+	 * Discovery client instance status is UP.
+	 */
+    public static final String UP = "UP";
+
+    /**
+	 * Discovery client instance status is DOWN.
+	 */
+    public static final String DOWN = "DOWN";
+
 }

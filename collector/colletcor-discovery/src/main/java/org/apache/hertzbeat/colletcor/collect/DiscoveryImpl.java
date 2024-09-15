@@ -17,14 +17,17 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd;
+package org.apache.colletcor.collect;
+
+import java.lang.reflect.Field;
+import java.util.Objects;
 
 import com.ecwid.consul.transport.TransportException;
 import com.google.common.annotations.VisibleForTesting;
-import java.lang.reflect.Field;
-import java.util.Objects;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.colletcor.collect.discovery.DiscoveryClient;
+import org.apache.colletcor.collect.discovery.DiscoveryClientManagement;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
@@ -42,7 +45,7 @@ import org.apache.hertzbeat.common.util.CommonUtil;
  * http_sd protocol collection implementation
  */
 @Slf4j
-public class HttpsdImpl extends AbstractCollect {
+public class DiscoveryImpl extends AbstractCollect {
     private static final String SERVER = "server";
 
     @Setter
