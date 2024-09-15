@@ -11,6 +11,10 @@ sidebar_label: Custom Monitoring
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
+### Custom Monitoring Metrics Refresh Interval
+
+HertzBeat now supports setting different refresh intervals for various groups of monitoring metrics. This can be configured in the monitoring template under the `metrics` section by setting the `interval` field, with the unit being seconds. If not set, the default refresh interval specified during the creation of the monitoring will be used.
+
 -------
 
 Configuration usages of the monitoring templates yml are detailed below.
