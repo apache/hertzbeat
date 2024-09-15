@@ -91,6 +91,15 @@ public class Metrics {
      */
     private Byte priority;
     /**
+     * The latest collect time
+     */
+    private long collectTime;
+    /**
+     * Customize interval of metrics
+     * If not set, the collection interval set in the front-end page will be used by default
+     */
+    private long interval;
+    /**
      * Is it visible true or false
      * if false, web ui will not see this metrics.
      */
