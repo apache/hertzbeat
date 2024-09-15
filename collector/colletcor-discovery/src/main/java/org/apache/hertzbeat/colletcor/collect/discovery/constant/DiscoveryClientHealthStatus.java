@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.colletcor.collect.discovery.constant;
+package org.apache.hertzbeat.colletcor.collect.discovery.constant;
 
 /**
  * Discovery client instance status.

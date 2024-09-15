@@ -125,18 +125,6 @@
             <artifactId>dnsjava</artifactId>
             <version>${dnsjava.version}</version>
         </dependency>
-        <!-- consul -->
-        <dependency>
-            <groupId>com.ecwid.consul</groupId>
-            <artifactId>consul-api</artifactId>
-            <version>${consul-api.version}</version>
-        </dependency>
-        <!-- nacos -->
-        <dependency>
-            <groupId>com.alibaba.nacos</groupId>
-            <artifactId>nacos-client</artifactId>
-            <version>${nacos-client.version}</version>
-        </dependency>
         <!-- mqtt -->
         <dependency>
             <groupId>com.hivemq</groupId>

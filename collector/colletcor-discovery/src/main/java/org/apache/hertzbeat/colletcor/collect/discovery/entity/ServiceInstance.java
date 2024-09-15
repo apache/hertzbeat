@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.colletcor.collect.discovery.entity;
+package org.apache.hertzbeat.colletcor.collect.discovery.entity;
 
 import java.util.Map;
 
