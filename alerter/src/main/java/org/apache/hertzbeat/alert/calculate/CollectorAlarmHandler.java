@@ -21,6 +21,7 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
 import org.apache.hertzbeat.alert.dao.AlertCollectorDao;
+import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
@@ -56,13 +57,16 @@ public class CollectorAlarmHandler {
 
     private final AlertCollectorDao alertCollectorDao;
 
+    private final AlarmCommonReduce alarmCommonReduce;
+
     private final AlerterWorkerPool workerPool;
 
     private ResourceBundle bundle;
 
-    public CollectorAlarmHandler(AlertService alertService, AlertCollectorDao alertCollectorDao,
+    public CollectorAlarmHandler(AlarmCommonReduce alarmCommonReduce, AlertService alertService, AlertCollectorDao alertCollectorDao,
                                  AlerterWorkerPool workerPool) {
         this.offlineAlertMap = new ConcurrentHashMap<>(16);
+        this.alarmCommonReduce = alarmCommonReduce;
         this.alertService = alertService;
         this.alertCollectorDao = alertCollectorDao;
         this.workerPool = workerPool;
@@ -94,6 +98,7 @@ public class CollectorAlarmHandler {
         if (preAlert != null) {
             Map<String, String> tags = preAlert.getTags();
             tags.put(CommonConstants.TAG_COLLECTOR_HOST, collector.getIp());
+            tags.put(CommonConstants.TAG_COLLECTOR_VERSION, collector.getVersion());
             String content = this.bundle.getString("alerter.availability.collector.recover");
             Alert resumeAlert = Alert.builder()
                     .tags(tags)
@@ -119,7 +124,7 @@ public class CollectorAlarmHandler {
             alertService.editAlertStatus(CommonConstants.ALERT_STATUS_CODE_SOLVED, alertIds);
 
             // Recovery notifications are generated only after an alarm has occurred
-            alertService.addAlert(restoreAlert);
+            alarmCommonReduce.reduceAndSendAlarm(restoreAlert);
         }
     }
 
@@ -166,6 +171,7 @@ public class CollectorAlarmHandler {
             tags.put(CommonConstants.TAG_COLLECTOR_ID, String.valueOf(collector.getId()));
             tags.put(CommonConstants.TAG_COLLECTOR_NAME, collector.getName());
             tags.put(CommonConstants.TAG_COLLECTOR_HOST, collector.getIp());
+            tags.put(CommonConstants.TAG_COLLECTOR_VERSION, collector.getVersion());
             tags.put(CommonConstants.TAG_CODE, "OFFLINE");
 
             String content =  this.bundle.getString("alerter.availability.collector.offline");
@@ -180,7 +186,7 @@ public class CollectorAlarmHandler {
                     .times(1)
                     .build();
             this.offlineAlertMap.put(identity, alert);
-            this.alertService.addAlert(alert);
+            alarmCommonReduce.reduceAndSendAlarm(alert);
         }
     }
 

@@ -20,6 +20,8 @@ package org.apache.hertzbeat.manager.service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.springframework.data.domain.Page;
@@ -69,4 +71,10 @@ public interface TagService {
      * @param monitor monitor
      */
     void deleteMonitorSystemTags(Monitor monitor);
+
+    /**
+     * remove collector system tags
+     * @param collector collector
+     */
+    void deleteCollectorSystemTags(Collector collector);
 }

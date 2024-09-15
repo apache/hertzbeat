@@ -213,6 +213,11 @@ public interface CommonConstants {
     String TAG_COLLECTOR_HOST = "collectorHost";
 
     /**
+     * Inside the tag: collectorVersion
+     */
+    String TAG_COLLECTOR_VERSION = "collectorVersion";
+
+    /**
      * Inside the tag: monitorId Monitor task ID
      */
     String TAG_MONITOR_ID = "monitorId";

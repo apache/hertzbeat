@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.support.exception.CommonException;
@@ -115,7 +116,7 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public void deleteTags(HashSet<Long> ids) {
-        if (CollectionUtils.isEmpty(ids)){
+        if (CollectionUtils.isEmpty(ids)) {
             return;
         }
         if (tagMonitorBindDao.countByTagIdIn(ids) != 0) {
@@ -132,9 +133,16 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteMonitorSystemTags(Monitor monitor) {
         if (CollectionUtils.isNotEmpty(monitor.getTags())) {
-            List<Tag> tags = monitor.getTags().stream().filter(tag ->  Objects.nonNull(tag.getType()) && tag.getType() == (byte) 0).collect(Collectors.toList());
+            List<Tag> tags = monitor.getTags().stream().filter(tag -> Objects.nonNull(tag.getType()) && tag.getType() == (byte) 0).collect(Collectors.toList());
             tagDao.deleteAll(tags);
         }
     }
 
+    @Override
+    public void deleteCollectorSystemTags(Collector collector) {
+        if (CollectionUtils.isNotEmpty(collector.getTags())) {
+            List<Tag> tags = collector.getTags().stream().filter(tag -> Objects.nonNull(tag.getType()) && tag.getType() == (byte) 0).toList();
+            tagDao.deleteAll(tags);
+        }
+    }
 }

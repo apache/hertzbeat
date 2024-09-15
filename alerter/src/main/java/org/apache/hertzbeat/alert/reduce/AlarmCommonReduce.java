@@ -53,9 +53,7 @@ public class AlarmCommonReduce {
             alert.setTags(tags);
         }
         String monitorIdStr = tags.get(CommonConstants.TAG_MONITOR_ID);
-        if (monitorIdStr == null) {
-            log.debug("receiver extern alarm message: {}", alert);
-        } else {
+        if (monitorIdStr != null){
             long monitorId = Long.parseLong(monitorIdStr);
             List<Tag> tagList = alertMonitorDao.findMonitorIdBindTags(monitorId);
             for (Tag tag : tagList) {
@@ -63,6 +61,8 @@ public class AlarmCommonReduce {
                     tags.put(tag.getName(), tag.getTagValue());
                 }
             }
+        } else if (tags.get(CommonConstants.TAG_COLLECTOR_NAME) == null){
+            log.debug("receiver extern alarm message: {}", alert);
         }
         // converge -> silence
         if (alarmConvergeReduce.filterConverge(alert) && alarmSilenceReduce.filterSilence(alert)) {

@@ -17,36 +17,18 @@
 
 package org.apache.hertzbeat.manager.dao;
 
-import java.util.List;
-import java.util.Optional;
-import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.apache.hertzbeat.common.entity.manager.TagCollectorBind;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 
 /**
- * Collector repository
+ * TagCollectorBindDao repository
  */
-public interface CollectorDao extends JpaRepository<Collector, Long>, JpaSpecificationExecutor<Collector> {
-    
-    /**
-     * find collector by name
-     * @param name name
-     * @return collector
-     */
-    Optional<Collector> findCollectorByName(String name);
+public interface TagCollectorBindDao extends JpaRepository<TagCollectorBind, Long>, JpaSpecificationExecutor<TagCollectorBind> {
 
     /**
-     * find collectors by names
-     * @param names collector name list
-     * @return collector list
+     * delete tags bind by collectorId
+     * @param collectorId collectorId
      */
-    List<Collector> findCollectorsByNameIn(List<String> names);
-
-    /**
-     * delete collector by name
-     * @param collector collector name
-     */
-    @Modifying
-    void deleteCollectorByName(String collector);
+    void deleteTagCollectorBindByCollectorId(Long collectorId);
 }
