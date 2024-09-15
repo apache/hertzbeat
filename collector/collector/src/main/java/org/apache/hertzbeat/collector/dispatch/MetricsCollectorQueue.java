@@ -37,6 +37,7 @@ public class MetricsCollectorQueue {
 
     public void addJob(MetricsCollect job) {
         jobQueue.offer(job);
+        job.metrics.setCollectTime(System.currentTimeMillis());
     }
 
     public MetricsCollect getJob() throws InterruptedException {

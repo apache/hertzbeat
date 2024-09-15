@@ -17,9 +17,16 @@
 
 package org.apache.hertzbeat.collector.dispatch.timer;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
 import org.apache.hertzbeat.common.entity.job.Job;
+import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.stereotype.Component;
@@ -83,7 +90,11 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
             currentCyclicTaskMap.put(addJob.getId(), timeout);
         } else {
-            Timeout timeout = wheelTimer.newTimeout(timerJob, 0, TimeUnit.SECONDS);
+            for (Metrics metric : addJob.getMetrics()) {
+                metric.setInterval(0L);
+            }
+            addJob.setIntervals(new LinkedList<>(List.of(0L)));
+            Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
             currentTempTaskMap.put(addJob.getId(), timeout);
             eventListeners.put(addJob.getId(), eventListener);
         }
