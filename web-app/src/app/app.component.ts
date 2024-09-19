@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, ElementRef, Inject, OnInit, Renderer2 } from '@angular/core';
 import { NavigationEnd, NavigationError, RouteConfigLoadStart, Router } from '@angular/router';
 import { I18NService } from '@core';
@@ -10,7 +11,10 @@ import { ThemeService } from './service/theme.service';
 
 @Component({
   selector: 'app-root',
-  template: ` <router-outlet></router-outlet> `
+  template: `
+    <router-outlet></router-outlet>
+    <app-chatbot></app-chatbot>
+  `
 })
 export class AppComponent implements OnInit {
   constructor(

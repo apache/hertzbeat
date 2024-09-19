@@ -1,0 +1,46 @@
+.message {
+  margin-bottom: 5px;
+  padding: 5px;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+  max-width: 100%;
+  word-wrap: break-word;
+  display: flex;
+  align-items: center;
+}
+
+.message p {
+  margin: 0;
+  flex-grow: 1;
+}
+
+.copy-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-right: 5px;
+  color: #3f51b5;
+}
+
+.copy-btn:hover {
+  color: #0056b3;
+}
+
+.hint {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #3f51b5;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.copy-btn .hint {
+  opacity: 1;
+}

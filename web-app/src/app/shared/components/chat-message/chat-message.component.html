@@ -1,0 +1,10 @@
+<div class="message" *ngIf="message.sender === 'AI'">
+  <p><strong>{{ message.sender }}:</strong> {{ message.text }}</p>
+  <button class="copy-btn" (click)="copyToClipboard(message.text)">
+    📋
+    <span class="hint" *ngIf="copied">Copied!</span>
+  </button>
+</div>
+<div class="message" *ngIf="message.sender !== 'AI'">
+  <p><strong>{{ message.sender }}:</strong> {{ message.text }}</p>
+</div>
