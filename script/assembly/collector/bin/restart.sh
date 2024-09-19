@@ -16,14 +16,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# cd bin dir
+cd `dirname $0`
+# bin dir
+BIN_DIR=`pwd`
+# return root dir
+cd ..
+# root path dir
+DEPLOY_DIR=`pwd`
+
 # restart start time
 startTime=$(date +%s)
 echo -e "\033[0;31mCurrent Time is：$(date "+%Y-%m-%d %H:%M:%S") Restart Now!\033[0m"
-./shutdown.sh
+$DEPLOY_DIR/bin/shutdown.sh
 echo
 sleep 2
 echo
-./startup.sh
+$DEPLOY_DIR/bin/startup.sh
 # restart end time
 endTime=$(date +%s)
 echo -e  "\033[0;31mCurrent Time is：$(date "+%Y-%m-%d %H:%M:%S") Restart Success！Spend $((endTime - startTime)) seconds \033[0m";
