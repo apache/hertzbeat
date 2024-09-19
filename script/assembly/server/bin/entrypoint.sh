@@ -17,10 +17,10 @@
 # limitations under the License.
 
 # project name
-SERVER_NAME="${project.build.finalName}"
+SERVER_NAME="hertzbeat-manager"
 
 # jar name
-JAR_NAME="${project.build.finalName}.jar"
+#JAR_NAME="${project.build.finalName}.jar"
 
 # cd bin
 cd `dirname $0`
@@ -36,8 +36,10 @@ DEPLOY_DIR=`pwd`
 # if a directory is specified, spring will read all configuration files in the directory
 CONF_DIR=$DEPLOY_DIR/config
 MAIN_CLASS="org.apache.hertzbeat.manager.Manager"
+LIB_PATH="$DEPLOY_DIR/lib"
 EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
-CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"
+TARGET_LIB_PATH="$DEPLOY_DIR/target"
+CLASSPATH="$LIB_PATH/*:$TARGET_LIB_PATH/*:$EXT_LIB_PATH/*"
 # log dir
 LOGS_DIR=$DEPLOY_DIR/logs
 # create logs dir when not exist
