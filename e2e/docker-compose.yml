@@ -27,24 +27,8 @@ services:
       - ./testsuite.yaml:/work/testsuite.yaml
       - ./report/report.md:/report.md
     command: atest run -p /work/testsuite.yaml --level debug --thread 3 --report md --report-file /report.md
-    depends_on:
-      checker:
-        condition: service_healthy
     links:
       - hertzbeat
-      - checker
-  checker:
-    image: alpine:latest
-    container_name: e2e-checker
-    command: sh -c "apk add --update curl && tail -f /dev/null"
-    healthcheck:
-      test: [ "CMD-SHELL",
-              "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"type\": 0,\"identifier\": \"admin\",\"credential\": \"hertzbeat\"}' http://hertzbeat:1157/api/account/auth/form | grep -q token"
-      ]
-      interval: 3s
-      timeout: 60s
-      retries: 10
-      start_period: 10s
   hertzbeat:
     image: apache/hertzbeat:test
     container_name: e2e-hertzbeat
