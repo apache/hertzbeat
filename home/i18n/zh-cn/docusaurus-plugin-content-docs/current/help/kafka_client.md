@@ -45,4 +45,3 @@ keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 | PartitionNum | 无 | 分区数量 |
 | earliest | 无  | 最早偏移量 |
 | latest | 无  | 最新偏移量 |
-
