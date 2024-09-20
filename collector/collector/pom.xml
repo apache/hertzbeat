@@ -42,6 +42,13 @@
             <version>${hertzbeat.version}</version>
         </dependency>
 
+        <!-- collector-kafka -->
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-collector-kafka</artifactId>
+            <version>${hertzbeat.version}</version>
+        </dependency>
+
         <!-- collector-mongodb -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
@@ -62,6 +69,8 @@
             <artifactId>hertzbeat-collector-rocketmq</artifactId>
             <version>${hertzbeat.version}</version>
         </dependency>
+
+
 
         <!-- spring -->
         <dependency>
