@@ -93,7 +93,8 @@
 
     <!-- Production environment configuration -->
     <springProfile name="prod">
-        <root level="INFO">
+        <root level="DEBUG">
+            <appender-ref ref="ConsoleAppender"/>
             <appender-ref ref="SystemOutFileAppender"/>
             <appender-ref ref="ErrOutFileAppender"/>
         </root>
