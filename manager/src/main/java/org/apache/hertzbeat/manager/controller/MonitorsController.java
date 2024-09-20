@@ -68,7 +68,7 @@ public class MonitorsController {
             @Parameter(description = "Number of list pagination ", example = "8") @RequestParam(defaultValue = "8") int pageSize,
             @Parameter(description = "Monitor tag ", example = "env:prod") @RequestParam(required = false) final String tag) {
         Page<Monitor> monitorPage = monitorService.getMonitors(ids, app, name, host, status, sort, order, pageIndex, pageSize, tag);
-        log.info("monitorPage.getTotalElements():{}", monitorPage.getTotalElements());
+        log.info("monitorPage:{}", monitorPage);
         return ResponseEntity.ok(Message.success(monitorPage));
     }
 
