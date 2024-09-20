@@ -69,10 +69,6 @@ jobs:
         cd e2e
         sudo docker-compose version
         sudo docker-compose up --exit-code-from testing --remove-orphans
-        
-        sudo docker-compose ps
-        
-        sudo docker logs -fn 2000 e2e-checker
 
     # upload application logs
     - name: Upload logs & API test reports
