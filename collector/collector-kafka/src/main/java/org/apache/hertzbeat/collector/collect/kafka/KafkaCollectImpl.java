@@ -84,7 +84,7 @@ public class KafkaCollectImpl extends AbstractCollect {
                     break;
             }
         } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
+            log.error("Kafka collect error", e);
         }
     }
 
