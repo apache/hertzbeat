@@ -20,6 +20,9 @@ package org.apache.hertzbeat.collector.collect.kafka;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * SupportedCommand
+ */
 public enum SupportedCommand {
 
     TOPIC_DESCRIBE("topic-describe"),

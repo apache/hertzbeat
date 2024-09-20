@@ -29,7 +29,6 @@ import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.admin.TopicDescription;
-import org.apache.kafka.clients.consumer.OffsetAndTimestamp;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.springframework.util.Assert;
@@ -91,10 +90,11 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     /**
      * Collect the earliest and latest offsets for each topic
-     * @param builder The MetricsData builder
+     *
+     * @param builder     The MetricsData builder
      * @param adminClient The AdminClient
      * @throws InterruptedException If the thread is interrupted
-     * @throws ExecutionException If an error occurs during execution
+     * @throws ExecutionException   If an error occurs during execution
      */
     private void collectTopicOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
         ListTopicsResult listTopicsResult = adminClient.listTopics(new ListTopicsOptions().listInternal(true));
@@ -127,7 +127,8 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     /**
      * Get the earliest offset for a given topic partition
-     * @param adminClient The AdminClient
+     *
+     * @param adminClient    The AdminClient
      * @param topicPartition The TopicPartition
      * @return The earliest offset
      */
@@ -143,7 +144,8 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     /**
      * Get the latest offset for a given topic partition
-     * @param adminClient The AdminClient
+     *
+     * @param adminClient    The AdminClient
      * @param topicPartition The TopicPartition
      * @return The latest offset
      */
@@ -159,11 +161,12 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     /**
      * Collect the list of topics
-     * @param builder The MetricsData builder
+     *
+     * @param builder     The MetricsData builder
      * @param adminClient The AdminClient
      */
     private static void collectTopicList(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
-       ListTopicsOptions options = new ListTopicsOptions().listInternal(true);
+        ListTopicsOptions options = new ListTopicsOptions().listInternal(true);
         Set<String> names = adminClient.listTopics(options).names().get();
         names.forEach(name -> {
             CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder().addColumns(name).build();
@@ -173,11 +176,12 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     /**
      * Collect the description of each topic
-     * @param builder The MetricsData builder
+     *
+     * @param builder     The MetricsData builder
      * @param adminClient The AdminClient
      */
     private static void collectTopicDescribe(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
-       ListTopicsOptions options = new ListTopicsOptions();
+        ListTopicsOptions options = new ListTopicsOptions();
         options.listInternal(true);
         ListTopicsResult listTopicsResult = adminClient.listTopics(options);
         Set<String> names = listTopicsResult.names().get();

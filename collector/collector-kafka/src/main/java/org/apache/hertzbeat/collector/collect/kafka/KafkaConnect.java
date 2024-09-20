@@ -52,7 +52,7 @@ public class KafkaConnect extends AbstractConnection<AdminClient> {
         }
     }
 
-   public static synchronized AdminClient getAdminClient(String brokerList) {
+    public static synchronized AdminClient getAdminClient(String brokerList) {
         if (adminClient == null) {
             Properties properties = new Properties();
             properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
