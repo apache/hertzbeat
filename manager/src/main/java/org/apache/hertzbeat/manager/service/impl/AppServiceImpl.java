@@ -52,6 +52,7 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.support.SpringContextHolder;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.DefineDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
@@ -463,7 +464,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             fieldsSet.clear();
             for (Metrics.Field field : metrics.getFields()) {
                 if (fieldsSet.contains(field.getField())) {
-                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " " 
+                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " "
                             + field.getField() + " can not duplicated.");
                 }
                 fieldsSet.add(field.getField());
@@ -567,23 +568,30 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 Yaml yaml = new Yaml();
                 log.info("load define app yml in internal jar");
                 var resolver = new PathMatchingResourcePatternResolver();
-                var resources = resolver.getResources("classpath:define/*.yml");
+                var resources = resolver.getResources("classpath*:define/*.yml");
+                log.info("load define app yml resources: {}", JsonUtil.toJson(resources));
+                Set<String> loadedApps = new HashSet<>();
                 for (var resource : resources) {
-                    log.info("load define app yml in internal jar: {}", resource.getFilename());
+                    String filename = resource.getFilename();
+                    if (filename == null || loadedApps.contains(filename)) {
+                        continue;
+                    }
+                    log.info("load define app yml in internal jar: {}", filename);
                     try (var inputStream = resource.getInputStream()) {
                         var app = yaml.loadAs(inputStream, Job.class);
                         log.info("load define app : {}", app);
                         if (app != null) {
                             appDefines.put(app.getApp().toLowerCase(), app);
+                            loadedApps.add(filename);
                         }
                     } catch (IOException e) {
                         log.error(e.getMessage(), e);
-                        log.error("Ignore this template file: {}.", resource.getFilename());
+                        log.error("Ignore this template file: {}.", filename);
                     }
                 }
-                return true;
+                return !appDefines.isEmpty();
             } catch (IOException e) {
-                log.error("define app yml not exist");
+                log.error("Error loading define app yml", e);
                 return false;
             }
         }
