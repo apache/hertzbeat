@@ -42,7 +42,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
     <fileSets>
         <!--All script files under the bin directory are output to the bin directory after packaging-->
         <fileSet>
-            <directory>../script/assembly/collector/bin</directory>
+            <directory>../../script/assembly/collector/bin</directory>
             <!-- Whether to perform property replacement, that is, use ${project.artifactId} -->
             <filtered>true</filtered>
             <outputDirectory>bin</outputDirectory>
@@ -66,7 +66,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
         <!-- Pack the startup jar in the target directory to the directory-->
         <fileSet>
             <directory>target</directory>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory>/lib</outputDirectory>
             <includes>
                 <include>*.jar</include>
             </includes>
@@ -74,7 +74,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
 
         <!-- external lib -->
         <fileSet>
-            <directory>../script/ext-lib</directory>
+            <directory>../../script/ext-lib</directory>
             <includes>
                 <include>**/*</include>
             </includes>
@@ -83,7 +83,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
 
         <!-- license -->
         <fileSet>
-            <directory>../</directory>
+            <directory>../../</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>DISCLAIMER</include>
@@ -91,7 +91,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             </includes>
         </fileSet>
         <fileSet>
-            <directory>../material/licenses/collector</directory>
+            <directory>../../material/licenses/collector</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
                 <include>LICENSE</include>
@@ -99,7 +99,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             </includes>
         </fileSet>
         <fileSet>
-            <directory>../material/licenses/collector</directory>
+            <directory>../../material/licenses/collector</directory>
             <outputDirectory>licenses</outputDirectory>
             <includes>
                 <include>LICENSE-*</include>
