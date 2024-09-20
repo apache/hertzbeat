@@ -41,10 +41,10 @@ services:
       test: [ "CMD-SHELL",
               "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"type\": 0,\"identifier\": \"admin\",\"credential\": \"hertzbeat\"}' http://hertzbeat:1157/api/account/auth/form | grep -q token"
       ]
-      interval: 3s
-      timeout: 60s
-      retries: 10
-      start_period: 10s
+      interval: 5s
+      timeout: 240s
+      retries: 40
+      start_period: 30s
   hertzbeat:
     image: apache/hertzbeat:test
     container_name: e2e-hertzbeat
