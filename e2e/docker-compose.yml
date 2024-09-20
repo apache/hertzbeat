@@ -34,9 +34,9 @@ services:
       - hertzbeat
       - checker
   checker:
-    image: alpine:latest
+    image: alpine:3.20.3
     container_name: e2e-checker
-    command: sh -c "apk add --update curl && tail -f /dev/null"
+    command: sh -c "apk add --update curl && curl -X POST http://hertzbeat:1157/api/account/auth/form && tail -f /dev/null"
     healthcheck:
       test: [ "CMD-SHELL",
               "curl -s -X POST -H \"Content-Type: application/json\" -d '{\"type\": 0,\"identifier\": \"admin\",\"credential\": \"hertzbeat\"}' http://hertzbeat:1157/api/account/auth/form | grep -q token"
