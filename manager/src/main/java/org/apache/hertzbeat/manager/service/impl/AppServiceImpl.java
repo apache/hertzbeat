@@ -570,8 +570,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 Yaml yaml = new Yaml();
                 log.info("load define app yml in internal jar");
                 var resolver = new PathMatchingResourcePatternResolver();
-                var resources = resolver.getResources("classpath:define/*.yml");
+                var resources = resolver.getResources("classpath*:define/*.yml");
                 for (var resource : resources) {
+                    log.info("load define app yml resource:{}", resource.getFilename());
                     try (var inputStream = resource.getInputStream()) {
                         var app = yaml.loadAs(inputStream, Job.class);
                         appDefines.put(app.getApp().toLowerCase(), app);
