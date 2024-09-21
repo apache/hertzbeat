@@ -33,10 +33,6 @@ ADD apache-hertzbeat-1.*-incubating-bin.tar.gz /opt/
 
 RUN mv /opt/apache-hertzbeat-*-incubating-bin /opt/hertzbeat
 
-RUN ls /opt/hertzbeat
-
-RUN ls /opt/hertzbeat/define
-
 EXPOSE 1157 1158 22
 
 WORKDIR /opt/hertzbeat/

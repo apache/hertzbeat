@@ -508,7 +508,6 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         var objectStoreConfig = objectStoreConfigService.getConfig();
-        log.info("load define app yml objectStoreConfig:{}", JsonUtil.toJson(objectStoreConfig));
         refreshStore(objectStoreConfig);
     }
 
