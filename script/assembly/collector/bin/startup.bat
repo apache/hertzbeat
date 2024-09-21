@@ -19,9 +19,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set SERVER_NAME="hertzbeat-collector"
+set SERVER_NAME=${project.artifactId}
 
-@REM set JAR_NAME=${project.build.finalName}.jar
+set JAR_NAME=${project.build.finalName}.jar
 
 rem enter the bin directory
 cd /d %~dp0
@@ -43,10 +43,8 @@ for /f "tokens=1-5" %%i in ('netstat -ano^|findstr "0.0.0.0:%SERVER_PORT%"') do 
 )
 set MAIN_CLASS=org.apache.hertzbeat.collector.Collector
 set LOGS_DIR=%DEPLOY_DIR%\logs
-set LIB_PATH=%DEPLOY_DIR%\lib
 set EXT_LIB_PATH=%DEPLOY_DIR%\ext-lib
-set TARGET_LIB_PATH=%DEPLOY_DIR%\target
-set CLASSPATH=%LIB_PATH%\*;%TARGET_LIB_PATH%\*;%EXT_LIB_PATH%\*
+set CLASSPATH=%DEPLOY_DIR%\%JAR_NAME%;%EXT_LIB_PATH%\*
 
 if not exist %LOGS_DIR% (
     mkdir %LOGS_DIR%
