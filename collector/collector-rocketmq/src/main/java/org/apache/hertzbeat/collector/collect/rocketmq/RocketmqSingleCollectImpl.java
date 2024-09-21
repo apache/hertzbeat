@@ -112,7 +112,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
      */
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
-        Assert.isTrue(metrics != null && metrics.getRocketmq() != null, "Mongodb collect must has rocketmq params");
+        Assert.isTrue(metrics != null && metrics.getRocketmq() != null, "Rocketmq collect must has rocketmq params");
         RocketmqProtocol rocketmq = metrics.getRocketmq();
         Assert.hasText(rocketmq.getNamesrvHost(), "Rocketmq Protocol namesrvHost is required.");
         Assert.hasText(rocketmq.getNamesrvPort(), "Rocketmq Protocol namesrvPort is required.");
