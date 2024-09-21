@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
@@ -95,7 +95,7 @@ import { AlertService } from '../../../service/alert.service';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class HeaderNotifyComponent implements OnInit {
+export class HeaderNotifyComponent implements OnInit, OnDestroy {
   data: any[] = [
     {
       title: this.i18nSvc.fanyi('dashboard.alerts.title-no'),
@@ -109,7 +109,7 @@ export class HeaderNotifyComponent implements OnInit {
   count = 0;
   loading = false;
   popoverVisible = false;
-
+  refreshInterval: any;
   constructor(
     private router: Router,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService,
@@ -121,6 +121,15 @@ export class HeaderNotifyComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
+    this.refreshInterval = setInterval(() => {
+      this.loadData();
+    }, 30000); // every 30 seconds refresh the tabs
+  }
+
+  ngOnDestroy() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   onPopoverVisibleChange(visible: boolean): void {

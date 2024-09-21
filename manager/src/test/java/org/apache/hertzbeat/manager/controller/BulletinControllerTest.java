@@ -22,13 +22,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.bulletin.Bulletin;
-import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinDto;
-import org.apache.hertzbeat.common.entity.manager.bulletin.BulletinMetricsData;
+import org.apache.hertzbeat.common.entity.manager.Bulletin;
+import org.apache.hertzbeat.manager.pojo.dto.BulletinMetricsData;
 import org.apache.hertzbeat.manager.service.BulletinService;
 import org.apache.hertzbeat.warehouse.store.realtime.RealTimeDataReader;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,7 +59,7 @@ class BulletinControllerTest {
 
     @Test
     void testAddNewBulletin() throws Exception {
-        BulletinDto bulletinDto = new BulletinDto();
+        Bulletin bulletinDto = new Bulletin();
         doAnswer(invocation -> {
             throw new IllegalArgumentException("Invalid bulletin");
         }).when(bulletinService).validate(bulletinDto);
@@ -89,7 +85,7 @@ class BulletinControllerTest {
 
     @Test
     void testEditBulletin() throws Exception {
-        BulletinDto bulletinDto = new BulletinDto();
+        Bulletin bulletinDto = new Bulletin();
         doAnswer(invocation -> {
             throw new IllegalArgumentException("Invalid bulletin");
         }).when(bulletinService).validate(bulletinDto);
@@ -114,70 +110,19 @@ class BulletinControllerTest {
     }
 
     @Test
-    void testGetBulletinByName() throws Exception {
-        Mockito.when(bulletinService.getBulletinByName(any(String.class))).thenReturn(null);
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/bulletin/{name}", "test"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-
-        Mockito.when(bulletinService.getBulletinByName(any(String.class))).thenThrow(new RuntimeException("test"));
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/bulletin/{name}", "test"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE));
-    }
-
-    @Test
-    void testGetAllNames() throws Exception {
-        List<String> names = new ArrayList<String>();
-        names.add("one");
-        names.add("two");
-        Mockito.when(bulletinService.getAllNames()).thenReturn(names);
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/bulletin/names"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0]").value("one"))
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-    }
-
-    @Test
-    void testDeleteBulletinByName() throws Exception {
-        Mockito.doNothing().when(bulletinService).deleteBulletinByName(any(List.class));
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/bulletin")
-                .param("names", "one"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
-
-        // will throw exception
-        Mockito.doThrow(new RuntimeException("test")).when(bulletinService).deleteBulletinByName(any(List.class));
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/bulletin")
-                .param("names", "one"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE));
-    }
-
-    @Test
     void testGetAllMetricsData() throws Exception {
         // server is not available
         Mockito.when(realTimeDataReader.isServerAvailable()).thenReturn(false);
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/bulletin/metrics")
-                .param("name", "test")
-                .param("pageIndex", "0")
-                .param("pageSize", "10"))
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/bulletin/metrics?id=33"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.FAIL_CODE));
-
-        // normal
-        Bulletin bulletin = new Bulletin();
+        
         BulletinMetricsData data = new BulletinMetricsData();
         data.setName("sample");
         Mockito.when(realTimeDataReader.isServerAvailable()).thenReturn(true);
-        Mockito.when(bulletinService.getBulletinByName(any(String.class)))
-                .thenReturn(bulletin);
-        Mockito.when(bulletinService.buildBulletinMetricsData(any(BulletinMetricsData.BulletinMetricsDataBuilder.class), any(Bulletin.class)))
+        Mockito.when(bulletinService.buildBulletinMetricsData(any(Long.class)))
             .thenReturn(data);
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/bulletin/metrics")
-            .param("name", "test")
-            .param("pageIndex", "0")
-            .param("pageSize", "10"))
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/bulletin/metrics?id=33"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.name").value("sample"))
             .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
