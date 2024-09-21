@@ -59,7 +59,7 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
                     .content(contentJson)
                     .build();
             generalConfigDao.save(generalConfig2Save);
-            log.info("Configuration saved successfully");
+            log.info("Configuration saved successfully:{}", contentJson);
             handler(getConfig());
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Configuration saved failed: " + e.getMessage());
