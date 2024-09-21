@@ -24,8 +24,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.HashSet;
 import java.util.List;
-
-import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.service.MonitorService;
@@ -47,7 +45,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "Monitor Manage Batch API")
 @RestController
 @RequestMapping(path = "/api/monitors", produces = {APPLICATION_JSON_VALUE})
-@Slf4j
 public class MonitorsController {
 
     @Autowired
@@ -68,7 +65,6 @@ public class MonitorsController {
             @Parameter(description = "Number of list pagination ", example = "8") @RequestParam(defaultValue = "8") int pageSize,
             @Parameter(description = "Monitor tag ", example = "env:prod") @RequestParam(required = false) final String tag) {
         Page<Monitor> monitorPage = monitorService.getMonitors(ids, app, name, host, status, sort, order, pageIndex, pageSize, tag);
-        log.info("monitorPage:{}", monitorPage);
         return ResponseEntity.ok(Message.success(monitorPage));
     }
 

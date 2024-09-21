@@ -464,7 +464,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
             fieldsSet.clear();
             for (Metrics.Field field : metrics.getFields()) {
                 if (fieldsSet.contains(field.getField())) {
-                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " "
+                    throw new IllegalArgumentException(app.getApp() + " " + metrics.getName() + " " 
                             + field.getField() + " can not duplicated.");
                 }
                 fieldsSet.add(field.getField());
@@ -508,6 +508,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         var objectStoreConfig = objectStoreConfigService.getConfig();
+        log.info("load define app yml objectStoreConfig:{}", JsonUtil.toJson(objectStoreConfig));
         refreshStore(objectStoreConfig);
     }
 
@@ -568,30 +569,19 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 Yaml yaml = new Yaml();
                 log.info("load define app yml in internal jar");
                 var resolver = new PathMatchingResourcePatternResolver();
-                var resources = resolver.getResources("classpath*:define/*.yml");
-                log.info("load define app yml resources: {}", JsonUtil.toJson(resources));
-                Set<String> loadedApps = new HashSet<>();
+                var resources = resolver.getResources("classpath:define/*.yml");
                 for (var resource : resources) {
-                    String filename = resource.getFilename();
-                    if (filename == null || loadedApps.contains(filename)) {
-                        continue;
-                    }
-                    log.info("load define app yml in internal jar: {}", filename);
                     try (var inputStream = resource.getInputStream()) {
                         var app = yaml.loadAs(inputStream, Job.class);
-                        log.info("load define app : {}", app);
-                        if (app != null) {
-                            appDefines.put(app.getApp().toLowerCase(), app);
-                            loadedApps.add(filename);
-                        }
+                        appDefines.put(app.getApp().toLowerCase(), app);
                     } catch (IOException e) {
                         log.error(e.getMessage(), e);
-                        log.error("Ignore this template file: {}.", filename);
+                        log.error("Ignore this template file: {}.", resource.getFilename());
                     }
                 }
-                return !appDefines.isEmpty();
+                return true;
             } catch (IOException e) {
-                log.error("Error loading define app yml", e);
+                log.error("define app yml not exist");
                 return false;
             }
         }
@@ -656,6 +646,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     }
                     try (var fileInputStream = new FileInputStream(appFile)) {
                         var app = yaml.loadAs(fileInputStream, Job.class);
+                        log.info("load in file: {} app: {} ", appFile.getName(), app);
                         if (app != null) {
                             appDefines.put(app.getApp().toLowerCase(), app);
                         }
