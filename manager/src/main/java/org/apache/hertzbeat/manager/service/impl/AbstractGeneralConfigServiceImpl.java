@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.service.GeneralConfigService;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,13 +54,13 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
     public void saveConfig(T config) {
         try {
             String contentJson = objectMapper.writeValueAsString(config);
-
+            String type = type();
             GeneralConfig generalConfig2Save = GeneralConfig.builder()
-                    .type(type())
+                    .type(type)
                     .content(contentJson)
                     .build();
             generalConfigDao.save(generalConfig2Save);
-            log.info("Configuration saved successfully:{}", contentJson);
+            log.info("Configuration saved successfully:{} type:{}", contentJson, type);
             handler(getConfig());
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Configuration saved failed: " + e.getMessage());
@@ -72,7 +73,9 @@ abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigServi
      */
     @Override
     public T getConfig() {
-        GeneralConfig generalConfig = generalConfigDao.findByType(type());
+        String type = type();
+        GeneralConfig generalConfig = generalConfigDao.findByType(type);
+        log.info("Get configuration by type:{} generalConfig:{}", type, JsonUtil.toJson(generalConfig));
         if (generalConfig == null) {
             return null;
         }
