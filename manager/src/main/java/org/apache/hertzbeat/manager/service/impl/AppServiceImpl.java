@@ -533,7 +533,6 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
-        log.info("refresh app define store success.objectStoreConfig:{}", JsonUtil.toJson(objectStoreConfig));
         var success = appDefineStore.loadAppDefines();
         if (!success) {
             new JarAppDefineStoreImpl().loadAppDefines();
@@ -649,7 +648,6 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     }
                     try (var fileInputStream = new FileInputStream(appFile)) {
                         var app = yaml.loadAs(fileInputStream, Job.class);
-                        log.info("load in file: {} app: {} ", appFile.getName(), app);
                         if (app != null) {
                             appDefines.put(app.getApp().toLowerCase(), app);
                         }
