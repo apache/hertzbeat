@@ -17,10 +17,10 @@
 # limitations under the License.
 
 # project name
-SERVER_NAME="hertzbeat-manager"
+SERVER_NAME="${project.artifactId}"
 
 # jar file name
-#JAR_NAME="${project.build.finalName}.jar"
+JAR_NAME="${project.build.finalName}.jar"
 
 # cd bin dir
 cd `dirname $0`
@@ -74,10 +74,8 @@ if [ -n "$SERVER_PORT" ]; then
     fi
 fi
 MAIN_CLASS="org.apache.hertzbeat.manager.Manager"
-LIB_PATH="$DEPLOY_DIR/lib"
 EXT_LIB_PATH="$DEPLOY_DIR/ext-lib"
-TARGET_LIB_PATH="$DEPLOY_DIR/target"
-CLASSPATH="$LIB_PATH/*:$TARGET_LIB_PATH/*:$EXT_LIB_PATH/*"
+CLASSPATH="$DEPLOY_DIR/$JAR_NAME:$EXT_LIB_PATH/*"
 # log dir
 LOGS_DIR=$DEPLOY_DIR/logs
 # create logs dir when not exist
