@@ -16,10 +16,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # project name
-APPLICATION="hertzbeat-manager"
+APPLICATION="${project.artifactId}"
 
 # jar file name
-APPLICATION_JAR="hertzbeat.manager"
+APPLICATION_JAR="${project.build.finalName}.jar"
 
 # find the service pid, kill -9 pid
 PID=$(ps -ef | grep java | grep "${APPLICATION_JAR}" | grep -v grep | awk '{ print $2 }')
