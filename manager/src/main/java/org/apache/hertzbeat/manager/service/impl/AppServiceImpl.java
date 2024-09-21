@@ -534,6 +534,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 appDefineStore = new LocalFileAppDefineStoreImpl();
             }
         }
+        log.info("refresh app define store success.objectStoreConfig:{}", JsonUtil.toJson(objectStoreConfig));
         var success = appDefineStore.loadAppDefines();
         if (!success) {
             new JarAppDefineStoreImpl().loadAppDefines();
