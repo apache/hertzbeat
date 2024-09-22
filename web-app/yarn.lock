@@ -1384,7 +1384,7 @@
 
 "@delon/abc@17.0.5":
   version "17.0.5"
-  resolved "https://registry.yarnpkg.com/@delon/abc/-/abc-17.0.5.tgz#f4eea83b563f8bcc3adc57b49726ea5f7e663531"
+  resolved "https://registry.npmmirror.com/@delon/abc/-/abc-17.0.5.tgz#f4eea83b563f8bcc3adc57b49726ea5f7e663531"
   integrity sha512-TdQMYFZ3dBC85eH/7vZGBRsL12uP0zD5lkYEdFhCiMSnnuIdQDosufv3oScFU7yHKriDc87IdXcA+wYobzlbag==
   dependencies:
     "@delon/acl" "^17.0.5"
@@ -1401,7 +1401,7 @@
 
 "@delon/abc@^17.3.1":
   version "17.3.1"
-  resolved "https://registry.yarnpkg.com/@delon/abc/-/abc-17.3.1.tgz#ed15e054dfb16694892c065dcea6815185e3a621"
+  resolved "https://registry.npmmirror.com/@delon/abc/-/abc-17.3.1.tgz#ed15e054dfb16694892c065dcea6815185e3a621"
   integrity sha512-Gh0IwSQVFA5cgrKvGMNEupj6He2ywk3luHz9ORRa4a81+SZpvvrebIba38f9Y5ZqPovUh4PLvrK2AfqGFpPfAQ==
   dependencies:
     "@delon/acl" "^17.3.1"
@@ -1418,7 +1418,7 @@
 
 "@delon/acl@17.3.1", "@delon/acl@^17.0.5", "@delon/acl@^17.3.1":
   version "17.3.1"
-  resolved "https://registry.yarnpkg.com/@delon/acl/-/acl-17.3.1.tgz#e4320fbcb18850d4ee560f1037394bbe7e7e7d1c"
+  resolved "https://registry.npmmirror.com/@delon/acl/-/acl-17.3.1.tgz#e4320fbcb18850d4ee560f1037394bbe7e7e7d1c"
   integrity sha512-iiw7eCwvkG5TTJMBKAD6mHDNIYgpGLiut7nKOinybyhwWWjev5okJceZyAI1QAZx0xYSfA9BPTfkq4vrjO0HIA==
   dependencies:
     "@delon/util" "^17.3.1"
@@ -1471,7 +1471,7 @@
 
 "@delon/theme@17.3.1", "@delon/theme@^17.0.5", "@delon/theme@^17.3.1":
   version "17.3.1"
-  resolved "https://registry.yarnpkg.com/@delon/theme/-/theme-17.3.1.tgz#f17a6f8962d36630d27a3612d9e75b4042473b53"
+  resolved "https://registry.npmmirror.com/@delon/theme/-/theme-17.3.1.tgz#f17a6f8962d36630d27a3612d9e75b4042473b53"
   integrity sha512-0pSuy13uhVfL/jOlIgY+onmZ89KYk9/NmtdRcuZ+nWfnlKh7Zj1BOtn6bShikbkGEzI3+EIzhOZAwgsMoBLSxg==
   dependencies:
     "@delon/abc" "^17.3.1"
@@ -1483,7 +1483,7 @@
 
 "@delon/util@17.3.1", "@delon/util@^17.0.5", "@delon/util@^17.3.1":
   version "17.3.1"
-  resolved "https://registry.yarnpkg.com/@delon/util/-/util-17.3.1.tgz#6185292831bd3e6c2076a5b4cfb53361e203f46d"
+  resolved "https://registry.npmmirror.com/@delon/util/-/util-17.3.1.tgz#6185292831bd3e6c2076a5b4cfb53361e203f46d"
   integrity sha512-4dXkfWNu4jE6e9mFYCOy1Fnr1DJubHGsWniFPg7zPRY44EC1IfQWNzKe2GB6WHxLZBU7I6UUeg0lBAYXrG+ctg==
   dependencies:
     extend "^3.0.2"
@@ -1797,7 +1797,7 @@
 
 "@github/hotkey@^2.3.0", "@github/hotkey@^2.3.1":
   version "2.3.1"
-  resolved "https://registry.yarnpkg.com/@github/hotkey/-/hotkey-2.3.1.tgz#366011806be0fe5742c13f28eb6790da4422b997"
+  resolved "https://registry.npmmirror.com/@github/hotkey/-/hotkey-2.3.1.tgz#366011806be0fe5742c13f28eb6790da4422b997"
   integrity sha512-+aEUEKAsJnnZElLKW5vdXJ9o7g0PXDGN9w54kDm4BorHyQiUVXRLcaDbBS41T62iyO+tqlCO1NuQrYbrbS8Z2Q==
 
 "@humanwhocodes/config-array@^0.11.13":
@@ -8112,7 +8112,7 @@ ngx-color-picker@16.0.0:
 
 ngx-countdown@^17.0.0, ngx-countdown@^17.1.1:
   version "17.1.1"
-  resolved "https://registry.yarnpkg.com/ngx-countdown/-/ngx-countdown-17.1.1.tgz#46a9a0d1d83b44c1dac3373f0af25f91b87ed725"
+  resolved "https://registry.npmmirror.com/ngx-countdown/-/ngx-countdown-17.1.1.tgz#46a9a0d1d83b44c1dac3373f0af25f91b87ed725"
   integrity sha512-ItZokeKc3QAYxLIZ96eD2mI6IZ5oEmKzFLIx94wjrLfZER1XRxUu+agHc+CnNmWEOmPWNn4ZtA5AUSawAcWZNQ==
   dependencies:
     tslib "^2.3.0"
