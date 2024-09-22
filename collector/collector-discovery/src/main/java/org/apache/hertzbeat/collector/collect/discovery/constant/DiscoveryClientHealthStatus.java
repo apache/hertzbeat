@@ -17,19 +17,21 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+package org.apache.hertzbeat.collector.collect.discovery.constant;
 
 /**
- * Discovery Client Connect Config
+ * Discovery client instance status.
  */
-@Data
-@Builder
-@AllArgsConstructor
-public class ConnectConfig {
-    private String host;
-    private int port;
+public final class DiscoveryClientHealthStatus {
+
+    /**
+	 * Discovery client instance status is UP.
+	 */
+    public static final String UP = "UP";
+
+    /**
+	 * Discovery client instance status is DOWN.
+	 */
+    public static final String DOWN = "DOWN";
+
 }

@@ -17,25 +17,19 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
+package org.apache.hertzbeat.collector.collect.discovery.entity;
 
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 /**
- * Service Instance
+ * Discovery Client Connect Config
  */
 @Data
 @Builder
 @AllArgsConstructor
-public class ServiceInstance {
-    private String serviceId;
-    private String serviceName;
-    private String address;
-    private double weight;
-    private Map<String, String> metadata;
+public class ConnectConfig {
+    private String host;
     private int port;
-    private String healthStatus;
 }

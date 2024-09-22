@@ -190,7 +190,7 @@ keywords: [open source, monitoring, alerting]
 - [feature] Add Apache Hbase RegionServer monitoring by @zhangshenghang in <https://github.com/apache/hertzbeat/pull/1833>
 - [improve] Optimize websocket monitor by @LiuTianyou in <https://github.com/apache/hertzbeat/pull/1838>
 - [refactor] Split the WarehouseProperties class by @xuziyang in <https://github.com/apache/hertzbeat/pull/1830>
-- [test] Add test for HttpsdImpl by @crossoverJie in <https://github.com/apache/hertzbeat/pull/1840>
+- [test] Add test for Service Discovery by @crossoverJie in <https://github.com/apache/hertzbeat/pull/1840>
 - [fix] Fix the wrong comment by @xuziyang in <https://github.com/apache/hertzbeat/pull/1843>
 - [refactor] trans and use assert by @dukbong in <https://github.com/apache/hertzbeat/pull/1841>
 - [bugfix] modify the command  in the mongodb monitoring template by @LiuTianyou in <https://github.com/apache/hertzbeat/pull/1844>

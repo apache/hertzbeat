@@ -17,39 +17,39 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery;
+package org.apache.hertzbeat.collector.collect.discovery;
 
 import java.util.Objects;
-import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientInstance;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.ConsulDiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.impl.NacosDiscoveryClient;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.collector.collect.discovery.constant.DiscoveryClientInstance;
+import org.apache.hertzbeat.collector.collect.discovery.impl.ConsulDiscoveryClient;
+import org.apache.hertzbeat.collector.collect.discovery.impl.NacosDiscoveryClient;
+import org.apache.hertzbeat.common.entity.job.protocol.DiscoveryProtocol;
 
 /**
  * Discovery Client Management
  */
 public class DiscoveryClientManagement {
 
-    public DiscoveryClient getClient(HttpsdProtocol httpsdProtocol) {
+    public DiscoveryClient getClient(DiscoveryProtocol httpsdProtocol) {
         return createClient(httpsdProtocol, DiscoveryClientInstance.getByName(httpsdProtocol.getDiscoveryClientTypeName()));
     }
 
-    private DiscoveryClient createClient(HttpsdProtocol httpsdProtocol, DiscoveryClientInstance discoveryClientInstance) {
+    private DiscoveryClient createClient(DiscoveryProtocol discoveryProtocol, DiscoveryClientInstance discoveryClientInstance) {
         if (Objects.equals(discoveryClientInstance, DiscoveryClientInstance.NOT_SUPPORT)) {
             return null;
         }
 
-        return doCreateClient(httpsdProtocol, discoveryClientInstance);
+        return doCreateClient(discoveryProtocol, discoveryClientInstance);
     }
 
-    private DiscoveryClient doCreateClient(HttpsdProtocol httpsdProtocol, DiscoveryClientInstance discoveryClientInstance) {
+    private DiscoveryClient doCreateClient(DiscoveryProtocol discoveryProtocol, DiscoveryClientInstance discoveryClientInstance) {
         DiscoveryClient discoveryClient;
         switch (discoveryClientInstance) {
             case CONSUL -> discoveryClient = new ConsulDiscoveryClient();
             case NACOS -> discoveryClient = new NacosDiscoveryClient();
             default -> { return null; }
         }
-        discoveryClient.initClient(discoveryClient.buildConnectConfig(httpsdProtocol));
+        discoveryClient.initClient(discoveryClient.buildConnectConfig(discoveryProtocol));
         return discoveryClient;
     }
 }

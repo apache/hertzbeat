@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd;
+package org.apache.hertzbeat.collector.collect.discovery.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClientManagement;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;
+import org.apache.hertzbeat.collector.collect.discovery.DiscoveryImpl;
+import org.apache.hertzbeat.collector.collect.discovery.DiscoveryClient;
+import org.apache.hertzbeat.collector.collect.discovery.DiscoveryClientManagement;
+import org.apache.hertzbeat.collector.collect.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.discovery.entity.ServiceInstance;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.DiscoveryProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -37,13 +37,14 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Test case for {@link HttpsdImpl}
+ * Test case for {@link DiscoveryImpl}
  */
 @ExtendWith(MockitoExtension.class)
-class HttpsdImplTest {
+class DiscoveryImplTest {
+
     @InjectMocks
     @Spy
-    private HttpsdImpl httpsd;
+    private DiscoveryImpl discovery;
 
     @Mock
     private DiscoveryClient client;
@@ -57,7 +58,7 @@ class HttpsdImplTest {
 
         String port = "123";
         String host = "127.0.0.1";
-        HttpsdProtocol httpsdProtocol = HttpsdProtocol.builder()
+        var httpsdProtocol = DiscoveryProtocol.builder()
                 .port(port)
                 .host(host)
                 .discoveryClientTypeName("consul")
@@ -68,7 +69,7 @@ class HttpsdImplTest {
         aliasField.add("responseTime");
         Metrics metrics = new Metrics();
         metrics.setName("server");
-        metrics.setHttpsd(httpsdProtocol);
+        metrics.setDiscovery(httpsdProtocol);
         metrics.setAliasFields(aliasField);
 
         Mockito.when(discoveryClientManagement.getClient(httpsdProtocol)).thenReturn(client);
@@ -77,13 +78,13 @@ class HttpsdImplTest {
                 .port(port)
                 .build();
         Mockito.when(client.getServerInfo()).thenReturn(serverInfo);
-        httpsd.setDiscoveryClientManagement(discoveryClientManagement);
-        httpsd.preCheck(metrics);
-        httpsd.collect(builder, 1L, "test", metrics);
+        discovery.setDiscoveryClientManagement(discoveryClientManagement);
+        discovery.preCheck(metrics);
+        discovery.collect(builder, 1L, "test", metrics);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(host, valueRow.getColumns(0));
-            assertEquals(port, valueRow.getColumns(1));
-            assertNotNull(valueRow.getColumns(2));
+            Assertions.assertEquals(host, valueRow.getColumns(0));
+            Assertions.assertEquals(port, valueRow.getColumns(1));
+            Assertions.assertNotNull(valueRow.getColumns(2));
         }
     }
 
@@ -93,7 +94,7 @@ class HttpsdImplTest {
 
         String port = "123";
         String host = "127.0.0.1";
-        HttpsdProtocol httpsdProtocol = HttpsdProtocol.builder()
+        var discoveryProtocol = DiscoveryProtocol.builder()
                 .port(port)
                 .host(host)
                 .discoveryClientTypeName("consul")
@@ -105,10 +106,10 @@ class HttpsdImplTest {
         aliasField.add("port");
         Metrics metrics = new Metrics();
         metrics.setName("service");
-        metrics.setHttpsd(httpsdProtocol);
+        metrics.setDiscovery(discoveryProtocol);
         metrics.setAliasFields(aliasField);
 
-        Mockito.when(discoveryClientManagement.getClient(httpsdProtocol)).thenReturn(client);
+        Mockito.when(discoveryClientManagement.getClient(discoveryProtocol)).thenReturn(client);
 
         String serviceId = "test";
         String serviceName = "service";
@@ -121,15 +122,15 @@ class HttpsdImplTest {
                 .build());
 
         Mockito.when(client.getServices()).thenReturn(serviceInstances);
-        httpsd.setDiscoveryClientManagement(discoveryClientManagement);
-        httpsd.preCheck(metrics);
-        httpsd.collect(builder, 1L, "test", metrics);
-        assertEquals(builder.getValuesCount(), 1);
+        discovery.setDiscoveryClientManagement(discoveryClientManagement);
+        discovery.preCheck(metrics);
+        discovery.collect(builder, 1L, "test", metrics);
+        Assertions.assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(serviceId, valueRow.getColumns(0));
-            assertEquals(serviceName, valueRow.getColumns(1));
-            assertEquals(host, valueRow.getColumns(2));
-            assertEquals(port, valueRow.getColumns(3));
+            Assertions.assertEquals(serviceId, valueRow.getColumns(0));
+            Assertions.assertEquals(serviceName, valueRow.getColumns(1));
+            Assertions.assertEquals(host, valueRow.getColumns(2));
+            Assertions.assertEquals(port, valueRow.getColumns(3));
         }
     }
 

@@ -28,10 +28,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.job.protocol.DiscoveryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
@@ -209,7 +209,7 @@ public class Metrics {
     /**
      * Monitoring configuration information using the public http_sd protocol
      */
-    private HttpsdProtocol httpsd;
+    private DiscoveryProtocol discovery;
     /**
      * Monitoring configuration information using the public redfish protocol
      */

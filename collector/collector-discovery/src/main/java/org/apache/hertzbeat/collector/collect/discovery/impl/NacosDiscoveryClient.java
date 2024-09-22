@@ -17,22 +17,23 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.impl;
+package org.apache.hertzbeat.collector.collect.discovery.impl;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.api.naming.NamingFactory;
 import com.alibaba.nacos.api.naming.NamingService;
 import com.google.common.collect.Lists;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.collect.httpsd.constant.DiscoveryClientHealthStatus;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ConnectConfig;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.collector.collect.discovery.DiscoveryClient;
+import org.apache.hertzbeat.collector.collect.discovery.constant.DiscoveryClientHealthStatus;
+import org.apache.hertzbeat.collector.collect.discovery.entity.ConnectConfig;
+import org.apache.hertzbeat.collector.collect.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.discovery.entity.ServiceInstance;
+import org.apache.hertzbeat.common.entity.job.protocol.DiscoveryProtocol;
 
 /**
  * DiscoveryClient impl of Nacos
@@ -43,10 +44,10 @@ public class NacosDiscoveryClient implements DiscoveryClient {
     private ConnectConfig localConnectConfig;
 
     @Override
-    public ConnectConfig buildConnectConfig(HttpsdProtocol httpsdProtocol) {
+    public ConnectConfig buildConnectConfig(DiscoveryProtocol discoveryProtocol) {
         return ConnectConfig.builder()
-                .host(httpsdProtocol.getHost())
-                .port(Integer.parseInt(httpsdProtocol.getPort()))
+                .host(discoveryProtocol.getHost())
+                .port(Integer.parseInt(discoveryProtocol.getPort()))
                 .build();
     }
 
