@@ -53,7 +53,7 @@ Pop-Location
 
 # package release artifacts
 Write-Host "Archiving source code..."
-git archive --format=tar.gz --output="dist/apache-hertzbeat-$version-incubating-src.tar.gz" --prefix=apache-hertzbeat-$version-incubating-src/$rcNumber git archive --format=tar.gz --output="dist/apache-hertzbeat-$version-incubating-src.tar.gz" --prefix=apache-hertzbeat-$version-incubating-src/$rcNumber
+git archive --format=tar.gz --output="dist/apache-hertzbeat-$version-incubating-src.tar.gz" --prefix=apache-hertzbeat-$version-incubating-src/ release-$version-$rcNumber
 
 # sign release artifacts
 Write-Host "Signing release artifacts..."
