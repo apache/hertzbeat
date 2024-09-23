@@ -40,6 +40,7 @@
         <module>collector-mongodb</module>
         <module>collector-nebulagraph</module>
         <module>collector-rocketmq</module>
+        <module>collector-kafka</module>
     </modules>
 
     <dependencyManagement>
@@ -57,6 +58,11 @@
             <dependency>
                 <groupId>org.apache.hertzbeat</groupId>
                 <artifactId>hertzbeat-collector-mongodb</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-kafka</artifactId>
                 <version>${hertzbeat.version}</version>
             </dependency>
             <dependency>
