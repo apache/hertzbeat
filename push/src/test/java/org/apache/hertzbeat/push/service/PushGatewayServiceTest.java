@@ -19,12 +19,16 @@
 
 package org.apache.hertzbeat.push.service;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
-
 import org.apache.hertzbeat.common.util.prometheus.Metric;
 import org.apache.hertzbeat.common.util.prometheus.PrometheusUtil;
 import org.apache.hertzbeat.push.service.impl.PushGatewayServiceImpl;
@@ -36,71 +40,65 @@ import org.mockito.InjectMocks;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.times;
-
 /**
  * test case for {@link PushGatewayServiceImpl}
  */
 
 @ExtendWith(MockitoExtension.class)
-class PushGatewayServiceImplTest {
+class PushGatewayServiceTest {
 
-	@InjectMocks
-	private PushGatewayServiceImpl pushGatewayService;
+    @InjectMocks
+    private PushGatewayServiceImpl pushGatewayService;
 
-	private MockedStatic<PrometheusUtil> prometheusUtilMock;
+    private MockedStatic<PrometheusUtil> prometheusUtilMock;
 
-	@BeforeEach
-	void setUp() {
+    @BeforeEach
+    void setUp() {
 
-		prometheusUtilMock = mockStatic(PrometheusUtil.class);
-	}
+        prometheusUtilMock = mockStatic(PrometheusUtil.class);
+    }
 
-	@AfterEach
-	void tearDown() {
+    @AfterEach
+    void tearDown() {
 
-		prometheusUtilMock.close();
-	}
+        prometheusUtilMock.close();
+    }
 
-	@Test
-	void testPushMetricsDataSuccess() throws IOException {
+    @Test
+    void testPushMetricsDataSuccess() throws IOException {
 
-		String mockData = "some metric data";
-		InputStream inputStream = new ByteArrayInputStream(mockData.getBytes());
-		List<Metric> mockMetrics = Collections.singletonList(new Metric());
+        String mockData = "some metric data";
+        InputStream inputStream = new ByteArrayInputStream(mockData.getBytes());
+        List<Metric> mockMetrics = Collections.singletonList(new Metric());
 
-		prometheusUtilMock.when(
-				() -> PrometheusUtil.parseMetrics(any(InputStream.class))
-		).thenReturn(mockMetrics);
+        prometheusUtilMock.when(
+                () -> PrometheusUtil.parseMetrics(any(InputStream.class))
+        ).thenReturn(mockMetrics);
 
-		boolean result = pushGatewayService.pushMetricsData(inputStream);
+        boolean result = pushGatewayService.pushMetricsData(inputStream);
 
-		assertTrue(result);
-		prometheusUtilMock.verify(
-				() -> PrometheusUtil.parseMetrics(any(InputStream.class)),
-				times(1)
-		);
-	}
+        assertTrue(result);
+        prometheusUtilMock.verify(
+                () -> PrometheusUtil.parseMetrics(any(InputStream.class)),
+                times(1)
+        );
+    }
 
-	@Test
-	void testPushMetricsDataFailure() throws IOException {
+    @Test
+    void testPushMetricsDataFailure() throws IOException {
 
-		String mockData = "some metric data";
-		InputStream inputStream = new ByteArrayInputStream(mockData.getBytes());
+        String mockData = "some metric data";
+        InputStream inputStream = new ByteArrayInputStream(mockData.getBytes());
 
-		prometheusUtilMock.when(() -> PrometheusUtil.parseMetrics(any(InputStream.class))).thenReturn(null);
+        prometheusUtilMock.when(() -> PrometheusUtil.parseMetrics(any(InputStream.class))).thenReturn(null);
 
-		boolean result = pushGatewayService.pushMetricsData(inputStream);
+        boolean result = pushGatewayService.pushMetricsData(inputStream);
 
-		assertFalse(result);
-		prometheusUtilMock.verify(
-				() -> PrometheusUtil.parseMetrics(any(InputStream.class)),
-				times(1)
-		);
-	}
+        assertFalse(result);
+        prometheusUtilMock.verify(
+                () -> PrometheusUtil.parseMetrics(any(InputStream.class)),
+                times(1)
+        );
+    }
 
 }

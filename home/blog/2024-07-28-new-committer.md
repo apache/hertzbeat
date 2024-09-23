@@ -8,9 +8,10 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-![hertzBeathertzBeat](/img/blog/new-committer.png)
+![HertzBeat](/img/blog/new-committer.png)
 
 > It's an honor for me to become a Committer of Apache Hertzbeat
+>
 ## Personal introduction
 
 I graduated in 2023 and am currently working as a Java developer in an Internet company.
@@ -30,7 +31,9 @@ I downloaded the source code of Hertzbeat and compiled and tested it according t
 After submitting the first PR, I continuously followed the issues in the Hertzbeat community and attempted to solve the existing problems. I have successively completed tasks such as specifying @people on WeChat, integrating AI, adding a PrestoDB monitor, modifying bugs, and contributing to the official website documentation.
 
 ## Reward
+
 After several months of contributing to open source, I have reaped a lot. I have learned the business logic in the code, code norms, some technical frameworks that I have never used before, and some algorithms. It can be said that I have benefited greatly.
 
 ## Conclusion
+
 Becoming a Committer of Apache Hertzbeat is a very meaningful thing for me. In the future, I will continue to contribute to the Apache Hertzbeat community. I also hope that Apache Hertzbeat can successfully graduate from the incubator and that the community will become better and better.

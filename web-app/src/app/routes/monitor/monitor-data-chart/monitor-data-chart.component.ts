@@ -53,6 +53,7 @@ export class MonitorDataChartComponent implements OnInit {
   echartsInstance!: any;
   // Default historical data period is last 6 hours
   timePeriod: string = '6h';
+
   constructor(private monitorSvc: MonitorService, @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService) {}
 
   ngOnInit(): void {

@@ -179,26 +179,28 @@ export class MonitorListComponent implements OnInit, OnDestroy {
 
   loadMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
-    let monitorInit$ = this.monitorSvc.getMonitors(this.app, this.tag, this.pageIndex - 1, this.pageSize, sortField, sortOrder).subscribe(
-      message => {
-        this.tableLoading = false;
-        this.checkedAll = false;
-        this.checkedMonitorIds.clear();
-        if (message.code === 0) {
-          let page = message.data;
-          this.monitors = page.content;
-          this.pageIndex = page.number + 1;
-          this.total = page.totalElements;
-        } else {
-          console.warn(message.msg);
+    let monitorInit$ = this.monitorSvc
+      .searchMonitors(this.app, this.tag, this.filterContent, this.filterStatus, this.pageIndex - 1, this.pageSize, sortField, sortOrder)
+      .subscribe(
+        message => {
+          this.tableLoading = false;
+          this.checkedAll = false;
+          this.checkedMonitorIds.clear();
+          if (message.code === 0) {
+            let page = message.data;
+            this.monitors = page.content;
+            this.pageIndex = page.number + 1;
+            this.total = page.totalElements;
+          } else {
+            console.warn(message.msg);
+          }
+          monitorInit$.unsubscribe();
+        },
+        error => {
+          this.tableLoading = false;
+          monitorInit$.unsubscribe();
         }
-        monitorInit$.unsubscribe();
-      },
-      error => {
-        this.tableLoading = false;
-        monitorInit$.unsubscribe();
-      }
-    );
+      );
   }
   changeMonitorTable(sortField?: string | null, sortOrder?: string | null) {
     this.tableLoading = true;
@@ -310,6 +312,10 @@ export class MonitorListComponent implements OnInit, OnDestroy {
         this.notifySvc.error(this.i18nSvc.fanyi('common.notify.delete-fail'), error.msg);
       }
     );
+    // delete grafana dashboard
+    for (let monitorId of monitors) {
+      this.deleteGrafanaDashboard(monitorId);
+    }
   }
 
   updatePageIndex(delSize: number) {
@@ -572,6 +578,21 @@ export class MonitorListComponent implements OnInit, OnDestroy {
   }
 
   // end: app type search filter
+
+  deleteGrafanaDashboard(monitorId: number) {
+    this.monitorSvc.deleteGrafanaDashboard(monitorId).subscribe(
+      message => {
+        if (message.code === 0) {
+          console.log('delete grafana dashboard success');
+        } else {
+          console.warn(message.msg);
+        }
+      },
+      error => {
+        console.error(error.msg);
+      }
+    );
+  }
 
   protected readonly sliceTagName = formatTagName;
 }

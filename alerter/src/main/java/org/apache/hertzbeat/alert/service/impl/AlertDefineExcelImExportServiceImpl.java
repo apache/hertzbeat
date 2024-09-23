@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,12 +31,11 @@ import org.apache.hertzbeat.alert.dto.AlertDefineDTO;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -48,8 +49,6 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Service
 public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImExportServiceImpl {
-    public static final String TYPE = "EXCEL";
-    public static final String FILE_SUFFIX = ".xlsx";
 
     /**
      * Export file type
@@ -96,17 +95,6 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse alertDefine data", e);
         }
-    }
-
-    private TagItem extractTagDataFromRow(Row row) {
-        String name = getCellValueAsString(row.getCell(7));
-        if (StringUtils.hasText(name)) {
-            TagItem tagItem = new TagItem();
-            tagItem.setName(name);
-            tagItem.setValue(getCellValueAsString(row.getCell(8)));
-            return tagItem;
-        }
-        return null;
     }
 
     private List<TagItem> extractTagDataFromRow(Cell cell) {
@@ -189,30 +177,12 @@ public class AlertDefineExcelImExportServiceImpl extends AlertDefineAbstractImEx
     @Override
     public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
         try {
+
             Workbook workbook = new HSSFWorkbook();
             String sheetName = "Export AlertDefine";
-            Sheet sheet = workbook.createSheet(sheetName);
-            sheet.setDefaultColumnWidth(20);
-            sheet.setColumnWidth(9, 40 * 256);
-            sheet.setColumnWidth(10, 40 * 256);
-            // set header style
-            CellStyle headerCellStyle = workbook.createCellStyle();
-            Font headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerCellStyle.setFont(headerFont);
-            headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+            Sheet sheet = ExcelExportUtils.setSheet(sheetName, workbook, AlertDefineDTO.class);
             // set cell style
-            CellStyle cellStyle = workbook.createCellStyle();
-            cellStyle.setAlignment(HorizontalAlignment.CENTER);
-            // set header
-            String[] headers = {"app", "metric", "field", "preset", "expr", "priority", "times", "tags",
-                    "enable", "recoverNotice", "template"};
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerCellStyle);
-            }
+            CellStyle cellStyle = ExcelExportUtils.setCellStyle(workbook);
 
             // Traverse the threshold rule list, each threshold rule object corresponds to a row of data
             int rowIndex = 1;

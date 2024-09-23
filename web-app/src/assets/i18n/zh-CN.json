@@ -10,6 +10,7 @@
     "monitor": {
       "": "监控",
       "center": "监控中心",
+      "bulletin": "自定义看板",
       "service": "应用服务监控",
       "db": "数据库监控",
       "os": "操作系统监控",
@@ -111,6 +112,12 @@
       "down": "宕机",
       "unreachable": "不可达",
       "paused": "暂停"
+    },
+    "grafana": {
+      "enabled.tip": "是否启用Grafana",
+      "enabled.label": "启用Grafana",
+      "upload.tip": "上传Grafana的JSON文件",
+      "upload.label": "上传Grafana模板"
     }
   },
   "alert": {
@@ -129,6 +136,20 @@
       "1": "严重告警",
       "2": "警告告警"
     }
+  },
+  "bulletin": {
+    "new": "新增看板项",
+    "edit": "编辑看板项",
+    "delete": "删除看板项",
+    "batch.delete": "批量删除看板项",
+    "name": "看板名称",
+    "name.placeholder": "请输入自定义看板名称",
+    "monitor.type": "监控类型",
+    "monitor.name": "监控任务名称",
+    "monitor.metrics": "监控指标",
+    "help.message.content": "自定义监控看板",
+    "help.content": "自定义监控看板,以表格形式展示某种监控的自选指标",
+    "help.link": "https://hertzbeat.apache.org/zh-cn/docs/help/bulletin"
   },
   "question.link": "https://hertzbeat.apache.org/zh-cn/docs/help/issue",
   "alert.setting.new": "新增阈值规则",
@@ -548,7 +569,10 @@
   "plugin.delete": "刪除插件",
   "plugin.type": "插件类型",
   "plugin.type.POST_ALERT": "告警后",
+  "plugin.type.POST_COLLECT": "采集后",
   "plugin.search": "搜索插件",
+  "plugin.edit": "编辑插件",
+  "plugin.param.edit": "编辑参数",
   "define.help": "监控模版定义每一个监控类型，类型的参数变量，指标信息，采集协议等。您可根据需求在下拉菜单中选择已有监控模板修改。左下区域为对照区，右下区域为编辑区。<br>您也可以点击“<i>新增监控类型</i>”来自定义新的的监控类型，目前支持 <a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-http'> HTTP 协议</a>，<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jdbc'>JDBC协议</a>，<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-ssh'>SSH协议</a>，<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-jmx'> JMX 协议</a>，<a href='https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-snmp'> SNMP 协议</a>，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/template'>点击查看监控模板</a>。\n",
   "define.help.link": "https://hertzbeat.apache.org/zh-cn/docs/advanced/extend-point/",
   "define.save-apply": "保存并应用",

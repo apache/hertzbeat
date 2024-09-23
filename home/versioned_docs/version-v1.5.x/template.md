@@ -4,27 +4,28 @@ title: Monitoring Template Here
 sidebar_label: Monitoring Template
 ---
 
-> Apache HertzBeat (incubating) is an open source, real-time monitoring tool with custom-monitor and agentLess.  
-
-> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.     
+> Apache HertzBeat (incubating) is an open source, real-time monitoring tool with custom-monitor and agentLess.
+>
+> We make protocols such as `Http, Jmx, Ssh, Snmp, Jdbc, Prometheus` configurable, and you only need to configure `YML` online to collect any metrics you want.
 > Do you believe that you can immediately adapt a new monitoring type such as K8s or Docker just by configuring online?
 
-Here is the architecture.  
+Here is the architecture.
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)
 
-**We define all monitoring collection types (mysql, website, jvm, k8s) as yml templates, and users can import these templates into the hertzbeat system to support corresponding types of monitoring, which is very convenient!** 
+**We define all monitoring collection types (mysql, website, jvm, k8s) as yml templates**  
+**Users can import these templates into the hertzbeat system to support corresponding types of monitoring, which is very convenient!**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
 **Welcome everyone to contribute your customized general monitoring type YML template during use. The available templates are as follows:**
 
-### Application service monitoring 
+### Application service monitoring
 
 &emsp;&#x1F449;&emsp;[Website monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-website.yml) <br />
-&emsp;&#x1F449;&emsp;[HTTP API](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-api.yml) <br /> 
-&emsp;&#x1F449;&emsp;[PING Connectivity](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ping.yml) <br /> 
-&emsp;&#x1F449;&emsp;[Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-port.yml) <br /> 
+&emsp;&#x1F449;&emsp;[HTTP API](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-api.yml) <br />
+&emsp;&#x1F449;&emsp;[PING Connectivity](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ping.yml) <br />
+&emsp;&#x1F449;&emsp;[Port Telnet](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-port.yml) <br />
 &emsp;&#x1F449;&emsp;[Full site monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-fullsite.yml) <br />
 &emsp;&#x1F449;&emsp;[SSL Cert monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ssl_cert.yml) <br />
 &emsp;&#x1F449;&emsp;[JVM monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-jvm.yml) <br />
@@ -32,7 +33,7 @@ Here is the architecture.
 &emsp;&#x1F449;&emsp;[SpringBoot3.0](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-springboot3.yml) <br />
 &emsp;&#x1F449;&emsp;[FTP Server](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-ftp.yml) <br />
 
-### Database monitoring  
+### Database monitoring
 
 &emsp;&#x1F449;&emsp;[MYSQL database monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-mysql.yml) <br />
 &emsp;&#x1F449;&emsp;[MariaDB database monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-mariadb.yml) <br />
@@ -49,7 +50,7 @@ Here is the architecture.
 &emsp;&#x1F449;&emsp;[Redis Sentinel database monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redis_sentinel.yml) <br />
 &emsp;&#x1F449;&emsp;[Redis Cluster database monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-redis_cluster.yml) <br />
 
-### Operating system monitoring     
+### Operating system monitoring
 
 &emsp;&#x1F449;&emsp;[Linux operating system monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-linux.yml) <br />
 &emsp;&#x1F449;&emsp;[Windows operating system monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-windows.yml) <br />
@@ -64,7 +65,6 @@ Here is the architecture.
 &emsp;&#x1F449;&emsp;[AlmaLinux operating system monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-almalinux.yml) <br />
 &emsp;&#x1F449;&emsp;[Debian operating system monitoring](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-debian.yml) <br />
 
-
 ### Middleware monitoring
 
 &emsp;&#x1F449;&emsp;[Zookeeper](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-zookeeper.yml) <br />
@@ -78,13 +78,12 @@ Here is the architecture.
 &emsp;&#x1F449;&emsp;[Flink](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-flink.yml) <br />
 &emsp;&#x1F449;&emsp;[Nacos](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-nacos.yml) <br />
 
-
 ### CloudNative monitoring
 
 &emsp;&#x1F449;&emsp;[Docker](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-docker.yml) <br />
 &emsp;&#x1F449;&emsp;[Kubernetes](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-kubernetes.yml) <br />
 
-### Network monitoring 
+### Network monitoring
 
 &emsp;&#x1F449;&emsp;[CiscoSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-cisco_switch.yml) <br />
 &emsp;&#x1F449;&emsp;[HpeSwitch](https://raw.githubusercontent.com/apache/hertzbeat/master/manager/src/main/resources/define/app-hpe_switch.yml) <br />

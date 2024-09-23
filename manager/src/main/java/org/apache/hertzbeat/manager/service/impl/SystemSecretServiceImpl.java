@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Type;
+import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.SystemSecret;
 import org.springframework.stereotype.Service;
@@ -37,17 +38,17 @@ public class SystemSecretServiceImpl extends AbstractGeneralConfigServiceImpl<Sy
      * @param generalConfigDao ConfigDao object
      * @param objectMapper     JSON tool object
      */
-    protected SystemSecretServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
+    public SystemSecretServiceImpl(GeneralConfigDao generalConfigDao, ObjectMapper objectMapper) {
         super(generalConfigDao, objectMapper);
     }
     
     @Override
     public String type() {
-        return "secret";
+        return GeneralConfigTypeEnum.secret.name();
     }
     
     @Override
-    protected TypeReference<SystemSecret> getTypeReference() {
+    public TypeReference<SystemSecret> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {

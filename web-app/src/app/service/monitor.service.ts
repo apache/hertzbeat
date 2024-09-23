@@ -32,6 +32,7 @@ const manage_monitors_uri = '/monitors/manage';
 const export_monitors_uri = '/monitors/export';
 const summary_uri = '/summary';
 const warehouse_storage_status_uri = '/warehouse/storage/status';
+const grafana_dashboard_uri = '/grafana/dashboard';
 
 @Injectable({
   providedIn: 'root'
@@ -45,6 +46,10 @@ export class MonitorService {
 
   public editMonitor(body: any): Observable<Message<any>> {
     return this.http.put<Message<any>>(monitor_uri, body);
+  }
+
+  public getMonitorByApp(app: string): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${monitor_uri}/metric/${app}`);
   }
 
   public deleteMonitor(monitorId: number): Observable<Message<any>> {
@@ -108,38 +113,6 @@ export class MonitorService {
 
   public getMonitorsByApp(app: string): Observable<Message<Monitor[]>> {
     return this.http.get<Message<Monitor[]>>(`${monitors_uri}/${app}`);
-  }
-
-  public getMonitors(
-    app: string | undefined,
-    tag: string | undefined,
-    pageIndex: number,
-    pageSize: number,
-    sortField?: string | null,
-    sortOrder?: string | null
-  ): Observable<Message<Page<Monitor>>> {
-    pageIndex = pageIndex ? pageIndex : 0;
-    pageSize = pageSize ? pageSize : 8;
-    // HttpParams is unmodifiable, so we need to save the return value of append/set
-    let httpParams = new HttpParams();
-    httpParams = httpParams.appendAll({
-      pageIndex: pageIndex,
-      pageSize: pageSize
-    });
-    if (app != undefined) {
-      httpParams = httpParams.append('app', app.trim());
-    }
-    if (tag != undefined) {
-      httpParams = httpParams.append('tag', tag);
-    }
-    if (sortField != null && sortOrder != null) {
-      httpParams = httpParams.appendAll({
-        sort: sortField,
-        order: sortOrder == 'ascend' ? 'asc' : 'desc'
-      });
-    }
-    const options = { params: httpParams };
-    return this.http.get<Message<Page<Monitor>>>(monitors_uri, options);
   }
 
   public searchMonitors(
@@ -211,5 +184,13 @@ export class MonitorService {
 
   public getWarehouseStorageServerStatus(): Observable<Message<any>> {
     return this.http.get<Message<any>>(warehouse_storage_status_uri);
+  }
+
+  public getGrafanaDashboard(monitorId: number): Observable<Message<any>> {
+    return this.http.get<Message<any>>(`${grafana_dashboard_uri}?monitorId=${monitorId}`);
+  }
+
+  public deleteGrafanaDashboard(monitorId: number): Observable<Message<any>> {
+    return this.http.delete<Message<any>>(`${grafana_dashboard_uri}?monitorId=${monitorId}`);
   }
 }

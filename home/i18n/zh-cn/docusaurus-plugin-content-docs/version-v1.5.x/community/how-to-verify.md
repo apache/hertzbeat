@@ -3,13 +3,14 @@ id: how_to_verify_release
 title: 版本物料的验证
 sidebar_position: 4
 ---
-# 验证候选版本
+
+## 验证候选版本
 
 详细检查列表请参考官方的[check list](https://cwiki.apache.org/confluence/display/INCUBATOR/Incubator+Release+Checklist)
 
-在浏览器中可访问版本内容 https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/
+在浏览器中可访问版本内容 <https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/>
 
-## 1. 下载候选版本到本地
+### 1. 下载候选版本到本地
 
 > 需要依赖gpg工具，如果没有，建议安装gpg2
 
@@ -21,13 +22,11 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 
 ```
 
-
-## 2. 验证上传的版本是否合规
+### 2. 验证上传的版本是否合规
 
 > 开始验证环节，验证包含但不局限于以下内容和形式
 
-
-### 2.1 查看发布包是否完整
+#### 2.1 查看发布包是否完整
 
 > 上传到dist的包必须包含源码包，二进制包可选
 
@@ -36,18 +35,18 @@ wget https://dist.apache.org/repos/dist/dev/incubator/hertzbeat/${release_versio
 3. 是否包含源码包的sha512
 4. 如果上传了二进制包，则同样检查(2)-(4)所列的内容
 
-
-### 2.2 检查gpg签名
+#### 2.2 检查gpg签名
 
 首先导入发布人公钥。从svn仓库导入KEYS到本地环境。（发布版本的人不需要再导入，帮助做验证的人需要导入，用户名填发版人的即可）
 
-#### 2.2.1 导入公钥
+##### 2.2.1 导入公钥
 
 ```shell
-$ curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # 下载KEYS
-$ gpg --import KEYS # 导入KEYS到本地
+curl  https://downloads.apache.org/incubator/hertzbeat/KEYS > KEYS # 下载KEYS
+gpg --import KEYS # 导入KEYS到本地
 ```
-#### 2.2.2 信任公钥
+
+##### 2.2.2 信任公钥
 
 > 信任此次版本所使用的KEY
 
@@ -75,13 +74,15 @@ Do you really want to set this key to ultimate trust? (y/N) y #选择y
 gpg> 
      
 ```
-#### 2.2.3 检查签名
+
+##### 2.2.3 检查签名
 
 ```shell
 for i in *.tar.gz; do echo $i; gpg --verify $i.asc $i ; done
 ```
 
 检查结果
+
 > 出现类似以下内容则说明签名正确，关键字：**`Good signature`**
 
 ```shell
@@ -91,16 +92,15 @@ gpg:                using RSA key XXXXX
 gpg: Good signature from "xxx @apache.org>"
 ```
 
-### 2.3 检查sha512哈希
+#### 2.3 检查sha512哈希
 
 > 本地计算sha512哈希后，验证是否与dist上的一致，如果上传二进制包，则同样需要检查二进制包的sha512哈希
-
 
 ```shell
 for i in *.tar.gz; do echo $i; sha512sum --check  $i.sha512; done
 ```
 
-### 2.4 检查二进制包
+#### 2.4 检查二进制包
 
 解压缩  `apache-hertzbeat-${release.version}-incubating-bin.tar.gz`
 
@@ -121,10 +121,9 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 - [ ] 如果依赖的是Apache许可证并且存在`NOTICE`文件，那么这些`NOTICE`文件也需要加入到版本的`NOTICE`文件中
 - [ ] .....
 
-参考: https://apache.org/legal/resolved.html
+参考: <https://apache.org/legal/resolved.html>
 
-
-### 2.5. 源码编译验证
+#### 2.5. 源码编译验证
 
 解压缩 `apache-hertzbeat-${release_version}-incubating-src.tar.gz`
 
@@ -132,7 +131,7 @@ tar -xzvf apache-hertzbeat-${release.version}-incubating-bin.tar.gz
 cd apache-hertzbeat-${release_version}-incubating-src
 ```
 
-编译源码: https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package 
+编译源码: <https://hertzbeat.apache.org/docs/community/development/#build-hertzbeat-binary-package>
 
 进行如下检查:
 
@@ -146,34 +145,33 @@ cd apache-hertzbeat-${release_version}-incubating-src
 - [ ] 能够正确编译
 - [ ] .....
 
-参考: https://apache.org/legal/resolved.html
+参考: <https://apache.org/legal/resolved.html>
 
-
-## 3. 邮件回复
+### 3. 邮件回复
 
 如果发起了发布投票，验证后，可以参照此回复示例进行邮件回复
 
 :::caution 注意
 回复的邮件一定要带上自己检查了那些项信息，仅仅回复`+1 approve`，是无效的。
 
-PPMC 在 dev@hertzbeat.apache.org HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
+PPMC 在 <dev@hertzbeat.apache.org> HertzBeat 的社区投票时，请带上 binding 后缀，表示对 HertzBeat 社区中的投票具有约束性投票，方便统计投票结果。
 
-IPMC 在 general@incubator.apache.org incubator 社区投票，请带上 binding 后缀，表示对 incubator 社区中的投票具有约束性投票，方便统计投票结果。
+IPMC 在 <general@incubator.apache.org> incubator 社区投票，请带上 binding 后缀，表示对 incubator 社区中的投票具有约束性投票，方便统计投票结果。
 :::
 
 :::caution 注意
-如果在dev@hertzbeat.apache.org已经投过票，在incubator社区进行投票回复时，可以直接带过去,<font color="red">需要注意约束性</font>  如:
+如果在<dev@hertzbeat.apache.org>已经投过票，在incubator社区进行投票回复时，可以直接带过去,<font color="red">需要注意约束性</font>  如:
 
 ```html
 //incubator社区 投票时，只有IPMC成员才具有约束性 binding，PPMC需要注意约束性的变化
 Forward my +1 from dev@hertzbeat (non-binding)
 Copy my +1 from hertzbeat DEV ML (non-binding)
 ```
+
 :::
 
-
-
 非PPMC/IPMC成员
+
 ```html
 +1 (non-binding)
 I  checked:
@@ -185,6 +183,7 @@ I  checked:
 ```
 
 PPMC/IPMC成员
+
 ```html
 //incubator社区 投票时，只有IPMC成员才具有约束性 binding
 +1 (binding)
@@ -196,7 +195,6 @@ I  checked:
     5. ....
 ```
 
+---
 
---- 
-
-This doc refer from [Apache StreamPark](https://streampark.apache.org/)   
+This doc refer from [Apache StreamPark](https://streampark.apache.org/)

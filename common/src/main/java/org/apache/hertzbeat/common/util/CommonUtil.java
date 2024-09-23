@@ -23,6 +23,7 @@ import java.time.LocalTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
@@ -178,16 +179,16 @@ public final class CommonUtil {
         if (cause != null) {
             message = cause.getMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.getMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.getLocalizedMessage();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = throwable.toString();
         }
-        if (message == null || "".equals(message)) {
+        if (message == null || StringUtils.isBlank(message)) {
             message = "unknown error.";
         }
         return message;
@@ -223,4 +224,40 @@ public final class CommonUtil {
         }
     }
 
+    /**
+     * generate random word
+     * @param length length
+     * @return words
+     */
+    public static String generateRandomWord(int length) {
+        StringBuilder word = new StringBuilder();
+        Random random = new Random();
+        // 'a' ASCII
+        int minVowel = 97;
+        // 'z' ASCII
+        int maxVowel = 122;
+        // 'A' ASCII
+        int minConsonant = 65;
+        // 'Z' ASCII
+        int maxConsonant = 90;
+        // '0' ASCII
+        int minDigit = 48;
+        // '9' ASCII
+        int maxDigit = 57;
+        word.append((char) (minVowel + random.nextInt(5)));
+        for (int i = 1; i < length; i++) {
+            switch (random.nextInt(3)) {
+                case 0:
+                    word.append((char) (minVowel + random.nextInt(5)));
+                    break;
+                case 1:
+                    word.append((char) (minDigit + random.nextInt(10)));
+                    break;
+                default:
+                    word.append((char) (minConsonant + random.nextInt(26)));
+                    break;
+            }
+        }
+        return word.toString();
+    }
 }

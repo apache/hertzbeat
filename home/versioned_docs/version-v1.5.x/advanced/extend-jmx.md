@@ -1,12 +1,14 @@
 ---
 id: extend-jmx
 title: JMX Protocol Custom Monitoring
-sidebar_label: JMX Protocol Custom Monitoring    
+sidebar_label: JMX Protocol Custom Monitoring
 ---
+
 > From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use JMX to customize Metric monitoring.
 > JMX protocol custom monitoring allows us to easily monitor Metrics we want by config JMX Mbeans Object.
 
 ### JMX protocol collection process
+
 【**Peer Server Enable Jmx Service**】->【**HertzBeat Connect Peer Server Jmx**】->【**Query Jmx Mbean Object Data**】->【**Metric data extraction**】
 
 It can be seen from the process that we define a monitoring type of JMX protocol. We need to configure JMX request parameters, configure which Metrics to obtain, and configure Mbeans Object.
@@ -15,24 +17,23 @@ It can be seen from the process that we define a monitoring type of JMX protocol
 
 By configuring the monitoring template YML metrics `field`, `aliasFields`, `objectName` of the `jmx` protocol to map and parse the `Mbean` object information exposed by the peer system.
 
-### Custom Steps   
+### Custom Steps
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
-------- 
+-------
+
 Configuration usages of the monitoring templates yml are detailed below.
 
 ### Monitoring Templates YML
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
-
-
+>
 > Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
 
 eg：Define a custom monitoring type `app` named `example_jvm` which use the JVM protocol to collect data.
-
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

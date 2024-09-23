@@ -1,0 +1,173 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring
+category: service
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: mqtt
+# The app api i18n name
+name:
+  zh-CN: MQTT 连接
+  en-US: MQTT Connection
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 对 MQTT 连接进行监测。<br>您可以点击 “<i>新建 MQTT 连接</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors MQTT connections. <br>You can click "<i>New MQTT connection</i>" and configure it, or select "<i>More actions</i>" to import an existing configuration.
+  zh-TW: HertzBeat 對 MQTT 連接進行監測。 <br>您可以點選 “<i>新建 MQTT 連線</i>” 並進行配置，或選擇“<i>更多操作</i>”，匯入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/mqtt
+  en-US: https://hertzbeat.apache.org/docs/help/mqtt
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: MQTT的Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value 1883
+    defaultValue: 1883
+  - field: protocolVersion
+    name:
+      zh-CN: 协议版本
+      en-US: Protocol version
+    type: radio
+    options:
+      - label: MQTT 3.1.1
+        value: MQTT_3_1_1
+      - label: MQTT 5.0
+        value: MQTT_5_0
+    required: true
+    defaultValue: MQTT_3_1_1
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 连接超时时间(ms)
+      en-US: Connect Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,100000]'
+    # required-true or false
+    required: true
+    # default value 6000
+    defaultValue: 6000
+  # field-param field key
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    hide: true
+    # required-true or false
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: text
+    hide: true
+    # required-true or false
+    required: false
+  - field: clientId
+    name:
+      zh-CN: 客户端ID
+      en-US: Client Id
+    type: text
+    defaultValue: hertzbeat-mqtt-client
+    # required-true or false
+    required: true
+
+  - field: topic
+    name:
+      zh-CN: 主题
+      en-US: Topic
+    type: text
+    required: true
+  - field: testMessage
+    name:
+      zh-CN: 测试消息
+      en-US: Test message
+    type: text
+    required: false
+# collect metrics config list
+metrics:
+  # metrics - summary
+  - name: summary
+    i18n:
+      zh-CN: 概要
+      en-US: Summary
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+    fields:
+      - field: responseTime
+        type: 0
+        unit: ms
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+      - field: canDescribe
+        type: 1
+        i18n:
+          zh-CN: 正常订阅
+          en-US: Normal subscription
+      - field: canPublish
+        type: 1
+        i18n:
+          zh-CN: 正常推送
+          en-US: Normal publish
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: mqtt
+    # Specific collection configuration when protocol is telnet protocol
+    mqtt:
+      # telnet host
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # timeout
+      timeout: ^_^timeout^_^
+      # email
+      topic: ^_^topic^_^
+      # clientId
+      clientId: ^_^clientId^_^
+      # protocolVersion
+      protocolVersion: ^_^protocolVersion^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # testMessage
+      testMessage: ^_^testMessage^_^
+
+

@@ -46,7 +46,11 @@ if [ ! -d $LOGS_DIR ]; then
 fi
 
 # JVM Configuration
-JAVA_OPTS=" -Doracle.jdbc.timezoneAsRegion=false"
+if [ -z "$JAVA_OPTS" ]; then
+  JAVA_OPTS=" -Doracle.jdbc.timezoneAsRegion=false"
+else
+  JAVA_OPTS="${JAVA_OPTS} -Doracle.jdbc.timezoneAsRegion=false"
+fi
 
 # JVM Configuration
 JAVA_MEM_OPTS=" -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$LOGS_DIR"

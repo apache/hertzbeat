@@ -23,10 +23,12 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN, TitleService } from '@delon/theme';
 import { NzNotificationService } from 'ng-zorro-antd/notification';
+import { NzUploadFile } from 'ng-zorro-antd/upload';
 import { throwError } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
 import { Collector } from '../../../pojo/Collector';
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -59,6 +61,7 @@ export class MonitorEditComponent implements OnInit {
   advancedParams!: Param[];
   paramValueMap!: Map<String, Param>;
   monitor = new Monitor();
+  grafanaDashboard!: GrafanaDashboard;
   collectors!: Collector[];
   collector: string = '';
   detected: boolean = false;
@@ -81,6 +84,7 @@ export class MonitorEditComponent implements OnInit {
           if (message.code === 0) {
             let paramValueMap = new Map<String, Param>();
             this.monitor = message.data.monitor;
+            this.grafanaDashboard = message.data.grafanaDashboard != undefined ? message.data.grafanaDashboard : new GrafanaDashboard();
             this.collector = message.data.collector == null ? '' : message.data.collector;
             this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
             if (message.data.params != null) {
@@ -191,7 +195,8 @@ export class MonitorEditComponent implements OnInit {
       detected: this.detected,
       monitor: info.monitor,
       collector: info.collector,
-      params: info.params.concat(info.advancedParams)
+      params: info.params.concat(info.advancedParams),
+      grafanaDashboard: info.grafanaDashboard
     };
     if (this.detected) {
       this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');

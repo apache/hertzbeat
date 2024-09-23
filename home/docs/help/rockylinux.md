@@ -9,7 +9,7 @@ keywords: [ Open Source Monitoring System, Open Source OS Monitoring, Rocky Linu
 
 ### Configuration Parameters
 
-| Parameter Name      | Parameter help description                                                                                                       |
+|   Parameter Name    |                                                    Parameter help description                                                    |
 |---------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | Monitoring Host     | The IP, IPV6, or domain name of the monitored endpoint. Note ⚠️: Do not include protocol headers (eg: https://, http://).        |
 | Task Name           | Identifies the name of this monitoring, ensuring uniqueness.                                                                     |
@@ -28,7 +28,7 @@ keywords: [ Open Source Monitoring System, Open Source OS Monitoring, Rocky Linu
 
 #### Metric Set: Basic Info
 
-| Metric Name    | Metric Unit | Metric help description   |
+|  Metric Name   | Metric Unit |  Metric help description  |
 |----------------|-------------|---------------------------|
 | Host Name      | None        | Host name.                |
 | System Version | None        | Operating system version. |
@@ -36,7 +36,7 @@ keywords: [ Open Source Monitoring System, Open Source OS Monitoring, Rocky Linu
 
 #### Metric Set: CPU Info
 
-| Metric Name    | Metric Unit | Metric help description                   |
+|  Metric Name   | Metric Unit |          Metric help description          |
 |----------------|-------------|-------------------------------------------|
 | info           | None        | CPU model.                                |
 | cores          | None        | Number of CPU cores.                      |
@@ -47,7 +47,7 @@ keywords: [ Open Source Monitoring System, Open Source OS Monitoring, Rocky Linu
 
 #### Metric Set: Memory Info
 
-| Metric Name | Metric Unit | Metric help description            |
+| Metric Name | Metric Unit |      Metric help description       |
 |-------------|-------------|------------------------------------|
 | total       | Mb          | Total memory capacity.             |
 | used        | Mb          | Used memory by user programs.      |
@@ -58,7 +58,7 @@ keywords: [ Open Source Monitoring System, Open Source OS Monitoring, Rocky Linu
 
 #### Metric Set: Disk Info
 
-| Metric Name   | Metric Unit | Metric help description            |
+|  Metric Name  | Metric Unit |      Metric help description       |
 |---------------|-------------|------------------------------------|
 | disk_num      | None        | Total number of disks.             |
 | partition_num | None        | Total number of partitions.        |
@@ -68,7 +68,7 @@ keywords: [ Open Source Monitoring System, Open Source OS Monitoring, Rocky Linu
 
 #### Metric Set: Interface Info
 
-| Metric Name    | Metric Unit | Metric help description        |
+|  Metric Name   | Metric Unit |    Metric help description     |
 |----------------|-------------|--------------------------------|
 | interface_name | None        | Name of the network interface. |
 | receive_bytes  | Mb          | Inbound data traffic.          |

@@ -17,14 +17,14 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile.TYPE;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.DumperOptions;
+import org.apache.hertzbeat.common.util.export.YamlExportUtils;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -33,8 +33,6 @@ import org.yaml.snakeyaml.Yaml;
 @Slf4j
 @Service
 public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
-    public static final String TYPE = "YAML";
-    public static final String FILE_SUFFIX = ".yaml";
 
     /**
      * Export file type
@@ -60,7 +58,7 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      * @return form
      */
     @Override
-    List<ExportMonitorDTO> parseImport(InputStream is) {
+    public List<ExportMonitorDTO> parseImport(InputStream is) {
         // todo now disable this, will enable it in the future.
         // upgrade to snakeyaml 2.2 and springboot3.x to fix the issue
         Yaml yaml = new Yaml();
@@ -73,12 +71,9 @@ public class YamlImExportServiceImpl extends AbstractImExportServiceImpl{
      * @param os          output stream
      */
     @Override
-    void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setIndent(2);
-        options.setPrettyFlow(true);
-        Yaml yaml = new Yaml(options);
-        yaml.dump(monitorList, new OutputStreamWriter(os, StandardCharsets.UTF_8));
+    public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
+
+        YamlExportUtils.exportWriteOs(monitorList, os);
     }
+
 }

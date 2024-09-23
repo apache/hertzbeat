@@ -5,20 +5,20 @@ sidebar_position: 0
 ---
 
 <!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
 
-       https://www.apache.org/licenses/LICENSE-2.0
+https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 
 > 非常欢迎参与项目贡献，我们致力于维护一个互相帮助的快乐社区。
@@ -47,7 +47,7 @@ sidebar_position: 0
 
 ### 让 HertzBeat 运行起来
 
-> 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。   
+> 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。
 > 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
 
 #### 后端启动
@@ -87,23 +87,31 @@ sidebar_position: 0
 
 1. 首先您需要 Fork 目标仓库 [hertzbeat repository](https://github.com/apache/hertzbeat).
 2. 然后 用git命令 将代码下载到本地:
-```shell
-git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
-```
+
+    ```shell
+    git clone git@github.com:${YOUR_USERNAME}/hertzbeat.git #Recommended  
+    ```
+
 3. 下载完成后，请参考目标仓库的入门指南或者 README 文件对项目进行初始化。
 4. 接着，您可以参考如下命令进行代码的提交, 切换新的分支, 进行开发:
-```shell
-git checkout -b a-feature-branch #Recommended  
-```
+
+    ```shell
+    git checkout -b a-feature-branch #Recommended  
+    ```
+
 5. 提交 commit , commit 描述信息需要符合约定格式: [module name or type name]feature or bugfix or doc: custom message.
-```shell
-git add <modified file/path> 
-git commit -m '[docs]feature: necessary instructions' #Recommended 
-```
+
+    ```shell
+    git add <modified file/path> 
+    git commit -m '[docs]feature: necessary instructions' #Recommended 
+    ```
+
 6. 推送到远程仓库
-```shell
-git push origin a-feature-branch   
-```
+
+    ```shell
+    git push origin a-feature-branch   
+    ```
+
 7. 然后您就可以在 GitHub 上发起新的 PR (Pull Request)。
 
 请注意 PR 的标题需要符合我们的规范，并且在 PR 中写上必要的说明，来方便 Committer 和其他贡献者进行代码审查。
@@ -148,14 +156,16 @@ git pull upstream master
 ### 模块
 
 - **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
+
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
-- **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** 提供监控数据采集服务
+>
+> - **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-- **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
+> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
-- **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** 提供告警服务
+> - **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** 提供告警服务
 > 告警计算触发，任务状态联动，告警配置，告警通知。
-- **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
+> - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** 提供可视化控制台页面
 > 监控告警系统可视化控制台前端
 
 ![hertzBeat](/img/docs/hertzbeat-arch.png)

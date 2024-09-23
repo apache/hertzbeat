@@ -17,26 +17,24 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.YamlFile.TYPE;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dto.ExportAlertDefineDTO;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.DumperOptions;
+import org.apache.hertzbeat.common.util.export.YamlExportUtils;
 import org.yaml.snakeyaml.Yaml;
 
 /**
- * Configure the import and export Yaml format
+ * Configure the import and export Yaml format.
  */
+
 @Slf4j
 @Service
 public class AlertDefineYamlImExportServiceImpl extends AlertDefineAbstractImExportServiceImpl {
-
-    public static final String TYPE = "YAML";
-    public static final String FILE_SUFFIX = ".yaml";
 
     @Override
     public String type() {
@@ -56,11 +54,8 @@ public class AlertDefineYamlImExportServiceImpl extends AlertDefineAbstractImExp
 
     @Override
     public void writeOs(List<ExportAlertDefineDTO> exportAlertDefineList, OutputStream os) {
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setIndent(2);
-        options.setPrettyFlow(true);
-        Yaml yaml = new Yaml(options);
-        yaml.dump(exportAlertDefineList, new OutputStreamWriter(os, StandardCharsets.UTF_8));
+
+        YamlExportUtils.exportWriteOs(exportAlertDefineList, os);
     }
+
 }

@@ -5,20 +5,20 @@ sidebar_position: 4
 ---
 
 <!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
 
-       https://www.apache.org/licenses/LICENSE-2.0
+https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 
 [Apache New Committer Guideline](https://community.apache.org/newcommitter.html#new-committer-process)
@@ -47,9 +47,8 @@ sidebar_position: 4
 
   see **Committer Account Creation**
 
-    - Wait until root says it is done
-    - [Roster](https://whimsy.apache.org/roster/ppmc/hertzbeat) add the new committer
-
+  - Wait until root says it is done
+  - [Roster](https://whimsy.apache.org/roster/ppmc/hertzbeat) add the new committer
 - Announce the new committer
 
   see **Announce New Committer Template**
@@ -58,7 +57,7 @@ sidebar_position: 4
 
 Note that, there are three placeholder in template should be replaced before using
 
-- NEW_COMMITTER_NAME This Must Be Public Name, Not Github Name Or Id. 
+- NEW_COMMITTER_NAME This Must Be Public Name, Not Github Name Or Id.
 - NEW_COMMITTER_EMAIL
 - NEW_COMMITTER_APACHE_NAME
 
@@ -67,7 +66,6 @@ Note that, there are three placeholder in template should be replaced before usi
 :::note
 NEW_COMMITTER_NAME This Must Be Public Name, Not Github Name Or Id.
 :::
-
 
 ```text
 To: private@hertzbeat.apache.org
@@ -112,7 +110,7 @@ ttt
 ```
 
 Note that, Voting ends one week from today, i.e.
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
 [Apache Voting Guidelines](https://community.apache.org/newcommitter.html)
 
 ### Close Vote Template

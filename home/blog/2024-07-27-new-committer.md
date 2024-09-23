@@ -8,13 +8,13 @@ tags: [opensource, practice]
 keywords: [open source monitoring system, alerting system]
 ---
 
-![hertzBeat](/img/blog/new-committer.png)
+![HertzBeat](/img/blog/new-committer.png)
 
 > It's an honor for me to become a Committer of Apache Hertzbeat
 
 ## Personal introduction
 
-I have been working as a Java back-end developer for three years. At present, I participate in the development of converged message center in an Internet company. 
+I have been working as a Java back-end developer for three years. At present, I participate in the development of converged message center in an Internet company.
 
 ## First met Apache Hertzbeat
 
@@ -22,7 +22,7 @@ Reading code and design in open-source framework is one way for me to improve my
 
 ## My first PR
 
-I failed to start Hertzbeat when I followed instructions in CONTRIBUTING. The exception shows that Node.js version at lease 18 is required. Therefor I modified CONTRIBUTING and opened my first PR in Hertzbeat community. 
+I failed to start Hertzbeat when I followed instructions in CONTRIBUTING. The exception shows that Node.js version at lease 18 is required. Therefor I modified CONTRIBUTING and opened my first PR in Hertzbeat community.
 
 ## Keep active in community
 

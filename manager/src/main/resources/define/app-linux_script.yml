@@ -27,8 +27,8 @@ help:
   en-US: Hertzbeat uses a collector as an agent to directly execute <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-script'> Shell commands </a> to collect and monitor general performance metrics of the Linux operating system (system information, CPU, memory, disk, network card, file system, TOP resource processes, etc.).<br>You can click “<i>Create New Linux Script</i>” to add it. Or select “<i>More Actions</i>” to import an existing configuration.
   zh-TW: Hertzbeat 使用采集器作為 agent 直接運行 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-script'> Shell 命令 </a> 對 Linux 操作系統的通用性能指標 (系統信息、CPU、內存、磁盤、網卡、文件系統、TOP資源進程等) 進行採集監控。<br>您可以點擊“<i>新建 Linux Script</i>”進行添加。或者選擇“<i>更多操作</i>”，導入已有配置。
 helpLink:
-  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/script
-  en-US: https://hertzbeat.apache.org/docs/help/script
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/linux_script
+  en-US: https://hertzbeat.apache.org/docs/help/linux_script
 # Input params define for monitoring(render web ui by the definition)
 params:
   # field-param field key
@@ -97,7 +97,7 @@ metrics:
           zh-CN: 型号
           en-US: Info
       - field: cores
-        type: 0
+        type: 1
         i18n:
           zh-CN: 核数
           en-US: Cores
@@ -155,7 +155,7 @@ metrics:
     priority: 2
     fields:
       - field: total
-        type: 0
+        type: 1
         unit: Mb
         i18n:
           zh-CN: 总内存容量
@@ -217,12 +217,12 @@ metrics:
     priority: 3
     fields:
       - field: disk_num
-        type: 0
+        type: 1
         i18n:
           zh-CN: 磁盘总数
           en-US: Disk Num
       - field: partition_num
-        type: 0
+        type: 1
         i18n:
           zh-CN: 分区总数
           en-US: Partition Num

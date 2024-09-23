@@ -180,10 +180,6 @@ Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hert
 
 **HAVE FUN**
 
-## 🥐 Roadmap
-
-![hertzBeat](home/static/img/docs/hertzbeat-roadmap.png) 
-
 ## ✨ Contributors
 
 Thanks to these wonderful people, welcome to join us:     
@@ -469,6 +465,15 @@ Thanks to these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/QBH-insist"><img src="https://avatars.githubusercontent.com/u/39401478?v=4?s=100" width="100px;" alt="QBH-insist"/><br /><sub><b>QBH-insist</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=QBH-insist" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jiangsh-ui"><img src="https://avatars.githubusercontent.com/u/86990361?v=4?s=100" width="100px;" alt="jiangsh"/><br /><sub><b>jiangsh</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=jiangsh-ui" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/keaifafafa"><img src="https://avatars.githubusercontent.com/u/83876361?v=4?s=100" width="100px;" alt="Keaifa"/><br /><sub><b>Keaifa</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=keaifafafa" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/loong95"><img src="https://avatars.githubusercontent.com/u/16333958?v=4?s=100" width="100px;" alt="Loong"/><br /><sub><b>Loong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=loong95" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ceekay47"><img src="https://avatars.githubusercontent.com/u/104664857?v=4?s=100" width="100px;" alt="Chandrakant Vankayalapati"/><br /><sub><b>Chandrakant Vankayalapati</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ceekay47" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/MRgenial"><img src="https://avatars.githubusercontent.com/u/49973336?v=4?s=100" width="100px;" alt="b_mountain"/><br /><sub><b>b_mountain</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=MRgenial" title="Code">💻</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/TemirlanBasitov"><img src="https://avatars.githubusercontent.com/u/57500808?v=4?s=100" width="100px;" alt="TemirlanBasitov"/><br /><sub><b>TemirlanBasitov</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=TemirlanBasitov" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/wyfvsfy"><img src="https://avatars.githubusercontent.com/u/11973517?v=4?s=100" width="100px;" alt="wyfvsfy"/><br /><sub><b>wyfvsfy</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=wyfvsfy" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/sherry-peng2333"><img src="https://avatars.githubusercontent.com/u/70619577?v=4?s=100" width="100px;" alt="sherry-peng2333"/><br /><sub><b>sherry-peng2333</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=sherry-peng2333" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/lixiaobaivv"><img src="https://avatars.githubusercontent.com/u/39290771?v=4?s=100" width="100px;" alt="Yzzz"/><br /><sub><b>Yzzz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lixiaobaivv" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
@@ -515,12 +520,6 @@ HertzBeat is built on so many great open source projects, thanks to them!
 HertzBeat has been included in the <a href="https://landscape.cncf.io/guide?item=observability-and-analysis--monitoring--hertzbeat#observability-and-analysis--monitoring">
 CNCF Observability And Analysis - Monitoring Landscape.</a>
 </p>
-
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=apache/hertzbeat&type=Date)](https://star-history.com/#apache/hertzbeat&Date)
-
 
 ## 🛡️ License
 [`Apache License, Version 2.0`](https://www.apache.org/licenses/LICENSE-2.0.html)

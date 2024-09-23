@@ -185,7 +185,8 @@
             "help/ntp",
             "help/dns",
             "help/ftp",
-            "help/websocket"
+            "help/websocket",
+            "help/mqtt"
           ]
         },
         {
@@ -206,6 +207,9 @@
             "help/mysql",
             "help/mariadb",
             "help/postgresql",
+            "help/greenplum",
+            "help/vastbase",
+            "help/kingbase",
             "help/sqlserver",
             "help/oracle",
             "help/dm",
@@ -214,7 +218,8 @@
             "help/nebulagraph_cluster",
             "help/tidb",
             "help/mongodb",
-            "help/mongodb_atlas"
+            "help/mongodb_atlas",
+            "help/oceanbase"
           ]
         },
         {
@@ -222,7 +227,8 @@
           "label": "cache",
           "items": [
             "help/redis",
-            "help/memcached"
+            "help/memcached",
+            "help/valkey"
           ]
         },
         {
@@ -239,7 +245,9 @@
             "help/freebsd",
             "help/redhat",
             "help/rockylinux",
-            "help/euleros"
+            "help/euleros",
+            "help/linux_script",
+            "help/windows_script"
           ]
         },
         {
@@ -274,6 +282,7 @@
             "help/hdfs_datanode",
             "help/iotdb",
             "help/hive",
+            "help/iceberg",
             "help/airflow",
             "help/clickhouse",
             "help/elasticsearch",
@@ -352,9 +361,11 @@
             "help/alert_smn"
           ]
         },
-        "help/issue",
+        "help/bulletin",
         "help/plugin",
-        "help/time_expression"
+        "help/time_expression",
+        "help/grafana_dashboard",
+        "help/issue"
       ]
     },
     {

@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.FILE_SUFFIX;
+import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFile.TYPE;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,12 +29,13 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.util.export.ExcelExportUtils;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -40,7 +43,6 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * Configure the import and export EXCEL format
@@ -49,8 +51,6 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 @Service
 public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
-    public static final String TYPE = "EXCEL";
-    public static final String FILE_SUFFIX = ".xlsx";
 
     /**
      * Export file type
@@ -75,7 +75,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
      * @param is input stream
      * @return form
      */
-
     @Override
     public List<ExportMonitorDTO> parseImport(InputStream is) {
         try (Workbook workbook = WorkbookFactory.create(is)) {
@@ -89,14 +88,14 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                     continue;
                 }
                 String name = getCellValueAsString(row.getCell(0));
-                if (StringUtils.hasText(name)) {
+                if (StringUtils.isNotBlank(name)) {
                     startRowList.add(row.getRowNum());
                     MonitorDTO monitor = extractMonitorDataFromRow(row);
                     ExportMonitorDTO exportMonitor = new ExportMonitorDTO();
                     exportMonitor.setMonitor(monitor);
                     monitors.add(exportMonitor);
                     String metrics = getCellValueAsString(row.getCell(11));
-                    if (StringUtils.hasText(metrics)) {
+                    if (StringUtils.isNotBlank(metrics)) {
                         List<String> metricList = Arrays.stream(metrics.split(",")).collect(Collectors.toList());
                         exportMonitor.setMetrics(metricList);
                     }
@@ -145,7 +144,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         monitor.setDescription(getCellValueAsString(row.getCell(5)));
 
         String tagsString = getCellValueAsString(row.getCell(6));
-        if (StringUtils.hasText(tagsString)) {
+        if (StringUtils.isNotBlank(tagsString)) {
             List<Long> tags = Arrays.stream(tagsString.split(","))
                     .map(Long::parseLong)
                     .collect(Collectors.toList());
@@ -159,7 +158,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
 
     private ParamDTO extractParamDataFromRow(Row row) {
         String fieldName = getCellValueAsString(row.getCell(8));
-        if (StringUtils.hasText(fieldName)) {
+        if (StringUtils.isNotBlank(fieldName)) {
             ParamDTO param = new ParamDTO();
             param.setField(fieldName);
             param.setType(getCellValueAsByte(row.getCell(9)));
@@ -210,38 +209,20 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         return null;
     }
 
-
     /**
      * Export Configuration to Output Stream
      * @param monitorList config list
      * @param os          output stream
      */
     @Override
-    void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
+    public void writeOs(List<ExportMonitorDTO> monitorList, OutputStream os) {
         try {
+
             Workbook workbook = WorkbookFactory.create(true);
             String sheetName = "Export Monitor";
-            Sheet sheet = workbook.createSheet(sheetName);
-            sheet.setDefaultColumnWidth(20);
-            sheet.setColumnWidth(9, 40 * 256);
-            sheet.setColumnWidth(10, 40 * 256);
-            // set header style
-            CellStyle headerCellStyle = workbook.createCellStyle();
-            Font headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerCellStyle.setFont(headerFont);
-            headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
+            Sheet sheet = ExcelExportUtils.setSheet(sheetName, workbook, ExportMonitorDTO.class);
             // set cell style
-            CellStyle cellStyle = workbook.createCellStyle();
-            cellStyle.setAlignment(HorizontalAlignment.CENTER);
-            // set header
-            String[] headers = { "name", "app", "host", "intervals", "status", "description", "tags", "collector(default null if system dispatch)", "field", "type", "value", "metrics", "detected" };
-            Row headerRow = sheet.createRow(0);
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerCellStyle);
-            }
+            CellStyle cellStyle = ExcelExportUtils.setCellStyle(workbook);
 
             // foreach monitor, each monitor object corresponds to a row of data
             int rowIndex = 1;
@@ -304,7 +285,7 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         valueCell.setCellStyle(cellStyle);
                     }
                 }
-                if (paramList.size() > 0) {
+                if (CollectionUtils.isNotEmpty(paramList)) {
                     RegionUtil.setBorderTop(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
                     RegionUtil.setBorderBottom(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
                     RegionUtil.setBorderLeft(BorderStyle.THICK, new CellRangeAddress(rowIndex - paramList.size(), rowIndex - 1, 0, 10), sheet);
@@ -317,6 +298,5 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
             throw new RuntimeException(e);
         }
     }
-
 
 }

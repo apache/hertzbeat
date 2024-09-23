@@ -257,10 +257,12 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/io.grpc/grpc-protobuf/1.56.1 Apache-2.0
     https://mvnrepository.com/artifact/io.grpc/grpc-protobuf-lite/1.56.1 Apache-2.0
     https://mvnrepository.com/artifact/io.grpc/grpc-stub/1.56.1 Apache-2.0
-    https://mvnrepository.com/artifact/io.greptime/greptimedb-common/0.4.0
-    https://mvnrepository.com/artifact/io.greptime/greptimedb-grpc/0.4.0
-    https://mvnrepository.com/artifact/io.greptime/greptimedb-rpc/0.4.0
-    https://mvnrepository.com/artifact/io.greptime/greptimedb-protocol/0.4.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-all/0.7.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-common/0.7.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-grpc/0.7.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-protocol/0.7.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/ingester-rpc/0.7.3 Apache-2.0
+    https://mvnrepository.com/artifact/io.greptime/greptimedb-proto/0.4.3 Apache-2.0
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api/0.11.2 Apache-2.0
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-impl/0.11.2 Apache-2.0
     https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-jackson/0.11.2 Apache-2.0
@@ -428,7 +430,6 @@ The text of each license is the standard Apache 2.0 license.
     https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml/4.1.1 Apache-2.0
     https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml-schemas/4.1.1 Apache-2.0
     https://mvnrepository.com/artifact/xml-apis/xml-apis/1.4.01 Apache-2.0
-    https://mvnrepository.com/artifact/com.github.GreptimeTeam/greptime-proto/0.4.0
     https://mvnrepository.com/artifact/org.webjars/swagger-ui/5.10.3
     https://mvnrepository.com/artifact/com.google.flatbuffers/flatbuffers-java/1.12.0
     https://mvnrepository.com/artifact/com.vesoft/client/3.6.0

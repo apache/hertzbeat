@@ -1,38 +1,38 @@
 ---
 id: extend-snmp  
 title: SNMP协议自定义监控  
-sidebar_label: SNMP协议自定义监控    
+sidebar_label: SNMP协议自定义监控
 ---
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用 SNMP 协议自定义指标监控。    
-> SNMP 协议自定义监控可以让我们很方便的通过配置 Mib OID信息 就能监控采集到我们想监控的OID指标     
 
-### SNMP协议采集流程    
-【**对端开启SNMP服务**】->【**HertzBeat直连对端SNMP服务**】->【**根据配置抓取对端OID指标信息**】->【**指标数据提取**】   
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用 SNMP 协议自定义指标监控。
+> SNMP 协议自定义监控可以让我们很方便的通过配置 Mib OID信息 就能监控采集到我们想监控的OID指标
+
+### SNMP协议采集流程
+
+【**对端开启SNMP服务**】->【**HertzBeat直连对端SNMP服务**】->【**根据配置抓取对端OID指标信息**】->【**指标数据提取**】
 
 由流程可见，我们自定义一个SNMP协议的监控类型，需要配置SNMP请求参数，配置获取哪些指标，配置查询OID信息。
 
-### 数据解析方式   
+### 数据解析方式
 
 通过配置监控模版YML的指标`field`, `aliasFields`, `snmp` 协议下的 `oids`来抓取对端指定的数据并解析映射。
 
-
-
-### 自定义步骤  
+### 自定义步骤
 
 **HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
-------- 
-下面详细介绍下文件的配置用法，请注意看使用注释。   
+-------
+
+下面详细介绍下文件的配置用法，请注意看使用注释。
 
 ### 监控模版YML
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
+> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。
 > 即我们通过自定义这个YML，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
 
-样例：自定义一个名称为 example_windows 的自定义监控类型，其使用 SNMP 协议采集指标数据。    
-
+样例：自定义一个名称为 example_windows 的自定义监控类型，其使用 SNMP 协议采集指标数据。
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring mid-middleware custom-custom monitoring os-operating system monitoring

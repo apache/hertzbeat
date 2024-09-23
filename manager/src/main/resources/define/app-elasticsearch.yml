@@ -121,6 +121,9 @@ params:
 metrics:
   # metrics - cpu
   - name: health
+    i18n:
+      zh-CN: 集群健康状态
+      en-US: Cluster Health Status
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -224,6 +227,9 @@ metrics:
       parseType: default
 
   - name: nodes
+    i18n:
+      zh-CN: 集群节点信息
+      en-US: Cluster Nodes
     priority: 1
     fields:
       - field: total
@@ -260,6 +266,9 @@ metrics:
       parseScript: '$._nodes'
 
   - name: nodes_detail
+    i18n:
+      zh-CN: 节点详细信息
+      en-US: Node Detail
     priority: 2
     fields:
       - field: node_name
@@ -297,7 +306,7 @@ metrics:
           zh-CN: 内存使用率
           en-US: Heap Used Percent
       - field: heap_total
-        type: 0
+        type: 1
         unit: 'MB'
         i18n:
           zh-CN: 总内存（MB）
@@ -309,7 +318,7 @@ metrics:
           zh-CN: 磁盘剩余容量（GB）
           en-US: Disk Free
       - field: disk_total
-        type: 0
+        type: 1
         unit: 'GB'
         i18n:
           zh-CN: 磁盘总容量

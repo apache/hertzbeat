@@ -10,28 +10,23 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 
 官网: hertzbeat.com | tancloud.cn
 
-
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
-
-
+![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a9629ef5bb6e486cacddb899f1495c6e~tplv-k3u1fbpfcp-zoom-1.image)
 
 ### What is HertzBeat?
 
-> HertzBeat赫兹跳动 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。     
-> 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等指标监控，阈值告警通知一步到位。   
+> HertzBeat赫兹跳动 是一个拥有强大自定义监控能力，无需 Agent 的开源实时监控告警工具。
+> 集 **监控+告警+通知** 为一体，支持对应用服务，应用程序，数据库，缓存，操作系统，大数据，中间件，Web服务器，云原生，网络，自定义等指标监控，阈值告警通知一步到位。
 > 支持更自由化的阈值规则(计算表达式)，`邮件` `Discord` `Slack` `Telegram` `钉钉` `微信` `飞书` `短信` `Webhook` 等方式及时送达。
-
+>
 > 我们将`Http, Jmx, Ssh, Snmp, Jdbc, Prometheus`等协议规范可配置化，您只需配置`YML`就能使用这些协议去自定义采集任何您想要的指标。
-
+>
 > 您相信只需定义YML就能立刻适配一款K8s或Docker等新的监控类型吗？
 
+![HertzBeat](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
 
-![](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4236e748f5ac4352b7cf4bb65ccf97aa~tplv-k3u1fbpfcp-zoom-1.image)
+**Github: <https://github.com/apache/hertzbeat>**
 
-
-**Github: https://github.com/apache/hertzbeat**
-
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**
 
 ### v1.3.1 来了
 
@@ -43,22 +38,22 @@ keywords: [open source monitoring system, alerting system, Linux monitoring]
 只需要一条docker命令即可安装体验hertzbeat ：  
 `docker run -d -p 1157:1157 --name hertzbeat apache/hertzbeat`
 
-## 升级注意⚠️.
+## 升级注意⚠️
 
 若之前使用的TDengine时序数据库，需升级至TDengine3.0+
 
-
 需要执行SQL升级脚本
-```
+
+```shell
 ALTER table hzb_alert_define modify field varchar(255) default null;
 COMMIT;
 ```
 
-----
+---
 
 ## ⛄ 已支持
 
-> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!   
+> 我们将监控采集类型(mysql,jvm,k8s)都定义为yml监控模版，用户可以导入这些模版来支持对应类型的监控!
 > 欢迎大家一起贡献你使用过程中自定义的通用监控类型监控模版。
 
 - Website, Port Telnet, Http Api, Ping Connect, Jvm, SiteMap, Ssl Certificate, SpringBoot2, FTP Server, SpringBoot3
@@ -70,7 +65,7 @@ COMMIT;
 - 和更多自定义监控模版。
 - 通知支持 Discord Slack Telegram 邮件 钉钉 微信 飞书 短信 Webhook。
 
-----
+---
 
-**Github: https://github.com/apache/hertzbeat**      
-**Gitee: https://gitee.com/hertzbeat/hertzbeat**
+**Github: <https://github.com/apache/hertzbeat>**
+**Gitee: <https://gitee.com/hertzbeat/hertzbeat>**

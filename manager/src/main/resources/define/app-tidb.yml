@@ -118,6 +118,9 @@ params:
 metrics:
   # metrics - status
   - name: status
+    i18n:
+      zh-CN: 状态
+      en-US: Status
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 0
@@ -126,10 +129,19 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: connections
         type: 0
+        i18n:
+          zh-CN: 连接数
+          en-US: Connections
       - field: version
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
       - field: git_hash
         type: 1
+        i18n:
+          zh-CN: Git Hash
+          en-US: Git Hash
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     http:
@@ -147,30 +159,66 @@ metrics:
       parseScript: '$'
       
   - name: stores
+    i18n:
+      zh-CN: 存储
+      en-US: Stores
     priority: 1
     fields:
       - field: address
         type: 1
+        i18n:
+          zh-CN: 地址
+          en-US: Address
       - field: version
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
       - field: status_address
         type: 1
+        i18n:
+          zh-CN: 状态地址
+          en-US: Status Address
       - field: deploy_path
         type: 1
+        i18n:
+          zh-CN: 部署路径
+          en-US: Deploy Path
       - field: state_name
         type: 1
+        i18n:
+          zh-CN: 状态名称
+          en-US: State Name
       - field: capacity
         type: 1
+        i18n:
+          zh-CN: 容量
+          en-US: Capacity
       - field: available
         type: 1
+        i18n:
+          zh-CN: 可用
+          en-US: Available
       - field: used_size
         type: 1
+        i18n:
+          zh-CN: 已用
+          en-US: Used
       - field: start_ts
         type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: Start Time
       - field: last_heartbeat_ts
         type: 1
+        i18n:
+          zh-CN: 上次心跳时间
+          en-US: Last Heartbeat Time
       - field: uptime
         type: 1
+        i18n:
+          zh-CN: 启动时长
+          en-US: Uptime
     aliasFields:
       - $.store.address
       - $.store.version
@@ -206,6 +254,9 @@ metrics:
       parseScript: '$.stores.*'
 
   - name: basic
+    i18n:
+      zh-CN: 基本信息
+      en-US: Basic Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     priority: 2
@@ -214,13 +265,25 @@ metrics:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: version
         type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
         label: true
       - field: port
         type: 1
+        i18n:
+          zh-CN: 端口
+          en-US: Port
       - field: datadir
         type: 1
+        i18n:
+          zh-CN: 数据目录
+          en-US: Data Directory
       - field: max_connections
         type: 0
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Max Connections
     # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
     aliasFields:
       - version

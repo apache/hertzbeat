@@ -21,9 +21,11 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.Data;
+import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 
@@ -40,7 +42,7 @@ public class MonitorDto {
     private Monitor monitor;
     
     @Schema(description = "Monitor Params", accessMode = READ_WRITE)
-    @NotNull
+    @NotEmpty
     @Valid
     private List<Param> params;
     
@@ -50,9 +52,9 @@ public class MonitorDto {
     @Schema(description = "Whether to Detect", accessMode = READ_WRITE)
     private boolean detected;
     
-    /**
-     * which collector this monitoring want to pin
-     */
     @Schema(description = "pinned collector, default null if system dispatch", accessMode = READ_WRITE)
     private String collector;
+    
+    @Schema(description = "grafana dashboard")
+    private GrafanaDashboard grafanaDashboard;
 }

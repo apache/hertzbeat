@@ -48,7 +48,7 @@ import org.springframework.util.CollectionUtils;
  * class AbstractImExportServiceImpl
  */
 @Slf4j
-abstract class AbstractImExportServiceImpl implements ImExportService {
+public abstract class AbstractImExportServiceImpl implements ImExportService {
 
     @Resource
     @Lazy
@@ -62,14 +62,14 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         var formList = parseImport(is)
                 .stream()
                 .map(this::convert)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         if (!CollectionUtils.isEmpty(formList)) {
             formList.forEach(monitorDto -> {
                 monitorService.validate(monitorDto, false);
                 if (monitorDto.isDetected()) {
                     monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
                 }
-                monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
+                monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
             });
         }
     }
@@ -80,7 +80,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
                 .map(it -> monitorService.getMonitorDto(it))
                 .filter(Objects::nonNull)
                 .map(this::convert)
-                .collect(Collectors.toUnmodifiableList());
+                .toList();
         writeOs(monitorList, os);
     }
 
@@ -173,7 +173,7 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
     @ExcelTarget(value = "ExportMonitorDTO")
-    protected static class ExportMonitorDTO {
+    public static class ExportMonitorDTO {
         @ExcelEntity(name = "Monitor")
         private MonitorDTO monitor;
         @ExcelCollection(name = "Params")
@@ -184,12 +184,11 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         private Boolean detected;
     }
 
-
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
     @ExcelTarget(value = "MonitorDTO")
-    protected static class MonitorDTO {
+    public static class MonitorDTO {
         @Excel(name = "Name")
         private String name;
         @Excel(name = "App")
@@ -208,12 +207,11 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         private String collector;
     }
 
-
     @Data
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonIgnoreProperties(ignoreUnknown = true)
     @ExcelTarget(value = "ParamDTO")
-    protected static class ParamDTO {
+    public static class ParamDTO {
         @Excel(name = "Field")
         private String field;
         @Excel(name = "Type")
@@ -221,6 +219,5 @@ abstract class AbstractImExportServiceImpl implements ImExportService {
         @Excel(name = "Value")
         private String value;
     }
-
 
 }

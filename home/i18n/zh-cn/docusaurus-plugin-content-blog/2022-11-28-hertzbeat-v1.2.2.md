@@ -8,9 +8,10 @@ tags: [opensource]
 ---
 
 ## v1.2.2
+
 Home: hertzbeat.com | tancloud.cn
 
-Hi guys! HertzBeat v1.2.2 is coming. This release brings significant features. This version we support monitor kubernets, docker, springboot, nacos and database dm, opengauss and more. Also we bring a experimental feature, users can custom define metrics collect from promethues with promql. Fixed several bugs and improved the overall stable usability. And more, linux monitor we support top10 cpu usage metrics, top10 memory usage mertics.   
+Hi guys! HertzBeat v1.2.2 is coming. This release brings significant features. This version we support monitor kubernets, docker, springboot, nacos and database dm, opengauss and more. Also we bring a experimental feature, users can custom define metrics collect from promethues with promql. Fixed several bugs and improved the overall stable usability. And more, linux monitor we support top10 cpu usage metrics, top10 memory usage mertics.
 Let's Try It Now!
 
 Only one docker command is needed to install and experience heartbeat：
@@ -26,11 +27,11 @@ Feature：
 2. [[home] add DM db document supplement #411](https://github.com/apache/hertzbeat/pull/411) @TJxiaobao
 3. [[home] support algolia search #416](https://github.com/apache/hertzbeat/pull/416)
 4. [[collector] support trigger and grading multiple subtasks through -_- placeholder expression #418](https://github.com/apache/hertzbeat/pull/418)
-5.  [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
-6.  [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
-6. [[#406][warehose] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
-8. [[#358][manager] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
-9. [[#356][manager] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
+5. [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
+6. [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
+7. [[#406]\[warehose\] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
+8. [[#358]\[manager\] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
+9. [[#356]\[manager\] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
 10. [[manager,collector] support docker metrics monitor #438](https://github.com/apache/hertzbeat/pull/438) @TJxiaobao
 11. [[alerter] implement AlertDefineControllerTest unit case #448](https://github.com/apache/hertzbeat/pull/448) @Ceilzcx
 12. [[collector] support spi load AbstractCollect Impl instance #449](https://github.com/apache/hertzbeat/pull/449)
@@ -39,7 +40,6 @@ Feature：
 15. [[manager-monitors]（增强）应用服务检测-网站检测-分页：添加默认name升序 （enhancement）manager-… #455](https://github.com/apache/hertzbeat/pull/455) @luxx-lq
 16. [[hertzbeat] update use PromQL to collect metrics from promethues server #456](https://github.com/apache/hertzbeat/pull/456)
 17. [[manager] support custom monitor api response data code #460](https://github.com/apache/hertzbeat/pull/460)
-
 
 Bugfix.
 
@@ -51,13 +51,14 @@ Bugfix.
 6. [[manager] bugfix the gmtUpdate not change when update monitor param #459](https://github.com/apache/hertzbeat/pull/459)
 7. [[home] fix typo in springboot2.md #464](https://github.com/apache/hertzbeat/pull/464) @eltociear
 
-Online https://console.tancloud.cn.
+Online <https://console.tancloud.cn>.
 
 Have Fun!
 
-----     
+----
 
 ## V1.2.2
+
 官网: hertzbeat.com | tancloud.cn
 
 大家好，HertzBeat v1.2.2发布啦！这个版本带来个超多重大更新，我们支持了对云原生kubernets, docker的监控，支持了对springboot应用, nacos注册发现中心，达梦数据库，opengauss数据库等的指标监控。我们也引入了一个实验性特性，用户可以使用promethues promql 从promethues server拿取指标数据作为hertzbeat自定义监控指标数据。当然我们也新增了多个测试用户覆盖，修复了多个BUG。还有个很多用户想要的更新，我们新增了对linux监控的top10 cpu 内存利用率的进程监控指标。有个这个指标，我们就可以干很多事情。比如监控某个进程CPU异常，内存爆满啥的。快来试试吧！
@@ -75,11 +76,11 @@ Feature：
 2. [[home] add DM db document supplement #411](https://github.com/apache/hertzbeat/pull/411) @TJxiaobao
 3. [[home] support algolia search #416](https://github.com/apache/hertzbeat/pull/416)
 4. [[collector] support trigger and grading multiple subtasks through -_- placeholder expression #418](https://github.com/apache/hertzbeat/pull/418)
-5.  [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
-6.  [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
-6. [[#406][warehose] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
-8. [[#358][manager] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
-9. [[#356][manager] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
+5. [WIP:feature support k8s monitor, http monitor nacos, service&http_micro monitor msa #421](https://github.com/apache/hertzbeat/pull/421) @cuipiheqiuqiu
+6. [[manager] support opengauss database monitor #422](https://github.com/apache/hertzbeat/pull/422)
+7. [[#406]\[warehose\] Add unit test MetricsDataControllerTest.java #426](https://github.com/apache/hertzbeat/pull/426) @haibo-duan
+8. [[#358]\[manager\] Add unit test manager/service/NoticeConfigServiceTest.java #427](https://github.com/apache/hertzbeat/pull/427) @haibo-duan
+9. [[#356]\[manager\] unit test case of manager/service/MailServiceTest.java #432](https://github.com/apache/hertzbeat/pull/432) @csyshu
 10. [[manager,collector] support docker metrics monitor #438](https://github.com/apache/hertzbeat/pull/438) @TJxiaobao
 11. [[alerter] implement AlertDefineControllerTest unit case #448](https://github.com/apache/hertzbeat/pull/448) @Ceilzcx
 12. [[collector] support spi load AbstractCollect Impl instance #449](https://github.com/apache/hertzbeat/pull/449)
@@ -88,7 +89,6 @@ Feature：
 15. [[manager-monitors]（增强）应用服务检测-网站检测-分页：添加默认name升序 （enhancement）manager-… #455](https://github.com/apache/hertzbeat/pull/455) @luxx-lq
 16. [[hertzbeat] update use PromQL to collect metrics from promethues server #456](https://github.com/apache/hertzbeat/pull/456)
 17. [[manager] support custom monitor api response data code #460](https://github.com/apache/hertzbeat/pull/460)
-
 
 Bugfix.
 
@@ -100,4 +100,4 @@ Bugfix.
 6. [[manager] bugfix the gmtUpdate not change when update monitor param #459](https://github.com/apache/hertzbeat/pull/459)
 7. [[home] fix typo in springboot2.md #464](https://github.com/apache/hertzbeat/pull/464) @eltociear
 
-----     
+----

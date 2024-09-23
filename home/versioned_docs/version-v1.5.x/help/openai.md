@@ -8,11 +8,12 @@ keywords: [open source monitoring system, open source network monitoring, OpenAI
 ### Preparation
 
 #### Obtain Session Key
+
 > 1. Open Chrome browser's network request interface
 >    `Mac: cmd + option + i`
 >    `Windows: ctrl + shift + i`
-> 2. Visit https://platform.openai.com/usage
-> 3. Find the request to https://api.openai.com/dashboard/billing/usage
+> 2. Visit <https://platform.openai.com/usage>
+> 3. Find the request to <https://api.openai.com/dashboard/billing/usage>
 > 4. Find the Authorization field in the request headers, and copy the content after `Bearer`. For example: `sess-123456`
 
 ### Notes
@@ -22,7 +23,7 @@ keywords: [open source monitoring system, open source network monitoring, OpenAI
 
 ### Configuration Parameters
 
-| Parameter Name    | Parameter Description                                                                          |
+| Parameter Name    |                                     Parameter Description                                      |
 |:------------------|------------------------------------------------------------------------------------------------|
 | Monitoring Host   | Fill in api.openai.com here.                                                                   |
 | Task Name         | Identify the name of this monitoring, ensuring uniqueness.                                     |
@@ -36,7 +37,7 @@ keywords: [open source monitoring system, open source network monitoring, OpenAI
 
 #### Metric Set: Credit Grants
 
-| Metric Name          | Metric Unit | Metric Description                   |
+|     Metric Name      | Metric Unit |          Metric Description          |
 |----------------------|-------------|--------------------------------------|
 | Total Granted        | USD ($)     | Total granted credit limit           |
 | Total Used           | USD ($)     | Total used credit limit              |
@@ -45,14 +46,14 @@ keywords: [open source monitoring system, open source network monitoring, OpenAI
 
 #### Metric Set: Model Cost
 
-| Metric Name | Metric Unit | Metric Description     |
+| Metric Name | Metric Unit |   Metric Description   |
 |-------------|-------------|------------------------|
 | Model Name  | None        | Name of the model      |
 | Cost        | USD ($)     | Expenses for the model |
 
 #### Metric Set: Billing Subscription
 
-| Metric Name              | Metric Unit | Metric Description                      |
+|       Metric Name        | Metric Unit |           Metric Description            |
 |--------------------------|-------------|-----------------------------------------|
 | Has Payment Method       | None        | Whether payment method is available     |
 | Canceled                 | None        | Whether subscription is cancelled       |

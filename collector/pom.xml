@@ -26,439 +26,70 @@
 
     <artifactId>hertzbeat-collector</artifactId>
     <name>${project.artifactId}</name>
+    <packaging>pom</packaging>
     <properties>
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-        <maven-assembly-plugin.version>3.3.0</maven-assembly-plugin.version>
     </properties>
 
+    <modules>
+        <module>collector-basic</module>
+        <module>collector-common</module>
+        <module>collector</module>
+        <module>collector-mongodb</module>
+        <module>collector-nebulagraph</module>
+        <module>collector-rocketmq</module>
+        <module>collector-kafka</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-common</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-basic</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-mongodb</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-kafka</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-nebulagraph</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hertzbeat</groupId>
+                <artifactId>hertzbeat-collector-rocketmq</artifactId>
+                <version>${hertzbeat.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
-        <!-- spring -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-configuration-processor</artifactId>
-            <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-        <!-- common -->
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common</artifactId>
         </dependency>
-        <!-- remoting -->
-        <dependency>
-            <groupId>org.apache.hertzbeat</groupId>
-            <artifactId>hertzbeat-remoting</artifactId>
-        </dependency>
-        <!-- run sql script-->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-jdbc</artifactId>
-        </dependency>
-        <!-- kafka -->
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-        </dependency>
-        <!-- http -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-        </dependency>
-        <!--network-->
-        <dependency>
-            <groupId>commons-net</groupId>
-            <artifactId>commons-net</artifactId>
-            <version>3.8.0</version>
-        </dependency>
-        <!--json path parser-->
-        <dependency>
-            <groupId>com.jayway.jsonpath</groupId>
-            <artifactId>json-path</artifactId>
-        </dependency>
-        <!-- lru hashmap -->
-        <dependency>
-            <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
-            <artifactId>concurrentlinkedhashmap-lru</artifactId>
-            <version>1.4.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
-        <!--collect-->
-        <!-- mysql -->
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <!-- clickhouse -->
-        <dependency>
-            <groupId>com.clickhouse</groupId>
-            <artifactId>clickhouse-jdbc</artifactId>
-        </dependency>
 
-        <!-- dm -->
-        <dependency>
-            <groupId>com.dameng</groupId>
-            <artifactId>DmJdbcDriver18</artifactId>
-        </dependency>
-        <!-- postgresql -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-        </dependency>
-        <!-- linux ssh -->
-        <dependency>
-            <groupId>org.apache.sshd</groupId>
-            <artifactId>sshd-core</artifactId>
-            <version>2.13.1</version>
-        </dependency>
-        <dependency>
-            <groupId>net.i2p.crypto</groupId>
-            <artifactId>eddsa</artifactId>
-            <version>0.3.0</version>
-        </dependency>
-        <!-- sql server -->
-        <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-        </dependency>
-        <!-- oracle -->
-        <dependency>
-            <groupId>com.oracle.database.jdbc</groupId>
-            <artifactId>ojdbc8</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.oracle.database.nls</groupId>
-            <artifactId>orai18n</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <!--redis-->
-        <dependency>
-            <groupId>io.lettuce</groupId>
-            <artifactId>lettuce-core</artifactId>
-        </dependency>
-        <!-- mongodb -->
-        <dependency>
-            <groupId>org.mongodb</groupId>
-            <artifactId>mongodb-driver-sync</artifactId>
-        </dependency>
-        <!--snmp-->
-        <dependency>
-            <groupId>org.snmp4j</groupId>
-            <artifactId>snmp4j</artifactId>
-            <version>3.6.7</version>
-        </dependency>
-
-        <!-- rocketmq -->
-        <dependency>
-            <groupId>org.apache.rocketmq</groupId>
-            <artifactId>rocketmq-tools</artifactId>
-            <version>4.9.4</version>
-        </dependency>
-
-        <!--dns-->
-        <dependency>
-            <groupId>dnsjava</groupId>
-            <artifactId>dnsjava</artifactId>
-            <version>3.5.2</version>
-        </dependency>
-
-        <!-- consul -->
-        <dependency>
-            <groupId>com.ecwid.consul</groupId>
-            <artifactId>consul-api</artifactId>
-            <version>1.4.5</version>
-        </dependency>
-        <!-- nacos -->
-        <dependency>
-            <groupId>com.alibaba.nacos</groupId>
-            <artifactId>nacos-client</artifactId>
-            <version>2.2.1</version>
-        </dependency>
-        <!-- nebula graph client -->
-        <dependency>
-            <groupId>com.vesoft</groupId>
-            <artifactId>client</artifactId>
-            <version>3.6.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>javax.servlet</groupId>
-                    <artifactId>javax.servlet-api</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.alibaba</groupId>
-                    <artifactId>fastjson</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
     </dependencies>
 
     <build>
-        <finalName>apache-hertzbeat-collector-${hzb.version}</finalName>
+        <finalName>apache-${project.artifactId}-${hzb.version}</finalName>
     </build>
 
-    <profiles>
-        <profile>
-            <id>inner</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${maven-jar-plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <phase>package</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>cluster</id>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                        <filtering>true</filtering>
-                        <includes>
-                            <include>*.yml</include>
-                            <include>*.properties</include>
-                            <include>*.xml</include>
-                            <include>banner.txt</include>
-                            <include>META-INF/**</include>
-                        </includes>
-                    </resource>
-                </resources>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <source>17</source>
-                            <target>17</target>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${maven-jar-plugin.version}</version>
-                        <configuration>
-                            <classesDirectory>target/classes/</classesDirectory>
-                            <archive>
-                                <!--Generated JAR does not include Maven descriptor-related files-->
-                                <addMavenDescriptor>false</addMavenDescriptor>
-                                <manifest>
-                                    <!--Project startup class-->
-                                    <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
-                                    <useUniqueVersions>false</useUniqueVersions>
-                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
-                                    <addClasspath>true</addClasspath>
-                                    <!--Location of external dependency JARs-->
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                </manifest>
-                                <manifestEntries>
-                                    <Class-Path>. config</Class-Path>
-                                </manifestEntries>
-                            </archive>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>${maven-assembly-plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>without-jdk</id>
-                                <!--Bound Maven operation-->
-                                <phase>package</phase>
-                                <!--Run once-->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>../script/assembly/collector/assembly.xml</descriptor>
-                                    </descriptors>
-                                    <outputDirectory>../dist</outputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>runtime</id>
-            <build>
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                        <filtering>true</filtering>
-                        <includes>
-                            <include>*.yml</include>
-                            <include>*.properties</include>
-                            <include>*.xml</include>
-                            <include>banner.txt</include>
-                            <include>META-INF/**</include>
-                        </includes>
-                    </resource>
-                </resources>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <configuration>
-                            <source>17</source>
-                            <target>17</target>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>${maven-jar-plugin.version}</version>
-                        <configuration>
-                            <classesDirectory>target/classes/</classesDirectory>
-                            <archive>
-                                <!--Generated JAR does not include Maven descriptor-related files-->
-                                <addMavenDescriptor>false</addMavenDescriptor>
-                                <manifest>
-                                    <!--Project startup class-->
-                                    <mainClass>org.apache.hertzbeat.collector.Collector</mainClass>
-                                    <useUniqueVersions>false</useUniqueVersions>
-                                    <!--Third-party JARs are added to the classpath using maven-dependency-plugin-->
-                                    <addClasspath>true</addClasspath>
-                                    <!--Location of external dependency JARs-->
-                                    <classpathPrefix>lib/</classpathPrefix>
-                                </manifest>
-                                <manifestEntries>
-                                    <Class-Path>. config</Class-Path>
-                                </manifestEntries>
-                            </archive>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>${maven-assembly-plugin.version}</version>
-                        <executions>
-                            <execution>
-                                <id>without-jdk</id>
-                                <!--Bound Maven operation-->
-                                <phase>package</phase>
-                                <!--Run once-->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>../script/assembly/collector/assembly.xml</descriptor>
-                                    </descriptors>
-                                    <outputDirectory>../dist</outputDirectory>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>make-macos-arm64</id>
-                                <!--Bound Maven operation-->
-                                <phase>package</phase>
-                                <!--Run once-->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>../script/assembly/collector/assembly-macos-arm64.xml</descriptor>
-                                    </descriptors>
-                                    <outputDirectory>../dist</outputDirectory>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>make-macos-amd64</id>
-                                <!--Bound Maven operation-->
-                                <phase>package</phase>
-                                <!--Run once-->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>../script/assembly/collector/assembly-macos-amd64.xml</descriptor>
-                                    </descriptors>
-                                    <outputDirectory>../dist</outputDirectory>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>make-linux-arm64</id>
-                                <!--Bound Maven operation-->
-                                <phase>package</phase>
-                                <!--Run once-->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>../script/assembly/collector/assembly-linux-arm64.xml</descriptor>
-                                    </descriptors>
-                                    <outputDirectory>../dist</outputDirectory>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>make-linux-amd64</id>
-                                <!--Bound Maven operation-->
-                                <phase>package</phase>
-                                <!--Run once-->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>../script/assembly/collector/assembly-linux-amd64.xml</descriptor>
-                                    </descriptors>
-                                    <outputDirectory>../dist</outputDirectory>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>make-windows-64</id>
-                                <!--Bound Maven operation-->
-                                <phase>package</phase>
-                                <!--Run once-->
-                                <goals>
-                                    <goal>single</goal>
-                                </goals>
-                                <configuration>
-                                    <descriptors>
-                                        <descriptor>../script/assembly/collector/assembly-windows-64.xml</descriptor>
-                                    </descriptors>
-                                    <outputDirectory>../dist</outputDirectory>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+
 
 </project>

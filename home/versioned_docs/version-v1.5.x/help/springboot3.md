@@ -51,7 +51,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 
 ### Configuration Parameters
 
-| Parameter Name    | Parameter Description                                                                                                |
+|  Parameter Name   |                                                Parameter Description                                                 |
 |-------------------|----------------------------------------------------------------------------------------------------------------------|
 | Monitor Host      | The monitored peer's IPV4, IPV6, or domain name. Note⚠️: Do not include protocol headers (eg: https://, http://).    |
 | Task Name         | Identifies the name of this monitor, ensuring uniqueness is necessary.                                               |
@@ -65,23 +65,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 ### Collection Metrics
 
 #### Metric Set: Availability
+
 | Metric Name  | Unit | Metric Description |
 |--------------|------|--------------------|
 | responseTime | ms   | Response time      |
 
 #### Metric Set: Threads
-| Metric Name | Unit | Metric Description               |
+
+| Metric Name | Unit |        Metric Description        |
 |-------------|------|----------------------------------|
 | state       | None | Thread state                     |
 | size        | None | Number of threads for this state |
 
 #### Metric Set: Memory Usage
-| Metric Name | Unit | Metric Description          |
+
+| Metric Name | Unit |     Metric Description      |
 |-------------|------|-----------------------------|
 | space       | None | Memory space name           |
 | mem_used    | MB   | Memory usage for this space |
 
 #### Metric Set: Health Status
-| Metric Name | Unit | Metric Description              |
+
+| Metric Name | Unit |       Metric Description        |
 |-------------|------|---------------------------------|
 | status      | None | Service health status: UP, Down |

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,8 +37,10 @@ import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
@@ -225,6 +228,15 @@ public class Metrics {
      * Monitoring configuration information using the public script protocol
      */
     private ScriptProtocol script;
+    /**
+     * Monitoring configuration information using the public mqtt protocol
+     */
+    private MqttProtocol mqtt;
+
+    /**
+     * Monitoring configuration information using the public kafka protocol
+     */
+    private KafkaProtocol kclient;
 
     /**
      * collector use - Temporarily store subTask metrics response data
@@ -322,10 +334,6 @@ public class Metrics {
          * Metric type 0-number: number 1-string: string
          */
         private byte type = 1;
-        /**
-         * Whether this field is the instance
-         */
-        private boolean instance = false;
         /**
          * Whether this field is the label
          */

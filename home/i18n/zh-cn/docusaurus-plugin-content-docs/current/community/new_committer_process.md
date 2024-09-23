@@ -5,20 +5,20 @@ sidebar_position: 4
 ---
 
 <!--
-    Licensed to the Apache Software Foundation (ASF) under one or more
-    contributor license agreements.  See the NOTICE file distributed with
-    this work for additional information regarding copyright ownership.
-    The ASF licenses this file to You under the Apache License, Version 2.0
-    (the "License"); you may not use this file except in compliance with
-    the License.  You may obtain a copy of the License at
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
 
-       https://www.apache.org/licenses/LICENSE-2.0
+https://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 -->
 
 [官方指南](https://community.apache.org/newcommitter.html#new-committer-process)
@@ -49,7 +49,6 @@ sidebar_position: 4
 
   - 等待root告诉我们已经完成
   - [Roster](https://whimsy.apache.org/roster/ppmc/hertzbeat) 添加新的 committer
-
 - Announce New Committer
 
   参见 **Announce New Committer Template**
@@ -108,7 +107,7 @@ ttt
 ```
 
 注意，投票将在今天一周后结束，即
-[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)    
+[midnight UTC on YYYY-MM-DD](https://www.timeanddate.com/counters/customcounter.html?year=YYYY&month=MM&day=DD)
 [Apache投票指南](https://community.apache.org/newcommitter.html)
 
 ### 关闭投票模板
@@ -285,8 +284,10 @@ Best Wishes!
 ## 详细步骤
 
 ### 接受邀请
+
 当通过PMC内部投票后，PMC会向您索要个人邮箱，之后您会收到一封邮件，邮件会指引您进行下一步操作，内容为:
-```
+
+```text
 Hello xxxx,
 
 The HertzBeat Project Management Committee (PPMC)
@@ -335,7 +336,7 @@ establishing you as a committer.
 
 如果您接受邀请，请回复该邮件，记住要**回复全部**，回复内容为:
 
-```
+```text
 hi, i accept. Thanks for invitaion.
 ```
 
@@ -347,78 +348,79 @@ hi, i accept. Thanks for invitaion.
 
 1. 下载iCLA申请表
 
-打开访问:[https://www.apache.org/licenses/#clas](https://www.apache.org/licenses/#clas)
+    打开访问:[https://www.apache.org/licenses/#clas](https://www.apache.org/licenses/#clas)
 
-找到`CLAs`点击进入页面
+    找到`CLAs`点击进入页面
 
-![](/img/docs/community/clas-web.png)
+    ![HertzBeat](/img/docs/community/clas-web.png)
 
-找到`ICLA(个人贡献者许可协议)`，点击[Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf)
+    找到`ICLA(个人贡献者许可协议)`，点击[Individual Contributor License Agreement](https://www.apache.org/licenses/icla.pdf)
 
-![](/img/docs/community/icla-web.png)
+    ![HertzBeat](/img/docs/community/icla-web.png)
 
-跳转后，会显示需要签署的协议，这里可以在网页上直接填写，也可以下载后填写。
+    跳转后，会显示需要签署的协议，这里可以在网页上直接填写，也可以下载后填写。
 
-![](/img/docs/community/icla-pdf.png)
+    ![HertzBeat](/img/docs/community/icla-pdf.png)
 
 2. 填写iCLA
 
-> tips: 签名时需要手写签名，其他的可以直接填写后打印。
+    > tips: 签名时需要手写签名，其他的可以直接填写后打印。
 
-需要填写的内容：
+    需要填写的内容：
 
-![](/img/docs/community/icla-content-1.png)
-![](/img/docs/community/icla-content-2.png)
+    ![HertzBeat](/img/docs/community/icla-content-1.png)
+    ![HertzBeat](/img/docs/community/icla-content-2.png)
 
-在PDF中需要填写的字段：
- - `Full name`
- - `Public name`
- - `Postal Address`
- - `Country`
- - `E-Mail`
- - `(optional) preferred Apache id(s)`
- - `(optional) notify project`
- - `Date`
+    在PDF中需要填写的字段：
 
-> 填写样例
-> ![](/img/docs/community/icla-content-3.png)
-> ![](/img/docs/community/icla-content-4.png)
+   - `Full name`
+   - `Public name`
+   - `Postal Address`
+   - `Country`
+   - `E-Mail`
+   - `(optional) preferred Apache id(s)`
+   - `(optional) notify project`
+   - `Date`
+
+    > 填写样例
+    > ![HertzBeat](/img/docs/community/icla-content-3.png)
+    > ![HertzBeat](/img/docs/community/icla-content-4.png)
 
 3. 打印并签署
 
-![](/img/docs/community/icla-content-5.png)
+    ![HertzBeat](/img/docs/community/icla-content-5.png)
 
-`Please sign`字段需要将文件打印出来然后手写签名，内容为自己姓名的全拼。
+    `Please sign`字段需要将文件打印出来然后手写签名，内容为自己姓名的全拼。
 
 4. 将签名后的文件拍照或扫描转为PDF，并重命名为`姓名拼音-icla.pdf`
 
 5. 发送邮件到指定邮箱
 
-邮件发送到`secretary@apache.org`，抄送到`private@hertzbeat.apache.org`。
+  邮件发送到`secretary@apache.org`，抄送到`private@hertzbeat.apache.org`。
 
-注意⚠️此邮件内容需要附加上之前的 committer 邀请邮件信息, 建议在之前的往来邮件点击回复然后修改标题和收件人等。
+  注意⚠️此邮件内容需要附加上之前的 committer 邀请邮件信息, 建议在之前的往来邮件点击回复然后修改标题和收件人等。
 
-**发送模板**
+  **发送模板**
 
-主题：`Accept to become a Hertzbeat(incubating) committer`
+  主题：`Accept to become a Hertzbeat(incubating) committer`
 
-正文:
+  正文:
 
-```
-Hello Apache,
-    I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
-Thanks !
-```
+  ```text
+  Hello Apache,
+      I am willing contribute to the ASF. The attachment is my ICLA information. My Github account is : https://github.com/xxxx.
+  Thanks !
+  ```
 
-大概1-5个工作日你就会收到一封来自`root@apache.org`的邮件。
+  大概1-5个工作日你就会收到一封来自`root@apache.org`的邮件。
 
-当您收到邮件标题为：`Welcome to the Apache Software Foundation`的邮件，恭喜你，你已经获取到Apache ID了！
+  当您收到邮件标题为：`Welcome to the Apache Software Foundation`的邮件，恭喜你，你已经获取到Apache ID了！
 
 ### 设置Apache密码
 
 在网站 [https://id.apache.org/reset/enter](https://id.apache.org/reset/enter) 输入您的Apache ID
 
-![](/img/docs/community/account-1.png)
+![HertzBeat](/img/docs/community/account-1.png)
 
 点击`Send Email`后会提示发送成功。
 
@@ -426,52 +428,54 @@ Thanks !
 
 ### 将Apache账号和GitHub账号关联
 
-访问: https://whimsy.apache.org/roster/committer/${APACHE_ID}
+访问: <https://whimsy.apache.org/roster/committer/${APACHE_ID}>
+
 - `${APACHE_ID}`替换成你的Apache ID
 
 登录后可以看到这个内容`Link GitHub username to ASF id`，点击跳转
 
-![](/img/docs/community/account-2.png)
+![HertzBeat](/img/docs/community/account-2.png)
 
 输入您的Apache的账号和密码并登录
 
-![](/img/docs/community/account-3.png)
+![HertzBeat](/img/docs/community/account-3.png)
 
 点击 `Authenticate with GitHub`
 
-![](/img/docs/community/account-4.png)
+![HertzBeat](/img/docs/community/account-4.png)
 
 点击`Authorize apache`授权给Apache
 
-![](/img/docs/community/account-5.png)
+![HertzBeat](/img/docs/community/account-5.png)
 
 点击`Send GitHub Invitation!` 发送GitHub邀请邮件
 
-![](/img/docs/community/account-6.png)
+![HertzBeat](/img/docs/community/account-6.png)
 
 邮箱中会收到一封邮件，点击`Join @apache`
+
 > 这里邮箱指的是您提供给PMC的那个邮箱地址
 
-![](/img/docs/community/account-7.png)
+![HertzBeat](/img/docs/community/account-7.png)
 
 点击`Join The Apache Software Foundation`，加入GitHub加入Apache组织，会自动跳转到GitHub页面
 
-![](/img/docs/community/account-8.png)
-![](/img/docs/community/account-9.png)
+![HertzBeat](/img/docs/community/account-8.png)
+![HertzBeat](/img/docs/community/account-9.png)
 
 回到Apache页面，提示GitHub启用多重身份认证，在GitHub页面启用双重身份认证
+
 > GitHub双重身份认证介绍，[点击跳转官方文档](https://docs.github.com/zh/authentication/securing-your-account-with-two-factor-authentication-2fa/about-two-factor-authentication)
 
-![](/img/docs/community/account-10.png)
+![HertzBeat](/img/docs/community/account-10.png)
 
 启动完成之后等几分钟，提示已经绑定完成
 
-![](/img/docs/community/account-11.png)
+![HertzBeat](/img/docs/community/account-11.png)
 
 至此您的GitHub账号与Apache账号就绑定完成了。
 
 最后一步，联系PMC主席开启svn和其他访问权限。
-
 
 ## 邮箱绑定
 
@@ -481,18 +485,18 @@ Thanks !
 
 进入设置页面，并点击`添加其他电子邮件地址``
 
-![](/img/docs/community/email-1.png)
+![HertzBeat](/img/docs/community/email-1.png)
 
 填写您的apache邮箱，按照指引点击下一步
 
-![](/img/docs/community/email-2.png)
-![](/img/docs/community/email-3.png)
-![](/img/docs/community/email-4.png)
+![HertzBeat](/img/docs/community/email-2.png)
+![HertzBeat](/img/docs/community/email-3.png)
+![HertzBeat](/img/docs/community/email-4.png)
 
 设置为默认发送邮箱(可选)
 
-![](/img/docs/community/email-5.png)
+![HertzBeat](/img/docs/community/email-5.png)
 
 配置完成。
 
-最后一步，别忘了订阅开发邮箱。
+最后一步，别忘了订阅[开发者邮箱列表](./mailing_lists.md)。

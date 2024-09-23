@@ -17,6 +17,10 @@
 
 package org.apache.hertzbeat.common.support.vaild;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import jakarta.validation.ConstraintValidatorContext;
 import org.apache.hertzbeat.common.support.valid.PhoneNumParamValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,51 +29,46 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 /**
  * Test case for {@link PhoneNumParamValidator}
  */
 
 class PhoneNumParamValidatorTest {
 
-	@InjectMocks
-	private PhoneNumParamValidator phoneNumParamValidator;
+    @InjectMocks
+    private PhoneNumParamValidator phoneNumParamValidator;
 
-	@Mock
-	private ConstraintValidatorContext context;
+    @Mock
+    private ConstraintValidatorContext context;
 
-	@Mock
-	private ConstraintValidatorContext.ConstraintViolationBuilder constraintViolationBuilder;
+    @Mock
+    private ConstraintValidatorContext.ConstraintViolationBuilder constraintViolationBuilder;
 
-	@BeforeEach
-	public void setUp() {
-		MockitoAnnotations.initMocks(this);
-		when(context.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
-	}
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+        when(context.buildConstraintViolationWithTemplate(any())).thenReturn(constraintViolationBuilder);
+    }
 
-	@Test
-	public void testIsValid() {
-		boolean result = phoneNumParamValidator.isValid(null, context);
-		assertFalse(result);
+    @Test
+    public void testIsValid() {
+        boolean result = phoneNumParamValidator.isValid(null, context);
+        assertFalse(result);
 
-		result = phoneNumParamValidator.isValid("", context);
-		assertFalse(result);
+        result = phoneNumParamValidator.isValid("", context);
+        assertFalse(result);
 
-		result = phoneNumParamValidator.isValid("123456", context);
-		assertFalse(result);
+        result = phoneNumParamValidator.isValid("123456", context);
+        assertFalse(result);
 
-		result = phoneNumParamValidator.isValid("abc123", context);
-		assertFalse(result);
+        result = phoneNumParamValidator.isValid("abc123", context);
+        assertFalse(result);
 
-		result = phoneNumParamValidator.isValid("13900001234", context);
-		assertTrue(result);
+        result = phoneNumParamValidator.isValid("13900001234", context);
+        assertTrue(result);
 
-		result = phoneNumParamValidator.isValid("1234567890123456789", context);
-		assertFalse(result);
-	}
+        result = phoneNumParamValidator.isValid("1234567890123456789", context);
+        assertFalse(result);
+    }
 }
 

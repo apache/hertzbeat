@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import javax.naming.AuthenticationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
@@ -55,11 +56,11 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public Map<String, String> authGetToken(LoginDto loginDto) throws AuthenticationException {
         SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
-        if (account == null || account.getPassword() == null) {
+        if (account == null || StringUtils.isBlank(account.getPassword())) {
             throw new AuthenticationException("Incorrect Account or Password");
         } else {
             String password = loginDto.getCredential();
-            if (account.getSalt() != null) {
+            if (StringUtils.isNotBlank(account.getSalt())) {
                 password = Md5Util.md5(password + account.getSalt());
             }
             if (!account.getPassword().equals(password)) {
@@ -85,11 +86,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public RefreshTokenResponse refreshToken(String refreshToken) throws AuthenticationException {
+    public RefreshTokenResponse refreshToken(String refreshToken) throws Exception {
         Claims claims = JsonWebTokenUtil.parseJwt(refreshToken);
         String userId = String.valueOf(claims.getSubject());
         boolean isRefresh = claims.get("refresh", Boolean.class);
-        if (userId == null || !isRefresh) {
+        if (StringUtils.isBlank(userId) || !isRefresh) {
             throw new AuthenticationException("Illegal Refresh Token");
         }
         SurenessAccount account = accountProvider.loadAccount(userId);

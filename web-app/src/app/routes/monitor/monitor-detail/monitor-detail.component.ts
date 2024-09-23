@@ -25,6 +25,7 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { throwError } from 'rxjs';
 import { finalize, switchMap } from 'rxjs/operators';
 
+import { GrafanaDashboard } from '../../../pojo/GrafanaDashboard';
 import { Message } from '../../../pojo/Message';
 import { Monitor } from '../../../pojo/Monitor';
 import { Param } from '../../../pojo/Param';
@@ -50,6 +51,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   monitorId!: number;
   app!: string;
   monitor: Monitor = new Monitor();
+  grafanaDashboard: GrafanaDashboard = new GrafanaDashboard();
   options: any;
   port: number | undefined;
   metrics!: string[];
@@ -63,6 +65,7 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.countDownTime = this.deadline;
     this.loadRealTimeMetric();
+    this.getGrafana();
   }
 
   loadMetricChart() {
@@ -197,6 +200,19 @@ export class MonitorDetailComponent implements OnInit, OnDestroy {
     this.deadline = deadlineTime;
     this.countDownTime = this.deadline;
     this.cdr.detectChanges();
+  }
+
+  getGrafana() {
+    this.monitorSvc.getGrafanaDashboard(this.monitorId).subscribe(
+      message => {
+        if (message.code === 0 && message.data != null) {
+          this.grafanaDashboard = message.data;
+        }
+      },
+      error => {
+        console.error(error.msg);
+      }
+    );
   }
 
   ngOnDestroy(): void {

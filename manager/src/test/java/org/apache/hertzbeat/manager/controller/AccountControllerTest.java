@@ -26,6 +26,7 @@ import javax.naming.AuthenticationException;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
+import org.apache.hertzbeat.manager.pojo.dto.TokenDto;
 import org.apache.hertzbeat.manager.service.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,7 +86,7 @@ class AccountControllerTest {
         this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/auth/form")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonUtil.toJson(loginDto)))
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_LOGIN_FAILED_CODE))
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.LOGIN_FAILED_CODE))
                 .andReturn();
     }
 
@@ -93,9 +94,10 @@ class AccountControllerTest {
     void refreshToken() throws Exception {
         String refreshToken = "123456";
         Mockito.when(accountService.refreshToken(refreshToken)).thenThrow(new AuthenticationException());
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/api/account/auth/refresh/{refreshToken}",
-                        refreshToken))
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.MONITOR_LOGIN_FAILED_CODE))
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/account/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(new TokenDto(refreshToken))))
+                .andExpect(jsonPath("$.code").value((int) CommonConstants.LOGIN_FAILED_CODE))
                 .andReturn();
     }
 }

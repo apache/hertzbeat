@@ -18,9 +18,11 @@
 package org.apache.hertzbeat.manager.service.impl;
 
 import jakarta.persistence.criteria.Predicate;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,6 +58,15 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public void addTags(List<Tag> tags) {
+        // Verify request data
+        tags = tags.stream().peek(tag -> {
+            Optional<Tag> tagOptional = tagDao.findTagByNameAndTagValue(tag.getName(), tag.getTagValue());
+            if (tagOptional.isPresent()) {
+                throw new IllegalArgumentException("The tag already exists.");
+            }
+            tag.setType((byte) 1);
+            tag.setId(null);
+        }).distinct().collect(Collectors.toList());
         tagDao.saveAll(tags);
     }
 
@@ -63,6 +74,11 @@ public class TagServiceImpl implements TagService {
     public void modifyTag(Tag tag) {
         Optional<Tag> tagOptional = tagDao.findById(tag.getId());
         if (tagOptional.isPresent()) {
+            
+            Optional<Tag> tagExistOptional = tagDao.findTagByNameAndTagValue(tag.getName(), tag.getTagValue());
+            if (tagExistOptional.isPresent() && !tagExistOptional.get().getId().equals(tag.getId())) {
+                throw new IllegalArgumentException("The tag with same key and value already exists.");
+            }
             tag.setTagValue(StringUtils.isEmpty(tag.getTagValue()) ? null : tag.getTagValue());
             tagDao.save(tag);
         } else {
@@ -83,7 +99,7 @@ public class TagServiceImpl implements TagService {
             Predicate andPredicate = criteriaBuilder.and(andList.toArray(andPredicates));
 
             List<Predicate> orList = new ArrayList<>();
-            if (search != null && !search.isEmpty()) {
+            if (StringUtils.isNotBlank(search)) {
                 Predicate predicateName = criteriaBuilder.like(root.get("name"), "%" + search + "%");
                 orList.add(predicateName);
                 Predicate predicateValue = criteriaBuilder.like(root.get("tagValue"), "%" + search + "%");
@@ -108,6 +124,9 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public void deleteTags(HashSet<Long> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return;
+        }
         if (tagMonitorBindDao.countByTagIdIn(ids) != 0) {
             throw new CommonException("The tag is in use and cannot be deleted.");
         }
@@ -122,7 +141,7 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteMonitorSystemTags(Monitor monitor) {
         if (CollectionUtils.isNotEmpty(monitor.getTags())) {
-            List<Tag> tags = monitor.getTags().stream().filter(tag -> tag.getType() == (byte) 0).collect(Collectors.toList());
+            List<Tag> tags = monitor.getTags().stream().filter(tag ->  Objects.nonNull(tag.getType()) && tag.getType() == (byte) 0).collect(Collectors.toList());
             tagDao.deleteAll(tags);
         }
     }

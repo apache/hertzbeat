@@ -4,7 +4,7 @@ title: NQGL自定义监控
 sidebar_label: NGQL自定义监控
 ---
 
-> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用NGQL自定义指标监控。   
+> 从[自定义监控](extend-point)了解熟悉了怎么自定义类型，指标，协议等，这里我们来详细介绍下用NGQL自定义指标监控。
 > NGQL自定义监控可以让我们很方便的使用NGQL或者OpenCypher从NebulaGraph图数据库中查询指标数据,支持NebulaGraph 3.X版本。
 
 ### 数据解析方式
@@ -20,11 +20,12 @@ NGQL查询回来的数据字段和我们需要的指标映射，就能获取对�
 > `filterName`: 过滤属性名称（可选）  
 > `filterValue`: 过滤属性值（可选）
 
-例如： 
+例如：
+
 - online_meta_count#SHOW HOSTS META#Status#ONLINE  
-    对 `SHOW HOSTS META` 返回的结果中统计滤Status==ONLINE的数量
+对 `SHOW HOSTS META` 返回的结果中统计滤Status==ONLINE的数量
 - online_meta_count#SHOW HOSTS META##  
-    统计 `SHOW HOSTS META` 返回的行数 
+统计 `SHOW HOSTS META` 返回的行数
 
 #### **oneRow**
 
@@ -47,7 +48,8 @@ NGQL查询回来的数据字段和我们需要的指标映射，就能获取对�
 
 > 查询多行数据, 通过查询返回结果集的列名称，和查询的字段映射
 
-例如：   
+例如：
+
 - 查询的指标字段为：a,b  
 - 查询NGQL：match (v:metrics) return v.metrics.a as a,v.metrics.b as b;
 这里指标字段就能和响应数据一一映射为多行采集数据。
@@ -69,14 +71,15 @@ NGQL查询回来的数据字段和我们需要的指标映射，就能获取对�
 
 **HertzBeat页面** -> **监控模版菜单** -> **新增监控类型** -> **配置自定义监控模版YML** -> **点击保存应用** -> **使用新监控类型添加监控**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
-------- 
+-------
+
 下面详细介绍下文件的配置用法，请注意看使用注释。
 
 ### 监控模版YML
 
-> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。    
+> 监控配置定义文件用于定义 *监控类型的名称(国际化), 请求参数结构定义(前端页面根据配置自动渲染UI), 采集指标信息, 采集协议配置* 等。
 > 即我们通过自定义这个YML，配置定义什么监控类型，前端页面需要输入什么参数，采集哪些性能指标，通过什么协议去采集。
 
 样例：自定义一个名称为example_ngql的自定义监控类型，其使用NGQL采集指标数据。

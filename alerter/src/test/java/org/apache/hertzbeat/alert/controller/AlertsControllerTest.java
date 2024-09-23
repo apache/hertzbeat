@@ -39,7 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -67,40 +67,37 @@ class AlertsControllerTest {
         ids = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
     }
 
-    // todo: fix this test
+    @Test
     void getAlerts() throws Exception {
         String sortField = "id";
-        String orderType = "asc";
+        String orderType = "desc";
+        Byte priority = 1;
+        Byte status = 1;
+        Long monitorId = 1L;
+        String content = "test";
         int pageIndex = 0;
         int pageSize = 10;
-        PageRequest pageRequest = PageRequest.of(pageIndex, pageSize, Sort.by(new Sort.Order(Sort.Direction.fromString(orderType), sortField)));
-        Page<Alert> alertPage = new PageImpl<>(Collections.singletonList(Alert.builder().build()));
-        Mockito.when(
-                        alertService.getAlerts(
-                                Mockito.any(Specification.class)
-                                , Mockito.argThat(
-                                        argument ->
-                                                argument.getPageNumber() == pageRequest.getPageNumber()
-                                                        && argument.getPageSize() == pageRequest.getPageSize()
-                                                        && argument.getSort().equals(pageRequest.getSort())
-                                )
-                        )
-                )
+
+        Page<Alert> alertPage = new PageImpl<>(
+                Collections.singletonList(Alert.builder().build()),
+                PageRequest.of(pageIndex, pageSize, Sort.by(sortField).descending()),
+                ids.size()
+        );
+        Mockito.when(alertService.getAlerts(ids, monitorId, priority, status, content, sortField, orderType, pageIndex, pageSize))
                 .thenReturn(alertPage);
 
-        mockMvc.perform(
-                        MockMvcRequestBuilders
-                                .get("/api/alerts")
-                                .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
-                                .param("monitorId", "1")
-                                .param("priority", "1")
-                                .param("status", "1")
-                                .param("content", "test")
-                                .param("sort", sortField)
-                                .param("order", orderType)
-                                .param("pageIndex", String.valueOf(pageIndex))
-                                .param("pageSize", String.valueOf(pageSize))
-                )
+        mockMvc.perform(MockMvcRequestBuilders
+                        .get("/api/alerts")
+                        .param("ids", ids.stream().map(String::valueOf).collect(Collectors.joining(",")))
+                        .param("monitorId", String.valueOf(monitorId))
+                        .param("priority", String.valueOf(priority))
+                        .param("status", String.valueOf(status))
+                        .param("content", content)
+                        .param("sort", sortField)
+                        .param("order", orderType)
+                        .param("pageIndex", String.valueOf(pageIndex))
+                        .param("pageSize", String.valueOf(pageSize))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content.length()").value(1))

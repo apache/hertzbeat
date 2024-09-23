@@ -68,7 +68,7 @@ class AlertDefinesControllerTest {
     String order = "asc";
     Integer pageIndex = 1;
     Integer pageSize = 7;
-  
+
     // Parameter collection
     Map<String, Object> content = new HashMap<>();
 
@@ -114,13 +114,13 @@ class AlertDefinesControllerTest {
         Mockito.when(alertDefineService.getAlertDefines(null, null, null, "id", "desc", 1, 10)).thenReturn(new PageImpl<>(Collections.singletonList(define)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(
-                "/api/alert/defines")
-                .param("ids", ids.toString().substring(1, ids.toString().length() - 1))
-                .param("priority", priority.toString())
-                .param("sort", sort)
-                .param("order", order)
-                .param("pageIndex", pageIndex.toString())
-                .param("pageSize", pageSize.toString()))
+                                "/api/alert/defines")
+                        .param("ids", ids.toString().substring(1, ids.toString().length() - 1))
+                        .param("priority", priority.toString())
+                        .param("sort", sort)
+                        .param("order", order)
+                        .param("pageIndex", pageIndex.toString())
+                        .param("pageSize", pageSize.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andExpect(jsonPath("$.data.content").value(new ArrayList<>()))
@@ -142,8 +142,8 @@ class AlertDefinesControllerTest {
     @Test
     void deleteAlertDefines() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders.delete("/api/alert/defines")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(JsonUtil.toJson(ids)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonUtil.toJson(ids)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
                 .andReturn();

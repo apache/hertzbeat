@@ -1,31 +1,29 @@
 ---
 id: extend-point  
 title: Custom Monitoring  
-sidebar_label: Custom Monitoring    
+sidebar_label: Custom Monitoring
 ---
+
 > HertzBeat has custom monitoring ability. You only need to configure monitoring template yml to fit a custom monitoring type.  
-> Custom monitoring currently supports [HTTP protocol](extend-http)，[JDBC protocol](extend-jdbc), [SSH protocol](extend-ssh), [JMX protocol](extend-jmx), [SNMP protocol](extend-snmp). And it will support more general protocols in the future.        
+> Custom monitoring currently supports [HTTP protocol](extend-http)，[JDBC protocol](extend-jdbc), [SSH protocol](extend-ssh), [JMX protocol](extend-jmx), [SNMP protocol](extend-snmp). And it will support more general protocols in the future.
 
-### Custom Monitoring Steps  
+### Custom Monitoring Steps
 
-**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type** 
+**HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-
-------- 
+-------
 
 Configuration usages of the monitoring templates yml are detailed below.
 
-### Monitoring Templates YML   
+### Monitoring Templates YML
 
 > We define all monitoring collection types (mysql,jvm,k8s) as yml monitoring templates, and users can import these templates to support corresponding types of monitoring.
+>
+> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
 
+eg：Define a custom monitoring type `app` named `example2` which use the HTTP protocol to collect data.
 
-> Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.  
-
-eg：Define a custom monitoring type `app` named `example2` which use the HTTP protocol to collect data.    
-
-**Monitoring Templates** -> **Config New Monitoring Template Yml** -> **Save and Apply**  
-
+**Monitoring Templates** -> **Config New Monitoring Template Yml** -> **Save and Apply**
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring

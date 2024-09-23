@@ -1,29 +1,31 @@
 ---
 id: extend-telnet  
 title: Telnet Protocol Custom Monitoring
-sidebar_label: Telnet Protocol Custom Monitoring     
+sidebar_label: Telnet Protocol Custom Monitoring
 ---
- 
+
 > From [Custom Monitoring](extend-point), you are familiar with how to customize types, Metrics, protocols, etc. Here we will introduce in detail how to use Telnet to customize Metric monitoring.
 > Telnet protocol custom monitoring allows us to easily monitor and collect the Linux Metrics we want by writing sh command script.
 
-### Telnet protocol collection process   
+### Telnet protocol collection process
+
 【**System directly connected to Linux**】->【**Run shell command script statement**】->【**parse response data: oneRow, multiRow**】->【**Metric data extraction**】
 
 It can be seen from the process that we define a monitoring type of Telnet protocol. We need to configure Telnet request parameters, configure which Metrics to obtain, and configure query script statements.
 
 ### Data parsing method
+
 By configuring the metrics `field`, `aliasFields` the `Telnet` protocol of the monitoring template YML to capture the data specified by the peer and parse the mapping.
 
-
-### Custom Steps 
+### Custom Steps
 
 **HertzBeat Dashboard** -> **Monitoring Templates** -> **New Template** -> **Config Monitoring Template Yml** -> **Save and Apply** -> **Add A Monitoring with The New Monitoring Type**
 
-![](/img/docs/advanced/extend-point-1.png)
+![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
-------- 
-Configuration usages of the monitoring templates yml are detailed below.   
+-------
+
+Configuration usages of the monitoring templates yml are detailed below.
 
 ### Monitoring Templates YML
 
@@ -31,7 +33,6 @@ Configuration usages of the monitoring templates yml are detailed below.
 > Monitoring template is used to define *the name of monitoring type(international), request parameter mapping, index information, collection protocol configuration information*, etc.
 
 eg：Define a custom monitoring type `app` named `zookeeper` which use the telnet protocol to collect data.
-
 
 ```yaml
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
