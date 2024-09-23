@@ -100,7 +100,9 @@ export class TagsSelectComponent implements ControlValueAccessor {
   }
 
   sliceTagName(tag: any): string {
-    if (tag.value != undefined && tag.value.trim() != '') {
+    if (tag.name != undefined && tag.tagValue != undefined && tag.tagValue.trim() != '') {
+      return `${tag.name}:${tag.tagValue}`;
+    } else if (tag.name != undefined && tag.value != undefined && tag.value.trim() != '') {
       return `${tag.name}:${tag.value}`;
     } else {
       return tag.name;
@@ -121,7 +123,7 @@ export class TagsSelectComponent implements ControlValueAccessor {
     let value = this.value == undefined ? [] : this.value;
     this.checkedTags.forEach(item => {
       if (this.value.find((tag: { id: number }) => tag.id == item.id) == undefined) {
-        value.push(item);
+        value.push({ ...item, value: item.tagValue });
       }
     });
     this.onChange(value);
