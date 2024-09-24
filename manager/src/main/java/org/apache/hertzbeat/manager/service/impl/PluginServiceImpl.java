@@ -123,6 +123,7 @@ public class PluginServiceImpl implements PluginService {
             plugin.setEnableStatus(false);
             updateStatus(plugin);
         }
+        // reload classloader
         loadJarToClassLoader();
         for (PluginMetadata plugin : plugins) {
             try {
@@ -146,8 +147,7 @@ public class PluginServiceImpl implements PluginService {
         }
         pluginParamDao.deletePluginParamsByPluginMetadataIdIn(ids);
         syncPluginStatus();
-        // reload classloader
-        loadJarToClassLoader();
+
     }
 
     /**
@@ -167,7 +167,7 @@ public class PluginServiceImpl implements PluginService {
             PluginMetadata metadata = pluginMetadata.get();
             metadata.setEnableStatus(plugin.getEnableStatus());
             metadataDao.save(metadata);
-            syncPluginStatus();
+            syncSinglePluginStatus(metadata);
         } else {
             throw new IllegalArgumentException("The plugin is not existed");
         }
@@ -366,6 +366,18 @@ public class PluginServiceImpl implements PluginService {
         PLUGIN_ENABLE_STATUS.putAll(statusMap);
         ITEM_TO_PLUGINMETADATAID_MAP.clear();
         ITEM_TO_PLUGINMETADATAID_MAP.putAll(itemToPluginMetadataIdMap);
+    }
+
+    private void syncSinglePluginStatus(PluginMetadata plugin) {
+        if (plugin == null || CollectionUtils.isEmpty(plugin.getItems())){
+            return;
+        }
+        for (PluginItem item : plugin.getItems()) {
+            PLUGIN_ENABLE_STATUS.put(item.getClassIdentifier(), plugin.getEnableStatus());
+            ITEM_TO_PLUGINMETADATAID_MAP.put(item.getClassIdentifier(), plugin.getId());
+        }
+
+
     }
 
     @PostConstruct
