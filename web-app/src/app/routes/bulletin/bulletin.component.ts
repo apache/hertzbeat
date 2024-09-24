@@ -230,7 +230,6 @@ export class BulletinComponent implements OnInit, OnDestroy {
       .pipe()
       .subscribe(
         message => {
-          console.log('message:', message);
           if (message.code === 0) {
             this.appMap = message.data;
             this.appEntries = Object.entries(this.appMap).map(([key, value]) => ({ key, value }));
