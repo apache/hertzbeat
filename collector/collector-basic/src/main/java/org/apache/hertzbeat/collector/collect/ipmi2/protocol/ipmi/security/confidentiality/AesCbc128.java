@@ -34,8 +34,8 @@ import org.apache.hertzbeat.collector.collect.ipmi2.utils.ByteOrderUtils;
 /**
  *  See IPMIv2 Section 13.29
  */
-public class AseCbc128 extends AbstractIpmiConfidentiality{
-    public AseCbc128() throws NoSuchPaddingException, NoSuchAlgorithmException {
+public class AesCbc128 extends AbstractIpmiConfidentiality{
+    public AesCbc128() throws NoSuchPaddingException, NoSuchAlgorithmException {
         super("AES/CBC/NoPadding");
     }
 

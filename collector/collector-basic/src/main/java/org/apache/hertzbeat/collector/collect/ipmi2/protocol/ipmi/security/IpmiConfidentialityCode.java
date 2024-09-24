@@ -18,7 +18,7 @@
 package org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.security;
 
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.common.IpmiCode;
-import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.security.confidentiality.AseCbc128;
+import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.security.confidentiality.AesCbc128;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.security.confidentiality.IpmiConfidentiality;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.security.confidentiality.None;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.security.confidentiality.Xrc440;
@@ -30,7 +30,7 @@ import org.apache.hertzbeat.collector.collect.ipmi2.utils.ByteConvertUtils;
  */
 public enum IpmiConfidentialityCode implements IpmiCode.Code {
     NONE(0x00, None.class),
-    AES_CBC_128(0x01, AseCbc128.class),
+    AES_CBC_128(0x01, AesCbc128.class),
     xRC4_128(0x02, Xrc4128.class),
     xRC4_40(0x03, Xrc440.class);
 
