@@ -50,7 +50,7 @@ public class GetChassisStatusResponse extends AbstractIpmiResponse {
         private final byte code;
         private final String description;
 
-        private PowerRestorePolicy(int code, String description) {
+        PowerRestorePolicy(int code, String description) {
             this.code = ByteConvertUtils.checkCastByte(code);
             this.description = description;
         }
@@ -75,7 +75,7 @@ public class GetChassisStatusResponse extends AbstractIpmiResponse {
         private final byte code;
         private final String description;
 
-        private LastPowerEvent(int code, String description) {
+        LastPowerEvent(int code, String description) {
             this.code = ByteConvertUtils.checkCastByte(code);
             this.description = description;
         }
@@ -89,11 +89,6 @@ public class GetChassisStatusResponse extends AbstractIpmiResponse {
         public String getDescription() {
             return description;
         }
-    }
-
-    @Override
-    public int getDataWireLength(IpmiPacketContext context) {
-        return 5;
     }
 
     @Override

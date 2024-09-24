@@ -36,11 +36,6 @@ public class GetChannelAuthenticationCapabilitiesResponse extends AbstractIpmiRe
     public boolean isSupportIpmi15;
 
     @Override
-    public int getDataWireLength(IpmiPacketContext context) {
-        return 9;
-    }
-
-    @Override
     public void fromResponseData(IpmiPacketContext context, ByteBuffer buffer) {
         channelNumberCode = IpmiCode.fromByte(IpmiChannelNumberCode.class, buffer.get());
         byte tmp = buffer.get();

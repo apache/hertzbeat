@@ -40,6 +40,11 @@ public abstract class AbstractIpmiResponse extends AbstractIpmiCommand implement
         fromResponseData(context, buffer);
     }
 
+    @Override
+    public int getDataWireLength(IpmiPacketContext context) {
+        return 0;
+    }
+
     public abstract void fromResponseData(IpmiPacketContext context, ByteBuffer buffer);
 
 }

@@ -30,11 +30,6 @@ import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.Abstra
 public class CloseSessionResponse extends AbstractIpmiResponse {
 
     @Override
-    public int getDataWireLength(IpmiPacketContext context) {
-        return 1;
-    }
-
-    @Override
     public void fromWireData(IpmiPacketContext context, ByteBuffer buffer) {
         byte code = buffer.get();
         if (code == (byte) 0x87) {
