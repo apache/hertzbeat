@@ -230,6 +230,7 @@ export class BulletinComponent implements OnInit, OnDestroy {
       .pipe()
       .subscribe(
         message => {
+          console.log('message:', message);
           if (message.code === 0) {
             this.appMap = message.data;
             this.appEntries = Object.entries(this.appMap).map(([key, value]) => ({ key, value }));
@@ -469,6 +470,10 @@ export class BulletinComponent implements OnInit, OnDestroy {
     );
   }
 
+  getMetricName(appName: string, metricName: string): string {
+    return this.i18nSvc.fanyi(`monitor.app.${appName}.metrics.${metricName}`);
+  }
+
   getKeys(metricName: string): string[] {
     const result = new Set<string>();
     this.metricsData.forEach((item: any) => {
@@ -477,6 +482,22 @@ export class BulletinComponent implements OnInit, OnDestroy {
           metric.fields.forEach((fieldGroup: any) => {
             fieldGroup.forEach((field: any) => {
               result.add(field.key);
+            });
+          });
+        }
+      });
+    });
+    return Array.from(result);
+  }
+
+  getKeyNames(appName: string, metricName: string): string[] {
+    const result = new Set<string>();
+    this.metricsData.forEach((item: any) => {
+      item.metrics.forEach((metric: any) => {
+        if (metric.name === metricName) {
+          metric.fields.forEach((fieldGroup: any) => {
+            fieldGroup.forEach((field: any) => {
+              result.add(this.i18nSvc.fanyi(`monitor.app.${appName}.metrics.${metricName}.metric.${field.key}`));
             });
           });
         }
