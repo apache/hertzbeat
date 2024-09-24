@@ -167,7 +167,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
         // parse translation content list
         ObjectMapper objectMapper = new ObjectMapper();
         List<String> searchList = Collections.emptyList();
-        if (org.apache.commons.lang3.StringUtils.isNotEmpty(search)) {
+        if (StringUtils.hasText(search)) {
             try {
                 searchList = objectMapper.readValue(URLDecoder.decode(search, StandardCharsets.UTF_8), new TypeReference<>() {});
             } catch (JsonProcessingException e) {
@@ -188,12 +188,13 @@ public class AlertDefineServiceImpl implements AlertDefineService {
             if (null != finalSearchList && !finalSearchList.isEmpty()) {
                 List<Predicate> searchPredicates = new ArrayList<>();
                 for (String searchContent : finalSearchList) {
+                    searchContent = searchContent.toLowerCase();
                     Predicate predicate = criteriaBuilder.or(
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("app")), "%" + searchContent.toLowerCase() + "%"),
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("metric")), "%" + searchContent.toLowerCase() + "%"),
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("field")), "%" + searchContent.toLowerCase() + "%"),
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("expr")), "%" + searchContent.toLowerCase() + "%"),
-                            criteriaBuilder.like(criteriaBuilder.lower(root.get("template")), "%" + searchContent.toLowerCase() + "%")
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("app")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("metric")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("field")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("expr")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("template")), "%" + searchContent + "%")
                     );
                     searchPredicates.add(predicate);
                 }

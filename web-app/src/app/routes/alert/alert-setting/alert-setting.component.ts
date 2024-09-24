@@ -133,6 +133,23 @@ export class AlertSettingComponent implements OnInit {
           console.warn(error.msg);
         }
       );
+    // query i18n content
+    this.appDefineSvc
+      .getAppDefines(this.i18nSvc.defaultLang)
+      .pipe()
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.appMap = message.data;
+            this.appEntries = Object.entries(this.appMap).map(([key, value]) => ({ key, value }));
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          console.warn(error.msg);
+        }
+      );
   }
 
   sync() {
@@ -140,61 +157,42 @@ export class AlertSettingComponent implements OnInit {
   }
 
   loadAlertDefineTable() {
-    const translationSearchList: string[] = [];
     this.tableLoading = true;
-
-    this.appDefineSvc
-      .getAppDefines(this.i18nSvc.defaultLang)
-      .pipe(
-        tap(message => {
-          if (message.code === 0) {
-            let trimSearch = '';
-            if (this.search !== undefined && this.search.trim() !== '') {
-              trimSearch = this.search.trim();
-            }
-            this.appMap = message.data;
-            this.appEntries = Object.entries(this.appMap).map(([key, value]) => ({ key, value }));
-
-            // Filter entries based on search input
-            this.appEntries.forEach(entry => {
-              if (trimSearch && entry.value.toLowerCase().includes(trimSearch.toLowerCase())) {
-                translationSearchList.push(entry.key);
-              }
-            });
-
-            // If no match found and search input exists, add search term to list
-            if (translationSearchList.length === 0 && trimSearch) {
-              translationSearchList.push(trimSearch);
-            }
-          } else {
-            console.warn(message.msg);
-          }
-        }),
-        switchMap(() => {
-          // Proceed to alertDefine request
-          return this.alertDefineSvc.getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize);
-        })
-      )
-      .subscribe(
-        message => {
-          this.tableLoading = false;
-          this.checkedAll = false;
-          this.checkedDefineIds.clear();
-
-          if (message.code === 0) {
-            const page = message.data;
-            this.defines = page.content;
-            this.pageIndex = page.number + 1;
-            this.total = page.totalElements;
-          } else {
-            console.warn(message.msg);
-          }
-        },
-        error => {
-          this.tableLoading = false;
-          console.error(error.msg);
+    const translationSearchList: string[] = [];
+    let trimSearch = '';
+    if (this.search !== undefined && this.search.trim() !== '') {
+      trimSearch = this.search.trim();
+    }
+    // Filter entries based on search input
+    this.appEntries.forEach(entry => {
+      if (trimSearch && entry.value.toLowerCase().includes(trimSearch.toLowerCase())) {
+        translationSearchList.push(entry.key);
+      }
+    });
+    // If no match found and search input exists, add search term to list
+    if (translationSearchList.length === 0 && trimSearch) {
+      translationSearchList.push(trimSearch);
+    }
+    let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize).subscribe(
+      message => {
+        this.tableLoading = false;
+        this.checkedAll = false;
+        this.checkedDefineIds.clear();
+        if (message.code === 0) {
+          let page = message.data;
+          this.defines = page.content;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
+        } else {
+          console.warn(message.msg);
         }
-      );
+        alertDefineInit$.unsubscribe();
+      },
+      error => {
+        this.tableLoading = false;
+        alertDefineInit$.unsubscribe();
+      }
+    );
   }
 
   onNewAlertDefine() {
