@@ -48,7 +48,7 @@ public class UdpConnection {
         channel = DatagramChannel.open();
     }
 
-    public int send(IpmiPacketContext context, IpmiPayload payload) throws IOException {
+    private int send(IpmiPacketContext context, IpmiPayload payload) throws IOException {
         Ipmi20Ipv4SessionWrapper wrapper = new Ipmi20Ipv4SessionWrapper();
         wrapper.setIpmiPayload(payload);
         if (context.getIpmiSession().isConnected()) {
@@ -61,12 +61,17 @@ public class UdpConnection {
         return channel.send(sendBuffer, address);
     }
 
-    public <T extends IpmiPayload> T receive(IpmiPacketContext context, Class<T> clazz) throws IOException {
+    private <T extends IpmiPayload> T receive(IpmiPacketContext context, Class<T> clazz) throws IOException {
         receiveBuffer.clear();
         channel.receive(receiveBuffer);
         receiveBuffer.flip();
         RmcpPacket rmcpPacket = IpmiEncoderDecoder.decode(context, receiveBuffer);
         return rmcpPacket.getEncapsulated(clazz);
+    }
+
+    public <T extends IpmiPayload> T get(IpmiPacketContext context, IpmiPayload payload, Class<T> clazz) throws IOException {
+        send(context, payload);
+        return receive(context, clazz);
     }
 
     public void close() throws IOException {

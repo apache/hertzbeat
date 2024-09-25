@@ -37,8 +37,7 @@ public class ChassisHandler implements IpmiHandler {
 
     @Override
     public void handler(IpmiSession session, UdpConnection connection, CollectRep.MetricsData.Builder builder, Metrics metrics) throws IOException {
-        connection.send(session, new GetChassisStatusRequest());
-        GetChassisStatusResponse getChassisStatusResponse = connection.receive(session, GetChassisStatusResponse.class);
+        GetChassisStatusResponse getChassisStatusResponse = connection.get(session, new GetChassisStatusRequest(), GetChassisStatusResponse.class);
         parseFieldToMap(getChassisStatusResponse);
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (Metrics.Field field : metrics.getFields()) {

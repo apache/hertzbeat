@@ -55,13 +55,11 @@ public class IpmiClient {
     public IpmiConnection connect() throws IOException {
         IpmiSession session = newSession(username, password);
 
-        connection.send(session, new RmcpPlusOpenSessionRequest());
-        RmcpPlusOpenSessionResponse rmcpPlusOpenSessionResponse = connection.receive(session, RmcpPlusOpenSessionResponse.class);
+        RmcpPlusOpenSessionResponse rmcpPlusOpenSessionResponse = connection.get(session, new RmcpPlusOpenSessionRequest(), RmcpPlusOpenSessionResponse.class);
         session.setSystemSessionId(rmcpPlusOpenSessionResponse.systemSessionId);
 
         session.generateConsoleRandomNumber();
-        connection.send(session, new RakpMessage1());
-        RakpMessage2 rakpMessage2 = connection.receive(session, RakpMessage2.class);
+        RakpMessage2 rakpMessage2 = connection.get(session, new RakpMessage1(), RakpMessage2.class);
         session.setSystemRandomNumber(rakpMessage2.systemRandom);
         session.setSystemGuid(rakpMessage2.systemGuid);
 
@@ -69,8 +67,7 @@ public class IpmiClient {
         session.generateSik();
         session.generateK1();
         session.generateK2();
-        connection.send(session, new RakpMessage3());
-        connection.receive(session, RakpMessage4.class);
+        connection.get(session, new RakpMessage3(), RakpMessage4.class);
 
         session.setConnected(true);
         return new IpmiConnection(session, connection);

@@ -53,8 +53,7 @@ public class IpmiConnection implements AutoCloseable {
 
     @Override
     public void close() throws IOException {
-        udpConnection.send(session, new CloseSessionRequest(session.getSystemSessionId()));
-        udpConnection.receive(session, CloseSessionResponse.class);
+        udpConnection.get(session,  new CloseSessionRequest(session.getSystemSessionId()), CloseSessionResponse.class);
         udpConnection.close();
         session = null;
         active = false;
