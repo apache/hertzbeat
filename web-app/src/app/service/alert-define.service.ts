@@ -67,7 +67,7 @@ export class AlertDefineService {
     return this.http.delete<Message<any>>(alert_defines_uri, options);
   }
 
-  public getAlertDefines(search: string | undefined, pageIndex: number, pageSize: number): Observable<Message<Page<AlertDefine>>> {
+  public getAlertDefines(search: string[] | undefined, pageIndex: number, pageSize: number): Observable<Message<Page<AlertDefine>>> {
     pageIndex = pageIndex ? pageIndex : 0;
     pageSize = pageSize ? pageSize : 8;
     // HttpParams is unmodifiable, so we need to save the return value of append/set
@@ -78,8 +78,9 @@ export class AlertDefineService {
       pageIndex: pageIndex,
       pageSize: pageSize
     });
-    if (search != undefined && search.trim() != '') {
-      httpParams = httpParams.append('search', search.trim());
+    if (search != undefined && search.length > 0) {
+      const searchJson = JSON.stringify(search);
+      httpParams = httpParams.append('search', encodeURIComponent(searchJson));
     }
     const options = { params: httpParams };
     return this.http.get<Message<Page<AlertDefine>>>(alert_defines_uri, options);

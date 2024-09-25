@@ -28,8 +28,8 @@ import { NzNotificationService } from 'ng-zorro-antd/notification';
 import { NzTableQueryParams } from 'ng-zorro-antd/table';
 import { TransferChange, TransferItem } from 'ng-zorro-antd/transfer';
 import { NzUploadChangeParam } from 'ng-zorro-antd/upload';
-import { zip } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
+import { EMPTY, zip } from 'rxjs';
+import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 
 import { AlertDefine } from '../../../pojo/AlertDefine';
 import { AlertDefineBind } from '../../../pojo/AlertDefineBind';
@@ -98,6 +98,8 @@ export class AlertSettingComponent implements OnInit {
     return null;
   };
   qbFormCtrl: FormControl;
+  appMap = new Map<string, string>();
+  appEntries: Array<{ value: any; key: string }> = [];
 
   ngOnInit(): void {
     this.loadAlertDefineTable();
@@ -131,6 +133,23 @@ export class AlertSettingComponent implements OnInit {
           console.warn(error.msg);
         }
       );
+    // query i18n content
+    this.appDefineSvc
+      .getAppDefines(this.i18nSvc.defaultLang)
+      .pipe()
+      .subscribe(
+        message => {
+          if (message.code === 0) {
+            this.appMap = message.data;
+            this.appEntries = Object.entries(this.appMap).map(([key, value]) => ({ key, value }));
+          } else {
+            console.warn(message.msg);
+          }
+        },
+        error => {
+          console.warn(error.msg);
+        }
+      );
   }
 
   sync() {
@@ -139,7 +158,22 @@ export class AlertSettingComponent implements OnInit {
 
   loadAlertDefineTable() {
     this.tableLoading = true;
-    let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(this.search, this.pageIndex - 1, this.pageSize).subscribe(
+    const translationSearchList: string[] = [];
+    let trimSearch = '';
+    if (this.search !== undefined && this.search.trim() !== '') {
+      trimSearch = this.search.trim();
+    }
+    // Filter entries based on search input
+    this.appEntries.forEach(entry => {
+      if (trimSearch && entry.value.toLowerCase().includes(trimSearch.toLowerCase())) {
+        translationSearchList.push(entry.key);
+      }
+    });
+    // If no match found and search input exists, add search term to list
+    if (translationSearchList.length === 0 && trimSearch) {
+      translationSearchList.push(trimSearch);
+    }
+    let alertDefineInit$ = this.alertDefineSvc.getAlertDefines(translationSearchList, this.pageIndex - 1, this.pageSize).subscribe(
       message => {
         this.tableLoading = false;
         this.checkedAll = false;
