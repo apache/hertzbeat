@@ -90,14 +90,12 @@
             <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
             <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
             <ng-container *ngFor="let metric of metrics">
-              <th nzAlign="center" [colSpan]="getKeys(metric).length">
-                {{ metric }}
-              </th>
+              <th nzAlign="center" [colSpan]="getKeys(metric).length"> {{ getMetricName(tab.app, metric) }} </th>
             </ng-container>
           </tr>
           <tr>
             <ng-container *ngFor="let metric of metrics">
-              <ng-container *ngFor="let field of getKeys(metric)">
+              <ng-container *ngFor="let field of getKeyNames(tab.app, metric)">
                 <th nzAlign="center" [colSpan]="1">
                   {{ field }}
                 </th>
