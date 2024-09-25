@@ -32,4 +32,28 @@ public class ByteConvertUtils {
         return UnsignedBytes.checkedCast(i);
     }
 
+    public static int lsMsByteToInt(byte lsByte, byte msByte) {
+        return (byteToInt(msByte) << 8) + byteToInt(lsByte);
+    }
+
+    public static byte[] intToLsMsByte(int i) {
+        if (i < 0 || i > 0xFFFF) {
+            throw new IllegalArgumentException("Invalid int value: " + i);
+        }
+        byte[] bytes = new byte[2];
+        bytes[0] = checkCastByte(i & 0xFF);
+        bytes[1] = checkCastByte((i >> 8) & 0xFF);
+        return bytes;
+    }
+
+    public static int getBitsAsSigned(int value, int n) {
+        int mask = (1 << n) - 1;
+        int lowerBits = value & mask;
+        int signBit = 1 << (n - 1);
+        if ((lowerBits & signBit) != 0) {
+            lowerBits |= ~mask;
+        }
+        return lowerBits;
+    }
+
 }

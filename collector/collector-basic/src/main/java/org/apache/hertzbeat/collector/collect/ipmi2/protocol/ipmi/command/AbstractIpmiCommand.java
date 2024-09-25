@@ -61,6 +61,10 @@ public abstract class AbstractIpmiCommand extends AbstractIpmiPayload implements
         return rqLun;
     }
 
+    public void setRqLun(IpmiLun rqLun) {
+        this.rqLun = rqLun;
+    }
+
     @Override
     public byte getSequenceNumber() {
         return sequenceNumber;

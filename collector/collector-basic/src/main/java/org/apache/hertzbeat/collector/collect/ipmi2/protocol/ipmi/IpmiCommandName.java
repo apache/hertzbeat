@@ -26,6 +26,12 @@ import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messag
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.CloseSessionResponse;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.GetChannelAuthenticationCapabilitiesRequest;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.GetChannelAuthenticationCapabilitiesResponse;
+import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.GetSdrRequest;
+import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.GetSdrResponse;
+import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.GetSensorReadingRequest;
+import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.GetSensorReadingResponse;
+import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.ReserveSdrRepositoryRequest;
+import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.ReserveSdrRepositoryResponse;
 import org.apache.hertzbeat.collector.collect.ipmi2.utils.ByteConvertUtils;
 
 /**
@@ -38,7 +44,11 @@ public enum IpmiCommandName implements IpmiCode.Code {
     GetChannelAuthenticationCapabilities("Get Channel Authentication Capabilities", IpmiNetworkFunctionCode.App,
             0x38, IpmiChannelPrivilegeLevel.User, GetChannelAuthenticationCapabilitiesRequest.class, GetChannelAuthenticationCapabilitiesResponse.class),
     CloseSession("Close Session", IpmiNetworkFunctionCode.App, 0x3C, IpmiChannelPrivilegeLevel.Callback,
-            CloseSessionRequest.class, CloseSessionResponse.class);
+            CloseSessionRequest.class, CloseSessionResponse.class),
+    ReserveSdrRepository("Reserve SDR Repository", IpmiNetworkFunctionCode.Storage, 0x22, IpmiChannelPrivilegeLevel.User,
+            ReserveSdrRepositoryRequest.class, ReserveSdrRepositoryResponse.class),
+    GetSdr("Get SDR", IpmiNetworkFunctionCode.Storage, 0x23, IpmiChannelPrivilegeLevel.User, GetSdrRequest.class, GetSdrResponse.class),
+    GetSensorReading("Get Sensor Reading", IpmiNetworkFunctionCode.Sensor_Event, 0x2D, IpmiChannelPrivilegeLevel.User, GetSensorReadingRequest.class, GetSensorReadingResponse.class);
 
     private final String name;
     private final IpmiNetworkFunctionCode networkFunction;

@@ -15,31 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command;
+package org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr;
 
+import java.nio.ByteBuffer;
+import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiPacketContext;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.IpmiCommandName;
-import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.IpmiLun;
-import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.IpmiPayload;
+import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.AbstractIpmiResponse;
 
 /**
- * IPMI Command interface
+ *  See IPMIv2 Section 33.12
  */
-public interface IpmiCommand extends IpmiPayload {
+public class GetSensorReadingResponse extends AbstractIpmiResponse {
 
-    byte getRsAddress();
+    public int sensorReading;
 
-    IpmiLun getRsLun();
+    @Override
+    public void fromResponseData(IpmiPacketContext context, ByteBuffer buffer) {
+        sensorReading = buffer.get();
+        buffer.position(buffer.limit());
+    }
 
-    byte getRqAddress();
-
-    IpmiLun getRqLun();
-
-    void setRqLun(IpmiLun lun);
-
-    byte getSequenceNumber();
-
-    void setSequenceNumber(byte sequenceNumber);
-
-    IpmiCommandName getCommandName();
-
+    @Override
+    public IpmiCommandName getCommandName() {
+        return IpmiCommandName.GetSensorReading;
+    }
 }

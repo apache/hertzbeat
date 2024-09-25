@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.handler.ChassisHandler;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.handler.IpmiHandler;
+import org.apache.hertzbeat.collector.collect.ipmi2.client.handler.SensorHandler;
 
 /**
  *  Manger for IpmiHandler
@@ -32,6 +33,7 @@ public class IpmiHandlerManager {
 
     public IpmiHandlerManager() {
         registerHandler("Chassis", new ChassisHandler());
+        registerHandler("Sensor", new SensorHandler());
     }
 
     public void registerHandler(String metricName, IpmiHandler handler) {
