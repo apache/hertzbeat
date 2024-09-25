@@ -121,7 +121,6 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
 
    安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)  
    要求：JAVA17环境  
-   下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)  
    安装后命令行检查是否成功安装
 
    ```shell
