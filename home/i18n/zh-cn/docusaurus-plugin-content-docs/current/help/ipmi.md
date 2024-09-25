@@ -44,3 +44,12 @@ keywords: [开源监控工具, 开源服务器监控, IPMI 监控]
 | Cooling/Fan Fault      | 无   | 检测到冷却/风扇故障。                                                   |
 | Drive Fault           | 无   | 硬盘故障。                                                             |
 | Front-Panel Lockout         | 无   | 前面板锁定已激活（通过机箱按钮禁用电源关闭和重置功能）。                 |
+
+#### 指标集合：Sensor
+
+| Metric Name    | Unit | Metric Description                           |
+| -------------- | ---- | -------------------------------------------- |
+| Sensor ID      | 无   | 传感器标识。                                 |
+| Entity ID      | 无   | 指示传感器正在监控或与传感器关联的物理实体。 |
+| Sensor Type    | 无   | 传感器类型。                                 |
+| Sensor Reading | 无   | 传感器当前读数。                             |

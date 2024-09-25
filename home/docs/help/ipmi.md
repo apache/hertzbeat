@@ -42,3 +42,12 @@ These are basic checks you can follow, and for further details on enabling and c
 | Cooling/Fan Fault    | none | Cooling/fan fault detected.                                  |
 | Drive Fault          | none | Drive Fault.                                                 |
 | Front-Panel Lockout  | none | Front Panel Lockout active (power off and reset via chassispush-buttons disabled.) |
+
+#### Metric Set: Sensor
+
+| Metric Name    | Unit | Metric Description                                           |
+| -------------- | ---- | ------------------------------------------------------------ |
+| Sensor ID      | none | Sensor ID.                                                   |
+| Entity ID      | none | Indicates the physical entity that the sensor is monitoring or is otherwiseassociated with the sensor. |
+| Sensor Type    | none | Sensor Type.                                                 |
+| Sensor Reading | none | Current Sensor Reading.                                      |
