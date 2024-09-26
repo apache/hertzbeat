@@ -65,8 +65,8 @@ public class IpmiClient {
 
 
         session.generateSik();
-        session.generateK1();
-        session.generateK2();
+        session.setK1(session.generateK(1));
+        session.setK2(session.generateK(2));
         connection.get(session, new RakpMessage3(), RakpMessage4.class);
 
         session.setConnected(true);

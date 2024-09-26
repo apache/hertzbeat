@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Data;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.common.AbstractWireable;
@@ -104,37 +105,17 @@ public class IpmiSession implements IpmiPacketContext {
         }
     }
 
-    public void generateK1() {
-        byte[] data1 = new byte[] {
-                0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
-                0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01
-        };
+    public byte[] generateK(int n) {
+        byte[] data = new byte[20];
+        Arrays.fill(data, (byte) n);
         IpmiAuthentication authentication = authenticationAlgorithm.newIpmiAuthentication();
         if (authentication == null) {
             throw new UnsupportedOperationException("Unsupported authentication code: " + authenticationAlgorithm);
         }
         try {
             authentication.setKey(sik);
-            authentication.setData(data1);
-            k1 = authentication.getHash();
-        } catch (InvalidKeyException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public void generateK2() {
-        byte[] data2 = new byte[] {
-                0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
-                0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02
-        };
-        IpmiAuthentication authentication = authenticationAlgorithm.newIpmiAuthentication();
-        if (authentication == null) {
-            throw new UnsupportedOperationException("Unsupported authentication code: " + authenticationAlgorithm);
-        }
-        try {
-            authentication.setKey(sik);
-            authentication.setData(data2);
-            k2 = authentication.getHash();
+            authentication.setData(data);
+            return authentication.getHash();
         } catch (InvalidKeyException e) {
             throw new RuntimeException(e);
         }

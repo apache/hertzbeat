@@ -211,8 +211,8 @@ public class IpmiSessionWrapperTest {
         };
         ipmiSession.setSystemGuid(guid);
         ipmiSession.generateSik();
-        ipmiSession.generateK1();
-        ipmiSession.generateK2();
+        ipmiSession.setK1(ipmiSession.generateK(1));
+        ipmiSession.setK2(ipmiSession.generateK(2));
 
         byte[] message = {
                 (byte) 0x06, (byte) 0x00, (byte) 0xff, (byte) 0x07, (byte) 0x06, (byte) 0xc0, (byte) 0xa4, (byte) 0xa3,
