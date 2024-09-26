@@ -1,0 +1,32 @@
+### Get templates By user
+GET http://localhost:8080/api/template/1
+
+### Get templates Page By user
+GET http://localhost:8080/api/template/page/user/1?page=0&size=2
+
+### Get templates By category
+GET http://localhost:8080/api/template/category/1
+
+### Get templates Page By category
+GET http://localhost:8080/api/template/page/category/1?page=0&size=2
+
+### Get templates By namelike
+GET http://localhost:8080/api/template/name/My
+
+### Get templates Page By namelike
+GET http://localhost:8080/api/template/page/name/My?page=0&size=2
+
+### Get templates order by option
+GET http://localhost:8080/api/template/query/3/0
+
+### Get templates Page order by option
+GET http://localhost:8080/api/template/page/option/3/0?page=0&size=2
+
+### Get all templates
+GET http://localhost:8080/api/template
+
+### Get all templates Page
+GET http://localhost:8080/api/template/page/0?page=0&size=2
+
+### download
+GET http://localhost:8080/api/template/download/1/1/v1.0.0/1
