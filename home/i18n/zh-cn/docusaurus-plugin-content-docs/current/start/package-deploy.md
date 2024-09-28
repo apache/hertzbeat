@@ -131,7 +131,7 @@ HertzBeat Collector 是一个轻量级的数据采集器，用于采集并将数
    Java HotSpot(TM) 64-Bit Server VM 17.0.9 (build 17.0.9+8-LTS-237, mixed mode)
    ```
 
-3. 按照流程部署，访问 <http://ip:1157/> 无界面
+2. 按照流程部署，访问 <http://ip:1157/> 无界面
    请参考下面几点排查问题：
 
    > 一：若切换了依赖服务MYSQL数据库，排查数据库是否成功创建，是否启动成功  
