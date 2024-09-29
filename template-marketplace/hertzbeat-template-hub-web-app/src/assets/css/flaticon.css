@@ -1,0 +1,191 @@
+@font-face {
+    font-family: "flaticon";
+    src: url("../fonts/flaticon.ttf") format("truetype"),
+url("../fonts/flaticon.woff") format("woff"),
+url("../fonts/flaticon.woff2") format("woff2"),
+url("../fonts/flaticon.eot") format("embedded-opentype"),
+url("../fonts/flaticon.svg") format("svg");
+}
+
+i[class^="flaticon-"]:before, i[class*=" flaticon-"]:before {
+    font-family: flaticon !important;
+    font-style: normal;
+    font-weight: normal !important;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.flaticon-loupe:before {
+    content: "\f101";
+}
+.flaticon-user:before {
+    content: "\f102";
+}
+.flaticon-phone:before {
+    content: "\f103";
+}
+.flaticon-curved-arrow:before {
+    content: "\f104";
+}
+.flaticon-stethoscope:before {
+    content: "\f105";
+}
+.flaticon-diet:before {
+    content: "\f106";
+}
+.flaticon-handshake:before {
+    content: "\f107";
+}
+.flaticon-play-button:before {
+    content: "\f108";
+}
+.flaticon-arrow-right:before {
+    content: "\f109";
+}
+.flaticon-double-quotes:before {
+    content: "\f10a";
+}
+.flaticon-time:before {
+    content: "\f10b";
+}
+.flaticon-pin:before {
+    content: "\f10c";
+}
+.flaticon-check-mark-black-outline:before {
+    content: "\f10d";
+}
+.flaticon-handshake-1:before {
+    content: "\f10e";
+}
+.flaticon-tag:before {
+    content: "\f10f";
+}
+.flaticon-mail:before {
+    content: "\f110";
+}
+.flaticon-telephone-call:before {
+    content: "\f111";
+}
+.flaticon-book:before {
+    content: "\f112";
+}
+.flaticon-drops:before {
+    content: "\f113";
+}
+.flaticon-healthy-food:before {
+    content: "\f114";
+}
+.flaticon-giving:before {
+    content: "\f115";
+}
+.flaticon-settings:before {
+    content: "\f116";
+}
+.flaticon-volunteer:before {
+    content: "\f117";
+}
+.flaticon-donor:before {
+    content: "\f118";
+}
+.flaticon-handshake-2:before {
+    content: "\f119";
+}
+.flaticon-facebook-logo:before {
+    content: "\f11a";
+}
+.flaticon-instagram:before {
+    content: "\f11b";
+}
+.flaticon-twitter:before {
+    content: "\f11c";
+}
+.flaticon-pinterest:before {
+    content: "\f11d";
+}
+.flaticon-agree:before {
+    content: "\f11e";
+}
+.flaticon-pray:before {
+    content: "\f11f";
+}
+.flaticon-world-blood-donor-day:before {
+    content: "\f120";
+}
+.flaticon-quote:before {
+    content: "\f121";
+}
+.flaticon-map:before {
+    content: "\f122";
+}
+.flaticon-down-arrow:before {
+    content: "\f123";
+}
+.flaticon-open-book:before {
+    content: "\f124";
+}
+.flaticon-warning:before {
+    content: "\f125";
+}
+.flaticon-comment:before {
+    content: "\f126";
+}
+.flaticon-calendar:before {
+    content: "\f127";
+}
+.flaticon-folder:before {
+    content: "\f128";
+}
+.flaticon-home:before {
+    content: "\f129";
+}
+.flaticon-love:before {
+    content: "\f12a";
+}
+.flaticon-people:before {
+    content: "\f12b";
+}
+.flaticon-shopping-cart:before {
+    content: "\f12c";
+}
+.flaticon-heart:before {
+    content: "\f12d";
+}
+.flaticon-email:before {
+    content: "\f12e";
+}
+.flaticon-mission:before {
+    content: "\f12f";
+}
+.flaticon-vision:before {
+    content: "\f130";
+}
+.flaticon-right-arrow:before {
+    content: "\f131";
+}
+.flaticon-up-arrow:before {
+    content: "\f132";
+}
+.flaticon-right-arrow-1:before {
+    content: "\f133";
+}
+.flaticon-down-arrow-1:before {
+    content: "\f134";
+}
+.flaticon-location:before {
+    content: "\f135";
+}
+.flaticon-home-1:before {
+    content: "\f136";
+}
+.flaticon-zakat:before {
+    content: "\f137";
+}
+.flaticon-people-1:before {
+    content: "\f138";
+}
+.flaticon-love-1:before {
+    content: "\f139";
+}
