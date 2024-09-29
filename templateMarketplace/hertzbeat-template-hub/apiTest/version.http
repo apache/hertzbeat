@@ -1,5 +1,0 @@
-### Get all version information of a template
-GET http://localhost:8080/api/version/version/1
-
-### Get all version page of a template
-GET http://localhost:8080/api/version/page/1?page=0&size=2

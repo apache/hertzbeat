@@ -1,5 +1,0 @@
-### share
-GET http://localhost:8080/api/share/getShareURL/1
-
-### downloadShare
-GET http://localhost:8080/api/share/share/6laZF
