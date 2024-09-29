@@ -91,7 +91,7 @@ public class ConfigInitializer implements SmartLifecycle {
                     .setDateFormat(simpleDateFormat);
         } else {
             // init system config data
-            systemConfig = SystemConfig.builder().timeZoneId(TimeZone.getDefault().getID())
+            systemConfig = SystemConfig.builder().timeZoneId(TimeZone.getDefault().getID()).theme("default")
                                    .locale(Locale.getDefault().getLanguage() + CommonConstants.LOCALE_SEPARATOR
                                                    + Locale.getDefault().getCountry())
                                    .build();

@@ -199,4 +199,9 @@ public interface DispatchConstants {
     String PARSE_PROM_QL = "PromQL";
     String PARSE_PROM_QL_VECTOR = "vector";
     String PARSE_PROM_QL_MATRIX = "matrix";
+
+    /**
+     * protocol kafka
+     */
+    String PROTOCOL_KAFKA = "kclient";
 }
