@@ -179,6 +179,11 @@
 
 **HAVE FUN**
 
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/apache/hertzbeat.svg)](https://starchart.cc/apache/hertzbeat.svg)
+
+
 ## ✨ Contributors
 
 Thanks these wonderful people, welcome to join us:   

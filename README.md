@@ -179,6 +179,12 @@ Install HertzBeat cluster in a Kubernetes cluster by Helm chart.
 Detailed steps refer to [Artifact Hub](https://artifacthub.io/packages/helm/hertzbeat/hertzbeat)
 
 **HAVE FUN**
+--- 
+
+## Stargazers over time
+
+[![Stargazers over time](https://starchart.cc/apache/hertzbeat.svg)](https://starchart.cc/apache/hertzbeat.svg)
+
 
 ## ✨ Contributors
 
