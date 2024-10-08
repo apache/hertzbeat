@@ -90,14 +90,12 @@
             <th nzAlign="center" nzWidth="7%" [rowSpan]="2">App</th>
             <th nzAlign="center" nzWidth="7%" [rowSpan]="2">Host</th>
             <ng-container *ngFor="let metric of metrics">
-              <th nzAlign="center" [colSpan]="getKeys(metric).length">
-                {{ metric }}
-              </th>
+              <th nzAlign="center" [colSpan]="getKeys(metric).length"> {{ getMetricName(tab.app, metric) }} </th>
             </ng-container>
           </tr>
           <tr>
             <ng-container *ngFor="let metric of metrics">
-              <ng-container *ngFor="let field of getKeys(metric)">
+              <ng-container *ngFor="let field of getKeyNames(tab.app, metric)">
                 <th nzAlign="center" [colSpan]="1">
                   {{ field }}
                 </th>
@@ -115,18 +113,20 @@
               </td>
               <td nzAlign="center" [rowSpan]="1">{{ content.host }}</td>
               <ng-container *ngFor="let metric of content.metrics">
-                <ng-container *ngFor="let field of metric.fields">
-                  <ng-container *ngFor="let item of field">
-                    <td nzAlign="center">
+                <ng-container *ngFor="let field of metric.fields[0]">
+                  <td nzAlign="center">
+                    <ng-container *ngFor="let item of combine(field, metric.fields)">
                       <ng-container *ngIf="item.value === 'NO_DATA'; else hasData">
                         <nz-tag nzColor="warning">No Data Available</nz-tag>
                       </ng-container>
                       <ng-template #hasData>
-                        {{ item.value }}
-                        <nz-tag *ngIf="item.unit !== ''" nzColor="success">{{ item.unit }}</nz-tag>
+                        <div style="display: flex; justify-content: space-between">
+                          {{ item.value }}
+                          <nz-tag *ngIf="item.unit !== ''" nzColor="success">{{ item.unit }}</nz-tag>
+                        </div>
                       </ng-template>
-                    </td>
-                  </ng-container>
+                    </ng-container>
+                  </td>
                 </ng-container>
               </ng-container>
             </tr>
