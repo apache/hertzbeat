@@ -554,4 +554,18 @@ export class BulletinComponent implements OnInit, OnDestroy {
     this.countDownTime = this.deadline;
     this.cdr.detectChanges();
   }
+
+  combine(field: any, fields: any): any[] {
+    let result: any[] = [];
+    if (fields.length == 0) {
+      return result;
+    }
+    for (let i = 0; i < fields.length; i++) {
+      let find = fields[i].filter((item: any) => {
+        return item.key == field.key;
+      });
+      result = result.concat(find);
+    }
+    return result;
+  }
 }
