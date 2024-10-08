@@ -66,7 +66,7 @@ sidebar_label: 安装包方式部署
 
 1. **若您使用的是不含JDK的安装包，需您提前准备JAVA运行环境**
 
-   安装JAVA运行环境-可参考[官方网站](http://www.oracle.com/technetwork/java/javase/downloads/index.html)  
+   安装JAVA运行环境-可参考[官方网站](https://www.oracle.com/java/technologies/downloads/)  
    要求：JAVA17环境  
    下载JAVA安装包: [镜像站](https://repo.huaweicloud.com/java/jdk/)  
    安装后命令行检查是否成功安装

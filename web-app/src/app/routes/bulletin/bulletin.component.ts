@@ -469,6 +469,10 @@ export class BulletinComponent implements OnInit, OnDestroy {
     );
   }
 
+  getMetricName(appName: string, metricName: string): string {
+    return this.i18nSvc.fanyi(`monitor.app.${appName}.metrics.${metricName}`);
+  }
+
   getKeys(metricName: string): string[] {
     const result = new Set<string>();
     this.metricsData.forEach((item: any) => {
@@ -477,6 +481,22 @@ export class BulletinComponent implements OnInit, OnDestroy {
           metric.fields.forEach((fieldGroup: any) => {
             fieldGroup.forEach((field: any) => {
               result.add(field.key);
+            });
+          });
+        }
+      });
+    });
+    return Array.from(result);
+  }
+
+  getKeyNames(appName: string, metricName: string): string[] {
+    const result = new Set<string>();
+    this.metricsData.forEach((item: any) => {
+      item.metrics.forEach((metric: any) => {
+        if (metric.name === metricName) {
+          metric.fields.forEach((fieldGroup: any) => {
+            fieldGroup.forEach((field: any) => {
+              result.add(this.i18nSvc.fanyi(`monitor.app.${appName}.metrics.${metricName}.metric.${field.key}`));
             });
           });
         }
@@ -533,5 +553,19 @@ export class BulletinComponent implements OnInit, OnDestroy {
     this.loadTabs();
     this.countDownTime = this.deadline;
     this.cdr.detectChanges();
+  }
+
+  combine(field: any, fields: any): any[] {
+    let result: any[] = [];
+    if (fields.length == 0) {
+      return result;
+    }
+    for (let i = 0; i < fields.length; i++) {
+      let find = fields[i].filter((item: any) => {
+        return item.key == field.key;
+      });
+      result = result.concat(find);
+    }
+    return result;
   }
 }
