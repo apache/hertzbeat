@@ -53,7 +53,7 @@ public class AiController {
 
     /**
      * request AI
-     * @param text                  request text
+     * @param requestParam          request text
      * @return                      AI response
      */
     @PostMapping(path = "/get", produces = {TEXT_EVENT_STREAM_VALUE})
