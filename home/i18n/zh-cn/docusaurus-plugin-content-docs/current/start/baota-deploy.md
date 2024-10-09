@@ -18,13 +18,13 @@ Apache HertzBeat (incubating) 支持在宝塔面板的 `Docker` 应用商店一�
 
 ## 部署 HertzBeat
 
-登录宝塔面板，点击左侧菜单中的 `应用商店`，在搜索框中搜索 `HertzBeat`，即可快速安装。
+登录宝塔面板，点击左侧菜单 `Docker` 里面的 `应用商店`，在搜索框中搜索 `HertzBeat`，即可快速安装。
 
-## 开放端口
+![HertzBeat](/img/docs/start/install-to-baota-1.png)
 
-> HertzBeat 默认使用 `1157` 端口，需要在安全组中开放此端口。
+点击 `安装`，根据提示配置名称，版本，访问等，等待安装完成。
 
-登录宝塔面板，点击左侧菜单中的 `安全`，在 `防火墙` 中添加 `1157` 端口放行。
+![HertzBeat](/img/docs/start/install-to-baota-2.png)
 
 ## 访问 HertzBeat
 

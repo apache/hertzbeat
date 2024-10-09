@@ -18,13 +18,14 @@ Log in to the BaoTa panel, click `Docker` in the left menu, and install the `Doc
 
 ## Deploy HertzBeat
 
-Log in to the BaoTa panel, click `Application Store` in the left menu, search for `HertzBeat` in the search box, and you can quickly install it.
+Look for `HertzBeat` in the `Application Store` in the `Docker` section of the left menu in the BaoTa panel, and you can install it quickly.
 
-## Open the Port
+![HertzBeat](/img/docs/start/install-to-baota-1.png)
 
-> HertzBeat uses the `1157` port by default, and you need to open this port in the security group.
+Click `Install`, configure the name, version, access, etc. as prompted, and wait for the installation to complete.
 
-Log in to the BaoTa panel, click `Security` in the left menu, and add the `1157` port to the firewall.
+![HertzBeat](/img/docs/start/install-to-baota-2.png)
+
 
 ## Access HertzBeat
 
