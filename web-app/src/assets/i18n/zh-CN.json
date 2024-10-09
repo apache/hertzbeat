@@ -75,6 +75,7 @@
     "collector": "采集器",
     "collector.tip": "配置此监控使用哪台采集器调度采集",
     "collector.system.default": "默认系统调度",
+    "collector.availability": "采集器可用性",
     "collector.status.online": "在线",
     "collector.status.offline": "离线",
     "category": {

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterWorkerPool;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
@@ -129,6 +130,9 @@ public class DispatcherAlarm implements InitializingBean {
                     if (alert != null) {
                         // Determining alarm type storage
                         alertStoreHandler.store(alert);
+                        if (alert.getTags() != null && alert.getTags().containsKey(CommonConstants.TAG_COLLECTOR_NAME)){
+                            continue;
+                        }
                         // Notice distribution
                         sendNotify(alert);
                         // Execute the plugin if enable (Compatible with old version plugins, will be removed in later versions)

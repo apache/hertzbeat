@@ -148,6 +148,11 @@ public interface CommonConstants {
     String AVAILABILITY = "availability";
 
     /**
+     * Collector availability
+     */
+    String AVAILABILITY_COLLECTOR = "collectorAvailability";
+
+    /**
      * Parameter Type Number
      */
     byte PARAM_TYPE_NUMBER = 0;
@@ -191,6 +196,26 @@ public interface CommonConstants {
      * Authentication type GITEE three-party login
      */
     byte AUTH_TYPE_GITEE = 5;
+
+    /**
+     * Inside the tag: monitorId
+     */
+    String TAG_COLLECTOR_ID = "collectorId";
+
+    /**
+     * Inside the tag: collectorName
+     */
+    String TAG_COLLECTOR_NAME = "collectorName";
+
+    /**
+     * Inside the tag: collectorHost
+     */
+    String TAG_COLLECTOR_HOST = "collectorHost";
+
+    /**
+     * Inside the tag: collectorVersion
+     */
+    String TAG_COLLECTOR_VERSION = "collectorVersion";
 
     /**
      * Inside the tag: monitorId Monitor task ID

@@ -24,8 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import jakarta.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.manager.AbstractSpringIntegrationTest;
 import org.junit.jupiter.api.AfterEach;
@@ -71,11 +74,15 @@ class TagDaoTest extends AbstractSpringIntegrationTest {
         assertNotNull(tagList);
         assertFalse(tagList.isEmpty());
 
-        Set<Long> ids = tagList.stream().map(Tag::getId).collect(Collectors.toSet());
+        Set<Long> ids = tagList.stream()
+                .filter(tag -> !Objects.equals(tag.getName(), CommonConstants.TAG_COLLECTOR_NAME))
+                .map(Tag::getId).collect(Collectors.toSet());
         assertDoesNotThrow(() -> tagDao.deleteTagsByIdIn(ids));
+
+        int count = tagList.size() - ids.size();
 
         tagList = tagDao.findAll();
         assertNotNull(tagList);
-        assertTrue(tagList.isEmpty());
+        assertTrue(tagList.size() == count);
     }
 }
