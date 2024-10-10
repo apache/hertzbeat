@@ -143,7 +143,7 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
                 }
                 appDefine.setMonitorId(monitor.getId());
-                appDefine.setInterval(monitor.getIntervals());
+                appDefine.setDefaultInterval(monitor.getIntervals());
                 appDefine.setCyclic(true);
                 appDefine.setTimestamp(System.currentTimeMillis());
                 List<Param> params = paramDao.findParamsByMonitorId(monitor.getId());

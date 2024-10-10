@@ -80,16 +80,16 @@ From the first `PR` to the present, I have participated in the `hertzbeat` open 
 
 **contribute:**
 
-* 1. Realize the monitoring of docker containers.
-* 2. Complete the domestic database DM monitoring
-* 3. Write a single test for the corresponding business.
-* 4. English translation of some annotations.
+1. Realize the monitoring of docker containers.
+2. Complete the domestic database DM monitoring
+3. Write a single test for the corresponding business.
+4. English translation of some annotations.
 
 **reward:**
 
-* 1. The technical ability has been further improved.
-* 2. Broaden your horizons.
-* 3. Learned a lot from the bosses.
+1. The technical ability has been further improved.
+2. Broaden your horizons.
+3. Learned a lot from the bosses.
 
 ### 🌻 Thanks to the community partners
 
@@ -99,10 +99,10 @@ Thanks to the friends who have helped me or inspired me for free (in no particul
 
 First of all, I am also a newcomer to Novice Village, but I can share some of my experience with you, hoping to help you.
 
-* 1. Don't be too impatient, and calm down to understand the general implementation logic of each module.
-* 2. Use different functions and debug to see the underlying implementation principle of each function.
-* 3. Slowly try to read the source code and understand it.
-* 4. If you encounter a bug, you can directly report it to issues, or you can try to solve it yourself.
+1. Don't be too impatient, and calm down to understand the general implementation logic of each module.
+2. Use different functions and debug to see the underlying implementation principle of each function.
+3. Slowly try to read the source code and understand it.
+4. If you encounter a bug, you can directly report it to issues, or you can try to solve it yourself.
 
 ## What is Hertz Beat?
 

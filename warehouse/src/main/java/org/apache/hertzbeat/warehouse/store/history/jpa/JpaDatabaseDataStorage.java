@@ -176,7 +176,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 singleHistoryList.forEach(history -> history.setInstance(JsonUtil.toJson(labels)));
                 allHistoryList.addAll(singleHistoryList);
             }
-            historyDao.saveAll(allHistoryList);
+            // historyDao.saveAll(allHistoryList);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
