@@ -13,7 +13,7 @@ Install Baota Panel, go to the [BaoTa Panel Website](https://www.bt.cn/new/index
 ## Install
 
 1. Log in to the Baota Panel, click `Docker` menu and install the `Docker` `Docker Compose` according the prompts.     
-    
+
     > Install the Docker service, skip if it already exists.   
 
     ![HertzBeat](/img/docs/start/install-to-baota-1.png)
