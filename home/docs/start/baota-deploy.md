@@ -8,25 +8,37 @@ Apache HertzBeat (incubating) supports one-click deployment in the `Docker` appl
 
 ## Prerequisites
 
-Install BaoTa panel, see [BaoTa Panel Quick Install](https://www.bt.cn/new/download.html).
+Install Baota Panel, go to the [BaoTa Panel Website](https://www.bt.cn/new/index.html), switch the script and install.
 
-## Install Docker
+## Install
 
-> Install the Docker service in the BaoTa panel, skip if you already have it.
+1. Log in to the Baota Panel, click `Docker` menu and install the `Docker` `Docker Compose` according the prompts.
 
-Log in to the BaoTa panel, click `Docker` in the left menu, and install the `Docker` and `Docker Compose` services as prompted.
-
-## Deploy HertzBeat
-
-Look for `HertzBeat` in the `Application Store` in the `Docker` section of the left menu in the BaoTa panel, and you can install it quickly.
+> Install the Docker service, skip if it already exists.
 
 ![HertzBeat](/img/docs/start/install-to-baota-1.png)
 
-Click `Install`, configure the name, version, access, etc. as prompted, and wait for the installation to complete.
+2. Find `HertzBeat` in `Docker App Store` and click `Install`
 
 ![HertzBeat](/img/docs/start/install-to-baota-2.png)
 
+3. Config the domain, name and other info, click `OK`
+
+![HertzBeat](/img/docs/start/install-to-baota-3.png)
+
+- Name: App name, default the `HertzBeat-random`
+- Version：Default `latest`
+- Domain：Config if you need domain access, please configure the domain name here and resolve the domain name to the server
+- Allow External Access：If you need to access directly through `IP+Port`, please check it. If you have already set the domain name, please do not check here
+- Port：Default `1157`
+
+4. After submission, the panel will automatically initialize the application, which takes about `1-3` minutes. After the initialization is completed, you can access it.
 
 ## Access HertzBeat
 
-After the installation is complete, visit `http://<BaoTa panel IP>:1157` in your browser to access the HertzBeat console.
+- If you have set a domain name, please enter the domain name directly in the browser address bar to access, such as `http://demo.hertzbeat.apache.org`, you can access the `HertzBeat` console.
+- If you choose to access via `IP+Port`, please enter the domain name in the browser address bar to access `http://<Baota Panel IP>:1157`, you can access the `HertzBeat` console.
+
+![HertzBeat](/img/home/0.png)
+
+> Default account username: `admin` password: `hertzbeat`
