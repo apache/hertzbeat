@@ -23,9 +23,9 @@ name:
   en-US: Kafka Message（Client）
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">Kafka Admin Client</a> 对 Kafka 的通用指标进行采集监控。</span>
-  en-US: HertzBeat uses <a href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'>Kafka Admin Client</a> to monitoring kafka general metrics. </span>
-  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">Kafka Admin Client</a> 對 Kafka 的通用指標進行采集監控。</span>
+  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client">Kafka Admin Client</a> 对 Kafka 的通用指标进行采集监控。</span>
+  en-US: HertzBeat uses <a href='https://hertzbeat.apache.org/docs/help/kafka_client'>Kafka Admin Client</a> to monitoring kafka general metrics. </span>
+  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client">Kafka Admin Client</a> 對 Kafka 的通用指標進行采集監控。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client
   en-US: https://hertzbeat.apache.org/docs/help/kafka_client
