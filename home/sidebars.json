@@ -262,6 +262,7 @@
             "help/spring_gateway",
             "help/nacos",
             "help/kafka",
+            "help/kafka_client",
             "help/pulsar"
           ]
         },
