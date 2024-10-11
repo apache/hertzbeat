@@ -14,7 +14,7 @@ Apache HertzBeat (incubating) 支持在宝塔面板的 `Docker` 应用商店一�
 
 1. 登录宝塔面板，在菜单栏中点击 `Docker`，根据提示安装 `Docker` 和 `Docker Compose` 服务。
 
-    > 在宝塔面板安装 Docker 服务，若已有则跳过。    
+    > 在宝塔面板安装 Docker 服务，若已有则跳过。
 
     ![HertzBeat](/img/docs/start/install-to-baota-1.png)
 

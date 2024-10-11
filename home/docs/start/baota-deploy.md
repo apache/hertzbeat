@@ -12,23 +12,23 @@ Install Baota Panel, go to the [BaoTa Panel Website](https://www.bt.cn/new/index
 
 ## Install
 
-1. Log in to the Baota Panel, click `Docker` menu and install the `Docker` `Docker Compose` according the prompts.     
+1. Log in to the Baota Panel, click `Docker` menu and install the `Docker` `Docker Compose` according the prompts.  
 
-    > Install the Docker service, skip if it already exists.   
+    > Install the Docker service, skip if it already exists.  
 
     ![HertzBeat](/img/docs/start/install-to-baota-1.png)
 
 2. Find `HertzBeat` in `Docker App Store` and click `Install`
 
-    ![HertzBeat](/img/docs/start/install-to-baota-2.png)   
+    ![HertzBeat](/img/docs/start/install-to-baota-2.png)  
 
 3. Config the domain, name and other info, click `OK`
 
     ![HertzBeat](/img/docs/start/install-to-baota-3.png)
     - Name: App name, default the `HertzBeat-random`
     - Version：Default `latest`
-    - Domain：Config if you need domain access, please configure the domain name here and resolve the domain name to the server 
-    - Allow External Access：If you need to access directly through `IP+Port`, please check it. If you have already set the domain name, please do not check here 
+    - Domain：Config if you need domain access, please configure the domain name here and resolve the domain name to the server
+    - Allow External Access：If you need to access directly through `IP+Port`, please check it. If you have already set the domain name, please do not check here
     - Port：Default `1157`
 
 4. After submission, the panel will automatically initialize the application, which takes about `1-3` minutes. After the initialization is completed, you can access it.

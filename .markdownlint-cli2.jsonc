@@ -19,9 +19,6 @@
     "default": true,
     "MD001": true,
     "MD003": true,
-    "MD009": {
-        "br_spaces": [2, 4]
-    },
     "MD013": {
         "line_length": 600,
         "code_blocks": false,
