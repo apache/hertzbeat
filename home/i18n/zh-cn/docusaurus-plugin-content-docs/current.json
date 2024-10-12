@@ -76,7 +76,7 @@
     "description": "The label for category snmp in sidebar docs"
   },
   "sidebar.docs.link.Install via Helm": {
-    "message": "Kubernetes Helm部署",
+    "message": "Helm方式安装",
     "description": "The label for link Install via Helm in sidebar docs, linking to https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
   },
   "sidebar.docs.category.push": {
@@ -150,5 +150,9 @@
   "sidebar.docs.category.use-case": {
     "message": "使用案例",
     "description": "The label for category use-case in sidebar docs"
+  },
+  "sidebar.docs.category.extern-deploy": {
+    "message": "集成平台部署",
+    "description": "The label for category extern-deploy in sidebar docs"
   }
 }
