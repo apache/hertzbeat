@@ -2072,6 +2072,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "pruidong",
+      "name": "puruidong",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13309008?v=4",
+      "profile": "http://www.bckf.cn/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
