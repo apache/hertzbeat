@@ -150,5 +150,9 @@
   "sidebar.docs.category.use-case": {
     "message": "UseCase",
     "description": "The label for category use-case in sidebar docs"
+  },
+  "sidebar.docs.category.extern-deploy": {
+    "message": "Extern Install",
+    "description": "The label for category extern-deploy in sidebar docs"
   }
 }
