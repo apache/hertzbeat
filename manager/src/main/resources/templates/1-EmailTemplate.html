@@ -600,7 +600,7 @@
                                                                                         class="tblCell">
                                                                                         <div style="line-height: 150%;">
                                                                                             <span style="font-size: 30px; line-height: 150%;">
-                                                                                                <strong >${nameTitle}</strong>
+                                                                                                <strong >${title}</strong>
                                                                                             </span>
                                                                                         </div>
                                                                                     </td>
@@ -648,7 +648,7 @@
                                                                                                         color: #817878;
                                                                                                         font-weight: 500;">
                                                                                                         <span>
-                                                                                                            ${nameTarget}
+                                                                                                            ${targetLabel}
                                                                                                         </span>
                                                                                                     </td>
                                                                                                     <td><span
@@ -659,7 +659,7 @@
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
                                                                                                         <span >
-                                                                                                            ${nameMonitorId}
+                                                                                                            ${monitorIdLabel}
                                                                                                         </span>
                                                                                                     </td>
                                                                                                     <td>
@@ -670,7 +670,7 @@
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
                                                                                                         <span>
-                                                                                                            ${nameMonitorName}
+                                                                                                            ${monitorNameLabel}
                                                                                                         </span>
                                                                                                     </td>
                                                                                                     <td>
@@ -681,7 +681,7 @@
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
                                                                                                         <span>
-                                                                                                            ${nameMonitorHost}
+                                                                                                            ${monitorHostLabel}
                                                                                                         </span>
                                                                                                     </td>
                                                                                                     <td>
@@ -692,7 +692,7 @@
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
                                                                                                         <span>
-                                                                                                            ${namePriority}
+                                                                                                            ${priorityLabel}
                                                                                                         </span>
                                                                                                     </td>
                                                                                                     <td>
@@ -703,19 +703,19 @@
                                                                                                     <td align="right"
                                                                                                         style="padding-right: 10px; color: #817878; font-weight: 500;">
                                                                                                         <span>
-                                                                                                            ${nameTriggerTime}
+                                                                                                            ${triggerTimeLabel}
                                                                                                         </span>
                                                                                                     </td>
                                                                                                     <td><span
-                                                                                                    >${lastTriggerTime}</span>
+                                                                                                    >${triggerTime}</span>
                                                                                                     </td>
                                                                                                 </tr>
-                                                                                                <#if nameRestoreTime??>
+                                                                                                <#if restoreTime??>
                                                                                                     <tr>
                                                                                                         <td align="right"
                                                                                                             style="padding-right: 10px; color: #817878; font-weight: 500;">
                                                                                                             <span>
-                                                                                                                ${nameRestoreTime}
+                                                                                                                ${restoreTimeLabel}
                                                                                                             </span>
                                                                                                         </td>
                                                                                                         <td><span
@@ -767,7 +767,7 @@
                                                                                                 target="_blank"
                                                                                                 style="color:#FFFFFF;text-decoration:none;"
                                                                                                 href="${consoleUrl}"
-                                                                                                data-link-type="web">${nameConsole}</a></span>
+                                                                                                data-link-type="web">${consoleLabel}</a></span>
                                                                                     </td>
                                                                                 </tr>
                                                                                 </tbody>
