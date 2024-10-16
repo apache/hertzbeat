@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -41,6 +42,7 @@ import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
+import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -108,6 +110,22 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                 collector.setMode(collectorInfo.getMode());
                 collector.setVersion(collectorInfo.getVersion());
             }
+            List<Tag> tags = collector.getTags();
+            if (tags == null){
+                tags = new ArrayList<>();
+                collector.setTags(tags);
+            }
+
+            boolean hasNameTag = false;
+            for (Tag tag : tags) {
+                if (CommonConstants.TAG_COLLECTOR_NAME.equals(tag.getName())){
+                    tag.setTagValue(collector.getName());
+                    hasNameTag = true;
+                }
+            }
+            if (!hasNameTag){
+                tags.add(Tag.builder().name(CommonConstants.TAG_COLLECTOR_NAME).tagValue(collector.getName()).type((byte) 0).build());
+            }
         } else {
             if (collectorInfo == null) {
                 log.error("collectorInfo can not null when collector not existed");
@@ -120,6 +138,9 @@ public class CollectorJobScheduler implements CollectorScheduling, CollectJobSch
                     .version(collectorInfo.getVersion())
                     .status(CommonConstants.COLLECTOR_STATUS_ONLINE)
                     .build();
+            List<Tag> tags = new LinkedList<>();
+            collector.setTags(tags);
+            tags.add(Tag.builder().name(CommonConstants.TAG_COLLECTOR_NAME).tagValue(collector.getName()).type((byte) 0).build());
         }
         collectorDao.save(collector);
         ConsistentHash.Node node = new ConsistentHash.Node(identity, collector.getMode(),

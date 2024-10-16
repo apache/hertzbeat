@@ -75,6 +75,7 @@
     "collector": "Collector",
     "collector.tip": "Choose which collector to dispatch this monitoring",
     "collector.system.default": "Default System Dispatch",
+    "collector.availability": "Collector Availability",
     "collector.status.online": "Online",
     "collector.status.offline": "Offline",
     "category": {

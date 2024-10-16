@@ -89,6 +89,7 @@
     "collector": "採集器",
     "collector.tip": "配置此監控使用哪台採集器調度採集",
     "collector.system.default": "默認系統調度",
+    "collector.availability": "採集器可用性",
     "collector.status.online": "在線",
     "collector.status.offline": "離線",
     "category": {
