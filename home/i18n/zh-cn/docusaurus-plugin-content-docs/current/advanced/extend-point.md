@@ -13,6 +13,10 @@ sidebar_label: 自定义监控
 
 ![HertzBeat](/img/docs/advanced/extend-point-1.png)
 
+### 自定义监控指标刷新时间
+
+现在，HertzBeat支持为每组监控指标设置不同的刷新时间。您可以在监控模板的 `metrics` 部分通过设置 `interval` 字段来实现，单位为秒。若不进行设置，则使用创建监控时设置的默认刷新时间。
+
 -------
 
 ### 监控模版YML
@@ -146,6 +150,9 @@ metrics:
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
     # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
     priority: 0
+    # refresh interval for this metrics group
+    # 该指标组刷新时间
+    interval: 10
     # collect metrics content
     # 具体监控指标列表
     fields:
