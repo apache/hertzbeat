@@ -30,10 +30,8 @@ import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
 import org.apache.hertzbeat.common.support.event.SystemConfigChangeEvent;
 import org.apache.hertzbeat.common.util.ResourceBundleUtil;
-import org.apache.hertzbeat.manager.component.alerter.AlertNotifyHandler;
 import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
-import org.apache.hertzbeat.manager.service.MailService;
 import org.apache.hertzbeat.manager.support.exception.AlertNoticeException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
@@ -48,11 +46,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
+public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     private final JavaMailSender javaMailSender;
-
-    private final MailService mailService;
 
     @Value("${spring.mail.host:smtp.demo.com}")
     private String host;
@@ -127,7 +123,7 @@ public class EmailAlertNotifyHandlerImpl implements AlertNotifyHandler {
             messageHelper.setTo(receiver.getEmail());
             messageHelper.setSentDate(new Date());
             // Build email templates
-            String process = mailService.buildAlertHtmlTemplate(alert, noticeTemplate);
+            String process = renderContent(noticeTemplate, alert);
             // Set Email Content Template
             messageHelper.setText(process, true);
             javaMailSender.send(mimeMessage);

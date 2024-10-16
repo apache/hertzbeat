@@ -106,7 +106,11 @@ abstract class AbstractAlertNotifyHandlerImpl implements AlertNotifyHandler {
         model.put("content", alert.getContent());
         model.put("tagsLabel", bundle.getString("alerter.notify.tags"));
         model.put("tags", alert.getTags());
-        // Single instance reuse cache considers mulitple-threading issues
+        if (alerterProperties != null) {
+            model.put("consoleUrl", alerterProperties.getConsoleUrl());   
+        }
+        model.put("consoleLabel", bundle.getString("alerter.notify.console"));
+        // TODO Single instance reuse cache considers multiple-threading issues
         String templateName = "freeMakerTemplate";
         stringLoader.putTemplate(templateName, noticeTemplate.getContent());
         cfg.setTemplateLoader(stringLoader);
