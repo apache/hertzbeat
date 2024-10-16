@@ -1,0 +1,20 @@
+### star version
+POST http://localhost:8080/api/version/star
+Content-Type: application/x-www-form-urlencoded
+
+  user=1&
+  template=1&
+  version=1
+
+### get star version by user
+GET http://localhost:8080/api/star/1
+
+### get star version page by user
+GET http://localhost:8080/api/star/page/user/1?page=0&size=2
+
+### cancel star
+POST http://localhost:8080/api/star/cancel/1
+Content-Type: application/x-www-form-urlencoded
+
+  versionId = 1
+
