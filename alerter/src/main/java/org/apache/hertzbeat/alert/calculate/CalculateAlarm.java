@@ -179,7 +179,7 @@ public class CalculateAlarm {
                                 String alarmKey = String.valueOf(monitorId) + define.getId();
                                 triggeredAlertMap.remove(alarmKey);
                                 if (define.isRecoverNotice()) {
-                                    handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
+                                    handleRecoveredAlert(currentTimeMilli, define, alarmKey);
                                 }
                             }
                         } catch (Exception e) {
@@ -234,7 +234,7 @@ public class CalculateAlarm {
                                 String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
                                 triggeredAlertMap.remove(alarmKey);
                                 if (define.isRecoverNotice()) {
-                                    handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
+                                    handleRecoveredAlert(currentTimeMilli, define, alarmKey);
                                 }
                             }
                         } catch (Exception e) {
@@ -246,12 +246,12 @@ public class CalculateAlarm {
         }
     }
 
-    private void handleRecoveredAlert(long currentTimeMilli, AlertDefine define, String expr, String alarmKey) {
+    private void handleRecoveredAlert(long currentTimeMilli, AlertDefine define, String alarmKey) {
         Alert notResolvedAlert = notRecoveredAlertMap.remove(alarmKey);
         if (notResolvedAlert != null) {
             // Sending an alarm Restore
             Map<String, String> tags = notResolvedAlert.getTags();
-            String content = this.bundle.getString("alerter.alarm.recover") + " : " + expr;
+            String content = this.bundle.getString("alerter.alarm.recover") + " : " + notResolvedAlert.getContent();
             Alert resumeAlert = Alert.builder()
                     .tags(tags)
                     .target(define.getApp() + "." + define.getMetric() + "." + define.getField())
