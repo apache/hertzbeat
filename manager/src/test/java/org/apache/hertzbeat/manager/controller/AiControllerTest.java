@@ -19,7 +19,6 @@ package org.apache.hertzbeat.manager.controller;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.apache.hertzbeat.manager.config.AiProperties;
@@ -34,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import reactor.core.publisher.Flux;
 
@@ -74,9 +74,12 @@ class AiControllerTest {
         when(aiService.requestAi(anyString())).thenReturn(responseFlux);
         when(aiProperties.getType()).thenReturn("alibabaAi");
 
-        mockMvc.perform(get("/api/ai/get")
-                        .param("text", "Who are you")
-                        .accept(MediaType.TEXT_EVENT_STREAM))
+        String requestBody = "{\"text\":\"Who are you\"}";
+
+        mockMvc.perform((MockMvcRequestBuilders.post("/api/ai/get")
+                .content(requestBody)
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.TEXT_EVENT_STREAM)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.TEXT_EVENT_STREAM_VALUE))
                 .andExpect(content().string("data:response\n\n"));
