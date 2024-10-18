@@ -9,7 +9,7 @@ import { CONSTANTS } from '../../shared/constants';
 @Component({
   selector: 'layout-basic',
   template: `
-    <layout-default [options]="options" [asideUser]="asideUserTpl" [nav]="navTpl" [content]="contentTpl" [customError]="null">
+    <layout-default [options]="options" [nav]="navTpl" [content]="contentTpl" [customError]="null">
       <layout-default-header-item direction="left">
         <a layout-default-header-item-trigger href="//github.com/apache/hertzbeat" target="_blank">
           <i nz-icon nzType="github"></i>
@@ -57,15 +57,6 @@ import { CONSTANTS } from '../../shared/constants';
       <layout-default-header-item direction="right">
         <header-user></header-user>
       </layout-default-header-item>
-      <ng-template #asideUserTpl>
-        <div class="alain-default__aside-user" style="cursor: default;">
-          <nz-avatar class="alain-default__aside-user-avatar" [nzSrc]="avatar"></nz-avatar>
-          <div class="alain-default__aside-user-info">
-            <strong>{{ user.name }}</strong>
-            <p class="mb0">{{ role }}</p>
-          </div>
-        </div>
-      </ng-template>
       <ng-template #navTpl>
         <layout-default-nav class="d-block py-lg" openStrictly="true"></layout-default-nav>
       </ng-template>

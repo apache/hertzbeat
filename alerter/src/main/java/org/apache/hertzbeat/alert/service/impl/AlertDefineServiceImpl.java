@@ -17,20 +17,12 @@
 
 package org.apache.hertzbeat.alert.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.servlet.http.HttpServletResponse;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
@@ -55,6 +47,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Alarm definition management interface implementation
@@ -158,6 +164,18 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public Page<AlertDefine> getAlertDefines(List<Long> defineIds, String search, Byte priority, String sort, String order, int pageIndex, int pageSize) {
+        // parse translation content list
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<String> searchList = Collections.emptyList();
+        if (StringUtils.hasText(search)) {
+            try {
+                searchList = objectMapper.readValue(URLDecoder.decode(search, StandardCharsets.UTF_8), new TypeReference<>() {});
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Failed to parse search parameter", e);
+            }
+        }
+        List<String> finalSearchList = searchList;
+        // build search condition
         Specification<AlertDefine> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> andList = new ArrayList<>();
             if (defineIds != null && !defineIds.isEmpty()) {
@@ -167,30 +185,21 @@ public class AlertDefineServiceImpl implements AlertDefineService {
                 }
                 andList.add(inPredicate);
             }
-            if (StringUtils.hasText(search)) {
-                Predicate predicate = criteriaBuilder.or(
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("app")),
-                                "%" + search.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("metric")),
-                                "%" + search.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("field")),
-                                "%" + search.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("expr")),
-                                "%" + search.toLowerCase() + "%"
-                        ),
-                        criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("template")),
-                                "%" + search.toLowerCase() + "%"
-                        )
-                );
-                andList.add(predicate);
+            if (null != finalSearchList && !finalSearchList.isEmpty()) {
+                List<Predicate> searchPredicates = new ArrayList<>();
+                for (String searchContent : finalSearchList) {
+                    searchContent = searchContent.toLowerCase();
+                    Predicate predicate = criteriaBuilder.or(
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("app")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("metric")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("field")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("expr")), "%" + searchContent + "%"),
+                            criteriaBuilder.like(criteriaBuilder.lower(root.get("template")), "%" + searchContent + "%")
+                    );
+                    searchPredicates.add(predicate);
+                }
+                // all search keywords are connected with or
+                andList.add(criteriaBuilder.or(searchPredicates.toArray(new Predicate[0])));
             }
             if (priority != null) {
                 Predicate predicate = criteriaBuilder.equal(root.get("priority"), priority);
