@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.templatehub.exception;
 
-import org.apache.hertzbeat.templatehub.model.dto.Message;
+import org.apache.hertzbeat.templatehub.model.DTO.Message;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;

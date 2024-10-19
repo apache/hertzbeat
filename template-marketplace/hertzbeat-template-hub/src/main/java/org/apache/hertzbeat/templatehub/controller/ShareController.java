@@ -18,9 +18,9 @@
 package org.apache.hertzbeat.templatehub.controller;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.templatehub.model.dto.Message;
-import org.apache.hertzbeat.templatehub.model.entity.Template;
-import org.apache.hertzbeat.templatehub.model.entity.Version;
+import org.apache.hertzbeat.templatehub.model.DO.VersionDO;
+import org.apache.hertzbeat.templatehub.model.DTO.Message;
+import org.apache.hertzbeat.templatehub.model.DO.TemplateDO;
 import org.apache.hertzbeat.templatehub.service.TemplateService;
 import org.apache.hertzbeat.templatehub.service.VersionService;
 import org.apache.hertzbeat.templatehub.util.Base62Util;
@@ -57,40 +57,33 @@ public class ShareController {
     @GetMapping("/getShareURL/{version}")
     public ResponseEntity<Message<String>> getShareURL(@PathVariable("version") long versionId){
 
-        if(versionId<=0){
-            return ResponseEntity.ok(Message.fail(FAIL_CODE,"params error"));
-        }
+        if(versionId<=0) return ResponseEntity.ok(Message.fail(FAIL_CODE,"params error"));
 
-        Version version = versionService.getVersion((int) versionId);
-        if(version==null){
-            return ResponseEntity.ok(Message.fail(FAIL_CODE,"version not found"));
-        }
+        VersionDO versionDO = versionService.getVersion((int) versionId);
+        if(versionDO ==null) return ResponseEntity.ok(Message.fail(FAIL_CODE,"version not found"));
 
         String base62Key = Base62Util.idToShortKey(versionId+100000000);
 
-        return ResponseEntity.ok(Message.success("http://"+serverAddress+":"+serverPort+contextPath+"/share/share/"+base62Key));
+        return ResponseEntity.ok(Message.success("http://"+serverAddress+":"+serverPort+contextPath+"/share/download/"+base62Key));
     }
 
-    @GetMapping("/share/{key}")
+    @GetMapping("/download/{key}")
     public ResponseEntity<Resource> downloadShare(@PathVariable("key") String key){
 
-        if(!Base62Util.isBase62(key)){
-            return ResponseEntity.notFound().build();
-        }
+        if(!Base62Util.isBase62(key)) return ResponseEntity.notFound().build();
 
         long versionId = (int) Base62Util.shortKeyToId(key)-100000000;
 
-        Version version = versionService.getVersion((int) versionId);
+        VersionDO versionDO = versionService.getVersion((int) versionId);
 
-        Template template = templateService.getTemplate(version.getTemplate());
+        if(versionDO ==null) return ResponseEntity.notFound().build();
 
-        Resource resource = templateService.downloadTemplate(template.getUser(), template.getId(), version.getVersion(), (int) versionId);
+        TemplateDO templateDO = templateService.getTemplate(versionDO.getTemplateId());
 
-        if(resource!=null){
-            return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + version.getVersion() + ".yml\"")
-                    .body(resource);
-        }else {
-            return ResponseEntity.notFound().build();
-        }
+        Resource resource = templateService.downloadTemplate(templateDO.getUser(), templateDO.getId(), versionDO.getVersion(), (int) versionId);
+
+        if(resource!=null) return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + versionDO.getVersion() + ".yml\"").body(resource);
+        else return ResponseEntity.notFound().build();
     }
 }

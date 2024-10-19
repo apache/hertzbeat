@@ -17,21 +17,19 @@
 
 package org.apache.hertzbeat.templatehub.service;
 
-import org.apache.hertzbeat.templatehub.model.dto.Message;
-import org.apache.hertzbeat.templatehub.model.entity.Template;
-import org.apache.hertzbeat.templatehub.model.entity.Version;
+import org.apache.hertzbeat.templatehub.model.DO.TemplateDO;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 public interface StarService {
-    int starVersion(int userId, int templateId, int versionId, String nowTime);
+    int starTemplate(int userId, int templateId, String nowTime);
 
-    @Deprecated
-    List<Version> getVersionByUserStar(int userId, int isCancel, int isDel, int offShelf);
+    boolean assertTemplateIdIsStarByUser(int userId, int templateId);
 
-    Page<Version> getPageByUserStar(int userId, int isCancel, int isDel, int offShelf, int page, int size);
+    List<Integer> getTemplateByUserStar(int userId, int isDel);
 
-    Boolean cancelStarByUser(int userId, int versionId);
+    Page<TemplateDO> getPageByUserStar(int userId, int isCancel, int isDel, int offShelf, int page, int size);
+
+    Boolean cancelStarByUser(int userId, int templateId);
 }

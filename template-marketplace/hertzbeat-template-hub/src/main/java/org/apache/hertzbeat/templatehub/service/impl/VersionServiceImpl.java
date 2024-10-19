@@ -18,13 +18,12 @@
 package org.apache.hertzbeat.templatehub.service.impl;
 
 import org.apache.hertzbeat.templatehub.exception.HertzbeatTemplateHubException;
-import org.apache.hertzbeat.templatehub.model.dao.StarDao;
-import org.apache.hertzbeat.templatehub.model.dao.TemplateDao;
-import org.apache.hertzbeat.templatehub.model.dao.VersionDao;
-import org.apache.hertzbeat.templatehub.model.dto.Message;
-import org.apache.hertzbeat.templatehub.model.dto.TemplateDto;
-import org.apache.hertzbeat.templatehub.model.entity.Template;
-import org.apache.hertzbeat.templatehub.model.entity.Version;
+import org.apache.hertzbeat.templatehub.model.DAO.StarDao;
+import org.apache.hertzbeat.templatehub.model.DAO.TemplateDao;
+import org.apache.hertzbeat.templatehub.model.DAO.VersionDao;
+import org.apache.hertzbeat.templatehub.model.DO.VersionDO;
+import org.apache.hertzbeat.templatehub.model.DTO.TemplateDto;
+import org.apache.hertzbeat.templatehub.model.DO.TemplateDO;
 import org.apache.hertzbeat.templatehub.service.FileStorageService;
 import org.apache.hertzbeat.templatehub.service.VersionService;
 import lombok.extern.slf4j.Slf4j;
@@ -32,15 +31,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
-
-import static org.apache.hertzbeat.templatehub.constants.CommonConstants.FAIL_CODE;
 
 @Slf4j
 @Service
@@ -63,32 +59,32 @@ public class VersionServiceImpl implements VersionService {
     }
 
     @Override
-    public boolean insertVersion(Version version, Template template) {
+    public boolean insertVersion(VersionDO versionDO, TemplateDO templateDO) {
 
-        version.setTemplate(template.getId());
+        versionDO.setTemplateId(templateDO.getId());
 
-        Version insertVersion = versionDao.save(version);
-        if(insertVersion.getId()==0){
+        VersionDO insertVersionDO = versionDao.save(versionDO);
+        if(insertVersionDO.getId()==0){
             return false;
         }
 
         //Update the latest version in the template file data table
-        int versionId=insertVersion.getId();
-        template.setLatest(versionId);
-        int updateTemplate = templateDao.updateTemplate(template.getLatest(), template.getId());
+        int versionId= insertVersionDO.getId();
+        templateDO.setLatest(versionId);
+        int updateTemplate = templateDao.updateTemplate(templateDO.getLatest(), templateDO.getId());
 
         return updateTemplate == 1;
     }
 
     @Deprecated
     @Override
-    public List<Version> getVersions(int templateId) {
+    public List<VersionDO> getVersions(int templateId) {
 
         return versionDao.queryVersionByTemplateId(templateId);
     }
 
     @Override
-    public Page<Version> getVersionPageByTemplate(int templateId, int isDel, int page, int size) {
+    public Page<VersionDO> getVersionPageByTemplate(int templateId, int isDel, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
 
@@ -99,33 +95,33 @@ public class VersionServiceImpl implements VersionService {
     @Override
     public boolean upload(TemplateDto templateDto, MultipartFile file) {
         //Generate Template entity
-        Template template=templateDao.findTemplateById(templateDto.getId());
+        TemplateDO templateDO =templateDao.findTemplateById(templateDto.getId());
 
         //Generate version entity
-        Version version=new Version();
-        version.setId(0);
-        version.setVersion(templateDto.getCurrentVersion());
-        version.setDescription(templateDto.getDescriptionVersion());
-        version.setDownload(0);
-        version.setCreateTime(templateDto.getCreate_time());
-        version.setOffShelf(0);
-        version.setIsDel(0);
+        VersionDO versionDO =new VersionDO();
+        versionDO.setId(0);
+        versionDO.setVersion(templateDto.getCurrentVersion());
+        versionDO.setDescription(templateDto.getDescriptionVersion());
+        versionDO.setDownload(0);
+        versionDO.setCreateTime(templateDto.getCreate_time());
+        versionDO.setOffShelf(0);
+        versionDO.setIsDel(0);
 
 
         //Check the version table of this template to see if there are any duplicate versions
-        int versionCount = versionDao.queryCountByTemplateAndVersion(template.getId(), templateDto.getCurrentVersion());
+        int versionCount = versionDao.queryCountByTemplateAndVersion(templateDO.getId(), templateDto.getCurrentVersion());
         if(versionCount>=1){
             throw new HertzbeatTemplateHubException("same version");
         }
 
         //Insert version information
-        boolean isInsertVersion = insertVersion(version, template);
+        boolean isInsertVersion = insertVersion(versionDO, templateDO);
 
         if(!isInsertVersion){
-            throw new RuntimeException("Version information insertion error");
+            throw new HertzbeatTemplateHubException("Version information insertion error");
         }
 
-        String path=templateDto.getUserId()+"/"+template.getId();
+        String path=templateDto.getUserId()+"/"+ templateDO.getId();
 
         try {
             fileStorageService.uploadFile(file, path, templateDto.getCurrentVersion()+".yml");
@@ -137,40 +133,40 @@ public class VersionServiceImpl implements VersionService {
     }
 
     @Override
-    public Version getVersion(int versionId) {
-        Optional<Version> byId = versionDao.findById(versionId);
+    public VersionDO getVersion(int versionId) {
+        Optional<VersionDO> byId = versionDao.findById(versionId);
         return byId.orElse(null);
     }
 
     @Override
-    public Version getLatestVersion(int templateId) {
+    public VersionDO getLatestVersion(int templateId) {
         return versionDao.queryLatestByTemplate(templateId);
     }
 
-    @Override
-    public boolean startVersion(int versionId) {
+//    @Override
+//    public boolean startVersion(int versionId) {
+//
+//        Optional<Version> byId = versionDao.findById(versionId);
+//        if(byId.isEmpty()){
+//            return false;
+//        }
+//        Version version = byId.get();
+//        version.setStar(version.getStar() + 1);
+//        versionDao.save(version);
+//
+//        return true;
+//    }
 
-        Optional<Version> byId = versionDao.findById(versionId);
-        if(byId.isEmpty()){
-            return false;
-        }
-        Version version = byId.get();
-        version.setStar(version.getStar() + 1);
-        versionDao.save(version);
-
-        return true;
-    }
-
-    @Override
-    public int cancelStarVersion(int versionId) {
-        Optional<Version> byId = versionDao.findById(versionId);
-        if(byId.isEmpty()){
-            return 0;
-        }
-        int i = versionDao.cancelStarVersion(1, versionId);
-        if(i!=1){
-            return 0;
-        }
-        return byId.get().getTemplate();
-    }
+//    @Override
+//    public int cancelStarVersion(int versionId) {
+//        Optional<Version> byId = versionDao.findById(versionId);
+//        if(byId.isEmpty()){
+//            return 0;
+//        }
+//        int i = versionDao.cancelStarVersion(1, versionId);
+//        if(i!=1){
+//            return 0;
+//        }
+//        return byId.get().getTemplateId();
+//    }
 }

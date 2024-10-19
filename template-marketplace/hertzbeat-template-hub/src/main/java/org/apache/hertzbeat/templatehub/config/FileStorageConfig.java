@@ -39,10 +39,6 @@ public class FileStorageConfig {
     @Value("${minio.secretKey}")
     private String secretKey;
 
-    private String getStorageType(){
-        return this.storageType;
-    }
-
     @Bean
     public FileStorageService fileStorageService() {
         if ("minio".equalsIgnoreCase(storageType)) {

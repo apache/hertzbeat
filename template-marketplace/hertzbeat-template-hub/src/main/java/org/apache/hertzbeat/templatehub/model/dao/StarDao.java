@@ -15,20 +15,28 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.templatehub.model.dao;
+package org.apache.hertzbeat.templatehub.model.DAO;
 
-import org.apache.hertzbeat.templatehub.model.entity.Star;
+import org.apache.hertzbeat.templatehub.model.DO.StarDO;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-public interface StarDao extends JpaRepository<Star, Integer> , Repository<Star, Integer> {
+import java.util.List;
+
+public interface StarDao extends JpaRepository<StarDO, Integer> , Repository<StarDO, Integer> {
 
     @Modifying(clearAutomatically = true)
     @Transactional
-    @Query(value = "UPDATE star set `is_del` = ? where `user_id` = ? AND version_id=? AND is_del=?", nativeQuery = true)
-    int cancelByUser(int cancel, int userId,int versionId,int isCancel);
+    @Query(value = "UPDATE star set `is_del` = ? where `user_id` = ? AND template_id=? AND is_del=?", nativeQuery = true)
+    int cancelByUser(int cancel, int userId,int templateId,int isCancel);
+
+    @Query(value = "select star.template_id from star where `user_id` = ? AND is_del=?", nativeQuery = true)
+    List<Integer> queryTemplateIdByUserAndIsDel(int userId, int isDel);
+
+//    @Query(value = "select star.id from star where `user_id` = ? AND is_del=?", nativeQuery = true)
+    boolean existsStarByTemplateIdAndUserIdAndIsDel(int templateId ,int userId, int isDel);
 
 }

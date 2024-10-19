@@ -18,19 +18,13 @@
 package org.apache.hertzbeat.templatehub.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.templatehub.model.dto.Message;
+import org.apache.hertzbeat.templatehub.model.DTO.Message;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.apache.hertzbeat.templatehub.constants.CommonConstants.FAIL_CODE;
 

@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.templatehub.model.dto;
+package org.apache.hertzbeat.templatehub.model.DTO;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 import org.apache.hertzbeat.templatehub.constants.CommonConstants;
@@ -35,6 +36,7 @@ import org.apache.hertzbeat.templatehub.constants.CommonConstants;
 
 @Data
 @ToString
+@Builder
 @AllArgsConstructor
 public class Message<T> {
 

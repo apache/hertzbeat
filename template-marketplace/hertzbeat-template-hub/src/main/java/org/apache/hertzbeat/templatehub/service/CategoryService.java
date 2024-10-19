@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.templatehub.service;
 
-import org.apache.hertzbeat.templatehub.model.entity.Category;
+import org.apache.hertzbeat.templatehub.model.DO.CategoryDO;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public interface CategoryService {
 
     boolean deleteCategory(int id);
 
-    List<Category> getAllCategoryByIsDel(int isDel);
+    List<CategoryDO> getAllCategoryByIsDel(int isDel);
 
-    Page<Category> getPageByIsDel(int isDel, int page, int size);
+    Page<CategoryDO> getPageByIsDel(int isDel, int page, int size);
 }

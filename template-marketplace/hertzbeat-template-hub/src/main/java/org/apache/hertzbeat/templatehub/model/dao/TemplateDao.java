@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.templatehub.model.dao;
+package org.apache.hertzbeat.templatehub.model.DAO;
 
-import org.apache.hertzbeat.templatehub.model.entity.Template;
+import org.apache.hertzbeat.templatehub.model.DO.TemplateDO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,7 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface TemplateDao extends JpaRepository<Template, Integer> {
+public interface TemplateDao extends JpaRepository<TemplateDO, Integer> {
 
     @Query(value = "select id from template where name= ? and `user`= ?",nativeQuery=true)
     int queryId(String name, int user);
@@ -44,102 +44,103 @@ public interface TemplateDao extends JpaRepository<Template, Integer> {
 
     @Deprecated
     @Query(value = "select * from template where `user` = ? and `is_del` = ?",nativeQuery=true)
-    List<Template> queryByUserId(int user, int isDel);
+    List<TemplateDO> queryByUserId(int user, int isDel);
 
     @Query(value = "select * from template where `user` = ? and `is_del` = ?", nativeQuery = true)
-    Page<Template> queryPageByUserId(int user, int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByUserId(int user, int isDel, Pageable pageable);
 
     @Deprecated
-    @Query(value = "select * from template where `category` = ? and `is_del` = ?",nativeQuery=true)
-    List<Template> queryByCategory(int categoryId, int isDel);
+    @Query(value = "select * from template where `category_id` = ? and `is_del` = ?",nativeQuery=true)
+    List<TemplateDO> queryByCategory(int categoryId, int isDel);
 
-    @Query(value = "select * from template where `category` IN ? and `is_del` = ?",nativeQuery=true)
-    Page<Template> queryPageByCategory(List<Integer> categoryIdList, int isDel, Pageable pageable);
+    @Query(value = "select * from template where `category_id` IN ? and `is_del` = ?",nativeQuery=true)
+    Page<TemplateDO> queryPageByCategory(List<Integer> categoryIdList, int isDel, Pageable pageable);
 
-    @Query(value = "select * from template where name like CONCAT('%',?,'%') AND `category` IN ? AND `is_del` = ?",nativeQuery=true)
-    Page<Template> queryPageByNameLikeAndCategory(String nameLike, List<Integer> categoryIdList, int isDel, Pageable pageable);
+    @Query(value = "select * from template where name like CONCAT('%',?,'%') AND `category_id` IN ? AND `is_del` = ?",nativeQuery=true)
+    Page<TemplateDO> queryPageByNameLikeAndCategory(String nameLike, List<Integer> categoryIdList, int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from  template where is_del=? AND name like CONCAT('%',?,'%') ",nativeQuery = true)
-    List<Template> queryByNameLike(int isDel, String name);
+    List<TemplateDO> queryByNameLike(int isDel, String name);
 
     @Query(value = "select * from  template where is_del=? AND name like CONCAT('%',?,'%') ",nativeQuery = true)
-    Page<Template> queryPageByNameLike(int isDel, String name, Pageable pageable);
-
-    @Deprecated
-    @Query(value = "select * from template where `is_del` = ?",nativeQuery=true)
-    List<Template> queryAllByIsDel(int isDel);
+    Page<TemplateDO> queryPageByNameLike(int isDel, String name, Pageable pageable);
 
     @Query(value = "select * from template where `is_del` = ?",nativeQuery=true)
-    Page<Template> queryPageByIsDel(int isDel, Pageable pageable);
+    List<TemplateDO> queryAllByIsDel(int isDel);
+
+    @Query(value = "select * from template where `is_del` = ?",nativeQuery=true)
+    Page<TemplateDO> queryPageByIsDel(int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from template where is_del = ? order by create_time desc ",nativeQuery = true)
-    List<Template> queryAllByIsDelOrderByCreateTimeDesc(int isDel);
+    List<TemplateDO> queryAllByIsDelOrderByCreateTimeDesc(int isDel);
 
     @Query(value = "select * from template where is_del = ? order by create_time desc ",nativeQuery = true)
-    Page<Template> queryPageByIsDelOrderByCreateTimeDesc(int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByIsDelOrderByCreateTimeDesc(int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from template where is_del = ? order by create_time",nativeQuery = true)
-    List<Template> queryAllByIsDelOrderByCreateTimeAsc(int isDel);
+    List<TemplateDO> queryAllByIsDelOrderByCreateTimeAsc(int isDel);
 
     @Query(value = "select * from template where is_del = ? order by create_time",nativeQuery = true)
-    Page<Template> queryPageByIsDelOrderByCreateTimeAsc(int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByIsDelOrderByCreateTimeAsc(int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from template where is_del = ? order by update_time desc ",nativeQuery = true)
-    List<Template> getByIsDelOrderByUpdateTimeDesc(int isDel);
+    List<TemplateDO> getByIsDelOrderByUpdateTimeDesc(int isDel);
 
     @Query(value = "select * from template where is_del = ? order by update_time desc ",nativeQuery = true)
-    Page<Template> queryPageByIsDelOrderByUpdateTimeDesc(int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByIsDelOrderByUpdateTimeDesc(int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from template where is_del = ? order by update_time",nativeQuery = true)
-    List<Template> getByIsDelOrderByUpdateTimeAsc(int isDel);
+    List<TemplateDO> getByIsDelOrderByUpdateTimeAsc(int isDel);
 
     @Query(value = "select * from template where is_del = ? order by update_time",nativeQuery = true)
-    Page<Template> queryPageByIsDelOrderByUpdateTimeAsc(int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByIsDelOrderByUpdateTimeAsc(int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from template where is_del = ? order by star desc ",nativeQuery = true)
-    List<Template> getByIsDelOrderByStarDesc(int isDel);
+    List<TemplateDO> getByIsDelOrderByStarDesc(int isDel);
 
     @Query(value = "select * from template where is_del = ? order by star desc ",nativeQuery = true)
-    Page<Template> queryPageByIsDelOrderByStarDesc(int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByIsDelOrderByStarDesc(int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from template where is_del = ? order by star",nativeQuery = true)
-    List<Template> getByIsDelOrderByStarAsc(int isDel);
+    List<TemplateDO> getByIsDelOrderByStarAsc(int isDel);
 
     @Query(value = "select * from template where is_del = ? order by star",nativeQuery = true)
-    Page<Template> queryPageByIsDelOrderByStarAsc(int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByIsDelOrderByStarAsc(int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from template where is_del = ? order by download desc ",nativeQuery = true)
-    List<Template> getByIsDelOrderByDownloadDesc(int isDel);
+    List<TemplateDO> getByIsDelOrderByDownloadDesc(int isDel);
 
     @Query(value = "select * from template where is_del = ? order by download desc ",nativeQuery = true)
-    Page<Template> queryPageByIsDelOrderByDownloadDesc(int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByIsDelOrderByDownloadDesc(int isDel, Pageable pageable);
 
     @Deprecated
     @Query(value = "select * from template where is_del = ? order by download",nativeQuery = true)
-    List<Template> getByIsDelOrderByDownloadAsc(int isDel);
+    List<TemplateDO> getByIsDelOrderByDownloadAsc(int isDel);
 
     @Query(value = "select * from template where is_del = ? order by download",nativeQuery = true)
-    Page<Template> queryPageByIsDelOrderByDownloadAsc(int isDel, Pageable pageable);
+    Page<TemplateDO> queryPageByIsDelOrderByDownloadAsc(int isDel, Pageable pageable);
 
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE template set `download` = `download` + ? where `id` = ?",nativeQuery=true)
     int downloadUpdate(int num, int id);
 
-    Template findTemplateById(int id);
+    TemplateDO findTemplateById(int id);
 
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE template set star = star - ? where `id` = ? AND is_del=0 AND off_shelf=0",nativeQuery=true)
     int cancelStarTemplate(int num, int templateId);
 
-
+    @Transactional
+    @Query(value = "select template.* from template left join star on template.id = star.template_id where star.user_id = ? AND star.is_del=? AND template.is_del=? AND template.off_shelf=?", nativeQuery = true)
+    Page<TemplateDO> queryPageByUserStar(int userId, int isCancel, int isDel, int offShelf, Pageable pageable);
 }

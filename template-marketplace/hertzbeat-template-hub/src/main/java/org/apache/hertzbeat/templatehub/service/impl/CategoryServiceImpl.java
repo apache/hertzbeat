@@ -18,10 +18,10 @@
 package org.apache.hertzbeat.templatehub.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.templatehub.model.dao.CategoryDao;
-import org.apache.hertzbeat.templatehub.model.dao.TemplateDao;
-import org.apache.hertzbeat.templatehub.model.entity.Category;
-import org.apache.hertzbeat.templatehub.model.entity.Template;
+import org.apache.hertzbeat.templatehub.model.DAO.CategoryDao;
+import org.apache.hertzbeat.templatehub.model.DAO.TemplateDao;
+import org.apache.hertzbeat.templatehub.model.DO.CategoryDO;
+import org.apache.hertzbeat.templatehub.model.DO.TemplateDO;
 import org.apache.hertzbeat.templatehub.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -46,7 +46,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public boolean addCategory(String categoryName, String categoryDescription, String nowTime) {
 
-        Category save = categoryDao.save(new Category(0, categoryName, categoryDescription, nowTime, nowTime, 0));
+        CategoryDO save = categoryDao.save(new CategoryDO(0, categoryName, categoryDescription, nowTime, nowTime, 0));
 
         return save.getId() > 0;
     }
@@ -54,17 +54,17 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public boolean modifyCategory(int id, String categoryName, String categoryDescription, String nowTime) {
 
-        Optional<Category> byId = categoryDao.findById(id);
+        Optional<CategoryDO> byId = categoryDao.findById(id);
 
         if(byId.isEmpty()){
             return false;
         }
-        Category category = byId.get();
-        category.setName(categoryName);
-        category.setDescription(categoryDescription);
-        category.setUpdateTime(nowTime);
+        CategoryDO categoryDO = byId.get();
+        categoryDO.setName(categoryName);
+        categoryDO.setDescription(categoryDescription);
+        categoryDO.setUpdateTime(nowTime);
 
-        categoryDao.save(category);
+        categoryDao.save(categoryDO);
 
         return true;
     }
@@ -74,7 +74,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         List<Integer> ids = new ArrayList<>();
         ids.add(id);
-        Page<Template> templates = templateDao.queryPageByCategory(ids, 0, PageRequest.of(0,1));
+        Page<TemplateDO> templates = templateDao.queryPageByCategory(ids, 0, PageRequest.of(0,1));
 
         if(templates.getTotalElements()!=0){
             return false;
@@ -84,12 +84,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<Category> getAllCategoryByIsDel(int isDel) {
+    public List<CategoryDO> getAllCategoryByIsDel(int isDel) {
         return categoryDao.findAllByIsDel(isDel);
     }
 
     @Override
-    public Page<Category> getPageByIsDel(int isDel, int page, int size) {
+    public Page<CategoryDO> getPageByIsDel(int isDel, int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         return categoryDao.findAllByIsDel(isDel,pageable);

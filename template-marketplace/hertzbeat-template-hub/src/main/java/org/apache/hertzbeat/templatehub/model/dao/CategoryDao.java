@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.templatehub.model.dao;
+package org.apache.hertzbeat.templatehub.model.DAO;
 
-import org.apache.hertzbeat.templatehub.model.entity.Category;
-import org.apache.hertzbeat.templatehub.model.entity.Star;
+import org.apache.hertzbeat.templatehub.model.DO.CategoryDO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,11 +28,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface CategoryDao extends JpaRepository<Category, Integer> , Repository<Category, Integer> {
+public interface CategoryDao extends JpaRepository<CategoryDO, Integer> , Repository<CategoryDO, Integer> {
 
-    List<Category> findAllByIsDel(int isDel);
+    List<CategoryDO> findAllByIsDel(int isDel);
 
-    Page<Category> findAllByIsDel(int isDel, Pageable pageable);
+    Page<CategoryDO> findAllByIsDel(int isDel, Pageable pageable);
 
     @Modifying(clearAutomatically = true)
     @Transactional

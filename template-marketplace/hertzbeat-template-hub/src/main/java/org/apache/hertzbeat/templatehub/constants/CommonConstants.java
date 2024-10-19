@@ -33,6 +33,11 @@ public interface CommonConstants {
     byte FAIL_CODE = 0x0F;
 
     /**
+     * Response status code: Incorrect login account password
+     */
+    byte LOGIN_FAILED_CODE = 0x06;
+
+    /**
      * Response status code: Parameter verification failed
      */
     byte PARAM_INVALID_CODE = 0x01;

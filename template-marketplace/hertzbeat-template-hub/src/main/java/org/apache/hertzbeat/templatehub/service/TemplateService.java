@@ -17,9 +17,9 @@
 
 package org.apache.hertzbeat.templatehub.service;
 
-import org.apache.hertzbeat.templatehub.model.dto.Message;
-import org.apache.hertzbeat.templatehub.model.dto.TemplateDto;
-import org.apache.hertzbeat.templatehub.model.entity.Template;
+import org.apache.hertzbeat.templatehub.model.DO.TemplateDO;
+import org.apache.hertzbeat.templatehub.model.DTO.Message;
+import org.apache.hertzbeat.templatehub.model.DTO.TemplateDto;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -33,75 +33,74 @@ public interface TemplateService {
 
     boolean upload(TemplateDto templateDto, MultipartFile file);
 
-    @Deprecated
-    ResponseEntity<Message<List<Template>>> getAllTemplatesByUserId(int userId);
+    Page<TemplateDO> getPageByUserId(int userId, int page, int size);
 
-    Page<Template> getPageByUserId(int userId, int page, int size);
+    Page<TemplateDO> getPageByCategory(List<Integer> categoryIdList, int isDel, int orderOption, int page, int size);
 
-    @Deprecated
-    List<Template> getTemplatesByCategory(int categoryId);
+    Page<TemplateDO> getPageByOption(String nameLike, List<Integer> categoryIdList, int isDel, int orderOption, int page, int size);
 
-    Page<Template> getPageByCategory(List<Integer> categoryIdList, int isDel, int orderOption, int page, int size);
+    Page<TemplateDO> getPageByIsDelOrderByCreateTimeDesc(int isDel, int page, int size);
 
-    Page<Template> getPageByOption(String nameLike, List<Integer> categoryIdList, int isDel, int orderOption, int page, int size);
+    Page<TemplateDO> getPageByIsDelOrderByCreateTimeAsc(int isDel, int page, int size);
 
-    @Deprecated
-    List<Template> getByIsDelOrderByCreateTimeDesc(int isDel);
+    Page<TemplateDO> getPageByIsDelOrderByUpdateTimeDesc(int isDel, int page, int size);
 
-    Page<Template> getPageByIsDelOrderByCreateTimeDesc(int isDel, int page, int size);
+    Page<TemplateDO> getPageByIsDelOrderByUpdateTimeAsc(int isDel, int page, int size);
 
-    @Deprecated
-    List<Template> getByIsDelOrderByCreateTimeAsc(int isDel);
+    Page<TemplateDO> getPageByIsDelOrderByStarDesc(int isDel, int page, int size);
 
-    Page<Template> getPageByIsDelOrderByCreateTimeAsc(int isDel, int page, int size);
+    Page<TemplateDO> getPageByIsDelOrderByStarAsc(int isDel, int page, int size);
 
-    @Deprecated
-    List<Template> getByIsDelOrderByUpdateTimeDesc(int isDel);
+    Page<TemplateDO> getPageByIsDelOrderByDownloadDesc(int isDel, int page, int size);
 
-    Page<Template> getPageByIsDelOrderByUpdateTimeDesc(int isDel, int page, int size);
+    Page<TemplateDO> getPageByIsDelOrderByDownloadAsc(int isDel, int page, int size);
 
-    @Deprecated
-    List<Template> getPageByIsDelOrderByUpdateTimeAsc(int isDel);
+    Page<TemplateDO> getPageByNameLike(String name, int isDel, int orderOption, int page, int size);
 
-    Page<Template> getPageByIsDelOrderByUpdateTimeAsc(int isDel, int page, int size);
-
-    @Deprecated
-    List<Template> getByIsDelOrderByStarDesc(int isDel);
-
-    Page<Template> getPageByIsDelOrderByStarDesc(int isDel, int page, int size);
-
-    @Deprecated
-    List<Template> getByIsDelOrderByStarAsc(int isDel);
-
-    Page<Template> getPageByIsDelOrderByStarAsc(int isDel, int page, int size);
-
-    @Deprecated
-    List<Template> getByIsDelOrderByDownloadDesc(int isDel);
-
-    Page<Template> getPageByIsDelOrderByDownloadDesc(int isDel, int page, int size);
-
-    @Deprecated
-    List<Template> getByIsDelOrderByDownloadAsc(int isDel);
-
-    Page<Template> getPageByIsDelOrderByDownloadAsc(int isDel, int page, int size);
-
-    @Deprecated
-    List<Template> getTemplatesByNameLike(String name);
-
-    Page<Template> getPageByNameLike(String name, int isDel, int orderOption, int page, int size);
-
-    @Deprecated
-    ResponseEntity<Message<List<Template>>> getAllTemplates();
-
-    Page<Template> getTemplatesByPage(int isDel, int page, int size);
+    Page<TemplateDO> getTemplatesByPage(int isDel, int page, int size);
 
     Resource downloadTemplate(int ownerId, int templateId, String version, int versionId);
 
     boolean deleteTemplate(int ownerId, int templateId, String version);
 
-    Template getTemplate(int templateId);
+    TemplateDO getTemplate(int templateId);
 
     boolean starTemplate(int templateId);
 
     boolean cancelStarTemplate(int templateId);
+
+    List<TemplateDO> getAllTemplates();
+
+//    @Deprecated
+//    List<TemplateDO> getTemplatesByCategory(int categoryId);
+//
+//    @Deprecated
+//    List<TemplateDO> getByIsDelOrderByCreateTimeDesc(int isDel);
+//
+//    @Deprecated
+//    List<TemplateDO> getByIsDelOrderByCreateTimeAsc(int isDel);
+//
+//    @Deprecated
+//    List<TemplateDO> getByIsDelOrderByUpdateTimeDesc(int isDel);
+//
+//    @Deprecated
+//    List<TemplateDO> getPageByIsDelOrderByUpdateTimeAsc(int isDel);
+//
+//    @Deprecated
+//    List<TemplateDO> getByIsDelOrderByStarDesc(int isDel);
+//
+//    @Deprecated
+//    List<TemplateDO> getByIsDelOrderByStarAsc(int isDel);
+//
+//    @Deprecated
+//    List<TemplateDO> getByIsDelOrderByDownloadDesc(int isDel);
+//
+//    @Deprecated
+//    List<TemplateDO> getByIsDelOrderByDownloadAsc(int isDel);
+//
+//    @Deprecated
+//    List<TemplateDO> getTemplatesByNameLike(String name);
+//
+//    @Deprecated
+//    ResponseEntity<Message<List<TemplateDO>>> getAllTemplatesByUserId(int userId);
 }

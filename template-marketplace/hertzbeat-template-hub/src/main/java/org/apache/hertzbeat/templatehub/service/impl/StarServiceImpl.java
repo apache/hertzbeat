@@ -18,10 +18,11 @@
 package org.apache.hertzbeat.templatehub.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.templatehub.model.dao.StarDao;
-import org.apache.hertzbeat.templatehub.model.dao.VersionDao;
-import org.apache.hertzbeat.templatehub.model.entity.Star;
-import org.apache.hertzbeat.templatehub.model.entity.Version;
+import org.apache.hertzbeat.templatehub.model.DAO.StarDao;
+import org.apache.hertzbeat.templatehub.model.DAO.TemplateDao;
+import org.apache.hertzbeat.templatehub.model.DAO.VersionDao;
+import org.apache.hertzbeat.templatehub.model.DO.StarDO;
+import org.apache.hertzbeat.templatehub.model.DO.TemplateDO;
 import org.apache.hertzbeat.templatehub.service.StarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -40,19 +41,20 @@ public class StarServiceImpl implements StarService {
 
     @Autowired
     VersionDao versionDao;
+    @Autowired
+    private TemplateDao templateDao;
 
     @Override
-    public int starVersion(int userId, int templateId, int versionId, String nowTime) {
+    public int starTemplate(int userId, int templateId, String nowTime) {
 
-        Star star = new Star();
-        star.setId(0);
-        star.setUserId(userId);
-        star.setTemplateId(templateId);
-        star.setVersionId(versionId);
-        star.setCreateTime(nowTime);
-        star.setIsDel(0);
+        StarDO starDO = new StarDO();
+        starDO.setId(0);
+        starDO.setUserId(userId);
+        starDO.setTemplateId(templateId);
+        starDO.setCreateTime(nowTime);
+        starDO.setIsDel(0);
 
-        Star save = starDao.save(star);
+        StarDO save = starDao.save(starDO);
         if(save.getId()==0) {
             return 0;
         }
@@ -60,21 +62,25 @@ public class StarServiceImpl implements StarService {
         return 1;
     }
 
-    @Deprecated
     @Override
-    public List<Version> getVersionByUserStar(int userId, int isCancel, int isDel, int offShelf) {
-        return versionDao.findAllByUserStar(userId, isCancel, isDel, offShelf);
+    public boolean assertTemplateIdIsStarByUser(int userId, int templateId) {
+        return starDao.existsStarByTemplateIdAndUserIdAndIsDel(templateId,userId,0);
     }
 
     @Override
-    public Page<Version> getPageByUserStar(int userId, int isCancel, int isDel, int offShelf, int page, int size) {
+    public List<Integer> getTemplateByUserStar(int userId, int isDel) {
+        return starDao.queryTemplateIdByUserAndIsDel(userId, isDel);
+    }
+
+    @Override
+    public Page<TemplateDO> getPageByUserStar(int userId, int isCancel, int isDel, int offShelf, int page, int size) {
         Pageable pageable= PageRequest.of(page, size);
-        return versionDao.queryPageByUserStar(userId, isCancel, isDel, offShelf,pageable);
+        return templateDao.queryPageByUserStar(userId, isCancel, isDel, offShelf,pageable);
     }
 
     @Override
-    public Boolean cancelStarByUser(int userId, int versionId) {
-        int i = starDao.cancelByUser(1, userId, versionId, 0);
+    public Boolean cancelStarByUser(int userId, int templateId) {
+        int i = starDao.cancelByUser(1, userId, templateId, 0);
         return i != 0;
     }
 }

@@ -17,31 +17,29 @@
 
 package org.apache.hertzbeat.templatehub.service;
 
-import org.apache.hertzbeat.templatehub.model.dto.Message;
-import org.apache.hertzbeat.templatehub.model.dto.TemplateDto;
-import org.apache.hertzbeat.templatehub.model.entity.Template;
-import org.apache.hertzbeat.templatehub.model.entity.Version;
+import org.apache.hertzbeat.templatehub.model.DO.VersionDO;
+import org.apache.hertzbeat.templatehub.model.DTO.TemplateDto;
+import org.apache.hertzbeat.templatehub.model.DO.TemplateDO;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface VersionService {
 
-    boolean insertVersion(Version version, Template template);
+    boolean insertVersion(VersionDO versionDO, TemplateDO templateDO);
 
-    List<Version> getVersions(int templateId);
+    List<VersionDO> getVersions(int templateId);
 
-    Page<Version> getVersionPageByTemplate(int templateId, int isDel, int page, int size);
+    Page<VersionDO> getVersionPageByTemplate(int templateId, int isDel, int page, int size);
 
     boolean upload(TemplateDto templateDto, MultipartFile file);
 
-    Version getVersion(int versionId);
+    VersionDO getVersion(int versionId);
 
-    Version getLatestVersion(int templateId);
+    VersionDO getLatestVersion(int templateId);
 
-    boolean startVersion(int versionId);
+//    boolean startVersion(int versionId);
 
-    int cancelStarVersion(int versionId);
+//    int cancelStarVersion(int versionId);
 }

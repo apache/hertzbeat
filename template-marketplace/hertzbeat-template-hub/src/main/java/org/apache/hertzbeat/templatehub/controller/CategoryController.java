@@ -17,9 +17,8 @@
 
 package org.apache.hertzbeat.templatehub.controller;
 
-import org.apache.hertzbeat.templatehub.exception.HertzbeatTemplateHubException;
-import org.apache.hertzbeat.templatehub.model.dto.Message;
-import org.apache.hertzbeat.templatehub.model.entity.Category;
+import org.apache.hertzbeat.templatehub.model.DO.CategoryDO;
+import org.apache.hertzbeat.templatehub.model.DTO.Message;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -95,25 +94,25 @@ public class CategoryController {
     }
 
     @GetMapping("/all/{isDel}")
-    public ResponseEntity<Message<List<Category>>> getAllCategory(@PathVariable("isDel") int isDel) {
+    public ResponseEntity<Message<List<CategoryDO>>> getAllCategory(@PathVariable("isDel") int isDel) {
 
         if (isDel!=0&&isDel!=1) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE,"error option"));
         }
 
-        List<Category> allCategoryByIsDel = categoryService.getAllCategoryByIsDel(isDel);
+        List<CategoryDO> allCategoryDOByIsDel = categoryService.getAllCategoryByIsDel(isDel);
 
-        return ResponseEntity.ok(Message.success(allCategoryByIsDel));
+        return ResponseEntity.ok(Message.success(allCategoryDOByIsDel));
     }
 
     @GetMapping("/page/isDel/{isDel}")
-    public ResponseEntity<Message<Page<Category>>> getCategoryPageByIsDel(@PathVariable("isDel") int isDel, @RequestParam int page, @RequestParam int size) {
+    public ResponseEntity<Message<Page<CategoryDO>>> getCategoryPageByIsDel(@PathVariable("isDel") int isDel, @RequestParam int page, @RequestParam int size) {
 
         if (isDel!=0&&isDel!=1||page<0||size<0) {
             return ResponseEntity.ok(Message.fail(FAIL_CODE,"Params Error"));
         }
 
-        Page<Category> allCategoryByIsDel = categoryService.getPageByIsDel(isDel, page, size);
+        Page<CategoryDO> allCategoryByIsDel = categoryService.getPageByIsDel(isDel, page, size);
 
         return ResponseEntity.ok(Message.success(allCategoryByIsDel));
     }
