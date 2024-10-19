@@ -19,6 +19,14 @@
               "type": "link",
               "label": "Install via Helm",
               "href": "https://artifacthub.io/packages/helm/hertzbeat/hertzbeat"
+            },
+            {
+              "type": "category",
+              "label": "extern-deploy",
+              "items": [
+                "start/baota-deploy",
+                "start/rainbond-deploy"
+              ]
             }
           ]
         },
@@ -262,6 +270,7 @@
             "help/spring_gateway",
             "help/nacos",
             "help/kafka",
+            "help/kafka_client",
             "help/pulsar"
           ]
         },
