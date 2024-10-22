@@ -23,9 +23,9 @@ name:
   en-US: Kafka Message（Client）
 # The description and help of this monitoring type
 help:
-  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">Kafka Admin Client</a> 对 Kafka 的通用指标进行采集监控。</span>
-  en-US: HertzBeat uses <a href='https://hertzbeat.apache.org/docs/advanced/extend-jmx'>Kafka Admin Client</a> to monitoring kafka general metrics. </span>
-  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.apache.org/docs/advanced/extend-jmx">Kafka Admin Client</a> 對 Kafka 的通用指標進行采集監控。</span>
+  zh-CN: HertzBeat 使用 <a href="https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client">Kafka Admin Client</a> 对 Kafka 的通用指标进行采集监控。</span>
+  en-US: HertzBeat uses <a href='https://hertzbeat.apache.org/docs/help/kafka_client'>Kafka Admin Client</a> to monitoring kafka general metrics. </span>
+  zh-TW: HertzBeat 使用 <a href="https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client">Kafka Admin Client</a> 對 Kafka 的通用指標進行采集監控。</span>
 helpLink:
   zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kafka_client
   en-US: https://hertzbeat.apache.org/docs/help/kafka_client
@@ -82,7 +82,7 @@ metrics:
       en-US: Topic Detail Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 0
+    priority: 1
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -134,7 +134,7 @@ metrics:
       en-US: Topic Offset
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 0
+    priority: 1
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
