@@ -116,9 +116,9 @@ Deploying multiple HertzBeat Collectors can achieve high availability, load bala
 
 1. you need to prepare the JAVA environment in advance
 
-   Install JAVA runtime environment-refer to [official website](http://www.oracle.com/technetwork/java/javase/downloads/index.html)
+   Install JAVA runtime environment-refer to [official website](https://www.oracle.com/java/technologies/downloads/)
    requirement：JDK17 ENV
-   download JAVA installation package: [mirror website](https://repo.huaweicloud.com/java/jdk/)
+   download JAVA installation package: [mirror website](https://mirrors.huaweicloud.com/openjdk/)
    After installation use command line to check whether you install it successfully.
 
    ```shell
