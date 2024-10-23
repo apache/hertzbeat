@@ -60,9 +60,9 @@
 
 **产出：**
 
-- 1. 特性代码能以PR的形式合入HertzBeat仓库。
-- 2. 完成 HertzBeat官方模板市场
-- 3. 更新相关帮助文档
+1. 特性代码能以PR的形式合入HertzBeat仓库。
+2. 完成 HertzBeat官方模板市场
+3. 更新相关帮助文档
 
 **联系导师：** 赵青然 [zqr10159@dromara.org](mailto:zqr10159@dromara.org)
 
