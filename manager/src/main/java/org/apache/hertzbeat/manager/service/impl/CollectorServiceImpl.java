@@ -27,15 +27,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.entity.dto.CollectorSummary;
 import org.apache.hertzbeat.common.entity.manager.Collector;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
+import org.apache.hertzbeat.common.support.event.CollectorDeletedEvent;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.TagCollectorBindDao;
 import org.apache.hertzbeat.manager.scheduler.AssignJobs;
 import org.apache.hertzbeat.manager.scheduler.ConsistentHash;
 import org.apache.hertzbeat.manager.scheduler.netty.ManageServer;
 import org.apache.hertzbeat.manager.service.CollectorService;
+import org.apache.hertzbeat.manager.service.TagService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -61,7 +65,16 @@ public class CollectorServiceImpl implements CollectorService {
     
     @Autowired(required = false)
     private ManageServer manageServer;
-    
+
+    @Autowired(required = false)
+    private ApplicationContext applicationContext;
+
+    @Autowired
+    private TagService tagService;
+
+    @Autowired
+    private TagCollectorBindDao tagCollectorBindDao;
+
     @Override
     @Transactional(readOnly = true)
     public Page<CollectorSummary> getCollectors(String name, int pageIndex, Integer pageSize) {
@@ -105,9 +118,13 @@ public class CollectorServiceImpl implements CollectorService {
                 throw new CommonException("The collector " + collector + " has pinned tasks that cannot be deleted.");
             }
         });
-        collectors.forEach(collector -> {
-            this.manageServer.closeChannel(collector);
-            this.collectorDao.deleteCollectorByName(collector);
+        List<Collector> collectorList = this.collectorDao.findCollectorsByNameIn(collectors);
+        collectorList.forEach(collector -> {
+            this.manageServer.closeChannel(collector.getName());
+            this.collectorDao.deleteCollectorByName(collector.getName());
+            this.tagService.deleteCollectorSystemTags(collector);
+            this.tagCollectorBindDao.deleteTagCollectorBindByCollectorId(collector.getId());
+            this.applicationContext.publishEvent(new CollectorDeletedEvent(this, collector.getName()));
         });
     }
 

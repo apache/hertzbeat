@@ -20,14 +20,23 @@ package org.apache.hertzbeat.common.entity.manager;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.ManyToMany;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -89,4 +98,12 @@ public class Collector {
     @Schema(title = "Record the latest modification time (timestamp in milliseconds)")
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
+
+    @ManyToMany(targetEntity = Tag.class, cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
+    @JoinTable(name = "hzb_tag_collector_bind",
+        foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+        inverseForeignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT),
+        joinColumns = {@JoinColumn(name = "collector_id", referencedColumnName = "id")},
+        inverseJoinColumns = {@JoinColumn(name = "tag_id", referencedColumnName = "id")})
+    private List<Tag> tags;
 }
