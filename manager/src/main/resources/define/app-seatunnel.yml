@@ -1,0 +1,487 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: seatunnel
+# The monitoring i18n name
+name:
+  zh-CN: Seatunnel
+  en-US: Seatunnel
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 Seatunnel 通用指标进行测量监控。<br>您可以点击 “<i>新建 Seatunnel</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat measures and monitors the general metrics of Seatunnel.<br>You can click on “<i>Create New Seatunnel</i>” to configure it, or select “<i>More Actions</i>” to import an existing configuration.
+  zh-TW: Hertzbeat 對 Seatunnel 通用指標進行測量監控。<br>您可以點擊 “<i>新建 Seatunnel</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/seatunnel
+  en-US: https://hertzbeat.apache.org/docs/help/seatunnel
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 5801
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    # type-param field type(most mapping the html input type)
+    type: number
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 6000
+  # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启用HTTPS
+      en-US: SSL
+    # type-param field type(boolean mapping the html h tag)
+    type: boolean
+    # required-true or false
+    required: true
+
+# collect metrics config list
+metrics:
+  - name: overview
+    i18n:
+      zh-CN: 集群概览
+      en-US: Cluster Overview
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: projectVersion
+        type: 1
+        i18n:
+          zh-CN: 项目版本
+          en-US: Project Version
+      - field: gitCommitAbbrev
+        type: 1
+        i18n:
+          zh-CN: Git提交编号
+          en-US: Git Commit Abbrev
+      - field: totalSlot
+        type: 0
+        i18n:
+          zh-CN: 总槽位数
+          en-US: Total Slot
+      - field: unassignedSlot
+        type: 0
+        i18n:
+          zh-CN: 未分配槽位数
+          en-US: Unassigned Slot
+      - field: runningJobs
+        type: 0
+        i18n:
+          zh-CN: 运行中任务数
+          en-US: Running Jobs
+      - field: finishedJobs
+        type: 0
+        i18n:
+          zh-CN: 已完成任务数
+          en-US: Finished Jobs
+      - field: failedJobs
+        type: 0
+        i18n:
+          zh-CN: 失败任务数
+          en-US: Failed Jobs
+      - field: cancelledJobs
+        type: 0
+        i18n:
+          zh-CN: 取消任务数
+          en-US: Cancelled Jobs
+      - field: workers
+        type: 0
+        i18n:
+          zh-CN: Worker数
+          en-US: Workers
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - projectVersion
+      - gitCommitAbbrev
+      - totalSlot
+      - unassignedSlot
+      - runningJobs
+      - finishedJobs
+      - failedJobs
+      - cancelledJobs
+      - workers
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - projectVersion=projectVersion
+      - gitCommitAbbrev=gitCommitAbbrev
+      - totalSlot=totalSlot
+      - unassignedSlot=unassignedSlot
+      - runningJobs=runningJobs
+      - finishedJobs=finishedJobs
+      - failedJobs=failedJobs
+      - cancelledJobs=cancelledJobs
+      - workers=workers
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: /hazelcast/rest/maps/overview
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: default
+
+  - name: thread
+    i18n:
+      zh-CN: 线程信息
+      en-US: Thread Info
+    priority: 1
+    fields:
+      - field: threadName
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 线程名称
+          en-US: Thread Name
+      - field: threadId
+        type: 0
+        i18n:
+          zh-CN: 线程ID
+          en-US: Thread ID
+      - field: threadState
+        type: 1
+        i18n:
+          zh-CN: 线程状态
+          en-US: Thread State
+      - field: stackTrace
+        type: 1
+        i18n:
+          zh-CN: 堆栈信息
+          en-US: Stack Trace
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /hazelcast/rest/maps/thread-dump
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      # parse script when parse type is josnPath
+      parseScript: '$.*'
+
+  - name: system_monitor
+    i18n:
+      zh-CN: 节点监控
+      en-US: Node Monitor
+    priority: 1
+    fields:
+      - field: isMaster
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 是否主节点
+          en-US: Is Master
+      - field: host
+        type: 1
+        i18n:
+          zh-CN: IP地址
+          en-US: IP Address
+      - field: port
+        type: 1
+        i18n:
+          zh-CN: 端口
+          en-US: Port
+      - field: processors
+        type: 1
+        i18n:
+          zh-CN: 处理器数
+          en-US: Processors
+      - field: physical.memory.total
+        type: 1
+        i18n:
+          zh-CN: 物理内存总量
+          en-US: Physical Memory Total
+      - field: physical.memory.free
+        type: 1
+        i18n:
+          zh-CN: 物理内存可用
+          en-US: Physical Memory Free
+      - field: swap.space.total
+        type: 1
+        i18n:
+          zh-CN: 交换空间总量
+          en-US: Swap Space Total
+      - field: swap.space.free
+        type: 1
+        i18n:
+          zh-CN: 交换空间可用
+          en-US: Swap Space Free
+      - field: heap.memory.used
+        type: 1
+        i18n:
+          zh-CN: 堆内存已用
+          en-US: Heap Memory Used
+      - field: heap.memory.free
+        type: 1
+        i18n:
+          zh-CN: 堆内存可用
+          en-US: Heap Memory Free
+      - field: heap.memory.total
+        type: 1
+        i18n:
+          zh-CN: 堆内存总量
+          en-US: Heap Memory Total
+      - field: heap.memory.max
+        type: 1
+        i18n:
+          zh-CN: 堆内存最大
+          en-US: Heap Memory Max
+      - field: heap.memory.used/total
+        type: 1
+        i18n:
+          zh-CN: 堆内存使用率
+          en-US: Heap Memory Used/Total
+      - field: heap.memory.used/max
+        type: 1
+        i18n:
+          zh-CN: 堆内存使用率最大
+          en-US: Heap Memory Used/Max
+      - field: minor.gc.count
+        type: 1
+        i18n:
+          zh-CN: 小垃圾回收次数
+          en-US: Minor GC Count
+      - field: minor.gc.time
+        type: 1
+        i18n:
+          zh-CN: 小垃圾回收时间
+          en-US: Minor GC Time
+      - field: major.gc.count
+        type: 1
+        i18n:
+          zh-CN: 大垃圾回收次数
+          en-US: Major GC Count
+      - field: major.gc.time
+        type: 1
+        i18n:
+          zh-CN: 大垃圾回收时间
+          en-US: Major GC Time
+      - field: load.process
+        type: 1
+        i18n:
+          zh-CN: 进程负载
+          en-US: Load Process
+      - field: load.system
+        type: 1
+        i18n:
+          zh-CN: 系统负载
+          en-US: Load System
+      - field: load.systemAverage
+        type: 1
+        i18n:
+          zh-CN: 系统平均负载
+          en-US: Load System Average
+      - field: thread.count
+        type: 1
+        i18n:
+          zh-CN: 线程数
+          en-US: Thread Count
+      - field: thread.peakCount
+        type: 1
+        i18n:
+          zh-CN: 线程峰值
+          en-US: Thread Peak Count
+      - field: cluster.timeDiff
+        type: 1
+        i18n:
+          zh-CN: 集群时间差
+          en-US: Cluster Time Diff
+      - field: event.q.size
+        type: 1
+        i18n:
+          zh-CN: 事件队列大小
+          en-US: Event Queue Size
+      - field: executor.q.async.size
+        type: 1
+        i18n:
+          zh-CN: 异步执行队列大小
+          en-US: Executor Queue Async Size
+      - field: executor.q.client.size
+        type: 1
+        i18n:
+          zh-CN: 客户端执行队列大小
+          en-US: Executor Queue Client Size
+      - field: executor.q.client.query.size
+        type: 1
+        i18n:
+          zh-CN: 客户端查询队列大小
+          en-US: Executor Queue Client Query Size
+      - field: executor.q.client.blocking.size
+        type: 1
+        i18n:
+          zh-CN: 客户端阻塞队列大小
+          en-US: Executor Queue Client Blocking Size
+      - field: executor.q.query.size
+        type: 1
+        i18n:
+          zh-CN: 查询队列大小
+          en-US: Executor Queue Query Size
+      - field: executor.q.scheduled.size
+        type: 1
+        i18n:
+          zh-CN: 定时执行队列大小
+          en-US: Executor Queue Scheduled Size
+      - field: executor.q.io.size
+        type: 1
+        i18n:
+          zh-CN: IO队列大小
+          en-US: Executor Queue IO Size
+      - field: executor.q.system.size
+        type: 1
+        i18n:
+          zh-CN: 系统执行队列大小
+          en-US: Executor Queue System Size
+      - field: executor.q.operations.size
+        type: 1
+        i18n:
+          zh-CN: 操作队列大小
+          en-US: Executor Queue Operations Size
+      - field: executor.q.priorityOperation.size
+        type: 1
+        i18n:
+          zh-CN: 优先操作队列大小
+          en-US: Executor Queue Priority Operation Size
+      - field: operations.completed.count
+        type: 1
+        i18n:
+          zh-CN: 完成操作次数
+          en-US: Operations Completed Count
+      - field: executor.q.mapLoad.size
+        type: 1
+        i18n:
+          zh-CN: 映射加载队列大小
+          en-US: Executor Queue Map Load Size
+      - field: executor.q.mapLoadAllKeys.size
+        type: 1
+        i18n:
+          zh-CN: 映射加载所有键大小
+          en-US: Executor Queue Map Load All Keys Size
+      - field: executor.q.cluster.size
+        type: 1
+        i18n:
+          zh-CN: 集群执行队列大小
+          en-US: Executor Queue Cluster Size
+      - field: executor.q.response.size
+        type: 1
+        i18n:
+          zh-CN: 响应队列大小
+          en-US: Executor Queue Response Size
+      - field: operations.running.count
+        type: 1
+        i18n:
+          zh-CN: 正在运行的操作数量
+          en-US: Operations Running Count
+      - field: operations.pending.invocations.percentage
+        type: 1
+        i18n:
+          zh-CN: 待处理调用百分比
+          en-US: Operations Pending Invocations Percentage
+      - field: operations.pending.invocations.count
+        type: 1
+        i18n:
+          zh-CN: 待处理调用数量
+          en-US: Operations Pending Invocations Count
+      - field: proxy.count
+        type: 1
+        i18n:
+          zh-CN: 代理数量
+          en-US: Proxy Count
+      - field: clientEndpoint.count
+        type: 1
+        i18n:
+          zh-CN: 客户端端点数量
+          en-US: Client Endpoint Count
+      - field: connection.active.count
+        type: 1
+        i18n:
+          zh-CN: 活动连接数
+          en-US: Connection Active Count
+      - field: client.connection.count
+        type: 1
+        i18n:
+          zh-CN: 客户端连接数
+          en-US: Client Connection Count
+      - field: connection.count
+        type: 1
+        i18n:
+          zh-CN: 总连接数
+          en-US: Connection Count
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /hazelcast/rest/maps/system-monitoring-information
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$.*'

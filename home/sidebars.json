@@ -297,7 +297,8 @@
             "help/elasticsearch",
             "help/influxdb",
             "help/presto",
-            "help/hugegraph"
+            "help/hugegraph",
+            "help/seatunnel"
           ]
         },
         {
