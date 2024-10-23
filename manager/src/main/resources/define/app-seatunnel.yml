@@ -84,7 +84,7 @@ params:
 metrics:
   - name: overview
     i18n:
-      zh-CN: 集群的概览
+      zh-CN: 集群概览
       en-US: Cluster Overview
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
@@ -178,10 +178,10 @@ metrics:
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: default
 
-  - name: nodes
+  - name: thread
     i18n:
-      zh-CN: 集群节点信息
-      en-US: Cluster Nodes
+      zh-CN: 线程信息
+      en-US: Thread Info
     priority: 1
     fields:
       - field: threadName
