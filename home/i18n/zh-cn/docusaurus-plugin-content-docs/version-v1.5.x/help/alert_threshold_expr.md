@@ -59,8 +59,8 @@ sidebar_label: 阈值触发表达式
    `responseTime>=400`
 2. API监控->响应时间大于3000ms时触发告警
    `responseTime>3000`
-3. 全站监控->URL(instance)路径为 `https://baidu.com/book/3` 的响应时间大于200ms时触发告警
-   `equals(instance,"https://baidu.com/book/3")&&responseTime>200`
+3. 全站监控->URL(instance)路径为 `https://baidu.com` 的响应时间大于200ms时触发告警
+   `equals(instance,"https://baidu.com")&&responseTime>200`
 4. MYSQL监控->status指标->threads_running(运行线程数)指标大于7时触发告警
    `threads_running>7`
 
