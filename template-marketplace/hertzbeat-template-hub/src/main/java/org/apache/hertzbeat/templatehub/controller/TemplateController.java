@@ -50,7 +50,7 @@ import static org.apache.hertzbeat.templatehub.constants.CommonConstants.FAIL_CO
 
 @Slf4j
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*",maxAge = 3600)
 @RequestMapping("template")
 public class TemplateController {
 
@@ -62,6 +62,12 @@ public class TemplateController {
 
     @Autowired
     private StarService starService;
+
+    @PostMapping("/localFileUpload")
+    public ResponseEntity<Message<String>> localFileUpload(@RequestParam("file") MultipartFile file){
+
+        return ResponseEntity.ok(Message.success("ok"));
+    }
 
     @PostMapping("/upload")
     public ResponseEntity<Message<String>> uploadTemplate(@ModelAttribute("templateDto") String s,

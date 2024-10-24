@@ -49,28 +49,6 @@ public class UserController {
     @Autowired
     private AccountService accountService;
 
-    @PostMapping("/form")
-    @Operation(summary = "Account password login to obtain associated user information", description = "Account password login to obtain associated user information")
-    public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
-        return ResponseUtil.handle(() -> accountService.authGetToken(loginDto));
-    }
-
-    @PostMapping("/refresh")
-    @Operation(summary = "Use refresh TOKEN to re-acquire TOKEN", description = "Use refresh TOKEN to re-acquire TOKEN")
-    public ResponseEntity<Message<RefreshTokenResponse>> refreshToken(@Valid @RequestBody TokenDto tokenDto) {
-        try {
-            return ResponseEntity.ok(Message.success(accountService.refreshToken(tokenDto.getToken())));
-        } catch (AuthenticationException e) {
-            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, e.getMessage()));
-        } catch (ExpiredJwtException expiredJwtException) {
-            log.warn("{}", expiredJwtException.getMessage());
-            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "Refresh Token Expired"));
-        } catch (Exception e) {
-            log.error("Exception occurred during token refresh: {}", e.getClass().getName(), e);
-            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "Refresh Token Error"));
-        }
-    }
-
     @GetMapping("/role")
     public ResponseEntity<Message> getUserRoles() {
         SubjectSum subject = SurenessContextHolder.getBindSubject();

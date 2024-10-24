@@ -15,24 +15,24 @@
 # limitations under the License.
 #
 
-### add categoryDO
-POST http://localhost:8080/api/categoryDO/upload/test
+### add category
+POST http://localhost:8080/api/category/upload/test
 Content-Type: application/x-www-form-urlencoded
 
 description=test
 
-### modify categoryDO
-POST http://localhost:8080/api/categoryDO/modify/1
+### modify category
+POST http://localhost:8080/api/category/modify/1
 Content-Type: application/x-www-form-urlencoded
 
 name=Database monitoring&
 description=数据库监控模版
 
-### delete categoryDO
-DELETE http://localhost:8080/api/categoryDO/delete/1
+### delete category
+DELETE http://localhost:8080/api/category/delete/1
 
-### get categoryDO by isDel
-GET http://localhost:8080/api/categoryDO/all/0
+### get category by isDel
+GET http://localhost:8080/api/category/all/0
 
-### get categoryDO page by isDel
-GET http://localhost:8080/api/categoryDO/page/isDel/0?page=0&size=2
+### get category page by isDel
+GET http://localhost:8080/api/category/page/isDel/0?page=0&size=10

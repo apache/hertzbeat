@@ -19,8 +19,6 @@ package org.apache.hertzbeat.templatehub.service.impl;
 
 import com.usthe.sureness.provider.DefaultAccount;
 import com.usthe.sureness.provider.SurenessAccount;
-import com.usthe.sureness.provider.SurenessAccountProvider;
-import com.usthe.sureness.provider.ducument.DocumentAccountProvider;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import com.usthe.sureness.util.Md5Util;
 import com.usthe.sureness.util.SurenessCommonUtil;
@@ -56,19 +54,16 @@ public class AccountServiceImpl implements AccountService {
      * Token validity time in seconds
      */
     private static final long PERIOD_TIME = 3600L;
-    /**
-     * account data provider
-     */
-    private final SurenessAccountProvider accountProvider = new DocumentAccountProvider();
 
     @Autowired
     private AuthUserDao authUserDao;
 
+    @Autowired
     private AuthUserRoleBindDao userRoleBindDao;
 
     @Override
     public Map<String, String> authGetToken(LoginDto loginDto) throws AuthenticationException {
-        SurenessAccount account = accountProvider.loadAccount(loginDto.getIdentifier());
+        SurenessAccount account = loadAccount(loginDto.getIdentifier());
         if (account == null || StringUtils.isBlank(account.getPassword())) {
             throw new AuthenticationException("Incorrect Account or Password");
         } else {
@@ -175,7 +170,7 @@ public class AccountServiceImpl implements AccountService {
         if (StringUtils.isBlank(userId) || !isRefresh) {
             throw new AuthenticationException("Illegal Refresh Token");
         }
-        SurenessAccount account = accountProvider.loadAccount(userId);
+        SurenessAccount account = loadAccount(userId);
         if (account == null) {
             throw new AuthenticationException("Not Exists This Token Mapping Account");
         }

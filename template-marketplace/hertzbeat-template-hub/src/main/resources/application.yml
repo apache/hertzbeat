@@ -52,3 +52,14 @@ minio:
   accessKey: CMULmgc3rfbnhmOCpXci
   secretKey: Mw9wnljHl4RtVBGcipcmDTArdCx75lAwaMJeLXGC
   bucketName: hertzbeat-data
+
+
+sureness:
+  container: jakarta_servlet
+  auths:
+    - jwt
+  jwt:
+    secret: 'CyaFv0bwq2Eik0jdrKUtsA6bx3sDJeFV643R
+             LnfKefTjsIfJLBa2YkhEqEGtcHDTNe4CU6+9
+             8tVt4bisXQ13r4N0oxhUZRd3M6EByXIO+SV5
+             dKhaX0cs3OC5lCxq20yhmUea6H6JIpSE2Rwp'

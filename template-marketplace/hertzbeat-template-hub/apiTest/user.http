@@ -25,8 +25,8 @@ Content-Type: application/json
   "credential": "123456"
 }
 
-### Login
-POST http://localhost:8080/api/auth/token
+### login+refresh
+POST http://localhost:8080/api/auth/login
 Content-Type: application/json
 
 {
@@ -35,12 +35,10 @@ Content-Type: application/json
   "credential": "123456"
 }
 
-### custom token
-POST http://localhost:8080/api/auth/custom/token
+### refresh
+POST http://localhost:8080/api/auth/refresh
 Content-Type: application/json
 
 {
-  "type": 1,
-  "identifier": "wbs2024@163.com",
-  "credential": "123456"
+  "token": "eyJhbGciOiJIUzUxMiIsInppcCI6IkRFRiJ9.eJwlyk0OwiAQQOG7zLpj-Kd01auATGM1toYBNTHeXRq333sfuNYVJogkvcnBYaCc0Ui3YLRJIUXrZdSjcCLBANxSn1-JlVBmlk6fzvu9-8rcnVuhjZix7jfakKk8qRw1VpikV8Fo7Z0dgN6PP1gzhgMKLYX4AlMtjb4_bgorXA.oYH8rk5Gb984ZcwBL-_N-6NcUk1githHwsKaQFxOewhne708JIsOhh6El3oKXE73gkEr5elASjUnL8zBzsVJ9A"
 }

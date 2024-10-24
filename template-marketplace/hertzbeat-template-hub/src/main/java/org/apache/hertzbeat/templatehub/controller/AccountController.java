@@ -1,27 +1,50 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.hertzbeat.templatehub.controller;
 
 import com.usthe.sureness.util.JsonWebTokenUtil;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.templatehub.model.DTO.LoginDto;
 import org.apache.hertzbeat.templatehub.model.DTO.Message;
+import org.apache.hertzbeat.templatehub.model.DTO.RefreshTokenResponse;
+import org.apache.hertzbeat.templatehub.model.DTO.TokenDto;
 import org.apache.hertzbeat.templatehub.service.AccountService;
+import org.apache.hertzbeat.templatehub.util.ResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.naming.AuthenticationException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import static org.apache.hertzbeat.templatehub.constants.CommonConstants.FAIL_CODE;
+import static org.apache.hertzbeat.templatehub.constants.CommonConstants.LOGIN_FAILED_CODE;
 
 @RestController
+@CrossOrigin(maxAge = 3600,origins = "*")
 @RequestMapping("/auth")
 @Slf4j
 public class AccountController {
@@ -31,6 +54,29 @@ public class AccountController {
 
     private static final String TOKEN_SPLIT = "--";
 
+    @PostMapping("/login")
+    @Operation(summary = "Account password login to obtain associated user information", description = "Account password login to obtain associated user information")
+    public ResponseEntity<Message<Map<String, String>>> authGetToken(@Valid @RequestBody LoginDto loginDto) {
+        return ResponseUtil.handle(() -> accountService.authGetToken(loginDto));
+    }
+
+    @PostMapping("/refresh")
+    @Operation(summary = "Use refresh TOKEN to re-acquire TOKEN", description = "Use refresh TOKEN to re-acquire TOKEN")
+    public ResponseEntity<Message<RefreshTokenResponse>> refreshToken(@Valid @RequestBody TokenDto tokenDto) {
+        try {
+            return ResponseEntity.ok(Message.success(accountService.refreshToken(tokenDto.getToken())));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, e.getMessage()));
+        } catch (ExpiredJwtException expiredJwtException) {
+            log.warn("{}", expiredJwtException.getMessage());
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "Refresh Token Expired"));
+        } catch (Exception e) {
+            log.error("Exception occurred during token refresh: {}", e.getClass().getName(), e);
+            return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, "Refresh Token Error"));
+        }
+    }
+
+    @Deprecated
     @PostMapping("/token")
     public ResponseEntity<Message<Map<String,String>>> issueJwtToken(@RequestBody @Validated LoginDto account) {
         boolean authenticatedFlag = accountService.authenticateAccount(account);
@@ -45,6 +91,7 @@ public class AccountController {
         return ResponseEntity.ok(message);
     }
 
+    @Deprecated
     @PostMapping("/custom/token")
     public ResponseEntity<Message<Map<String,String>>> issueCustomToken(@RequestBody @Validated LoginDto account) {
         boolean authenticatedFlag = accountService.authenticateAccount(account);

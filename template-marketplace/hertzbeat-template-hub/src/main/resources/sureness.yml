@@ -20,47 +20,10 @@
 # eg: /api/v1/source1===get===[admin] means /api/v2/host===post support role[admin] access.
 # eg: /api/v1/source2===get===[] means /api/v1/source2===get can not access by any role.
 resourceRole:
-#  - /api/account/auth/refresh===post===[admin,user,guest]
+
 
 
 # config the resource restful api that need bypass auth protection
 # rule: api===method
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
 excludedResource:
-#  - /**/*===*
-#  - /api/template/**===*
-#  - /api/category/**===get
-#  - /api/auth/register===post
-#  - /api/alerts/report/**===*
-#  - /api/account/auth/**===*
-#  - /api/i18n/**===get
-#  - /api/apps/hierarchy===get
-#  - /api/push/**===*
-#  - /api/status/page/public/**===*
-  # web ui resource
-#  - /===get
-#  - /dashboard/**===get
-#  - /monitors/**===get
-#  - /alert/**===get
-#  - /account/**===get
-#  - /setting/**===get
-#  - /passport/**===get
-#  - /status/**===get
-#  - /**/*.html===get
-#  - /**/*.js===get
-#  - /**/*.css===get
-#  - /**/*.ico===get
-#  - /**/*.ttf===get
-#  - /**/*.png===get
-#  - /**/*.gif===get
-#  - /**/*.jpg===get
-#  - /**/*.svg===get
-#  - /**/*.json===get
-#  - /**/*.woff===get
-#  - /**/*.eot===get
-#  # swagger ui resource
-#  - /swagger-resources/**===get
-#  - /v2/api-docs===get
-#  - /v3/api-docs===get
-#  # h2 database
-#  - /h2-console/**===*

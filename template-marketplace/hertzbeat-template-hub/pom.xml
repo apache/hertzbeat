@@ -155,9 +155,15 @@
 			<artifactId>spring-boot-starter-validation</artifactId>
 		</dependency>
 
+<!--		<dependency>-->
+<!--			<groupId>com.usthe.sureness</groupId>-->
+<!--			<artifactId>sureness-core</artifactId>-->
+<!--			<version>1.1.0</version>-->
+<!--		</dependency>-->
+
 		<dependency>
 			<groupId>com.usthe.sureness</groupId>
-			<artifactId>sureness-core</artifactId>
+			<artifactId>spring-boot3-starter-sureness</artifactId>
 			<version>1.1.0</version>
 		</dependency>
 
