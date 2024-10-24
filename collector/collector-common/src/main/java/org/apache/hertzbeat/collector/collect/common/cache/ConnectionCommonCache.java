@@ -147,8 +147,7 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
         }
         if (cacheTime[0] + cacheTime[1] < System.currentTimeMillis()) {
             log.warn("[connection common cache] is timeout, remove it, key {}.", key);
-            timeoutMap.remove(key);
-            cacheMap.remove(key);
+            removeCache(key);
             return Optional.empty();
         }
         C value = cacheMap.compute(key, (k, v) -> {
