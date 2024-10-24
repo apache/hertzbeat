@@ -69,6 +69,7 @@ export class UserUploadComponent implements OnInit,OnDestroy {
 
   fileList: NzUploadFile[] = [];
   file: any[] = [];
+  uniqueFile:any=null;
 
   templateInfo = {
     id: 0,
@@ -126,8 +127,6 @@ export class UserUploadComponent implements OnInit,OnDestroy {
 
   handleChange(info: NzUploadChangeParam) {
     if (info.file.status !== 'uploading') {
-      console.log(info.file, info.fileList);
-
       const isLt4M = info.file.size! / 1024 / 1024 < 4;
       if (!isLt4M) {
         // this.message.error('Message.File.SizeFile');
@@ -137,30 +136,34 @@ export class UserUploadComponent implements OnInit,OnDestroy {
     }
     if (info.file.status === 'done') {
       this.file.pop();
+      this.fileList.reverse()
+      if(this.fileList.length > 1) {
+        this.fileList.pop()
+      }
       // this.msg.success(`${info.file.name} file uploaded successfully`);
     } else if (info.file.status === 'error') {
+      this.fileList=[];
       // this.msg.error(`${info.file.name} file upload failed.`);
     }
   }
 
   beforeUpload = (file: any) => {
-    while (this.file.length > 0) {
-      this.file.pop();
-    }
-    console.log('beforeUpload', file);
     this.file.push(file);
-    console.log('afterUpload', this.file);
-    return false;
-  };
-
-  customUpload = (file: any) => {
-    console.log('customUpload');
+    this.uniqueFile=file;
+    this.fileList=[]
+    return true;
   };
 
   uploadTemplate(): void {
+    console.log('ss',this.file, this.fileList);
+    console.log(this.uniqueFile)
+    if(this.uniqueFile==null){
+      this.msg.error("文件为空");
+      return;
+    }
     const formData = new FormData();
-    if (this.file.length > 0) {
-      formData.append('file', this.file[0]);
+    if (this.uniqueFile != null) {
+      formData.append('file', this.uniqueFile);
       this.templateInfo.category=this.getCategoryStr(this.templateInfo.categoryId)
       formData.append('templateDto', JSON.stringify(this.templateInfo));
       const uploadTemplateRes$ = this.templateService
@@ -177,6 +180,7 @@ export class UserUploadComponent implements OnInit,OnDestroy {
             if (message.code === 0) {
               // this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
               this.msg.success(`模版文件上传成功`);
+              this.fileList=[]
             } else {
               this.msg.error(`模版上传失败:${message.msg}`);
               // this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);

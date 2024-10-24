@@ -25,38 +25,52 @@ import {UserUploadComponent} from './user-upload/user-upload.component';
 import {FormsModule} from "@angular/forms";
 import {CommonModule} from "@angular/common";
 import {NzOptionComponent, NzSelectComponent} from "ng-zorro-antd/select";
-import {NzAutosizeDirective, NzInputDirective} from "ng-zorro-antd/input";
+import {NzAutosizeDirective, NzInputDirective, NzInputGroupComponent} from "ng-zorro-antd/input";
 import {NzFormControlComponent, NzFormDirective, NzFormItemComponent, NzFormLabelComponent} from "ng-zorro-antd/form";
-import {NzColDirective} from "ng-zorro-antd/grid";
+import {NzColDirective, NzRowDirective} from "ng-zorro-antd/grid";
 import {NzDatePickerComponent} from "ng-zorro-antd/date-picker";
 import {NzTimePickerComponent} from "ng-zorro-antd/time-picker";
 import {NzInputNumberComponent} from "ng-zorro-antd/input-number";
 import {NzIconDirective} from "ng-zorro-antd/icon";
+import {UserAssetsComponent} from "./user-assets/user-assets.component";
+import {NzPaginationComponent} from "ng-zorro-antd/pagination";
+import {AssetsDetailComponent} from "./assets-detail/assets-detail.component";
+import {NzDrawerComponent, NzDrawerContentDirective} from "ng-zorro-antd/drawer";
+import {NzButtonComponent} from "ng-zorro-antd/button";
+import {UserStarComponent} from "./user-star/user-star.component";
+import {NzTooltipDirective} from "ng-zorro-antd/tooltip";
 
-const COMPONENTS: Array<Type<void>> = [UserUploadComponent];
+const COMPONENTS: Array<Type<void>> = [UserUploadComponent, UserAssetsComponent,AssetsDetailComponent,UserStarComponent];
 
 @NgModule({
 
-  imports: [
-    UserCenterRoutingModule,
-    NzDividerModule,
-    NzUploadModule,
-    FormsModule,
-    CommonModule,
-    NzOptionComponent,
-    NzSelectComponent,
-    NzAutosizeDirective,
-    NzInputDirective,
-    NzFormItemComponent,
-    NzFormLabelComponent,
-    NzFormControlComponent,
-    NzColDirective,
-    NzDatePickerComponent,
-    NzTimePickerComponent,
-    NzInputNumberComponent,
-    NzFormDirective,
-    NzIconDirective,
-  ],
+    imports: [
+        UserCenterRoutingModule,
+        NzDividerModule,
+        NzUploadModule,
+        FormsModule,
+        CommonModule,
+        NzOptionComponent,
+        NzSelectComponent,
+        NzAutosizeDirective,
+        NzInputDirective,
+        NzFormItemComponent,
+        NzFormLabelComponent,
+        NzFormControlComponent,
+        NzColDirective,
+        NzDatePickerComponent,
+        NzTimePickerComponent,
+        NzInputNumberComponent,
+        NzFormDirective,
+        NzIconDirective,
+        NzPaginationComponent,
+        NzDrawerComponent,
+        NzButtonComponent,
+        NzInputGroupComponent,
+        NzRowDirective,
+        NzDrawerContentDirective,
+        NzTooltipDirective,
+    ],
   declarations: COMPONENTS,
   providers:[...COMPONENTS],
 })

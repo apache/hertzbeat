@@ -25,6 +25,7 @@ import {TemplateService} from '../../../service/template.service';
 import {Observable, Subscription, window} from "rxjs";
 import {LocalStorageService} from "../../../service/local-storage.service";
 import {CategoryService} from "../../../service/category.service";
+import {StarService} from "../../../service/star.service";
 import {VersionService} from "../../../service/version.service";
 
 @Component({
@@ -36,7 +37,7 @@ export class TemplateDetailComponent implements OnInit, OnDestroy {
   constructor(private templateService: TemplateService,
               private msg: NzMessageService,
               private localStorageService: LocalStorageService,
-              private categoryService: CategoryService,
+              private starService: StarService,
               private versionService: VersionService,) {}
 
   templateInfo :any = null;
@@ -54,6 +55,8 @@ export class TemplateDetailComponent implements OnInit, OnDestroy {
 
   categoryStr='';
 
+  isStarNow:boolean = false;
+
   showPage = 1;
 
   downloadTemplateNow(): void {
@@ -61,13 +64,25 @@ export class TemplateDetailComponent implements OnInit, OnDestroy {
       saveAs(blob, `${this.templateInfo.name}-${this.latestVersion.version}.yml`);
       this.localStorageService.removeData('nowTemplate');
       this.templateInfo.download++;
+      for (let item of this.versionList) {
+        if(item.id==this.templateInfo.latest) {
+          item.download++;
+          break;
+        }
+      }
       this.localStorageService.putData('nowTemplate', JSON.stringify(this.templateInfo));
     });
   }
 
   downloadVersion(version:string, versionId:number): void {
     this.templateService.downloadTemplate(this.templateInfo.user, this.templateInfo.id,version, versionId).subscribe(blob => {
-      saveAs(blob, `${this.templateInfo.name}-${this.latestVersion.version}.yml`);
+      saveAs(blob, `${this.templateInfo.name}-${version}.yml`);
+      for (let item of this.versionList) {
+        if(item.id==versionId) {
+          item.download++;
+          break;
+        }
+      }
       this.localStorageService.removeData('nowTemplate');
       this.templateInfo.download++;
       this.localStorageService.putData('nowTemplate', JSON.stringify(this.templateInfo));
@@ -89,7 +104,6 @@ export class TemplateDetailComponent implements OnInit, OnDestroy {
         selBox.select();
         document.execCommand('copy');
         document.body.removeChild(selBox);
-        // console.log(message.msg);
       }else{
         this.msg.error(message.msg);
       }
@@ -98,6 +112,13 @@ export class TemplateDetailComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.templateInfo=JSON.parse(<string>this.localStorageService.getData('nowTemplate'));
+    this.starService.assertTemplateStarByUser(1,this.templateInfo.id).subscribe(response => {
+      if(response.code == 0) {
+        this.isStarNow=response.data
+      }else{
+        this.msg.error('是否收藏判断失败'+response.msg)
+      }
+    })
     this.versionService.getVersion(this.templateInfo.latest).subscribe(response => {
       if(response.code == 0) {
         this.latestVersion=response.data;
@@ -110,10 +131,14 @@ export class TemplateDetailComponent implements OnInit, OnDestroy {
     console.log(this.templateInfo);
     console.log(this.categoryList);
     for (const item of this.categoryList) {
-      if(item.value==this.templateInfo.category){
+      if(item.value==this.templateInfo.categoryId){
         this.categoryStr=item.label;
       }
     }
+    this.getVersions();
+  }
+
+  getVersions(){
     this.versionService.getVersionPage(this.templateInfo.id,0,this.pageIndex,this.pageSize).subscribe(response => {
       if(response.code == 0) {
         this.versionList=response.data.content;
@@ -124,6 +149,37 @@ export class TemplateDetailComponent implements OnInit, OnDestroy {
         this.numberOfPages=response.data.numberOfElements;
       }
     })
+  }
+
+  starTemplate(id:number){
+    const formData = new FormData();
+    formData.append('user', '1');
+    formData.append('template', id.toString());
+    this.starService.starTemplate(formData)
+      .subscribe(message=>{
+        if (message.code == 0) {
+          this.msg.success(message.msg);
+          this.isStarNow=true;
+          this.templateInfo.star++;
+        }else{
+          this.msg.error(message.msg);
+        }
+      })
+  }
+
+  cancelStarTemplate(id:number){
+    const formData = new FormData();
+    formData.append('templateId', id.toString());
+    this.starService.cancelStarTemplate(1,formData)
+      .subscribe(message=>{
+        if (message.code == 0) {
+          this.msg.success(message.msg);
+          this.isStarNow=false;
+          this.templateInfo.star--;
+        }else{
+          this.msg.error(message.msg);
+        }
+      })
   }
 
   ngOnDestroy(): void {

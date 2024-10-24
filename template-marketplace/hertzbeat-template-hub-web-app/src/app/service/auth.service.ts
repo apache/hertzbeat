@@ -23,7 +23,15 @@ import {Observable} from 'rxjs';
 
 import {Message} from '../pojo/Message';
 
-const account_auth_refresh_uri = '/account/auth/refresh';
+const auth_login_uri = '/auth/login';
+const auth_refresh_uri = '/auth/refresh';
+const auth_register_uri = '/auth/register';
+
+export interface LoginDTO {
+  type:number,
+  identifier:string,
+  credential:string,
+}
 
 @Injectable({
   providedIn: 'root'
@@ -31,7 +39,16 @@ const account_auth_refresh_uri = '/account/auth/refresh';
 export class AuthService {
   constructor(private http: HttpClient) {}
 
-  public refreshToken(refreshToken: string): Observable<Message<any>> {
-    return this.http.get<Message<any>>(`${account_auth_refresh_uri}/${refreshToken}`);
+  public tryLogin(data: LoginDTO): Observable<Message<any>> {
+    return this.http.post<Message<any>>(auth_login_uri,data);
   }
+
+  public register(data:any): Observable<Message<any>> {
+    return this.http.post<Message<any>>(auth_register_uri,data);
+  }
+
+  public refreshToken(refreshToken: string): Observable<Message<any>> {
+    return this.http.post<Message<any>>(auth_refresh_uri, {"token":refreshToken});
+  }
+
 }

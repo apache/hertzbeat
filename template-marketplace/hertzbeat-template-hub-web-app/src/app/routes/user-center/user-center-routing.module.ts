@@ -21,10 +21,16 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { UserUploadComponent } from './user-upload/user-upload.component';
+import {UserAssetsComponent} from "./user-assets/user-assets.component";
+import {AssetsDetailComponent} from "./assets-detail/assets-detail.component";
+import {UserStarComponent} from "./user-star/user-star.component";
 
 const routes: Routes = [
   { path: '', component: UserUploadComponent },
   { path: 'upload', component: UserUploadComponent },
+  { path: 'assets', component: UserAssetsComponent },
+  { path: 'detail', component: AssetsDetailComponent },
+  { path: 'star', component: UserStarComponent },
   { path: '**', component: UserUploadComponent }
 ];
 

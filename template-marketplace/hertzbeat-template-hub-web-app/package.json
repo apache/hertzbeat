@@ -44,6 +44,7 @@
     "@angular/compiler-cli": "^18.2.0",
     "@types/file-saver": "^2.0.7",
     "@types/jasmine": "~5.1.0",
+    "@types/node": "^22.7.7",
     "jasmine-core": "~5.2.0",
     "jasmine-spec-reporter": "^7.0.0",
     "karma": "~6.4.0",
@@ -54,6 +55,7 @@
     "ng-alain": "^18.1.0",
     "node-fetch": "^3.3.2",
     "prettier": "^3.3.3",
+    "purgecss": "^6.0.0",
     "ts-node": "^10.9.2",
     "typescript": "~5.5.2"
   },

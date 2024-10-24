@@ -37,6 +37,7 @@ import {FormsModule} from "@angular/forms";
 import {NzPaginationComponent} from "ng-zorro-antd/pagination";
 import {NzCheckboxComponent, NzCheckboxGroupComponent} from "ng-zorro-antd/checkbox";
 import {NzIconDirective} from "ng-zorro-antd/icon";
+import {NzTooltipDirective} from "ng-zorro-antd/tooltip";
 
 const COMPONENTS: Array<Type<void>> = [TemplateListComponent, TemplateDetailComponent, TemplateListComponent];
 
@@ -59,7 +60,8 @@ const COMPONENTS: Array<Type<void>> = [TemplateListComponent, TemplateDetailComp
         NzPaginationComponent,
         NzCheckboxComponent,
         NzCheckboxGroupComponent,
-        NzIconDirective
+        NzIconDirective,
+        NzTooltipDirective
     ],
   declarations: COMPONENTS,
   exports:[RouterModule]

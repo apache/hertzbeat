@@ -35,7 +35,6 @@ export class VersionService {
   constructor(@Optional() private http: HttpClient) {}
 
   public upload(data: FormData): Observable<Message<any>> {
-    //默认接收json的返回值，返回字符串时报错
     return this.http.post<Message<any>>(template_upload_uri, data);
   }
 

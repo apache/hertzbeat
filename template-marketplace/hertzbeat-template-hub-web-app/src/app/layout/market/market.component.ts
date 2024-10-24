@@ -23,6 +23,8 @@ import {RouterOutlet} from "@angular/router";
 import {NzImageDirective} from "ng-zorro-antd/image";
 import {TemplateService} from "../../service/template.service";
 import {NzMessageService} from "ng-zorro-antd/message";
+import {NgIf} from "@angular/common";
+import {LocalStorageService} from "../../service/local-storage.service";
 
 @Component({
   selector: 'app-market',
@@ -30,7 +32,8 @@ import {NzMessageService} from "ng-zorro-antd/message";
   standalone: true,
   imports: [
     RouterOutlet,
-    NzImageDirective
+    NzImageDirective,
+    NgIf
   ]
 })
 export class LayoutMarketComponent implements OnInit{
@@ -38,12 +41,21 @@ export class LayoutMarketComponent implements OnInit{
     logoExpanded: `./assets/brand_white.svg`,
     logoCollapsed: `./assets/logo.svg`
   };
-
-  constructor(private templateService: TemplateService,private msg: NzMessageService,) {}
+  constructor(private templateService: TemplateService,
+              private msg: NzMessageService,
+              private localStorageService: LocalStorageService,
+              ) {}
 
   count=0;
+  isLogin:boolean = false;
 
   ngOnInit(): void {
+    const userInfo = this.localStorageService.getData('userInfo');
+    if(userInfo!=null){
+
+      this.isLogin=true
+    }
+
     this.templateService.getTemplateCount(0,0).subscribe(message=>{
       if (message.code == 0) {
         this.count=message.data;

@@ -101,7 +101,7 @@ export class DefaultInterceptor implements HttpInterceptor {
 
   private tryRefreshToken(ev: HttpResponseBase, req: HttpRequest<any>, next: HttpHandler): Observable<any> {
     // 1, redirect to login page if this request is used for refreshing token
-    if ([`/account/auth/refresh`].some(url => req.url.includes(url))) {
+    if ([`/api/auth/refresh`].some(url => req.url.includes(url))) {
       this.toLogin();
       return throwError(ev);
     }
@@ -161,7 +161,7 @@ export class DefaultInterceptor implements HttpInterceptor {
   private toLogin(): void {
     if (!this.notified) {
       this.notified = true;
-      this.goTo('/passport/login');
+      this.goTo('/login');
     }
   }
 
@@ -193,10 +193,12 @@ export class DefaultInterceptor implements HttpInterceptor {
           return of(httpEvent);
         }
       }),
-      catchError((err: HttpErrorResponse) => {
+      catchError((err: any) => {
+        console.error("err:",err);
         // handle failed response and token expired
         switch (err.status) {
           case 401:
+            console.log('检测到401了')
             return this.tryRefreshToken(err, newReq, next);
           case 404:
           case 500:

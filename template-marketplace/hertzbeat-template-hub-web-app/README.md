@@ -8,11 +8,12 @@ This project was generated with [Angular CLI](https://github.com/angular/angular
 - 搜索页面：名称模糊查询+类别查询+排序功能
 - 详情页面：模版信息展示、版本信息展示、下载功能、分享功能
 - 上传页面：上传模版
-
-## 待完成工作
 - 登录注册页面
 - 详情页面：收藏功能
-- 用户中心页面：资产管理
+- 用户中心页面：资产管理、收藏管理、版本更新
+
+## 待完成工作
+
 - 管理员页面
 
 ## Development server

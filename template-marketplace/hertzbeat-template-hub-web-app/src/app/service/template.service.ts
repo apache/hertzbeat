@@ -23,12 +23,30 @@ import {BehaviorSubject, Observable} from 'rxjs';
 
 import {Message} from '../pojo/Message';
 
+export interface TemplateVO {
+  id: number;
+  name: string;
+  description: string;
+  latest: number;
+  user: number;
+  categoryId: number;
+  tag:number;
+  download: number;
+  star:number,
+  create_time: string;
+  update_time: string;
+  off_shelf: number;
+  isDel: number;
+  starByNowUser:boolean;
+}
+
 const template_count_uri = '/template/count';
 const template_upload_uri = '/template/upload';
 const template_page_uri = '/template/page';
 const template_page_name_uri='/template/page/name';
 const template_page_option_uri='/template/page/option';
 const template_page_order_uri='/template/page/order';
+const template_page_user_uri='/template/page/user';
 const template_download_uri = '/template/download/';
 const template_download_latest_uri = '/template/download/latest/';
 const template_page_category_uri = '/template/page/category';
@@ -73,12 +91,17 @@ export class TemplateService {
     return this.http.post<Message<any>>(template_upload_uri, data);
   }
 
-  public getTemplatePage(isDel: number, page:number, size:number): Observable<Message<any>> {
-    return this.http.get<Message<any>>(template_page_uri+'/'+isDel+'?page='+page+'&size='+size,
+  public getTemplatePage(isDel: number, userId:number, page:number, size:number): Observable<Message<any>> {
+    return this.http.get<Message<any>>(template_page_uri+'/'+isDel+'/'+userId+'?page='+page+'&size='+size,
       {headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'json'});
   }
 
-  public getTemplatePageByOption(allCategory:boolean,category: number[],nameLike:string,orderOption:number,
+  public getTemplatePageByUser(userId: number, page:number, size:number): Observable<Message<any>> {
+    return this.http.get<Message<any>>(template_page_user_uri+'/'+userId+'?page='+page+'&size='+size,
+      {headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'json'});
+  }
+
+  public getTemplatePageByOption(userId:number, allCategory:boolean,category: number[],nameLike:string,orderOption:number,
                                  isDel: number, page:number, size:number): Observable<Message<any>> {
     var categoryStr='';
     for (const id of category) {
@@ -90,32 +113,32 @@ export class TemplateService {
     }
     if(nameLike!=''){
       if(allCategory){
-        return this.http.get<Message<any>>(template_page_name_uri+'/'+nameLike+'/'+isDel+'/'+orderOption+'?page='+page+'&size='+size+'&category='+category,
+        return this.http.get<Message<any>>(template_page_name_uri+'/'+nameLike+'/'+isDel+'/'+orderOption+'/'+userId+'?page='+page+'&size='+size+'&category='+category,
           {headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'json'});
       }
-      else if(!allCategory&&category.length>0){
-        return this.http.get<Message<any>>(template_page_option_uri+'/'+nameLike+'/'+categoryStr+'/'+isDel+'/'+orderOption+'?page='+page+'&size='+size+'&category='+category,
+      else if(!allCategory){
+        return this.http.get<Message<any>>(template_page_option_uri+'/'+nameLike+'/'+categoryStr+'/'+isDel+'/'+orderOption+'/'+userId+'?page='+page+'&size='+size+'&category='+category,
           {headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'json'});
       }
       else{
-        return this.http.get<Message<any>>(template_page_option_uri+'/'+nameLike+'/'+categoryStr+'/'+isDel+'/'+orderOption+'?page='+page+'&size='+size+'&category='+category,
+        return this.http.get<Message<any>>(template_page_option_uri+'/'+nameLike+'/'+categoryStr+'/'+isDel+'/'+orderOption+'/'+userId+'?page='+page+'&size='+size+'&category='+category,
           {headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'json'});
       }
     }
     else{
       if(allCategory){
         return this.http.get<Message<any>>(
-          template_page_order_uri+'/'+orderOption+'/'+isDel+'?page='+page+'&size='+size+'',
+          template_page_order_uri+'/'+orderOption+'/'+isDel+'/'+userId+'?page='+page+'&size='+size+'',
           {headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'json'});
       }
       else if(!allCategory&&category.length>0){
         return this.http.get<Message<any>>(
-          template_page_category_uri+'/'+categoryStr+'/'+isDel+'/'+orderOption+'?page='+page+'&size='+size+'',
+          template_page_category_uri+'/'+categoryStr+'/'+isDel+'/'+orderOption+'/'+userId+'?page='+page+'&size='+size+'',
           {headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'json'});
       }
       else{
         return this.http.get<Message<any>>(
-          template_page_category_uri+'/'+'_'+'/'+isDel+'/'+orderOption+'?page='+page+'&size='+size+'',
+          template_page_category_uri+'/'+'_'+'/'+isDel+'/'+orderOption+'/'+userId+'?page='+page+'&size='+size+'',
           {headers: new HttpHeaders({ 'Content-Type': 'application/json' }), responseType: 'json'});
       }
     }

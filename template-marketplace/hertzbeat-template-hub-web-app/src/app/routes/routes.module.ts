@@ -26,6 +26,7 @@ import {NzTimelineModule} from 'ng-zorro-antd/timeline';
 
 import {LayoutModule} from '../layout/layout.module';
 import {HomePageComponent} from './home-page/home-page.component';
+import {LoginComponent} from './login/login.component';
 import {RouterModule} from "@angular/router";
 import {NzMessageModule} from "ng-zorro-antd/message";
 import {BrowserModule} from "@angular/platform-browser";
@@ -33,7 +34,7 @@ import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {FormsModule} from "@angular/forms";
 
 const COMPONENTS: Array<Type<void>> = [
-  HomePageComponent,
+  HomePageComponent,LoginComponent
 ];
 
 @NgModule({

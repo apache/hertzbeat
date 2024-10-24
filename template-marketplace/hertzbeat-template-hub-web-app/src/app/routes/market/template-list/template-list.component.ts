@@ -20,8 +20,9 @@
 import {Component, OnDestroy, OnInit} from '@angular/core';
 import {NzMessageService} from 'ng-zorro-antd/message';
 
-import {TemplateService} from '../../../service/template.service';
+import {TemplateService, TemplateVO} from '../../../service/template.service';
 import {CategoryService} from "../../../service/category.service";
+import {StarService} from "../../../service/star.service";
 import {LocalStorageService} from "../../../service/local-storage.service";
 import {saveAs} from "file-saver";
 
@@ -40,14 +41,16 @@ export class TemplateListComponent implements OnInit, OnDestroy {
   constructor(private templateService: TemplateService,
               private msg: NzMessageService,
               private categoryService: CategoryService,
+              private starService: StarService,
               private localStorageService: LocalStorageService,) {}
 
-  templateList: any[] = [];
+  templateList: TemplateVO[] = [];
+  starTemplatesIds: number[]=[];
 
   totalElements = 1;
   totalPages = 1;
   pageIndex=0;
-  pageSize = 2;
+  pageSize = 10;
   numberOfPages = 1;
   newPageIndex=this.pageIndex;
   newPageSize = this.pageSize;
@@ -71,7 +74,7 @@ export class TemplateListComponent implements OnInit, OnDestroy {
     this.templateList=[];
     this.categoryService.clearCategoryList();
     this.categoryService.getAllCategoryByIsDel(0).subscribe(message => {
-      // console.log('返回结果',message);
+      console.log('返回结果',message);
       if (message.code == 0) {
         this.categoryService.addCategoryList(message.data)
         this.categoryList=[];
@@ -87,9 +90,10 @@ export class TemplateListComponent implements OnInit, OnDestroy {
       }
     })
 
-    this.templateService.getTemplatePage(0,0,2).subscribe(message => {
+    this.templateService.getTemplatePage(0, 1,0,10).subscribe(message => {
       if (message.code == 0) {
         this.templateList.push(...message.data.content);
+        console.log(this.templateList);
         this.totalElements=message.data.totalElements;
         this.totalPages=message.data.totalPages;
         this.pageIndex=message.data.pageable.pageNumber;
@@ -118,7 +122,7 @@ export class TemplateListComponent implements OnInit, OnDestroy {
   }
 
   getTemplatePageByOption(){
-    this.templateService.getTemplatePageByOption(this.allChecked,this.checkCategory,this.nameLike,this.orderOption,0,this.newPageIndex-1,this.newPageSize)
+    this.templateService.getTemplatePageByOption(1,this.allChecked,this.checkCategory,this.nameLike,this.orderOption,0,this.newPageIndex-1,this.newPageSize)
       .subscribe(message => {
         if (message.code == 0) {
           this.templateList=[];
@@ -180,6 +184,12 @@ export class TemplateListComponent implements OnInit, OnDestroy {
     this.templateService.downloadLatestTemplate(user,id,latest)
       .subscribe((blob:Blob)=>{
           saveAs(blob, `${name}-latest.yml`);
+          for (let templateVO of this.templateList) {
+            if(templateVO.id==id) {
+              templateVO.download++;
+              break;
+            }
+          }
       },
       error => {
         console.error('下载文件时发生错误:', error);
@@ -193,13 +203,52 @@ export class TemplateListComponent implements OnInit, OnDestroy {
     // console.log(this.templateService.getNowTemplate());
   }
 
+  starTemplate(id:number){
+    const formData = new FormData();
+    formData.append('user', '1');
+    formData.append('template', id.toString());
+    this.starService.starTemplate(formData)
+      .subscribe(message=>{
+        if (message.code == 0) {
+          for (let templateVO of this.templateList) {
+            if(templateVO.id==id) {
+              templateVO.starByNowUser=true;
+              templateVO.star++;
+              break;
+            }
+          }
+          this.msg.success(message.msg);
+        }else{
+          this.msg.error(message.msg);
+        }
+      })
+  }
+
+  cancelStarTemplate(id:number){
+    const formData = new FormData();
+    formData.append('templateId', id.toString());
+    this.starService.cancelStarTemplate(1,formData)
+      .subscribe(message=>{
+        if (message.code == 0) {
+          this.msg.success(message.msg);
+          for (let templateVO of this.templateList) {
+            if(templateVO.id==id) {
+              templateVO.starByNowUser=false;
+              templateVO.star--;
+              break;
+            }
+          }
+        }else{
+          this.msg.error(message.msg);
+        }
+      })
+  }
+
   ngOnDestroy(): void {
     this.templateList=[];
     this.categoryList=[];
     this.templateService.clearTemplateSubject();
     this.categoryService.clearCategoryList();
   }
-
-  protected readonly window = window;
   protected readonly event = event;
 }
