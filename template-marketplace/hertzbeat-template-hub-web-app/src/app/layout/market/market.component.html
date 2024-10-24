@@ -1,0 +1,251 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+  <header class="tp-header-height" style="height: 151px;">
+    <div class="tp-header-top__area theme-bg tp-header-top__space">
+      <div class="container container-large">
+        <div class="row align-items-center">
+          <div class="col-xxl-4 col-xl-4 col-lg-6 col-md-6 col-sm-6">
+            <div class="tp-header-top__left-box text-center text-md-start">
+              <img src="assets/svg/hand.svg" alt="">
+              <span>Welcome to HertzBeat 监控模版市场!</span>
+            </div>
+          </div>
+          <div class="col-xxl-4 col-xl-5 d-xl-block">
+            <div class="tp-header-top__shop-box text-xl-start text-end">
+              <span>目前共有{{ count }}个模版</span>
+              <a href="#">搜索！</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="header-sticky" class="tp-header__area">
+      <div class="container container-large">
+        <div class="row align-items-center">
+          <!--logo-->
+          <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6 col-6">
+            <div class="tp-header__left-box d-flex align-items-center">
+              <div class="tp-header__logo">
+                <a href="home-page">
+                  <img src="../../../assets/svg/brand.svg" alt="">
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-7 d-none d-xl-block">
+            <div class="tp-header__main-menu">
+              <nav class="tp-main-menu-content">
+                <ul>
+                  <li class="has-dropdown">
+                    <a href="home-page">主页</a>
+                  </li>
+                  <li class="has-dropdown">
+                    <a href="market/list">市场</a>
+                  </li>
+                  <li class="has-dropdown">
+                    <a href="https://hertzbeat.apache.org/zh-cn/">社区</a>
+                  </li>
+                  <li>
+                    <a href="about-us.html">about</a>
+                  </li>
+                  <li class="has-dropdown">
+                    <a href="blog.html">其他</a>
+                    <ul class="submenu tp-submenu">
+                      <li><a href="blog.html">博客</a></li>
+                      <li><a href="blog-details.html">xxx</a></li>
+                    </ul>
+                  </li>
+                  <li class="has-dropdown">
+                    <a href="user-center/upload">个人中心</a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+          <div class="col-xl-2 col-lg-6 col-md-6 col-sm-6 col-6">
+            <div class="tp-header__right-box d-flex align-items-center justify-content-end">
+              <ul class="d-none d-sm-block">
+                <li>
+                  <div class="tp-header__icon-box">
+                    <a href="user-center/assets" *ngIf="isLogin">
+                      <span>
+                        <img src="assets/svg/user-center.svg" alt="">
+                      </span>
+                    </a>
+                    <a href="user-center/star" *ngIf="isLogin">
+                      <span class="heart p-relative">
+                        <i class="fa-light fa-heart"></i>
+                      </span>
+                    </a>
+                    <a href="javascript:">
+                      <span class="cart p-relative">
+                        <img src="assets/svg/i18n.svg" alt="">
+                      </span>
+                    </a>
+                  </div>
+                </li>
+                <li *ngIf="!isLogin">
+                  <div class="tp-header__chat-box d-none d-xxl-block">
+                    <a href="login">
+                      登录 / 注册
+<!--                      <svg-->
+<!--                        t="1720473255204"-->
+<!--                        class="icon"-->
+<!--                        viewBox="0 0 1024 1024"-->
+<!--                        version="1.1"-->
+<!--                        xmlns="http://www.w3.org/2000/svg"-->
+<!--                        p-id="9285"-->
+<!--                        width="34"-->
+<!--                        height="34"-->
+<!--                      >-->
+<!--                        <path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z" fill="#F79484"-->
+<!--                              p-id="9286"></path>-->
+<!--                        <path-->
+<!--                          d="M609.28 494.08L577.28 409.6c-28.16-72.96-101.12-117.76-176.64-106.24-12.8-17.92-35.84-25.6-56.32-16.64-21.76 7.68-33.28 30.72-29.44 52.48-57.6 43.52-79.36 122.88-52.48 192l30.72 78.08c-17.92 23.04-21.76 53.76-11.52 80.64v1.28c3.84 10.24 10.24 20.48 17.92 28.16h1.28c6.4 6.4 14.08 8.96 23.04 8.96 2.56 0 5.12-1.28 10.24-2.56l314.88-121.6c2.56-1.28 3.84-1.28 6.4-3.84 8.96-5.12 14.08-14.08 14.08-23.04 0-11.52-1.28-24.32-6.4-34.56v-1.28c-10.24-21.76-29.44-40.96-53.76-47.36z"-->
+<!--                          fill="#FFFFFF"-->
+<!--                          opacity=".5"-->
+<!--                          p-id="9287"-->
+<!--                        ></path>-->
+<!--                        <path-->
+<!--                          d="M482.56 729.6c0 32 25.6 57.6 57.6 57.6s57.6-25.6 57.6-57.6h-115.2z m254.72-165.12v-102.4c0-89.6-58.88-165.12-143.36-184.32-6.4-24.32-28.16-40.96-52.48-40.96-25.6 0-47.36 19.2-52.48 43.52-79.36 23.04-134.4 98.56-134.4 181.76v96c-28.16 17.92-44.8 48.64-44.8 81.92v1.28c0 12.8 2.56 25.6 7.68 37.12l1.28 1.28c3.84 8.96 11.52 15.36 20.48 17.92 2.56 1.28 6.4 1.28 11.52 1.28h382.72c2.56 0 5.12 0 7.68-1.28 11.52-1.28 20.48-8.96 24.32-17.92 5.12-11.52 7.68-25.6 7.68-38.4V640c0-29.44-12.8-56.32-35.84-75.52z"-->
+<!--                          fill="#FFFFFF"-->
+<!--                          p-id="9288"-->
+<!--                        ></path>-->
+<!--                      </svg>-->
+                    </a>
+                  </div>
+                </li >
+              </ul>
+<!--              <div class="tp-header-2__bar d-xl-none">-->
+<!--                <button class="tp-menu-bar">-->
+<!--                  <i class="fa-solid fa-bars"></i>-->
+<!--                </button>-->
+<!--              </div>-->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </header>
+  <router-outlet></router-outlet>
+  <footer>
+    <div class="tp-footer__area p-relative grey-bg pb-5" style="padding-top: 45px;">
+      <div class="container">
+        <div class="row"  style="width: 1400px;">
+          <div class="col-xl-4 col-lg-6 col-md-6 mb-5 wow tpfadeUp" data-wow-duration=".9s" data-wow-delay=".3s">
+            <div class="tp-footer__widget z-index footer-col-1">
+              <div class="tp-footer__logo">
+                <a href="home-page">
+                  <img src="../../../assets/svg/brand.svg" alt="">
+                </a>
+              </div>
+              <div class="tp-footer__text">
+                <p>易用友好的开源实时监控系统</p>
+              </div>
+              <div class="tp-footer__contact-list">
+                <div class="tp-footer__contact-item pb-5 d-flex about-items-center">
+                  <div class="tp-footer__icon">
+                    <img src="assets/svg/github.svg" alt="">
+                  </div>
+                  <div class="tp-footer__text">
+                    <a href="https://github.com/apache/hertzbeat"> Github </a>
+                  </div>
+                </div>
+                <div class="tp-footer__contact-item d-flex about-items-center">
+                  <div class="tp-footer__icon">
+                    <span>
+                      <img src="assets/svg/email.svg" alt="">
+                    </span>
+                  </div>
+                  <div class="tp-footer__text">
+                    <a href="邮箱地址"> 邮箱&#64;163.com </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-4 col-lg-6 col-md-6 mb-5 wow tpfadeUp" data-wow-duration=".9s" data-wow-delay=".5s">
+            <div class="tp-footer__widget footer-col-2">
+              <h4 class="tp-footer__widget-title">导航</h4>
+              <div class="tp-footer__list">
+                <ul>
+                  <li><a href="page-home">首页</a></li>
+                  <li><a href="#">社区</a></li>
+                  <li><a href="#">市场</a></li>
+                  <li><a href="#">About</a></li>
+                  <li><a href="#">其他</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-4 col-lg-6 col-md-6 mb-5 wow tpfadeUp" data-wow-duration=".9s" data-wow-delay=".7s">
+            <div class="tp-footer__widget footer-col-3">
+              <h4 class="tp-footer__widget-title">相关资源</h4>
+              <div class="tp-footer__list">
+                <ul>
+                  <li><a href="#">GitHub 仓库</a></li>
+                  <li><a href="#">团队</a></li>
+                  <li><a href="#">博客</a></li>
+                  <li><a href="#">其他资源</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tp-copyright__area grey-bg tp-copyright__border">
+      <div class="container">
+        <div class="row" style="width: 1350px;">
+          <div class="col-xl-12 wow tpfadeUp" data-wow-duration=".9s" data-wow-delay=".3s">
+            <div
+              class="tp-copyright__wrapper d-flex align-items-center justify-content-sm-between justify-content-center">
+              <div class="tp-copyright__text text-center">
+                      <span
+                      >Apache HertzBeat is an effort undergoing incubation at The Apache Software Foundation (ASF), sponsored by the Apache
+                        Incubator. Incubation is required of all newly accepted projects until a further review indicates that the
+                        infrastructure, communications, and decision making process have stabilized in a manner consistent with other successful
+                        ASF projects. While incubation status is not necessarily a reflection of the completeness or stability of the code, it
+                        does indicate that the project has yet to be fully endorsed by the ASF.</span
+                      >
+                <br/>
+                <HR style="FILTER: alpha(opacity=100,finishopacity=0,style=3)" width="100%" color="#987cb9"
+                    SIZE="3">
+                <span
+                >Copyright © 2024 The Apache Software Foundation. Apache HertzBeat, HertzBeat, and its feather logo are trademarks of
+                        The Apache Software Foundation.</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

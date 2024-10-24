@@ -1,0 +1,56 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+### Get Count
+GET http://localhost:8080/api/template/count/0/0
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInppcCI6IkRFRiJ9.eJwtzM0KwjAQBOB32XMj-Wua9OR7iEjTbCBqm5JtVRDf3VS8Dd8M84brmqAH5by2Y2yZsjYyzWPHnPGBWeetDyM6FwU0QJuv46cnyaU-CqMOY56qJ6LqtBWckYit-YYzIywPLHs7rNCLTjqtjGlVA_ha_qC53KHkO9aH0y9chjClGc6fL9mALgA.59te86AOUF0aAHZG_6pWTw5HM5DqBpk48QeOoZ_XSbINJVIy1lllgnaLOyvrDoKpVyozMMfaIoRWayFQD2SKUg
+
+### Get templates By user
+GET http://localhost:8080/api/template/1
+
+### Get templates Page By user
+GET http://localhost:8080/api/template/page/user/1?page=0&size=10
+
+### Get templates By category
+GET http://localhost:8080/api/template/category/1
+
+### Get templates Page By category
+GET http://localhost:8080/api/template/page/category/1_3/0/1/1?page=0&size=2
+
+### Get templates Page
+GET http://localhost:8080/api/template/page/0/1?page=0&size=10
+
+### Get templates order by order
+GET http://localhost:8080/api/template/query/3/0
+
+### Get templates Page By option
+GET http://localhost:8080/api/template/page/option/My/1_3/0/1/1?page=0&size=10
+
+### Get all templates noToken
+GET http://localhost:8080/api/template/
+
+### Authorization Get all templates
+GET http://localhost:8080/api/template/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzUxMiIsInppcCI6IkRFRiJ9.eJw1zMEKwjAQBNB_2XMjSbokTU_-h4gk7QpRm0g2VUH8d1PB2_BmmDdcaoQRDIXZeScF4nkQaJwRXgUvUCrrrCI3TB464DW08TOwlhr3yvS7KS_NI3NzXgslYhY1XykJpvKgsrW-wqisdogae9UBve5_MHKDkm_UHg6_cPLzEhMcP1-hvS19.D9WYp53dXBrDd0MphrLhuipHmAbnd5ahuyHQkDkIFO28TRvYqGRGmY5l2vU26WpplVA81QHHl8DMQ9aFxXARAg
+
+### download
+GET http://localhost:8080/api/template/download/1/1/v1.0.0/1
+
+### download latest
+GET http://localhost:8080/api/template/download/latest/1/1/1
