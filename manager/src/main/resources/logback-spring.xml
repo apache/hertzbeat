@@ -83,7 +83,6 @@
     <logger name="io.netty" level="info"/>
     <logger name="org.slf4j" level="info"/>
     <logger name="ch.qos.logback" level="warn"/>
-    <logger name="org.apache.kafka.clients" level="info"/>
     <logger name="org.hibernate" level="info"/>
     <logger name="org.apache.http" level="info"/>
     <logger name="com.zaxxer" level="info"/>
