@@ -316,16 +316,23 @@ public class SnmpCollectImpl extends AbstractCollect {
     }
 
     private TargetBuilder.PrivProtocol getPrivPasswordEncryption(String privPasswordEncryption) {
-        if (privPasswordEncryption == null) return TargetBuilder.PrivProtocol.des;
-        else if (AES128.equals(privPasswordEncryption)) {
+        if (privPasswordEncryption == null) {
+            return TargetBuilder.PrivProtocol.des;
+        } else if (AES128.equals(privPasswordEncryption)) {
             return TargetBuilder.PrivProtocol.aes128;
-        } else return TargetBuilder.PrivProtocol.des;
+        } else {
+            return TargetBuilder.PrivProtocol.des;
+        }
     }
 
     private TargetBuilder.AuthProtocol getAuthPasswordEncryption(String authPasswordEncryption) {
-        if (authPasswordEncryption == null) return TargetBuilder.AuthProtocol.md5;
-        else if (SHA1.equals(authPasswordEncryption))  return TargetBuilder.AuthProtocol.sha1;
-        else return TargetBuilder.AuthProtocol.md5;
+        if (authPasswordEncryption == null) {
+            return TargetBuilder.AuthProtocol.md5;
+        } else if (SHA1.equals(authPasswordEncryption)) {
+            return TargetBuilder.AuthProtocol.sha1;
+        } else {
+            return TargetBuilder.AuthProtocol.md5;
+        }
     }
 
     private String getContextName(String contextName) {

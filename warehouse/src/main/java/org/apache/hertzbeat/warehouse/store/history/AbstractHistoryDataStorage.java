@@ -31,6 +31,7 @@ public abstract class AbstractHistoryDataStorage implements HistoryDataReader, H
     /**
      * @return data storage available
      */
+    @Override
     public boolean isServerAvailable() {
         return serverAvailable;
     }
