@@ -1,11 +1,11 @@
 ---
 id: seatunnel
-title: 监控：Seatunnel
-sidebar_label: Seatunnel
-keywords: [ 开源监控系统, 监控Seatunnel ]
+title: 监控：SeaTunnel
+sidebar_label: SeaTunnel
+keywords: [ 开源监控系统, 监控SeaTunnel ]
 ---
 
-> 对 Seatunnel 指标进行采集监控。
+> 对 SeaTunnel 指标进行采集监控。
 
 ### 配置参数
 
@@ -13,7 +13,7 @@ keywords: [ 开源监控系统, 监控Seatunnel ]
 |---------|------------------------------------------------------|
 | 目标Host  | 被监控的对端IPV4，IPV6或域名。注意⚠️不带协议头(eg: https://, http://)。 |
 | 任务名称    | 标识此监控的名称，名称需要保证唯一性。                                  |
-| 端口      | Seatunnel开放的监控端口，默认值：5801。                           |
+| 端口      | SeaTunnel开放的监控端口，默认值：5801。                           |
 | 启用HTTPS | 是否启用HTTPS。                                           |
 | 查询超时时间  | 设置查询未响应数据时的超时时间，单位ms毫秒，默认6000毫秒。                     |
 | 采集间隔    | 监控周期性采集数据间隔时间，单位秒，可设置的最小间隔为30秒                       |

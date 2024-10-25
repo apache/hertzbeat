@@ -1,11 +1,11 @@
 ---
 id: seatunnel
-title: Monitoring： Seatunnel
-sidebar_label: Seatunnel
-keywords: [ Open Source Monitoring System, Monitor Seatunnel ]
+title: Monitoring： SeaTunnel
+sidebar_label: SeaTunnel
+keywords: [ Open Source Monitoring System, Monitor SeaTunnel ]
 ---
 
-> Collect monitoring metrics for Seatunnel.
+> Collect monitoring metrics for SeaTunnel.
 
 ### Configuration Parameters
 
@@ -13,8 +13,8 @@ keywords: [ Open Source Monitoring System, Monitor Seatunnel ]
 |-------------------|-----------------------------------------------------------------------------------------------------------------|
 | Target Host       | The monitored endpoint's IPV4, IPV6, or domain name. Note ⚠️ no protocol header (e.g., https://, http://).      |
 | Task Name         | The name that identifies this monitoring task, which needs to be unique.                                        |
-| Port              | The monitoring port opened by Seatunnel, default value: 5801.                                                   |
-| SSL                 | Whether SSL is enabled for connecting to Seatunnel.                                                             |
+| Port              | The monitoring port opened by SeaTunnel, default value: 5801.                                                   |
+| SSL                 | Whether SSL is enabled for connecting to SeaTunnel.                                                             |
 | Query Timeout     | Set the timeout for unresponsive queries, in milliseconds (ms), default 6000 ms.                                |
 | Collection Interval| The interval time for periodic data collection, in seconds; the minimum interval that can be set is 30 seconds. |
 | Binding Tags      | Used for categorizing and managing monitoring resources.                                                        |
