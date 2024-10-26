@@ -38,6 +38,7 @@ public class SshConnect extends AbstractConnection<ClientSession> {
         }
     }
 
+    @Override
     public ClientSession getConnection() {
         return clientSession;
     }
