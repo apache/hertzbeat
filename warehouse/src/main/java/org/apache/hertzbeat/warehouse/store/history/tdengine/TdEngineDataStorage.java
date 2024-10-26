@@ -57,7 +57,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class TdEngineDataStorage extends AbstractHistoryDataStorage {
 
-    private static final String CONSTANTS_URL_PREFIX = "jdbc:TAOS://";
+    private static final String CONSTANTS_URL_PREFIX = "jdbc:TAOS-RS://";
     private static final Pattern SQL_SPECIAL_STRING_PATTERN = Pattern.compile("(\\\\)|(')");
     private static final String INSTANCE_NULL = "''";
     private static final String CONSTANTS_CREATE_DATABASE = "CREATE DATABASE IF NOT EXISTS %s";
