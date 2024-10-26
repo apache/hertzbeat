@@ -163,6 +163,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         }
     }
 
+    @Override
     public void destroy() {
 
         connection.close();
