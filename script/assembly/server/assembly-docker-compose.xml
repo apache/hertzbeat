@@ -77,6 +77,7 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
             <filtered>true</filtered>
             <includes>
                 <include>README.md</include>
+                <include>LICENSE</include>
             </includes>
             <outputDirectory>/</outputDirectory>
         </fileSet>
@@ -89,7 +90,6 @@ http://maven.apache.org/ASSEMBLY/2.0.0 ">
                 <include>DISCLAIMER</include>
                 <include>LICENSE</include>
                 <include>NOTICE</include>
-                <include>README.md</include>
             </includes>
         </fileSet>
     </fileSets>
