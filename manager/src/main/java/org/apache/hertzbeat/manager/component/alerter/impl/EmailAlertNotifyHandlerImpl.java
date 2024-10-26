@@ -137,6 +137,7 @@ public class EmailAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl 
         return 1;
     }
 
+    @Override
     @EventListener(SystemConfigChangeEvent.class)
     public void onEvent(SystemConfigChangeEvent event) {
         log.info("{} receive system config change event: {}.", this.getClass().getName(), event.getSource());
