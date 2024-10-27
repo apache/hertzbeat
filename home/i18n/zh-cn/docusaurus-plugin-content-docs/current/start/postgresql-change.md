@@ -23,7 +23,7 @@ PostgreSQL 是一个功能强大，开源的关系型数据库管理系统（RDB
 2. Docker 安装 PostgreSQL
 
    ```shell
-   docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
+   docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgres:15       
    ```
 
    使用 ```$ docker ps``` 查看数据库是否启动成功
