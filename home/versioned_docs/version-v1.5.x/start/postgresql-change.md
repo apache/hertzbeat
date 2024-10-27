@@ -22,7 +22,7 @@ PostgreSQL is a RDBMS emphasizing extensibility and SQL compliance. In addition 
 2. Install PostgreSQL with Docker
 
    ```shell
-   docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
+   docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgres:15       
    ```
 
    use```$ docker ps```to check if the database started successfully
