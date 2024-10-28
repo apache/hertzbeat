@@ -260,6 +260,13 @@
         },
         {
           "type": "category",
+          "label": "server",
+          "items": [
+            "help/ipmi"
+          ]
+        },
+        {
+          "type": "category",
           "label": "mid",
           "items": [
             "help/zookeeper",
