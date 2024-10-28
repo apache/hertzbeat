@@ -35,6 +35,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
@@ -241,7 +242,10 @@ public class Metrics {
      * Monitoring configuration information using the public mqtt protocol
      */
     private MqttProtocol mqtt;
-
+    /**
+     * Monitoring configuration information using the public ipmi protocol
+     */
+    private IpmiProtocol ipmi;
     /**
      * Monitoring configuration information using the public kafka protocol
      */
