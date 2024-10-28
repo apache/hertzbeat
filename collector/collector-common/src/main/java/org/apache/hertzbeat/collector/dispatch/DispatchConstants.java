@@ -142,6 +142,11 @@ public interface DispatchConstants {
      */
     String PROTOCOL_MQTT = "mqtt";
 
+    /**
+     * protocol ipmi
+     */
+    String PROTOCOL_IPMI = "ipmi";
+
     // Protocol type related - end
 
     // http protocol related - start should reuse HttpHeaders as much as possible
