@@ -66,7 +66,9 @@ public class TextParser {
 
     private static void parseLine(Map<String, MetricFamily> metricMap, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         switch (buffer.charAt(0)) {
             case '#':
             case ENTER:
@@ -95,7 +97,9 @@ public class TextParser {
 
     private static void readLabels(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         metric.setLabels(new LinkedList<>());
         if (buffer.charAt(0) == LEFT_CURLY_BRACKET) {
             buffer.read();
@@ -107,11 +111,15 @@ public class TextParser {
 
     private static void startReadLabelName(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         if (buffer.charAt(0) == RIGHT_CURLY_BRACKET) {
             buffer.read();
             buffer.skipBlankTabs();
-            if (buffer.isEmpty()) return;
+            if (buffer.isEmpty()) {
+                return;
+            }
             readLabelValue(metric, buffer);
             return;
         }
@@ -129,7 +137,9 @@ public class TextParser {
 
     private static void startReadLabelValue(MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         char c = buffer.read();
         if (c != QUOTES) {
             throw new ParseException("expected '\"' at start of label value, line: " + buffer.toStr());
@@ -140,7 +150,9 @@ public class TextParser {
             throw new ParseException("no valid label value: " + labelValue);
         }
         metric.getLabels().add(label);
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         c = buffer.read();
         switch (c) {
             case COMMA -> startReadLabelName(metric, buffer);
@@ -151,7 +163,9 @@ public class TextParser {
 
     private static void readLabelValue(MetricFamily.Metric metric, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         metric.setValue(buffer.toDouble());
     }
 
