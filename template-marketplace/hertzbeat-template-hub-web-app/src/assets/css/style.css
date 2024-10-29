@@ -344,7 +344,47 @@ input[type=text], input[type=email], input[type=tel], input[type=number], input[
   top: 0;
 }
 
-.tp-btn-square {
+.btn-icon {
+  display:inline-flex;
+  align-items: center;
+  height: 61px;
+  padding: 0 50px;
+  /*display: inline-block;*/
+  line-height: 61px;
+  font-weight: 500;
+  font-size: 16px;
+  text-align: center;
+  text-transform: uppercase;
+  transition: 0.3s;
+  background: var(--tp-common-purple-2);
+  color: var(--tp-common-white);
+}
+@media only screen and (min-width: 992px) and (max-width: 1199px), only screen and (min-width: 768px) and (max-width: 991px) {
+  .btn-icon {
+    display:inline-flex;
+    align-items: center;
+    height: 50px;
+    padding: 0 25px;
+    line-height: 50px;
+    font-size: 14px;
+  }
+}
+@media (max-width: 767px) {
+  .btn-icon {
+    display:inline-flex;
+    align-items: center;
+    height: 50px;
+    padding: 0 25px;
+    line-height: 50px;
+    font-size: 12px;
+  }
+}
+.btn-icon:hover {
+  background-color: #FF8717;
+  color: var(--tp-common-white);
+}
+
+.btn-no-icon {
   height: 61px;
   padding: 0 50px;
   display: inline-block;
@@ -358,7 +398,7 @@ input[type=text], input[type=email], input[type=tel], input[type=number], input[
   color: var(--tp-common-white);
 }
 @media only screen and (min-width: 992px) and (max-width: 1199px), only screen and (min-width: 768px) and (max-width: 991px) {
-  .tp-btn-square {
+  .btn-no-icon {
     height: 50px;
     padding: 0 25px;
     line-height: 50px;
@@ -366,14 +406,14 @@ input[type=text], input[type=email], input[type=tel], input[type=number], input[
   }
 }
 @media (max-width: 767px) {
-  .tp-btn-square {
+  .btn-no-icon {
     height: 50px;
     padding: 0 25px;
     line-height: 50px;
     font-size: 12px;
   }
 }
-.tp-btn-square:hover {
+.btn-no-icon:hover {
   background-color: #FF8717;
   color: var(--tp-common-white);
 }
@@ -1629,7 +1669,7 @@ input[type=text], input[type=email], input[type=tel], input[type=number], input[
 .tp-fea-product__item:hover {
   background-color: var(--tp-common-white);
 }
-.tp-fea-product__item:hover .tp-fea-product__icon-box {
+.tp-fea-product__item:hover .template_card__icon-box {
   opacity: 1;
   visibility: visible;
   top: 50%;
@@ -1647,16 +1687,16 @@ input[type=text], input[type=email], input[type=tel], input[type=number], input[
 .tp-fea-product__item:hover .tp-fea-product__thumb img {
   transform: scale(1.2) rotate(-1deg);
 }
-.tp-fea-product__icon-box {
+.template_card__icon-box {
   position: absolute;
   top: 20%;
-  left: 0;
-  right: 0;
+  left: 36%;
+  /*right: 0;*/
   transition: 0.5s;
   opacity: 0;
   visibility: hidden;
 }
-.tp-fea-product__icon-box a {
+.template_card__icon-box a {
   border-radius: 5px;
   border: 0 solid #D72323;
   background: var(--tp-common-white);
@@ -1668,15 +1708,15 @@ input[type=text], input[type=email], input[type=tel], input[type=number], input[
   transition: 0.3s;
   margin: 0 2px;
 }
-.tp-fea-product__icon-box a svg {
+.template_card__icon-box a svg {
   transition: 0.3s;
   color: var(--tp-common-black);
   width: 20px;
 }
-.tp-fea-product__icon-box a:hover {
+.template_card__icon-box a:hover {
   background-color: var(--tp-common-purple-2);
 }
-.tp-fea-product__icon-box a:hover svg {
+.template_card__icon-box a:hover svg {
   color: var(--tp-common-white);
 }
 

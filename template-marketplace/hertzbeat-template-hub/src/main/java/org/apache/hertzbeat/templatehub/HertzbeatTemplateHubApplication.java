@@ -19,10 +19,8 @@ package org.apache.hertzbeat.templatehub;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-//@ServletComponentScan(basePackages = "org.apache.hertzbeat.templatehub.sureness")
 @SpringBootApplication
 @EnableTransactionManagement
 public class HertzbeatTemplateHubApplication {

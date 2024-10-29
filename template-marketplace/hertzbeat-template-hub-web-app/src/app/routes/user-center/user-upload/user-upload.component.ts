@@ -60,6 +60,8 @@ export class UserUploadComponent implements OnInit,OnDestroy {
               private categoryService: CategoryService,
               private localStorageService: LocalStorageService,) {}
 
+  userId:number=0;
+
   error = 'success';
   type = 0;
   loading = false;
@@ -96,6 +98,13 @@ export class UserUploadComponent implements OnInit,OnDestroy {
   ];
 
   ngOnInit(): void {
+    const user=this.localStorageService.getData("userId");
+    const userName=this.localStorageService.getData("userInfo");
+    if(user==null) this.userId=0;
+    else this.userId=parseInt(user);
+    this.templateInfo.userId=this.userId;
+    this.templateInfo.user=userName==null?'user':userName;
+
     this.categoryList=[];
     this.categoryService.clearCategoryList();
     this.categoryService.getAllCategoryByIsDel(0).subscribe(message => {

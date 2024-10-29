@@ -20,13 +20,13 @@ package org.apache.hertzbeat.templatehub.controller;
 import com.usthe.sureness.util.JsonWebTokenUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.templatehub.model.DTO.LoginDto;
-import org.apache.hertzbeat.templatehub.model.DTO.Message;
-import org.apache.hertzbeat.templatehub.model.DTO.RefreshTokenResponse;
-import org.apache.hertzbeat.templatehub.model.DTO.TokenDto;
+import org.apache.hertzbeat.templatehub.exception.HertzbeatTemplateHubException;
+import org.apache.hertzbeat.templatehub.model.DTO.*;
 import org.apache.hertzbeat.templatehub.service.AccountService;
+import org.apache.hertzbeat.templatehub.service.RoleService;
 import org.apache.hertzbeat.templatehub.util.ResponseUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -51,6 +51,9 @@ public class AccountController {
 
     @Autowired
     private AccountService accountService;
+
+    @Autowired
+    private RoleService roleService;
 
     private static final String TOKEN_SPLIT = "--";
 
@@ -110,16 +113,22 @@ public class AccountController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Message<String>> accountRegister(@RequestBody @Validated LoginDto account) {
+    @Transactional
+    public ResponseEntity<Message<String>> accountRegister(@RequestBody @Validated SignUpDto account) {
+        //此处先让前端传递明文密码，后续改为加密密码
 
         if (accountService.registerAccount(account)) {
-            Message<String> message=Message.success("sign up success, login after");
+            Long authUser = roleService.getRoleIdByCode("role_user");
+            if(authUser == null) throw new HertzbeatTemplateHubException("Role query error");
+            boolean b = accountService.authorityUserRole(account.getEmail(), authUser);
+            if(!b) throw new HertzbeatTemplateHubException("Role authority error");
+            Message<String> message=Message.success("Sign up success, login after");
             if (log.isDebugEnabled()) {
                 log.debug("account: {}, sign up success", account);
             }
             return ResponseEntity.ok(message);
         } else {
-            return ResponseEntity.ok(Message.fail(FAIL_CODE,"username already exist"));
+            return ResponseEntity.ok(Message.fail(FAIL_CODE,"Email already exist"));
         }
     }
 }

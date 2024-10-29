@@ -20,6 +20,7 @@ package org.apache.hertzbeat.templatehub.service;
 import com.usthe.sureness.provider.SurenessAccount;
 import org.apache.hertzbeat.templatehub.model.DTO.LoginDto;
 import org.apache.hertzbeat.templatehub.model.DTO.RefreshTokenResponse;
+import org.apache.hertzbeat.templatehub.model.DTO.SignUpDto;
 
 import javax.naming.AuthenticationException;
 import java.util.List;
@@ -48,7 +49,7 @@ public interface AccountService {
      * @param account account info
      * @return success-true failed-false
      */
-    boolean registerAccount(LoginDto account);
+    boolean registerAccount(SignUpDto account);
 
     /**
      * Determine whether the account already exists

@@ -32,9 +32,10 @@ import {NzMessageModule} from "ng-zorro-antd/message";
 import {BrowserModule} from "@angular/platform-browser";
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
 import {FormsModule} from "@angular/forms";
+import {SignUpComponent} from "./sign-up/sign-up.component";
 
 const COMPONENTS: Array<Type<void>> = [
-  HomePageComponent,LoginComponent
+  HomePageComponent,LoginComponent,SignUpComponent
 ];
 
 @NgModule({

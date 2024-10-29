@@ -61,15 +61,18 @@ export class UserAssetsComponent implements OnInit,OnDestroy {
               private categoryService: CategoryService,
               private localStorageService: LocalStorageService,) {}
 
+  userId:number=0;
+
   templateList: any[] = [];
 
   totalElements = 1;
   totalPages = 1;
   pageIndex=0;
-  pageSize = 10;
+  pageSize = 9;
   numberOfPages = 1;
   newPageIndex=this.pageIndex;
   newPageSize = this.pageSize;
+  pageSizeOptions:number[]=[9,18,27];
 
   nameLike='';
   type = 0;
@@ -87,7 +90,11 @@ export class UserAssetsComponent implements OnInit,OnDestroy {
   loading = false;
 
   ngOnInit(): void {
-    this.templateList=[];
+    const user=this.localStorageService.getData("userId");
+    if(user==null) this.userId=0;
+    else this.userId=parseInt(user);
+
+    // this.templateList=[];
     this.categoryService.clearCategoryList();
     this.categoryService.getAllCategoryByIsDel(0).subscribe(message => {
       console.log('返回结果',message);
@@ -106,7 +113,7 @@ export class UserAssetsComponent implements OnInit,OnDestroy {
       }
     })
 
-    this.templateService.getTemplatePageByUser(1,0,10).subscribe(message => {
+    this.templateService.getTemplatePageByUser(this.userId,0,this.pageSize).subscribe(message => {
       if (message.code == 0) {
         this.templateList.push(...message.data.content);
         this.totalElements=message.data.totalElements;
@@ -123,11 +130,12 @@ export class UserAssetsComponent implements OnInit,OnDestroy {
   }
 
   orderOptionChange(orderValue:number) {
+    //
     console.log(orderValue);
   }
 
   pageIndexChange(newIndex:number){
-    this.newPageIndex=newIndex;
+    this.newPageIndex=newIndex-1;
     this.getTemplatePageByOption()
   }
 
@@ -137,7 +145,7 @@ export class UserAssetsComponent implements OnInit,OnDestroy {
   }
 
   getTemplatePageByOption(){
-    this.templateService.getTemplatePageByOption(1,this.allChecked,this.checkCategory,this.nameLike,this.orderOption,0,this.newPageIndex-1,this.newPageSize)
+    this.templateService.getTemplatePageByOption(this.userId,this.allChecked,this.checkCategory,this.nameLike,this.orderOption,0,this.newPageIndex,this.newPageSize)
       .subscribe(message => {
         if (message.code == 0) {
           this.templateList=[];

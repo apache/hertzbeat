@@ -28,25 +28,25 @@ import {StarService} from "../../../service/star.service";
 import {LocalStorageService} from "../../../service/local-storage.service";
 import {saveAs} from "file-saver";
 
-interface TemplateInfo {
-  id: number;
-  name: string;
-  description: string;
-  descriptionVersion: string;
-  latest: number;
-  versions: string[];
-  currentVersion: string;
-  user: string;
-  userId: number;
-  category: string;
-  categoryId: number;
-  download: number;
-  star:number,
-  create_time: string;
-  update_time: string;
-  off_shelf: number;
-  is_del: number;
-}
+// interface TemplateInfo {
+//   id: number;
+//   name: string;
+//   description: string;
+//   descriptionVersion: string;
+//   latest: number;
+//   versions: string[];
+//   currentVersion: string;
+//   user: string;
+//   userId: number;
+//   category: string;
+//   categoryId: number;
+//   download: number;
+//   star:number,
+//   create_time: string;
+//   update_time: string;
+//   off_shelf: number;
+//   is_del: number;
+// }
 
 @Component({
   selector: 'user-upload',
@@ -61,15 +61,18 @@ export class UserStarComponent implements OnInit,OnDestroy {
               private starService: StarService,
               private localStorageService: LocalStorageService,) {}
 
+  userId:number=0;
+
   templateList: TemplateVO[] = [];
 
   totalElements = 1;
   totalPages = 1;
   pageIndex=0;
-  pageSize = 10;
+  pageSize = 9;
   numberOfPages = 1;
   newPageIndex=this.pageIndex;
   newPageSize = this.pageSize;
+  pageSizeOptions:number[]=[9,18,27];
 
   nameLike='';
   type = 0;
@@ -87,6 +90,11 @@ export class UserStarComponent implements OnInit,OnDestroy {
   loading = false;
 
   ngOnInit(): void {
+    this.templateList=[]
+    const user=this.localStorageService.getData("userId");
+    if(user==null) this.userId=0;
+    else this.userId=parseInt(user);
+
     this.categoryService.clearCategoryList();
     this.categoryService.getAllCategoryByIsDel(0).subscribe(message => {
       console.log('返回结果',message);
@@ -105,7 +113,7 @@ export class UserStarComponent implements OnInit,OnDestroy {
       }
     })
 
-    this.starService.getTemplatePageByUserStar(1,0,10).subscribe(message => {
+    this.starService.getTemplatePageByUserStar(this.userId,0,9).subscribe(message => {
       if (message.code == 0) {
         this.templateList=message.data.content;
         // this.templateList.push(...message.data.content);
@@ -123,7 +131,7 @@ export class UserStarComponent implements OnInit,OnDestroy {
   }
 
   pageIndexChange(newIndex:number){
-    this.newPageIndex=newIndex;
+    this.newPageIndex=newIndex-1;
     this.getTemplatePageByOption()
   }
 
@@ -133,7 +141,7 @@ export class UserStarComponent implements OnInit,OnDestroy {
   }
 
   getTemplatePageByOption(){
-    this.templateService.getTemplatePageByOption(1,this.allChecked,this.checkCategory,this.nameLike,this.orderOption,0,this.newPageIndex-1,this.newPageSize)
+    this.templateService.getTemplatePageByOption(this.userId,this.allChecked,this.checkCategory,this.nameLike,this.orderOption,0,this.newPageIndex,this.newPageSize)
       .subscribe(message => {
         if (message.code == 0) {
           this.templateList=[];
@@ -170,7 +178,7 @@ export class UserStarComponent implements OnInit,OnDestroy {
 
   starTemplate(id:number){
     const formData = new FormData();
-    formData.append('user', '1');
+    formData.append('user', this.userId.toString());
     formData.append('template', id.toString());
     this.starService.starTemplate(formData)
       .subscribe(message=>{

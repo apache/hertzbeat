@@ -45,15 +45,16 @@ export class TemplateListComponent implements OnInit, OnDestroy {
               private localStorageService: LocalStorageService,) {}
 
   templateList: TemplateVO[] = [];
-  starTemplatesIds: number[]=[];
+  userId:number=0;
 
   totalElements = 1;
   totalPages = 1;
   pageIndex=0;
-  pageSize = 10;
+  pageSize = 9;
   numberOfPages = 1;
-  newPageIndex=this.pageIndex;
+  newPageIndex= this.pageIndex;
   newPageSize = this.pageSize;
+  pageSizeOptions:number[]=[9,18,27];
 
   nameLike='';
   type = 0;
@@ -74,7 +75,7 @@ export class TemplateListComponent implements OnInit, OnDestroy {
     this.templateList=[];
     this.categoryService.clearCategoryList();
     this.categoryService.getAllCategoryByIsDel(0).subscribe(message => {
-      console.log('返回结果',message);
+      // console.log('返回结果',message);
       if (message.code == 0) {
         this.categoryService.addCategoryList(message.data)
         this.categoryList=[];
@@ -90,7 +91,11 @@ export class TemplateListComponent implements OnInit, OnDestroy {
       }
     })
 
-    this.templateService.getTemplatePage(0, 1,0,10).subscribe(message => {
+    const user=this.localStorageService.getData("userId");
+    if(user==null) this.userId=0;
+    else this.userId=parseInt(user);
+
+    this.templateService.getTemplatePage(0, this.userId,0,9).subscribe(message => {
       if (message.code == 0) {
         this.templateList.push(...message.data.content);
         console.log(this.templateList);
@@ -99,7 +104,7 @@ export class TemplateListComponent implements OnInit, OnDestroy {
         this.pageIndex=message.data.pageable.pageNumber;
         this.pageSize=message.data.pageable.pageSize;
         this.numberOfPages=message.data.numberOfElements;
-        this.msg.success('查询成功');
+        // this.msg.success('查询成功');
         this.templateService.setTemplateSubject(this.templateList);
       } else {
         this.msg.error(message.msg);
@@ -108,21 +113,28 @@ export class TemplateListComponent implements OnInit, OnDestroy {
   }
 
   orderOptionChange(orderValue:number) {
+    this.msg.warning('排序功能开发中！');
     console.log(orderValue);
   }
 
+  tagChange(){
+    this.msg.warning('标签功能开发中！');
+  }
+
   pageIndexChange(newIndex:number){
-    this.newPageIndex=newIndex;
+    this.newPageIndex=newIndex-1;
+    // console.log("newPageIndex",this.newPageIndex,"newPageSize",this.newPageSize);
     this.getTemplatePageByOption()
   }
 
   pageSizeChange(newSize:number){
     this.newPageSize=newSize;
+    // console.log("newSize",newSize,"newPageIndex",this.newPageIndex);
     this.getTemplatePageByOption()
   }
 
   getTemplatePageByOption(){
-    this.templateService.getTemplatePageByOption(1,this.allChecked,this.checkCategory,this.nameLike,this.orderOption,0,this.newPageIndex-1,this.newPageSize)
+    this.templateService.getTemplatePageByOption(this.userId,this.allChecked,this.checkCategory,this.nameLike,this.orderOption,0,this.newPageIndex,this.newPageSize)
       .subscribe(message => {
         if (message.code == 0) {
           this.templateList=[];
@@ -132,8 +144,10 @@ export class TemplateListComponent implements OnInit, OnDestroy {
           this.pageIndex=message.data.pageable.pageNumber;
           this.pageSize=message.data.pageable.pageSize;
           this.numberOfPages=message.data.numberOfElements;
-          this.msg.success('查询成功');
+          // this.msg.success('查询成功');
           this.templateService.setTemplateSubject(this.templateList);
+          console.log(this.templateList)
+          console.log(message)
         } else {
           this.msg.error(message.msg);
         }
@@ -159,6 +173,7 @@ export class TemplateListComponent implements OnInit, OnDestroy {
         this.checkCategory.push(item.value);
       }
     })
+    if(this.checkCategory.length!=0) this.getTemplatePageByOption();
   }
 
   updateSingleChecked(): void {
@@ -178,6 +193,7 @@ export class TemplateListComponent implements OnInit, OnDestroy {
         this.checkCategory.push(item.value);
       }
     })
+    this.getTemplatePageByOption();
   }
 
   downloadLatestTemplate(id:number,user:number,latest:number,name:string){
@@ -205,7 +221,7 @@ export class TemplateListComponent implements OnInit, OnDestroy {
 
   starTemplate(id:number){
     const formData = new FormData();
-    formData.append('user', '1');
+    formData.append('user', this.userId.toString());
     formData.append('template', id.toString());
     this.starService.starTemplate(formData)
       .subscribe(message=>{
@@ -227,7 +243,7 @@ export class TemplateListComponent implements OnInit, OnDestroy {
   cancelStarTemplate(id:number){
     const formData = new FormData();
     formData.append('templateId', id.toString());
-    this.starService.cancelStarTemplate(1,formData)
+    this.starService.cancelStarTemplate(this.userId,formData)
       .subscribe(message=>{
         if (message.code == 0) {
           this.msg.success(message.msg);

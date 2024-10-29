@@ -26,6 +26,7 @@ import {DefaultInterceptor} from "@core";
 import {provideAnimations} from "@angular/platform-browser/animations";
 import {TemplateService} from "./service/template.service";
 import {LocalStorageService} from "./service/local-storage.service";
+import {DataService} from "./service/data.service";
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -39,6 +40,7 @@ export const appConfig: ApplicationConfig = {
       multi: true,
     },
     TemplateService,
-    LocalStorageService
+    LocalStorageService,
+    DataService
   ]
 };

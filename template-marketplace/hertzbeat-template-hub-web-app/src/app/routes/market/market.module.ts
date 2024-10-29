@@ -38,31 +38,36 @@ import {NzPaginationComponent} from "ng-zorro-antd/pagination";
 import {NzCheckboxComponent, NzCheckboxGroupComponent} from "ng-zorro-antd/checkbox";
 import {NzIconDirective} from "ng-zorro-antd/icon";
 import {NzTooltipDirective} from "ng-zorro-antd/tooltip";
+import {NzCardComponent, NzCardMetaComponent} from "ng-zorro-antd/card";
+import {NzAvatarComponent} from "ng-zorro-antd/avatar";
 
 const COMPONENTS: Array<Type<void>> = [TemplateListComponent, TemplateDetailComponent, TemplateListComponent];
 
 @NgModule({
-    imports: [
-        MarketRoutingModule,
-        NzBreadCrumbModule,
-        NzSwitchModule,
-        NzRadioModule,
-        NzLayoutModule,
-        NzSpaceModule,
-        ClipboardModule,
-        NzInputGroupComponent,
-        NzOptionComponent,
-        NzButtonComponent,
-        NzInputDirective,
-        CommonModule,
-        FormsModule,
-        NzSelectModule,
-        NzPaginationComponent,
-        NzCheckboxComponent,
-        NzCheckboxGroupComponent,
-        NzIconDirective,
-        NzTooltipDirective
-    ],
+  imports: [
+    MarketRoutingModule,
+    NzBreadCrumbModule,
+    NzSwitchModule,
+    NzRadioModule,
+    NzLayoutModule,
+    NzSpaceModule,
+    ClipboardModule,
+    NzInputGroupComponent,
+    NzOptionComponent,
+    NzButtonComponent,
+    NzInputDirective,
+    CommonModule,
+    FormsModule,
+    NzSelectModule,
+    NzPaginationComponent,
+    NzCheckboxComponent,
+    NzCheckboxGroupComponent,
+    NzIconDirective,
+    NzTooltipDirective,
+    NzCardComponent,
+    NzCardMetaComponent,
+    NzAvatarComponent
+  ],
   declarations: COMPONENTS,
   exports:[RouterModule]
 })

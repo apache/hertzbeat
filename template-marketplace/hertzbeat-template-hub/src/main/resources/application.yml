@@ -21,7 +21,7 @@ server:
 
 spring:
   application:
-    name: hetzbeat-templateDO-hub
+    name: hetzbeat-template-hub
   datasource:
     url: jdbc:mysql://localhost:3306/hertzbeat_template_hub
     username: root

@@ -31,6 +31,7 @@ import org.apache.hertzbeat.templatehub.model.DTO.LoginDto;
 import org.apache.hertzbeat.templatehub.model.DTO.RefreshTokenResponse;
 import org.apache.hertzbeat.templatehub.model.DO.AuthUserDO;
 import org.apache.hertzbeat.templatehub.model.DO.AuthUserRoleBindDO;
+import org.apache.hertzbeat.templatehub.model.DTO.SignUpDto;
 import org.apache.hertzbeat.templatehub.service.AccountService;
 import org.apache.hertzbeat.templatehub.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,12 +91,15 @@ public class AccountServiceImpl implements AccountService {
         resp.put("refreshToken", issueRefresh);
         resp.put("role", JsonUtil.toJson(roles));
 
+        Optional<AuthUserDO> authUserByEmail = this.authUserDao.findAuthUserByEmail(loginDto.getIdentifier());
+        resp.put("id", String.valueOf(authUserByEmail.map(AuthUserDO::getId).orElse(null)));
+
         return resp;
     }
 
     @Override
     public boolean authenticateAccount(LoginDto account) {
-        Optional<AuthUserDO> authUserOptional = authUserDao.findAuthUserByUsername(account.getIdentifier());
+        Optional<AuthUserDO> authUserOptional = authUserDao.findAuthUserByEmail(account.getIdentifier());
         if (authUserOptional.isEmpty()) {
             return false;
         }
@@ -118,19 +122,19 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public boolean registerAccount(LoginDto account) {
-        if (isAccountExist(account)) {
+    public boolean registerAccount(SignUpDto account) {
+        if (isAccountExist(new LoginDto((byte) 1, account.getEmail(), account.getPassword()))) {
             return false;
         }
         String salt = SurenessCommonUtil.getRandomString(6);
-        String password = Md5Util.md5(account.getCredential() + salt);
-        AuthUserDO authUser = AuthUserDO.builder().name(account.getIdentifier())
+        String password = Md5Util.md5(account.getPassword() + salt);
+        AuthUserDO authUser = AuthUserDO.builder().name(account.getName())
                 .password(password).salt(salt).status(1).build();
 
         authUser.setCreateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         authUser.setUpdateTime(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         authUser.setLogOffTime("0");
-        authUser.setEmail(account.getIdentifier());
+        authUser.setEmail(account.getEmail());
 
         authUserDao.save(authUser);
         return true;
@@ -138,13 +142,13 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public boolean isAccountExist(LoginDto account) {
-        Optional<AuthUserDO> authUserOptional = authUserDao.findAuthUserByUsername(account.getIdentifier());
+        Optional<AuthUserDO> authUserOptional = authUserDao.findAuthUserByEmail(account.getIdentifier());
         return authUserOptional.isPresent();
     }
 
     @Override
     public SurenessAccount loadAccount(String username) {
-        Optional<AuthUserDO> authUserOptional = authUserDao.findAuthUserByUsername(username);
+        Optional<AuthUserDO> authUserOptional = authUserDao.findAuthUserByEmail(username);
         if (authUserOptional.isPresent()) {
             AuthUserDO authUser = authUserOptional.get();
             DefaultAccount.Builder accountBuilder = DefaultAccount.builder(username)
@@ -188,8 +192,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public boolean authorityUserRole(String appId, Long roleId) {
-        Optional<AuthUserDO> optional = authUserDao.findAuthUserByUsername(appId);
-        if (!optional.isPresent()) {
+        Optional<AuthUserDO> optional = authUserDao.findAuthUserByEmail(appId);
+        if (optional.isEmpty()) {
             return false;
         }
         Long userId = optional.get().getId();
@@ -201,8 +205,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public boolean deleteAuthorityUserRole(String appId, Long roleId) {
-        Optional<AuthUserDO> optional = authUserDao.findAuthUserByUsername(appId);
-        if (!optional.isPresent()) {
+        Optional<AuthUserDO> optional = authUserDao.findAuthUserByEmail(appId);
+        if (optional.isEmpty()) {
             return false;
         }
         Long userId = optional.get().getId();

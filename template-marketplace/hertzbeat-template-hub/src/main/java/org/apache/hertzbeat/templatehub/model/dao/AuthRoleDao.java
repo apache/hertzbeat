@@ -38,4 +38,7 @@ public interface AuthRoleDao extends JpaRepository<AuthRoleDO, Long> {
     @Query("select ar.name from AuthRoleDO ar, AuthUserDO au, AuthUserRoleBindDO bind " +
             "where ar.id = bind.roleId and au.id = bind.userId and au.name = :username")
     List<String> findAccountOwnRoles(@Param("username") String username);
+
+    @Query("select ar.id from AuthRoleDO ar where ar.code = :code")
+    Long queryIdByCode(@Param("code") String code);
 }

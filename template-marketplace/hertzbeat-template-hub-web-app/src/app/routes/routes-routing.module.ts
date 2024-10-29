@@ -21,6 +21,7 @@ import {Routes} from '@angular/router';
 import {LayoutMarketComponent} from '../layout/market/market.component';
 import {HomePageComponent} from './home-page/home-page.component';
 import {LoginComponent} from './login/login.component';
+import {SignUpComponent} from "./sign-up/sign-up.component";
 
 export const routes: Routes = [
   {
@@ -29,6 +30,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'home-page', pathMatch: 'full' },
       { path: 'login', component: LoginComponent },
+      { path: 'sign-up', component: SignUpComponent },
       { path: 'home-page', component: HomePageComponent },
       { path: 'market', loadChildren: () => import('./market/market.module').then(m => m.MarketModule) },
       { path: 'user-center', loadChildren: () => import('./user-center/user-center.module').then(m => m.UserCenterModule) }

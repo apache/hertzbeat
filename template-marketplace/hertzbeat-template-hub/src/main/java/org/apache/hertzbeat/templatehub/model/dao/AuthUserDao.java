@@ -32,12 +32,12 @@ import java.util.Optional;
 public interface AuthUserDao extends JpaRepository<AuthUserDO, Long> {
 
     /**
-     * Get user by username
-     * @param username username
+     * Get user by email
+     * @param email email
      * @return user
      */
-    @Query("select au from AuthUserDO au where au.name = :username")
-    Optional<AuthUserDO> findAuthUserByUsername(@Param("username") String username);
+    @Query("select au from AuthUserDO au where au.email = :email")
+    Optional<AuthUserDO> findAuthUserByEmail(@Param("email") String email);
 
     /**
      * Query the role owned by the current user

@@ -24,11 +24,9 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * @author tomsun28
- * @date 00:14 2019-08-01
- */
 public interface RoleService {
+
+    Long getRoleIdByCode(String code);
 
     /**
      * Determine whether the role already exists

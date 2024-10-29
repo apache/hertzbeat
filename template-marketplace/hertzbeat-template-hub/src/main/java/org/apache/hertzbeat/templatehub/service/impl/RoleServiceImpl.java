@@ -57,6 +57,15 @@ public class RoleServiceImpl implements RoleService {
     private TreePathRoleMatcher treePathRoleMatcher;
 
     @Override
+    public Long getRoleIdByCode(String code) {
+        Long l = authRoleDao.queryIdByCode(code);
+        if (l == null) {
+            return null;
+        }
+        return l;
+    }
+
+    @Override
     public boolean isRoleExist(AuthRoleDO authRole) {
         AuthRoleDO role = AuthRoleDO.builder()
                 .name(authRole.getName()).code(authRole.getCode()).build();

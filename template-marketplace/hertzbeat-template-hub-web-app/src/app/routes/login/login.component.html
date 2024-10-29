@@ -33,13 +33,13 @@
                 <div class="col-xl-12">
                   <div class="tp-register__input-box">
                     <label for="email">Email 地址</label>
-                    <input id="email" type="email" placeholder="邮箱地址">
+                    <input id="email" type="email" placeholder="邮箱地址" name="identifier" [(ngModel)]="loginForm.identifier">
                   </div>
                 </div>
                 <div class="col-xl-12">
                   <div class="tp-register__input-box">
                     <label for="password">密码</label>
-                    <input id="password" type="password" placeholder="密码">
+                    <input id="password" type="password" placeholder="密码" name="credential" [(ngModel)]="loginForm.credential">
                     <a href="" class="tp-register__input-text">忘记密码?</a>
                   </div>
                 </div>
@@ -53,10 +53,7 @@
                     </div>
                   </div>
                   <div class="tp-contact-4__btn">
-<!--                    <button nz-button (click)="submitLogin()" nzType="primary">登录</button>-->
-                    <button type="button" class="tp-btn-square w-100" (click)="submitLogin()">登录</button>
-<!--                    <button class="tp-btn-square w-100">登录</button>-->
-                    <button type="button" class="tp-btn-square w-100">去注册</button>
+                    <button type="button" class="btn-no-icon w-100" (click)="submitLogin()">登录</button>
                   </div>
                 </div>
               </div>

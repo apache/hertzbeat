@@ -33,6 +33,12 @@ export interface LoginDTO {
   credential:string,
 }
 
+export interface SignUpDTO {
+  name:string,
+  email:string,
+  password:string,
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -43,7 +49,7 @@ export class AuthService {
     return this.http.post<Message<any>>(auth_login_uri,data);
   }
 
-  public register(data:any): Observable<Message<any>> {
+  public register(data:SignUpDTO): Observable<Message<any>> {
     return this.http.post<Message<any>>(auth_register_uri,data);
   }
 

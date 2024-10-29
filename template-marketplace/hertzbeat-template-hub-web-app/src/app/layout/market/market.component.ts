@@ -25,6 +25,7 @@ import {TemplateService} from "../../service/template.service";
 import {NzMessageService} from "ng-zorro-antd/message";
 import {NgIf} from "@angular/common";
 import {LocalStorageService} from "../../service/local-storage.service";
+import {DataService} from "../../service/data.service";
 
 @Component({
   selector: 'app-market',
@@ -44,15 +45,16 @@ export class LayoutMarketComponent implements OnInit{
   constructor(private templateService: TemplateService,
               private msg: NzMessageService,
               private localStorageService: LocalStorageService,
+              private dataService: DataService
               ) {}
 
   count=0;
   isLogin:boolean = false;
 
   ngOnInit(): void {
+    this.dataService.isLoginMsg.subscribe(isLogin => this.isLogin = isLogin)
     const userInfo = this.localStorageService.getData('userInfo');
     if(userInfo!=null){
-
       this.isLogin=true
     }
 
@@ -63,5 +65,12 @@ export class LayoutMarketComponent implements OnInit{
         this.msg.error(message.error)
       }
     })
+  }
+
+  logout():void{
+    this.localStorageService.removeData('userInfo');
+    this.localStorageService.removeData('userId');
+    this.localStorageService.removeData('Authorization');
+    this.localStorageService.removeData('refresh-token');
   }
 }

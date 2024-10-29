@@ -39,6 +39,8 @@ import {NzDrawerComponent, NzDrawerContentDirective} from "ng-zorro-antd/drawer"
 import {NzButtonComponent} from "ng-zorro-antd/button";
 import {UserStarComponent} from "./user-star/user-star.component";
 import {NzTooltipDirective} from "ng-zorro-antd/tooltip";
+import {NzAvatarComponent} from "ng-zorro-antd/avatar";
+import {NzCardComponent, NzCardMetaComponent} from "ng-zorro-antd/card";
 
 const COMPONENTS: Array<Type<void>> = [UserUploadComponent, UserAssetsComponent,AssetsDetailComponent,UserStarComponent];
 
@@ -70,6 +72,9 @@ const COMPONENTS: Array<Type<void>> = [UserUploadComponent, UserAssetsComponent,
         NzRowDirective,
         NzDrawerContentDirective,
         NzTooltipDirective,
+        NzAvatarComponent,
+        NzCardComponent,
+        NzCardMetaComponent,
     ],
   declarations: COMPONENTS,
   providers:[...COMPONENTS],

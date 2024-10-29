@@ -18,12 +18,13 @@
  */
 
 import {Component, Injector, OnDestroy, OnInit} from '@angular/core';
-import {FormBuilder} from '@angular/forms';
+import {FormBuilder, FormsModule} from '@angular/forms';
 import {AuthService, LoginDTO} from "../../service/auth.service";
 import {LocalStorageService} from "../../service/local-storage.service";
 import {NzMessageService} from "ng-zorro-antd/message";
 import {Router} from "@angular/router";
 import {NzButtonComponent} from "ng-zorro-antd/button";
+import {DataService} from "../../service/data.service";
 
 @Component({
   selector: 'login',
@@ -32,7 +33,8 @@ import {NzButtonComponent} from "ng-zorro-antd/button";
   standalone: true,
   providers: [],
   imports: [
-    NzButtonComponent
+    NzButtonComponent,
+    FormsModule
   ],
   // changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -43,15 +45,17 @@ export class LoginComponent implements OnInit,OnDestroy {
     private localStorageService: LocalStorageService,
     private msg: NzMessageService,
     private injector: Injector,
+    private dataService: DataService,
   ) {}
 
   loginForm: LoginDTO={
     type:1,
-    identifier:'wbs2024@163.com',
-    credential:'123456',
+    identifier:'',
+    credential:'',
   };
 
   submitLogin():void{
+    console.log(this.loginForm)
     this.authService.tryLogin(this.loginForm).subscribe(response => {
       if(response.code == 0) {
         console.log(response);
@@ -59,7 +63,9 @@ export class LoginComponent implements OnInit,OnDestroy {
         this.localStorageService.storageRefreshToken(response.data.refreshToken);
         this.msg.success('登录成功');
         this.localStorageService.putData('userInfo',this.loginForm.identifier);
-        this.injector.get(Router).navigateByUrl('/');
+        this.localStorageService.putData('userId',response.data.id);
+        this.dataService.sendLoginMsg(true);
+        window.history.back();
       }else{
         this.msg.error('登录失败：'+response.msg)
       }
