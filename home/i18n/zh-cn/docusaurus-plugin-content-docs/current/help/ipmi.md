@@ -1,10 +1,8 @@
 ---
-
 id: ipmi  
 title: IPMI2 监控  
-sidebar_label: Server Monitor  
+sidebar_label: Server 监控  
 keywords: [开源监控工具, 开源服务器监控, IPMI 监控]
-
 ---
 
 > 使用 IPMI2 协议收集并监控服务器的一般性能指标。
