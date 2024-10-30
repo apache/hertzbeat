@@ -52,7 +52,6 @@
           "items": [
             "start/victoria-metrics-init",
             "start/iotdb-init",
-            "start/tdengine-init",
             "start/influxdb-init",
             "start/postgresql-change",
             "start/mysql-change"
