@@ -1,7 +1,7 @@
 ---
 id: hadoop
 title: Monitoring Hadoop
-sidebar_label: Hadoop 
+sidebar_label: Apache Hadoop 
 keywords: [Open Source Monitoring System, Open Source Java Monitoring, Hadoop JVM Monitoring]
 ---
 
