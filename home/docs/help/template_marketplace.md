@@ -75,7 +75,7 @@ sidebar_label: Template Marketplace
    > Template details page to share the latest version.  
    > Version page to share historical versions.  
    > Sharing will automatically copy the sharing URL to the clipboard, and the person being shared can download the file via that URL  
-   >  
+   >
    > **📋Todo:** Shared template detail page is accessed through the URL of the shared template, and the shared person is free to choose whether to download or not.
 
    ![img.png](template-marketplace-img/share.png)
@@ -85,7 +85,7 @@ sidebar_label: Template Marketplace
 💡 User availability
 
    > Provide asset management, collection management and upload function  
->  
+>
    > **📋Todo:** Overview page, notification page, user settings page
 
 1. **Asset: Manage all templates uploaded by user themselves**
@@ -113,7 +113,7 @@ sidebar_label: Template Marketplace
 4. **Upload**
 
    > Create a new template series and upload the first version of the file  
-   >  
+   >
    > Fill in the template name, select the template category, fill in the description information and version information, and upload files
 
    ![img.png](template-marketplace-img/user-center-upload.png)
@@ -125,7 +125,7 @@ sidebar_label: Template Marketplace
 1. **Sign up**
 
    > Usernames can be duplicated, but email addresses are unique  
-   >  
+   >
    > **📋Todo:** Captcha function, email verification function
 
    ![img.png](template-marketplace-img/sign-up.png)
