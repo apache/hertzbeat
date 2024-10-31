@@ -52,7 +52,6 @@
           "items": [
             "start/victoria-metrics-init",
             "start/iotdb-init",
-            "start/tdengine-init",
             "start/influxdb-init",
             "start/postgresql-change",
             "start/mysql-change"
@@ -383,6 +382,13 @@
         "help/time_expression",
         "help/grafana_dashboard",
         "help/issue"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Template Marketplace",
+      "items": [
+        "help/template_marketplace"
       ]
     },
     {
