@@ -1,7 +1,7 @@
 ---
 id: spark  
 title: Monitoring Spark      
-sidebar_label: Spark Monitor
+sidebar_label: Spark 监控
 keywords: [open source monitoring tool, open source java spark monitoring tool, monitoring spark metrics]
 ---
 
