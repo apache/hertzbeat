@@ -386,6 +386,13 @@
     },
     {
       "type": "category",
+      "label": "Template Marketplace",
+      "items": [
+        "help/template_marketplace"
+      ]
+    },
+    {
+      "type": "category",
       "label": "Others",
       "items": [
         "others/resource"
