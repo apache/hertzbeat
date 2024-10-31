@@ -1,7 +1,7 @@
 ---
 id: redis  
 title: 监控：REDIS数据库监控      
-sidebar_label: REDIS数据库   
+sidebar_label: Redis 数据库   
 keywords: [开源监控系统, 开源数据库监控, Redis数据库监控]
 ---
 

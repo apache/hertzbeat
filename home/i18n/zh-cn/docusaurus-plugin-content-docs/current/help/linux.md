@@ -1,7 +1,7 @@
 ---
 id: linux  
 title: 监控：Linux操作系统监控      
-sidebar_label: Linux操作系统       
+sidebar_label: Linux 操作系统       
 keywords: [开源监控系统, 开源操作系统监控, Linux操作系统监控]
 ---
 
