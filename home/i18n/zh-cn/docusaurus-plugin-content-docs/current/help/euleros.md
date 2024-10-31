@@ -1,7 +1,7 @@
 ---
 id: euleros
 title: 监控：EulerOS操作系统监控
-sidebar_label: EulerOS操作系统
+sidebar_label: EulerOS 操作系统
 keywords: [ 开源监控系统, 开源操作系统监控, EulerOS操作系统监控 ]
 ---
 

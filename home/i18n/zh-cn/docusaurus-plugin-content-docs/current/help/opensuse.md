@@ -1,7 +1,7 @@
 ---
 id: opensuse
 title: 监控：OpenSUSE操作系统监控    
-sidebar_label: OpenSUSE操作系统    
+sidebar_label: OpenSUSE 操作系统    
 keywords: [开源监控系统, 开源操作系统监控, OpenSUSE操作系统监控]
 ---
 

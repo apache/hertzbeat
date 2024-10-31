@@ -1,7 +1,7 @@
 ---
 id: zookeeper  
 title: 监控：Zookeeper监控      
-sidebar_label: Zookeeper监控  
+sidebar_label: Apache Zookeeper 监控  
 keywords: [开源监控系统, Zookeeper监控监控]
 ---
 

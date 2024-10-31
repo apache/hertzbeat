@@ -1,7 +1,7 @@
 ---
 id: flink_on_yarn  
 title: 监控：Flink On Yarn    
-sidebar_label: Flink On Yarn Monitor
+sidebar_label: Flink On Yarn 监控
 keywords: [开源监控系统, 开源 Flink On Yarn 监控]
 ---
 
