@@ -1,7 +1,7 @@
 ---
 id: hadoop  
 title: 监控：Hadoop      
-sidebar_label: Hadoop
+sidebar_label: Apache Hadoop
 keywords: [开源监控系统, 开源JAVA监控, Hadoop的JVM虚拟机监控]
 ---
 
