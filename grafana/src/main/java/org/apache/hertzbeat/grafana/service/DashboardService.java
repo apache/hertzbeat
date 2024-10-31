@@ -17,11 +17,12 @@
 
 package org.apache.hertzbeat.grafana.service;
 
-import static org.apache.hertzbeat.grafana.common.CommonConstants.CREATE_DASHBOARD_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.DELETE_DASHBOARD_API;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.INSTANCE;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.KIOSK;
-import static org.apache.hertzbeat.grafana.common.CommonConstants.REFRESH;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.CREATE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.DELETE_DASHBOARD_API;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.INSTANCE;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.KIOSK;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.REFRESH;
+import static org.apache.hertzbeat.grafana.common.GrafanaConstants.USE_DATASOURCE;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
-
 
 /**
  * Service for managing Grafana dashboards.
@@ -68,7 +68,7 @@ public class DashboardService {
      * @return ResponseEntity containing the response from Grafana
      */
     @Transactional(rollbackFor = Exception.class)
-    public ResponseEntity<?> createDashboard(String dashboardJson, Long monitorId) {
+    public ResponseEntity<?> createOrUpdateDashboard(String dashboardJson, Long monitorId) {
         String token = serviceAccountService.getToken();
         String url = grafanaProperties.getPrefix() + grafanaProperties.getUrl() + CREATE_DASHBOARD_API;
 
@@ -90,7 +90,8 @@ public class DashboardService {
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
                     grafanaDashboard.setUrl(grafanaProperties.getPrefix() + grafanaProperties.getUrl()
-                            + grafanaDashboard.getUrl().replace(grafanaProperties.getUrl(), "") + KIOSK + REFRESH + INSTANCE + monitorId);
+                            + grafanaDashboard.getUrl().replace(grafanaProperties.getUrl(), "")
+                            + KIOSK + REFRESH + INSTANCE + monitorId + USE_DATASOURCE);
                     grafanaDashboard.setMonitorId(monitorId);
                     dashboardDao.save(grafanaDashboard);
                     log.info("create dashboard success, token: {}", response.getBody());
@@ -105,8 +106,7 @@ public class DashboardService {
             throw new RuntimeException("create dashboard error", ex);
         }
     }
-
-
+    
     /**
      * Deletes a dashboard in Grafana by monitor ID.
      *
@@ -141,8 +141,7 @@ public class DashboardService {
             }
         }
     }
-
-
+    
     /**
      * Retrieves a dashboard by monitor ID.
      *
@@ -162,19 +161,6 @@ public class DashboardService {
         GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
         if (grafanaDashboard != null) {
             grafanaDashboard.setEnabled(false);
-            dashboardDao.save(grafanaDashboard);
-        }
-    }
-
-    /**
-     * Enables a Grafana dashboard by monitor ID.
-     *
-     * @param monitorId the ID of the monitor associated with the dashboard
-     */
-    public void openGrafanaDashboard(Long monitorId) {
-        GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
-        if (grafanaDashboard != null) {
-            grafanaDashboard.setEnabled(true);
             dashboardDao.save(grafanaDashboard);
         }
     }

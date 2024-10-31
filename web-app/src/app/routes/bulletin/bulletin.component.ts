@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnInit, OnDestroy } from '@angular/core';
 import { I18NService } from '@core';
 import { ALAIN_I18N_TOKEN } from '@delon/theme';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -39,21 +39,23 @@ import { MonitorService } from '../../service/monitor.service';
   templateUrl: './bulletin.component.html',
   styleUrls: ['./bulletin.component.less']
 })
-export class BulletinComponent implements OnInit {
+export class BulletinComponent implements OnInit, OnDestroy {
   constructor(
     private modal: NzModalService,
     private notifySvc: NzNotificationService,
     private appDefineSvc: AppDefineService,
     private monitorSvc: MonitorService,
     private bulletinDefineSvc: BulletinDefineService,
+    private cdr: ChangeDetectorRef,
     @Inject(ALAIN_I18N_TOKEN) private i18nSvc: I18NService
   ) {}
   search!: string;
-  tabs!: string[];
+  bulletins!: BulletinDefine[];
+  currentTab: number = 0;
+  currentBulletin!: BulletinDefine;
   metricsData!: any;
   tableLoading: boolean = true;
-  bulletinName!: string;
-  deleteBulletinNames: string[] = [];
+  deleteBulletinIds: number[] = [];
   isAppListLoading = false;
   isMonitorListLoading = false;
   treeNodes!: NzTreeNodeOptions[];
@@ -68,13 +70,43 @@ export class BulletinComponent implements OnInit {
   pageIndex: number = 1;
   pageSize: number = 8;
   total: number = 0;
+  refreshInterval: any;
+  deadline = 30;
+  countDownTime: number = 0;
 
   ngOnInit() {
     this.loadTabs();
+    this.refreshInterval = setInterval(() => {
+      this.countDown();
+    }, 1000); // every 30 seconds refresh the tabs
+  }
+
+  ngOnDestroy() {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   sync() {
-    this.loadData(this.pageIndex - 1, this.pageSize);
+    this.loadCurrentBulletinData();
+  }
+
+  configRefreshDeadline(deadlineTime: number) {
+    this.deadline = deadlineTime;
+    this.countDownTime = this.deadline;
+    this.cdr.detectChanges();
+  }
+
+  countDown() {
+    if (this.deadline > 0) {
+      this.countDownTime = Math.max(0, this.countDownTime - 1);
+      this.cdr.detectChanges();
+      if (this.countDownTime == 0) {
+        this.loadCurrentBulletinData();
+        this.countDownTime = this.deadline;
+        this.cdr.detectChanges();
+      }
+    }
   }
 
   onNewBulletinDefine() {
@@ -85,8 +117,8 @@ export class BulletinComponent implements OnInit {
   }
 
   onEditBulletinDefine() {
-    if (this.currentDefine) {
-      this.define = this.currentDefine;
+    if (this.currentBulletin) {
+      this.define = this.currentBulletin;
       this.onAppChange(this.define.app);
       // this.tempMetrics.add(...this.define.fields.keys());
       this.isManageModalAdd = false;
@@ -95,12 +127,12 @@ export class BulletinComponent implements OnInit {
     }
   }
 
-  deleteBulletinDefines(defineNames: string[]) {
-    if (defineNames == null || defineNames.length == 0) {
+  deleteBulletinDefines(defineIds: number[]) {
+    if (defineIds == null || defineIds.length == 0) {
       this.notifySvc.warning(this.i18nSvc.fanyi('common.notify.no-select-delete'), '');
       return;
     }
-    const deleteDefines$ = this.bulletinDefineSvc.deleteBulletinDefines(defineNames).subscribe(
+    const deleteDefines$ = this.bulletinDefineSvc.deleteBulletinDefines(defineIds).subscribe(
       message => {
         deleteDefines$.unsubscribe();
         if (message.code === 0) {
@@ -121,7 +153,6 @@ export class BulletinComponent implements OnInit {
   isManageModalOkLoading = false;
   isManageModalAdd = true;
   define: BulletinDefine = new BulletinDefine();
-  currentDefine!: BulletinDefine | null;
 
   onManageModalCancel() {
     this.isManageModalVisible = false;
@@ -141,8 +172,6 @@ export class BulletinComponent implements OnInit {
   onManageModalOk() {
     this.isManageModalOkLoading = true;
     this.define.fields = this.fields;
-    // clear fields
-    this.fields = {};
     if (this.isManageModalAdd) {
       const modalOk$ = this.bulletinDefineSvc
         .newBulletinDefine(this.define)
@@ -157,6 +186,8 @@ export class BulletinComponent implements OnInit {
             if (message.code === 0) {
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.new-success'), '');
               this.isManageModalVisible = false;
+              // clear fields
+              this.fields = {};
               this.resetManageModalData();
               this.loadTabs();
             } else {
@@ -181,7 +212,7 @@ export class BulletinComponent implements OnInit {
             if (message.code === 0) {
               this.isManageModalVisible = false;
               this.notifySvc.success(this.i18nSvc.fanyi('common.notify.edit-success'), '');
-              this.loadData(this.pageIndex - 1, this.pageSize);
+              this.loadTabs();
             } else {
               this.notifySvc.error(this.i18nSvc.fanyi('common.notify.edit-fail'), message.msg);
             }
@@ -347,7 +378,7 @@ export class BulletinComponent implements OnInit {
   transferChange(ret: TransferChange): void {
     // add
     if (ret.to === 'right') {
-      this.checkedNodeList.forEach(node => {
+      ret.list.forEach(node => {
         node.isDisabled = true;
         node.isChecked = true;
         this.tempMetrics.add(node.key);
@@ -355,20 +386,20 @@ export class BulletinComponent implements OnInit {
         if (!this.fields[node.key]) {
           this.fields[node.key] = [];
         }
-        if (!this.fields[node.key].includes(node.origin.value)) {
-          this.fields[node.key].push(node.origin.value);
+        if (!this.fields[node.key].includes(node.value)) {
+          this.fields[node.key].push(node.value);
         }
       });
     }
     // delete
     else if (ret.to === 'left') {
-      this.checkedNodeList.forEach(node => {
+      ret.list.forEach(node => {
         node.isDisabled = false;
         node.isChecked = false;
         this.tempMetrics.delete(node.key);
 
         if (this.fields[node.key]) {
-          const index = this.fields[node.key].indexOf(node.origin.value);
+          const index = this.fields[node.key].indexOf(node.value);
           if (index > -1) {
             this.fields[node.key].splice(index, 1);
           }
@@ -382,15 +413,21 @@ export class BulletinComponent implements OnInit {
   }
 
   loadTabs() {
-    const allNames$ = this.bulletinDefineSvc.getAllNames().subscribe(
+    const allNames$ = this.bulletinDefineSvc.queryBulletins().subscribe(
       message => {
         allNames$.unsubscribe();
         if (message.code === 0) {
-          this.tabs = message.data;
-          if (this.tabs != null) {
-            this.bulletinName = this.tabs[0];
+          let page = message.data;
+          this.bulletins = page.content;
+          this.pageIndex = page.number + 1;
+          this.total = page.totalElements;
+          if (this.bulletins != null) {
+            if (this.currentTab >= this.bulletins.length) {
+              this.currentTab = 0;
+            }
+            this.currentBulletin = this.bulletins[this.currentTab];
+            this.loadCurrentBulletinData();
           }
-          this.loadData(this.pageIndex - 1, this.pageSize);
         } else {
           this.notifySvc.error(this.i18nSvc.fanyi('common.notify.get-fail'), message.msg);
         }
@@ -402,51 +439,38 @@ export class BulletinComponent implements OnInit {
     );
   }
 
-  loadData(page: number, size: number) {
+  loadCurrentBulletinData() {
     this.tableLoading = true;
     this.metricsData = [];
-    this.currentDefine = null;
     this.metrics = new Set<string>();
-    if (this.bulletinName != null) {
-      const defineData$ = this.bulletinDefineSvc.getBulletinDefine(this.bulletinName).subscribe(
-        message => {
-          if (message.code === 0) {
-            this.currentDefine = message.data;
-
-            const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(this.bulletinName, page, size).subscribe(
-              message => {
-                metricData$.unsubscribe();
-                if (message.code === 0 && message.data) {
-                  (this.metricsData = message.data.content).forEach((item: any) => {
-                    item.metrics.forEach((metric: any) => {
-                      this.metrics.add(metric.name);
-                    });
-                  });
-                } else if (message.code !== 0) {
-                  this.notifySvc.warning(`${message.msg}`, '');
-                  console.info(`${message.msg}`);
-                }
-                this.tableLoading = false;
-              },
-              error => {
-                console.error(error.msg);
-                metricData$.unsubscribe();
-                this.tableLoading = false;
-              }
-            );
-          } else {
-            this.notifySvc.warning(`${message.msg}`, '');
-            console.info(`${message.msg}`);
-          }
-        },
-        error => {
-          console.error(error.msg);
-          defineData$.unsubscribe();
-          this.tableLoading = false;
-        }
-      );
+    if (this.currentBulletin == null || this.currentBulletin.id == null) {
+      return;
     }
-    this.tableLoading = false;
+    const metricData$ = this.bulletinDefineSvc.getMonitorMetricsData(this.currentBulletin?.id).subscribe(
+      message => {
+        metricData$.unsubscribe();
+        if (message.code === 0 && message.data) {
+          (this.metricsData = message.data.content).forEach((item: any) => {
+            item.metrics.forEach((metric: any) => {
+              this.metrics.add(metric.name);
+            });
+          });
+        } else if (message.code !== 0) {
+          this.notifySvc.warning(`${message.msg}`, '');
+          console.info(`${message.msg}`);
+        }
+        this.tableLoading = false;
+      },
+      error => {
+        console.error(error.msg);
+        metricData$.unsubscribe();
+        this.tableLoading = false;
+      }
+    );
+  }
+
+  getMetricName(appName: string, metricName: string): string {
+    return this.i18nSvc.fanyi(`monitor.app.${appName}.metrics.${metricName}`);
   }
 
   getKeys(metricName: string): string[] {
@@ -465,13 +489,29 @@ export class BulletinComponent implements OnInit {
     return Array.from(result);
   }
 
+  getKeyNames(appName: string, metricName: string): string[] {
+    const result = new Set<string>();
+    this.metricsData.forEach((item: any) => {
+      item.metrics.forEach((metric: any) => {
+        if (metric.name === metricName) {
+          metric.fields.forEach((fieldGroup: any) => {
+            fieldGroup.forEach((field: any) => {
+              result.add(this.i18nSvc.fanyi(`monitor.app.${appName}.metrics.${metricName}.metric.${field.key}`));
+            });
+          });
+        }
+      });
+    });
+    return Array.from(result);
+  }
+
   onTablePageChange(params: NzTableQueryParams): void {
     const { pageSize, pageIndex } = params;
 
     if (pageIndex !== this.pageIndex || pageSize !== this.pageSize) {
       this.pageIndex = pageIndex;
       this.pageSize = pageSize;
-      this.loadData(pageIndex - 1, pageSize);
+      this.loadTabs();
     }
   }
 
@@ -486,7 +526,7 @@ export class BulletinComponent implements OnInit {
       nzOkDanger: true,
       nzOkType: 'primary',
       nzClosable: false,
-      nzOnOk: () => this.deleteBulletinDefines([this.bulletinName])
+      nzOnOk: () => this.deleteBulletinDefines([this.currentBulletin.id])
     });
   }
 
@@ -499,7 +539,7 @@ export class BulletinComponent implements OnInit {
   }
 
   onBatchDeleteModalOk() {
-    this.deleteBulletinDefines(this.deleteBulletinNames);
+    this.deleteBulletinDefines(this.deleteBulletinIds);
     this.isBatchDeleteModalOkLoading = false;
     this.isBatchDeleteModalVisible = false;
   }
@@ -507,9 +547,25 @@ export class BulletinComponent implements OnInit {
   protected readonly Array = Array;
 
   onTabChange($event: number) {
-    this.bulletinName = this.tabs[$event];
+    this.currentTab = $event;
+    this.currentBulletin = this.bulletins[this.currentTab];
     this.metricsData = [];
-    this.loadData(this.pageIndex - 1, this.pageSize);
-    console.log(this.metricsData);
+    this.loadTabs();
+    this.countDownTime = this.deadline;
+    this.cdr.detectChanges();
+  }
+
+  combine(field: any, fields: any): any[] {
+    let result: any[] = [];
+    if (fields.length == 0) {
+      return result;
+    }
+    for (let i = 0; i < fields.length; i++) {
+      let find = fields[i].filter((item: any) => {
+        return item.key == field.key;
+      });
+      result = result.concat(find);
+    }
+    return result;
   }
 }

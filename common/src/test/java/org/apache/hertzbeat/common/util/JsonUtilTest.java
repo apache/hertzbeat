@@ -20,6 +20,8 @@ package org.apache.hertzbeat.common.util;
 import static org.apache.hertzbeat.common.util.JsonUtil.isJsonStr;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
@@ -41,6 +43,8 @@ class JsonUtilTest {
 
         assertEquals("[{\"name\":\"test\",\"value\":\"pro\"},{\"name\":\"test\",\"value\":\"dev\"}]",
                 JsonUtil.toJson(tagList));
+
+        assertNull(JsonUtil.toJson(null));
     }
 
     @Test
@@ -49,6 +53,17 @@ class JsonUtilTest {
         List<TagItem> tagItems = JsonUtil.fromJson(jsonStr, new TypeReference<>() {
         });
         assertEquals("[TagItem(name=test, value=pro), TagItem(name=test, value=dev)]", tagItems.toString());
+        assertNull(JsonUtil.fromJson("", new TypeReference<>() {
+        }));
+        assertNull(JsonUtil.fromJson(null, new TypeReference<>() {
+        }));
+        assertNull(JsonUtil.fromJson(" ", new TypeReference<>() {
+        }));
+        assertNull(JsonUtil.fromJson(" ", String.class));
+        assertNull(JsonUtil.fromJson(" "));
+        assertNull(JsonUtil.fromJson(null));
+        assertNotNull(JsonUtil.fromJson(jsonStr));
+        assertNull(JsonUtil.fromJson("invalid"));
     }
 
     @Test
@@ -68,6 +83,8 @@ class JsonUtilTest {
 
         String jsonStringArrays = "[{\"name\":\"John\"}, {\"name\":\"Doe\"}]";
         assertTrue(isJsonStr(jsonStringArrays));
+
+        assertFalse(isJsonStr("{invalid}"));
     }
 
 }
