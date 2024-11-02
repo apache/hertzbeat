@@ -19,6 +19,8 @@ package org.apache.hertzbeat.common.entity.manager;
 
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
+
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,6 +38,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.serialize.DesensitizeSerializer;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -83,12 +86,14 @@ public class NoticeReceiver {
             description = "Mobile number: Valid when the notification method is SMS",
             example = "18923435643", accessMode = READ_WRITE)
     @Size(max = 100)
+    @JsonSerialize(using = DesensitizeSerializer.PhoneSerializer.class)
     private String phone;
 
     @Schema(title = "Email account: Valid when the notification method is email",
             description = "Email account: Valid when the notification method is email",
             example = "tom@qq.com", accessMode = READ_WRITE)
     @Size(max = 100)
+    @JsonSerialize(using = DesensitizeSerializer.EmailSerializer.class)
     private String email;
 
     @Schema(title = "URL address: The notification method is valid for webhook",
@@ -147,6 +152,7 @@ public class NoticeReceiver {
     @Schema(title = "Enterprise weChat secret: The notification method is valid for Enterprise WeChat app message",
             description = "Enterprise weChat secret: The notification method is valid for Enterprise WeChat app message",
             example = "oUydwn92ey0lnuY02MixNa57eNK-20dJn5NEOG-u2uE", accessMode = READ_WRITE)
+    @JsonSerialize(using = DesensitizeSerializer.PasswordSerializer.class)
     private String appSecret;
 
     @Schema(title = "Enterprise weChat party id: The notification method is valid for Enterprise WeChat app message",

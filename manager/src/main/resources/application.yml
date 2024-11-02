@@ -69,10 +69,10 @@ spring:
       on-profile: prod
 
   datasource:
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 123456
-    url: jdbc:h2:./data/hertzbeat;MODE=MYSQL
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: zcx88372565
+    url: jdbc:mysql://localhost:3306/hertzbeat
     hikari:
       max-lifetime: 120000
 
@@ -124,7 +124,7 @@ warehouse:
   store:
     # store history metrics data, enable only one below
     jpa:
-      enabled: true
+      enabled: false
       # The maximum retention time for history records, after which records will be deleted
       expire-time: 1h
       # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
@@ -162,6 +162,7 @@ warehouse:
       enabled: false
       server-url: http://127.0.0.1:8086
       username: root
+
       password: root
       expire-time: '30d'
       replication: 1
