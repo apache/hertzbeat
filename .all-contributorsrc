@@ -2081,6 +2081,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "shinestare",
+      "name": "shinestare",
+      "avatar_url": "https://avatars.githubusercontent.com/u/13570619?v=4",
+      "profile": "https://github.com/shinestare",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

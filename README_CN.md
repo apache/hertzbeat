@@ -474,6 +474,7 @@ Thanks these wonderful people, welcome to join us:
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sherry-peng2333"><img src="https://avatars.githubusercontent.com/u/70619577?v=4?s=100" width="100px;" alt="sherry-peng2333"/><br /><sub><b>sherry-peng2333</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=sherry-peng2333" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/lixiaobaivv"><img src="https://avatars.githubusercontent.com/u/39290771?v=4?s=100" width="100px;" alt="Yzzz"/><br /><sub><b>Yzzz</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=lixiaobaivv" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="http://www.bckf.cn/"><img src="https://avatars.githubusercontent.com/u/13309008?v=4?s=100" width="100px;" alt="puruidong"/><br /><sub><b>puruidong</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=pruidong" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/shinestare"><img src="https://avatars.githubusercontent.com/u/13570619?v=4?s=100" width="100px;" alt="shinestare"/><br /><sub><b>shinestare</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=shinestare" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
