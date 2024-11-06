@@ -15,8 +15,11 @@
 
 $gpgKeyId = "********"
 
+# ********************************************************
+# Set version and release candidate number
 $version = "1.6.1"
 $rcNumber = "rc1"
+# ********************************************************
 
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectPath = (Get-Item (Split-Path -Parent $scriptPath)).Parent.FullName
@@ -42,13 +45,13 @@ yarn package
 Pop-Location
 
 Write-Host "Building project with Maven..."
-mvn clean package -Prelease
+mvn clean package -Prelease -DskipTests
 
-mvn clean install
+mvn clean install -DskipTests
 
 Write-Host "Building collector..."
 Push-Location -Path "collector"
-mvn clean package -Pcluster
+mvn clean package -Pcluster -DskipTests
 Pop-Location
 
 # package release artifacts
@@ -65,7 +68,7 @@ Get-ChildItem *.tar.gz | ForEach-Object {
     Write-Host "Generating SHA512 for $fileName..."
     $hash = Get-FileHash -Path "$fileName" -Algorithm SHA512
     $hashString = $hash.Hash
-    "$hashString  $fileName" | Out-File "$fileName.sha512" -Append
+    "$hashString  $fileName" | Out-File "$fileName.sha512" -Append -NoNewline
 }
 Pop-Location
 

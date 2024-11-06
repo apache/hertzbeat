@@ -76,7 +76,9 @@ public class ExporterParser {
 
     private void parseLine(Map<String, MetricFamily> metricMap, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         switch (buffer.charAt(0)) {
             case '#' -> {
                 buffer.read();
@@ -231,7 +233,9 @@ public class ExporterParser {
 
     private void readLabelValue(MetricFamily.Metric metric, MetricFamily.Label label, StrBuffer buffer) {
         buffer.skipBlankTabs();
-        if (buffer.isEmpty()) return;
+        if (buffer.isEmpty()) {
+            return;
+        }
         switch (this.currentMetricFamily.getMetricType()) {
             case INFO -> {
                 MetricFamily.Info info = new MetricFamily.Info();

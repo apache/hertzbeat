@@ -1,7 +1,7 @@
 ---
 id: redhat
 title: 监控：RedHat操作系统监控
-sidebar_label: RedHat操作系统
+sidebar_label: RedHat 操作系统
 keywords: [ 开源监控系统, 开源操作系统监控, RedHat操作系统监控 ]
 ---
 
