@@ -30,10 +30,12 @@ public class IpmiEncapsulation {
     }
 
     public static <T> T getEncapsulated(Class<T> type, Object value) {
-        if (type.isInstance(value))
+        if (type.isInstance(value)) {
             return type.cast(value);
-        if (value instanceof Encapsulation)
+        }
+        if (value instanceof Encapsulation) {
             return ((Encapsulation) value).getEncapsulated(type);
+        }
         return null;
     }
 
