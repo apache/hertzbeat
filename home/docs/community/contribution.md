@@ -167,7 +167,7 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
 > - **[warehouse](https://github.com/apache/hertzbeat/tree/master/hertzbeat-warehouse)** Provide monitoring data warehousing services.
 > Metrics data management, data query, calculation and statistics.
-> - **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** Provide alert service.
+> - **[alerter](https://github.com/apache/hertzbeat/tree/master/hertzbeat-alerter)** Provide alert service.
 > Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
 > - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
