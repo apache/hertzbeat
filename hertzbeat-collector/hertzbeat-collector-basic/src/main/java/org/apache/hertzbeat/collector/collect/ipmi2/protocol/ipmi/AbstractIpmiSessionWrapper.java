@@ -71,8 +71,9 @@ public abstract class AbstractIpmiSessionWrapper extends AbstractWireable implem
 
     @Override
     public <T> T getEncapsulated(Class<T> type) {
-        if (type.isInstance(this))
+        if (type.isInstance(this)) {
             return type.cast(this);
+        }
         return IpmiEncapsulation.getEncapsulated(type, getIpmiPayload());
     }
 
