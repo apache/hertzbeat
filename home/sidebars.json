@@ -52,7 +52,6 @@
           "items": [
             "start/victoria-metrics-init",
             "start/iotdb-init",
-            "start/tdengine-init",
             "start/influxdb-init",
             "start/postgresql-change",
             "start/mysql-change"
@@ -260,44 +259,52 @@
         },
         {
           "type": "category",
+          "label": "server",
+          "items": [
+            "help/ipmi"
+          ]
+        },
+        {
+          "type": "category",
           "label": "mid",
           "items": [
-            "help/zookeeper",
-            "help/shenyu",
-            "help/rabbitmq",
             "help/activemq",
-            "help/rocketmq",
-            "help/spring_gateway",
-            "help/nacos",
             "help/kafka",
             "help/kafka_client",
-            "help/pulsar"
+            "help/pulsar",
+            "help/nacos",
+            "help/rabbitmq",
+            "help/rocketmq",
+            "help/shenyu",
+            "help/spring_gateway",
+            "help/zookeeper"
           ]
         },
         {
           "type": "category",
           "label": "bigdata",
           "items": [
-            "help/spark",
-            "help/flink",
-            "help/flink_on_yarn",
-            "help/doris_be",
-            "help/doris_fe",
-            "help/hadoop",
-            "help/yarn",
+            "help/airflow",
             "help/hbase_master",
             "help/hbase_regionserver",
-            "help/hdfs_namenode",
             "help/hdfs_datanode",
-            "help/iotdb",
+            "help/hdfs_namenode",
+            "help/hugegraph",
+            "help/hadoop",
             "help/hive",
             "help/iceberg",
-            "help/airflow",
             "help/clickhouse",
+            "help/doris_be",
+            "help/doris_fe",
             "help/elasticsearch",
+            "help/flink",
+            "help/flink_on_yarn",
             "help/influxdb",
+            "help/iotdb",
             "help/presto",
-            "help/hugegraph"
+            "help/seatunnel",
+            "help/spark",
+            "help/yarn"
           ]
         },
         {
@@ -375,6 +382,13 @@
         "help/time_expression",
         "help/grafana_dashboard",
         "help/issue"
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Template Marketplace",
+      "items": [
+        "help/template_marketplace"
       ]
     },
     {

@@ -1154,6 +1154,19 @@ export default function () {
                     src="https://avatars.githubusercontent.com/u/13309008?v=4?s=100" width="100px;"
                     alt="puruidong"/><br/><sub><b>puruidong</b></sub></a><br/><a
                     href="https://github.com/apache/hertzbeat/commits?author=pruidong" title="Documentation">📖</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/shinestare"><img
+                    src="https://avatars.githubusercontent.com/u/13570619?v=4?s=100" width="100px;"
+                    alt="shinestare"/><br/><sub><b>shinestare</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=shinestare" title="Code">💻</a></td>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/po-168"><img
+                    src="https://avatars.githubusercontent.com/u/185745593?v=4?s=100" width="100px;" alt="po-168"/><br/><sub><b>po-168</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=po-168" title="Code">💻</a></td>
+                </tr>
+                <tr>
+                  <td align="center" valign="top" width="14.28%"><a href="https://github.com/All-The-Best-for"><img
+                    src="https://avatars.githubusercontent.com/u/76414672?v=4?s=100" width="100px;"
+                    alt="wbs99"/><br/><sub><b>wbs99</b></sub></a><br/><a
+                    href="https://github.com/apache/hertzbeat/commits?author=All-The-Best-for" title="Code">💻</a></td>
                 </tr>
                 </tbody>
               </table>

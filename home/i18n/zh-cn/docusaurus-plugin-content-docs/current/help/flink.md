@@ -1,7 +1,7 @@
 ---
 id: flink  
 title: 监控：Flink      
-sidebar_label: Flink Monitor
+sidebar_label: Flink 监控
 keywords: [开源监控系统, 开源 Flink 监控]
 ---
 
