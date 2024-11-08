@@ -38,7 +38,7 @@ Even small corrections to typos are very welcome :)
 
 3. Execute under the project root directory: `mvn clean install -DskipTests`
 
-4. Start `springboot manager` service: `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
+4. Start `springboot manager` service: `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
 
 #### Frontend start
 
@@ -189,7 +189,7 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 3. 在项目根目录运行编译: `mvn clean install -DskipTests`
 
-4. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
+4. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
 
 #### 前端启动
 

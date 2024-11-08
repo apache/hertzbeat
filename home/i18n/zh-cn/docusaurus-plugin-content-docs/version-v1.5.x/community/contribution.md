@@ -58,7 +58,7 @@ limitations under the License.
 
 3. 在项目根目录运行编译: `mvn clean install -DskipTests`
 
-4. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
+4. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
 
 #### 前端启动
 
