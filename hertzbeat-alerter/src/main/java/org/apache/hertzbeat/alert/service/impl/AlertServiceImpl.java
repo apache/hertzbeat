@@ -189,7 +189,7 @@ public class AlertServiceImpl implements AlertService {
             alert = AlertReport.builder()
                     .content("error do not has cloud service api")
                     .alertName("/api/alerts/report/" + cloudServiceName)
-                    .alertTime(System.currentTimeMillis())
+                    .alertTime(Instant.now().getEpochSecond())
                     .priority(1)
                     .reportType(1)
                     .build();
