@@ -43,6 +43,10 @@
     "message": "OS Monitor",
     "description": "The label for category os in sidebar docs"
   },
+  "sidebar.docs.category.server": {
+    "message": "Server Monitor",
+    "description": "The label for category Server in sidebar docs"
+  },
   "sidebar.docs.category.threshold": {
     "message": "Threshold Alarm Setting",
     "description": "The label for category threshold in sidebar docs"
@@ -146,5 +150,9 @@
   "sidebar.docs.category.use-case": {
     "message": "UseCase",
     "description": "The label for category use-case in sidebar docs"
+  },
+  "sidebar.docs.category.extern-deploy": {
+    "message": "Extern Install",
+    "description": "The label for category extern-deploy in sidebar docs"
   }
 }

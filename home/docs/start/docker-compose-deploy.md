@@ -15,7 +15,7 @@ Run the `docker compose version` command to check if you have a Docker Compose e
 
 1. Download the startup script package
 
-   Download the installation script package `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz` from the [download](https://github.com/apache/hertzbeat/releases/download/v1.6.0/apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz)
+   Download the installation script package `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz` from the [download](/docs/download)
 
 2. Choose to use the HertzBeat + PostgreSQL + VictoriaMetrics solution
 

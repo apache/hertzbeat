@@ -109,6 +109,11 @@ spring:
           ssl:
             enable: true
 
+common:
+  queue:
+    # memory or kafka
+    type: memory
+    
 warehouse:
   store:
 # store history metrics data, enable only one below
@@ -126,21 +131,23 @@ warehouse:
       # 数据存储时间：默认'7776000000'（90天,单位为毫秒,-1代表永不过期）
       # data expire time, unit:ms, default '7776000000'(90 days, -1:never expire)
       expire-time: '7776000000'
-# store real-time metrics data, enable only one below
-# 存储实时数据方式, 下方只能enabled启用一种方式
+  # store real-time metrics data, enable only one below
+  real-time:
     memory:
       enabled: true
       init-size: 16
     redis:
       enabled: false
-      host: 127.0.0.1
-      port: 6379
+      # redis mode: single, sentinel, cluster. Default is single
+      mode: single
+      # separate each address with comma when using cluster mode, eg: 127.0.0.1:6379,127.0.0.1:6380
+      address: 127.0.0.1:6379
+      # enter master name when using sentinel mode
+      masterName: mymaster
       password: 123456
+      # redis db index, default: DB0
+      db: 0
 
-common:
-  queue:
-    # memory or kafka
-    type: memory
 
 alerter:
   # custom console url
@@ -155,7 +162,7 @@ alerter:
   telegram-webhook-url: https://api.telegram.org/bot%s/sendMessage
   # discord
   discord-webhook-url: https://discord.com/api/v9/channels/%s/messages
-  # server酱
+  # serverChan
   server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
   gotify-webhook-url: http://127.0.0.1/message?token=%s
@@ -165,3 +172,8 @@ scheduler:
     enabled: true
     port: 1158
 
+grafana:
+  enabled: false
+  url: http://127.0.0.1:3000
+  username: admin
+  password: admin

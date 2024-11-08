@@ -21,10 +21,8 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.LOGIN_FAILED
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import javax.naming.AuthenticationException;
 import lombok.extern.slf4j.Slf4j;
@@ -32,11 +30,10 @@ import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.util.ResponseUtil;
 import org.apache.hertzbeat.manager.pojo.dto.LoginDto;
 import org.apache.hertzbeat.manager.pojo.dto.RefreshTokenResponse;
+import org.apache.hertzbeat.manager.pojo.dto.TokenDto;
 import org.apache.hertzbeat.manager.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -60,13 +57,11 @@ public class AccountController {
         return ResponseUtil.handle(() -> accountService.authGetToken(loginDto));
     }
 
-    @GetMapping("/refresh/{refreshToken}")
+    @PostMapping("/refresh")
     @Operation(summary = "Use refresh TOKEN to re-acquire TOKEN", description = "Use refresh TOKEN to re-acquire TOKEN")
-    public ResponseEntity<Message<RefreshTokenResponse>> refreshToken(
-            @Parameter(description = "Refresh TOKEN", example = "xxx")
-            @PathVariable("refreshToken") @NotNull final String refreshToken) {
+    public ResponseEntity<Message<RefreshTokenResponse>> refreshToken(@Valid @RequestBody TokenDto tokenDto) {
         try {
-            return ResponseEntity.ok(Message.success(accountService.refreshToken(refreshToken)));
+            return ResponseEntity.ok(Message.success(accountService.refreshToken(tokenDto.getToken())));
         } catch (AuthenticationException e) {
             return ResponseEntity.ok(Message.fail(LOGIN_FAILED_CODE, e.getMessage()));
         } catch (ExpiredJwtException expiredJwtException) {

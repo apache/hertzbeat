@@ -337,13 +337,11 @@ metrics:
           en-US: In Octets
       - field: in_discards
         type: 0
-        unit: 'package'
         i18n:
           zh-CN: 入丢包数
           en-US: In Discards
       - field: in_errors
         type: 0
-        unit: 'package'
         i18n:
           zh-CN: 入错包数
           en-US: In Errors
@@ -355,13 +353,11 @@ metrics:
           en-US: Out Octets
       - field: out_discards
         type: 0
-        unit: 'package'
         i18n:
           zh-CN: 出丢包数
           en-US: Out Discards
       - field: out_errors
         type: 0
-        unit: 'package'
         i18n:
           zh-CN: 出错包数
           en-US: Out Errors
@@ -395,11 +391,11 @@ metrics:
       - index=ifIndex
       - descr=ifDescr
       - mtu=ifMtu
-      - speed=ifSpeed / 8 / 1024 / 1024
-      - in_octets=ifInOctets / 1024 / 1024
+      - speed=ifSpeed / 1000 / 1000
+      - in_octets=ifInOctets / 1000 / 1000
       - in_discards=ifInDiscards
       - in_errors=ifInErrors
-      - out_octets=ifOutOctets / 1024 / 1024
+      - out_octets=ifOutOctets / 1000 / 1000
       - out_discards=ifOutDiscards
       - out_errors=ifOutErrors
       - admin_status=ifAdminStatus

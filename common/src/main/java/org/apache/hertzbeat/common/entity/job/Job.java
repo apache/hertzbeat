@@ -158,6 +158,7 @@ public class Job {
         Map<Byte, List<Metrics>> map = metrics.stream()
             .filter(metrics -> (System.currentTimeMillis() >= metrics.getCollectTime() + metrics.getInterval() * 1000))
             .peek(metric -> {
+                metric.setCollectTime(System.currentTimeMillis());
                 // Determine whether to configure aliasFields If not, configure the default
                 if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
                     metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
