@@ -46,9 +46,9 @@ public class KafkaConnect extends AbstractConnection<AdminClient> {
     }
 
     @Override
-    public void closeConnection() throws Exception {
-        if (this.adminClient != null) {
-            this.adminClient.close();
+    public void closeConnection() {
+        if (adminClient != null) {
+            adminClient.close();
         }
     }
 
