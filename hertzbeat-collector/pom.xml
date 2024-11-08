@@ -34,13 +34,13 @@
     </properties>
 
     <modules>
-        <module>collector-basic</module>
-        <module>collector-common</module>
-        <module>collector</module>
-        <module>collector-mongodb</module>
-        <module>collector-nebulagraph</module>
-        <module>collector-rocketmq</module>
-        <module>collector-kafka</module>
+        <module>hertzbeat-collector-basic</module>
+        <module>hertzbeat-collector-common</module>
+        <module>hertzbeat-collector-collector</module>
+        <module>hertzbeat-collector-mongodb</module>
+        <module>hertzbeat-collector-nebulagraph</module>
+        <module>hertzbeat-collector-rocketmq</module>
+        <module>hertzbeat-collector-kafka</module>
     </modules>
 
     <dependencyManagement>
