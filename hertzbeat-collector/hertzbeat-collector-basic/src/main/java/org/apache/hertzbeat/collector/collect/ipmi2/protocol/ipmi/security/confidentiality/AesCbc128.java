@@ -75,9 +75,11 @@ public class AesCbc128 extends AbstractIpmiConfidentiality{
         this.init(Cipher.DECRYPT_MODE, secretKey, iv);
         this.update(in, buffer);
         int padLength = ByteConvertUtils.byteToInt(buffer.get(buffer.position() - 1));
-        for (int i = 1; i <= padLength; i++)
-            if (ByteConvertUtils.byteToInt(buffer.get(buffer.position() - i - 1)) != padLength - i + 1)
+        for (int i = 1; i <= padLength; i++) {
+            if (ByteConvertUtils.byteToInt(buffer.get(buffer.position() - i - 1)) != padLength - i + 1) {
                 throw new IllegalArgumentException("Bad pad byte " + i);
+            }
+        }
         buffer.limit(buffer.position() - padLength - 1);
         buffer.flip();
         return buffer;
@@ -86,8 +88,9 @@ public class AesCbc128 extends AbstractIpmiConfidentiality{
     @Override
     public int pad(int length) {
         int t = length % 16;
-        if (t == 0)
+        if (t == 0) {
             return 0;
+        }
         return 16 - t;
     }
 
@@ -96,6 +99,7 @@ public class AesCbc128 extends AbstractIpmiConfidentiality{
         return 16 + length + pad(length);
     }
 
+    @Override
     public void update(ByteBuffer input, ByteBuffer output) throws ShortBufferException {
         super.update(input, output);
     }

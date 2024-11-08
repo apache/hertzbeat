@@ -25,7 +25,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -190,7 +189,7 @@ public class AlertServiceImpl implements AlertService {
             alert = AlertReport.builder()
                     .content("error do not has cloud service api")
                     .alertName("/api/alerts/report/" + cloudServiceName)
-                    .alertTime(new Date().getTime())
+                    .alertTime(Instant.now().getEpochSecond())
                     .priority(1)
                     .reportType(1)
                     .build();

@@ -61,6 +61,7 @@ public abstract class AbstractIpmiCommand extends AbstractIpmiPayload implements
         return rqLun;
     }
 
+    @Override
     public void setRqLun(IpmiLun rqLun) {
         this.rqLun = rqLun;
     }
