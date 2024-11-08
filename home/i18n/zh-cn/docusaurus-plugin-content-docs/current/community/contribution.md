@@ -159,9 +159,9 @@ git pull upstream master
 
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
 >
-> - **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** 提供监控数据采集服务
+> - **[collector](https://github.com/apache/hertzbeat/tree/master/hertzbeat-collector)** 提供监控数据采集服务
 > 使用通用协议远程采集获取对端指标数据。
-> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** 提供监控数据仓储服务
+> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/hertzbeat-warehouse)** 提供监控数据仓储服务
 > 采集指标结果数据管理，数据落盘，查询，计算统计。
 > - **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** 提供告警服务
 > 告警计算触发，任务状态联动，告警配置，告警通知。

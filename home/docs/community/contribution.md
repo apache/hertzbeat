@@ -163,9 +163,9 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 > Provides monitoring management, monitoring configuration management, system user management, etc.
 >
-> - **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
+> - **[collector](https://github.com/apache/hertzbeat/tree/master/hertzbeat-collector)** Provide metrics data collection services.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
-> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
+> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/hertzbeat-warehouse)** Provide monitoring data warehousing services.
 > Metrics data management, data query, calculation and statistics.
 > - **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** Provide alert service.
 > Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
