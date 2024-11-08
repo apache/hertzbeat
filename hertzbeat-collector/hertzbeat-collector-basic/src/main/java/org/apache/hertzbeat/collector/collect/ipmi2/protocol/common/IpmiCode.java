@@ -38,9 +38,11 @@ public class IpmiCode {
     }
 
     public static <T extends Enum<T> & IpmiCode.Code> T fromByte(Class<T> type, byte code) {
-        for (T value : type.getEnumConstants())
-            if (value.getCode() == code)
+        for (T value : type.getEnumConstants()) {
+            if (value.getCode() == code) {
                 return value;
+            }
+        }
         throw new IllegalArgumentException("Unknown " + type.getSimpleName() + " code 0x" + UnsignedBytes.toString(code, 16));
     }
 
