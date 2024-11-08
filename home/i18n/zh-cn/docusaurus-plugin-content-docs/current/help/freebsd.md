@@ -1,7 +1,7 @@
 ---
 id: freebsd
 title: 监控：FreeBSD操作系统监控
-sidebar_label: FreeBSD操作系统
+sidebar_label: FreeBSD 操作系统
 keywords: [ 开源监控系统, 开源操作系统监控, FreeBSD操作系统监控 ]
 ---
 

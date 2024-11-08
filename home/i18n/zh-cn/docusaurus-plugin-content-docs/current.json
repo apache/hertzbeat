@@ -43,6 +43,10 @@
     "message": "操作系统监控",
     "description": "The label for category os in sidebar docs"
   },
+  "sidebar.docs.category.server": {
+    "message": "服务器监控",
+    "description": "The label for category Server in sidebar docs"
+  },
   "sidebar.docs.category.mid": {
     "message": "中间件监控",
     "description": "The label for category mid in sidebar docs"
