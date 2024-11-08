@@ -48,7 +48,7 @@ limitations under the License.
 ### 让 HertzBeat 运行起来
 
 > 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。
-> 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
+> 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
 
 #### 后端启动
 
@@ -155,7 +155,7 @@ git pull upstream master
 
 ### 模块
 
-- **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** 提供监控管理,系统管理基础服务
+- **[manager](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager)** 提供监控管理,系统管理基础服务
 
 > 提供对监控的管理，监控应用配置的管理，系统用户租户后台管理等。
 >

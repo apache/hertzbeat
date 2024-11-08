@@ -8,7 +8,7 @@ sidebar_label: Development
 
 > To get HertzBeat code running on your development tools, and able to debug with breakpoints.
 > This is a front-end and back-end separation project.
-> To start the local code, the back-end [manager](https://github.com/apache/hertzbeat/tree/master/manager) and the front-end [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) must be started separately.
+> To start the local code, the back-end [manager](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager) and the front-end [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) must be started separately.
 
 ### Backend start
 
