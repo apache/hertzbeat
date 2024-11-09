@@ -7,7 +7,7 @@ sidebar_label: 运行编译
 ## 让 HertzBeat 运行起来
 
 > 让 HertzBeat 的代码在您的开发工具上运行起来，并且能够断点调试。
-> 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
+> 此为前后端分离项目，本地代码启动需将后端 [manager](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager) 和前端 [web-app](https://github.com/apache/hertzbeat/tree/master/web-app) 分别启动生效。
 
 ### 后端启动
 
@@ -17,7 +17,7 @@ sidebar_label: 运行编译
 
 3. 在项目根目录运行编译: `mvn clean install -DskipTests`
 
-4. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
+4. 启动`springboot manager`服务 `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
 
 ### 前端启动
 
