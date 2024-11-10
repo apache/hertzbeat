@@ -37,6 +37,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.constants.DesensitizedField;
+import org.apache.hertzbeat.common.util.DesensitizedUtil;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -84,12 +86,14 @@ public class NoticeReceiver {
             description = "Mobile number: Valid when the notification method is SMS",
             example = "18923435643", accessMode = READ_WRITE)
     @Size(max = 100)
+    @DesensitizedField(desensitizedType= DesensitizedUtil.DesensitizedType.MOBILE_PHONE)
     private String phone;
 
     @Schema(title = "Email account: Valid when the notification method is email",
             description = "Email account: Valid when the notification method is email",
             example = "tom@qq.com", accessMode = READ_WRITE)
     @Size(max = 100)
+    @DesensitizedField(desensitizedType= DesensitizedUtil.DesensitizedType.EMAIL)
     private String email;
 
     @Schema(title = "URL address: The notification method is valid for webhook",
@@ -148,6 +152,7 @@ public class NoticeReceiver {
     @Schema(title = "Enterprise weChat secret: The notification method is valid for Enterprise WeChat app message",
             description = "Enterprise weChat secret: The notification method is valid for Enterprise WeChat app message",
             example = "oUydwn92ey0lnuY02MixNa57eNK-20dJn5NEOG-u2uE", accessMode = READ_WRITE)
+    @DesensitizedField(desensitizedType= DesensitizedUtil.DesensitizedType.PASSWORD)
     private String appSecret;
 
     @Schema(title = "Enterprise weChat party id: The notification method is valid for Enterprise WeChat app message",

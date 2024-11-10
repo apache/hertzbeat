@@ -40,7 +40,6 @@ import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.manager.NoticeRule;
 import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.apache.hertzbeat.common.util.DesensitizedUtil;
 import org.apache.hertzbeat.manager.component.alerter.DispatcherAlarm;
 import org.apache.hertzbeat.manager.dao.NoticeReceiverDao;
 import org.apache.hertzbeat.manager.dao.NoticeRuleDao;
@@ -96,15 +95,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
             }
             return predicate;
         };
-        List<NoticeReceiver> noticeReceivers = noticeReceiverDao.findAll(specification);
-        if (CollectionUtils.isNotEmpty(noticeReceivers)) {
-            noticeReceivers.forEach(noticeReceiver -> {
-                noticeReceiver.setPhone(DesensitizedUtil.mobilePhone(noticeReceiver.getPhone()));
-                noticeReceiver.setEmail(DesensitizedUtil.email(noticeReceiver.getEmail()));
-                noticeReceiver.setAppSecret(DesensitizedUtil.password(noticeReceiver.getAppSecret()));
-            });
-        }
-        return noticeReceivers;
+        return noticeReceiverDao.findAll(specification);
     }
 
     @Override

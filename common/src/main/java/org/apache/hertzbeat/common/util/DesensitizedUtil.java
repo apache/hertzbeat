@@ -25,6 +25,34 @@ import org.apache.commons.lang3.StringUtils;
 public class DesensitizedUtil {
 
     /**
+     * desensitize field
+     */
+    public enum DesensitizedType {
+        MOBILE_PHONE,
+        EMAIL,
+        PASSWORD
+    }
+
+    /**
+     * desensitize field
+     * @param type field type
+     * @param str field value
+     * @return desensitized value
+     */
+    public static String desensitize(DesensitizedType type, String str) {
+        if (type == null || StringUtils.isEmpty(str)) {
+            return str;
+        }
+        switch (type) {
+            case MOBILE_PHONE -> str = mobilePhone(str);
+            case EMAIL -> str = email(str);
+            case PASSWORD -> str = password(str);
+            default -> {}
+        }
+        return str;
+    }
+
+    /**
      * desensitize mobile phone
      * @param str field value
      * @return desensitized value
