@@ -50,7 +50,7 @@ import java.util.stream.Stream;
  * KafkaCollectE2E
  */
 @Slf4j
-public class KafkaCollectE2E {
+public class KafkaCollectE2eTest {
 
     private static final String ZOOKEEPER_IMAGE_NAME = "zookeeper:3.8.4";
     private static final String ZOOKEEPER_NAME = "zookeeper";
