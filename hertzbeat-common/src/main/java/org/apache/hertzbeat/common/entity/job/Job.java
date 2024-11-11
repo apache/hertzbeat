@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.util.CollectionUtils;
 
 /**
  * Collect task details
@@ -94,9 +95,13 @@ public class Job {
      */
     private long timestamp;
     /**
-     * Task collection time interval (unit: second) eg: 30,60,600
+     * Default task collection time interval (unit: second) eg: 30,60,600
      */
-    private long interval = 600L;
+    private long defaultInterval = 600L;
+    /**
+     * Refresh time list for one cycle of the job
+     */
+    private LinkedList<Long> intervals;
     /**
      * Whether it is a recurring periodic task true is yes, false is no
      */
@@ -151,17 +156,19 @@ public class Job {
      */
     public synchronized void constructPriorMetrics() {
         Map<Byte, List<Metrics>> map = metrics.stream()
-                .peek(metric -> {
-                    // Determine whether to configure aliasFields If not, configure the default
-                    if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
-                        metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
-                    }
-                    // Set the default metrics execution priority, if not filled, the default last priority
-                    if (metric.getPriority() == null) {
-                        metric.setPriority(Byte.MAX_VALUE);
-                    }
-                })
-                .collect(Collectors.groupingBy(Metrics::getPriority));
+            .filter(metrics -> (System.currentTimeMillis() >= metrics.getCollectTime() + metrics.getInterval() * 1000))
+            .peek(metric -> {
+                metric.setCollectTime(System.currentTimeMillis());
+                // Determine whether to configure aliasFields If not, configure the default
+                if ((metric.getAliasFields() == null || metric.getAliasFields().isEmpty()) && metric.getFields() != null) {
+                    metric.setAliasFields(metric.getFields().stream().map(Metrics.Field::getField).collect(Collectors.toList()));
+                }
+                // Set the default metrics execution priority, if not filled, the default last priority
+                if (metric.getPriority() == null) {
+                    metric.setPriority(Byte.MAX_VALUE);
+                }
+            })
+            .collect(Collectors.groupingBy(Metrics::getPriority));
         // Construct a linked list of task execution order of the metrics
         priorMetrics = new LinkedList<>();
         map.values().forEach(metric -> {
@@ -246,5 +253,82 @@ public class Job {
     public Job clone() {
         // deep clone
         return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
+    }
+
+    public void initIntervals() {
+        List<Long> metricsIntervals = new LinkedList<>();
+        for (Metrics metrics: getMetrics()) {
+            metrics.setCollectTime(System.currentTimeMillis());
+            if (metrics.getInterval() <= 0) {
+                metrics.setInterval(defaultInterval);
+            }
+            if (!metricsIntervals.contains(metrics.getInterval())) {
+                metricsIntervals.add(metrics.getInterval());
+            }
+        }
+        generateMetricsIntervals(metricsIntervals);
+    }
+
+    /**
+     * The greatest common divisor
+     */
+    public static long gcd(long a, long b) {
+        while (b != 0) {
+            long temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+
+    /**
+     * The least common multiple
+     */
+    public static long lcm(List<Long> array) {
+        if (array != null) {
+            long result = array.get(0);
+            for (int i = 1; i < array.size(); i++) {
+                result = (result * array.get(i)) / gcd(result, array.get(i));
+            }
+            return result;
+        }
+        return 0;
+    }
+
+    /**
+     *
+     * @param metricsIntervals A unique list composed of intervals for all metrics
+     * Generate a list of refresh intervals for metric collection
+     */
+    public void generateMetricsIntervals(List<Long> metricsIntervals) {
+        // 1. To find the least common multiple (LCM) of all metric refresh intervals
+        long lcm = lcm(metricsIntervals);
+        List<Long> refreshTimes = new LinkedList<>();
+        // 2. Calculate all possible refresh intervals in one round
+        for (long interval : metricsIntervals) {
+            for (long t = interval; t <= lcm; t += interval) {
+                if (!refreshTimes.contains(t)) {
+                    refreshTimes.add(t);
+                }
+            }
+        }
+        // 3. Sort from smallest to largest
+        Collections.sort(refreshTimes);
+        // 4. Calculate the refresh interval list for Job's cycle
+        LinkedList<Long> intervals = new LinkedList<>();
+        intervals.add(refreshTimes.get(0));
+        for (int i = 1; i < refreshTimes.size(); i++) {
+            intervals.add(refreshTimes.get(i) - refreshTimes.get(i - 1));
+        }
+        setIntervals(intervals);
+    }
+
+    public long getInterval() {
+        if (!CollectionUtils.isEmpty(getIntervals())) {
+            long interval = getIntervals().remove();
+            getIntervals().add(interval);
+            return interval;
+        }
+        return getDefaultInterval();
     }
 }
