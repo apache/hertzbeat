@@ -1,7 +1,7 @@
 ---
 id: ubuntu  
 title: 监控：Ubuntu操作系统监控      
-sidebar_label: Ubuntu操作系统       
+sidebar_label: Ubuntu 操作系统       
 keywords: [开源监控系统, 开源操作系统监控, Ubuntu监控]
 ---
 

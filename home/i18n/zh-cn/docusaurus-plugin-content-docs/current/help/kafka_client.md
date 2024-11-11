@@ -1,7 +1,7 @@
 ---
 id: kafka_client  
 title: 监控：Kafka监控(基于客户端)    
-sidebar_label: Kafka监控(基于客户端)
+sidebar_label: Apache Kafka 监控(基于客户端)
 keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 ---
 

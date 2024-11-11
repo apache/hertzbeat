@@ -1,7 +1,7 @@
 ---
 id: debian  
 title: 监控：debian 系统监控  
-sidebar_label: Debian
+sidebar_label: Debian 操作系统
 keywords: [开源监控系统, 操作系统监控, Debian监控]
 ---
 
