@@ -194,7 +194,7 @@ metrics:
       reuseConnection: ^_^reuseConnection^_^
       # ssh run collect script
       # ssh response data parse type: oneRow, multiRow
-      script: ps -eo pid,user,%cpu,%mem,rss,cmd | grep -v grep | grep '^_^process_name^_^' | awk 'BEGIN {print "pid user cpu mem rss cmd"} {cmd=substr($0, index($0, $6)); gsub(/ /, " ", cmd); print $1, $2, $3, $4, $5, cmd}'
+      script: output=$(ps -ef|grep '^_^process_name^_^'|grep -v grep); [ -n "$output" ] && ps -eo pid,user,%cpu,%mem,rss,cmd | grep -v grep | grep '^_^process_name^_^' | awk 'BEGIN {print "pid user cpu mem rss cmd"} {cmd=substr($0, index($0, $6)); gsub(/ /, " ", cmd); print $1, $2, $3, $4, $5, cmd}'
       parseType: multiRow
   - name: mem
     i18n:
@@ -203,7 +203,7 @@ metrics:
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
 
-    priority: 0
+    priority: 1
     # collect metrics content
 
     fields:
@@ -247,7 +247,7 @@ metrics:
       en-US: Other
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 0
+    priority: 1
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
@@ -299,7 +299,7 @@ metrics:
       en-US: IO
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 0
+    priority: 1
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
