@@ -58,7 +58,7 @@ Even small corrections to typos are very welcome :)
 
 3. Execute under the project root directory: `mvn clean install -DskipTests`
 
-4. Start `springboot manager` service: `manager/src/main/java/org/apache/hertzbeat/manager/Manager.java`
+4. Start `springboot manager` service: `manager/src/main/java/org/apache/hertzbeat/hertzbeat-manager/Manager.java`
 
 #### Frontend start
 
@@ -159,15 +159,15 @@ Add WeChat account `ahertzbeat` to pull you into the WeChat group.
 
 ## 🥐 Architecture
 
-- **[manager](https://github.com/apache/hertzbeat/tree/master/manager)** Provide monitoring management, system management basic services.
+- **[manager](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager)** Provide monitoring management, system management basic services.
 
 > Provides monitoring management, monitoring configuration management, system user management, etc.
 >
-> - **[collector](https://github.com/apache/hertzbeat/tree/master/collector)** Provide metrics data collection services.
+> - **[collector](https://github.com/apache/hertzbeat/tree/master/hertzbeat-collector)** Provide metrics data collection services.
 > Use common protocols to remotely collect and obtain peer-to-peer metrics data.
-> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/warehouse)** Provide monitoring data warehousing services.
+> - **[warehouse](https://github.com/apache/hertzbeat/tree/master/hertzbeat-warehouse)** Provide monitoring data warehousing services.
 > Metrics data management, data query, calculation and statistics.
-> - **[alerter](https://github.com/apache/hertzbeat/tree/master/alerter)** Provide alert service.
+> - **[alerter](https://github.com/apache/hertzbeat/tree/master/hertzbeat-alerter)** Provide alert service.
 > Alarm calculation trigger, monitoring status linkage, alarm configuration, and alarm notification.
 > - **[web-app](https://github.com/apache/hertzbeat/tree/master/web-app)** Provide web ui.
 > Angular Web UI.
