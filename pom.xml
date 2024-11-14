@@ -88,6 +88,7 @@
         <module>hertzbeat-push</module>
         <module>hertzbeat-plugin</module>
         <module>hertzbeat-grafana</module>
+        <module>hertzbeat-e2e</module>
     </modules>
 
     <properties>
