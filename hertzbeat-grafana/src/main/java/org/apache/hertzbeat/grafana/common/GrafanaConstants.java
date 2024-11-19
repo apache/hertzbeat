@@ -48,15 +48,15 @@ public interface GrafanaConstants {
     
     String QUERY_DATASOURCE_API = "/api/datasources/name/" + DATASOURCE_NAME;
     
-    String GET_SERVICE_ACCOUNTS_API = "%s:%s@%s/api/serviceaccounts/search";
+    String GET_SERVICE_ACCOUNTS_API = "%s/api/serviceaccounts/search";
 
     String ACCOUNT_NAME = ConfigConstants.SystemConstant.PROJECT_NAME;
     
     String ACCOUNT_ROLE = "Admin";
     
-    String CREATE_SERVICE_ACCOUNT_API = "%s:%s@%s/api/serviceaccounts";
+    String CREATE_SERVICE_ACCOUNT_API = "%s/api/serviceaccounts";
     
-    String CREATE_SERVICE_TOKEN_API = "%s:%s@%s/api/serviceaccounts/%d/tokens";
+    String CREATE_SERVICE_TOKEN_API = "%s/api/serviceaccounts/%d/tokens";
 
     String GRAFANA_CONFIG = "grafanaConfig";
 }
