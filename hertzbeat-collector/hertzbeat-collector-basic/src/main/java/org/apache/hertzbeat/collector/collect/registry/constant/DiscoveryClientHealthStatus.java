@@ -17,27 +17,21 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
+package org.apache.hertzbeat.collector.collect.registry.constant;
 
 /**
- * Httpsd protocol
+ * Discovery client instance status.
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class HttpsdProtocol {
-    private String host;
-    private String port;
-    private String discoveryClientTypeName;
+public final class DiscoveryClientHealthStatus {
 
-    public boolean isInvalid() {
-        return StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
-    }
+    /**
+	 * Discovery client instance status is UP.
+	 */
+    public static final String UP = "UP";
+
+    /**
+	 * Discovery client instance status is DOWN.
+	 */
+    public static final String DOWN = "DOWN";
+
 }

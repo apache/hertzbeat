@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd;
+package org.apache.hertzbeat.collector.collect.registry;
 
 import com.ecwid.consul.transport.TransportException;
 import com.google.common.annotations.VisibleForTesting;
@@ -27,22 +27,22 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClient;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.DiscoveryClientManagement;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClient;
+import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClientManagement;
+import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
- * http_sd protocol collection implementation
+ * registry protocol collection implementation
  */
 @Slf4j
-public class HttpsdImpl extends AbstractCollect {
+public class RegistryImpl extends AbstractCollect {
     private static final String SERVER = "server";
 
     @Setter
@@ -51,17 +51,17 @@ public class HttpsdImpl extends AbstractCollect {
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
-        HttpsdProtocol httpsdProtocol = metrics.getHttpsd();
-        if (Objects.isNull(httpsdProtocol) || httpsdProtocol.isInvalid()){
-            throw new IllegalArgumentException("http_sd collect must have a valid http_sd protocol param! ");
+        RegistryProtocol registryProtocol = metrics.getRegistry();
+        if (Objects.isNull(registryProtocol) || registryProtocol.isInvalid()){
+            throw new IllegalArgumentException("registry collect must have a valid registry protocol param! ");
         }
     }
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        HttpsdProtocol httpsdProtocol = metrics.getHttpsd();
+        RegistryProtocol registryProtocol = metrics.getRegistry();
 
-        try (DiscoveryClient discoveryClient = discoveryClientManagement.getClient(httpsdProtocol)) {
+        try (DiscoveryClient discoveryClient = discoveryClientManagement.getClient(registryProtocol)) {
             collectMetrics(builder, metrics, discoveryClient);
         } catch (TransportException e1) {
             String errorMsg = "Consul " + CommonUtil.getMessageFromThrowable(e1);
@@ -103,11 +103,7 @@ public class HttpsdImpl extends AbstractCollect {
 
     @Override
     public String supportProtocol() {
-        return DispatchConstants.PROTOCOL_HTTP_SD;
-    }
-
-    private boolean checkParamsFailed(HttpsdProtocol httpsd) {
-        return Objects.isNull(httpsd) || httpsd.isInvalid();
+        return DispatchConstants.PROTOCOL_REGISTRY;
     }
 
     private void addColumnIfMatched(String fieldName, Object sourceObj, CollectRep.ValueRow.Builder valueRowBuilder) {

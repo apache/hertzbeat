@@ -1,13 +1,13 @@
 ---
-id: httpsd
-title: Monitoring Httpsd
-sidebar_label: Httpsd Monitor
-keywords: [open source monitoring tool, open source java monitoring tool, monitoring httpsd metrics]
+id: registry
+title: Monitoring Registry
+sidebar_label: Registry Monitor
+keywords: [open source monitoring tool, open source java monitoring tool, monitoring registry metrics]
 ---
 
-> Collect and monitor the general performance Metrics of Httpsd.
+> Collect and monitor the general performance Metrics of Registry.
 
-**Protocol Use：httpsd**
+**Protocol Use：registry**
 
 ## Steps to monitor micro services
 

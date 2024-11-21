@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
+package org.apache.hertzbeat.collector.collect.registry.discovery.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
