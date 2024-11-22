@@ -1,7 +1,7 @@
 tasks:
 
     - name: Run backend
-      before: cd manager
+      before: cd hertzbeat-manager
       command: |
           gp sync-await setup-backend
           mvn spring-boot:run
