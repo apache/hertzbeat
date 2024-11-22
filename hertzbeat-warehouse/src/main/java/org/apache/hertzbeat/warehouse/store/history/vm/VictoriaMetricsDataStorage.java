@@ -139,6 +139,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         boolean isPrometheusAuto = false;
         if (metricsData.getApp().startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             isPrometheusAuto = true;
+            defaultLabels.remove(MONITOR_METRICS_KEY);
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp()
                     .substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));   
         } else {
@@ -174,7 +175,9 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
                         String labelName = isPrometheusAuto ? metricsData.getMetrics() 
                                 : metricsData.getMetrics() + SPILT + entry.getKey();
                         labels.put(LABEL_KEY_NAME, labelName);
-                        labels.put(MONITOR_METRIC_KEY, entry.getKey());
+                        if (!isPrometheusAuto) {
+                            labels.put(MONITOR_METRIC_KEY, entry.getKey());
+                        }
                         VictoriaMetricsContent content = VictoriaMetricsContent.builder()
                                 .metric(labels)
                                 .values(new Double[]{entry.getValue()})
