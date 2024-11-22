@@ -256,7 +256,7 @@ metrics:
     i18n:
       zh-CN: 连接情况
       en-US: Connection
-    priority: 1
+    priority: 2
     fields:
       - field: user_connection
         i18n:

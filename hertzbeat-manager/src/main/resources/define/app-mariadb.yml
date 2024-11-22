@@ -263,7 +263,7 @@ metrics:
       url: ^_^url^_^
 
   - name: performance
-    priority: 1
+    priority: 2
     i18n:
       zh-CN: 性能 信息
       en-US: Performance Info
@@ -297,7 +297,7 @@ metrics:
       url: ^_^url^_^
 
   - name: innodb
-    priority: 1
+    priority: 3
     i18n:
       zh-CN: Innodb 信息
       en-US: Innodb Info
@@ -363,7 +363,7 @@ metrics:
       url: ^_^url^_^
 
   - name: status
-    priority: 1
+    priority: 4
     i18n:
       zh-CN: 状态 信息
       en-US: Status Info
@@ -458,7 +458,7 @@ metrics:
       url: ^_^url^_^
 
   - name: handler
-    priority: 2
+    priority: 5
     i18n:
       zh-CN: 处理器 信息
       en-US: Handler Info
@@ -537,7 +537,7 @@ metrics:
       url: ^_^url^_^
 
   - name: connection
-    priority: 2
+    priority: 6
     i18n:
       zh-CN: 连接 信息
       en-US: Connection Info
@@ -576,7 +576,7 @@ metrics:
       url: ^_^url^_^
 
   - name: thread
-    priority: 2
+    priority: 7
     i18n:
       zh-CN: 线程 信息
       en-US: Thread Info
@@ -615,7 +615,7 @@ metrics:
       url: ^_^url^_^
 
   - name: tmp
-    priority: 2
+    priority: 8
     i18n:
       zh-CN: 临时表 信息
       en-US: TMP Info
@@ -649,7 +649,7 @@ metrics:
       url: ^_^url^_^
 
   - name: select_type
-    priority: 2
+    priority: 9
     i18n:
       zh-CN: 查询类型 信息
       en-US: Select Type Info
@@ -693,7 +693,7 @@ metrics:
       url: ^_^url^_^
 
   - name: sort
-    priority: 2
+    priority: 10
     i18n:
       zh-CN: 排序 信息
       en-US: Sort Info
@@ -732,7 +732,7 @@ metrics:
       url: ^_^url^_^
 
   - name: table_lock
-    priority: 2
+    priority: 11
     i18n:
       zh-CN: 表级锁 信息
       en-US: Table Lock Info
@@ -761,7 +761,7 @@ metrics:
       url: ^_^url^_^
 
   - name: process_state
-    priority: 2
+    priority: 12
     i18n:
       zh-CN: 进程状态 信息
       en-US: Process State Info
@@ -791,7 +791,7 @@ metrics:
       url: ^_^url^_^
 
   - name: slow_sql
-    priority: 2
+    priority: 13
     i18n:
       zh-CN: 慢查询 信息
       en-US: Slow Sql Info

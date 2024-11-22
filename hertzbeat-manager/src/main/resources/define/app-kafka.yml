@@ -155,7 +155,7 @@ metrics:
     i18n:
       zh-CN: 内存池
       en-US: Memory Pool
-    priority: 1
+    priority: 2
     fields:
       - field: name
         type: 1
@@ -208,7 +208,7 @@ metrics:
     i18n:
       zh-CN: 活跃控制器数量
       en-US: Active Controller Count
-    priority: 1
+    priority: 3
     fields:
       - field: Value
         type: 0
@@ -229,7 +229,7 @@ metrics:
     i18n:
       zh-CN: Broker分区数量
       en-US: Broker Partition Count
-    priority: 1
+    priority: 4
     fields:
       - field: Value
         type: 0
@@ -250,7 +250,7 @@ metrics:
     i18n:
       zh-CN: Broker领导者数量
       en-US: Broker Leader Count
-    priority: 1
+    priority: 5
     fields:
       - field: Value
         type: 0
@@ -271,7 +271,7 @@ metrics:
     i18n:
       zh-CN: Broker处理器平均百分比
       en-US: Broker Handler Avg Percent
-    priority: 2
+    priority: 6
     fields:
       - field: EventType
         type: 1
@@ -322,7 +322,7 @@ metrics:
     i18n:
       zh-CN: 每秒主题流入字节
       en-US: Topic Bytes In PerSec
-    priority: 2
+    priority: 7
     fields:
       - field: EventType
         type: 1
@@ -373,7 +373,7 @@ metrics:
     i18n:
       zh-CN: 每秒主题流出字节
       en-US: Topic Bytes Out PerSec
-    priority: 2
+    priority: 8
     fields:
       - field: EventType
         type: 1
@@ -424,7 +424,7 @@ metrics:
     i18n:
       zh-CN: 每秒生产消息转换
       en-US: Produce Message Conversions PerSec
-    priority: 2
+    priority: 9
     fields:
       - field: EventType
         type: 1
@@ -475,7 +475,7 @@ metrics:
     i18n:
       zh-CN: 每秒生产总请求数
       en-US: Produce Total Requests PerSec
-    priority: 2
+    priority: 10
     fields:
       - field: EventType
         type: 1

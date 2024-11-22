@@ -199,7 +199,7 @@ metrics:
       parseScript: '$.items.*'
 
   - name: pods
-    priority: 1
+    priority: 2
     fields:
       - field: pod
         type: 1
@@ -273,7 +273,7 @@ metrics:
       parseScript: '$.items.*'
 
   - name: services
-    priority: 1
+    priority: 3
     fields:
       - field: service
         type: 1
