@@ -17,25 +17,27 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery.entity;
+package org.apache.hertzbeat.common.entity.job.protocol;
 
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 /**
- * Service Instance
+ * Registry protocol
  */
 @Data
 @Builder
 @AllArgsConstructor
-public class ServiceInstance {
-    private String serviceId;
-    private String serviceName;
-    private String address;
-    private double weight;
-    private Map<String, String> metadata;
-    private int port;
-    private String healthStatus;
+@NoArgsConstructor
+public class RegistryProtocol {
+    private String host;
+    private String port;
+    private String discoveryClientTypeName;
+
+    public boolean isInvalid() {
+        return StringUtils.isAnyBlank(host, String.valueOf(port), discoveryClientTypeName);
+    }
 }

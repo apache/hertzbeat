@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
@@ -219,9 +219,9 @@ public class Metrics {
      */
     private Pop3Protocol pop3;
     /**
-     * Monitoring configuration information using the public http_sd protocol
+     * Monitoring configuration information using the public registry protocol
      */
-    private HttpsdProtocol httpsd;
+    private RegistryProtocol registry;
     /**
      * Monitoring configuration information using the public redfish protocol
      */

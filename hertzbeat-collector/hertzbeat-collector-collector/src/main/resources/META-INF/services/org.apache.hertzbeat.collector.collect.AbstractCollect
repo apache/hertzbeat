@@ -20,7 +20,7 @@ org.apache.hertzbeat.collector.collect.nginx.NginxCollectImpl
 org.apache.hertzbeat.collector.collect.memcached.MemcachedCollectImpl
 org.apache.hertzbeat.collector.collect.nebulagraph.NebulaGraphCollectImpl
 org.apache.hertzbeat.collector.collect.pop3.Pop3CollectImpl
-org.apache.hertzbeat.collector.collect.httpsd.HttpsdImpl
+org.apache.hertzbeat.collector.collect.registry.RegistryImpl
 org.apache.hertzbeat.collector.collect.redfish.RedfishCollectImpl
 org.apache.hertzbeat.collector.collect.nebulagraph.NgqlCollectImpl
 org.apache.hertzbeat.collector.collect.imap.ImapCollectImpl
