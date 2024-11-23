@@ -15,40 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.manager.dao;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.List;
+import java.util.Set;
+import org.apache.hertzbeat.common.entity.manager.MonitorBind;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
- * telnet Protocol configuration
+ * AuthResources database operation
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class TelnetProtocol implements CommonRequestProtocol {
+public interface MonitorBindDao extends JpaRepository<MonitorBind, Long>, JpaSpecificationExecutor<MonitorBind> {
+    List<MonitorBind> findAllByBizIdInAndType(Set<Long> bizIdList, byte type);
 
-    /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
-     */
-    private String host;
+    List<MonitorBind> findMonitorBindByBizIdAndType(Long bizId, byte type);
 
-    /**
-     * Peer host port
-     */
-    private String port;
+    MonitorBind findMonitorBindByBizIdAndMonitorIdAndType(Long bizId, Long monitorId, byte type);
 
-    /**
-     * TIME OUT PERIOD
-     */
-    private String timeout;
+    List<MonitorBind> findAllByType(byte type);
 
-    /**
-     * Sent command
-     */
-    private String cmd;
-
+    void deleteByMonitorId(Long monitorId);
 }

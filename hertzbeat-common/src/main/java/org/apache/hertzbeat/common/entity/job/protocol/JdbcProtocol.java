@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class JdbcProtocol {
+public class JdbcProtocol implements CommonRequestProtocol {
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */

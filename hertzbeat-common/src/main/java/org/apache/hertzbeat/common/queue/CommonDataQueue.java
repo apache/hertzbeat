@@ -58,10 +58,23 @@ public interface CommonDataQueue {
      * @param alert alert data
      */
     void sendAlertsData(Alert alert);
-    
+
+    /**
+     * poll service discovery data
+     * @return metrics data
+     * @throws InterruptedException when poll timeout
+     */
+    CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException;
+
     /**
      * send collect metrics data
      * @param metricsData metrics data
      */
     void sendMetricsData(CollectRep.MetricsData metricsData);
+
+    /**
+     * send service discovery data
+     * @param metricsData service discovery data
+     */
+    void sendServiceDiscoveryData(CollectRep.MetricsData metricsData);
 }

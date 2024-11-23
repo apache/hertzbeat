@@ -111,6 +111,14 @@ public final class ClusterMsg {
          * <code>GO_CLOSE = 8;</code>
          */
         GO_CLOSE(8),
+        /**
+         * <pre>
+         * response cyclic collect sd data
+         * </pre>
+         *
+         * <code>RESPONSE_CYCLIC_TASK_SD_DATA = 9;</code>
+         */
+        RESPONSE_CYCLIC_TASK_SD_DATA(9),
         UNRECOGNIZED(-1),
         ;
 

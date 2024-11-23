@@ -15,40 +15,53 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.common.entity.sd;
 
+import java.util.Arrays;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * telnet Protocol configuration
+ * service discovery common field
  */
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class TelnetProtocol implements CommonRequestProtocol {
+@AllArgsConstructor
+public class ServiceDiscoveryProtocol {
+    private Long id;
+    private List<Long> jobIdList;
+    /**
+     * sd type
+     */
+    private Type type;
+    /**
+     * Target sd sources by which collector updates SDCache.
+     */
+    private String sdSource;
 
     /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
+     * sd Type
      */
-    private String host;
+    public enum Type {
+        HTTP_SD("httpsd"),
+        ;
 
-    /**
-     * Peer host port
-     */
-    private String port;
+        private final String protocolName;
 
-    /**
-     * TIME OUT PERIOD
-     */
-    private String timeout;
+        Type(String protocolName) {
+            this.protocolName = protocolName;
+        }
 
-    /**
-     * Sent command
-     */
-    private String cmd;
+        public static Type getType(String str) {
+            return Arrays.stream(Type.values()).filter(t -> t.toString().equalsIgnoreCase(str)).findFirst().orElse(null);
+        }
 
+        public String getProtocolName() {
+            return protocolName;
+        }
+    }
 }
