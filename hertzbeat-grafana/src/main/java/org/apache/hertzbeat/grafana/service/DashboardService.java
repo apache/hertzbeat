@@ -89,7 +89,7 @@ public class DashboardService {
                 GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(response.getBody(), GrafanaDashboard.class);
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
-                    grafanaDashboard.setUrl(grafanaProperties.getPrefix() + grafanaProperties.getUrl()
+                    grafanaDashboard.setUrl(grafanaProperties.exposeUrl()
                             + grafanaDashboard.getUrl().replace(grafanaProperties.getUrl(), "")
                             + KIOSK + REFRESH + INSTANCE + monitorId + USE_DATASOURCE);
                     grafanaDashboard.setMonitorId(monitorId);

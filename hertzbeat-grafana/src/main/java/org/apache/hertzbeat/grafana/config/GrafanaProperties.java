@@ -31,6 +31,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.GRAFANA)
 public record GrafanaProperties(@DefaultValue("false") boolean enabled,
                                 @DefaultValue("http://127.0.0.1:3000") String url,
+                                @DefaultValue("http://127.0.0.1:3000") String exposeUrl,
                                 @DefaultValue(GrafanaConstants.ADMIN) String username,
                                 @DefaultValue(GrafanaConstants.ADMIN) String password) {
     /**
