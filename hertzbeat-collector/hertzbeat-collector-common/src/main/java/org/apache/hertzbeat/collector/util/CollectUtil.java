@@ -271,6 +271,7 @@ public final class CollectUtil {
                 if (!cryingMatcher.find()) {
                     continue;
                 }
+                // Replace special characters
                 value = replaceSpecialCharacterIfNeeded(value, CRYING_PLACEHOLDER_REX, cryingMatcher, configmap);
                 jsonObject.addProperty(entry.getKey(), value);
             }
@@ -293,6 +294,7 @@ public final class CollectUtil {
                     index++;
                     continue;
                 }
+                // Replace special characters
                 value = replaceSpecialCharacterIfNeeded(value, CRYING_PLACEHOLDER_REX, cryingMatcher, configmap);
                 jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
                 index++;
@@ -347,6 +349,7 @@ public final class CollectUtil {
                 if (!smilingMatcher.find()) {
                     continue;
                 }
+                // Replace special characters
                 value = replaceSpecialCharacterIfNeeded(value, SMILING_PLACEHOLDER_REX, smilingMatcher, configmap);
                 jsonObject.addProperty(entry.getKey(), value);
             }
