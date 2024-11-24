@@ -79,7 +79,6 @@ public class KimiAiServiceImpl implements AiService {
                 .messages(List.of(new AiMessage(AiConstants.KimiAiConstants.REQUEST_ROLE, text)))
                 .build();
 
-
         return webClient.post()
                 .body(BodyInserters.fromValue(zhiPuRequestParamDTO))
                 .retrieve()
