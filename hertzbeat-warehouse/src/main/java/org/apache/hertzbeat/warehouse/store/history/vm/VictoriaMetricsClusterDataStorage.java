@@ -125,7 +125,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
             return;
         }
         if (metricsData.getValuesList().isEmpty()) {
-            log.info("[warehouse victoria-metrics] flush metrics data {} is null, ignore.", metricsData.getId());
+            log.info("[warehouse victoria-metrics] flush metrics data {} {} {} is null, ignore.",
+                    metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
         }
         Map<String, String> defaultLabels = new HashMap<>(8);
@@ -134,8 +135,8 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         if (metricsData.getApp().startsWith(CommonConstants.PROMETHEUS_APP_PREFIX)) {
             isPrometheusAuto = true;
             defaultLabels.remove(MONITOR_METRICS_KEY);
-            defaultLabels.put(LABEL_KEY_JOB,
-                    metricsData.getApp().substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));
+            defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp()
+                    .substring(CommonConstants.PROMETHEUS_APP_PREFIX.length()));
         } else {
             defaultLabels.put(LABEL_KEY_JOB, metricsData.getApp());
         }
@@ -145,6 +146,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         Long[] timestamp = new Long[]{metricsData.getTime()};
         Map<String, Double> fieldsValue = new HashMap<>(fields.size());
         Map<String, String> labels = new HashMap<>(fields.size());
+        List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList = new LinkedList<>();
         for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
             fieldsValue.clear();
             labels.clear();
@@ -172,33 +174,46 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                         if (!isPrometheusAuto) {
                             labels.put(MONITOR_METRIC_KEY, entry.getKey());
                         }
-                        VictoriaMetricsContent content = VictoriaMetricsContent.builder().metric(labels)
-                                .values(new Double[]{entry.getValue()}).timestamps(timestamp).build();
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setContentType(MediaType.APPLICATION_JSON);
-                        if (StringUtils.hasText(vmInsertProps.username()) && StringUtils.hasText(
-                                vmInsertProps.password())) {
-                            String authStr = vmInsertProps.username() + ":" + vmInsertProps.password();
-                            String encodedAuth = new String(
-                                    Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)),
-                                    StandardCharsets.UTF_8);
-                            headers.add(HttpHeaders.AUTHORIZATION, NetworkConstants.BASIC
-                                    + SignConstants.BLANK + encodedAuth);
-                        }
-                        HttpEntity<VictoriaMetricsContent> httpEntity = new HttpEntity<>(content, headers);
-                        ResponseEntity<String> responseEntity = restTemplate.postForEntity(
-                                vmInsertProps.url() + IMPORT_PATH, httpEntity, String.class);
-                        if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                            log.debug("insert metrics data to victoria-metrics success. {}", content);
-                        } else {
-                            log.error("insert metrics data to victoria-metrics failed. {}", content);
-                        }
+                        VictoriaMetricsDataStorage.VictoriaMetricsContent content = VictoriaMetricsDataStorage.VictoriaMetricsContent.builder()
+                                .metric(new HashMap<>(labels))
+                                .values(new Double[]{entry.getValue()})
+                                .timestamps(timestamp)
+                                .build();
+                        contentList.add(content);
                     } catch (Exception e) {
-                        log.error("flush metrics data to victoria-metrics error: {}.", e.getMessage(), e);
+                        log.error("combine metrics data error: {}.", e.getMessage(), e);
                     }
 
                 }
             }
+        }
+        if (contentList.isEmpty()) {
+            log.info("[warehouse victoria-metrics] flush metrics data {} is empty, ignore.", metricsData.getId());
+            return;
+        }
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            if (StringUtils.hasText(vmInsertProps.username())
+                    && StringUtils.hasText(vmInsertProps.password())) {
+                String authStr = vmInsertProps.username() + ":" + vmInsertProps.password();
+                String encodedAuth = new String(Base64.encodeBase64(authStr.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+                headers.add(HttpHeaders.AUTHORIZATION,  NetworkConstants.BASIC + SignConstants.BLANK + encodedAuth);
+            }
+            StringBuilder stringBuilder = new StringBuilder();
+            for (VictoriaMetricsDataStorage.VictoriaMetricsContent content : contentList) {
+                stringBuilder.append(JsonUtil.toJson(content)).append("\n");
+            }
+            HttpEntity<String> httpEntity = new HttpEntity<>(stringBuilder.toString(), headers);
+            ResponseEntity<String> responseEntity = restTemplate.postForEntity(vmInsertProps.url() + IMPORT_PATH,
+                    httpEntity, String.class);
+            if (responseEntity.getStatusCode().is2xxSuccessful()) {
+                log.debug("insert metrics data to victoria-metrics success.");
+            } else {
+                log.error("insert metrics data to victoria-metrics failed. {}", responseEntity.getBody());
+            }
+        } catch (Exception e){
+            log.error("flush metrics data to victoria-metrics error: {}.", e.getMessage(), e);
         }
     }
 
