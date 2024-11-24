@@ -222,7 +222,7 @@ metrics:
     i18n:
       zh-CN: 会话总数
       en-US: Total Sessions
-    priority: 1
+    priority: 2
     fields:
       - field: count
         type: 0
@@ -246,7 +246,7 @@ metrics:
     i18n:
       zh-CN: 活动会话
       en-US: Active Sessions
-    priority: 1
+    priority: 3
     fields:
       - field: count
         type: 0
@@ -270,7 +270,7 @@ metrics:
     i18n:
       zh-CN: 后台会话
       en-US: Background Sessions
-    priority: 1
+    priority: 4
     fields:
       - field: count
         type: 0
@@ -294,7 +294,7 @@ metrics:
     i18n:
       zh-CN: 连接
       en-US: Connection
-    priority: 1
+    priority: 5
     fields:
       - field: username
         type: 1
@@ -324,7 +324,7 @@ metrics:
     i18n:
       zh-CN: 性能
       en-US: Performance
-    priority: 1
+    priority: 6
     fields:
       - field: qps
         type: 0
@@ -370,7 +370,7 @@ metrics:
     i18n:
       zh-CN: 百分比
       en-US: Percentage
-    priority: 1
+    priority: 7
     fields:
       - field: tablespace_name
         type: 1
@@ -423,7 +423,7 @@ metrics:
     i18n:
       zh-CN: 进程
       en-US: Process
-    priority: 1
+    priority: 8
     fields:
       - field: process_count
         type: 0
@@ -447,7 +447,7 @@ metrics:
     i18n:
       zh-CN: 事务
       en-US: Transaction
-    priority: 1
+    priority: 9
     fields:
       - field: commits
         type: 0
@@ -484,7 +484,7 @@ metrics:
     i18n:
       zh-CN: 等待
       en-US: Wait
-    priority: 1
+    priority: 10
     fields:
       - field: concurrent_wait_time
         type: 0
@@ -569,7 +569,7 @@ metrics:
     i18n:
       zh-CN: CPU状态
       en-US: CPU Stats
-    priority: 1
+    priority: 11
     fields:
       - field: type
         type: 1
@@ -599,7 +599,7 @@ metrics:
     i18n:
       zh-CN: 内存状态
       en-US: Memory Stats
-    priority: 1
+    priority: 12
     fields:
       - field: type
         type: 1
@@ -629,7 +629,7 @@ metrics:
     i18n:
       zh-CN: 缓存命中率
       en-US: Cache Hit Ratio
-    priority: 1
+    priority: 13
     fields:
       - field: lib_cache_hit_ratio
         type: 0
@@ -664,7 +664,7 @@ metrics:
     i18n:
       zh-CN: 慢查询
       en-US: Slow Query
-    priority: 1
+    priority: 14
     fields:
       - field: sql_id
         type: 1

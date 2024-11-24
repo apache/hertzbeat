@@ -271,7 +271,7 @@ metrics:
       en-US: Query Rate Per Second
     # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 1
+    priority: 2
     # metrics fields list.
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
@@ -331,7 +331,7 @@ metrics:
       en-US: Query Executor Queries Finished Every 10 Seconds
     # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 1
+    priority: 3
     # metrics fields list.
     fields:
       # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric

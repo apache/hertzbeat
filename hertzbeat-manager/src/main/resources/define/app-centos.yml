@@ -80,7 +80,7 @@ params:
     type: boolean
     # required-true or false
     required: true
-    defaultValue: false
+    defaultValue: true
   # field-param field key
   - field: username
     # name-param field display i18n name

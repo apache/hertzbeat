@@ -519,7 +519,7 @@ metrics:
   - name: Commandstats
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 8
+    priority: 7
     i18n:
       zh-CN: 命令信息
       en-US: Command Stats
@@ -554,7 +554,7 @@ metrics:
   # metrics - cluster
   - name: cluster
     # collect metrics content
-    priority: 9
+    priority: 8
     i18n:
       zh-CN: 集群信息
       en-US: Cluster
@@ -655,7 +655,7 @@ metrics:
   - name: keyspace
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 9
+    priority: 10
     i18n:
       zh-CN: 数据库统计信息
       en-US: Keyspace

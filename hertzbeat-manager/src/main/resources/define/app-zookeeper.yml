@@ -243,7 +243,7 @@ metrics:
       timeout: ^_^timeout^_^
       cmd: mntr
   - name: envi
-    priority: 1
+    priority: 2
     fields:
       - field: zk_version
         type: 1

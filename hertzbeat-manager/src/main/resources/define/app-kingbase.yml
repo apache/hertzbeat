@@ -246,7 +246,7 @@ metrics:
     i18n:
       zh-CN: 资源配置
       en-US: Resource Config
-    priority: 1
+    priority: 3
     fields:
       - field: work_mem
         type: 0
@@ -299,7 +299,7 @@ metrics:
     i18n:
       zh-CN: 连接信息
       en-US: Connection Info
-    priority: 1
+    priority: 4
     fields:
       - field: active
         type: 0
@@ -323,7 +323,7 @@ metrics:
     i18n:
       zh-CN: 连接状态
       en-US: Connection State
-    priority: 1
+    priority: 5
     fields:
       - field: state
         type: 1
@@ -353,7 +353,7 @@ metrics:
     i18n:
       zh-CN: 连接数据库
       en-US: Connection Db
-    priority: 1
+    priority: 6
     fields:
       - field: db_name
         type: 1
@@ -383,7 +383,7 @@ metrics:
     i18n:
       zh-CN: 元组信息
       en-US: Tuple Info
-    priority: 1
+    priority: 7
     fields:
       - field: fetched
         type: 0
@@ -427,7 +427,7 @@ metrics:
     i18n:
       zh-CN: 临时文件
       en-US: Temp File
-    priority: 1
+    priority: 8
     fields:
       - field: db_name
         type: 1
@@ -463,7 +463,7 @@ metrics:
     i18n:
       zh-CN: 锁信息
       en-US: Lock Info
-    priority: 1
+    priority: 9
     fields:
       - field: db_name
         type: 1
@@ -500,7 +500,7 @@ metrics:
     i18n:
       zh-CN: 慢查询
       en-US: Slow Sql
-    priority: 1
+    priority: 10
     fields:
       - field: sql_text
         type: 1
@@ -557,7 +557,7 @@ metrics:
     i18n:
       zh-CN: 事务信息
       en-US: Transaction Info
-    priority: 2
+    priority: 12
     fields:
       - field: db_name
         type: 1
@@ -594,7 +594,7 @@ metrics:
     i18n:
       zh-CN: 冲突信息
       en-US: Conflicts Info
-    priority: 2
+    priority: 13
     fields:
       - field: db_name
         type: 1
@@ -644,7 +644,7 @@ metrics:
     i18n:
       zh-CN: 缓存命中率
       en-US: Cache Hit Ratio
-    priority: 2
+    priority: 14
     fields:
       - field: db_name
         type: 1
@@ -681,7 +681,7 @@ metrics:
     i18n:
       zh-CN: Checkpoint信息
       en-US: Checkpoint Info
-    priority: 2
+    priority: 15
     fields:
       - field: checkpoint_sync_time
         type: 0
@@ -712,7 +712,7 @@ metrics:
     i18n:
       zh-CN: Buffer信息
       en-US: Buffer Info
-    priority: 2
+    priority: 16
     fields:
       - field: allocated
         type: 0

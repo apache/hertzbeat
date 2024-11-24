@@ -143,7 +143,7 @@ metrics:
     i18n:
       zh-CN: JobManager Config
       en-US: JobManager Config
-    priority: 0
+    priority: 1
     fields:
       - field: key
         type: 1
@@ -175,7 +175,7 @@ metrics:
     i18n:
       zh-CN: TaskManager
       en-US: TaskManager
-    priority: 1
+    priority: 2
     fields:
       - field: id
         type: 1
@@ -439,7 +439,7 @@ metrics:
     i18n:
       zh-CN: TaskManager Metrics
       en-US: TaskManager Metrics
-    priority: 2
+    priority: 3
     fields:
       - field: container_id
         i18n:
