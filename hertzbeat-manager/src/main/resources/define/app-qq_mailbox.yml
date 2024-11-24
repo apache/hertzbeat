@@ -195,7 +195,7 @@ metrics:
       en-US: Sent info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 1
+    priority: 2
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
@@ -235,7 +235,7 @@ metrics:
       en-US: Drafts info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 1
+    priority: 3
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
@@ -275,7 +275,7 @@ metrics:
       en-US: Deleted Messages info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 1
+    priority: 4
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
@@ -315,7 +315,7 @@ metrics:
       en-US: Junk info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 1
+    priority: 5
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit
@@ -369,7 +369,7 @@ metrics:
       en-US: QQ Mail Subscribe Info
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 1
+    priority: 6
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), instance-is instance primary key, unit-metric unit

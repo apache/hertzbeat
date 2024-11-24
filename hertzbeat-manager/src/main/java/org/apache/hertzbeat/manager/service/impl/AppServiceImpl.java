@@ -203,7 +203,6 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         return metricNames;
     }
 
-
     @Override
     public Map<String, String> getI18nResources(String lang) {
         Map<String, String> i18nMap = new HashMap<>(128);
@@ -265,7 +264,6 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         }
         return i18nMap;
     }
-
 
     @Override
     public List<Hierarchy> getAllAppHierarchy(String lang) {
@@ -360,7 +358,6 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         }
     }
 
-
     private void combineHierarchyMetrics(List<Hierarchy> hierarchyMetricList, Hierarchy hierarchyMetric) {
         Optional<Hierarchy> preHierarchyOptional = hierarchyMetricList.stream()
                 .filter(item -> item.getValue().equals(hierarchyMetric.getValue()))
@@ -383,12 +380,10 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         }
     }
 
-
     @Override
     public Map<String, Job> getAllAppDefines() {
         return appDefines;
     }
-
 
     @Override
     public String getMonitorDefineFileContent(String app) {

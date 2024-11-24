@@ -143,6 +143,7 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
         Long[] cacheTime = timeoutMap.get(key);
         if (cacheTime == null || cacheTime.length != CACHE_TIME_LENGTH) {
             log.info("[connection common cache] not hit the cache, key {}.", key);
+            removeCache(key);
             return Optional.empty();
         }
         if (cacheTime[0] + cacheTime[1] < System.currentTimeMillis()) {

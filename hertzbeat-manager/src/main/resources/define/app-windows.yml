@@ -263,7 +263,7 @@ metrics:
     i18n:
       zh-CN: 服务
       en-US: Services
-    priority: 1
+    priority: 2
     fields:
       - field: svSvcName
         type: 1
@@ -310,7 +310,7 @@ metrics:
     i18n:
       zh-CN: 安装
       en-US: Installed
-    priority: 1
+    priority: 3
     fields:
       - field: hrSWInstalledIndex
         type: 0
@@ -351,7 +351,7 @@ metrics:
     i18n:
       zh-CN: 存储
       en-US: Storages
-    priority: 1
+    priority: 5
     fields:
       - field: index
         type: 0
@@ -428,7 +428,7 @@ metrics:
     i18n:
       zh-CN: 接口详情
       en-US: Interfaces Detail
-    priority: 1
+    priority: 8
     fields:
       - field: index
         type: 1
@@ -555,7 +555,7 @@ metrics:
     i18n:
       zh-CN: 设备
       en-US: Devices
-    priority: 4
+    priority: 9
     fields:
       - field: index
         type: 1
