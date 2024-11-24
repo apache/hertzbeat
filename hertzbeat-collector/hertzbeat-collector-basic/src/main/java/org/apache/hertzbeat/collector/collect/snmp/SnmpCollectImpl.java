@@ -18,10 +18,15 @@
 package org.apache.hertzbeat.collector.collect.snmp;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
@@ -218,7 +223,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                             if (value == null) {
                                 // get leaf
                                 for (String key : oidsValueMap.keySet()) {
-                                    if (key.startsWith(oid)){
+                                    if (key.startsWith(oid)) {
                                         value = oidsValueMap.get(key);
                                         break;
                                     }
@@ -296,12 +301,15 @@ public class SnmpCollectImpl extends AbstractCollect {
         String hexString = binding.toValueString();
         if (hexString.contains(HEX_SPLIT)) {
             try {
-                StringBuilder output = new StringBuilder();
-                String[] hexArr = hexString.split(HEX_SPLIT);
-                for (String hex : hexArr) {
-                    output.append((char) Integer.parseInt(hex, 16));
+                String clearHexStr = hexString.replace(HEX_SPLIT, "");
+                byte[] bytes = HexFormat.of().parseHex(clearHexStr);
+                CharsetDecoder decoder = Charset.forName("GB2312").newDecoder();
+                try {
+                    CharBuffer res = decoder.decode(ByteBuffer.wrap(bytes));
+                    return res.toString();
+                } catch (Exception e) {
+                    return new String(bytes);
                 }
-                return output.toString();
             } catch (Exception e) {
                 return hexString;
             }
