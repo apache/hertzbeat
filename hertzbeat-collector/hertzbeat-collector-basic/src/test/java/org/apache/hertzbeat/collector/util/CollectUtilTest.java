@@ -179,7 +179,9 @@ class CollectUtilTest {
 
     @ParameterizedTest
     @MethodSource("testParamsForShouldVerifyReplaceCryPlaceholder")
-    void shouldVerifyReplaceCryPlaceholder(JsonObject jsonObject, Map<String, Configmap> configmap, JsonObject jsonObjectTarget) throws JsonProcessingException {
+    void shouldVerifyReplaceCryPlaceholder(JsonObject jsonObject,
+                                           Map<String, Configmap> configmap,
+                                           JsonObject jsonObjectTarget) throws JsonProcessingException {
 
         JsonElement res1 = CollectUtil.replaceCryPlaceholder(jsonObject, configmap);
         assertEquals(JSON_MAPPER.readTree(jsonObjectTarget.toString()), JSON_MAPPER.readTree(res1.toString()));
