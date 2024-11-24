@@ -97,5 +97,4 @@ public class ZhiPuServiceImpl implements AiService {
         Assert.notNull(apiKey, "ai.api-key is null");
     }
 
-
 }

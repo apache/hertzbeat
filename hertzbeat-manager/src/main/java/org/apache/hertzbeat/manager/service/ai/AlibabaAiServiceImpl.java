@@ -90,7 +90,6 @@ public class AlibabaAiServiceImpl implements AiService {
                         .build())
                 .build();
 
-
         return webClient.post()
                 .body(BodyInserters.fromValue(aliAiRequestParamDTO))
                 .retrieve()
@@ -110,7 +109,6 @@ public class AlibabaAiServiceImpl implements AiService {
                 })
                 .doOnError(error -> log.info("AlibabaAiServiceImpl.requestAi exception:{}", error.getMessage()));
     }
-
 
     private void checkParam(String param, String apiKey, String model) {
         Assert.notNull(param, "text is null");
