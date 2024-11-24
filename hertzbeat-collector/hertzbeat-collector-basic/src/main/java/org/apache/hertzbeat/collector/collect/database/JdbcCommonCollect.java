@@ -171,6 +171,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         }
         // renew connection when failed
         Connection connection = DriverManager.getConnection(url, username, password);
+        connection.setReadOnly(true);
         statement = connection.createStatement();
         int timeoutSecond = timeout / 1000;
         timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;

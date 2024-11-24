@@ -133,7 +133,7 @@ metrics:
     i18n:
       zh-CN: 内存信息
       en-US: Memory Info
-    priority: 1
+    priority: 2
     fields:
       - field: totalPhysical
         type: 0
@@ -177,7 +177,7 @@ metrics:
     i18n:
       zh-CN: 磁盘信息
       en-US: Disk Info
-    priority: 1
+    priority: 3
     fields:
       - field: Model
         type: 1
@@ -214,7 +214,7 @@ metrics:
     i18n:
       zh-CN: 文件系统
       en-US: Disk Free
-    priority: 1
+    priority: 4
     fields:
       - field: Caption
         type: 1
@@ -249,7 +249,7 @@ metrics:
     i18n:
       zh-CN: Top10 CPU 进程
       en-US: Top10 CPU Process
-    priority: 1
+    priority: 5
     fields:
       - field: name
         type: 1
@@ -293,7 +293,7 @@ metrics:
     i18n:
       zh-CN: Top10 内存进程
       en-US: Top10 Memory Process
-    priority: 1
+    priority: 6
     fields:
       - field: name
         type: 1

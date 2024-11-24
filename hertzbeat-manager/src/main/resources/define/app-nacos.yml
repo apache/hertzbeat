@@ -133,7 +133,7 @@ metrics:
     i18n:
       zh-CN: Nacos 详情
       en-US: Nacos Monitor
-    priority: 1
+    priority: 2
     fields:
       - field: module
         type: 1
