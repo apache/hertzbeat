@@ -47,7 +47,6 @@ import reactor.core.publisher.Flux;
 @Slf4j
 public class SparkDeskAiServiceImpl implements AiService {
 
-
     @Autowired
     private AiProperties aiProperties;
 
