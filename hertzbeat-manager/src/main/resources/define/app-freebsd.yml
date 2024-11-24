@@ -79,7 +79,7 @@ params:
     type: boolean
     # required-true or false
     required: true
-    defaultValue: false
+    defaultValue: true
   # field-param field key
   - field: username
     # name-param field display i18n name
@@ -347,7 +347,7 @@ metrics:
     i18n:
       zh-CN: Top10 CPU 进程
       en-US: Top10 CPU Process
-    priority: 3
+    priority: 4
     fields:
       - field: pid
         type: 1
@@ -388,7 +388,7 @@ metrics:
     i18n:
       zh-CN: Top10 内存进程
       en-US: Top10 Memory Process
-    priority: 3
+    priority: 5
     fields:
       - field: pid
         type: 1

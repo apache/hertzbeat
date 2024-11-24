@@ -87,7 +87,7 @@ metrics:
     i18n:
       zh-CN: 编辑日志清理
       en-US: Edit Log Clean
-    priority: 0
+    priority: 1
     fields:
       - field: type
         type: 1
@@ -111,7 +111,7 @@ metrics:
     i18n:
       zh-CN: 编辑日志
       en-US: Edit Log
-    priority: 0
+    priority: 2
     fields:
       - field: type
         type: 1
@@ -135,7 +135,7 @@ metrics:
     i18n:
       zh-CN: 图片清理
       en-US: Image Clean
-    priority: 0
+    priority: 3
     fields:
       - field: type
         type: 1
@@ -159,7 +159,7 @@ metrics:
     i18n:
       zh-CN: 图片写入
       en-US: Image Write
-    priority: 0
+    priority: 4
     fields:
       - field: type
         type: 1
@@ -183,7 +183,7 @@ metrics:
     i18n:
       zh-CN: 查询错误
       en-US: Query Error
-    priority: 0
+    priority: 5
     fields:
       - field: value
         type: 0
@@ -205,7 +205,7 @@ metrics:
     i18n:
       zh-CN: 最大日志ID
       en-US: Max Journal ID
-    priority: 0
+    priority: 6
     fields:
       - field: value
         type: 0
@@ -227,7 +227,7 @@ metrics:
     i18n:
       zh-CN: 最大Tablet压缩分数
       en-US: Max Tablet Compaction Score
-    priority: 0
+    priority: 7
     fields:
       - field: value
         type: 0
@@ -249,7 +249,7 @@ metrics:
     i18n:
       zh-CN: 每秒查询率
       en-US: QPS
-    priority: 0
+    priority: 8
     fields:
       - field: value
         type: 0
@@ -271,7 +271,7 @@ metrics:
     i18n:
       zh-CN: 查询错误率
       en-US: Query Error Rate
-    priority: 0
+    priority: 9
     fields:
       - field: value
         type: 0
@@ -295,7 +295,7 @@ metrics:
     i18n:
       zh-CN: 报告队列大小
       en-US: Report Queue Size
-    priority: 0
+    priority: 10
     fields:
       - field: value
         type: 0
@@ -317,7 +317,7 @@ metrics:
     i18n:
       zh-CN: 每秒转数
       en-US: RPS
-    priority: 0
+    priority: 11
     fields:
       - field: value
         type: 0
@@ -339,7 +339,7 @@ metrics:
     i18n:
       zh-CN: 调度 Tablet 数量
       en-US: Scheduled Tablet Num
-    priority: 0
+    priority: 12
     fields:
       - field: value
         type: 0
@@ -361,7 +361,7 @@ metrics:
     i18n:
       zh-CN: 事务状态
       en-US: Transaction Status
-    priority: 0
+    priority: 13
     fields:
       - field: type
         type: 1
