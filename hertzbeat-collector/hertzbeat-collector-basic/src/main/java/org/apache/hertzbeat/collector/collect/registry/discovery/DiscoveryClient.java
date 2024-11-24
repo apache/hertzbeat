@@ -17,13 +17,13 @@
  * under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.httpsd.discovery;
+package org.apache.hertzbeat.collector.collect.registry.discovery;
 
 import java.util.List;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ConnectConfig;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServerInfo;
-import org.apache.hertzbeat.collector.collect.httpsd.discovery.entity.ServiceInstance;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ConnectConfig;
+import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
+import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServiceInstance;
+import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 
 /**
  * DiscoveryClient interface.
@@ -32,10 +32,10 @@ public interface DiscoveryClient extends AutoCloseable {
 
     /**
      * Build connect config.
-     * @param httpsdProtocol httpsd protocol.
+     * @param registryProtocol registry protocol.
      * @return connect config object.
      */
-    ConnectConfig buildConnectConfig(HttpsdProtocol httpsdProtocol);
+    ConnectConfig buildConnectConfig(RegistryProtocol registryProtocol);
 
     /**
      * Initialize client.
