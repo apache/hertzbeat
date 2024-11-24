@@ -64,7 +64,7 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
    ```
 
    默认数据库是内置的  `public` ，若制定其它数据库名称，需要在 `greptimeDB` 提前创建。 
-   eg: 创建名称为 `hertzbeat` 数据有效期90天的数据库 SQL: `CREATE DATABASE IF NOT EXISTS `hertzbeat` WITH(ttl='90d')`
+   eg: 创建名称为 `hertzbeat` 数据有效期90天的数据库 SQL: `CREATE DATABASE IF NOT EXISTS hertzbeat WITH(ttl='90d')`
 
 2. 重启 HertzBeat
 
