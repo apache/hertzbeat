@@ -51,19 +51,20 @@ use```$ docker ps``` to check if the database started successfully
    ```yaml
    warehouse:
       store:
-         # disable jpa
          jpa:
             enabled: false
-         # enable greptime   
          greptime:
             enabled: true
             grpc-endpoints: localhost:4001
-            database: hertzbeat
+            http-endpoint: http://localhost:4000
+            database: public
             username: greptime
             password: greptime
    ```
 
-   The default database is `hertzbeat` in the `url`, and it will be created automatically. The `expire-time` specifies the TTL(time-to-live) of the auto-created database, it's 30 days by default.
+   默认数据库是内置的  `public` ，若制定其它数据库名称，需要在 `greptimeDB` 提前创建。
+   The default database is `public`, if you specify another database name, you need to create it in `greptimeDB` in advance.
+   eg: Create a database named `hertzbeat` with a validity period of 90 days SQL: `CREATE DATABASE IF NOT EXISTS `hertzbeat` WITH(ttl='90d')`
 
 2. Restart HertzBeat
 

@@ -57,12 +57,14 @@ Docker 工具自身的下载请参考 [Docker官网文档](https://docs.docker.c
          greptime:
             enabled: true
             grpc-endpoints: localhost:4001
-            database: hertzbeat
+            http-endpoint: http://localhost:4000
+            database: public
             username: greptime
             password: greptime
    ```
 
-   默认数据库是 URL 中配置的  `hertzbeat` ，将自动创建。 `expire-time` 是自动创建的数据库的 TTL （数据过期）时间，默认为 30 天。
+   默认数据库是内置的  `public` ，若制定其它数据库名称，需要在 `greptimeDB` 提前创建。 
+   eg: 创建名称为 `hertzbeat` 数据有效期90天的数据库 SQL: `CREATE DATABASE IF NOT EXISTS `hertzbeat` WITH(ttl='90d')`
 
 2. 重启 HertzBeat
 
