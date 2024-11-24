@@ -28,9 +28,9 @@ After the installation you can check if the Docker version normally output at th
 2. Install GreptimeDB with Docker
 
     ```shell
-    $ docker run -p 127.0.0.1:4000-4003:4000-4003 \
+    $ docker run -d -p 127.0.0.1:4000-4003:4000-4003 \
     v "$(pwd)/greptimedb:/tmp/greptimedb" \
-    --name greptime --rm \
+    --name greptime \
     greptime/greptimedb:latest standalone start \
     --http-addr 0.0.0.0:4000 \
     --rpc-addr 0.0.0.0:4001 \
@@ -58,11 +58,9 @@ use```$ docker ps``` to check if the database started successfully
          greptime:
             enabled: true
             grpc-endpoints: localhost:4001
-            url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
-            driver-class-name: com.mysql.cj.jdbc.Driver
+            database: hertzbeat
             username: greptime
             password: greptime
-            expire-time: 30d
    ```
 
    The default database is `hertzbeat` in the `url`, and it will be created automatically. The `expire-time` specifies the TTL(time-to-live) of the auto-created database, it's 30 days by default.

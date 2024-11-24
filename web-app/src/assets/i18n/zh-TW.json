@@ -55,7 +55,7 @@
       "monitor.name": "監控任務名稱",
       "monitor.metrics": "監控指標",
       "help.message.content": "自定義監控看板",
-      "help.content": "自定義監控看板，以表格形式展示某種監控的自選指標",
+      "help.content": "自定義監控看板(beta)，以表格形式展示某種監控的自選指標",
       "help.link": ""
     },
     "advanced": {
@@ -161,8 +161,7 @@
     "monitor.type": "監控類型",
     "monitor.name": "監控任務名稱",
     "monitor.metrics": "監控指標",
-    "help.message.content": "自定義監控看板",
-    "help.content": "自定義監控看板，以表格形式展示某種監控的自選指標",
+    "help.content": "自定義監控看板(beta)，以表格形式展示某種監控的自選指標",
     "help.link": "https://hertzbeat.apache.org/docs/help/bulletin"
   },
   "alert.setting.new": "新增阈值規則",

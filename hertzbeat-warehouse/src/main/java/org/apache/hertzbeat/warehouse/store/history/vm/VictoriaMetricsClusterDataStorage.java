@@ -330,15 +330,15 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                             URLEncoder.encode("{" + timeSeriesSelector + "}", StandardCharsets.UTF_8))
                     .queryParam("step", "4h").queryParam("start", startTime).queryParam("end", endTime).build(true)
                     .toUri();
-            ResponseEntity<VictoriaMetricsQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET,
-                    httpEntity, VictoriaMetricsQueryContent.class);
+            ResponseEntity<PromQlQueryContent> responseEntity = restTemplate.exchange(uri, HttpMethod.GET,
+                    httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 log.debug("query metrics data from victoria-metrics success. {}", uri);
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
                         && responseEntity.getBody().getData().getResult() != null) {
-                    List<VictoriaMetricsQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
+                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
                             .getResult();
-                    for (VictoriaMetricsQueryContent.ContentData.Content content : contents) {
+                    for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
@@ -368,13 +368,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                             URLEncoder.encode("max_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h").queryParam("start", startTime).queryParam("end", endTime).build(true)
                     .toUri();
-            responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, VictoriaMetricsQueryContent.class);
+            responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
                         && responseEntity.getBody().getData().getResult() != null) {
-                    List<VictoriaMetricsQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
+                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
                             .getResult();
-                    for (VictoriaMetricsQueryContent.ContentData.Content content : contents) {
+                    for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
@@ -404,13 +404,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                             URLEncoder.encode("min_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h").queryParam("start", startTime).queryParam("end", endTime).build(true)
                     .toUri();
-            responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, VictoriaMetricsQueryContent.class);
+            responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
                         && responseEntity.getBody().getData().getResult() != null) {
-                    List<VictoriaMetricsQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
+                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
                             .getResult();
-                    for (VictoriaMetricsQueryContent.ContentData.Content content : contents) {
+                    for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
@@ -440,13 +440,13 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                             URLEncoder.encode("avg_over_time({" + timeSeriesSelector + "})", StandardCharsets.UTF_8))
                     .queryParam("step", "4h").queryParam("start", startTime).queryParam("end", endTime).build(true)
                     .toUri();
-            responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, VictoriaMetricsQueryContent.class);
+            responseEntity = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, PromQlQueryContent.class);
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
                 if (responseEntity.getBody() != null && responseEntity.getBody().getData() != null
                         && responseEntity.getBody().getData().getResult() != null) {
-                    List<VictoriaMetricsQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
+                    List<PromQlQueryContent.ContentData.Content> contents = responseEntity.getBody().getData()
                             .getResult();
-                    for (VictoriaMetricsQueryContent.ContentData.Content content : contents) {
+                    for (PromQlQueryContent.ContentData.Content content : contents) {
                         Map<String, String> labels = content.getMetric();
                         labels.remove(LABEL_KEY_NAME);
                         labels.remove(LABEL_KEY_JOB);
@@ -500,60 +500,5 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
          * every timestamp is associated with the value at the corresponding position
          */
         private Long[] timestamps;
-    }
-
-    /**
-     * victoria metrics query content
-     */
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static final class VictoriaMetricsQueryContent {
-
-        private String status;
-
-        private ContentData data;
-
-        /**
-         * content data
-         */
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static final class ContentData {
-
-            private String resultType;
-
-            private List<Content> result;
-
-            /**
-             * content
-             */
-            @Data
-            @AllArgsConstructor
-            @NoArgsConstructor
-            public static final class Content {
-
-                /**
-                 * metric contains metric name plus labels for a particular time series
-                 */
-                private Map<String, String> metric;
-
-                /**
-                 * values contains raw sample values for the given time series
-                 * value-timestamp
-                 * [1700993195,"436960986"]
-                 */
-                private Object[] value;
-
-                /**
-                 * values contains raw sample values for the given time series
-                 * value-timestamp list
-                 * [[1700993195,"436960986"],[1700993195,"436960986"]...]
-                 */
-                private List<Object[]> values;
-            }
-        }
     }
 }
