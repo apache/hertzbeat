@@ -31,7 +31,9 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 abstract class AbstractGeneralConfigServiceImpl<T> implements GeneralConfigService<T> {
+
     protected final GeneralConfigDao generalConfigDao;
+
     protected final ObjectMapper objectMapper;
 
     /**
