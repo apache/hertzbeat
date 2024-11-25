@@ -62,8 +62,7 @@ use```$ docker ps``` to check if the database started successfully
             password: greptime
    ```
 
-   默认数据库是内置的  `public` ，若制定其它数据库名称，需要在 `greptimeDB` 提前创建。
-   The default database is `public`, if you specify another database name, you need to create it in `greptimeDB` in advance.
+   The default database is `public`, if you specify another database name, you need to create it in `greptimeDB` in advance.  
    eg: Create a database named `hertzbeat` with a validity period of 90 days SQL: `CREATE DATABASE IF NOT EXISTS hertzbeat WITH(ttl='90d')`
 
 2. Restart HertzBeat
