@@ -88,7 +88,7 @@ spring:
     baseline-on-migrate: true
     baseline-version: 1
     locations:
-      - classpath:db/migration/{vendor}
+      - classpath:db/migration/mysql
       
   # Not Require, Please config if you need email notify
   # 非必填：不使用邮箱作为警告通知可以去掉spring.mail配置
