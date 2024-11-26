@@ -27,9 +27,9 @@
     "message": "TELNET协议",
     "description": "The label for category telnet in sidebar docs"
   },
-  "sidebar.docs.category.help": {
-    "message": "帮助文档",
-    "description": "The label for category help in sidebar docs"
+  "sidebar.docs.category.guides": {
+    "message": "使用指南",
+    "description": "The label for category guides in sidebar docs"
   },
   "sidebar.docs.category.service": {
     "message": "应用服务监控",
