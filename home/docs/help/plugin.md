@@ -1,12 +1,16 @@
 ---
 id: plugin
-title: Custom plugin
-sidebar_label: Custom plugin
+title: Custom plugin(Beta)
+sidebar_label: Custom plugin(Beta)
 ---
 
 ### Introduction
 
 In the current usage of `HertzBeat`, interaction with external systems only occurs after an alert through the notification feature. The plugin functionality allows users to add custom operations at various stages of the `HertzBeat` lifecycle, such as executing `SQL` or `shell` scripts after an alert, or sending collected monitoring data to other systems. Users can develop plugins following the custom plugin development process, package them, and then upload and enable them using the `Plugin Management` - `Upload Plugin` feature, thereby adding custom functionality without restarting `HertzBeat`.
+
+:::warning
+In the current version, custom plugins are a test feature and may have some limitations and instability. The plugin functionality might be restructured in future versions.
+:::
 
 ### Supported Plugin Types
 
