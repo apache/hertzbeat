@@ -1,0 +1,342 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: program
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: process
+# The monitoring i18n name
+name:
+  zh-CN: Linux进程
+  en-US: Linux Process
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 Linux系统进程进行监控，支持根据进程名称(或部分名称)匹配进行监控，支持进程的 CPU使用率、内存使用率、物理内存、IO 等监控。<br>您可以点击“<i>新建 Linux进程</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH protocol</a> to monitor Linux system processes. It supports monitoring based on process names (or partial names), and provides monitoring for CPU usage, memory usage, physical memory, IO, and more. <br> You can click on "<i>New Linux Process</i>" and configure HOST port, account, and other related parameters for addition. It supports SSH account password or key authentication. Alternatively, you can choose "<i>More Actions</i>" to import existing configurations.
+  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH 協議</a> 對 Linux 系統進程進行監控，支持根據進程名稱（或部分名稱）匹配進行監控，支持進程的 CPU 使用率、內存使用率、物理內存、IO 等監控。<br>您可以點擊“新建 Linux 进程”，並配置 HOST 端口、帳戶等相關參數進行添加，支持 SSH 帳戶密碼或金鑰認證。或者選擇“更多操作”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/process/
+  en-US: https://hertzbeat.apache.org/docs/help/process/
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    # 默认值
+    defaultValue: 22
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[400,200000]'
+    # required-true or false
+    required: false
+    # default value
+    defaultValue: 6000
+  # field-param field key
+  - field: reuseConnection
+    # name-param field display i18n name
+    name:
+      zh-CN: 复用连接
+      en-US: Reuse Connection
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+    defaultValue: true
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: privateKey
+    # name-param field display i18n name
+    name:
+      zh-CN: 私钥
+      en-US: PrivateKey
+    # type-param field type(most mapping the html input type)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+  - field: process_name
+    # name-param field display i18n name
+    name:
+      zh-CN: 进程名称
+      en-US: process_name
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 100
+    # required-true or false
+    required: true
+# collect metrics config list
+metrics:
+  # metrics - basic, inner monitoring metrics (responseTime - response time)
+  - name: basic
+    i18n:
+      zh-CN: 进程基本信息
+      en-US: Basic Info
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: pid
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程ID
+          en-US: PID
+      - field: user
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 用户
+          en-US: User
+      - field: cpu
+        type: 0
+        i18n:
+          zh-CN: CPU使用率
+          en-US: CPU
+      - field: mem
+        type: 0
+        i18n:
+          zh-CN: 内存使用率
+          en-US: MEM
+      - field: rss
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 物理内存
+          en-US: rss
+      - field: cmd
+        type: 1
+        i18n:
+          zh-CN: 运行命令
+          en-US: cmd
+    units:
+      - rss=KB->MB
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # the config content when protocol is ssh
+    ssh:
+      # ssh host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ssh port
+      port: ^_^port^_^
+      # ssh username
+      username: ^_^username^_^
+      # ssh password
+      password: ^_^password^_^
+      # ssh private key
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # ssh run collect script
+      # ssh response data parse type: oneRow, multiRow
+      script: output=$(ps -ef|grep '^_^process_name^_^'|grep -v grep); [ -n "$output" ] && ps -eo pid,user,%cpu,%mem,rss,cmd | grep -v grep | grep '^_^process_name^_^' | awk 'BEGIN {print "pid user cpu mem rss cmd"} {cmd=substr($0, index($0, $6)); gsub(/ /, " ", cmd); print $1, $2, $3, $4, $5, cmd}'
+      parseType: multiRow
+  - name: mem
+    i18n:
+      zh-CN: 内存使用信息
+      en-US: MEM
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+
+    priority: 1
+    # collect metrics content
+
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+
+      - field: pid
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程ID
+          en-US: PID
+      - field: metric
+        type: 1
+        i18n:
+          zh-CN: 详细监控指标
+          en-US: detail
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # the config content when protocol is ssh
+    ssh:
+      # ssh host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ssh port
+      port: ^_^port^_^
+      # ssh username
+      username: ^_^username^_^
+      # ssh password
+      password: ^_^password^_^
+      # ssh private key
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # ssh run collect script
+      # ssh response data parse type: oneRow, multiRow
+      script: echo "pid metric" ; ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd}' | while read pid _; do cat "/proc/$pid/status" | sed 's/ / /g'| grep Vm | sed -e "s/VmPeak:/虚拟内存峰值:/g" -e "s/VmSize:/当前虚拟内存使用:/g" -e "s/VmLck:/锁定内存:/g" -e "s/VmPin:/固定内存:/g" -e "s/VmHWM:/物理内存峰值:/g" -e "s/VmRSS:/当前物理内存使用:/g" -e "s/VmData:/数据段大小:/g" -e "s/VmStk:/堆栈大小:/g" -e "s/VmExe:/代码大小:/g" -e "s/VmLib:/共享库大小:/g" -e "s/VmPTE:/页表项大小:/g" -e "s/VmSwap:/交换空间使用:/g" | sed "s/^/$pid /" ; done
+      parseType: multiRow
+
+  - name: other
+    i18n:
+      zh-CN: 其他监控信息
+      en-US: Other
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: pid
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程ID
+          en-US: PID
+      - field: path
+        type: 1
+        i18n:
+          zh-CN: 执行路径
+          en-US: path
+      - field: date
+        type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: date
+      - field: fd_count
+        type: 1
+        i18n:
+          zh-CN: 打开文件描述符数量
+          en-US: fd_count
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # the config content when protocol is ssh
+    ssh:
+      # ssh host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ssh port
+      port: ^_^port^_^
+      # ssh username
+      username: ^_^username^_^
+      # ssh password
+      password: ^_^password^_^
+      # ssh private key
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # ssh run collect script
+      # ssh response data parse type: oneRow, multiRow
+      script: echo "pid path date fd_count" ; ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd}' | while read pid _; do cwd=$(readlink -f "/proc/$pid/cwd"); start_time=$(ps -p $pid -o lstart | tail -n 1 | sed 's/ / /g'); fd_count=$(ls -l /proc/$pid/fd/ 2>/dev/null | wc -l); echo "$pid $cwd $start_time $fd_count"; done
+      parseType: multiRow
+
+  - name: io
+    i18n:
+      zh-CN: IO
+      en-US: IO
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: pid
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程ID
+          en-US: PID
+      - field: metric
+        type: 1
+        i18n:
+          zh-CN: 监控指标名称
+          en-US: metric
+      - field: value
+        type: 1
+        i18n:
+          zh-CN: 监控指标值
+          en-US: value
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # the config content when protocol is ssh
+    ssh:
+      # ssh host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ssh port
+      port: ^_^port^_^
+      # ssh username
+      username: ^_^username^_^
+      # ssh password
+      password: ^_^password^_^
+      # ssh private key
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # ssh run collect script
+      # ssh response data parse type: oneRow, multiRow
+      script: echo "pid metric value" ; ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd}' | while read pid _; do cat "/proc/$pid/io" | sed -e "s/rchar:/rchar(进程从磁盘或其他文件读取的总字节数):/g" -e "s/wchar:/wchar(进程写入到磁盘或其他文件的总字节数):/g" -e "s/syscr:/syscr(进程发起的读取操作的次数):/g" -e "s/syscw:/syscw(进程发起的写入操作的次数):/g" -e "s/read_bytes:/read_bytes(进程从磁盘实际读取的字节数):/g" -e "s/write_bytes:/write_bytes(进程写入到磁盘的实际字节数):/g" -e "s/cancelled_write_bytes:/cancelled_write_bytes(进程写入但被取消的字节数):/g" | sed "s/^/$pid /" ; done
+      parseType: multiRow
+

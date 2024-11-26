@@ -1,7 +1,7 @@
 ---
 id: centos  
 title: 监控：CentOS操作系统监控      
-sidebar_label: CentOS操作系统      
+sidebar_label: CentOS 操作系统      
 keywords: [开源监控系统, 开源操作系统监控, CentOS操作系统监控]
 ---
 

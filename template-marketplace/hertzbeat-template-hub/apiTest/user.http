@@ -1,0 +1,44 @@
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+### Registy
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "type": 1,
+  "identifier": "wbs2024@163.com",
+  "credential": "123456"
+}
+
+### login+refresh
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "type": 1,
+  "identifier": "wbs2024@163.com",
+  "credential": "123456"
+}
+
+### refresh
+POST http://localhost:8080/api/auth/refresh
+Content-Type: application/json
+
+{
+  "token": "eyJhbGciOiJIUzUxMiIsInppcCI6IkRFRiJ9.eJwlyk0OwiAQQOG7zLpj-Kd01auATGM1toYBNTHeXRq333sfuNYVJogkvcnBYaCc0Ui3YLRJIUXrZdSjcCLBANxSn1-JlVBmlk6fzvu9-8rcnVuhjZix7jfakKk8qRw1VpikV8Fo7Z0dgN6PP1gzhgMKLYX4AlMtjb4_bgorXA.oYH8rk5Gb984ZcwBL-_N-6NcUk1githHwsKaQFxOewhne708JIsOhh6El3oKXE73gkEr5elASjUnL8zBzsVJ9A"
+}

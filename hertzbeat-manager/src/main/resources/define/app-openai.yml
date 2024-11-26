@@ -1,0 +1,327 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: llm
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: openai
+# The monitoring i18n name
+name:
+  zh-CN: OpenAI 监控
+  en-US: OpenAI
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 将调用 OpenAI API 接口，监测账户、账单、大模型 API 使用情况等数据。会话密钥获取请见使用指南。<br>您可以先点击“新增 OpenAI API”按钮并进行配置，或在“更多操作”中导入已有配置。
+  en-US: HertzBeat will call the OpenAI API interface to monitor account, billing, and usage data of LLM API, etc. Please refer to the user guide for session key acquisition.<br>You can click the "Add OpenAI API" button to configure it first, or import existing configurations in the "More Actions" section.
+  zh-TW: HertzBeat 將調用 OpenAI API 接口，監測帳戶、帳單、大模型 API 使用情況等數據。請參閱使用指南以獲取會話密鑰。<br>您可以先點擊“新增 OpenAI API”按鈕並進行配置，或在“更多操作”中導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/openai
+  en-US: https://hertzbeat.apache.org/docs/help/openai
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: token
+    # name-param field display i18n name
+    name:
+      zh-CN: 会话密钥
+      en-US: Session Key
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: true
+# collect metrics config list
+metrics:
+  # metrics - cpu
+  - name: credit_grants
+    # metrics name i18n label
+    i18n:
+      zh-CN: 信用额度授予
+      en-US: Credit Grants
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, i18n-metric name i18n label, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: total_granted
+        type: 0
+        i18n:
+          zh-CN: 总授予额度
+          en-US: Total Granted
+        unit: $
+      - field: total_used
+        type: 0
+        i18n:
+          zh-CN: 总使用额度
+          en-US: Total Used
+        unit: $
+      - field: total_available
+        type: 0
+        i18n:
+          zh-CN: 总可用额度
+          en-US: Total Available
+        unit: $
+      - field: total_paid_available
+        type: 0
+        i18n:
+          zh-CN: 总付费可用额度
+          en-US: Total Paid Available
+        unit: $
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: api.openai.com
+      # http port
+      port: 80
+      # http url
+      url: /dashboard/billing/credit_grants
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: false
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Bearer Token
+        bearerTokenToken: ^_^token^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: model_cost
+    # metrics name i18n label
+    i18n:
+      zh-CN: 模型花费
+      en-US: Model Cost
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    # collect metrics content
+    fields:
+      # field-metric name, i18n-metric name i18n label, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: name
+        type: 1
+        i18n:
+          zh-CN: 模型名称
+          en-US: Model Name
+        label: true
+      - field: cost
+        type: 0
+        i18n:
+          zh-CN: 花费
+          en-US: Cost
+        unit: $
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: api.openai.com
+      # http port
+      port: 80
+      # http url
+      url: /dashboard/billing/usage
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: false
+      params:
+        exclude_project_costs: false
+        new_endpoint: true
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Bearer Token
+        bearerTokenToken: ^_^token^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      parseScript: '$.daily_costs[0][line_items][*]'
+
+  - name: billing_subscription
+    # metrics name i18n label
+    i18n:
+      zh-CN: 订阅计费
+      en-US: Billing Subscription
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 2
+    # collect metrics content
+    fields:
+      # field-metric name, i18n-metric name i18n label, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: has_payment_method
+        type: 1
+        i18n:
+          zh-CN: 是否有支付方式
+          en-US: Has Payment Method
+      - field: canceled
+        type: 1
+        i18n:
+          zh-CN: 订阅是否已取消
+          en-US: Canceled
+      - field: canceled_at
+        type: 1
+        i18n:
+          zh-CN: 订阅取消时间
+          en-US: Canceled At
+      - field: delinquent
+        type: 1
+        i18n:
+          zh-CN: 订阅是否拖欠
+          en-US: Delinquent
+      - field: soft_limit
+        type: 0
+        i18n:
+          zh-CN: 一定时间内最大使用量限制
+          en-US: Soft Limit
+      - field: hard_limit
+        type: 0
+        i18n:
+          zh-CN: 最大使用量限制
+          en-US: Hard Limit
+      - field: system_hard_limit
+        type: 0
+        i18n:
+          zh-CN: 系统硬限制使用量
+          en-US: System Hard Limit
+      - field: soft_limit_usd
+        type: 0
+        i18n:
+          zh-CN: 软限制费用
+          en-US: Soft Limit USD
+        unit: $
+      - field: hard_limit_usd
+        type: 0
+        i18n:
+          zh-CN: 硬限制费用
+          en-US: Hard Limit USD
+        unit: $
+      - field: system_hard_limit_usd
+        type: 0
+        i18n:
+          zh-CN: 系统硬限制费用
+          en-US: System Hard Limit USD
+        unit: $
+      - field: plan
+        type: 1
+        i18n:
+          zh-CN: 订阅计划
+          en-US: Plan
+      - field: primary
+        type: 1
+        i18n:
+          zh-CN: 是否是主要订阅
+          en-US: Primary
+        unit: $
+      - field: billing_mechanism
+        type: 1
+        i18n:
+          zh-CN: 结算机制
+          en-US: Billing Mechanism
+      - field: is_arrears_eligible
+        type: 1
+        i18n:
+          zh-CN: 是否符合拖欠资格
+          en-US: Is Arrears Eligible
+      - field: max_balance
+        type: 0
+        i18n:
+          zh-CN: 最大余额
+          en-US: Max Balance
+        unit: $
+      - field: auto_recharge_eligible
+        type: 1
+        i18n:
+          zh-CN: 是否符合自动充值资格
+          en-US: Auto Recharge Eligible
+      - field: auto_recharge_enabled
+        type: 1
+        i18n:
+          zh-CN: 是否启用自动充值
+          en-US: Auto Recharge Enabled
+      - field: auto_recharge_threshold
+        type: 0
+        i18n:
+          zh-CN: 自动充值阈值
+          en-US: Auto Recharge Threshold
+        unit: $
+      - field: auto_recharge_to_balance
+        type: 0
+        i18n:
+          zh-CN: 自动充值金额
+          en-US: Auto Recharge To Balance
+        unit: $
+      - field: trust_tier
+        type: 1
+        i18n:
+          zh-CN: 信用等级
+          en-US: Trust Tier
+      - field: account_name
+        type: 1
+        i18n:
+          zh-CN: 账户名称
+          en-US: Account Name
+      - field: po_number
+        type: 1
+        i18n:
+          zh-CN: 采购号
+          en-US: Po Number
+      - field: billing_email
+        type: 1
+        i18n:
+          zh-CN: 账单邮箱
+          en-US: Billing Email
+      - field: tax_ids
+        type: 1
+        i18n:
+          zh-CN: 税务ID
+          en-US: Tax IDs
+      - field: billing_address
+        type: 1
+        i18n:
+          zh-CN: 结算地址
+          en-US: Billing Address
+      - field: business_address
+        type: 1
+        i18n:
+          zh-CN: 业务地址
+          en-US: Business Address
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: api.openai.com
+      # http port
+      port: 80
+      # http url
+      url: /dashboard/billing/subscription
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # if enabled https
+      ssl: false
+      params:
+        start_date: ${@date}
+        end_date: ${@date+1d}
+      # http auth
+      authorization:
+        # http auth type: Basic Auth, Digest Auth, Bearer Token
+        type: Bearer Token
+        bearerTokenToken: ^_^token^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      parseType: jsonPath
+      parseScript: '$'
+

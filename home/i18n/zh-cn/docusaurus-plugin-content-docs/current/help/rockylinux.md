@@ -1,7 +1,7 @@
 ---
 id: rockylinux
 title: 监控：Rocky Linux操作系统监控
-sidebar_label: Rocky Linux操作系统
+sidebar_label: Rocky Linux 操作系统
 keywords: [ 开源监控系统, 开源操作系统监控, Rocky Linux操作系统监控 ]
 ---
 

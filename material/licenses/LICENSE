@@ -533,6 +533,7 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://mvnrepository.com/artifact/org.java-websocket/Java-WebSocket/1.5.2
     https://mvnrepository.com/artifact/com.taosdata.jdbc/taos-jdbcdriver/3.0.0
     https://mvnrepository.com/artifact/com.beetstra.jutf7/jutf7/1.0.0
+    https://mvnrepository.com/artifact/org.testcontainers/kafka/1.20.2 MIT
 
 ========================================================================
 MPL-1.1 licenses

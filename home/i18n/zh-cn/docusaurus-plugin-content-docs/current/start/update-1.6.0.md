@@ -22,7 +22,7 @@ sidebar_label: 1.6.0升级指南
 
 2. 升级数据库
 
-    打开[https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration)，
+    打开[https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration)，
     选择你使用的数据库的目录下相应的 `V160__update_column.sql`文件执行升级sql。
 
 3. 升级配置文件
@@ -119,7 +119,7 @@ oracle（如果你要监控oracle，这两个驱动是必须的）：
 
 2. 升级数据库脚本
 
-    打开[https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration)，
+    打开[https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration)，
     选择你使用的数据库的目录下相应的 `V160__update_column.sql`文件在 Mysql 执行升级sql。
 
 3. 升级配置文件
@@ -203,7 +203,7 @@ oracle（如果你要监控oracle，这两个驱动是必须的）：
     java -jar h2-2.2.220.jar -url jdbc:h2:file:./hertzbeat -user sa -password 123456
     ```
 
-    打开[https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/manager/src/main/resources/db/migration)，
+    打开[https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration](https://github.com/apache/hertzbeat/tree/master/hertzbeat-manager/src/main/resources/db/migration)，
     选择你使用的数据库的目录下相应的 `V160__update_column.sql`文件在 H2 执行升级sql。
 
 3. 升级配置文件

@@ -35,7 +35,7 @@ jobs:
     - uses: ./script/ci/github-actions/setup-deps
 
     - name: Build with Maven
-      run: mvn clean -B package -Prelease --file pom.xml
+      run: mvn clean -B package -Prelease -Dmaven.test.skip=false --file pom.xml
 
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v4.0.1

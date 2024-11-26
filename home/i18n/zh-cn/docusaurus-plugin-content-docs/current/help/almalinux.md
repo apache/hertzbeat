@@ -1,7 +1,7 @@
 ---
 id: almalinux
 title: 监控：AlmaLinux操作系统监控    
-sidebar_label: AlmaLinux操作系统    
+sidebar_label: AlmaLinux 操作系统    
 keywords: [开源监控系统, 开源操作系统监控, AlmaLinux操作系统监控]
 ---
 

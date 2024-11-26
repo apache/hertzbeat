@@ -1,0 +1,66 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~   http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing,
+  ~ software distributed under the License is distributed on an
+  ~ "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  ~ KIND, either express or implied.  See the License for the
+  ~ specific language governing permissions and limitations
+  ~ under the License.
+-->
+
+<main>
+  <div class="tp-register__area pt-xxl-4 pb-xxl-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-xl-6">
+          <div class="tp-register__form-box">
+            <div class="tp-register__form-title text-center mb-5">
+              <h6>邮箱登录</h6>
+<!--              <span>邮箱登录 <br>-->
+<!--                                    & become our partner</span>-->
+            </div>
+            <form>
+              <div class="row">
+                <div class="col-xl-12">
+                  <div class="tp-register__input-box">
+                    <label for="email">Email 地址</label>
+                    <input id="email" type="email" placeholder="邮箱地址" name="identifier" [(ngModel)]="loginForm.identifier">
+                  </div>
+                </div>
+                <div class="col-xl-12">
+                  <div class="tp-register__input-box">
+                    <label for="password">密码</label>
+                    <input id="password" type="password" placeholder="密码" name="credential" [(ngModel)]="loginForm.credential">
+                    <a href="" class="tp-register__input-text">忘记密码?</a>
+                  </div>
+                </div>
+                <div class="col-xl-12">
+                  <div class="tp-contact-4__comment-agree label-2 pt-5 pb-5">
+                    <div class="form-check-box">
+                      <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                      <label class="form-check-label text-theme" for="flexCheckDefault">
+                        我同意 xxx & <span class="red">xxx</span> 和 xxx
+                      </label>
+                    </div>
+                  </div>
+                  <div class="tp-contact-4__btn">
+                    <button type="button" class="btn-no-icon w-100" (click)="submitLogin()">登录</button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

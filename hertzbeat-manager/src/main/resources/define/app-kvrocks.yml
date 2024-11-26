@@ -1,0 +1,718 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: cache
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: kvrocks
+# The monitoring i18n name
+name:
+  zh-CN: Kvrocks 数据库
+  en-US: Kvrocks
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 对 Apache Kvrocks 数据库的通用性能指标进行采集监控(server、clients、memory、persistence、stats、replication、cpu、cluster、commandstats)，支持版本为 Apache Kvrocks 2.9.0+。<br>您可以点击“<i>新建 Kvrocks 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat monitors Apache Kvrocks database of general performance metrics such as memory, persistence, replication and so on. The versions we support is Apache Kvrocks 2.9.0+. <br>You could click the "<i>New Kvrocks</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: HertzBeat 對 Apache Kvrocks 數據庫的通用性能指標進行采集監控(server、clients、memory、persistence、stats、replication、cpu、cluster、commandstats)，支持版本爲 Apache Kvrocks 2.9.0+。<br>您可以點擊“<i>新建 Kvrocks 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/kvrocks
+  en-US: https://hertzbeat.apache.org/docs/help/kvrocks
+# Input params define for monitoring(render web ui by
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 6666
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间
+      en-US: Timeout
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,100000]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 3000
+  # field-param field key
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 50
+    required: false
+  # field-param field key
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+
+# collect metrics config list
+metrics:
+  # metrics - server
+  - name: server
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    i18n:
+      zh-CN: 服务器信息
+      en-US: Server
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: kvrocks_version
+        type: 1
+        i18n:
+          zh-CN: Kvrocks 服务版本
+          en-US: Kvrocks Version
+      - field: redis_version
+        type: 1
+        i18n:
+          zh-CN: Redis 服务版本
+          en-US: Redis Version
+      - field: git_sha1
+        type: 0
+        i18n:
+          zh-CN: Kvrocks Git SHA1
+          en-US: Kvrocks Git SHA1
+      - field: kvrocks_mode
+        type: 1
+        i18n:
+          zh-CN: 运行模式
+          en-US: Server Mode
+      - field: os
+        type: 1
+        i18n:
+          zh-CN: 操作系统
+          en-US: Operating System
+      - field: arch_bits
+        type: 0
+        i18n:
+          zh-CN: 架构
+          en-US: Architecture Bits
+      - field: multiplexing_api
+        type: 1
+        i18n:
+          zh-CN: IO多路复用器API
+          en-US: Multiplexing API
+      - field: atomicvar_api
+        type: 1
+        i18n:
+          zh-CN: 原子操作处理API
+          en-US: Atomicvar API
+      - field: gcc_version
+        type: 1
+        i18n:
+          zh-CN: GCC版本
+          en-US: GCC Version
+      - field: process_id
+        type: 0
+        i18n:
+          zh-CN: 进程ID
+          en-US: PID
+      - field: tcp_port
+        type: 0
+        i18n:
+          zh-CN: TCP/IP监听端口
+          en-US: TCP Port
+      - field: server_time_usec
+        type: 0
+        i18n:
+          zh-CN: 服务器时间戳
+          en-US: Server Time Usec
+      - field: uptime_in_seconds
+        type: 0
+        i18n:
+          zh-CN: 运行时长(秒)
+          en-US: Uptime(Seconds)
+      - field: uptime_in_days
+        type: 0
+        i18n:
+          zh-CN: 运行时长(天)
+          en-US: Uptime(Days)
+      - field: hz
+        type: 0
+        i18n:
+          zh-CN: 事件循环频率
+          en-US: hz
+      - field: configured_hz
+        type: 0
+        i18n:
+          zh-CN: 配置的事件循环频率
+          en-US: Configured hz
+      - field: lru_clock
+        type: 0
+        i18n:
+          zh-CN: LRU时钟
+          en-US: LRU Clock
+      - field: executable
+        type: 1
+        i18n:
+          zh-CN: 服务器执行路径
+          en-US: Server's Executable Path
+      - field: config_file
+        type: 1
+        i18n:
+          zh-CN: 配置文件路径
+          en-US: Config File Path
+      - field: io_threads_active
+        type: 0
+        i18n:
+          zh-CN: 活跃IO线程数
+          en-US: Active IO Threads
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+  # metrics - clients
+  - name: clients
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    i18n:
+      zh-CN: 客户端信息
+      en-US: Clients
+    # collect metrics content
+    fields:
+      - field: connected_clients
+        type: 0
+        i18n:
+          zh-CN: 已连接客户端数量
+          en-US: Connected Clients
+      - field: maxclients
+        type: 0
+        i18n:
+          zh-CN: 最大客户端连接数
+          en-US: Max Clients
+      - field: blocked_clients
+        type: 0
+        i18n:
+          zh-CN: 阻塞客户端数量
+          en-US: Blocked Clients
+      - field: monitor_clients
+        type: 0
+        i18n:
+          zh-CN: 监控的客户端数量
+          en-US: monitor Clients
+    protocol: redis
+    redis:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      timeout: ^_^timeout^_^
+  # metrics - memory
+  - name: memory
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 2
+    i18n:
+      zh-CN: 内存信息
+      en-US: Memory
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: used_memory_rss
+        type: 0
+        i18n:
+          zh-CN: 已使用内存(字节)
+          en-US: Used Memory RSS
+      - field: used_memory_rss_human
+        type: 0
+        unit: MB
+        i18n:
+          zh-CN: 已使用物理内存
+          en-US: Used Memory RSS Human
+      - field: used_memory_lua
+        type: 0
+        i18n:
+          zh-CN: LUA脚本占用的内存(字节)
+          en-US: Used Memory LUA
+      - field: used_memory_lua_human
+        type: 0
+        unit: KB
+        i18n:
+          zh-CN: LUA脚本占用的内存
+          en-US: Used Memory LUA Human
+      - field: used_memory_startup
+        type: 0
+        i18n:
+          zh-CN: 启动占用内存
+          en-US: Used Memory Startup
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - persistence
+  - name: persistence
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 3
+    i18n:
+      zh-CN: 持久化信息
+      en-US: Persistence
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: loading
+        type: 0
+        i18n:
+          zh-CN: 是否正在加载持久化文件
+          en-US: Loading
+      - field: bgsave_in_progress
+        type: 0
+        i18n:
+          zh-CN: 是否正在进行bgsave
+          en-US: bgsave In Progress
+      - field: last_bgsave_time
+        type: 0
+        i18n:
+          zh-CN: 最近一次bgsave命令执行时间
+          en-US: Last Save Time
+      - field: last_bgsave_status
+        type: 1
+        i18n:
+          zh-CN: 最近一次bgsave命令执行状态
+          en-US: Last bgsave Status
+      - field: last_bgsave_time_sec
+        type: 0
+        i18n:
+          zh-CN: 最近一次bgsave命令执行时间(秒)
+          en-US: Last bgsave Time Sec
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - stats
+  - name: stats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 4
+    i18n:
+      zh-CN: 全局统计信息
+      en-US: Stats
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: total_connections_received
+        type: 0
+        i18n:
+          zh-CN: 已接受的总连接数
+          en-US: Total Connections Received
+      - field: total_commands_processed
+        type: 0
+        i18n:
+          zh-CN: 执行过的命令总数
+          en-US: Total Commands Processed
+      - field: instantaneous_ops_per_sec
+        type: 0
+        i18n:
+          zh-CN: 命令处理条数/秒
+          en-US: Instantaneous Ops Per Sec
+      - field: total_net_input_bytes
+        type: 0
+        i18n:
+          zh-CN: 输入总网络流量(字节)
+          en-US: Total Net Input Bytes
+      - field: total_net_output_bytes
+        type: 0
+        i18n:
+          zh-CN: 输出总网络流量(字节)
+          en-US: Total Net Output Bytes
+      - field: instantaneous_input_kbps
+        type: 0
+        i18n:
+          zh-CN: 输入字节数/秒
+          en-US: Instantaneous Input Kbps
+      - field: instantaneous_output_kbps
+        type: 0
+        i18n:
+          zh-CN: 输出字节数/秒
+          en-US: Instantaneous Output Kbps
+      - field: sync_full
+        type: 0
+        i18n:
+          zh-CN: 主从完全同步成功次数
+          en-US: Sync Full
+      - field: sync_partial_ok
+        type: 0
+        i18n:
+          zh-CN: 主从部分同步成功次数
+          en-US: Sync Partial OK
+      - field: sync_partial_err
+        type: 0
+        i18n:
+          zh-CN: 主从部分同步失败次数
+          en-US: Sync Partial Error
+      - field: pubsub_channels
+        type: 0
+        i18n:
+          zh-CN: 订阅的频道数量
+          en-US: Pubsub Channels
+      - field: pubsub_patterns
+        type: 0
+        i18n:
+          zh-CN: 订阅的模式数量
+          en-US: Pubsub Patterns
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - replication
+  - name: replication
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 5
+    i18n:
+      zh-CN: 主从同步信息
+      en-US: Replication
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: role
+        type: 1
+        i18n:
+          zh-CN: 节点角色
+          en-US: Role
+      - field: connected_slaves
+        type: 0
+        i18n:
+          zh-CN: 已连接的从节点个数
+          en-US: Connected Slaves
+      - field: master_repl_offset
+        type: 0
+        i18n:
+          zh-CN: 主节点偏移量
+          en-US: Master Repl Offset
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - cpu
+  - name: cpu
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 6
+    i18n:
+      zh-CN: CPU消耗信息
+      en-US: CPU
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: used_cpu_sys
+        type: 0
+        i18n:
+          zh-CN: Kvrocks进程使用的CPU时钟总和(内核态)
+          en-US: Used CPU Sys
+      - field: used_cpu_user
+        type: 0
+        i18n:
+          zh-CN: Kvrocks进程使用的CPU时钟总和(用户态)
+          en-US: Used CPU User
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - Commandstats
+  - name: Commandstats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 7
+    i18n:
+      zh-CN: 命令信息
+      en-US: Command Stats
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: cmdstat_command
+        type: 1
+        i18n:
+          zh-CN: 命令
+          en-US: Command Stat Command
+      - field: cmdstat_info
+        type: 1
+        i18n:
+          zh-CN: 命令监控信息
+          en-US: Command Stat Info
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - cluster
+  - name: cluster
+    # collect metrics content
+    priority: 8
+    i18n:
+      zh-CN: 集群信息
+      en-US: Cluster
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: cluster_enabled
+        type: 0
+        i18n:
+          zh-CN: 节点是否开启集群模式
+          en-US: Cluster Enabled
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - commandstats
+  - name: commandstats
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 9
+    i18n:
+      zh-CN: 命令统计信息
+      en-US: Command Stats
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: cmdstat_client
+        type: 1
+        i18n:
+          zh-CN: 客户端命令统计
+          en-US: cmdstat client
+      - field: cmdstat_config
+        type: 1
+        i18n:
+          zh-CN: 配置命令统计
+          en-US: cmdstat config
+      - field: cmdstat_get
+        type: 1
+        i18n:
+          zh-CN: get
+          en-US: get
+      - field: cmdstat_hello
+        type: 1
+        i18n:
+          zh-CN: hello
+          en-US: hello
+      - field: cmdstat_info
+        type: 1
+        i18n:
+          zh-CN: info
+          en-US: info
+      - field: cmdstat_keys
+        type: 1
+        i18n:
+          zh-CN: keys
+          en-US: keys
+      - field: cmdstat_ping
+        type: 1
+        i18n:
+          zh-CN: ping
+          en-US: ping
+      - field: cmdstat_select
+        type: 1
+        i18n:
+          zh-CN: select
+          en-US: select
+      - field: cmdstat_set
+        type: 1
+        i18n:
+          zh-CN: set
+          en-US: set
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # metrics - keyspace
+  - name: keyspace
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 10
+    i18n:
+      zh-CN: 数据库统计信息
+      en-US: Keyspace
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: db0
+        type: 1
+        i18n:
+          zh-CN: db0
+          en-US: db0
+      - field: sequence
+        type: 1
+        i18n:
+          zh-CN: 序列
+          en-US: sequence
+      - field: used_db_size
+        type: 1
+        i18n:
+          zh-CN: 数据库使用大小
+          en-US: used_db_size
+      - field: max_db_size
+        type: 1
+        i18n:
+          zh-CN: 数据库最大使用大小
+          en-US: max_db_size
+      - field: used_percent
+        type: 1
+        i18n:
+          zh-CN: 数据库使用百分比
+          en-US: used_percent
+      - field: disk_capacity
+        type: 1
+        i18n:
+          zh-CN: 磁盘容量
+          en-US: disk_capacity
+      - field: used_disk_size
+        type: 1
+        i18n:
+          zh-CN: 占用磁盘大小
+          en-US: used_disk_size
+      - field: used_disk_percent
+        type: 1
+        i18n:
+          zh-CN: 占用磁盘百分比
+          en-US: used_disk_percent
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: redis
+    # the config content when protocol is redis
+    redis:
+      # redis host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # redis port
+      port: ^_^port^_^
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
