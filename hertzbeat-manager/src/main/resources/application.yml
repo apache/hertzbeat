@@ -144,11 +144,11 @@ warehouse:
     greptime:
       enabled: false
       grpc-endpoints: localhost:4001
-      url: jdbc:mysql://localhost:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
-      driver-class-name: com.mysql.cj.jdbc.Driver
+      http-endpoint: http://localhost:4000
+      # if you config other database name, you should create them first
+      database: public
       username: greptime
       password: greptime
-      expire-time: 30d
     iot-db:
       enabled: false
       host: 127.0.0.1

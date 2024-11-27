@@ -82,7 +82,7 @@ metrics:
     i18n:
       zh-CN: Memtable 刷新总数
       en-US: Memtable Flush Total
-    priority: 0
+    priority: 1
     fields:
       - field: value
         type: 0
@@ -99,7 +99,7 @@ metrics:
     i18n:
       zh-CN: Plan Fragment 数量
       en-US: Plan Fragment Count
-    priority: 0
+    priority: 2
     fields:
       - field: value
         type: 0
@@ -116,7 +116,7 @@ metrics:
     i18n:
       zh-CN: 进程线程数
       en-US: Process Thread Num
-    priority: 0
+    priority: 3
     fields:
       - field: value
         type: 0
@@ -133,7 +133,7 @@ metrics:
     i18n:
       zh-CN: 查询扫描行数
       en-US: Query Scan Rows
-    priority: 0
+    priority: 4
     fields:
       - field: value
         type: 0
@@ -150,7 +150,7 @@ metrics:
     i18n:
       zh-CN: 结果缓冲区块数
       en-US: Result Buffer Block Count
-    priority: 0
+    priority: 5
     fields:
       - field: value
         type: 0
@@ -167,7 +167,7 @@ metrics:
     i18n:
       zh-CN: 批量发送线程池队列大小
       en-US: Send Batch Thread Pool Queue Size
-    priority: 0
+    priority: 6
     fields:
       - field: value
         type: 0
@@ -184,7 +184,7 @@ metrics:
     i18n:
       zh-CN: Tablet Base 最大压缩分数
       en-US: Tablet Base Max Compaction Score
-    priority: 0
+    priority: 7
     fields:
       - field: value
         type: 0
@@ -201,7 +201,7 @@ metrics:
     i18n:
       zh-CN: 超时取消的 Fragment 数量
       en-US: Timeout Canceled Fragment Count
-    priority: 0
+    priority: 8
     fields:
       - field: value
         type: 0
@@ -218,7 +218,7 @@ metrics:
     i18n:
       zh-CN: 加载行数
       en-US: Load Rows
-    priority: 0
+    priority: 9
     fields:
       - field: value
         type: 0
@@ -235,7 +235,7 @@ metrics:
     i18n:
       zh-CN: Rowset 总数
       en-US: All Rowsets Num
-    priority: 0
+    priority: 10
     fields:
       - field: value
         type: 0
@@ -252,7 +252,7 @@ metrics:
     i18n:
       zh-CN: Segment 总数
       en-US: All Segments Num
-    priority: 0
+    priority: 11
     fields:
       - field: value
         type: 0
@@ -269,7 +269,7 @@ metrics:
     i18n:
       zh-CN: 繁重工作最大线程数
       en-US: Heavy Work Max Threads
-    priority: 0
+    priority: 12
     fields:
       - field: value
         type: 0
@@ -286,7 +286,7 @@ metrics:
     i18n:
       zh-CN: 轻量工作最大线程数
       en-US: Light Work Max Threads
-    priority: 0
+    priority: 13
     fields:
       - field: value
         type: 0
@@ -303,7 +303,7 @@ metrics:
     i18n:
       zh-CN: 繁重工作池队列大小
       en-US: Heavy Work Pool Queue Size
-    priority: 0
+    priority: 14
     fields:
       - field: value
         type: 0
@@ -320,7 +320,7 @@ metrics:
     i18n:
       zh-CN: 轻量工作池队列大小
       en-US: Light Work Pool Queue Size
-    priority: 0
+    priority: 15
     fields:
       - field: value
         type: 0
@@ -337,7 +337,7 @@ metrics:
     i18n:
       zh-CN: 繁重工作活跃线程数
       en-US: Heavy Work Active Threads
-    priority: 0
+    priority: 16
     fields:
       - field: value
         type: 0
@@ -354,7 +354,7 @@ metrics:
     i18n:
       zh-CN: 轻量工作活跃线程数
       en-US: Light Work Active Threads
-    priority: 0
+    priority: 17
     fields:
       - field: value
         type: 0
@@ -371,7 +371,7 @@ metrics:
     i18n:
       zh-CN: 压缩字节总数
       en-US: Compaction Bytes Total
-    priority: 0
+    priority: 18
     fields:
       - field: type
         type: 1
@@ -391,7 +391,7 @@ metrics:
     i18n:
       zh-CN: 磁盘可用容量
       en-US: Disks Avail Capacity
-    priority: 0
+    priority: 19
     fields:
       - field: path
         type: 1
@@ -411,7 +411,7 @@ metrics:
     i18n:
       zh-CN: 磁盘总容量
       en-US: Disks Total Capacity
-    priority: 0
+    priority: 20
     fields:
       - field: path
         type: 1
@@ -431,7 +431,7 @@ metrics:
     i18n:
       zh-CN: 本地读取字节总数
       en-US: Local Bytes Read Total
-    priority: 0
+    priority: 21
     fields:
       - field: value
         type: 0
@@ -449,7 +449,7 @@ metrics:
     i18n:
       zh-CN: 本地写入字节总数
       en-US: Local Bytes Written Total
-    priority: 0
+    priority: 22
     fields:
       - field: value
         type: 0
@@ -467,7 +467,7 @@ metrics:
     i18n:
       zh-CN: 内存分配字节
       en-US: Memory Allocated Bytes
-    priority: 0
+    priority: 23
     fields:
       - field: value
         type: 0

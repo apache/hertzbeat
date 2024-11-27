@@ -237,7 +237,7 @@ metrics:
     i18n:
       zh-CN: 线程
       en-US: Thread
-    priority: 4
+    priority: 3
     fields:
       - field: thread_count
         i18n:
@@ -283,7 +283,7 @@ metrics:
     i18n:
       zh-CN: 代码缓存
       en-US: Code Cache
-    priority: 5
+    priority: 4
     fields:
       - field: committed
         i18n:

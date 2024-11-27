@@ -74,7 +74,6 @@ import org.springframework.util.StringUtils;
 public class SnmpCollectImpl extends AbstractCollect {
 
     private static final String AES128 = "1";
-
     private static final String SHA1 = "1";
     private static final String DEFAULT_PROTOCOL = "udp";
     private static final String OPERATION_GET = "get";
@@ -87,7 +86,6 @@ public class SnmpCollectImpl extends AbstractCollect {
                     + "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
 
     private final Map<Integer, Snmp> versionSnmpService = new ConcurrentHashMap<>(3);
-
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -262,7 +260,6 @@ public class SnmpCollectImpl extends AbstractCollect {
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_SNMP;
     }
-
 
     private synchronized Snmp getSnmpService(int snmpVersion, SnmpBuilder snmpBuilder) throws IOException {
         Snmp snmpService = versionSnmpService.get(snmpVersion);
