@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.job.protocol;
+package org.apache.hertzbeat.common.entity.manager;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,32 +23,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * telnet Protocol configuration
+ * sd monitor param
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class TelnetProtocol implements CommonRequestProtocol {
-
-    /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
-     */
-    private String host;
-
-    /**
-     * Peer host port
-     */
-    private String port;
-
-    /**
-     * TIME OUT PERIOD
-     */
-    private String timeout;
-
-    /**
-     * Sent command
-     */
-    private String cmd;
-
+public class SdMonitorParam {
+    private String detectedHost;
+    private String detectedPort;
+    private Param sdParam;
+    private Long bizId;
 }

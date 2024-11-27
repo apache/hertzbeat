@@ -17,38 +17,11 @@
 
 package org.apache.hertzbeat.common.entity.job.protocol;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * telnet Protocol configuration
+ * Define common field method for each protocol in {@link org.apache.hertzbeat.common.entity.job.Metrics}
  */
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class TelnetProtocol implements CommonRequestProtocol {
+public interface CommonRequestProtocol {
+    void setHost(String host);
 
-    /**
-     * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
-     */
-    private String host;
-
-    /**
-     * Peer host port
-     */
-    private String port;
-
-    /**
-     * TIME OUT PERIOD
-     */
-    private String timeout;
-
-    /**
-     * Sent command
-     */
-    private String cmd;
-
+    void setPort(String port);
 }

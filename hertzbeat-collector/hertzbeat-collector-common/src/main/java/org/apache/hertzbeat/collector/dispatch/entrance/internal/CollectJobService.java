@@ -170,6 +170,17 @@ public class CollectJobService {
         this.collectServer.sendMsg(message);
     }
 
+    public void sendAsyncServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+        String data = ProtoJsonUtil.toJsonStr(metricsData);
+        ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
+                .setIdentity(collectorIdentity)
+                .setMsg(data)
+                .setDirection(ClusterMsg.Direction.REQUEST)
+                .setType(ClusterMsg.MessageType.RESPONSE_CYCLIC_TASK_SD_DATA)
+                .build();
+        this.collectServer.sendMsg(message);
+    }
+
     public String getCollectorIdentity() {
         return collectorIdentity;
     }
