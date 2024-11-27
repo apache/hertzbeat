@@ -26,16 +26,12 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 /**
  * GrepTimeDB configuration information
  */
-
 @ConfigurationProperties(prefix = ConfigConstants.FunctionModuleConstants.WAREHOUSE
 		+ SignConstants.DOT
 		+ WarehouseConstants.STORE
 		+ SignConstants.DOT
 		+ WarehouseConstants.HistoryName.GREPTIME)
 public record GreptimeProperties(@DefaultValue("false") boolean enabled,
-	@DefaultValue("127.0.0.1:4001") String grpcEndpoints,
-	@DefaultValue("jdbc:mysql://127.0.0.1:4002/hertzbeat?connectionTimeZone=Asia/Shanghai&forceConnectionTimeZoneToSession=true") String url,
-	@DefaultValue("com.mysql.cj.jdbc.Driver") String driverClassName, String username, String password,
-	// Database TTL, default is 30 days.
-	@DefaultValue("30d") String expireTime) {
+	@DefaultValue("127.0.0.1:4001") String grpcEndpoints, @DefaultValue("http://127.0.0.1:4000") String httpEndpoint,
+	@DefaultValue("public") String database, String username, String password) {
 }

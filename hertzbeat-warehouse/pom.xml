@@ -103,12 +103,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- mysql -->
-        <dependency>
-             <groupId>mysql</groupId>
-             <artifactId>mysql-connector-java</artifactId>
-             <version>${mysql-jdbcdriver.version}</version>
-        </dependency>
         <!-- kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>
