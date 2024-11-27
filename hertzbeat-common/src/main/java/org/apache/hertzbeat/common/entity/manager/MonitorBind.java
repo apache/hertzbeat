@@ -17,7 +17,6 @@
 
 package org.apache.hertzbeat.common.entity.manager;
 
-import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
@@ -28,89 +27,64 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.util.JsonUtil;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 /**
- * Monitor parameter values
+ * Monitor Bind
  */
 @Entity
-@Table(name = "hzb_param", indexes = { @Index(columnList = "monitorId") },
-        uniqueConstraints = @UniqueConstraint(columnNames = {"monitorId", "field"}))
+@Table(name = "hzb_monitor_bind", indexes = {
+        @Index(name = "index_monitor_bind", columnList = "bizId"),
+        @Index(name = "index_monitor_bin", columnList = "monitor_id")
+})
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Parameter Entity")
+@Schema(description = "relation between monitor")
 @EntityListeners(AuditingEntityListener.class)
-public class Param {
-
-    /**
-     * Parameter primary key index ID
-     */
+public class MonitorBind {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(title = "Parameter primary key index ID", example = "87584674384", accessMode = READ_ONLY)
+    @Schema(title = "primary id", example = "23")
     private Long id;
 
-    /**
-     * Monitor ID
-     */
-    @Schema(title = "Monitor task ID", example = "875846754543", accessMode = READ_WRITE)
+    @Schema(title = "collector name", example = "87432674384")
+    private Long bizId;
+
+    @Schema(title = "monitor ID", example = "87432674336")
+    @Column(name = "monitor_id")
     private Long monitorId;
 
-    /**
-     * Parameter Field Identifier
-     */
-    @Schema(title = "Parameter identifier field", example = "port", accessMode = READ_WRITE)
-    @Size(max = 100)
-    @NotBlank(message = "field can not null")
-    private String field;
-
-    /**
-     * Param Value
-     */
-    @Schema(title = "parameter values", example = "8080", accessMode = READ_WRITE)
-    @Size(max = 8126)
-    @Column(length = 8126)
-    private String paramValue;
-
-    /**
-     * Parameter type 0: number 1: string 2: encrypted string 3: json string mapped by map
-     */
-    @Schema(title = "Parameter types 0: number 1: string 2: encrypted string 3:map mapped json string 4:arrays string",
-            accessMode = READ_WRITE)
+    @Schema(title = "Bind type 0: sd", accessMode = READ_WRITE)
     @Min(0)
+    @Max(3)
     private byte type;
 
-    /**
-     * Record create time
-     */
-    @Schema(title = "Record create time", example = "1612198922000", accessMode = READ_ONLY)
+    @Schema(title = "The creator of this record", example = "tom")
+    @CreatedBy
+    private String creator;
+
+    @Schema(title = "This record was last modified by")
+    @LastModifiedBy
+    private String modifier;
+
+    @Schema(title = "This record creation time (millisecond timestamp)")
     @CreatedDate
     private LocalDateTime gmtCreate;
 
-    /**
-     * Record the latest modification time
-     */
-    @Schema(title = "Record modify time", example = "1612198444000", accessMode = READ_ONLY)
+    @Schema(title = "Record the latest modification time (timestamp in milliseconds)")
     @LastModifiedDate
     private LocalDateTime gmtUpdate;
-
-    @Override
-    public Param clone() {
-        // deep clone
-        return JsonUtil.fromJson(JsonUtil.toJson(this), getClass());
-    }
 }

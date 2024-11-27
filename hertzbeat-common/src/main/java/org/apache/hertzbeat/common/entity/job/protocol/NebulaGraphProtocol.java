@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class NebulaGraphProtocol {
+public class NebulaGraphProtocol implements CommonRequestProtocol {
     /**
      * NebulaGraph host ip or domain name
      */
