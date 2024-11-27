@@ -28,8 +28,8 @@
     "description": "The label for category telnet in sidebar docs"
   },
   "sidebar.docs.category.help": {
-    "message": "Help",
-    "description": "The label for category help in sidebar docs"
+    "message": "Guides",
+    "description": "The label for category guides in sidebar docs"
   },
   "sidebar.docs.category.service": {
     "message": "Service Monitor",
