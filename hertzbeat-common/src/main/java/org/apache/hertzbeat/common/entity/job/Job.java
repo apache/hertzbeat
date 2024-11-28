@@ -119,6 +119,10 @@ public class Job {
      * Monitoring configuration parameter properties and values eg: username password timeout host
      */
     private List<Configmap> configmap;
+    /**
+     * Whether it is a service discovery job, true is yes, false is no
+     */
+    private boolean isSd = false;
 
     /**
      * the collect data response metrics as env configmap for other collect use. ^o^xxx^o^

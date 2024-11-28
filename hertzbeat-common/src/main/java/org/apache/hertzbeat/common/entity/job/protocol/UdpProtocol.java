@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UdpProtocol {
+public class UdpProtocol implements CommonRequestProtocol {
     /**
      * IP ADDRESS OR DOMAIN NAME OF THE PEER HOST
      */

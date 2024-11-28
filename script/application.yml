@@ -33,7 +33,10 @@ spring:
     exclude: org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration, org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
   freemarker:
     enabled: false
-
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
 
 management:
   health:
@@ -81,7 +84,7 @@ spring:
       eclipselink:
         logging:
           level: SEVERE
-  
+
   flyway:
     enabled: true
     clean-disabled: true
@@ -89,13 +92,12 @@ spring:
     baseline-version: 1
     locations:
       - classpath:db/migration/{vendor}
-  
+
   mail:
-    # Mail server address, eg: qq-mailbox is smtp.qq.com, qq-exmail is smtp.exmail.qq.com  
+    # Mail server address, eg: qq-mailbox is smtp.qq.com, qq-exmail is smtp.exmail.qq.com
     host: smtp.qq.com
     username: tancloud@qq.com
     # Attention this is not email account password, this requires an email authorization code
-    # 请注意此非邮箱账户密码 此需填写邮箱授权码
     password: your-password
     # Mailbox smtp server port, eg: qq-mailbox is 465, qq-exmail is 587
     port: 465
@@ -105,6 +107,8 @@ spring:
           socketFactoryClass: javax.net.ssl.SSLSocketFactory
           ssl:
             enable: true
+          starttls:
+            enable: false
 
 common:
   queue:
@@ -119,14 +123,12 @@ common:
 warehouse:
   store:
     # store history metrics data, enable only one below
-    # 存储历史数据方式, 下方只能 enabled 启用一种方式
     jpa:
       enabled: true
       # The maximum retention time for history records, after which records will be deleted
       expire-time: 1h
       # The maximum number of history records retained, if this number is exceeded, half of the data in this configuration item will be deleted
       # (please set this configuration reasonably as history records can affect performance when it is large)
-      # 历史数据的最大保留条数，超过此数量时，将会删除一半于此配量的数据（由于历史数据较大时会影响性能，请合理设置此配置）
       max-history-record-num: 6000
     victoria-metrics:
       enabled: false
@@ -141,7 +143,12 @@ warehouse:
       password: taosdata
     greptime:
       enabled: false
-      endpoint: localhost:4001
+      grpc-endpoints: localhost:4001
+      http-endpoint: http://localhost:4000
+      # if you config other database name, you should create them first
+      database: public
+      username: greptime
+      password: greptime
     iot-db:
       enabled: false
       host: 127.0.0.1
@@ -158,16 +165,19 @@ warehouse:
       password: root
       expire-time: '30d'
       replication: 1
-
-    # store real-time metrics data, enable only one below
-    # 存储实时数据方式, 下方只能 enabled 启用一种方式
+  # store real-time metrics data, enable only one below
+  real-time:
     memory:
       enabled: true
       init-size: 16
     redis:
       enabled: false
-      host: 127.0.0.1
-      port: 6379
+      # redis mode: single, sentinel, cluster. Default is single
+      mode: single
+      # separate each address with comma when using cluster mode, eg: 127.0.0.1:6379,127.0.0.1:6380
+      address: 127.0.0.1:6379
+      # enter master name when using sentinel mode
+      masterName: mymaster
       password: 123456
       # redis db index, default: DB0
       db: 0
@@ -185,7 +195,7 @@ alerter:
   telegram-webhook-url: https://api.telegram.org/bot%s/sendMessage
   # discord
   discord-webhook-url: https://discord.com/api/v9/channels/%s/messages
-  # server酱
+  # serverChan
   server-chan-webhook-url: https://sctapi.ftqq.com/%s.send
   # gotify
   gotify-webhook-url: http://127.0.0.1/message?token=%s
@@ -194,3 +204,4 @@ scheduler:
   server:
     enabled: true
     port: 1158
+    

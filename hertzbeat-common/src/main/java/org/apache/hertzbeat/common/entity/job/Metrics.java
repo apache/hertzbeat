@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.job.protocol.HttpsdProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
@@ -60,6 +60,7 @@ import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryProtocol;
 
 /**
  * Details of the monitoring metrics collected
@@ -219,9 +220,9 @@ public class Metrics {
      */
     private Pop3Protocol pop3;
     /**
-     * Monitoring configuration information using the public http_sd protocol
+     * Monitoring configuration information using the public registry protocol
      */
-    private HttpsdProtocol httpsd;
+    private RegistryProtocol registry;
     /**
      * Monitoring configuration information using the public redfish protocol
      */
@@ -250,6 +251,10 @@ public class Metrics {
      * Monitoring configuration information using the public kafka protocol
      */
     private KafkaProtocol kclient;
+    /**
+     * Collect sd data protocol
+     */
+    private ServiceDiscoveryProtocol sdProtocol;
 
     /**
      * collector use - Temporarily store subTask metrics response data

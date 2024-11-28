@@ -110,7 +110,7 @@ metrics:
   - name: buildInfo
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 1
+    priority: 0
     # collect metrics content
     i18n:
       zh-CN: 构建信息
@@ -176,7 +176,7 @@ metrics:
 
   # https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
   - name: server_document
-    priority: 0
+    priority: 1
     i18n:
       zh-CN: 服务器文档
       en-US: Server Document
@@ -213,7 +213,7 @@ metrics:
       timeout: ^_^timeout^_^
 
   - name: server_operation
-    priority: 1
+    priority: 2
     i18n:
       zh-CN: 服务器操作
       en-US: Server Operation
@@ -240,7 +240,7 @@ metrics:
       timeout: ^_^timeout^_^
 
   - name: server_ttl
-    priority: 1
+    priority: 3
     i18n:
       zh-CN: 服务器_ttl
       en-US: Max Connections
@@ -268,7 +268,7 @@ metrics:
 
   # https://www.mongodb.com/docs/manual/reference/command/hostInfo/
   - name: systemInfo
-    priority: 1
+    priority: 4
     i18n:
       zh-CN: 系统信息
       en-US: System Info
@@ -327,7 +327,7 @@ metrics:
       timeout: ^_^timeout^_^
 
   - name: os
-    priority: 1
+    priority: 5
     i18n:
       zh-CN: 操作系统信息
       en-US: OS Info
@@ -359,7 +359,7 @@ metrics:
       timeout: ^_^timeout^_^
 
   - name: extra
-    priority: 1
+    priority: 6
     i18n:
       zh-CN: 额外信息
       en-US: Extra Info

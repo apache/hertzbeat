@@ -376,8 +376,6 @@ public class PluginServiceImpl implements PluginService {
             PLUGIN_ENABLE_STATUS.put(item.getClassIdentifier(), plugin.getEnableStatus());
             ITEM_TO_PLUGINMETADATAID_MAP.put(item.getClassIdentifier(), plugin.getId());
         }
-
-
     }
 
     @PostConstruct

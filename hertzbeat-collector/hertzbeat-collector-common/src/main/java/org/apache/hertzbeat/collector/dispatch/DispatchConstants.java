@@ -120,7 +120,11 @@ public interface DispatchConstants {
      */
     String PROTOCOL_POP3 = "pop3";
     /**
-     * protocol http_sd
+     * protocol registry
+     */
+    String PROTOCOL_REGISTRY = "registry";
+    /**
+     * protocol http sd
      */
     String PROTOCOL_HTTP_SD = "httpsd";
     /**

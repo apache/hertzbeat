@@ -90,7 +90,7 @@ metrics:
     i18n:
       zh-CN: 进程启动时间
       en-US: Process Start Time
-    priority: 0
+    priority: 1
     fields:
       - field: value
         i18n:
@@ -115,7 +115,7 @@ metrics:
     i18n:
       zh-CN: 打开的文件描述符
       en-US: Open File Descriptors
-    priority: 0
+    priority: 2
     fields:
       - field: value
         type: 0
@@ -139,7 +139,7 @@ metrics:
     i18n:
       zh-CN: 最大文件描述符
       en-US: Max File Descriptors
-    priority: 0
+    priority: 3
     fields:
       - field: value
         type: 0
@@ -163,7 +163,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池已分配字节
       en-US: JVM Memory Pool Allocated Bytes
-    priority: 0
+    priority: 4
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
@@ -199,7 +199,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池已使用字节
       en-US: JVM Memory Pool Used Bytes
-    priority: 0
+    priority: 5
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
@@ -229,7 +229,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池已提交字节
       en-US: JVM Memory Pool Committed Bytes
-    priority: 0
+    priority: 6
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
@@ -259,7 +259,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池最大字节
       en-US: JVM Memory Pool Max Bytes
-    priority: 0
+    priority: 7
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
@@ -289,7 +289,7 @@ metrics:
     i18n:
       zh-CN: broker 发布延迟
       en-US: Broker Publish Latency
-    priority: 0
+    priority: 8
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:
@@ -331,7 +331,7 @@ metrics:
     i18n:
       zh-CN: 元数据存储操作延迟
       en-US: Metadata Store Ops Latency
-    priority: 0
+    priority: 9
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: http
     fields:

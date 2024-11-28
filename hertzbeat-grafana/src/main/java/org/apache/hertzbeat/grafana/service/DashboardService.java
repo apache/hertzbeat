@@ -26,6 +26,8 @@ import static org.apache.hertzbeat.grafana.common.GrafanaConstants.USE_DATASOURC
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
 import org.apache.hertzbeat.common.entity.grafana.GrafanaDashboard;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.grafana.config.GrafanaProperties;
@@ -89,7 +91,7 @@ public class DashboardService {
                 GrafanaDashboard grafanaDashboard = JsonUtil.fromJson(response.getBody(), GrafanaDashboard.class);
                 if (grafanaDashboard != null) {
                     grafanaDashboard.setEnabled(true);
-                    grafanaDashboard.setUrl(grafanaProperties.getPrefix() + grafanaProperties.getUrl()
+                    grafanaDashboard.setUrl(grafanaProperties.exposeUrl()
                             + grafanaDashboard.getUrl().replace(grafanaProperties.getUrl(), "")
                             + KIOSK + REFRESH + INSTANCE + monitorId + USE_DATASOURCE);
                     grafanaDashboard.setMonitorId(monitorId);
@@ -115,6 +117,9 @@ public class DashboardService {
     @Transactional(rollbackFor = Exception.class)
     public void deleteDashboard(Long monitorId) {
         GrafanaDashboard grafanaDashboard = dashboardDao.findByMonitorId(monitorId);
+        if (Objects.isNull(grafanaDashboard)) {
+            return;
+        }
         String uid = grafanaDashboard.getUid();
         List<GrafanaDashboard> grafanaDashboards = dashboardDao.findByUid(uid);
 

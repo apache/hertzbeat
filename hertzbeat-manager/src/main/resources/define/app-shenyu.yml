@@ -99,7 +99,7 @@ metrics:
     i18n:
       zh-CN: 进程 CPU 时间总量 (秒)
       en-US: Process CPU Time Total
-    priority: 1
+    priority: 2
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: value
@@ -123,7 +123,7 @@ metrics:
     i18n:
       zh-CN: 进程打开的文件描述符数量
       en-US: Process Open Fds
-    priority: 1
+    priority: 3
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: value
@@ -146,7 +146,7 @@ metrics:
     i18n:
       zh-CN: 进程最大文件描述符数量
       en-US: Process Max Fds
-    priority: 1
+    priority: 4
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
       - field: value
@@ -169,7 +169,7 @@ metrics:
     i18n:
       zh-CN: JVM 信息
       en-US: JVM Info
-    priority: 1
+    priority: 5
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: runtime
@@ -205,7 +205,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存使用字节数
       en-US: JVM Memory Bytes Used
-    priority: 1
+    priority: 6
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: area
@@ -237,7 +237,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池使用字节数
       en-US: JVM Memory Pool Bytes Used
-    priority: 1
+    priority: 7
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
@@ -269,7 +269,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池提交字节数
       en-US: JVM Memory Pool Bytes Committed
-    priority: 1
+    priority: 8
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
@@ -301,7 +301,7 @@ metrics:
     i18n:
       zh-CN: JVM 内存池最大字节数
       en-US: JVM Memory Pool Bytes Max
-    priority: 1
+    priority: 9
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: pool
@@ -333,7 +333,7 @@ metrics:
     i18n:
       zh-CN: JVM 线程状态
       en-US: JVM Threads State
-    priority: 1
+    priority: 10
     fields:
       # Metric information includes field name, type field type (0-number number, 1-string string), label-whether it is a metric label field, unit: metric unit
       - field: state
