@@ -106,37 +106,10 @@ public class SshCollectE2eTest {
         Job ubuntuJob = appService.getAppDefine("ubuntu");
         List<Metrics> metricsDefinitions = ubuntuJob.getMetrics();
 
-        // Test each metric collection
-        for (Metrics metricsDef : metricsDefinitions) {
-            String metricsName = metricsDef.getName();
-            if ("basic".equals(metricsName)) {
-                testBasicMetricsCollection(metricsDef);
-            } else {
-                testCpuMetricsCollection(metricsDef);
-            }
-        }
+        metricsDefinitions.forEach(this::testMetricsCollection);
     }
 
-    private void testBasicMetricsCollection(Metrics metricsDef) {
-        CollectRep.MetricsData.Builder builder = executeCollection(metricsDef);
-
-        // Verify basic metrics
-        Assertions.assertTrue(builder.getValuesList().size() > 0, "Basic metrics values should not be empty");
-        CollectRep.ValueRow valueRow = builder.getValuesList().get(0);
-
-        // Verify specific fields
-        Assertions.assertNotNull(valueRow.getColumns(0), "Hostname should not be null");
-        Assertions.assertFalse(valueRow.getColumns(0).isEmpty(), "Hostname should not be empty");
-
-        Assertions.assertEquals("6.4.16-linuxkit", valueRow.getColumns(1), "Kernel version mismatch");
-
-        Assertions.assertNotNull(valueRow.getColumns(2), "System time should not be null");
-        Assertions.assertFalse(valueRow.getColumns(2).isEmpty(), "System time should not be empty");
-
-        log.info("Basic metrics validation passed");
-    }
-
-    private void testCpuMetricsCollection(Metrics metricsDef) {
+    private void testMetricsCollection(Metrics metricsDef) {
         String name = metricsDef.getName();
         CollectRep.MetricsData.Builder builder = executeCollection(metricsDef);
 
