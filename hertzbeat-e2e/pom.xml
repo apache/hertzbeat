@@ -29,6 +29,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>hertzbeat-collector-kafka-e2e</module>
+        <module>hertzbeat-collector-basic-e2e</module>
     </modules>
 
     <properties>
@@ -63,6 +64,12 @@
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
             <version>${awaitility.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hertzbeat</groupId>
+            <artifactId>hertzbeat-manager</artifactId>
+            <version>${hertzbeat.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
