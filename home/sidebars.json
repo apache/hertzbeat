@@ -157,13 +157,6 @@
         },
         {
           "type": "category",
-          "label": "server",
-          "items": [
-            "help/ipmi"
-          ]
-        },
-        {
-          "type": "category",
           "label": "mid",
           "items": [
             "help/activemq",
@@ -382,13 +375,6 @@
             "community/how_to_verify_release"
           ]
         }
-      ]
-    },
-    {
-      "type": "category",
-      "label": "Template Marketplace",
-      "items": [
-        "help/template_marketplace"
       ]
     },
     {
