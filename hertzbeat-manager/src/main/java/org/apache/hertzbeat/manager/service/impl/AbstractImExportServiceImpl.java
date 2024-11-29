@@ -66,9 +66,6 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         if (!CollectionUtils.isEmpty(formList)) {
             formList.forEach(monitorDto -> {
                 monitorService.validate(monitorDto, false);
-                if (monitorDto.isDetected()) {
-                    monitorService.detectMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector());
-                }
                 monitorService.addMonitor(monitorDto.getMonitor(), monitorDto.getParams(), monitorDto.getCollector(), monitorDto.getGrafanaDashboard());
             });
         }
@@ -119,7 +116,6 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
                 })
                 .toList());
         exportMonitor.setMetrics(dto.getMetrics());
-        exportMonitor.setDetected(false);
         exportMonitor.getMonitor().setCollector(dto.getCollector());
         return exportMonitor;
     }
@@ -130,7 +126,6 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         }
 
         var monitorDto = new MonitorDto();
-        monitorDto.setDetected(exportMonitor.getDetected());
         var monitor = new Monitor();
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
         if (exportMonitor.monitor != null) { // Add one more null check
@@ -180,8 +175,6 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private List<ParamDTO> params;
         @ExcelCollection(name = "Metrics")
         private List<String> metrics;
-        @ExcelCollection(name = "detected")
-        private Boolean detected;
     }
 
     @Data
