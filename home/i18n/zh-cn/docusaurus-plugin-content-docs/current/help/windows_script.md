@@ -8,6 +8,7 @@ keywords: [开源监控系统, 开源网络监控, 使用脚本监控 Windows �
 ### 准备工作
 
 > 若要监控本机，部署 Hertzbeat 即可，若要监控其他主机，需在目标主机上部署采集器，部署采集器可参考[此链接](https://github.com/apache/hertzbeat?tab=readme-ov-file#2install-via-package)的第 5 步。
+> 如果使用 Docker 安装采集器，则会导致采集器监控不到宿主机上的进程信息，因为 Docker 容器在一个独立的环境中运行，每个容器都有自己的进程空间。
 > 在创建监控任务选择采集器时，需选择目标主机上对应的采集器。
 
 ### 配置参数
