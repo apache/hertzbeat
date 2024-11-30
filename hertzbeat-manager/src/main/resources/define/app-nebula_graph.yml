@@ -16,7 +16,7 @@
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring mid-middleware
 category: db
 # The monitoring type eg: linux windows tomcat mysql aws...
-app: nebulaGraph
+app: nebula_graph
 # The app api i18n name
 name:
   zh-CN: NebulaGraph
