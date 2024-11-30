@@ -10,16 +10,15 @@ Apache HertzBeat 是一个高可扩展的系统，其提供用户大量的自定
 这里的安全模型主要涉及用户在扩展过程中需要注意的安全边界，以及如何保证用户的自定义不会对系统造成安全隐患。
 :::
 
-
 ## 用户权限安全
 
-Apache HertzBeat 使用 [Sureness](https://github.com/dromara/sureness) 来支撑系统用户安全。 
+Apache HertzBeat 使用 [Sureness](https://github.com/dromara/sureness) 来支撑系统用户安全。
 
-使用 Sureness 提供的 `sureness.yml` 来配置用户账户，角色，API资源等，强烈建议初始用户修改账户密码，具体参考 [账户权限管理](../start/account-modify)  
+使用 Sureness 提供的 `sureness.yml` 来配置用户账户，角色，API资源等，强烈建议初始用户修改账户密码，具体参考 [账户权限管理](../start/account-modify)
 
 ## 监控模版安全
 
-Apache HertzBeat 提供了监控模版功能，用户可以通过配置监控模版里面的自定义脚本来定义监控规则。 
+Apache HertzBeat 提供了监控模版功能，用户可以通过配置监控模版里面的自定义脚本来定义监控规则。
 
 脚本类型包含 `SQL` `SHELL` `JMX` `URL` `API` 等，当用户自定义脚本时需要自行保证自定义脚本的安全性，避免脚本中包含恶意代码等。
 
