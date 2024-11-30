@@ -213,4 +213,9 @@ public interface DispatchConstants {
      * protocol kafka
      */
     String PROTOCOL_KAFKA = "kclient";
+
+    /**
+     * protocol plc
+     */
+    String PROTOCOL_PLC = "plc";
 }
