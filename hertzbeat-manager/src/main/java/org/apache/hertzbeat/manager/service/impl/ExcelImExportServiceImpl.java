@@ -99,8 +99,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                         List<String> metricList = Arrays.stream(metrics.split(",")).collect(Collectors.toList());
                         exportMonitor.setMetrics(metricList);
                     }
-                    boolean detected = getCellValueAsBoolean(row.getCell(12));
-                    exportMonitor.setDetected(detected);
                 }
             }
 
@@ -267,9 +265,6 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
                             metricCell.setCellValue(String.join(",", metricList));
                             metricCell.setCellStyle(cellStyle);
                         }
-                        Cell detectedCell = row.createCell(12);
-                        detectedCell.setCellValue(monitor.getDetected() != null && monitor.getDetected());
-                        detectedCell.setCellStyle(cellStyle);
                     }
                     // Fill in parameter information
                     if (i < paramList.size()) {
