@@ -230,16 +230,11 @@ public class OnlineParser {
             i = parseLabelName(inputStream, stringBuilder).maybeSpace().maybeEqualsSign().noElse();
             label.setName(stringBuilder.toString());
             stringBuilder.delete(0, stringBuilder.length());
-
             if (i == ' ') {
                 skipSpaces(inputStream).maybeEqualsSign().noElse();
             }
 
-            i = parseOneChar(inputStream).maybeSpace().maybeQuotationMark().noElse();
-
-            if (i == ' ') {
-                skipSpaces(inputStream).maybeEqualsSign().noElse();
-            }
+            skipSpaces(inputStream).maybeQuotationMark().noElse();
             parseLabelValue(inputStream, stringBuilder).maybeQuotationMark().noElse();
             String labelValue = stringBuilder.toString();
             if (!labelValue.equals(new String(labelValue.getBytes(StandardCharsets.UTF_8)))) {
@@ -248,7 +243,7 @@ public class OnlineParser {
             label.setValue(labelValue);
             stringBuilder.delete(0, stringBuilder.length());
 
-            i = parseOneChar(inputStream).maybeComma().maybeRightBracket().noElse();
+            i = skipSpaces(inputStream).maybeSpace().maybeComma().maybeRightBracket().noElse();
             labelList.add(label);
             if (i == '}') {
                 break;
