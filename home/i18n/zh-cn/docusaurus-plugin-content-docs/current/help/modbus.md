@@ -29,14 +29,19 @@ keywords: [ open source monitoring tool,  Modbus监控 ]
 参数示例:
 
 线圈寄存器地址：
-- 1,2[3]
+```text
+1,2[3]
+```
 
 参数别名名称：
-
-- holding-register:0
-- holding-register:1-0
-- holding-register:1-1
-- holding-register:1-2
+```yaml
+aliasFields:
+  - responseTime
+  - holding-register:0
+  - holding-register:1-0
+  - holding-register:1-1
+  - holding-register:1-2
+```
 
 | 指标名称    | 指标单位 | 指标帮助描述              |
 |---------|------|---------------------|
@@ -51,17 +56,21 @@ keywords: [ open source monitoring tool,  Modbus监控 ]
 参数示例:
 
 线圈寄存器地址：
-- 1,2[3]
+```text
+1,2[3]
+```
 
 参数别名名称：
-
-- coil:0
-- coil:1-0
-- coil:1-1
-- coil:1-2
+```yaml
+aliasFields:
+  - responseTime
+  - coil:0
+  - coil:1-0
+  - coil:1-1
+  - coil:1-2
+```
 
 | 指标名称 | 指标单位 | 指标帮助描述              |
 |------|------|---------------------|
 | 响应时间 | 毫秒   | Modbus服务器响应请求所需的时间。 |
 | 线圈状态 |      | 线圈状态 （0或1）          |
-

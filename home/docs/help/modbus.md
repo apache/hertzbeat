@@ -28,15 +28,20 @@ keywords: [ open source monitoring tool, Modbus monitoring ]
 
 Parameter example:
 
-Coil register addresses: 
-- 1,2[3]
+Coil register addresses:  
+```text
+1,2[3]
+```
 
 Parameter alias names:
-
-- holding-register:0
-- holding-register:1-0
-- holding-register:1-1
-- holding-register:1-2
+```yaml
+aliasFields:
+  - responseTime
+  - holding-register:0
+  - holding-register:1-0
+  - holding-register:1-1
+  - holding-register:1-2
+```
 
 | Metric Name                | Metric Unit  | Metric Help Description                                         |
 |----------------------------|--------------|-----------------------------------------------------------------|
@@ -48,16 +53,22 @@ Parameter alias names:
 1. The number of parameters must match the total number of coil register addresses specified in the parameters.
 2. Alias format for parameters: coil:m or coil:m-n
 
-Parameter example: 
+Parameter example:  
 
-Coil register addresses: 
-- 1,2[3] 
+Coil register addresses:  
+```text
+1,2[3]
+``` 
 
 Parameter alias names:
-- coil:0
-- coil:1-0
-- coil:1-1
-- coil:1-2
+```yaml
+aliasFields:
+  - responseTime
+  - coil:0
+  - coil:1-0
+  - coil:1-1
+  - coil:1-2
+```
 
 | Metric Name   | Metric Unit  | Metric Help Description                                         |
 |---------------|--------------|-----------------------------------------------------------------|
