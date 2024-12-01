@@ -171,10 +171,13 @@ public class OnlineParser {
                 switch (i) {
                     case 'n':
                         stringBuilder.append('\n');
+                        break;
                     case '\\':
                         stringBuilder.append('\\');
+                        break;
                     case '\"':
                         stringBuilder.append('\"');
+                        break;
                     default:
                         throw new FormatException();
                 }
