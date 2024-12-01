@@ -59,16 +59,17 @@ public class PlcCollectImpl extends AbstractCollect {
             throw new IllegalArgumentException("PLC collect must have register address");
         }
         // check timeout is legal
-        try {
-            Long.parseLong(metrics.getPlc().getTimeout());
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("PLC collect must have valid timeout");
+        if (Objects.nonNull(metrics.getPlc().getTimeout())) {
+            try {
+                Long.parseLong(metrics.getPlc().getTimeout());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("PLC collect must have valid timeout");
+            }
         }
 
         AtomicInteger addressCount = new AtomicInteger();
         metrics.getPlc().getRegisterAddresses().forEach(address -> {
             if (address.contains("[") && address.contains("]")) {
-
                 String[] addressArray = address.split("\\[");
                 String num = addressArray[1].replace("]", "");
                 addressCount.addAndGet(Integer.parseInt(num));
@@ -77,10 +78,14 @@ public class PlcCollectImpl extends AbstractCollect {
             }
         });
         List<String> aliasFields = metrics.getAliasFields();
+        if (Objects.isNull(aliasFields)) {
+            throw new IllegalArgumentException("Please ensure that the number of aliasFields (tagName) in yml matches the number of registered addresses" +
+                    "Number of AliasFields(tagList): 0 ,but Number of addresses:" + addressCount.get());
+        }
         int tagListCount = aliasFields.size() - 1;
         if (aliasFields.size() - 1 != addressCount.get()) {
             throw new IllegalArgumentException("Please ensure that the number of aliasFields (tagName) in yml matches the number of registered addresses" +
-                    "Number of AliasFields(tagList):" + tagListCount + "but Number of addresses:" + addressCount.get());
+                    "Number of AliasFields(tagList): " + tagListCount + " ,but Number of addresses:" + addressCount.get());
         }
     }
 
@@ -90,11 +95,13 @@ public class PlcCollectImpl extends AbstractCollect {
         long startTime = System.currentTimeMillis();
         PlcProtocol plcProtocol = metrics.getPlc();
         // check slaveId
-        if( !StringUtils.hasText(metrics.getPlc().getSlaveId())){
+        if (!StringUtils.hasText(metrics.getPlc().getSlaveId())) {
             plcProtocol.setSlaveId("1");
         }
+        if (!StringUtils.hasText(plcProtocol.getTimeout())) {
+            plcProtocol.setTimeout("5000");
+        }
         String connectionString = "modbus-tcp:tcp://" + plcProtocol.getHost() + ":" + plcProtocol.getPort() + "?unit-identifier=" + plcProtocol.getSlaveId();
-//        String connectionString = "modbus-tcp:tcp://127.0.0.1:502?request-timeout=5000&unit-identifier=1";
         PlcConnection plcConnection = null;
         List<String> registerAddressList = plcProtocol.getRegisterAddresses();
         try {
@@ -140,7 +147,7 @@ public class PlcCollectImpl extends AbstractCollect {
             if (COIL.equals(plcProtocol.getAddressSyntax())) {
                 resultMap = resultMap.entrySet()
                         .stream()
-                        .peek(obj -> obj.setValue(String.valueOf(Boolean.TRUE.equals(Boolean.valueOf(obj.getValue()))?1:0)))
+                        .peek(obj -> obj.setValue(String.valueOf(Boolean.TRUE.equals(Boolean.valueOf(obj.getValue())) ? 1 : 0)))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             }
