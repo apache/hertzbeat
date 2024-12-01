@@ -22,7 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -118,7 +120,6 @@ public class OnlineParser {
         private int getInt() throws FormatException {
             return this.i;
         }
-        
 
     }
 
@@ -127,19 +128,18 @@ public class OnlineParser {
         return new CharChecker(i);
     }
 
-    private static CharChecker parseOneWord(InputStream inputStream, StringBuilder stringBuilder) throws IOException {
+    private static CharChecker parseOneDouble(InputStream inputStream, StringBuilder stringBuilder) throws IOException {
         int i = inputStream.read();
-        while ((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || (i >= '0' && i <= '9') || i == '_' || i == ':') {
+        while ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || i == '-' || i == '+' || i == 'e' || i == '.') {
             stringBuilder.append((char) i);
             i = inputStream.read();
         }
         return new CharChecker(i);
     }
 
-    private static CharChecker parseOneDouble(InputStream inputStream, StringBuilder stringBuilder) throws IOException {
+    private static CharChecker skipOneLong(InputStream inputStream) throws IOException {
         int i = inputStream.read();
-        while ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || i == '-' || i == '+' || i == 'e' || i == '.') {
-            stringBuilder.append((char) i);
+        while (i >= '0' && i <= '9') {
             i = inputStream.read();
         }
         return new CharChecker(i);
@@ -163,18 +163,25 @@ public class OnlineParser {
         return new CharChecker(i);
     }
 
-    private static CharChecker parseLabelValue(InputStream inputStream, StringBuilder stringBuilder) throws IOException {
+    private static CharChecker parseLabelValue(InputStream inputStream, StringBuilder stringBuilder) throws IOException, FormatException {
         int i = inputStream.read();
         while (i != '"' && i != -1) {
-            stringBuilder.append((char) i);
-            i = inputStream.read();
-        }
-        return new CharChecker(i);
-    }
-
-    private static CharChecker skipOneWord(InputStream inputStream) throws IOException {
-        int i = inputStream.read();
-        while ((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z') || (i >= '0' && i <= '9') || i == '_' || i == ':') {
+            if (i == '\\') {
+                i = inputStream.read();
+                switch (i) {
+                    case 'n':
+                        stringBuilder.append('\n');
+                    case '\\':
+                        stringBuilder.append('\\');
+                    case '\"':
+                        stringBuilder.append('\"');
+                    default:
+                        throw new FormatException();
+                }
+            }
+            else {
+                stringBuilder.append((char) i);
+            }
             i = inputStream.read();
         }
         return new CharChecker(i);
@@ -214,26 +221,31 @@ public class OnlineParser {
         }
     }
 
-
-
-    private static CharChecker skipCommentLine(InputStream inputStream) throws IOException, FormatException {
-        // skip space after '#'
-        int i = skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
-        return new CharChecker(i);
-    }
-
     private static CharChecker parseLabels(InputStream inputStream, StringBuilder stringBuilder, List<MetricFamily.Label> labelList) throws IOException, FormatException {
         int i;
         while (true) {
             MetricFamily.Label label = new MetricFamily.Label();
-            parseLabelName(inputStream, stringBuilder).maybeEqualsSign().noElse();
+            i = skipSpaces(inputStream).getInt();
+            stringBuilder.append((char) i);
+            i = parseLabelName(inputStream, stringBuilder).maybeSpace().maybeEqualsSign().noElse();
             label.setName(stringBuilder.toString());
             stringBuilder.delete(0, stringBuilder.length());
 
-            parseOneChar(inputStream).maybeQuotationMark().noElse();
+            if (i == ' ') {
+                skipSpaces(inputStream).maybeEqualsSign().noElse();
+            }
 
+            i = parseOneChar(inputStream).maybeSpace().maybeQuotationMark().noElse();
+
+            if (i == ' ') {
+                skipSpaces(inputStream).maybeEqualsSign().noElse();
+            }
             parseLabelValue(inputStream, stringBuilder).maybeQuotationMark().noElse();
-            label.setValue(stringBuilder.toString());
+            String labelValue = stringBuilder.toString();
+            if (!labelValue.equals(new String(labelValue.getBytes(StandardCharsets.UTF_8)))) {
+                throw new FormatException();
+            }
+            label.setValue(labelValue);
             stringBuilder.delete(0, stringBuilder.length());
 
             i = parseOneChar(inputStream).maybeComma().maybeRightBracket().noElse();
@@ -252,7 +264,7 @@ public class OnlineParser {
         String metricName = stringBuilder.toString();
         stringBuilder.delete(0, stringBuilder.length());
 
-        if (!metricFamilyMap.containsKey(stringBuilder.toString())) {
+        if (!metricFamilyMap.containsKey(metricName)) {
             metricFamily = new MetricFamily();
             metricFamily.setMetricList(new ArrayList<>());
             metricFamily.setName(metricName);
@@ -262,26 +274,33 @@ public class OnlineParser {
             metricFamily = metricFamilyMap.get(metricName);
         }
 
+        if (i == ' ') {
+            i = skipSpaces(inputStream).getInt();
+        }
         if (i == '{') {
-            List<MetricFamily.Label> labelList = new ArrayList<>();
+            List<MetricFamily.Label> labelList = new LinkedList<>();
             parseLabels(inputStream, stringBuilder, labelList);
             metric.setLabels(labelList);
+            i = skipSpaces(inputStream).getInt();
         }
 
         stringBuilder.delete(0, stringBuilder.length());
-        i = skipSpaces(inputStream).getInt();
         stringBuilder.append((char) i);
-
         i = parseOneDouble(inputStream, stringBuilder).maybeSpace().maybeEol().maybeEof().noElse();
         metric.setValue(toDouble(stringBuilder.toString()));
-        stringBuilder.delete(0, stringBuilder.length());
-        if (i == '\n') {
+        if (i == '\n' || i == -1) {
             metricFamily.getMetricList().add(metric);
             return new CharChecker(i);
         }
 
         i = skipSpaces(inputStream).getInt();
-        i = skipOneWord(inputStream).maybeSpace().maybeEol().maybeEof().noElse();
+        stringBuilder.delete(0, stringBuilder.length());
+        stringBuilder.append((char) i);
+        i = skipOneLong(inputStream).maybeSpace().maybeEol().maybeEof().noElse();
+        if (i == '\n' || i == -1) {
+            metricFamily.getMetricList().add(metric);
+            return new CharChecker(i);
+        }
         i = skipSpaces(inputStream).maybeEol().maybeEof().noElse();
 
         metricFamily.getMetricList().add(metric);
@@ -293,8 +312,8 @@ public class OnlineParser {
         int i = inputStream.read();
         try {
             while (i != -1) {
-                if (i == '#') {
-                    skipCommentLine(inputStream);
+                if (i == '#' || i == '\n') {
+                    skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
                 } else {
                     StringBuilder stringBuilder = new StringBuilder();
                     stringBuilder.append((char) i);
