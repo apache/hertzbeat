@@ -35,7 +35,6 @@ public class PushGatewayServiceImpl implements PushGatewayService {
 
     @Override
     public boolean pushMetricsData(InputStream inputStream) throws IOException {
-//        List<Metric> metrics = PrometheusUtil.parseMetrics(inputStream);
         return true;
     }
 }
