@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 
 /**
- * @author Ayu
  * @date 2024-11-30
  * @Description Phone Desensitizing serializer
  */
