@@ -29,11 +29,13 @@ keywords: [ open source monitoring tool, Modbus monitoring ]
 Parameter example:
 
 Coil register addresses:  
+
 ```text
 1,2[3]
 ```
 
 Parameter alias names:
+
 ```yaml
 aliasFields:
   - responseTime
@@ -56,11 +58,13 @@ aliasFields:
 Parameter example:  
 
 Coil register addresses:  
+
 ```text
 1,2[3]
-``` 
+```
 
 Parameter alias names:
+
 ```yaml
 aliasFields:
   - responseTime
