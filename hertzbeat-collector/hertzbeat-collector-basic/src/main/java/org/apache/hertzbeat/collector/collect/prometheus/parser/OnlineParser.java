@@ -27,11 +27,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+
+/**
+ * Resolves the data passed by prometheus's exporter interface http:xxx/metrics
+ */
 @Slf4j
 public class OnlineParser {
 
     private static class FormatException extends Exception {
+
         public FormatException() {}
+
         public FormatException(String message) {
             super(message);
         }
@@ -40,22 +46,12 @@ public class OnlineParser {
     private static class CharChecker {
         int i;
         boolean satisfied;
+
         CharChecker(int i) {
             this.i = i;
             this.satisfied = false;
         }
-        //        private CharChecker NotEOF() throws FormatException {
-//            if (i == -1) {
-//                throw new FormatException();
-//            }
-//            return this;
-//        }
-//        private CharChecker NotEOL() throws FormatException {
-//            if (i == '\n') {
-//                throw new FormatException();
-//            }
-//            return this;
-//        }
+
         private CharChecker maybeLeftBracket() {
             if (i == '{') {
                 satisfied = true;
@@ -98,14 +94,14 @@ public class OnlineParser {
             return this;
         }
 
-        private CharChecker maybeEOF() {
+        private CharChecker maybeEof() {
             if (i == -1) {
                 satisfied = true;
             }
             return this;
         }
 
-        private CharChecker maybeEOL() {
+        private CharChecker maybeEol() {
             if (i == '\n') {
                 satisfied = true;
             }
@@ -222,7 +218,7 @@ public class OnlineParser {
 
     private static CharChecker skipCommentLine(InputStream inputStream) throws IOException, FormatException {
         // skip space after '#'
-        int i = skipToLineEnd(inputStream).maybeEOL().maybeEOF().noElse();
+        int i = skipToLineEnd(inputStream).maybeEol().maybeEof().noElse();
         return new CharChecker(i);
     }
 
@@ -274,9 +270,9 @@ public class OnlineParser {
 
         stringBuilder.delete(0, stringBuilder.length());
         i = skipSpaces(inputStream).getInt();
-        stringBuilder.append((char)i);
+        stringBuilder.append((char) i);
 
-        i = parseOneDouble(inputStream, stringBuilder).maybeSpace().maybeEOL().maybeEOF().noElse();
+        i = parseOneDouble(inputStream, stringBuilder).maybeSpace().maybeEol().maybeEof().noElse();
         metric.setValue(toDouble(stringBuilder.toString()));
         stringBuilder.delete(0, stringBuilder.length());
         if (i == '\n') {
@@ -285,8 +281,8 @@ public class OnlineParser {
         }
 
         i = skipSpaces(inputStream).getInt();
-        i = skipOneWord(inputStream).maybeSpace().maybeEOL().maybeEOF().noElse();
-        i = skipSpaces(inputStream).maybeEOL().maybeEOF().noElse();
+        i = skipOneWord(inputStream).maybeSpace().maybeEol().maybeEof().noElse();
+        i = skipSpaces(inputStream).maybeEol().maybeEof().noElse();
 
         metricFamily.getMetricList().add(metric);
         return new CharChecker(i);
