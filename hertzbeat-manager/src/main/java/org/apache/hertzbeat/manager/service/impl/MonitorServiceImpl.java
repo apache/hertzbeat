@@ -302,7 +302,7 @@ public class MonitorServiceImpl implements MonitorService {
             String urlValue = urlParam.getParamValue();
             // Check if the urlValue is not null and starts with "jdbc:h2:mem:" or contains "RUNSCRIPT FROM"
             if (urlValue!= null && (urlValue.startsWith("jdbc: h2: mem:") && urlValue.contains("RUNSCRIPT FROM"))) {
-                // Here, appropriate handling can be done, such as throwing an exception, logging, or correcting the parameter
+                // todo Here, appropriate handling can be done, such as throwing an exception, logging, or correcting the parameter
                 // For example, throwing an exception
                 throw new IllegalArgumentException("Invalid url parameter value: " + urlValue);
             }
