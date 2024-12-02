@@ -298,10 +298,10 @@ public class MonitorServiceImpl implements MonitorService {
                 .collect(Collectors.toMap(Param::getField, param -> param));
         // Get the Param object corresponding to the "url" key from the paramMap
         Param urlParam = paramMap.get("url");
-        if (urlParam!= null) {
+        if (urlParam != null) {
             String urlValue = urlParam.getParamValue();
             // Check if the urlValue is not null and starts with "jdbc:h2:mem:" or contains "RUNSCRIPT FROM"
-            if (urlValue!= null && (urlValue.startsWith("jdbc: h2: mem:") && urlValue.contains("RUNSCRIPT FROM"))) {
+            if (urlValue != null && (urlValue.startsWith("jdbc: h2: mem:") && urlValue.contains("RUNSCRIPT FROM"))) {
                 // todo Here, appropriate handling can be done, such as throwing an exception, logging, or correcting the parameter
                 // For example, throwing an exception
                 throw new IllegalArgumentException("Invalid url parameter value: " + urlValue);
