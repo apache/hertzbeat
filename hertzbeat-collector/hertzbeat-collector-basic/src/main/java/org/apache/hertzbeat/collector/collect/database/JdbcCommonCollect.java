@@ -292,6 +292,11 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (Objects.nonNull(jdbcProtocol.getUrl())
                 && !Objects.equals("", jdbcProtocol.getUrl())
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
+            String url = jdbcProtocol.getUrl().toLowerCase(); // convert the URL to lowercase for case-insensitive checking
+            // check whether the parameter is valid
+            if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")) {
+                throw new IllegalArgumentException("Invalid JDBC URL: contains malicious characters.");
+            }
             // when has config jdbc url, use it 
             return jdbcProtocol.getUrl();
         }
