@@ -25,8 +25,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 
 /**
- * @date 2024-11-30
- * @Description Phone Desensitizing serializer
+ * 2024-11-30
+ * Phone Desensitizing serializer
  */
 public class PhoneDesensitizationSerializer extends JsonSerializer<String> {
 
