@@ -1,27 +1,9 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.apache.hertzbeat.collector.collect.plc;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
-import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
@@ -33,7 +15,6 @@ import org.apache.plc4x.java.api.PlcDriverManager;
 import org.apache.plc4x.java.api.messages.PlcReadRequest;
 import org.apache.plc4x.java.api.messages.PlcReadResponse;
 import org.apache.plc4x.java.api.types.PlcResponseCode;
-import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,20 +24,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-/**
- * plc collect
- */
 @Slf4j
-public class PlcCollectImpl extends AbstractCollect {
+public abstract class AbstractPlcCollectImpl extends AbstractCollect {
     private static final String[] DRIVER_LIST = {"s7", "modbus-tcp"};
     private static final String[] ADDRESS_SYNTAX = {"discrete-input", "coil", "input-register", "holding-register"};
     private static final String COIL = "coil";
 
-    private final PlcConnectionManager connectionManager;
+    private static final PlcConnectionManager CONNECTION_MANAGER;
 
-    public PlcCollectImpl() {
-        connectionManager = PlcDriverManager.getDefault().getConnectionManager();
+    static {
+        CONNECTION_MANAGER = PlcDriverManager.getDefault().getConnectionManager();
     }
+
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -114,18 +93,10 @@ public class PlcCollectImpl extends AbstractCollect {
 
         long startTime = System.currentTimeMillis();
         PlcProtocol plcProtocol = metrics.getPlc();
-        // check slaveId
-        if (!StringUtils.hasText(metrics.getPlc().getSlaveId())) {
-            plcProtocol.setSlaveId("1");
-        }
-        if (!StringUtils.hasText(plcProtocol.getTimeout())) {
-            plcProtocol.setTimeout("5000");
-        }
-        String connectionString = "modbus-tcp:tcp://" + plcProtocol.getHost() + ":" + plcProtocol.getPort() + "?unit-identifier=" + plcProtocol.getSlaveId();
         PlcConnection plcConnection = null;
-        List<String> registerAddressList = plcProtocol.getRegisterAddresses();
         try {
-            plcConnection = connectionManager.getConnection(connectionString);
+            String connectionString = getConnectionString(metrics);
+            plcConnection = CONNECTION_MANAGER.getConnection(connectionString);
             if (!plcConnection.getMetadata().isReadSupported()) {
                 log.error("This connection doesn't support reading.");
             }
@@ -134,17 +105,9 @@ public class PlcCollectImpl extends AbstractCollect {
                 log.error("This connection doesn't support writing.");
             }
 
-            // Create a new read request:
-            PlcReadRequest.Builder requestBuilder = plcConnection.readRequestBuilder();
-            for (int i = 0; i < registerAddressList.size(); i++) {
-                String s1 = plcProtocol.getAddressSyntax() + ":" + registerAddressList.get(i);
-                requestBuilder.addTagAddress(metrics.getPlc().getAddressSyntax() + ":" + i, s1);
-            }
-
-            PlcReadRequest readRequest = requestBuilder.build();
+            PlcReadRequest readRequest = buildRequest(metrics, plcConnection);
             PlcReadResponse response = readRequest.execute().get(Long.parseLong(plcProtocol.getTimeout()), TimeUnit.MILLISECONDS);
             long responseTime = System.currentTimeMillis() - startTime;
-
             Map<String, String> resultMap = new HashMap<>();
             for (String tagName : response.getTagNames()) {
                 if (response.getResponseCode(tagName) == PlcResponseCode.OK) {
@@ -193,10 +156,10 @@ public class PlcCollectImpl extends AbstractCollect {
                 }
             }
         }
+
     }
 
-    @Override
-    public String supportProtocol() {
-        return DispatchConstants.PROTOCOL_PLC;
-    }
+    protected abstract String getConnectionString(Metrics metrics);
+
+    protected abstract PlcReadRequest buildRequest(Metrics metrics, PlcConnection connection);
 }

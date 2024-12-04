@@ -218,4 +218,9 @@ public interface DispatchConstants {
      * protocol plc
      */
     String PROTOCOL_PLC = "plc";
+
+    /**
+     * protocol modbus
+     */
+    String PROTOCOL_MODBUS = "modbus";
 }

@@ -22,6 +22,8 @@ import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.plc4x.java.api.PlcConnection;
+import org.apache.plc4x.java.api.messages.PlcReadRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,16 +34,40 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Test case for {@link PlcCollectImpl}
+ * Test case for {@link AbstractPlcCollectImpl}
  */
 public class PlcCollectTest {
-    private PlcCollectImpl plcCollect;
+    private AbstractPlcCollectImpl plcCollect;
     private Metrics metrics;
     private CollectRep.MetricsData.Builder builder;
 
     @BeforeEach
     public void setup() {
-        plcCollect = new PlcCollectImpl();
+        plcCollect = new AbstractPlcCollectImpl() {
+            @Override
+            public String supportProtocol() {
+                return DispatchConstants.PROTOCOL_PLC;
+            }
+
+            @Override
+            protected String getConnectionString(Metrics metrics) {
+                PlcProtocol plcProtocol = metrics.getPlc();
+                return "modbus-tcp:tcp://" + plcProtocol.getHost() + ":" + plcProtocol.getPort() + "?unit-identifier=" + plcProtocol.getSlaveId();
+            }
+
+            @Override
+            protected PlcReadRequest buildRequest(Metrics metrics, PlcConnection connection) {
+                PlcProtocol modbus = metrics.getPlc();
+                List<String> registerAddressList = modbus.getRegisterAddresses();
+                // Create a new read request:
+                PlcReadRequest.Builder requestBuilder = connection.readRequestBuilder();
+                for (int i = 0; i < registerAddressList.size(); i++) {
+                    String s1 = modbus.getAddressSyntax() + ":" + registerAddressList.get(i);
+                    requestBuilder.addTagAddress(metrics.getPlc().getAddressSyntax() + ":" + i, s1);
+                }
+                return requestBuilder.build();
+            }
+        };
         PlcProtocol plc = PlcProtocol.builder().build();
         metrics = Metrics.builder()
                 .plc(plc)
@@ -158,7 +184,7 @@ public class PlcCollectTest {
             plc.setPort("502");
             plc.setDriverName("modbus-tcp");
             plc.setAddressSyntax("holding-register");
-            plc.setRegisterAddresses(List.of("1", "2[2]"));
+            plc.setRegisterAddresses(List.of("1", "2[3]"));
             plc.setSlaveId("1");
             plc.setTimeout("500");
 
@@ -170,6 +196,7 @@ public class PlcCollectTest {
                     "holding-register:1-1",
                     "holding-register:1-2"
             ));
+            plcCollect.preCheck(metrics);
             plcCollect.collect(builder, 1L, "app", metrics);
         });
 
@@ -180,7 +207,7 @@ public class PlcCollectTest {
             plc.setPort("502");
             plc.setDriverName("modbus-tcp");
             plc.setAddressSyntax("coil");
-            plc.setRegisterAddresses(List.of("1", "2[2]"));
+            plc.setRegisterAddresses(List.of("1", "2[3]"));
             plc.setSlaveId("1");
             plc.setTimeout("500");
 
@@ -192,7 +219,7 @@ public class PlcCollectTest {
                     "coil:1-1",
                     "coil:1-2"
             ));
-
+            plcCollect.preCheck(metrics);
             plcCollect.collect(builder, 1L, "app", metrics);
         });
 
@@ -205,7 +232,7 @@ public class PlcCollectTest {
             plc.setPort("502");
             plc.setDriverName("modbus-tcp");
             plc.setAddressSyntax("holding-register");
-            plc.setRegisterAddresses(List.of("1", "2[2]"));
+            plc.setRegisterAddresses(List.of("1", "2[3]"));
             plc.setSlaveId("2");
             plc.setTimeout("500");
 
@@ -217,6 +244,7 @@ public class PlcCollectTest {
                     "holding-register:1-1",
                     "holding-register:1-2"
             ));
+            plcCollect.preCheck(metrics);
             plcCollect.collect(builder, 1L, "app", metrics);
         });
 

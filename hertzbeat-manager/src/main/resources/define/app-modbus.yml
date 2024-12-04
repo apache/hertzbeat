@@ -155,9 +155,9 @@ metrics:
       - address-1-0=holding-register:1-0
       - address-1-1=holding-register:1-1
       - address-1-2=holding-register:1-2
-    protocol: plc
+    protocol: modbus
     # the config content when protocol is http
-    plc:
+    modbus:
       # host
       host: ^_^host^_^
       # port
@@ -175,7 +175,7 @@ metrics:
       en-US: coil stats
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 0
+    priority: 1
     # collect metrics content
     fields:
       - field: responseTime
@@ -222,9 +222,9 @@ metrics:
       - address-1-0=coil:1-0
       - address-1-1=coil:1-1
       - address-1-2=coil:1-2
-    protocol: plc
+    protocol: modbus
     # the config content when protocol is http
-    plc:
+    modbus:
       # host
       host: ^_^host^_^
       # port
