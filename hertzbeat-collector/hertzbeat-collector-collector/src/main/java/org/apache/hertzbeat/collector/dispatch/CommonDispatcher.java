@@ -186,7 +186,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         job.constructPriorMetrics();
         Set<Metrics> metricsSet = job.getNextCollectMetrics(null, true);
         // Avoid NullPointerException
-        if(null != metricsSet){
+        if (null != metricsSet){
             metricsSet.forEach(metrics -> {
                 MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, this,
                         collectorIdentity, unitConvertList);
