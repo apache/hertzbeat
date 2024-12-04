@@ -144,7 +144,7 @@ In an isolated network where multiple networks are not connected, we need to dep
 * An open source collaboration product using the `Apache2` protocol, maintained by a free and open source community.
 * No monitoring number `License`, monitoring type and other pseudo-open source restrictions .
 * Built on `Java+SpringBoot+TypeScript+Angular` mainstream technology stack , convenient secondary development .
-* Open source is not the same as free, dev based on HertzBeat must retain copyright, etc.
+* Dev based on HertzBeat need retain copyright.
 
 **HertzBeat has been included in the [CNCF Observability And Analysis - Monitoring Landscape](https://landscape.cncf.io/card-mode?category=monitoring&grouping=category)**
 

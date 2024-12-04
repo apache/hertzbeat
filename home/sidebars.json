@@ -71,11 +71,12 @@
       "label": "guides",
       "items": [
         "help/guide",
-        "help/prometheus",
+        "help/security_model",
         {
           "type": "category",
           "label": "service",
           "items": [
+            "help/prometheus",
             "help/website",
             "help/api",
             "help/ping",
@@ -154,13 +155,6 @@
             "help/euleros",
             "help/linux_script",
             "help/windows_script"
-          ]
-        },
-        {
-          "type": "category",
-          "label": "server",
-          "items": [
-            "help/ipmi"
           ]
         },
         {
@@ -383,13 +377,6 @@
             "community/how_to_verify_release"
           ]
         }
-      ]
-    },
-    {
-      "type": "category",
-      "label": "Template Marketplace",
-      "items": [
-        "help/template_marketplace"
       ]
     },
     {
