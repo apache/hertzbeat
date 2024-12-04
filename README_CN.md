@@ -78,7 +78,7 @@
   [ClickHouse](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-clickhouse.yml), [IoTDB](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-iotdb.yml),
   [Redis Cluster](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_cluster.yml), [Redis Sentinel](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-redis_sentinel.yml)
   [Doris BE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_be.yml), [Doris FE](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-doris_fe.yml),
-  [Memcached](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-nebulaGraph.yml)
+  [Memcached](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-memcached.yml), [NebulaGraph](https://github.com/apache/hertzbeat/blob/master/hertzbeat-manager/src/main/resources/define/app-nebula_graph.yml)
 - [Linux](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-linux.yml), [Ubuntu](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-ubuntu.yml),
   [CentOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-centos.yml), [Windows](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-windows.yml),
   [EulerOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-euleros.yml), [Fedora CoreOS](https://raw.githubusercontent.com/apache/hertzbeat/master/hertzbeat-manager/src/main/resources/define/app-coreos.yml),
@@ -479,6 +479,9 @@ Thanks these wonderful people, welcome to join us:
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/All-The-Best-for"><img src="https://avatars.githubusercontent.com/u/76414672?v=4?s=100" width="100px;" alt="wbs99"/><br /><sub><b>wbs99</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=All-The-Best-for" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/starryCoder"><img src="https://avatars.githubusercontent.com/u/46510059?v=4?s=100" width="100px;" alt="starryCoder"/><br /><sub><b>starryCoder</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=starryCoder" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hasimmollah"><img src="https://avatars.githubusercontent.com/u/32538599?v=4?s=100" width="100px;" alt="hasimmollah"/><br /><sub><b>hasimmollah</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=hasimmollah" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ayu-v0"><img src="https://avatars.githubusercontent.com/u/127600988?v=4?s=100" width="100px;" alt="Ayu"/><br /><sub><b>Ayu</b></sub></a><br /><a href="https://github.com/apache/hertzbeat/commits?author=ayu-v0" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
