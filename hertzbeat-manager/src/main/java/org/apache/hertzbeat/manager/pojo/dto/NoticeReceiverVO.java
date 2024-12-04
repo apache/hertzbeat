@@ -45,7 +45,6 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
  * 2024-11-30
- * NoticeReceiverVO
  */
 @Data
 @AllArgsConstructor
