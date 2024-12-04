@@ -25,8 +25,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 
 /**
- * @date 2024-11-30
- * @Description Email Desensitizing serializer
+ * 2024-11-30
+ * Email Desensitizing serializer
  */
 public class EmailDesensitizationSerializer extends JsonSerializer<String> {
 
