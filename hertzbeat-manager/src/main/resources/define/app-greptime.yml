@@ -18,7 +18,7 @@
 category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
-app: greptimeDB
+app: greptime
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
