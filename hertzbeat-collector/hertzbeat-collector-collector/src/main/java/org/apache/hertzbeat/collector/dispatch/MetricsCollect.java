@@ -97,6 +97,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * Start time of the collection task
      */
     protected long startTime;
+    /**
+     * Whether it is a service discovery job, true is yes, false is no
+     */
+    protected boolean isSd;
 
     protected List<UnitConvert> unitConvertList;
 
@@ -115,6 +119,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
+        this.isSd = job.isSd();
         this.unitConvertList = unitConvertList;
         // Temporary one-time tasks are executed with high priority
         if (isCyclic) {

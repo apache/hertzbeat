@@ -74,7 +74,6 @@ class MonitorControllerTest {
 
         MonitorDto monitorDto = new MonitorDto();
         monitorDto.setMonitor(monitor);
-        monitorDto.setDetected(true);
         monitorDto.setParams(params);
         return monitorDto;
     }

@@ -32,7 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegistryProtocol {
+public class RegistryProtocol implements CommonRequestProtocol {
     private String host;
     private String port;
     private String discoveryClientTypeName;

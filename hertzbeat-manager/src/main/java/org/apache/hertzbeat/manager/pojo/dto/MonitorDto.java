@@ -49,9 +49,6 @@ public class MonitorDto {
     @Schema(description = "Monitor Metrics", accessMode = READ_ONLY)
     private List<String> metrics;
     
-    @Schema(description = "Whether to Detect", accessMode = READ_WRITE)
-    private boolean detected;
-    
     @Schema(description = "pinned collector, default null if system dispatch", accessMode = READ_WRITE)
     private String collector;
     

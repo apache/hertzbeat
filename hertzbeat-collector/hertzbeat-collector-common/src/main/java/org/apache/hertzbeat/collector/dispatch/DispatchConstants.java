@@ -124,6 +124,10 @@ public interface DispatchConstants {
      */
     String PROTOCOL_REGISTRY = "registry";
     /**
+     * protocol http sd
+     */
+    String PROTOCOL_HTTP_SD = "httpsd";
+    /**
      * protocol redfish
      */
     String PROTOCOL_REDFISH = "redfish";
