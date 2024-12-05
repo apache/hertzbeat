@@ -1,0 +1,512 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: hdfs_namenode
+# The monitoring i18n name
+name:
+  zh-CN: Apache HDFS NameNode
+  en-US: Apache HDFS NameNode
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 HDFS NameNode 节点监控指标进行监控。<br>您可以点击 “<i>新建 Apache HDFS NameNode</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors the HDFS NameNode metrics. <br>You can click "<i>New Apache HDFS NameNode</i>" to configure, or select "<i>More Actions</i>" to import an existing configuration.
+  zh-TW: Hertzbeat 對 HDFS NameNode 節點監控指標進行監控。<br>您可以點擊 “<i>新建 Apache HDFS NameNode</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hdfs_namenode/
+  en-US: https://hertzbeat.apache.org/docs/help/hdfs_namenode/
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 50070
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    # type-param field type(most mapping the html input type)
+    type: number
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 6000
+# collect metrics config list
+metrics:
+  # metrics - Server
+  - name: FSNamesystem
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: CapacityTotal
+        type: 0
+        i18n:
+          zh-CN: 集群存储总容量
+          en-US: CapacityTotal
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: CapacityTotalGB
+        type: 0
+        unit: 'GB'
+        i18n:
+          zh-CN: 集群存储总容量
+          en-US: CapacityTotalGB
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: CapacityUsed
+        type: 0
+        i18n:
+          zh-CN: 集群存储已使用容量
+          en-US: CapacityUsed
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: CapacityUsedGB
+        type: 0
+        i18n:
+          zh-CN: 集群存储已使用容量
+          unit: 'GB'
+          en-US: CapacityUsedGB
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: CapacityRemaining
+        type: 0
+        i18n:
+          zh-CN: 集群存储剩余容量
+          en-US: CapacityRemaining
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: CapacityRemainingGB
+        type: 0
+        unit: 'GB'
+        i18n:
+          zh-CN: 集群存储剩余容量
+          en-US: CapacityRemainingGB
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: CapacityUsedNonDFS
+        type: 0
+        i18n:
+          zh-CN: 集群非 HDFS 使用容量
+          en-US: CapacityUsedNonDFS
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: TotalLoad
+        type: 0
+        i18n:
+          zh-CN: 整个集群的客户端连接数
+          en-US: TotalLoad
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: FilesTotal
+        type: 0
+        i18n:
+          zh-CN: 集群文件总数量
+          en-US: FilesTotal
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: BlocksTotal
+        type: 0
+        i18n:
+          zh-CN: 总 BLOCK 数量
+          en-US: BlocksTotal
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: PendingReplicationBlocks
+        type: 0
+        i18n:
+          zh-CN: 等待被备份的块数量
+          en-US: PendingReplicationBlocks
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: UnderReplicatedBlocks
+        type: 0
+        i18n:
+          zh-CN: 副本数不够的块数量
+          en-US: UnderReplicatedBlocks
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: CorruptBlocks
+        type: 0
+        i18n:
+          zh-CN: 坏块数量
+          en-US: CorruptBlocks
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: ScheduledReplicationBlocks
+        type: 0
+        i18n:
+          zh-CN: 安排要备份的块数量
+          en-US: ScheduledReplicationBlocks
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: PendingDeletionBlocks
+        type: 0
+        i18n:
+          zh-CN: 等待被删除的块数量
+          en-US: PendingDeletionBlocks
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: ExcessBlocks
+        type: 0
+        i18n:
+          zh-CN: 多余的块数量
+          en-US: ExcessBlocks
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: PostponedMisreplicatedBlocks
+        type: 0
+        i18n:
+          zh-CN: 被推迟处理的异常块数量
+          en-US: PostponedMisreplicatedBlocks
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: NumLiveDataNodes
+        type: 0
+        i18n:
+          zh-CN: 活的数据节点数量
+          en-US: NumLiveDataNodes
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: NumDeadDataNodes
+        type: 0
+        i18n:
+          zh-CN: 已经标记为 Dead 状态的数据节点数量
+          en-US: NumDeadDataNodes
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: NumDecomLiveDataNodes
+        type: 0
+        i18n:
+          zh-CN: 下线且 Live 的节点数量
+          en-US: NumDecomLiveDataNodes
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: NumDecomDeadDataNodes
+        type: 0
+        i18n:
+          zh-CN: 下线且 Dead 的节点数量
+          en-US: NumDecomDeadDataNodes
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: NumDecommissioningDataNodes
+        type: 0
+        i18n:
+          zh-CN: 正在下线的节点数量
+          en-US: NumDecommissioningDataNodes
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: TransactionsSinceLastCheckpoint
+        type: 0
+        i18n:
+          zh-CN: 从上次Checkpoint之后的事务数量
+          en-US: TransactionsSinceLastCheckpoint
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: LastCheckpointTime
+        type: 0
+        i18n:
+          zh-CN: 上一次Checkpoint时间
+          en-US: LastCheckpointTime
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: PendingDataNodeMessageCount
+        type: 0
+        i18n:
+          zh-CN: DATANODE 的请求被 QUEUE 在 standby namenode 中的个数
+          en-US: PendingDataNodeMessageCount
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - $.CapacityTotal
+      - $.CapacityTotalGB
+      - $.CapacityUsed
+      - $.CapacityUsedGB
+      - $.CapacityRemaining
+      - $.CapacityRemainingGB
+      - $.CapacityUsedNonDFS
+      - $.TotalLoad
+      - $.FilesTotal
+      - $.BlocksTotal
+      - $.PendingReplicationBlocks
+      - $.UnderReplicatedBlocks
+      - $.CorruptBlocks
+      - $.ScheduledReplicationBlocks
+      - $.PendingDeletionBlocks
+      - $.ExcessBlocks
+      - $.PostponedMisreplicatedBlocks
+      - $.NumLiveDataNodes
+      - $.NumDeadDataNodes
+      - $.NumDecomLiveDataNodes
+      - $.NumDecomDeadDataNodes
+      - $.NumDecommissioningDataNodes
+      - $.TransactionsSinceLastCheckpoint
+      - $.LastCheckpointTime
+      - $.PendingDataNodeMessageCount
+    calculates:
+      - CapacityTotal=$.CapacityTotal
+      - CapacityTotalGB=$.CapacityTotalGB
+      - CapacityUsed=$.CapacityUsed
+      - CapacityUsedGB=$.CapacityUsedGB
+      - CapacityRemaining=$.CapacityRemaining
+      - CapacityRemainingGB=$.CapacityRemainingGB
+      - CapacityUsedNonDFS=$.CapacityUsedNonDFS
+      - TotalLoad=$.TotalLoad
+      - FilesTotal=$.FilesTotal
+      - BlocksTotal=$.BlocksTotal
+      - PendingReplicationBlocks=$.PendingReplicationBlocks
+      - UnderReplicatedBlocks=$.UnderReplicatedBlocks
+      - CorruptBlocks=$.CorruptBlocks
+      - ScheduledReplicationBlocks=$.ScheduledReplicationBlocks
+      - PendingDeletionBlocks=$.PendingDeletionBlocks
+      - ExcessBlocks=$.ExcessBlocks
+      - PostponedMisreplicatedBlocks=$.PostponedMisreplicatedBlocks
+      - NumLiveDataNodes=$.NumLiveDataNodes
+      - NumDeadDataNodes=$.NumDeadDataNodes
+      - NumDecomLiveDataNodes=$.NumDecomLiveDataNodes
+      - NumDecomDeadDataNodes=$.NumDecomDeadDataNodes
+      - NumDecommissioningDataNodes=$.NumDecommissioningDataNodes
+      - TransactionsSinceLastCheckpoint=$.TransactionsSinceLastCheckpoint
+      - LastCheckpointTime=$.LastCheckpointTime
+      - PendingDataNodeMessageCount=$.PendingDataNodeMessageCount
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /jmx
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$.beans[?(@.name == "Hadoop:service=NameNode,name=FSNamesystem")]'
+  - name: RPC
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: ReceivedBytes
+        type: 0
+        i18n:
+          zh-CN: 接收数据速率
+          en-US: ReceivedBytes
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: SentBytes
+        type: 0
+        i18n:
+          zh-CN: 发送数据速率
+          en-US: SentBytes
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: RpcQueueTimeNumOps
+        type: 0
+        i18n:
+          zh-CN: RPC 调用速率
+          en-US: RpcQueueTimeNumOps
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - $.ReceivedBytes
+      - $.SentBytes
+      - $.RpcQueueTimeNumOps
+    calculates:
+      - ReceivedBytes=$.ReceivedBytes
+      - SentBytes=$.SentBytes
+      - RpcQueueTimeNumOps=$.RpcQueueTimeNumOps
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /jmx
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$.beans[?(@.name =~ /Hadoop:service=NameNode,name=RpcActivityForPort80\d+/)]'
+#      parseScript: '$.beans[?(@.name == "Hadoop:service=NameNode,name=RpcActivityForPort8020")]'
+  - name: runtime
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 2
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: StartTime
+        type: 1
+        i18n:
+          zh-CN: 启动时间
+          en-US: StartTime
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - $.beans[?(@.name == "java.lang:type=Runtime")].StartTime
+    calculates:
+      - StartTime=$.beans[?(@.name == "java.lang:type=Runtime")].StartTime
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /jmx
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: JvmMetric
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 3
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: MemNonHeapUsedM
+        type: 0
+        i18n:
+          zh-CN: JVM 当前已经使用的 NonHeapMemory 的大小
+          en-US: MemNonHeapUsedM
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: MemNonHeapCommittedM
+        type: 0
+        i18n:
+          zh-CN: JVM 配置的 NonHeapCommittedM 的大小
+          en-US: MemNonHeapCommittedM
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: MemHeapUsedM
+        type: 0
+        i18n:
+          zh-CN: JVM 当前已经使用的 HeapMemory 的大小
+          en-US: MemHeapUsedM
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: MemHeapCommittedM
+        type: 0
+        i18n:
+          zh-CN: JVM HeapMemory 提交大小
+          en-US: MemHeapCommittedM
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: MemHeapMaxM
+        type: 0
+        i18n:
+          zh-CN: JVM 配置的 HeapMemory 的大小
+          en-US: MemHeapMaxM
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: MemMaxM
+        type: 0
+        i18n:
+          zh-CN: JVM 运行时可以使用的最大内存大小
+          en-US: MemMaxM
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: GcCountParNew
+        type: 0
+        i18n:
+          zh-CN: 新生代GC次数
+          en-US: GcCountParNew
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: GcTimeMillisParNew
+        type: 0
+        i18n:
+          zh-CN: 新生代GC消耗时间
+          en-US: GcTimeMillisParNew
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: GcCountConcurrentMarkSweep
+        type: 0
+        i18n:
+          zh-CN: 老年代GC次数
+          en-US: GcCountConcurrentMarkSweep
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: GcTimeMillisConcurrentMarkSweep
+        type: 0
+        i18n:
+          zh-CN: 老年代GC消耗时间
+          en-US: GcTimeMillisConcurrentMarkSweep
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: GcCount
+        type: 0
+        i18n:
+          zh-CN: GC次数
+          en-US: GcCount
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: GcTimeMillis
+        type: 0
+        i18n:
+          zh-CN: GC消耗时间
+          en-US: GcTimeMillis
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: ThreadsRunnable
+        type: 0
+        i18n:
+          zh-CN: 处于 BLOCKED 状态的线程数量
+          en-US: ThreadsRunnable
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: ThreadsBlocked
+        type: 0
+        i18n:
+          zh-CN: 处于 BLOCKED 状态的线程数量
+          en-US: ThreadsBlocked
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: ThreadsWaiting
+        type: 0
+        i18n:
+          zh-CN: 处于 WAITING 状态的线程数量
+          en-US: ThreadsWaiting
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: ThreadsTimedWaiting
+        type: 0
+        i18n:
+          zh-CN: 处于 TIMED WAITING 状态的线程数量
+          en-US: ThreadsTimedWaiting
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - $.MemNonHeapUsedM
+      - $.MemNonHeapCommittedM
+      - $.MemHeapUsedM
+      - $.MemHeapCommittedM
+      - $.MemHeapMaxM
+      - $.MemMaxM
+      - $.GcCountParNew
+      - $.GcTimeMillisParNew
+      - $.GcCountConcurrentMarkSweep
+      - $.GcTimeMillisConcurrentMarkSweep
+      - $.GcCount
+      - $.GcTimeMillis
+      - $.ThreadsRunnable
+      - $.ThreadsBlocked
+      - $.ThreadsWaiting
+      - $.ThreadsTimedWaiting
+    calculates:
+      - MemNonHeapUsedM=$.MemNonHeapUsedM
+      - MemNonHeapCommittedM=$.MemNonHeapCommittedM
+      - MemHeapUsedM=$.MemHeapUsedM
+      - MemHeapCommittedM=$.MemHeapCommittedM
+      - MemHeapMaxM=$.MemHeapMaxM
+      - MemMaxM=$.MemMaxM
+      - GcCountParNew=$.GcCountParNew
+      - GcTimeMillisParNew=$.GcTimeMillisParNew
+      - GcCountConcurrentMarkSweep=$.GcCountConcurrentMarkSweep
+      - GcTimeMillisConcurrentMarkSweep=$.GcTimeMillisConcurrentMarkSweep
+      - GcCount=$.GcCount
+      - GcTimeMillis=$.GcTimeMillis
+      - ThreadsRunnable=$.ThreadsRunnable
+      - ThreadsBlocked=$.ThreadsBlocked
+      - ThreadsWaiting=$.ThreadsWaiting
+      - ThreadsTimedWaiting=$.ThreadsTimedWaiting
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /jmx
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$.beans[?(@.name == "Hadoop:service=NameNode,name=JvmMetrics")]'

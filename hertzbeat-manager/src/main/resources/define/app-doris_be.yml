@@ -1,0 +1,483 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: doris_be
+# The monitoring i18n name
+name:
+  zh-CN: Apache Doris BE
+  en-US: Apache Doris BE
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 DORIS 数据库FE的通用性能指标（load channel count、memtable flush total、process thread num、light work max threads等）进行采集监控，支持版本为DORIS2.0.0。<br>您可以点击 “<i>新建 Doris DatabaseBE</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitoring Doris DatabaseBE through general performance metric such as load channel count, memtable flush total, process thread num and light work max threads. The version we support is DORIS2.0.0. You could click the "<i>New Doris DatabaseBE Monitor</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 DORIS 資料庫FE的通用性能指標（load channel count、memtable flush total、process thread num、light work max threads等）進行採集監控，支持版本為DORIS2.0.0。<br>您可以點擊“<i>新建Doris DatabaseBE</i>”並進行配寘，或者選擇“<i>更多操作</i>”，導入已有配寘。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/doris_be/
+  en-US: https://hertzbeat.apache.org/docs/help/doris_be/
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标 Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # default value
+    defaultValue: 8040
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    type: number
+    required: false
+    # hide param-true or false
+    hide: true
+    defaultValue: 6000
+metrics:
+  - name: doris_be_load_channel_count
+    i18n:
+      zh-CN: 加载通道数
+      en-US: Load Channel Count
+    priority: 0
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_memtable_flush_total
+    i18n:
+      zh-CN: Memtable 刷新总数
+      en-US: Memtable Flush Total
+    priority: 1
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_plan_fragment_count
+    i18n:
+      zh-CN: Plan Fragment 数量
+      en-US: Plan Fragment Count
+    priority: 2
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_process_thread_num
+    i18n:
+      zh-CN: 进程线程数
+      en-US: Process Thread Num
+    priority: 3
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_query_scan_rows
+    i18n:
+      zh-CN: 查询扫描行数
+      en-US: Query Scan Rows
+    priority: 4
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_result_buffer_block_count
+    i18n:
+      zh-CN: 结果缓冲区块数
+      en-US: Result Buffer Block Count
+    priority: 5
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_send_batch_thread_pool_queue_size
+    i18n:
+      zh-CN: 批量发送线程池队列大小
+      en-US: Send Batch Thread Pool Queue Size
+    priority: 6
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_tablet_base_max_compaction_score
+    i18n:
+      zh-CN: Tablet Base 最大压缩分数
+      en-US: Tablet Base Max Compaction Score
+    priority: 7
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_timeout_canceled_fragment_count
+    i18n:
+      zh-CN: 超时取消的 Fragment 数量
+      en-US: Timeout Canceled Fragment Count
+    priority: 8
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_load_rows
+    i18n:
+      zh-CN: 加载行数
+      en-US: Load Rows
+    priority: 9
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_all_rowsets_num
+    i18n:
+      zh-CN: Rowset 总数
+      en-US: All Rowsets Num
+    priority: 10
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_all_segments_num
+    i18n:
+      zh-CN: Segment 总数
+      en-US: All Segments Num
+    priority: 11
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_heavy_work_max_threads
+    i18n:
+      zh-CN: 繁重工作最大线程数
+      en-US: Heavy Work Max Threads
+    priority: 12
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_light_work_max_threads
+    i18n:
+      zh-CN: 轻量工作最大线程数
+      en-US: Light Work Max Threads
+    priority: 13
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_heavy_work_pool_queue_size
+    i18n:
+      zh-CN: 繁重工作池队列大小
+      en-US: Heavy Work Pool Queue Size
+    priority: 14
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_light_work_pool_queue_size
+    i18n:
+      zh-CN: 轻量工作池队列大小
+      en-US: Light Work Pool Queue Size
+    priority: 15
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_heavy_work_active_threads
+    i18n:
+      zh-CN: 繁重工作活跃线程数
+      en-US: Heavy Work Active Threads
+    priority: 16
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_light_work_active_threads
+    i18n:
+      zh-CN: 轻量工作活跃线程数
+      en-US: Light Work Active Threads
+    priority: 17
+    fields:
+      - field: value
+        type: 0
+        label: true
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_compaction_bytes_total
+    i18n:
+      zh-CN: 压缩字节总数
+      en-US: Compaction Bytes Total
+    priority: 18
+    fields:
+      - field: type
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: Byte
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_disks_avail_capacity
+    i18n:
+      zh-CN: 磁盘可用容量
+      en-US: Disks Avail Capacity
+    priority: 19
+    fields:
+      - field: path
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: Byte
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_disks_total_capacity
+    i18n:
+      zh-CN: 磁盘总容量
+      en-US: Disks Total Capacity
+    priority: 20
+    fields:
+      - field: path
+        type: 1
+        label: true
+      - field: value
+        type: 0
+        unit: Byte
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_local_bytes_read_total
+    i18n:
+      zh-CN: 本地读取字节总数
+      en-US: Local Bytes Read Total
+    priority: 21
+    fields:
+      - field: value
+        type: 0
+        label: true
+        unit: Byte
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_local_bytes_written_total
+    i18n:
+      zh-CN: 本地写入字节总数
+      en-US: Local Bytes Written Total
+    priority: 22
+    fields:
+      - field: value
+        type: 0
+        label: true
+        unit: Byte
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: doris_be_memory_allocated_bytes
+    i18n:
+      zh-CN: 内存分配字节
+      en-US: Memory Allocated Bytes
+    priority: 23
+    fields:
+      - field: value
+        type: 0
+        label: true
+        unit: Byte
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus

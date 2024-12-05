@@ -1,0 +1,338 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: bigdata
+# The monitoring type eg: springboot2 linux windows tomcat mysql aws...
+app: hive
+# The monitoring i18n name
+name:
+  zh-CN: Apache Hive
+  en-US: Apache Hive
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 对 <a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a> 暴露的通用性能指标(basic、environment、thread、code_cache)进行采集监控。<span class='help_module_span'>⚠️注意：如果要监控 Apache Hive 中的信息，需要您的 Apache Hive 应用集成并开启 Hive Server2, <a class='help_module_content'  href='https://hertzbeat.apache.org/zh-cn/docs/help/hive'>点击查看具体步骤</a>。</span>
+  en-US: HertzBeat collects and monitors Apache Hive through general performance metric(health, environment, threads, memory_used) that exposed by the Hive Server2. <br><span class='help_module_span'>⚠️Note:You should make sure that your Apache Hive application have already integrated and enabled the Hive Server2, <a class='help_module_content'  href='https://hertzbeat.apache.org/docs/help/hive'>click here to see the specific steps.</a></span>
+  zh-TW: HertzBeat 對<a class='help_module_content' href='https://cwiki.apache.org/confluence/display/Hive/Hive+Metrics'> HServer2 </a>暴露的通用性能指標（basic、environment、thread、code_cache）進行採集監控。< span class='help_module_span'> ⚠️ 注意：如果要監控Apache Hive中的指標，需要您的Apache Hive應用集成並開啟Hive Server2，<a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/hive'>點擊查看具體步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/hive
+  en-US: https://hertzbeat.apache.org/docs/help/hive
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标 Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 10002
+  # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    # When the type is boolean, the frontend will display a switch for it.
+    type: boolean
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: base_path
+    # name-param field display i18n name
+    name:
+      zh-CN: Base Path
+      en-US: Base Path
+    # type-param field type(most mapping the html input type) The type "text" belongs to a text input field.
+    type: text
+    # default value
+    defaultValue: /jmx
+    # required-true or false
+    required: true
+    # hide-true or false
+    hide: true
+# collect metrics config list
+metrics:
+  # metrics - available
+  - name: available
+    i18n:
+      zh-CN: 可用性
+      en-US: Availability
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: responseTime
+        i18n:
+          zh-CN: 响应时间
+          en-US: Response Time
+        type: 0
+        unit: ms
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # Specific collection configuration when protocol is http protocol
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: ^_^base_path^_^
+      # http request method GET POST PUT DELETE PATCH
+      method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
+      parseType: default
+
+  - name: basic
+    i18n:
+      zh-CN: 基本信息
+      en-US: Basic
+    priority: 1
+    fields:
+      - field: vm_name
+        i18n:
+          zh-CN: 虚拟机名称
+          en-US: VM Name
+        type: 1
+      - field: vm_vendor
+        i18n:
+          zh-CN: 虚拟机供应商
+          en-US: VM Vendor
+        type: 1
+      - field: vm_version
+        i18n:
+          zh-CN: 虚拟机版本
+          en-US: VM Version
+        type: 1
+      - field: up_time
+        i18n:
+          zh-CN: 运行时间
+          en-US: Uptime
+        type: 0
+        unit: ms
+    aliasFields:
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmName
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmVendor
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].Uptime
+    calculates:
+      - vm_name=$.beans[?(@.name == 'java.lang:type=Runtime')].VmName
+      - vm_vendor=$.beans[?(@.name == 'java.lang:type=Runtime')].VmVendor
+      - vm_version=$.beans[?(@.name == 'java.lang:type=Runtime')].VmVersion
+      - up_time=$.beans[?(@.name == 'java.lang:type=Runtime')].Uptime
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  # metrics - environment
+  - name: environment
+    i18n:
+      zh-CN: 环境信息
+      en-US: Environment
+    priority: 2
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: https_proxyPort
+        i18n:
+          zh-CN: https 代理端口
+          en-US: https Proxy Port
+        type: 0
+      - field: os_name
+        i18n:
+          zh-CN: os 名称
+          en-US: OS Name
+        type: 1
+      - field: os_version
+        i18n:
+          zh-CN: os 版本
+          en-US: OS Version
+        type: 1
+      - field: os_arch
+        i18n:
+          zh-CN: os 架构
+          en-US: OS Arch
+        type: 1
+      - field: java_runtime_name
+        i18n:
+          zh-CN: java 运行时名称
+          en-US: Java Runtime Name
+        type: 1
+      - field: java_runtime_version
+        i18n:
+          zh-CN: java 运行时版本
+          en-US: Java Runtime Version
+        type: 1
+    # metric alias list, used to identify metrics in query results
+    aliasFields:
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.name')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.version')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.arch')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.name')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.version')].value
+      - $.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value
+    # A list of calculation scripts for metric values.
+    calculates:
+      - https_proxyPort=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'https.proxyPort')].value
+      - os_name=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.name')].value
+      - os_version=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.version')].value
+      - os_arch=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'os.arch')].value
+      - java_runtime_name=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.name')].value
+      - java_runtime_version=$.beans[?(@.name == 'java.lang:type=Runtime')].SystemProperties[?(@.key == 'java.runtime.version')].value
+    # The protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # Specific collection configuration when protocol is http protocol
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: ^_^base_path^_^
+      # http request method GET POST PUT DELETE PATCH
+      method: GET
+      # enable SSL/TLS, that is, whether it is http or https, the default is false
+      ssl: ^_^ssl^_^
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-api availability monitoring
+      parseType: jsonPath
+      # http response data parse script
+      parseScript: '$'
+
+  - name: thread
+    i18n:
+      zh-CN: 线程
+      en-US: Thread
+    priority: 3
+    fields:
+      - field: thread_count
+        i18n:
+          zh-CN: 线程数
+          en-US: Thread Count
+        type: 0
+      - field: total_started_thread
+        i18n:
+          zh-CN: 启动线程数
+          en-US: Total Started Thread
+        type: 0
+      - field: peak_thread_count
+        i18n:
+          zh-CN: 峰值线程数
+          en-US: Peak Thread Count
+        type: 0
+      - field: daemon_thread_count
+        i18n:
+          zh-CN: 守护线程数
+          en-US: Daemon Thread Count
+        type: 0
+    aliasFields:
+      - $.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].TotalStartedThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount
+      - $.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount
+    calculates:
+      - thread_count=$.beans[?(@.name == 'java.lang:type=Threading')].ThreadCount
+      - total_started_thread=$.beans[?(@.name == 'java.lang:type=Threading')].TotalStartedThreadCount
+      - peak_thread_count=$.beans[?(@.name == 'java.lang:type=Threading')].PeakThreadCount
+      - daemon_thread_count=$.beans[?(@.name == 'java.lang:type=Threading')].DaemonThreadCount
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: code_cache
+    i18n:
+      zh-CN: 代码缓存
+      en-US: Code Cache
+    priority: 4
+    fields:
+      - field: committed
+        i18n:
+          zh-CN: 已提交
+          en-US: Committed
+        type: 1
+        unit: MB
+      - field: init
+        i18n:
+          zh-CN: 初始化
+          en-US: Init
+        type: 0
+        unit: MB
+      - field: max
+        i18n:
+          zh-CN: 最大
+          en-US: Max
+        type: 0
+        unit: MB
+      - field: used
+        i18n:
+          zh-CN: 已使用
+          en-US: Used
+        type: 0
+        unit: MB
+    aliasFields:
+      - $.beans[?(@.Name == 'Code Cache')].Usage.committed
+      - $.beans[?(@.Name == 'Code Cache')].Usage.init
+      - $.beans[?(@.Name == 'Code Cache')].Usage.max
+      - $.beans[?(@.Name == 'Code Cache')].Usage.used
+    calculates:
+      - committed=$.beans[?(@.Name == 'Code Cache')].Usage.committed
+      - init=$.beans[?(@.Name == 'Code Cache')].Usage.init
+      - max=$.beans[?(@.Name == 'Code Cache')].Usage.max
+      - used=$.beans[?(@.Name == 'Code Cache')].Usage.used
+    units:
+      - committed=B->MB
+      - init=B->MB
+      - max=B->MB
+      - used=B->MB
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: ^_^base_path^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'

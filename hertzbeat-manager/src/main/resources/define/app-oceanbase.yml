@@ -1,0 +1,361 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: db
+# The monitoring type
+app: oceanbase
+# The monitoring i18n name
+name:
+  zh-CN: OceanBase数据库
+  en-US: OceanBase DB
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 OceanBase 数据库的通用性能指标(系统信息、性能状态、Innodb、缓存、事物、用户线程、慢SQL等)进行采集监控，支持版本为 OceanBase 4.0+。<br>您可以点击“<i>新建 OceanBase 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of OceanBase database (system information, performance status, Innodb, cache, things, user threads, slow SQL, etc.). Supported version is OceanBase 4.0+. <br>You can click "<i>New OceanBase Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 OceanBase 數據庫的通用性能指標(系統信息、性能狀態、Innodb、緩存、事物、用戶線程、慢SQL等)進行采集監控，支持版本爲 OceanBase 4.0+。<br>您可以點擊“<i>新建 OceanBase 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/oceanbase
+  en-US: https://hertzbeat.apache.org/docs/help/oceanbase
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 2881
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[400,200000]'
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 6000
+  # field-param field key
+  - field: database
+    # name-param field display i18n name
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    # type-param field type(most mapping the html input tag)
+    type: text
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input tag)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+    # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+    # field-param field key
+  - field: url
+    # name-param field display i18n name
+    name:
+      zh-CN: URL
+      en-US: URL
+    # type-param field type(most mapping the html input tag)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+
+# collect metrics config list
+metrics:
+  # metrics - basic
+  - name: basic
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    i18n:
+      zh-CN: 基础 信息
+      en-US: Basic Info
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: version
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+      - field: datadir
+        type: 1
+        i18n:
+          zh-CN: 存储目录
+          en-US: DataDir
+      - field: max_connections
+        type: 0
+        i18n:
+          zh-CN: 最大连接数
+          en-US: Max Connections
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - version
+      - version_compile_os
+      - version_compile_machine
+      - datadir
+      - max_connections
+    # (optional)mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - datadir=datadir
+      - max_connections=max_connections
+      - version=version+"_"+version_compile_os+"_"+version_compile_machine
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jdbc
+    # the config content when protocol is jdbc
+    jdbc:
+      # OceanBase host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # OceanBase port
+      port: ^_^port^_^
+      # database platform name
+      platform: mysql
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # database name
+      database: ^_^database^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      # SQL Query Method：oneRow, multiRow, columns
+      queryType: columns
+      # sql
+      sql: show global variables where Variable_name like 'version%' or Variable_name = 'max_connections' or Variable_name = 'datadir' ;
+      # JDBC url
+      url: ^_^url^_^
+  # metrics - tenant
+  - name: tenant
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    i18n:
+      zh-CN: 租户 信息
+      en-US: Tenant Info
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: tenant_id
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 租户id
+          en-US: TenantId
+      - field: tenant_name
+        type: 1
+        i18n:
+          zh-CN: 租户名称
+          en-US: tenantName
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: status
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - tenant_id
+      - tenant_name
+      - status
+    # (optional)mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - tenant_id=tenant_id
+      - tenant_name=tenant_name
+      - status=status
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jdbc
+    # the config content when protocol is jdbc
+    jdbc:
+      # OceanBase host: ipv4 ipv6 host
+      host: ^_^host^_^
+      # OceanBase port
+      port: ^_^port^_^
+      # database platform name
+      platform: mysql
+      # username
+      username: ^_^username^_^
+      # password
+      password: ^_^password^_^
+      # database name
+      database: ^_^database^_^
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+      # SQL Query Method：oneRow, multiRow, columns
+      queryType: multiRow
+      # sql
+      sql: select tenant_id, tenant_name, info, status from oceanbase.__all_tenant;
+      # JDBC url
+      url: ^_^url^_^
+      
+  - name: sql
+    priority: 2
+    i18n:
+      zh-CN: Sql 信息
+      en-US: Sql Info
+    fields:
+      - field: con_id
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 租户id
+          en-US: TenantId
+      - field: sql_select_count
+        type: 0
+        i18n:
+          zh-CN: select 语句执行次数
+          en-US: sql select count
+      - field: sql_insert_count
+        type: 0
+        i18n:
+          zh-CN: insert 语句执行次数
+          en-US: sql insert count
+      - field: sql_update_count
+        type: 0
+        i18n:
+          zh-CN: update 语句执行次数
+          en-US: sql update count
+      - field: sql_delete_count
+        type: 0
+        i18n:
+          zh-CN: delete 语句执行次数
+          en-US: sql delete count
+#      - field: com_commit
+#        type: 0
+#        i18n:
+#          zh-CN: 事务提交次数
+#          en-US: trans commit count
+#      - field: com_rollback
+#        type: 0
+#        i18n:
+#          zh-CN: 事务回滚次数
+#          en-US: trans rollback count
+    aliasFields:
+      - con_id
+      - sql_select_count
+      - sql_insert_count
+      - sql_update_count
+      - sql_delete_count
+#      - com_commit
+#      - com_rollback
+    calculates:
+      - con_id=con_id
+      - sql_select_count=sql_select_count
+      - sql_insert_count=sql_insert_count
+      - sql_update_count=sql_update_count
+      - sql_delete_count=sql_delete_count
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: |
+        SELECT
+            con_id,
+            MAX(CASE WHEN name = 'sql select count' THEN value END) AS "sql_select_count",
+            MAX(CASE WHEN name = 'sql insert count' THEN value END) AS "sql_insert_count",
+            MAX(CASE WHEN name = 'sql update count' THEN value END) AS "sql_update_count",
+            MAX(CASE WHEN name = 'sql delete count' THEN value END) AS "sql_delete_count"
+        FROM
+            oceanbase.gv$sysstat
+        WHERE
+            CLASS = 8
+            AND name IN ('sql select count', 'sql insert count', 'sql update count', 'sql delete count')
+        GROUP BY
+            con_id
+        ORDER BY
+            con_id;
+      url: ^_^url^_^
+
+
+  - name: process_state
+    priority: 3
+    i18n:
+      zh-CN: 进程状态 信息
+      en-US: Process State Info
+    fields:
+      - field: state
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 进程状态
+          en-US: State
+      - field: num
+        type: 0
+        i18n:
+          zh-CN: 该状态进程数量
+          en-US: Num
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: mysql
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: multiRow
+      sql: select state, count(*) as num from information_schema.PROCESSLIST where state != '' group by state;
+      url: ^_^url^_^

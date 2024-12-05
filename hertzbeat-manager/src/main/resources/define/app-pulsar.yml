@@ -1,0 +1,380 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category: service-application service monitoring, db-database monitoring, custom-custom monitoring.
+category: mid
+# The monitoring application type name (consistent with the file name)
+app: pulsar
+name:
+  zh-CN: Pulsar
+  en-US: Pulsar
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat  从 Pulsar WebService接口查询到 Pulsar 的通用指标数据来进行监控。<br>您可以点击 “<i>新建 Pulsar</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat queries general metric data from Pulsar through the Pulsar WebService interface for monitoring. You can click "<i>Create Pulsar</i>" to configure a new monitoring task, or select "<i>More Actions</i>" to import existing configurations.
+  zh-TW: Hertzbeat 從 Pulsar WebService接口查詢到 Pulsar 的通用指標數據來進行監控。<br>您可以點擊 “<i>新建 Pulsar</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/pulsar
+  en-US: https://hertzbeat.apache.org/docs/help/pulsar
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # default value
+    defaultValue: 8030
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    type: number
+    required: false
+    # hide param-true or false
+    hide: true
+    defaultValue: 6000
+metrics:
+  - name: pulsar_version_info
+    i18n:
+      zh-CN: 版本信息
+      en-US: Version Info
+    priority: 0
+    fields:
+      - field: version
+        i18n:
+          zh-CN: 版本信息
+          en-US: Version Info
+        type: 1
+        label: false
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: process_start_time_seconds
+    i18n:
+      zh-CN: 进程启动时间
+      en-US: Process Start Time
+    priority: 1
+    fields:
+      - field: value
+        i18n:
+          zh-CN: 进程启动时间
+          en-US: Process Start Time
+        type: 0
+        label: false
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: process_open_fds
+    i18n:
+      zh-CN: 打开的文件描述符
+      en-US: Open File Descriptors
+    priority: 2
+    fields:
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 打开的文件描述符
+          en-US: Open File Descriptors
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: process_max_fds
+    i18n:
+      zh-CN: 最大文件描述符
+      en-US: Max File Descriptors
+    priority: 3
+    fields:
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 最大文件描述符
+          en-US: Max File Descriptors
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: jvm_memory_pool_allocated_bytes
+    i18n:
+      zh-CN: JVM 内存池已分配字节
+      en-US: JVM Memory Pool Allocated Bytes
+    priority: 4
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    fields:
+      - field: .name
+        type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+        label: true
+      - field: pool
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 池
+          en-US: Pool
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: jvm_memory_pool_bytes_used
+    i18n:
+      zh-CN: JVM 内存池已使用字节
+      en-US: JVM Memory Pool Used Bytes
+    priority: 5
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    fields:
+      - field: pool
+        type: 1
+        i18n:
+          zh-CN: 池
+          en-US: Pool
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: jvm_memory_pool_bytes_committed
+    i18n:
+      zh-CN: JVM 内存池已提交字节
+      en-US: JVM Memory Pool Committed Bytes
+    priority: 6
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    fields:
+      - field: pool
+        type: 1
+        i18n:
+          zh-CN: 池
+          en-US: Pool
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: jvm_memory_pool_bytes_max
+    i18n:
+      zh-CN: JVM 内存池最大字节
+      en-US: JVM Memory Pool Max Bytes
+    priority: 7
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    fields:
+      - field: pool
+        type: 1
+        i18n:
+          zh-CN: 池
+          en-US: Pool
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: pulsar_broker_publish_latency
+    i18n:
+      zh-CN: broker 发布延迟
+      en-US: Broker Publish Latency
+    priority: 8
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    fields:
+      - field: .name
+        type: 1
+        i18n:
+          zh-CN: 指标名称
+          en-US: Metric Name
+        label: true
+      - field: cluster
+        type: 1
+        i18n:
+          zh-CN: 集群
+          en-US: Cluster
+        label: true
+      - field: quantile
+        type: 1
+        i18n:
+          zh-CN: 分位数
+          en-US: Quantile
+        label: true
+      - field: value
+        type: 0
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+  - name: pulsar_metadata_store_ops_latency_ms
+    i18n:
+      zh-CN: 元数据存储操作延迟
+      en-US: Metadata Store Ops Latency
+    priority: 9
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    fields:
+      - field: .name
+        type: 1
+        i18n:
+          zh-CN: 指标名称
+          en-US: Metric Name
+        label: true
+      - field: cluster
+        type: 1
+        i18n:
+          zh-CN: 集群
+          en-US: Cluster
+        label: true
+      - field: name
+        type: 1
+        i18n:
+          zh-CN: 名称
+          en-US: Name
+        label: true
+      - field: type
+        type: 1
+        i18n:
+          zh-CN: 类型
+          en-US: Type
+        label: true
+      - field: status
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: Status
+        label: true
+      - field: le
+        type: 0
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      # url request interface path
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus

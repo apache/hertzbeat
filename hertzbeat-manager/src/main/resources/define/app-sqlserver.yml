@@ -1,0 +1,277 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: db
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: sqlserver
+# The monitoring i18n name
+name:
+  zh-CN: SqlServer数据库
+  en-US: SqlServer DB
+# The description and help of this monitoring type
+help:
+  zh-CN: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 协议</a> 通过配置 SQL 对 SqlServer 数据库的通用性能指标(系统信息、性能状态、连接等)进行采集监控，支持版本为 SqlServer 2017+。<br><a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/sqlserver'>点击查看可能遇见的问题</a>。您可以点击“<i>新建 Mysql 数据库</i>”并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC Protocol</a> to configure SQL for collecting general metrics of SqlServer database (basic、performance counters、connection etc.). Supported version is SqlServer 2017+. <br><a class='help_module_content' href='https://hertzbeat.apache.org/docs/help/sqlserver'>Click here to see the possible SSH problems.</a>. You can click "<i>New Mysql Database</i>" and configure it, or select "<i>More Operations</i>" to import the existing configuration.
+  zh-TW: HertzBeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-jdbc'> JDBC 協議</a> 通過配置 SQL 對 SqlServer 數據庫的通用性能指標(系統信息、性能狀態、连接等)進行采集監控，支持版本爲 SqlServer 2017+。<br><a class='help_module_content' href='https://hertzbeat.apache.org/zh-cn/docs/help/sqlserver'>點擊查看可能遇見的問題</a>。您可以點擊“<i>新建 Mysql 數據庫</i>”並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/sqlserver
+  en-US: https://hertzbeat.apache.org/docs/help/sqlserver
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 1433
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 查询超时时间(ms)
+      en-US: Query Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[400,200000]'
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+    # default value
+    defaultValue: 6000
+  # field-param field key
+  - field: database
+    # name-param field display i18n name
+    name:
+      zh-CN: 数据库名称
+      en-US: Database Name
+    # type-param field type(most mapping the html input tag)
+    type: text
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input tag)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: url
+    # type-param field type(most mapping the html input tag)
+    name:
+      zh-CN: URL
+      en-US: URL
+    # type-param field type(most mapping the html input tag)
+    type: text
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+# collect metrics config list
+metrics:
+  # metrics - basic
+  - name: basic
+    i18n:
+      zh-CN: 基本信息
+      en-US: Basic
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: machine_name
+        i18n:
+          zh-CN: 机器名称
+          en-US: Machine Name
+        type: 1
+        label: true
+      - field: server_name
+        i18n:
+          zh-CN: 数据库服务器名称
+          en-US: Server Name
+        type: 1
+      - field: version
+        i18n:
+          zh-CN: 数据库版本
+          en-US: Version
+        type: 1
+      - field: edition
+        i18n:
+          zh-CN: 版本类型
+          en-US: Edition
+        type: 1
+      - field: start_time
+        i18n:
+          zh-CN: 启动时间
+          en-US: Start Time
+        type: 1
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: jdbc
+    # the config content when protocol is jdbc
+    jdbc:
+      # server host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # server port
+      port: ^_^port^_^
+      # database type
+      platform: sqlserver
+      # database username
+      username: ^_^username^_^
+      # database password
+      password: ^_^password^_^
+      # database name
+      database: ^_^database^_^
+      # jdbc connect timeout
+      timeout: ^_^timeout^_^
+      # sql query data type: oneRow, multiRow, columns
+      queryType: oneRow
+      # sql
+      sql: SELECT SERVERPROPERTY('MachineName') AS machine_name, SERVERPROPERTY('ServerName') AS server_name, SERVERPROPERTY('ProductVersion') AS version, SERVERPROPERTY('Edition') AS edition, sqlserver_start_time AS start_time FROM sys.dm_os_sys_info;
+      # custom jdbc url
+      url: ^_^url^_^
+
+  - name: performance_counters
+    i18n:
+      zh-CN: 性能指标
+      en-US: Performance Counters
+    priority: 1
+    fields:
+      - field: database_pages
+        i18n:
+          zh-CN: 数据库页数
+          en-US: Database Pages
+        type: 0
+      - field: target_pages
+        i18n:
+          zh-CN: 目标页数
+          en-US: Target Pages
+        type: 0
+      - field: page_life_expectancy
+        i18n:
+          zh-CN: 页面平均寿命
+          en-US: Page Life Expectancy
+        type: 0
+      - field: buffer_cache_hit_ratio
+        i18n:
+          zh-CN: 缓存命中率
+          en-US: Buffer Cache Hit Ratio
+        type: 0
+      - field: checkpoint_pages_sec
+        i18n:
+          zh-CN: 每秒写入检查点页数
+          en-US: Checkpoint Pages/sec
+        type: 0
+      - field: page_reads_sec
+        i18n:
+          zh-CN: 每秒读取页面数
+          en-US: Page Reads/sec
+        type: 0
+      - field: page_writes_sec
+        i18n:
+          zh-CN: 每秒写入页面数
+          en-US: Page Writes/sec
+        type: 0
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    aliasFields:
+      - Database pages
+      - Target pages
+      - Page life expectancy
+      - Buffer cache hit ratio
+      - Checkpoint pages/sec
+      - Page reads/sec
+      - Page writes/sec
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - database_pages=Database pages
+      - target_pages=Target pages
+      - page_life_expectancy=Page life expectancy
+      - buffer_cache_hit_ratio=Buffer cache hit ratio
+      - checkpoint_pages_sec=Checkpoint pages/sec
+      - page_reads_sec=Page reads/sec
+      - page_writes_sec=Page writes/sec
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: sqlserver
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: columns
+      sql: select counter_name, cntr_value from sys.dm_os_performance_counters where object_name = 'SQLServer:Buffer Manager';
+      url: ^_^url^_^
+
+  - name: connection
+    i18n:
+      zh-CN: 连接情况
+      en-US: Connection
+    priority: 2
+    fields:
+      - field: user_connection
+        i18n:
+          zh-CN: 连接数
+          en-US: User Connection
+        type: 0
+    protocol: jdbc
+    jdbc:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      platform: sqlserver
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      timeout: ^_^timeout^_^
+      queryType: oneRow
+      sql: SELECT cntr_value as user_connection FROM sys.dm_os_performance_counters WHERE object_name = 'SQLServer:General Statistics' AND counter_name = 'User Connections';
+      url: ^_^url^_^

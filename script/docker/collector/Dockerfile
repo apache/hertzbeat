@@ -19,6 +19,8 @@ FROM openjdk:17-slim-buster
 
 MAINTAINER Apache HertzBeat "dev@hertzbeat.apache.org"
 
+ARG VERSION
+
 # Install SSH
 RUN apt-get update && apt-get install -y openssh-server 
 RUN mkdir /var/run/sshd
@@ -29,6 +31,6 @@ ENV JAVA_OPTS ""
 ENV TZ=Asia/Shanghai
 ENV LANG=en_US.UTF-8
 
-WORKDIR /opt/apache-hertzbeat-collector-*-incubating-bin/
+WORKDIR /opt/apache-hertzbeat-collector-${VERSION}-incubating-bin/
 
 ENTRYPOINT ["./bin/entrypoint.sh"]
