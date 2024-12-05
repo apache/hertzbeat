@@ -30,9 +30,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Test case for {@link CollectUtil}
@@ -129,6 +136,64 @@ class CollectUtilTest {
         List<Metrics> metricsListTarget = new ArrayList<>();
         metricsListTarget.add(metricsTarget);
         metricsListTarget.add(metricsTarget);
+        JsonElement jsonArrayTarget = new Gson().toJsonTree(metricsListTarget);
+        assertEquals(JSON_MAPPER.readTree(jsonArrayTarget.toString()), JSON_MAPPER.readTree(res2.toString()));
+    }
+
+    static Stream<Arguments> testParamsForShouldVerifyReplaceCryPlaceholder() {
+        JsonObject jsonObject = new JsonObject();
+        String value = "^o^A1-B2.C3^o^";
+        String replacedField = "A1-B2.C3";
+        String replacedValue = "A1B2C3";
+        String nameKey = "name";
+        String messageKey = "message";
+
+        jsonObject.add(messageKey, new JsonPrimitive(value));
+        Map<String, Configmap> configmap = new HashMap<>();
+        Configmap config = Configmap.builder().key(nameKey).value(replacedValue).build();
+        configmap.put(replacedField, config);
+
+        JsonObject jsonObjectExpected = new JsonObject();
+        jsonObjectExpected.addProperty(messageKey, replacedValue);
+
+        Map<String, Configmap> configmapUnmatched = new HashMap<>();
+        Configmap configUnmatched = Configmap.builder().key(nameKey).value(replacedValue).build();
+        configmapUnmatched.put(nameKey, configUnmatched);
+
+        JsonObject jsonObjectExpectedForUnmatched = new JsonObject();
+        jsonObjectExpectedForUnmatched.addProperty(messageKey, value);
+
+        Map<String, Configmap> configMapSameLength = new HashMap<>();
+        Configmap configSameLength = Configmap.builder().key(nameKey).value(null).build();
+        configMapSameLength.put(replacedField, configSameLength);
+
+        JsonObject jsonObjectExpectedForSameLength = new JsonObject();
+        jsonObjectExpectedForSameLength.addProperty(messageKey, (String) null);
+
+        return Stream.of(
+                Arguments.of(jsonObject.deepCopy(), configMapSameLength, jsonObjectExpectedForSameLength),
+                Arguments.of(jsonObject.deepCopy(), configmap, jsonObjectExpected),
+                Arguments.of(jsonObject.deepCopy(), configmapUnmatched, jsonObjectExpectedForUnmatched)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("testParamsForShouldVerifyReplaceCryPlaceholder")
+    void shouldVerifyReplaceCryPlaceholder(JsonObject jsonObject,
+                                           Map<String, Configmap> configmap,
+                                           JsonObject jsonObjectTarget) throws JsonProcessingException {
+
+        JsonElement res1 = CollectUtil.replaceCryPlaceholder(jsonObject, configmap);
+        assertEquals(JSON_MAPPER.readTree(jsonObjectTarget.toString()), JSON_MAPPER.readTree(res1.toString()));
+
+        List<JsonObject> metricsList = new ArrayList<>();
+        metricsList.add(jsonObject);
+        JsonElement jsonArray = new Gson().toJsonTree(metricsList);
+        JsonElement res2 = CollectUtil.replaceCryPlaceholder(jsonArray, configmap);
+
+        List<JsonObject> metricsListTarget = new ArrayList<>();
+
+        metricsListTarget.add(jsonObjectTarget);
         JsonElement jsonArrayTarget = new Gson().toJsonTree(metricsListTarget);
         assertEquals(JSON_MAPPER.readTree(jsonArrayTarget.toString()), JSON_MAPPER.readTree(res2.toString()));
     }
