@@ -294,7 +294,9 @@ public class JdbcCommonCollect extends AbstractCollect {
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
             String url = jdbcProtocol.getUrl().toLowerCase(); // convert the URL to lowercase for case-insensitive checking
             // check whether the parameter is valid
-            if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")) {
+            if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")
+                    || url.contains("allowloadlocalinfile") || url.contains("allowloadlocalinfileinpath")
+                    || url.contains("uselocalinfile")) {
                 throw new IllegalArgumentException("Invalid JDBC URL: contains malicious characters.");
             }
             // when has config jdbc url, use it 
