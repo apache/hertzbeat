@@ -33,3 +33,11 @@ Apache HertzBeat supports users to customize collectors to personalize the colle
 ## Security Constraints in Other Customizations
 
 Apache HertzBeat provides a variety of system extension methods and custom capabilities. Users need to pay attention to the security of customizations during use. Of course, all extension capabilities need to be within the scope of authenticated users.
+
+----
+
+## Reporting a Vulnerability
+
+Please do not file GitHub issues for security vulnerabilities as they are public!
+
+To report a new vulnerability you have discovered please follow the [ASF vulnerability reporting process](https://apache.org/security/#reporting-a-vulnerability).

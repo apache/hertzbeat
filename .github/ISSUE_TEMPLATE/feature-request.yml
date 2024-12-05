@@ -53,4 +53,4 @@ body:
   validations:
     required: false
 - type: markdown
-  value: "Please read the [Contribution Guideline](https://hertzbeat.apache.org/docs/others/contributing) before submitting the PR"
+  value: "Please read the [Contribution Guideline](https://hertzbeat.apache.org/docs/community/contribution) before submitting the PR"

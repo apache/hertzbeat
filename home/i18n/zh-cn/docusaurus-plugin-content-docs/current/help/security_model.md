@@ -33,3 +33,11 @@ Apache HertzBeat 支持用户自定义采集器来个性化采集监控指标等
 ## 其它自定义下的安全约束
 
 Apache HertzBeat 提供多种系统扩展方式和自定义能力，用户在使用过程中需注意自定义的安全性。当然所有扩展能力都是需在认证用户范围。
+
+----
+
+## Reporting a Vulnerability
+
+Please do not file GitHub issues for security vulnerabilities as they are public!
+
+To report a new vulnerability you have discovered please follow the [ASF vulnerability reporting process](https://apache.org/security/#reporting-a-vulnerability).
