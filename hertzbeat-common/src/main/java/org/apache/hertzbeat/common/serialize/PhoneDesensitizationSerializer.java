@@ -18,22 +18,32 @@
 package org.apache.hertzbeat.common.serialize;
 
 import cn.hutool.core.util.DesensitizedUtil;
+import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import org.apache.hertzbeat.common.cache.CacheFactory;
+import org.apache.hertzbeat.common.cache.CommonCacheService;
+import org.apache.hertzbeat.common.entity.dto.NoticeReceiverVO;
 
 import java.io.IOException;
 
 /**
- * @author Ayu
- * @date 2024-11-30
- * @Description Phone Desensitizing serializer
+ * 2024-12-06
+ * Phone Desensitizing serializer
  */
 public class PhoneDesensitizationSerializer extends JsonSerializer<String> {
 
     @Override
     public void serialize(String phone, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
-        String phoneDesensitization = DesensitizedUtil.mobilePhone(phone);
+        String phoneDesensitization = "";
+        CommonCacheService<String, Object> desensitizationMapCache = CacheFactory.getDesensitizationMapCache();
+        if (StrUtil.isNotBlank(phone)){
+            phoneDesensitization = DesensitizedUtil.mobilePhone(phone);
+            NoticeReceiverVO currentValue = (NoticeReceiverVO)jsonGenerator.getOutputContext().getCurrentValue();
+            desensitizationMapCache.put(currentValue.getId()+"_"+phoneDesensitization, phone);
+        }
+
         jsonGenerator.writeString(phoneDesensitization);
     }
 }

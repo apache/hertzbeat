@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.service.impl;
 
+import cn.hutool.core.util.ObjectUtil;
 import jakarta.persistence.criteria.Predicate;
 import java.io.IOException;
 import java.io.InputStream;
@@ -132,6 +133,13 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public void editReceiver(NoticeReceiver noticeReceiver) {
+        CommonCacheService<String, Object> desensitizationMapCache = CacheFactory.getDesensitizationMapCache();
+        if (ObjectUtil.isNotEmpty(noticeReceiver.getEmail()) && ObjectUtil.isNotEmpty(desensitizationMapCache.get(noticeReceiver.getId()+"_"+noticeReceiver.getEmail()))){
+            noticeReceiver.setEmail((String) desensitizationMapCache.get(noticeReceiver.getId()+"_"+noticeReceiver.getEmail()));
+        }
+        if (ObjectUtil.isNotEmpty(noticeReceiver.getPhone()) && ObjectUtil.isNotEmpty(desensitizationMapCache.get(noticeReceiver.getId()+"_"+noticeReceiver.getPhone()))){
+            noticeReceiver.setPhone((String) desensitizationMapCache.get(noticeReceiver.getId()+"_"+noticeReceiver.getPhone()));
+        }
         noticeReceiverDao.save(noticeReceiver);
     }
 
@@ -267,6 +275,16 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
+        if (null != noticeReceiver.getId()){
+            CommonCacheService<String, Object> desensitizationMapCache = CacheFactory.getDesensitizationMapCache();
+            if (ObjectUtil.isNotEmpty(noticeReceiver.getEmail()) && ObjectUtil.isNotEmpty(desensitizationMapCache.get(noticeReceiver.getId()+"_"+noticeReceiver.getEmail()))){
+                noticeReceiver.setEmail((String) desensitizationMapCache.get(noticeReceiver.getId()+"_"+noticeReceiver.getEmail()));
+            }
+            if (ObjectUtil.isNotEmpty(noticeReceiver.getPhone()) && ObjectUtil.isNotEmpty(desensitizationMapCache.get(noticeReceiver.getId()+"_"+noticeReceiver.getPhone()))){
+                noticeReceiver.setPhone((String) desensitizationMapCache.get(noticeReceiver.getId()+"_"+noticeReceiver.getPhone()));
+            }
+        }
+
         Map<String, String> tags = new HashMap<>(8);
         tags.put(CommonConstants.TAG_MONITOR_ID, "100");
         tags.put(CommonConstants.TAG_MONITOR_NAME, "100Name");

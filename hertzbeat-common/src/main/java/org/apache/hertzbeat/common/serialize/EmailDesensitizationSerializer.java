@@ -21,23 +21,29 @@ import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import org.apache.hertzbeat.common.cache.CacheFactory;
+import org.apache.hertzbeat.common.cache.CommonCacheService;
+import org.apache.hertzbeat.common.entity.dto.NoticeReceiverVO;
 
 import java.io.IOException;
 
 /**
- * @author Ayu
- * @date 2024-11-30
- * @Description Email Desensitizing serializer
+ * 2024-12-06
+ * Email Desensitizing serializer
  */
 public class EmailDesensitizationSerializer extends JsonSerializer<String> {
 
     @Override
     public void serialize(String email, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         String emailDesensitization = "";
+        CommonCacheService<String, Object> desensitizationMapCache = CacheFactory.getDesensitizationMapCache();
         if (StrUtil.isNotBlank(email)) {
             int index = StrUtil.indexOf(email, '@');
             emailDesensitization = index <= 1 ? email :
-                    StrUtil.replace(email, 1,index,'.');
+                    StrUtil.replace(email, 1,index,'*');
+            NoticeReceiverVO currentValue = (NoticeReceiverVO)jsonGenerator.getOutputContext().getCurrentValue();
+
+            desensitizationMapCache.put(currentValue.getId()+"_"+emailDesensitization, email);
         }
         jsonGenerator.writeString(emailDesensitization);
     }
