@@ -33,6 +33,9 @@ public final class CacheFactory {
     
     private static final CommonCacheService<String, Object> ALERT_CONVERGE_CACHE =
             new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
+
+    private static final CommonCacheService<String, Object> DESENSITIZATION_MAP_CACHE =
+            new CaffeineCacheServiceImpl<>(10, 1000, Duration.ofDays(1), false);
     
     /**
      * get notice cache
@@ -57,4 +60,10 @@ public final class CacheFactory {
     public static CommonCacheService<String, Object> getAlertConvergeCache() {
         return ALERT_CONVERGE_CACHE;
     }
+
+    /**
+     * get desensitizationMap cache
+     * @return desensitizationMap cache
+     */
+    public static CommonCacheService<String, Object> getDesensitizationMapCache(){return DESENSITIZATION_MAP_CACHE;};
 }
