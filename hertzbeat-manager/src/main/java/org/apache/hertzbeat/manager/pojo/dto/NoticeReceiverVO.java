@@ -44,9 +44,7 @@ import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY;
 import static io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_WRITE;
 
 /**
- * @author Ayu
- * @date 2024-11-30
- * @Description NoticeReceiverVO
+ * 2024-11-30
  */
 @Data
 @AllArgsConstructor
