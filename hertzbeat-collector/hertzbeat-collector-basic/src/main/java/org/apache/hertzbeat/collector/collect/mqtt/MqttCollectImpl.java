@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -70,7 +71,9 @@ public class MqttCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final Builder builder = metricsDataBuilder.getBuilder();
+
         MqttProtocol mqtt = metrics.getMqtt();
         String protocolVersion = mqtt.getProtocolVersion();
         MqttVersion mqttVersion = MqttVersion.valueOf(protocolVersion);

@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.telnet.TelnetClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
@@ -53,7 +54,8 @@ public class TelnetCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
         TelnetProtocol telnet = metrics.getTelnet();
         int timeout = CollectUtil.getTimeout(telnet.getTimeout());
@@ -65,7 +67,7 @@ public class TelnetCollectImpl extends AbstractCollect {
             if (telnetClient.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
                 List<String> aliasFields = metrics.getAliasFields();
-                Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), app);
+                Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), metricsDataBuilder.getBuilder().getApp());
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
                 if (resultMap.size() < aliasFields.size()) {
                     log.error("telnet response data not enough: {}", resultMap);

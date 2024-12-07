@@ -17,9 +17,15 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.jexl3.JexlExpression;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriter;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
@@ -28,6 +34,7 @@ import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -36,8 +43,6 @@ import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.Pair;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -128,15 +133,15 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     public void run() {
         this.startTime = System.currentTimeMillis();
         setNewThreadName(monitorId, app, startTime, metrics);
-        CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder();
-        response.setApp(app);
-        response.setId(monitorId);
-        response.setTenantId(tenantId);
+        CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder()
+                .setApp(app)
+                .setId(monitorId)
+                .setTenantId(tenantId);
         // for prometheus auto
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
             List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
                 .getInstance().collect(response, metrics);
-            validateResponse(metricsData.stream().findFirst().orElse(null));
+            validateMetricsData(metricsData.stream().findFirst().orElse(null));
             collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
             return;
         }
@@ -153,7 +158,18 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         } else {
             try {
                 abstractCollect.preCheck(metrics);
-                abstractCollect.collect(response, monitorId, app, metrics);
+
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(response, new ArrowVectorWriterImpl(metrics.getAliasFields()));
+                abstractCollect.collect(metricsDataBuilder, metrics);
+
+                // Alias attribute expression replacement calculation
+                if (fastFailed()) {
+                    return;
+                }
+
+                calculateFields(metrics, response, metricsDataBuilder);
+                CollectRep.MetricsData metricsData = validateMetricsData(metricsDataBuilder);
+                collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
             } catch (Exception e) {
                 String msg = e.getMessage();
                 if (msg == null && e.getCause() != null) {
@@ -170,13 +186,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 }
             }
         }
-        // Alias attribute expression replacement calculation
-        if (fastFailed()) {
-            return;
-        }
-        calculateFields(metrics, response);
-        CollectRep.MetricsData metricsData = validateResponse(response);
-        collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
     }
 
 
@@ -186,159 +195,157 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * @param metrics     Metrics configuration
      * @param collectData Data collection
      */
-    private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData) {
+    private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData, MetricsDataBuilder metricsDataBuilder) throws Exception {
         collectData.setPriority(metrics.getPriority());
-        List<CollectRep.Field> fieldList = new LinkedList<>();
-        for (Metrics.Field field : metrics.getFields()) {
-            CollectRep.Field.Builder fieldBuilder = CollectRep.Field.newBuilder();
-            fieldBuilder.setName(field.getField()).setType(field.getType()).setLabel(field.isLabel());
-            if (field.getUnit() != null) {
-                fieldBuilder.setUnit(field.getUnit());
-            }
-            fieldList.add(fieldBuilder.build());
-        }
-        collectData.addAllFields(fieldList);
-        List<CollectRep.ValueRow> aliasRowList = collectData.getValuesList();
-        if (aliasRowList == null || aliasRowList.isEmpty()) {
+
+        final ArrowVectorWriter arrowVectorWriter = metricsDataBuilder.getArrowVectorWriter();
+        if (arrowVectorWriter.isEmpty()) {
             return;
         }
-        collectData.clearValues();
         // Preprocess calculates first
         if (metrics.getCalculates() == null) {
             metrics.setCalculates(Collections.emptyList());
         }
-        // eg: database_pages=Database pages unconventional mapping
-        Map<String, String> fieldAliasMap = new HashMap<>(8);
-        Map<String, JexlExpression> fieldExpressionMap = metrics.getCalculates()
-            .stream()
-            .map(cal -> transformCal(cal, fieldAliasMap))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (JexlExpression) arr[1], (oldValue, newValue) -> newValue));
 
-        if (metrics.getUnits() == null) {
-            metrics.setUnits(Collections.emptyList());
-        }
-        Map<String, Pair<String, String>> fieldUnitMap = metrics.getUnits()
-            .stream()
-            .map(this::transformUnit)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVectorWriter.toByteArray())) {
+            arrowVectorWriter.close();
+            ArrowVectorWriter writer = new ArrowVectorWriterImpl(metrics.getFields());
+            metricsDataBuilder.setArrowVectorWriter(writer);
 
-        List<Metrics.Field> fields = metrics.getFields();
-        List<String> aliasFields = metrics.getAliasFields();
-        Map<String, String> aliasFieldValueMap = new HashMap<>(8);
-        Map<String, Object> fieldValueMap = new HashMap<>(8);
-        Map<String, Object> stringTypefieldValueMap = new HashMap<>(8);
-        Map<String, String> aliasFieldUnitMap = new HashMap<>(8);
-        CollectRep.ValueRow.Builder realValueRowBuilder = CollectRep.ValueRow.newBuilder();
-        for (CollectRep.ValueRow aliasRow : aliasRowList) {
-            for (int aliasIndex = 0; aliasIndex < aliasFields.size(); aliasIndex++) {
-                String aliasFieldValue = aliasRow.getColumns(aliasIndex);
-                String aliasField = aliasFields.get(aliasIndex);
-                if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
-                    aliasFieldValueMap.put(aliasField, aliasFieldValue);
-                    // whether the alias field is a number
-                    CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                        .extractDoubleAndUnitFromStr(aliasFieldValue);
-                    if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
-                        fieldValueMap.put(aliasField, doubleAndUnit.getValue());
-                        if (doubleAndUnit.getUnit() != null) {
-                            aliasFieldUnitMap.put(aliasField, doubleAndUnit.getUnit());
-                        }
-                    } else {
-                        fieldValueMap.put(aliasField, aliasFieldValue);
-                    }
-                    stringTypefieldValueMap.put(aliasField, aliasFieldValue);
-                } else {
-                    fieldValueMap.put(aliasField, null);
-                    stringTypefieldValueMap.put(aliasField, null);
-                }
+            // eg: database_pages=Database pages unconventional mapping
+            Map<String, String> fieldAliasMap = Maps.newHashMapWithExpectedSize(8);
+            Map<String, JexlExpression> fieldExpressionMap = metrics.getCalculates()
+                    .stream()
+                    .map(cal -> transformCal(cal, fieldAliasMap))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (JexlExpression) arr[1], (oldValue, newValue) -> newValue));
+
+            if (metrics.getUnits() == null) {
+                metrics.setUnits(Collections.emptyList());
             }
+            Map<String, Pair<String, String>> fieldUnitMap = metrics.getUnits()
+                    .stream()
+                    .map(this::transformUnit)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(arr -> (String) arr[0], arr -> (Pair<String, String>) arr[1], (oldValue, newValue) -> newValue));
 
+            List<Metrics.Field> fields = metrics.getFields();
+            Map<String, String> aliasFieldValueMap = Maps.newHashMapWithExpectedSize(8);
+            Map<String, Object> fieldValueMap = Maps.newHashMapWithExpectedSize(8);
+            Map<String, Object> stringTypefieldValueMap = Maps.newHashMapWithExpectedSize(8);
+            Map<String, String> aliasFieldUnitMap = Maps.newHashMapWithExpectedSize(8);
 
-            for (Metrics.Field field : fields) {
-                String realField = field.getField();
-                JexlExpression expression = fieldExpressionMap.get(realField);
-                String value = null;
-                String aliasFieldUnit = null;
-                if (expression != null) {
-                    try {
-                        Map<String, Object> context;
-                        if (CommonConstants.TYPE_STRING == field.getType()) {
-                            context = stringTypefieldValueMap;
-                        } else {
-                            for (Map.Entry<String, String> unitEntry : aliasFieldUnitMap.entrySet()) {
-                                if (expression.getSourceText().contains(unitEntry.getKey())) {
-                                    aliasFieldUnit = unitEntry.getValue();
-                                    break;
-                                }
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                rowWrapper.handleRestCells(cell -> {
+                    String aliasFieldValue = cell.getValue();
+                    String aliasField = cell.getField().getName();
+                    if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {
+                        aliasFieldValueMap.put(aliasField, aliasFieldValue);
+                        // whether the alias field is a number
+                        CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                .extractDoubleAndUnitFromStr(aliasFieldValue);
+                        if (doubleAndUnit != null && doubleAndUnit.getValue() != null) {
+                            fieldValueMap.put(aliasField, doubleAndUnit.getValue());
+                            if (doubleAndUnit.getUnit() != null) {
+                                aliasFieldUnitMap.put(aliasField, doubleAndUnit.getUnit());
                             }
-                            context = fieldValueMap;
+                        } else {
+                            fieldValueMap.put(aliasField, aliasFieldValue);
                         }
-
-                        // Also executed when valueList is empty, covering pure string assignment expressions
-                        Object objValue = JexlExpressionRunner.evaluate(expression, context);
-
-                        if (objValue != null) {
-                            value = String.valueOf(objValue);
-                        }
-                    } catch (Exception e) {
-                        log.info("[calculates execute warning] {}.", e.getMessage());
-                    }
-                } else {
-                    // does not exist then map the alias value
-                    String aliasField = fieldAliasMap.get(realField);
-                    if (aliasField != null) {
-                        value = aliasFieldValueMap.get(aliasField);
+                        stringTypefieldValueMap.put(aliasField, aliasFieldValue);
                     } else {
-                        value = aliasFieldValueMap.get(realField);
+                        fieldValueMap.put(aliasField, null);
+                        stringTypefieldValueMap.put(aliasField, null);
                     }
+                });
 
-                    if (value != null) {
-                        final byte fieldType = field.getType();
-                        if (fieldType == CommonConstants.TYPE_NUMBER) {
-                            CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
-                                .extractDoubleAndUnitFromStr(value);
-                            final Double tempValue = doubleAndUnit == null ? null : doubleAndUnit.getValue();
-                            value = tempValue == null ? null : String.valueOf(tempValue);
-                            aliasFieldUnit = doubleAndUnit == null ? null : doubleAndUnit.getUnit();
-                        } else if (fieldType == CommonConstants.TYPE_TIME) {
-                            final int tempValue;
-                            value = (tempValue = CommonUtil.parseTimeStrToSecond(value)) == -1 ? null : String.valueOf(tempValue);
+                for (Metrics.Field field : fields) {
+                    String realField = field.getField();
+                    JexlExpression expression = fieldExpressionMap.get(realField);
+                    String value = null;
+                    String aliasFieldUnit = null;
+                    if (expression != null) {
+                        try {
+                            Map<String, Object> context;
+                            if (CommonConstants.TYPE_STRING == field.getType()) {
+                                context = stringTypefieldValueMap;
+                            } else {
+                                for (Map.Entry<String, String> unitEntry : aliasFieldUnitMap.entrySet()) {
+                                    if (expression.getSourceText().contains(unitEntry.getKey())) {
+                                        aliasFieldUnit = unitEntry.getValue();
+                                        break;
+                                    }
+                                }
+                                context = fieldValueMap;
+                            }
+
+                            // Also executed when valueList is empty, covering pure string assignment expressions
+                            Object objValue = JexlExpressionRunner.evaluate(expression, context);
+
+                            if (objValue != null) {
+                                value = String.valueOf(objValue);
+                            }
+                        } catch (Exception e) {
+                            log.info("[calculates execute warning] {}.", e.getMessage());
+                        }
+                    } else {
+                        // does not exist then map the alias value
+                        String aliasField = fieldAliasMap.get(realField);
+                        if (aliasField != null) {
+                            value = aliasFieldValueMap.get(aliasField);
+                        } else {
+                            value = aliasFieldValueMap.get(realField);
+                        }
+
+                        if (value != null) {
+                            final byte fieldType = field.getType();
+                            if (fieldType == CommonConstants.TYPE_NUMBER) {
+                                CollectUtil.DoubleAndUnit doubleAndUnit = CollectUtil
+                                        .extractDoubleAndUnitFromStr(value);
+                                final Double tempValue = doubleAndUnit == null ? null : doubleAndUnit.getValue();
+                                value = tempValue == null ? null : String.valueOf(tempValue);
+                                aliasFieldUnit = doubleAndUnit == null ? null : doubleAndUnit.getUnit();
+                            } else if (fieldType == CommonConstants.TYPE_TIME) {
+                                final int tempValue;
+                                value = (tempValue = CommonUtil.parseTimeStrToSecond(value)) == -1 ? null : String.valueOf(tempValue);
+                            }
                         }
                     }
-                }
 
-                Pair<String, String> unitPair = fieldUnitMap.get(realField);
-                if (aliasFieldUnit != null) {
-                    if (unitPair != null) {
-                        unitPair.setLeft(aliasFieldUnit);
-                    } else if (field.getUnit() != null && !aliasFieldUnit.equalsIgnoreCase(field.getUnit())) {
-                        unitPair = Pair.of(aliasFieldUnit, field.getUnit());
-                    }
-                }
-                if (value != null && unitPair != null) {
-                    for (UnitConvert unitConvert : unitConvertList) {
-                        if (unitConvert.checkUnit(unitPair.getLeft()) && unitConvert.checkUnit(unitPair.getRight())) {
-                            value = unitConvert.convert(value, unitPair.getLeft(), unitPair.getRight());
+                    Pair<String, String> unitPair = fieldUnitMap.get(realField);
+                    if (aliasFieldUnit != null) {
+                        if (unitPair != null) {
+                            unitPair.setLeft(aliasFieldUnit);
+                        } else if (field.getUnit() != null && !aliasFieldUnit.equalsIgnoreCase(field.getUnit())) {
+                            unitPair = Pair.of(aliasFieldUnit, field.getUnit());
                         }
                     }
+                    if (value != null && unitPair != null) {
+                        for (UnitConvert unitConvert : unitConvertList) {
+                            if (unitConvert.checkUnit(unitPair.getLeft()) && unitConvert.checkUnit(unitPair.getRight())) {
+                                value = unitConvert.convert(value, unitPair.getLeft(), unitPair.getRight());
+                            }
+                        }
+                    }
+                    // Handle metrics values that may have units such as 34%, 34Mb, and limit values to 4 decimal places
+                    if (CommonConstants.TYPE_NUMBER == field.getType()) {
+                        value = CommonUtil.parseDoubleStr(value, field.getUnit());
+                    }
+                    if (value == null) {
+                        value = CommonConstants.NULL_VALUE;
+                    }
+
+                    writer.setValue(realField, value);
                 }
-                // Handle metrics values that may have units such as 34%, 34Mb, and limit values to 4 decimal places
-                if (CommonConstants.TYPE_NUMBER == field.getType()) {
-                    value = CommonUtil.parseDoubleStr(value, field.getUnit());
-                }
-                if (value == null) {
-                    value = CommonConstants.NULL_VALUE;
-                }
-                realValueRowBuilder.addColumns(value);
+
+                aliasFieldValueMap.clear();
+                fieldValueMap.clear();
+                aliasFieldUnitMap.clear();
+                stringTypefieldValueMap.clear();
             }
-            aliasFieldValueMap.clear();
-            fieldValueMap.clear();
-            aliasFieldUnitMap.clear();
-            stringTypefieldValueMap.clear();
-            collectData.addValues(realValueRowBuilder.build());
-            realValueRowBuilder.clear();
         }
     }
 
@@ -385,7 +392,9 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         return this.timeout == null || this.timeout.isCancelled();
     }
 
-    private CollectRep.MetricsData validateResponse(CollectRep.MetricsData.Builder builder) {
+    private CollectRep.MetricsData validateMetricsData(MetricsDataBuilder metricsDataBuilder) {
+
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long endTime = System.currentTimeMillis();
         builder.setTime(endTime);
         long runningTime = endTime - startTime;
@@ -398,10 +407,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         } else {
             log.info("[Collect Success, Run {}ms, All {}ms].", runningTime, allTime);
         }
-        return builder.build();
+        return metricsDataBuilder.build();
     }
 
-    private void validateResponse(CollectRep.MetricsData metricsData) {
+    private void validateMetricsData(CollectRep.MetricsData metricsData) {
         if (metricsData == null) {
             log.error("[Collect Failed] Response metrics data is null.");
             return;

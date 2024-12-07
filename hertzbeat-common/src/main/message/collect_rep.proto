@@ -40,6 +40,7 @@ message MetricsData
     repeated Field fields = 9;
     // monitoring collect metric data, mapping with the fields
     repeated ValueRow values = 10;
+    bytes data = 11;
 }
 
 message Field

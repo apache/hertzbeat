@@ -25,6 +25,10 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Bulletin;
 import org.apache.hertzbeat.manager.pojo.dto.BulletinMetricsData;
@@ -128,50 +132,62 @@ public class BulletinServiceImpl implements BulletinService {
             List<BulletinMetricsData.Metric> metrics = new ArrayList<>();
             Map<String, List<String>> fieldMap = bulletin.getFields();
 
-            if (fieldMap != null) {
-                for (Map.Entry<String, List<String>> entry : fieldMap.entrySet()) {
-                    String metric = entry.getKey();
-                    List<String> fields = entry.getValue();
-                    BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
-                            .name(metric);
-                    CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(monitorId, metric);
-
-                    List<List<BulletinMetricsData.Field>> fieldsList;
-                    if (currentMetricsData != null) {
-                        fieldsList = currentMetricsData.getValuesList().stream()
-                                .map(valueRow -> {
-                                    List<BulletinMetricsData.Field> fieldList = currentMetricsData.getFieldsList().stream()
-                                            .map(field -> BulletinMetricsData.Field.builder()
-                                                    .key(field.getName())
-                                                    .unit(field.getUnit())
-                                                    .build())
-                                            .toList();
-
-                                    for (int i = 0; i < fieldList.size(); i++) {
-                                        fieldList.get(i).setValue(valueRow.getColumns(i));
-                                    }
-                                    return fieldList.stream().filter(field -> fields.contains(field.getKey())).toList();
-                                })
-                                .toList();
-                    } else {
-                        fieldsList = Collections.singletonList(fields.stream()
-                                .map(field -> BulletinMetricsData.Field.builder()
-                                        .key(field)
-                                        .unit(EMPTY_STRING)
-                                        .value(NO_DATA)
-                                        .build())
-                                .toList());
-                    }
-
-                    metricBuilder.fields(fieldsList);
-                    metrics.add(metricBuilder.build());
-                }
-            }
+            addMetrics(monitorId, fieldMap, metrics);
             dataBuilder.metrics(metrics);
             dataList.add(dataBuilder.build());
         }
         contentBuilder.content(dataList);
         return contentBuilder.build();
+    }
+
+    private void addMetrics(Long monitorId, Map<String, List<String>> fieldMap, List<BulletinMetricsData.Metric> metrics) {
+        if (fieldMap == null) {
+            return;
+        }
+
+        for (Map.Entry<String, List<String>> entry : fieldMap.entrySet()) {
+            String metric = entry.getKey();
+            List<String> fields = entry.getValue();
+            BulletinMetricsData.Metric.MetricBuilder metricBuilder = BulletinMetricsData.Metric.builder()
+                    .name(metric);
+            CollectRep.MetricsData currentMetricsData = realTimeDataReader.getCurrentMetricsData(monitorId, metric);
+
+            List<List<BulletinMetricsData.Field>> fieldsList = new ArrayList<>();
+            if (currentMetricsData != null) {
+                try (ArrowVectorReader reader = new ArrowVectorReaderImpl(currentMetricsData.getData().toByteArray())) {
+                    RowWrapper rowWrapper = reader.readRow();
+                    while (rowWrapper.hasNextRow()) {
+                        rowWrapper = rowWrapper.nextRow();
+
+                        List<BulletinMetricsData.Field> rowFieldList = rowWrapper.mapRestCells(cell -> BulletinMetricsData.Field.builder()
+                                        .key(cell.getField().getName())
+                                        .unit(cell.getMetadata().get(MetricDataFieldConstants.UNIT))
+                                        .value(cell.getValue())
+                                    .build())
+                                .stream()
+                                .filter(field -> fields.contains(field.getKey()))
+                                .toList();
+
+                        fieldsList.add(rowFieldList);
+                    }
+
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
+
+            } else {
+                fieldsList = Collections.singletonList(fields.stream()
+                        .map(field -> BulletinMetricsData.Field.builder()
+                                .key(field)
+                                .unit(EMPTY_STRING)
+                                .value(NO_DATA)
+                                .build())
+                        .toList());
+            }
+
+            metricBuilder.fields(fieldsList);
+            metrics.add(metricBuilder.build());
+        }
     }
 
     @Override
