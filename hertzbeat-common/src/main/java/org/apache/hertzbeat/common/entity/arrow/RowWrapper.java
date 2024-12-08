@@ -29,6 +29,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
+ * A wrapper of row, which contains row info, fields info in this row and each cell of field.
+ * When using RowWrapper, it is necessary to call {@link RowWrapper#hasNextRow()} and {@link RowWrapper#nextRow()}
  */
 public class RowWrapper {
     private final Row currentRow;
@@ -55,6 +57,12 @@ public class RowWrapper {
         return new RowWrapper(rowIterator.next(), rowIterator, fieldList, ++rowIndex);
     }
 
+    /**
+     * <p>Get next cell in current row.
+     * <p>RowWrapper maintain a field index internally, which means cannot back to previous cell after call this method.
+     * However, you can use {@link RowWrapper#resetCellIndex()} to reset field index to the beginning.
+     * @return ArrowCell
+     */
     public ArrowCell nextCell() {
         if (!hasNextCell() || currentRow == null) {
             throw new NoSuchElementException("No more cells in current row");
@@ -63,13 +71,23 @@ public class RowWrapper {
         return new ArrowCell(fieldList.get(fieldIndex++), currentRow);
     }
 
+    /**
+     * <p>Performs an action for each cell of this RowWrapper.
+     * <p>Field index will be set to the ending, which means can not call {@link RowWrapper#nextCell()} except calling {@link RowWrapper#resetCellIndex()} to reset field index to the beginning.
+     */
     public void foreachCell(Consumer<ArrowCell> cellConsumer) {
+        resetCellIndex();
+
         while (hasNextCell()) {
             cellConsumer.accept(nextCell());
         }
     }
 
+    /**
+     * Returns a List consisting of the results of applying the given function to the rest cell of this RowWrapper.
+     */
     public <R> List<R> map(Function<ArrowCell, R> function) {
+        resetCellIndex();
         List<R> result = new ArrayList<>();
 
         while (hasNextCell()) {

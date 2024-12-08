@@ -23,11 +23,32 @@ import org.apache.arrow.vector.types.pojo.Field;
 import java.util.List;
 
 /**
+ * <p>Used for reading Apache Arrow data bytes.
+ * <p>After creating ArrowVectorReader, data structures will be organized like:
+ * <p>RowWrapper 1 -- ArrowCell 1 -> ArrowCell 2 -> ArrowCell ...
+ * <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+ * <p>RowWrapper 2 -- ArrowCell 1 -> ArrowCell 2 -> ArrowCell ...
+ * <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|
+ * <p>RowWrapper 3 -- ArrowCell 1 -> ArrowCell 2 -> ArrowCell ...
+ * <p>
+ * <p>
+ * <p>Before operating this structure, you should call {@link ArrowVectorReader#readRow()} to get a {@link RowWrapper}.
+ * Then you can use it like a iterator.
  */
 public interface ArrowVectorReader extends AutoCloseable {
+    /**
+     * Get a RowWrapper
+     * @return RowWrapper
+     */
     RowWrapper readRow();
 
+    /**
+     * Returns all fields in this ArrowVectorReader.
+     */
     List<Field> getAllFields();
 
+    /**
+     * Returns the number of RowWrapper in this ArrowVectorReader.
+     */
     long getRowCount();
 }

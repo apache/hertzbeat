@@ -24,6 +24,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 import java.util.Map;
 
 /**
+ * A cell consisting of {@link Field} and value
  */
 @Data
 public class ArrowCell {

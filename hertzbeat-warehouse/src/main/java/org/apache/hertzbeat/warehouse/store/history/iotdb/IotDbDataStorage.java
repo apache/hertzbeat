@@ -219,7 +219,6 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                         labels.put(cell.getField().getName(), cell.getValue());
                     }
                 });
-                rowWrapper.resetCellIndex();
 
 
                 String label = JsonUtil.toJson(labels);

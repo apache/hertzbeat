@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.constants;
 
 /**
+ * Metric Data Field Constants
  */
 public interface MetricDataFieldConstants {
     String TYPE = "type";

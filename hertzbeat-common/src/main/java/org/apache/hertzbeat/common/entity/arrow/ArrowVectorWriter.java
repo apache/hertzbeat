@@ -17,20 +17,50 @@
 
 package org.apache.hertzbeat.common.entity.arrow;
 
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.vector.VectorSchemaRoot;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 
 /**
+ * <p>Used for writing data as Arrow and generating bytes that can be set in {@link org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData}.
+ * <p>Before using ArrowVectorWriter, you should initialize {@link BufferAllocator} and {@link VectorSchemaRoot}
+ * <p>ArrowVectorWriter can set value in any field that has been initialized and add field dynamically without concerning.
  */
 public interface ArrowVectorWriter extends AutoCloseable {
+    /**
+     * Add field without checking if it is added before.
+     * @param field field to be added
+     */
     void addField(Metrics.Field field);
 
+    /**
+     * Add value to the given field name. Default value is {@link CommonConstants#NULL_VALUE} when value is null or blank.
+     * @param fieldName fieldName
+     * @param value value
+     */
     void setValue(String fieldName, String value);
 
+    /**
+     * Set {@link CommonConstants#NULL_VALUE} to the given field name.
+     * @param fieldName fieldName
+     */
     void setNull(String fieldName);
 
+    /**
+     * Generate bytes arr
+     * @return bytes arr
+     */
     byte[] toByteArray();
 
+    /**
+     * Check if is empty.
+     * @return If no data in ArrowVectorWriter, return true.
+     */
     boolean isEmpty();
 
+    /**
+     * Close all resource. Especially {@link BufferAllocator} and {@link VectorSchemaRoot}
+     */
     void close();
 }
