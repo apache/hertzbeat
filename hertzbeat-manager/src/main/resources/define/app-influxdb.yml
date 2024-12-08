@@ -18,7 +18,7 @@
 category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
-app: influxDB
+app: influxdb
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
@@ -134,7 +134,7 @@ metrics:
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
     # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
-    priority: 2
+    priority: 1
     # collect metrics content
     # 具体监控指标列表
     fields:
@@ -214,7 +214,7 @@ metrics:
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
     # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
     # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
-    priority: 1
+    priority: 2
     # collect metrics content
     # 具体监控指标列表
     fields:

@@ -149,7 +149,7 @@ metrics:
     i18n:
       zh-CN: JVM内存已使用
       en-US: JVM memory used bytes
-    priority: 1
+    priority: 2
     fields:
       - field: area
         i18n:
@@ -183,7 +183,7 @@ metrics:
     i18n:
       zh-CN: JVM线程状态
       en-US: JVM thread state
-    priority: 1
+    priority: 3
     fields:
       - field: state
         i18n:
@@ -214,7 +214,7 @@ metrics:
     i18n:
       zh-CN: 数量
       en-US: Quantity
-    priority: 1
+    priority: 4
     fields:
       - field: id
         i18n:
@@ -256,7 +256,7 @@ metrics:
     i18n:
       zh-CN: 缓存命中率
       en-US: Cache hit rate
-    priority: 1
+    priority: 5
     fields:
       - field: name
         i18n:
@@ -282,7 +282,7 @@ metrics:
     i18n:
       zh-CN: 队列
       en-US: Queue
-    priority: 1
+    priority: 6
     fields:
       - field: id
         i18n:
@@ -324,7 +324,7 @@ metrics:
     i18n:
       zh-CN: Thrift连接数
       en-US: Thrift connection number
-    priority: 1
+    priority: 7
     fields:
       - field: name
         i18n:

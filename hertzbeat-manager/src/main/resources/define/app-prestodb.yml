@@ -16,7 +16,7 @@
 # The monitoring type category: service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
-app: prestoDB
+app: prestodb
 # The app api i18n name
 name:
   zh-CN: PrestoDB
@@ -109,7 +109,7 @@ metrics:
     i18n:
       zh-CN: 节点信息
       en-US: Node Info
-    priority: 0
+    priority: 1
     fields:
       - field: uri
         type: 1
@@ -167,7 +167,7 @@ metrics:
     i18n:
       zh-CN: 节点状态
       en-US: Node Status
-    priority: 0
+    priority: 2
     fields:
       - field: nodeId
         type: 1
@@ -290,7 +290,7 @@ metrics:
     i18n:
       zh-CN: 任务查询
       en-US: Task Query
-    priority: 0
+    priority: 3
     fields:
       - field: taskId
         type: 1

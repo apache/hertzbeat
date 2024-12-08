@@ -111,7 +111,7 @@ metrics:
     i18n:
       zh-CN: 主题偏移量
       en-US: Topic Offset
-    priority: 1
+    priority: 2
     # Kafka offset does not need to be obtained frequently, as getting it too quickly will affect performance
     interval: 300
     fields:

@@ -51,6 +51,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final String metricsDataQueueNameToAlerter;
     private final String metricsDataQueueNameToPersistentStorage;
     private final String metricsDataQueueNameToRealTimeStorage;
+    private final String metricsDataQueueNameForServiceDiscovery;
     private final String alertsDataQueueName;
     private final CommonProperties.RedisProperties redisProperties;
 
@@ -74,6 +75,7 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
         this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
         this.metricsDataQueueNameToPersistentStorage = redisProperties.getMetricsDataQueueNameToPersistentStorage();
         this.metricsDataQueueNameToRealTimeStorage = redisProperties.getMetricsDataQueueNameToRealTimeStorage();
+        this.metricsDataQueueNameForServiceDiscovery = redisProperties.getMetricsDataQueueNameForServiceDiscovery();
         this.alertsDataQueueName = redisProperties.getAlertsDataQueueName();
     }
 
@@ -150,6 +152,20 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
+    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
+        try {
+            String metricsDataJson = syncCommands.rpop(metricsDataQueueNameForServiceDiscovery);
+            if (metricsDataJson != null) {
+                return JsonUtil.fromJson(metricsDataJson, CollectRep.MetricsData.class);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
+    @Override
     public void sendMetricsData(CollectRep.MetricsData metricsData) {
 
         try {
@@ -157,6 +173,17 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
             syncCommands.lpush(metricsDataQueueNameToAlerter, metricsDataJson);
             syncCommands.lpush(metricsDataQueueNameToPersistentStorage, metricsDataJson);
             syncCommands.lpush(metricsDataQueueNameToRealTimeStorage, metricsDataJson);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+        try {
+            String metricsDataJson = ProtoJsonUtil.toJsonStr(metricsData);
+            syncCommands.lpush(metricsDataQueueNameForServiceDiscovery, metricsDataJson);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new RuntimeException(e);

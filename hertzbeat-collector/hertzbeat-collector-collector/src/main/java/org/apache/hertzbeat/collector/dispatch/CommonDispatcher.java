@@ -216,6 +216,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
         Set<Metrics> metricsSet = job.getNextCollectMetrics(metrics, false);
         if (job.isCyclic()) {
+            if (job.isSd()) {
+                commonDataQueue.sendServiceDiscoveryData(metricsData);
+            }
+
             // If it is an asynchronous periodic cyclic task, directly response the collected data
             commonDataQueue.sendMetricsData(metricsData);
             if (log.isDebugEnabled()) {
@@ -226,11 +230,12 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     }
                 }
             }
+
             // If metricsSet is null, it means that the execution is completed or whether the priority of the collection metrics is 0, that is, the availability collection metrics.
             // If the availability collection fails, the next metrics scheduling will be cancelled and the next round of scheduling will be entered directly.
             boolean isAvailableCollectFailed = metricsSet != null && !metricsSet.isEmpty()
                     && metrics.getPriority() == (byte) 0 && metricsData.getCode() != CollectRep.Code.SUCCESS;
-            if (metricsSet == null || isAvailableCollectFailed) {
+            if (metricsSet == null || isAvailableCollectFailed || job.isSd()) {
                 // The collection and execution task of this job are completed.
                 // The periodic task pushes the task to the time wheel again.
                 // First, determine the execution time of the task and the task collection interval.
@@ -300,7 +305,8 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     }
                 }
             }
-            if (metricsSet == null) {
+
+            if (job.isSd() || metricsSet == null) {
                 // The collection and execution of all metrics of this job are completed
                 // and the result listener is notified of the combination of all metrics data
                 timerDispatch.responseSyncJobData(job.getId(), job.getResponseDataTemp());

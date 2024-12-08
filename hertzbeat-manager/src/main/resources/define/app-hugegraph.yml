@@ -84,7 +84,7 @@ params:
 metrics:
   # metrics - environment
   - name: gauges
-    priority: 1
+    priority: 0
     # The specific monitoring metrics in the metric group.
     # collect metrics content
     fields:
@@ -696,7 +696,7 @@ metrics:
       parseScript: '$'
 
   - name: system
-    priority: 1
+    priority: 2
     # collect metrics content
     fields:
       # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field

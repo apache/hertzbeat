@@ -172,6 +172,7 @@ public class JdbcCommonCollect extends AbstractCollect {
         }
         // renew connection when failed
         Connection connection = DriverManager.getConnection(url, username, password);
+        connection.setReadOnly(true);
         statement = connection.createStatement();
         int timeoutSecond = timeout / 1000;
         timeoutSecond = timeoutSecond <= 0 ? 1 : timeoutSecond;
@@ -279,6 +280,13 @@ public class JdbcCommonCollect extends AbstractCollect {
         if (Objects.nonNull(jdbcProtocol.getUrl())
                 && !Objects.equals("", jdbcProtocol.getUrl())
                 && jdbcProtocol.getUrl().startsWith("jdbc")) {
+            String url = jdbcProtocol.getUrl().toLowerCase(); // convert the URL to lowercase for case-insensitive checking
+            // check whether the parameter is valid
+            if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")
+                    || url.contains("allowloadlocalinfile") || url.contains("allowloadlocalinfileinpath")
+                    || url.contains("uselocalinfile")) {
+                throw new IllegalArgumentException("Invalid JDBC URL: contains malicious characters.");
+            }
             // when has config jdbc url, use it 
             return jdbcProtocol.getUrl();
         }

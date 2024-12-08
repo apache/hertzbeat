@@ -16,7 +16,7 @@
 # The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
 category: db
 # The monitoring type
-app: OceanBase
+app: oceanbase
 # The monitoring i18n name
 name:
   zh-CN: OceanBase数据库
@@ -186,7 +186,7 @@ metrics:
   - name: tenant
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 0
+    priority: 1
     i18n:
       zh-CN: 租户 信息
       en-US: Tenant Info
@@ -246,7 +246,7 @@ metrics:
       url: ^_^url^_^
       
   - name: sql
-    priority: 1
+    priority: 2
     i18n:
       zh-CN: Sql 信息
       en-US: Sql Info
@@ -331,7 +331,7 @@ metrics:
 
 
   - name: process_state
-    priority: 2
+    priority: 3
     i18n:
       zh-CN: 进程状态 信息
       en-US: Process State Info

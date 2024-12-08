@@ -84,7 +84,6 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
     @Lazy
     private DispatcherAlarm dispatcherAlarm;
 
-
     @Override
     public List<NoticeReceiver> getNoticeReceivers(String name) {
         Specification<NoticeReceiver> specification = (root, query, criteriaBuilder) -> {

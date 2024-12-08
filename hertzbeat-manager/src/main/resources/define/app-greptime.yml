@@ -18,7 +18,7 @@
 category: bigdata
 # The monitoring type eg: linux windows tomcat mysql aws...
 # 监控类型 eg: linux windows tomcat mysql aws...
-app: greptimeDB
+app: greptime
 # The monitoring i18n name
 # 监控类型国际化名称
 name:
@@ -106,7 +106,7 @@ metrics:
     i18n:
       zh-CN: 目录 模式 数量
       en-US: greptime_catalog_schema_count
-    priority: 0
+    priority: 1
     fields:
       - field: value
         i18n:
@@ -130,7 +130,7 @@ metrics:
     i18n:
       zh-CN: 缓存容器缓存获取
       en-US: greptime_meta_cache_container_cache_get
-    priority: 0
+    priority: 2
     fields:
       - field: name
         i18n:
@@ -158,7 +158,7 @@ metrics:
     i18n:
       zh-CN: 缓存容器缓存未命中
       en-US: greptime_meta_cache_container_cache_miss
-    priority: 0
+    priority: 3
     fields:
       - field: name
         i18n:
@@ -186,7 +186,7 @@ metrics:
     i18n:
       zh-CN: mito 引擎区域数量
       en-US: greptime_mito_region_count
-    priority: 0
+    priority: 4
     fields:
       - field: worker
         i18n:
@@ -214,7 +214,7 @@ metrics:
     i18n:
       zh-CN: mito 引擎写入延迟总数
       en-US: greptime_mito_write_stall_total
-    priority: 0
+    priority: 5
     fields:
       - field: worker
         i18n:
@@ -242,7 +242,7 @@ metrics:
     i18n:
       zh-CN: 创建目录计数器
       en-US: greptime_meta_create_catalog_counter
-    priority: 0
+    priority: 6
     fields:
       - field: value
         i18n:
@@ -264,7 +264,7 @@ metrics:
     i18n:
       zh-CN: 运行时线程存活
       en-US: greptime_runtime_threads_alive
-    priority: 0
+    priority: 7
     fields:
       - field: thread_name
         i18n:
@@ -291,7 +291,7 @@ metrics:
     i18n:
       zh-CN: 运行时线程空闲
       en-US: greptime_runtime_threads_idle
-    priority: 0
+    priority: 8
     fields:
       - field: thread_name
         i18n:
@@ -318,7 +318,7 @@ metrics:
     i18n:
       zh-CN: greptime 服务 HTTP 请求总数
       en-US: greptime_servers_http_requests_total
-    priority: 0
+    priority: 9
     fields:
       - field: code
         i18n:
@@ -355,7 +355,7 @@ metrics:
     i18n:
       zh-CN: greptime 服务 MySQL 连接数
       en-US: greptime_servers_mysql_connection_count
-    priority: 0
+    priority: 10
     fields:
       - field: value
         i18n:
@@ -377,7 +377,7 @@ metrics:
     i18n:
       zh-CN: greptime 服务 Postgres 连接数
       en-US: greptime_servers_postgres_connection_count
-    priority: 0
+    priority: 11
     fields:
       - field: value
         i18n:
@@ -399,7 +399,7 @@ metrics:
     i18n:
       zh-CN: 进程 CPU 时间总数
       en-US: process_cpu_seconds_total
-    priority: 0
+    priority: 12
     fields:
       - field: value
         i18n:
@@ -421,7 +421,7 @@ metrics:
     i18n:
       zh-CN: 进程最大文件描述符
       en-US: process_max_fds
-    priority: 0
+    priority: 13
     fields:
       - field: value
         i18n:
@@ -443,7 +443,7 @@ metrics:
     i18n:
       zh-CN: 进程打开文件描述符
       en-US: process_open_fds
-    priority: 0
+    priority: 14
     fields:
       - field: value
         i18n:
@@ -465,7 +465,7 @@ metrics:
     i18n:
       zh-CN: 进程常驻内存字节
       en-US: process_resident_memory_bytes
-    priority: 0
+    priority: 15
     fields:
       - field: value
         i18n:
@@ -487,7 +487,7 @@ metrics:
     i18n:
       zh-CN: 进程启动时间（秒）
       en-US: process_start_time_seconds
-    priority: 0
+    priority: 16
     fields:
       - field: value
         i18n:
@@ -509,7 +509,7 @@ metrics:
     i18n:
       zh-CN: 进程线程
       en-US: process_threads
-    priority: 0
+    priority: 17
     fields:
       - field: value
         i18n:
@@ -531,7 +531,7 @@ metrics:
     i18n:
       zh-CN: 进程虚拟内存字节
       en-US: process_virtual_memory_bytes
-    priority: 0
+    priority: 18
     fields:
       - field: value
         i18n:
@@ -553,7 +553,7 @@ metrics:
     i18n:
       zh-CN: raft 引擎日志条目数量
       en-US: raft_engine_log_entry_count
-    priority: 0
+    priority: 19
     fields:
       - field: type
         i18n:
@@ -580,7 +580,7 @@ metrics:
     i18n:
       zh-CN: raft 引擎日志文件数量
       en-US: raft_engine_log_file_count
-    priority: 0
+    priority: 20
     fields:
       - field: type
         i18n:
@@ -607,7 +607,7 @@ metrics:
     i18n:
       zh-CN: raft 引擎内存占用
       en-US: raft_engine_memory_usage
-    priority: 0
+    priority: 21
     fields:
       - field: value
         i18n:
@@ -629,7 +629,7 @@ metrics:
     i18n:
       zh-CN: raft 引擎回收文件数量
       en-US: raft_engine_recycled_file_count
-    priority: 0
+    priority: 22
     fields:
       - field: type
         i18n:
@@ -656,7 +656,7 @@ metrics:
     i18n:
       zh-CN: jemalloc 分配
       en-US: sys_jemalloc_allocated
-    priority: 0
+    priority: 23
     fields:
       - field: value
         i18n:
@@ -678,7 +678,7 @@ metrics:
     i18n:
       zh-CN: jemalloc 常驻
       en-US: sys_jemalloc_resident
-    priority: 0
+    priority: 24
     fields:
       - field: value
         i18n:

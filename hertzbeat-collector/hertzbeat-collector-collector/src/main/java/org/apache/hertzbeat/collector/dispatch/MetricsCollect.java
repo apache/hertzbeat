@@ -102,6 +102,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * Start time of the collection task
      */
     protected long startTime;
+    /**
+     * Whether it is a service discovery job, true is yes, false is no
+     */
+    protected boolean isSd;
 
     protected List<UnitConvert> unitConvertList;
 
@@ -120,6 +124,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         this.app = job.getApp();
         this.collectDataDispatch = collectDataDispatch;
         this.isCyclic = job.isCyclic();
+        this.isSd = job.isSd();
         this.unitConvertList = unitConvertList;
         // Temporary one-time tasks are executed with high priority
         if (isCyclic) {
@@ -193,7 +198,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             }
         }
     }
-
 
     /**
      * Calculate the real metrics value according to the calculates and aliasFields configuration
@@ -355,7 +359,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         }
     }
 
-
     /**
      * @param cal           cal
      * @param fieldAliasMap field alias map
@@ -374,7 +377,6 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         }
         return new Object[]{field, expression};
     }
-
 
     /**
      * transform unit

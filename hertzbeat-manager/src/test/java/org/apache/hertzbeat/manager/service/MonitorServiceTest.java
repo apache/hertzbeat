@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
@@ -46,6 +45,7 @@ import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
+import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
 import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
@@ -118,6 +118,9 @@ class MonitorServiceTest {
 
     @Mock
     private TagMonitorBindDao tagMonitorBindDao;
+
+    @Mock
+    private MonitorBindDao monitorBindDao;
 
     @Mock
     private CollectorDao collectorDao;
@@ -612,12 +615,16 @@ class MonitorServiceTest {
 
     @Test
     void deleteMonitor() {
-        long id = 1L;
-        Monitor existOkMonitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
-        when(monitorDao.findById(id)).thenReturn(Optional.of(existOkMonitor));
-        doNothing().when(alertDefineBindDao).deleteAlertDefineMonitorBindsByMonitorIdEquals(id);
-        doNothing().when(tagMonitorBindDao).deleteTagMonitorBindsByMonitorId(id);
-        assertDoesNotThrow(() -> monitorService.deleteMonitor(id));
+        Set<Long> ids = new HashSet<>();
+        ids.add(1L);
+        List<Monitor> monitors = new ArrayList<>();
+        for (Long id : ids) {
+            Monitor monitor = Monitor.builder().jobId(id).intervals(1).app("app").name("memory").host("host").id(id).build();
+            monitors.add(monitor);
+        }
+        when(monitorDao.findMonitorsByIdIn(ids)).thenReturn(monitors);
+
+        assertDoesNotThrow(() -> monitorService.deleteMonitor(1L));
     }
 
     @Test

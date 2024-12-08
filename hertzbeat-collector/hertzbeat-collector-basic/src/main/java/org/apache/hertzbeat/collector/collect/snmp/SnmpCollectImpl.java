@@ -18,9 +18,14 @@
 package org.apache.hertzbeat.collector.collect.snmp;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +73,6 @@ import org.springframework.util.StringUtils;
 public class SnmpCollectImpl extends AbstractCollect {
 
     private static final String AES128 = "1";
-
     private static final String SHA1 = "1";
     private static final String DEFAULT_PROTOCOL = "udp";
     private static final String OPERATION_GET = "get";
@@ -81,7 +85,6 @@ public class SnmpCollectImpl extends AbstractCollect {
                     + "{3,choice,0#|1#1 second, |1<{3,number,integer} seconds }";
 
     private final Map<Integer, Snmp> versionSnmpService = new ConcurrentHashMap<>(3);
-
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -218,7 +221,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                             if (value == null) {
                                 // get leaf
                                 for (String key : oidsValueMap.keySet()) {
-                                    if (key.startsWith(oid)){
+                                    if (key.startsWith(oid)) {
                                         value = oidsValueMap.get(key);
                                         break;
                                     }
@@ -257,7 +260,6 @@ public class SnmpCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SNMP;
     }
 
-
     private synchronized Snmp getSnmpService(int snmpVersion, SnmpBuilder snmpBuilder) throws IOException {
         Snmp snmpService = versionSnmpService.get(snmpVersion);
         if (snmpService != null) {
@@ -295,12 +297,15 @@ public class SnmpCollectImpl extends AbstractCollect {
         String hexString = binding.toValueString();
         if (hexString.contains(HEX_SPLIT)) {
             try {
-                StringBuilder output = new StringBuilder();
-                String[] hexArr = hexString.split(HEX_SPLIT);
-                for (String hex : hexArr) {
-                    output.append((char) Integer.parseInt(hex, 16));
+                String clearHexStr = hexString.replace(HEX_SPLIT, "");
+                byte[] bytes = HexFormat.of().parseHex(clearHexStr);
+                CharsetDecoder decoder = Charset.forName("GB2312").newDecoder();
+                try {
+                    CharBuffer res = decoder.decode(ByteBuffer.wrap(bytes));
+                    return res.toString();
+                } catch (Exception e) {
+                    return new String(bytes);
                 }
-                return output.toString();
             } catch (Exception e) {
                 return hexString;
             }

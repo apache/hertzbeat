@@ -29,8 +29,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-
-public class ScriptProtocol {
+public class ScriptProtocol implements CommonRequestProtocol {
     /**
      * OS charset
      */
@@ -60,4 +59,14 @@ public class ScriptProtocol {
      * Script tool name, exp: bash, cmd, powershell
      */
     private String scriptTool;
+
+    @Override
+    public void setHost(String host) {
+        this.workDirectory = host;
+    }
+
+    @Override
+    public void setPort(String port) {
+        this.scriptPath = port;
+    }
 }

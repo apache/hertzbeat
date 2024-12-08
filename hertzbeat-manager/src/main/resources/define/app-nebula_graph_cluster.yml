@@ -151,7 +151,7 @@ metrics:
       en-US: Session
     # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
     # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
-    priority: 0
+    priority: 1
     fields:
       - field: session
         type: 0
@@ -188,7 +188,7 @@ metrics:
     i18n:
       zh-CN: 后台任务
       en-US: Jobs
-    priority: 0
+    priority: 2
     fields:
       - field: queue_jobs
         type: 0
@@ -219,7 +219,7 @@ metrics:
     i18n:
       zh-CN: 节点信息
       en-US: Cluster node info
-    priority: 0
+    priority: 3
     fields:
       - field: total_storage_node
         type: 0
@@ -283,7 +283,7 @@ metrics:
     i18n:
       zh-CN: Storage节点
       en-US: Storage Nodes
-    priority: 0
+    priority: 4
     fields:
       - field: host
         type: 1
@@ -352,7 +352,7 @@ metrics:
     i18n:
       zh-CN: Meta节点
       en-US: Meta Nodes
-    priority: 0
+    priority: 5
     fields:
       - field: host
         type: 1
@@ -400,7 +400,7 @@ metrics:
     i18n:
       zh-CN: Graph节点
       en-US: Graph Nodes
-    priority: 0
+    priority: 6
     fields:
       - field: host
         type: 1

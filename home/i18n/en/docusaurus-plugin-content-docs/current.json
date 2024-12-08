@@ -27,9 +27,9 @@
     "message": "TELNET Protocol",
     "description": "The label for category telnet in sidebar docs"
   },
-  "sidebar.docs.category.help": {
-    "message": "Help",
-    "description": "The label for category help in sidebar docs"
+  "sidebar.docs.category.guides": {
+    "message": "Use Guides",
+    "description": "The label for category guides in sidebar docs"
   },
   "sidebar.docs.category.service": {
     "message": "Service Monitor",
