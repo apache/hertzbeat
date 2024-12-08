@@ -26,7 +26,10 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_METRICS;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_APP;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_ID;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_NAME;
+
+import com.google.common.collect.Maps;
 import jakarta.persistence.criteria.Predicate;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,8 +48,12 @@ import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -155,94 +162,100 @@ public class CalculateAlarm {
         if (defineMap.isEmpty()) {
             return;
         }
-        List<CollectRep.Field> fields = metricsData.getFieldsList();
-        Map<String, Object> fieldValueMap = new HashMap<>(8);
-        int valueRowCount = metricsData.getValuesCount();
-        for (Map.Entry<String, List<AlertDefine>> entry : defineMap.entrySet()) {
-            List<AlertDefine> defines = entry.getValue();
-            for (AlertDefine define : defines) {
-                final String expr = define.getExpr();
-                if (StringUtils.isBlank(expr)) {
-                    continue;
-                }
-                if (expr.contains(SYSTEM_VALUE_ROW_COUNT) && metricsData.getValuesCount() == 0) {
-                    fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
-                    try {
-                        boolean match = execAlertExpression(fieldValueMap, expr);
-                        try {
-                            if (match) {
-                                // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                                afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, "", fieldValueMap, define);
-                                // if the threshold is triggered, ignore other data rows
-                                continue;
-                            } else {
-                                String alarmKey = String.valueOf(monitorId) + define.getId();
-                                triggeredAlertMap.remove(alarmKey);
-                                if (define.isRecoverNotice()) {
-                                    handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
-                                }
-                            }
-                        } catch (Exception e) {
-                            log.error(e.getMessage(), e);
-                        }
-                    } catch (Exception ignored) {}
-                }
-                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
+        Map<String, Object> fieldValueMap = Maps.newHashMapWithExpectedSize(8);
 
-                    if (CollectionUtils.isEmpty(valueRow.getColumnsList())) {
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+            for (Map.Entry<String, List<AlertDefine>> entry : defineMap.entrySet()) {
+                List<AlertDefine> defines = entry.getValue();
+                for (AlertDefine define : defines) {
+                    final String expr = define.getExpr();
+                    if (StringUtils.isBlank(expr)) {
                         continue;
                     }
-                    fieldValueMap.clear();
-                    fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, valueRowCount);
-                    StringBuilder tagBuilder = new StringBuilder();
-                    for (int index = 0; index < valueRow.getColumnsList().size(); index++) {
-                        String valueStr = valueRow.getColumns(index);
-                        if (CommonConstants.NULL_VALUE.equals(valueStr)) {
-                            continue;
-                        }
 
-                        final CollectRep.Field field = fields.get(index);
-                        final int fieldType = field.getType();
-
-                        if (fieldType == CommonConstants.TYPE_NUMBER) {
-                            final Double doubleValue;
-                            if ((doubleValue = CommonUtil.parseStrDouble(valueStr)) != null) {
-                                fieldValueMap.put(field.getName(), doubleValue);
-                            }
-                        } else if (fieldType == CommonConstants.TYPE_TIME) {
-                            final Integer integerValue;
-                            if ((integerValue = CommonUtil.parseStrInteger(valueStr)) != null) {
-                                fieldValueMap.put(field.getName(), integerValue);
-                            }
-                        } else {
-                            if (StringUtils.isNotEmpty(valueStr)) {
-                                fieldValueMap.put(field.getName(), valueStr);
-                            }
-                        }
-
-                        if (field.getLabel()) {
-                            tagBuilder.append("-").append(valueStr);
-                        }
-                    }
-                    try {
-                        boolean match = execAlertExpression(fieldValueMap, expr);
+                    if (expr.contains(SYSTEM_VALUE_ROW_COUNT) && arrowVectorReader.getRowCount() == 0L) {
+                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, arrowVectorReader.getRowCount());
                         try {
-                            if (match) {
-                                // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                                afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, tagBuilder.toString(), fieldValueMap, define);
+                            boolean match = execAlertExpression(fieldValueMap, expr);
+                            try {
+                                if (match) {
+                                    // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
+                                    afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, "", fieldValueMap, define);
+                                    // if the threshold is triggered, ignore other data rows
+                                    continue;
+                                } else {
+                                    String alarmKey = String.valueOf(monitorId) + define.getId();
+                                    triggeredAlertMap.remove(alarmKey);
+                                    if (define.isRecoverNotice()) {
+                                        handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                log.error(e.getMessage(), e);
+                            }
+                        } catch (Exception ignored) {}
+                    }
+
+                    RowWrapper rowWrapper = arrowVectorReader.readRow();
+                    while (rowWrapper.hasNextRow()) {
+                        rowWrapper = rowWrapper.nextRow();
+
+                        String finalApp = app;
+                        rowWrapper.foreach(cell -> {
+                            fieldValueMap.clear();
+                            fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, arrowVectorReader.getRowCount());
+                            StringBuilder tagBuilder = new StringBuilder();
+
+                            String valueStr = cell.getValue();
+                            if (CommonConstants.NULL_VALUE.equals(valueStr)) {
+                                return;
+                            }
+
+                            final String fieldName = cell.getField().getName();
+                            final int fieldType = Integer.parseInt(cell.getMetadata().get(MetricDataFieldConstants.TYPE));
+
+                            if (fieldType == CommonConstants.TYPE_NUMBER) {
+                                final Double doubleValue;
+                                if ((doubleValue = CommonUtil.parseStrDouble(valueStr)) != null) {
+                                    fieldValueMap.put(fieldName, doubleValue);
+                                }
+                            } else if (fieldType == CommonConstants.TYPE_TIME) {
+                                final Integer integerValue;
+                                if ((integerValue = CommonUtil.parseStrInteger(valueStr)) != null) {
+                                    fieldValueMap.put(fieldName, integerValue);
+                                }
                             } else {
-                                String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
-                                triggeredAlertMap.remove(alarmKey);
-                                if (define.isRecoverNotice()) {
-                                    handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
+                                if (StringUtils.isNotEmpty(valueStr)) {
+                                    fieldValueMap.put(fieldName, valueStr);
                                 }
                             }
-                        } catch (Exception e) {
-                            log.error(e.getMessage(), e);
-                        }
-                    } catch (Exception ignored) {}
+
+                            if (Boolean.parseBoolean(cell.getMetadata().get(MetricDataFieldConstants.LABEL))) {
+                                tagBuilder.append("-").append(valueStr);
+                            }
+                            try {
+                                boolean match = execAlertExpression(fieldValueMap, expr);
+                                try {
+                                    if (match) {
+                                        // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
+                                        afterThresholdRuleMatch(currentTimeMilli, monitorId, finalApp, metrics, tagBuilder.toString(), fieldValueMap, define);
+                                    } else {
+                                        String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
+                                        triggeredAlertMap.remove(alarmKey);
+                                        if (define.isRecoverNotice()) {
+                                            handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    log.error(e.getMessage(), e);
+                                }
+                            } catch (Exception ignored) {}
+                        });
+                    }
                 }
             }
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 

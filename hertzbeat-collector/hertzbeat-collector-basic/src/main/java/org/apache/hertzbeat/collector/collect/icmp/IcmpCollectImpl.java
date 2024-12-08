@@ -22,9 +22,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -44,7 +44,8 @@ public class IcmpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
 
         IcmpProtocol icmp = metrics.getIcmp();
@@ -66,15 +67,14 @@ public class IcmpCollectImpl extends AbstractCollect {
                 builder.setMsg("Un Reachable, Timeout " + timeout + "ms");
                 return;
             }
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
             for (String alias : metrics.getAliasFields()) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(Long.toString(responseTime));
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    metricsDataBuilder.getArrowVectorWriter().setNull(alias);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
         } catch (UnknownHostException unknownHostException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
             builder.setCode(CollectRep.Code.UN_REACHABLE);

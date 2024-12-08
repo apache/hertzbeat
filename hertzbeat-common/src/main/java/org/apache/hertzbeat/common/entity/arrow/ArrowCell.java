@@ -15,19 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.ipmi2.client.handler;
+package org.apache.hertzbeat.common.entity.arrow;
 
-import java.io.IOException;
+import lombok.Data;
+import org.apache.arrow.vector.table.Row;
+import org.apache.arrow.vector.types.pojo.Field;
 
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
-import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiSession;
-import org.apache.hertzbeat.collector.collect.ipmi2.client.UdpConnection;
-import org.apache.hertzbeat.common.entity.job.Metrics;
+import java.util.Map;
 
 /**
- * IpmiHandler interface
  */
-public interface IpmiHandler {
-    void handler(IpmiSession session, UdpConnection connection, MetricsDataBuilder metricsDataBuilder, Metrics metrics) throws IOException;
+@Data
+public class ArrowCell {
+    private final String value;
+    private final Field field;
+    private final Map<String, String> metadata;
 
+    public ArrowCell(Field field, Row row) {
+        this.field = field;
+        this.value = row.getVarCharObj(field.getName());
+        this.metadata = field.getMetadata();
+    }
 }

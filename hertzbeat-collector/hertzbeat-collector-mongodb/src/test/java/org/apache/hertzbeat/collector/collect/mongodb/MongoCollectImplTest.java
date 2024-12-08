@@ -26,6 +26,9 @@ import com.mongodb.client.MongoDatabase;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -73,7 +76,7 @@ public class MongoCollectImplTest {
 
     @Test
     void mockTest() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         mongodbProtocol.setCommand("hostInfo.os");
         Metrics metrics = new Metrics();
         metrics.setAliasFields(List.of("type", "name", "version"));
@@ -99,8 +102,13 @@ public class MongoCollectImplTest {
                         b.serverSelectionTimeout(Long.parseLong(mongodbProtocol.getTimeout()), MILLISECONDS))
                 .build();
         mongoClientsMockedStatic.when(() -> MongoClients.create(settings)).thenReturn(mongoClient);
+
         mongodbSingleCollect.preCheck(metrics);
-        mongodbSingleCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            mongodbSingleCollect.collect(metricsDataBuilder, metrics);
+        }
+
         Assertions.assertEquals("Linux", builder.getValues(0).getColumns(0));
         Assertions.assertEquals("Ubuntu", builder.getValues(0).getColumns(1));
         Assertions.assertEquals("22.04", builder.getValues(0).getColumns(2));

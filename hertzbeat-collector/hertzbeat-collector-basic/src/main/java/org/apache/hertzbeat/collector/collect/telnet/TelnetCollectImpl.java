@@ -24,16 +24,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.telnet.TelnetClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -53,7 +52,8 @@ public class TelnetCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
         TelnetProtocol telnet = metrics.getTelnet();
         int timeout = CollectUtil.getTimeout(telnet.getTimeout());
@@ -65,7 +65,7 @@ public class TelnetCollectImpl extends AbstractCollect {
             if (telnetClient.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
                 List<String> aliasFields = metrics.getAliasFields();
-                Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), app);
+                Map<String, String> resultMap = execCmdAndParseResult(telnetClient, telnet.getCmd(), metricsDataBuilder.getBuilder().getApp());
                 resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
                 if (resultMap.size() < aliasFields.size()) {
                     log.error("telnet response data not enough: {}", resultMap);
@@ -73,12 +73,11 @@ public class TelnetCollectImpl extends AbstractCollect {
                     builder.setMsg("The cmd execution results do not match the expected number of metrics.");
                     return;
                 }
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
                 for (String field : aliasFields) {
                     String fieldValue = resultMap.get(field);
-                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                    metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
                 }
-                builder.addValues(valueRowBuilder.build());
             } else {
                 builder.setCode(CollectRep.Code.UN_CONNECTABLE);
                 builder.setMsg("Peer connect failed，Timeout " + timeout + "ms");

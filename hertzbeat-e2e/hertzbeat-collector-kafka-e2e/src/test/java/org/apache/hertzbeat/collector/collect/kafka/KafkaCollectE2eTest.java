@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.collector.collect.kafka;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -120,15 +122,21 @@ public class KafkaCollectE2eTest {
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get(60, TimeUnit.SECONDS);
 
         // Verify the information of topic list monitoring
-        builder = CollectRep.MetricsData.newBuilder();
-        kafkaCollect.collect(builder, 0, "kafka", metrics);
+        builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("kafka");
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            kafkaCollect.collect(metricsDataBuilder, metrics);
+        }
         Assertions.assertTrue(builder.getValuesList().stream()
                 .anyMatch(valueRow -> valueRow.getColumns(0).equals(topicName)));
 
         // Verify the information monitored by topic description
-        builder = CollectRep.MetricsData.newBuilder();
         kafkaProtocol.setCommand("topic-describe");
-        kafkaCollect.collect(builder, 0, "kafka", metrics);
+        builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("kafka");
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            kafkaCollect.collect(metricsDataBuilder, metrics);
+        }
         List<CollectRep.ValueRow> topicDescribeList = builder.getValuesList();
         CollectRep.ValueRow firstRow = topicDescribeList.get(0);
         Assertions.assertAll(

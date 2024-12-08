@@ -26,6 +26,9 @@ import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.resource.ClientResources;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -88,7 +91,7 @@ class RedisSingleCollectImplTest {
                 used_cpu_sys:0.544635
                 used_cpu_user:0.330690
                 """;
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         List<String> aliasField = new ArrayList<>();
         aliasField.add("used_cpu_sys");
         Metrics metrics = new Metrics();
@@ -103,7 +106,11 @@ class RedisSingleCollectImplTest {
         Mockito.when(client.connect()).thenReturn(connection);
         Mockito.when(connection.sync()).thenReturn(cmd);
         Mockito.when(cmd.info(metrics.getName())).thenReturn(info);
-        redisSingleCollect.collect(builder, 1L, "test", metrics);
+
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            redisSingleCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getValues(0).getColumns(0), "0.544635");
         clientMockedStatic.close();
     }
@@ -119,7 +126,7 @@ class RedisSingleCollectImplTest {
         String version = "7.2.4";
         String redisInfo = String.format(redisInfoTemplate, redisMode, version);
 
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         List<String> aliasField = new ArrayList<>();
         aliasField.add("redis_mode");
         aliasField.add("redis_version");
@@ -149,7 +156,10 @@ class RedisSingleCollectImplTest {
         Mockito.when(cmd.info(metrics.getName())).thenReturn(redisInfo);
 
         redisSingleCollect.preCheck(metrics);
-        redisSingleCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            redisSingleCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
         for (CollectRep.ValueRow row : builder.getValuesList()) {
             assertEquals(row.getColumnsCount(), 2);

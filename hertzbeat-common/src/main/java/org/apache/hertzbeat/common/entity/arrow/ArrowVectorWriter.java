@@ -15,34 +15,22 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect;
+package org.apache.hertzbeat.common.entity.arrow;
 
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 
 /**
- * Specific metrics collection implementation abstract class
  */
-public abstract class AbstractCollect {
+public interface ArrowVectorWriter extends AutoCloseable {
+    void addField(Metrics.Field field);
 
-    /**
-     * Pre-check metrics
-     * @param metrics metric configuration
-     * @throws IllegalArgumentException when validation failed
-     */
-    public abstract void preCheck(Metrics metrics) throws IllegalArgumentException;
+    void setValue(String fieldName, String value);
 
+    void setNull(String fieldName);
 
-    /**
-     * Real acquisition implementation interface
-     * @param metricsDataBuilder response builder
-     * @param metrics metric configuration
-     */
-    public abstract void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics);
+    byte[] toByteArray();
 
-    /**
-     * the protocol this collect instance support
-     * @return protocol str
-     */
-    public abstract String supportProtocol();
+    boolean isEmpty();
+
+    void close();
 }

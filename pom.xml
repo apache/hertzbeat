@@ -170,6 +170,7 @@
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <greptimedb.version>0.9.1</greptimedb.version>
         <mysql-jdbcdriver.version>8.0.33</mysql-jdbcdriver.version>
+        <arrow.version>18.0.0</arrow.version>
     </properties>
 
     <dependencyManagement>
@@ -452,6 +453,17 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
                 <version>${netty.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-vector</artifactId>
+                <version>${arrow.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.arrow</groupId>
+                <artifactId>arrow-memory-netty</artifactId>
+                <version>${arrow.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

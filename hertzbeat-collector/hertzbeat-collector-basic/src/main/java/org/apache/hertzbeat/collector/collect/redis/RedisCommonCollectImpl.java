@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.RedisConnect;
@@ -82,14 +83,16 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
+
         try {
             if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 List<Map<String, String>> redisInfoList = getClusterRedisInfo(metrics);
-                doMetricsDataList(builder, redisInfoList, metrics);
+                doMetricsDataList(metricsDataBuilder, redisInfoList, metrics);
             } else {
                 Map<String, String> redisInfo = getSingleRedisInfo(metrics);
-                doMetricsData(builder, redisInfo, metrics);
+                doMetricsData(metricsDataBuilder, redisInfo, metrics);
             }
         } catch (RedisConnectionException connectionException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(connectionException);
@@ -147,31 +150,22 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * Build monitoring parameters according to redis info
-     * @param builder builder
+     * @param metricsDataBuilder metricsDataBuilder
      * @param valueMapList map list
      * @param metrics metrics
      */
-    private void doMetricsDataList(CollectRep.MetricsData.Builder builder, List<Map<String, String>> valueMapList, Metrics metrics) {
-        valueMapList.forEach(e -> doMetricsData(builder, e, metrics));
+    private void doMetricsDataList(MetricsDataBuilder metricsDataBuilder, List<Map<String, String>> valueMapList, Metrics metrics) {
+        valueMapList.forEach(e -> doMetricsData(metricsDataBuilder, e, metrics));
     }
 
     /**
      * Build monitoring parameters according to redis info
-     * @param builder builder
+     * @param metricsDataBuilder metricsDataBuilder
      * @param valueMap map value
      * @param metrics metrics
      */
-    private void doMetricsData(CollectRep.MetricsData.Builder builder, Map<String, String> valueMap, Metrics metrics) {
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        metrics.getAliasFields().forEach(it -> {
-            if (valueMap.containsKey(it)) {
-                String fieldValue = valueMap.get(it);
-                valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
-            } else {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            }
-        });
-        builder.addValues(valueRowBuilder.build());
+    private void doMetricsData(MetricsDataBuilder metricsDataBuilder, Map<String, String> valueMap, Metrics metrics) {
+        metrics.getAliasFields().forEach(it -> metricsDataBuilder.getArrowVectorWriter().setValue(it, valueMap.get(it)));
     }
 
     /**

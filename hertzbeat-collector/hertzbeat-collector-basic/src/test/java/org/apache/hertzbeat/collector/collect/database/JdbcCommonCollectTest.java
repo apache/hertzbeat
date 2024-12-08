@@ -21,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -41,9 +43,7 @@ class JdbcCommonCollectTest {
 
     @Test
     void preCheck() {
-        assertThrows(IllegalArgumentException.class, () -> {
-            jdbcCommonCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> jdbcCommonCollect.preCheck(null));
         assertThrows(IllegalArgumentException.class, () -> {
             Metrics metrics = new Metrics();
             jdbcCommonCollect.preCheck(metrics);
@@ -86,8 +86,13 @@ class JdbcCommonCollectTest {
             Metrics metrics = new Metrics();
             metrics.setJdbc(jdbc);
 
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            jdbcCommonCollect.collect(builder, 1, "test", metrics);
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder()
+                    .setId(1L)
+                    .setApp("test");
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                jdbcCommonCollect.collect(metricsDataBuilder, metrics);
+            }
         });
 
         String[] platforms = new String[]{
@@ -106,8 +111,13 @@ class JdbcCommonCollectTest {
                 Metrics metrics = new Metrics();
                 metrics.setJdbc(jdbc);
     
-                CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-                jdbcCommonCollect.collect(builder, 1, "test", metrics);
+                CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder()
+                        .setId(1L)
+                        .setApp("test");
+                try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                    final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                    jdbcCommonCollect.collect(metricsDataBuilder, metrics);
+                }
             });
         }
         // invalid platform
@@ -118,8 +128,13 @@ class JdbcCommonCollectTest {
             Metrics metrics = new Metrics();
             metrics.setJdbc(jdbc);
 
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
-            jdbcCommonCollect.collect(builder, 1, "test", metrics);
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder()
+                    .setId(1L)
+                    .setApp("test");
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                jdbcCommonCollect.collect(metricsDataBuilder, metrics);
+            }
         });
     }
 

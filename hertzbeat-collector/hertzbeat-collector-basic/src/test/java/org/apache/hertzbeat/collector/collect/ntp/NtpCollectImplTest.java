@@ -27,6 +27,8 @@ import org.apache.commons.net.ntp.NtpV3Impl;
 import org.apache.commons.net.ntp.NtpV3Packet;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.apache.commons.net.ntp.TimeStamp;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -48,7 +50,7 @@ class NtpCollectImplTest {
 
     @Test
     void testCollect() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         NtpProtocol telnetProtocol = NtpProtocol.builder()
                 .host("192.168.77.100")
                 .port("1234")
@@ -77,7 +79,11 @@ class NtpCollectImplTest {
         metrics.setNtp(telnetProtocol);
         metrics.setAliasFields(aliasField);
         ntpCollect.preCheck(metrics);
-        ntpCollect.collect(builder, 1L, "test", metrics);
+
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ntpCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));

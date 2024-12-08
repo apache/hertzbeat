@@ -41,6 +41,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -145,22 +149,31 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
         List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(monitorId);
         Metrics tmpMetrics = job.getMetrics().get(0);
         List<Metrics> metricsList = new LinkedList<>();
+
         for (CollectRep.MetricsData metricsData : metricsDataList) {
-            List<Metrics.Field> fields = metricsData.getFieldsList().stream().map(item ->
-                    Metrics.Field.builder()
-                            .field(item.getName())
-                            .type((byte) item.getType())
-                            .label(item.getLabel())
-                            .unit(item.getUnit())
-                            .build())
-                    .collect(Collectors.toList());
-            Metrics metrics = Metrics.builder()
-                    .visible(true)
-                    .name(metricsData.getMetrics())
-                    .fields(fields)
-                    .prometheus(tmpMetrics.getPrometheus())
-                    .build();
-            metricsList.add(metrics);
+            try (ArrowVectorReader reader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                RowWrapper rowWrapper = reader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    List<Metrics.Field> fields = rowWrapper.map(cell -> Metrics.Field.builder()
+                            .field(cell.getField().getName())
+                            .type(Integer.valueOf(cell.getMetadata().get(MetricDataFieldConstants.TYPE)).byteValue())
+                            .label(Boolean.parseBoolean(cell.getMetadata().get(MetricDataFieldConstants.LABEL)))
+                            .unit(cell.getMetadata().get(MetricDataFieldConstants.UNIT))
+                            .build());
+
+                    Metrics metrics = Metrics.builder()
+                            .visible(true)
+                            .name(metricsData.getMetrics())
+                            .fields(fields)
+                            .prometheus(tmpMetrics.getPrometheus())
+                            .build();
+                    metricsList.add(metrics);
+                }
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
         job.setMetrics(metricsList);
         return job;
@@ -311,17 +324,24 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                     var hierarchyMetric = new Hierarchy();
                     hierarchyMetric.setValue(metricsData.getMetrics());
                     hierarchyMetric.setLabel(metricsData.getMetrics());
-                    List<Hierarchy> hierarchyFieldList = metricsData.getFieldsList().stream()
-                            .map(item -> {
-                                var hierarchyField = new Hierarchy();
-                                hierarchyField.setValue(item.getName());
-                                hierarchyField.setLabel(item.getName());
-                                hierarchyField.setIsLeaf(true);
-                                hierarchyField.setType((byte) item.getType());
-                                hierarchyField.setUnit(item.getUnit());
-                                return hierarchyField;
-                            }).collect(Collectors.toList());
-                    hierarchyMetric.setChildren(hierarchyFieldList);
+
+                    try (ArrowVectorReader reader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                        List<Hierarchy> hierarchyFieldList = reader.getAllFields().stream()
+                                .map(item -> {
+                                    var hierarchyField = new Hierarchy();
+                                    hierarchyField.setValue(item.getName());
+                                    hierarchyField.setLabel(item.getName());
+                                    hierarchyField.setIsLeaf(true);
+                                    hierarchyField.setType(Integer.valueOf(item.getMetadata().get(MetricDataFieldConstants.TYPE)).byteValue());
+                                    hierarchyField.setUnit(item.getMetadata().get(MetricDataFieldConstants.UNIT));
+                                    return hierarchyField;
+                                })
+                                .collect(Collectors.toList());
+
+                        hierarchyMetric.setChildren(hierarchyFieldList);
+                    } catch (Exception e) {
+                        log.error(e.getMessage(), e);
+                    }
                     // combine Hierarchy Metrics
                     combineHierarchyMetrics(hierarchyMetricList, hierarchyMetric);
                 }

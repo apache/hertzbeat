@@ -21,10 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClientManagement;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServiceInstance;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -53,7 +56,7 @@ class RegistryImplTest {
 
     @Test
     void testServerCollect() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
 
         String port = "123";
         String host = "127.0.0.1";
@@ -79,7 +82,11 @@ class RegistryImplTest {
         Mockito.when(client.getServerInfo()).thenReturn(serverInfo);
         registry.setDiscoveryClientManagement(discoveryClientManagement);
         registry.preCheck(metrics);
-        registry.collect(builder, 1L, "test", metrics);
+
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            registry.collect(metricsDataBuilder, metrics);
+        }
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(host, valueRow.getColumns(0));
             assertEquals(port, valueRow.getColumns(1));
@@ -89,7 +96,7 @@ class RegistryImplTest {
 
     @Test
     void testServiceCollect() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
 
         String port = "123";
         String host = "127.0.0.1";
@@ -123,7 +130,10 @@ class RegistryImplTest {
         Mockito.when(client.getServices()).thenReturn(serviceInstances);
         registry.setDiscoveryClientManagement(discoveryClientManagement);
         registry.preCheck(metrics);
-        registry.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            registry.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(serviceId, valueRow.getColumns(0));

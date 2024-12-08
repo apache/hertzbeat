@@ -28,6 +28,9 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -89,7 +92,7 @@ public class RedisClusterCollectImplTest {
                 cluster_known_nodes:%s
                 """;
         String clusterInfo = String.format(clusterInfoTemp, clusterKnownNodes);
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         List<String> aliasField = new ArrayList<>();
         aliasField.add("cluster_known_nodes");
         aliasField.add("cluster_enabled");
@@ -132,7 +135,10 @@ public class RedisClusterCollectImplTest {
         Mockito.when(cmd.clusterInfo()).thenReturn(clusterInfo);
 
         redisClusterCollect.preCheck(metrics);
-        redisClusterCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            redisClusterCollect.collect(metricsDataBuilder, metrics);
+        }
 
         assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
         assertEquals(builder.getValuesCount(), 2);

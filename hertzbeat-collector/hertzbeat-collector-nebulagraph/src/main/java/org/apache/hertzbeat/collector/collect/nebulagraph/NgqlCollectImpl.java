@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -61,7 +62,8 @@ public class NgqlCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final Builder builder = metricsDataBuilder.getBuilder();
         NgqlProtocol ngql = metrics.getNgql();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -83,10 +85,10 @@ public class NgqlCollectImpl extends AbstractCollect {
         long responseTime = stopWatch.getTotalTimeMillis();
         try {
             switch (ngql.getParseType()) {
-                case PARSE_TYPE_FILTER_COUNT -> filterCount(nebulaTemplate, ngql, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_ONE_ROW -> queryOneRow(nebulaTemplate, ngql, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_MULTI_ROW -> queryMultiRow(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_COLUMNS -> queryColumns(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_FILTER_COUNT -> filterCount(nebulaTemplate, ngql, metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_ONE_ROW -> queryOneRow(nebulaTemplate, ngql, metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_MULTI_ROW -> queryMultiRow(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_COLUMNS -> queryColumns(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 default -> {
                 }
             }
@@ -104,8 +106,11 @@ public class NgqlCollectImpl extends AbstractCollect {
      * @param columns        metrics aliasField
      * @param responseTime   cost time for connect to nebula graph
      */
-    private void filterCount(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void filterCount(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns,
+                             MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+        final Builder builder = metricsDataBuilder.getBuilder();
         Map<String, String> data = new HashMap<>();
+
         for (String command : protocol.getCommands()) {
             Map<String, String> showJobs = showJobs(nebulaTemplate, protocol.getSpaceName(), command);
             if (Objects.nonNull(showJobs)) {
@@ -136,20 +141,19 @@ public class NgqlCollectImpl extends AbstractCollect {
             }
 
         }
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
         for (String column : columns) {
             if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                valueRowBuilder.addColumns(String.valueOf(responseTime));
+                metricsDataBuilder.getArrowVectorWriter().setValue(column, String.valueOf(responseTime));
             } else {
                 String value = data.get(column);
-                value = value == null ? CommonConstants.NULL_VALUE : value;
-                valueRowBuilder.addColumns(value);
+                metricsDataBuilder.getArrowVectorWriter().setValue(column, value);
             }
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
-    private void queryOneRow(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void queryOneRow(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns,
+                             MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         Map<String, Object> queryResult = new HashMap<>();
         for (String command : protocol.getCommands()) {
             Map<String, String> showJobs = showJobs(nebulaTemplate, protocol.getSpaceName(), command);
@@ -162,15 +166,17 @@ public class NgqlCollectImpl extends AbstractCollect {
                 queryResult.putAll(maps.get(0));
             }
         }
-        inflateData(columns, responseTime, queryResult, builder);
+        inflateData(columns, responseTime, queryResult, metricsDataBuilder);
     }
 
-    private void queryMultiRow(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void queryMultiRow(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns,
+                               MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+        final Builder builder = metricsDataBuilder.getBuilder();
         String command = commands.get(0);
         try {
             List<Map<String, Object>> result = nebulaTemplate.executeCommand(command);
             for (Map<String, Object> row : result) {
-                inflateData(columns, responseTime, row, builder);
+                inflateData(columns, responseTime, row, metricsDataBuilder);
             }
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
@@ -179,8 +185,11 @@ public class NgqlCollectImpl extends AbstractCollect {
 
     }
 
-    private void queryColumns(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void queryColumns(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns,
+                              MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+        final Builder builder = metricsDataBuilder.getBuilder();
         Map<String, Object> resultMap = new HashMap<>();
+
         for (String command : commands) {
             try {
                 List<Map<String, Object>> result = nebulaTemplate.executeCommand(command);
@@ -198,21 +207,18 @@ public class NgqlCollectImpl extends AbstractCollect {
                 builder.setMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
             }
         }
-        inflateData(columns, responseTime, resultMap, builder);
+        inflateData(columns, responseTime, resultMap, metricsDataBuilder);
     }
 
-    private void inflateData(List<String> columns, Long responseTime, Map<String, Object> dataFromDb, CollectRep.MetricsData.Builder builder) {
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+    private void inflateData(List<String> columns, Long responseTime, Map<String, Object> dataFromDb, MetricsDataBuilder metricsDataBuilder) {
         for (String column : columns) {
             if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                valueRowBuilder.addColumns(String.valueOf(responseTime));
+                metricsDataBuilder.getArrowVectorWriter().setValue(column, String.valueOf(responseTime));
             } else {
                 Object value = dataFromDb.get(column);
-                value = value == null ? CommonConstants.NULL_VALUE : value;
-                valueRowBuilder.addColumns(Objects.toString(value));
+                metricsDataBuilder.getArrowVectorWriter().setValue(column, value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
             }
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
     @Override

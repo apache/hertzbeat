@@ -21,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -45,15 +47,13 @@ class SnmpCollectImplTest {
         snmap.setPort("161");
         snmap.setVersion("2c");
         metrics.setSnmp(snmap);
-        builder = CollectRep.MetricsData.newBuilder();
+        builder = CollectRep.MetricsData.newBuilder().setId(0L);
     }
 
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> {
-            snmpCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> snmpCollect.preCheck(null));
 
         // snmp protocol is null
         assertThrows(IllegalArgumentException.class, () -> {
@@ -88,15 +88,16 @@ class SnmpCollectImplTest {
         });
 
         // everything is ok
-        assertDoesNotThrow(() -> {
-            snmpCollect.preCheck(metrics);
-        });
+        assertDoesNotThrow(() -> snmpCollect.preCheck(metrics));
     }
 
     @Test
     void collect() {
         assertDoesNotThrow(() -> {
-            snmpCollect.collect(builder, 0, null, metrics);
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                snmpCollect.collect(metricsDataBuilder, metrics);
+            }
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

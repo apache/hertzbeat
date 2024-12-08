@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import javax.net.ssl.SSLException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.util.Base64;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.MetricFamily;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.TextParser;
@@ -78,8 +79,9 @@ public class PrometheusAutoCollectImpl {
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
     
-    public List<CollectRep.MetricsData> collect(CollectRep.MetricsData.Builder builder,
-                                                Metrics metrics) {
+    public List<CollectRep.MetricsData> collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
+
         try {
             validateParams(metrics);
         } catch (Exception e) {
@@ -90,8 +92,7 @@ public class PrometheusAutoCollectImpl {
         HttpContext httpContext = createHttpContext(metrics.getPrometheus());
         HttpUriRequest request = createHttpRequest(metrics.getPrometheus());
         try {
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
-                                                     .execute(request, httpContext);
+            CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             boolean isSuccessInvoke = defaultSuccessStatusCodes.contains(statusCode);
             log.debug("http response status: {}", statusCode);
@@ -100,6 +101,7 @@ public class PrometheusAutoCollectImpl {
                 builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return null;
             }
+
             // todo: The InputStream is directly converted to a String here
             //       For large data in the Prometheus exporter, this can generate large objects, which could severely impact JVM memory space
             // todo: Option one: Use InputStream for parsing, but this requires significant code changes
@@ -107,13 +109,13 @@ public class PrometheusAutoCollectImpl {
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             long collectTime = System.currentTimeMillis();
             builder.setTime(collectTime);
-            if (resp == null || !StringUtils.hasText(resp)) {
+            if (!StringUtils.hasText(resp)) {
                 log.error("http response content is empty, status: {}.", statusCode);
                 builder.setCode(CollectRep.Code.FAIL);
                 builder.setMsg("http response content is empty");
             } else {
                 try {
-                    return parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
+                    return parseResponseByPrometheusExporter(resp, metricsDataBuilder);
                 } catch (Exception e) {
                     log.info("parse error: {}.", e.getMessage(), e);
                     builder.setCode(CollectRep.Code.FAIL);
@@ -169,10 +171,11 @@ public class PrometheusAutoCollectImpl {
         }
     }
     
-    private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
-                                                                           CollectRep.MetricsData.Builder builder) {
+    private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(String resp, MetricsDataBuilder metricsDataBuilder) {
         Map<String, MetricFamily> metricFamilyMap = TextParser.textToMetricFamilies(resp);
         List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
+
         for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
             builder.clearMetrics();
             builder.clearFields();
@@ -187,24 +190,28 @@ public class PrometheusAutoCollectImpl {
                     if (index == 0) {
                         metric.getLabels().forEach(label -> {
                             metricsFields.add(label.getName());
-                            builder.addFields(CollectRep.Field.newBuilder().setName(label.getName())
-                                    .setType(CommonConstants.TYPE_STRING).setLabel(true).build());
+                            metricsDataBuilder.getArrowVectorWriter().addField(Metrics.Field.builder()
+                                    .field(label.getName())
+                                    .type(CommonConstants.TYPE_STRING)
+                                    .label(true)
+                                    .build());
                         });
-                        builder.addFields(CollectRep.Field.newBuilder().setName("value")
-                                .setType(CommonConstants.TYPE_NUMBER).setLabel(false).build());
+                        metricsDataBuilder.getArrowVectorWriter().addField(Metrics.Field.builder()
+                                .field("value")
+                                .type(CommonConstants.TYPE_NUMBER)
+                                .label(false)
+                                .build());
                     }
+
                     Map<String, String> labelMap = metric.getLabels()
                             .stream()
                             .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
-                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                     for (String field : metricsFields) {
                         String fieldValue = labelMap.get(field);
-                        valueRowBuilder.addColumns(fieldValue == null ? CommonConstants.NULL_VALUE : fieldValue);
+                        metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
                     }
-                    valueRowBuilder.addColumns(String.valueOf(metric.getValue()));
-                    builder.addValues(valueRowBuilder.build());
                 }
-                metricsDataList.add(builder.build());
+                metricsDataList.add(metricsDataBuilder.build());
             }
         }
         return metricsDataList;
