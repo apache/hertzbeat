@@ -30,7 +30,10 @@ import java.util.List;
 
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -69,7 +72,7 @@ class UdpCollectImplTest {
     }
 
     @Test
-    void testCollect() {
+    void testCollect() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         UdpProtocol udpProtocol = UdpProtocol.builder()
                 .timeout("10")
@@ -91,14 +94,22 @@ class UdpCollectImplTest {
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
 
-        final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(new ArrayList<String>());
+        final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields());
         MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
         builder.setId(1L);
         builder.setApp("test");
         udpCollect.collect(metricsDataBuilder, metrics);
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertNotNull(valueRow.getColumns(0));
+
+        final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+            assertEquals(1, arrowVectorReader.getRowCount());
+
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                assertNotNull(rowWrapper.nextCell().getValue());
+            }
         }
 
         socketMockedConstruction.close();

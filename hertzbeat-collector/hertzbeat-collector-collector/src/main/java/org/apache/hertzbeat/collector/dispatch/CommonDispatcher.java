@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -29,6 +30,10 @@ import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -36,8 +41,8 @@ import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -224,11 +229,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             commonDataQueue.sendMetricsData(metricsData);
             if (log.isDebugEnabled()) {
                 log.debug("Cyclic Job: {} - {} - {}", job.getMonitorId(), job.getApp(), metricsData.getMetrics());
-                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                    for (CollectRep.Field field : metricsData.getFieldsList()) {
-                        log.debug("Field-->{},Value-->{}", field.getName(), valueRow.getColumns(metricsData.getFieldsList().indexOf(field)));
-                    }
-                }
+                debugLogFieldAndValue(metricsData);
             }
 
             // If metricsSet is null, it means that the execution is completed or whether the priority of the collection metrics is 0, that is, the availability collection metrics.
@@ -299,11 +300,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             job.addCollectMetricsData(metricsData);
             if (log.isDebugEnabled()) {
                 log.debug("One-time Job: {}", metricsData.getMetrics());
-                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                    for (CollectRep.Field field : metricsData.getFieldsList()) {
-                        log.debug("Field-->{},Value-->{}", field.getName(), valueRow.getColumns(metricsData.getFieldsList().indexOf(field)));
-                    }
-                }
+                debugLogFieldAndValue(metricsData);
             }
 
             if (job.isSd() || metricsSet == null) {
@@ -323,6 +320,19 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 // The list of metrics task at the current execution level has not been fully executed.
                 // It needs to wait for the execution of other metrics task of the same level to complete the execution and enter the next level for execution.
             }
+        }
+    }
+
+    private void debugLogFieldAndValue(CollectRep.MetricsData metricsData) {
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                rowWrapper.foreachCell(cell -> log.debug("Field-->{},Value-->{}", cell.getField().getName(), cell.getValue()));
+            }
+        } catch (Exception ignored) {
         }
     }
 
@@ -355,25 +365,35 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     }
 
     private List<Map<String, Configmap>> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {
-        if (metricsData.getValuesCount() <= 0 || metricsData.getFieldsCount() <= 0) {
-            return new LinkedList<>();
-        }
-        List<Map<String, Configmap>> mapList = new LinkedList<>();
-        for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-            if (valueRow.getColumnsCount() != metricsData.getFieldsCount()) {
-                continue;
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+            if (arrowVectorReader.getRowCount() <= 0 || arrowVectorReader.getAllFields().size() <= 0) {
+                return new ArrayList<>();
             }
-            Map<String, Configmap> configmapMap = new HashMap<>(valueRow.getColumnsCount());
-            int index = 0;
-            for (CollectRep.Field field : metricsData.getFieldsList()) {
-                String value = valueRow.getColumns(index);
-                index++;
-                Configmap configmap = new Configmap(field.getName(), value, Integer.valueOf(field.getType()).byteValue());
-                configmapMap.put(field.getName(), configmap);
+
+            List<Map<String, Configmap>> mapList = new ArrayList<>();
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                if (rowWrapper.getFieldList().size() != arrowVectorReader.getAllFields().size()) {
+                    continue;
+                }
+
+                Map<String, Configmap> configmapMap = Maps.newHashMapWithExpectedSize(rowWrapper.getFieldList().size());
+                rowWrapper.foreachCell(cell -> {
+                    String value = cell.getValue();
+                    Configmap configmap = new Configmap(cell.getField().getName(), value, cell.getIntMetaData(MetricDataFieldConstants.TYPE).byteValue());
+                    configmapMap.put(cell.getField().getName(), configmap);
+                });
+                mapList.add(configmapMap);
             }
-            mapList.add(configmapMap);
+
+            return mapList;
+        } catch (Exception ignored) {
         }
-        return mapList;
+
+        return new ArrayList<>();
     }
 
     /**

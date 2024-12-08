@@ -26,6 +26,7 @@ import io.greptime.models.Table;
 import io.greptime.models.TableSchema;
 import io.greptime.models.WriteOk;
 import io.greptime.options.GreptimeOptions;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -42,10 +43,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -116,7 +124,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
+        if (metricsData.getData().isEmpty()) {
             log.info("[warehouse greptime] flush metrics data {} {}is null, ignore.", metricsData.getId(), metricsData.getMetrics());
             return;
         }
@@ -127,44 +135,59 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         tableSchemaBuilder.addTag("instance", DataType.String)
                 .addTimestamp("ts", DataType.TimestampMillisecond);
 
-        List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
-        for (CollectRep.Field field : fieldsList) {
-            // handle field type
-            if (field.getLabel()) {
-                tableSchemaBuilder.addTag(field.getName(), DataType.String);
-            } else {
-                if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                    tableSchemaBuilder.addField(field.getName(), DataType.Float64);
-                } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                    tableSchemaBuilder.addField(field.getName(), DataType.String);
-                }
-            }
-        }
-        Table table = Table.from(tableSchemaBuilder.build());
-        try {
-            long now = System.currentTimeMillis();
-            Object[] values = new Object[2 + fieldsList.size()];
-            values[0] = monitorId;
-            values[1] = now;
-            for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                for (int i = 0; i < fieldsList.size(); i++) {
-                    if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                        CollectRep.Field field = fieldsList.get(i);
-                        if (field.getLabel()) {
-                            values[2 + i] = valueRow.getColumns(i);
-                        } else {
-                            if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                                values[2 + i] = Double.parseDouble(valueRow.getColumns(i));
-                            } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                                values[2 + i] = valueRow.getColumns(i);
-                            }
-                        }
-                    } else {
-                        values[2 + i] = null;
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+            List<Field> fieldList = arrowVectorReader.getAllFields();
+            for (Field field : fieldList) {
+                Map<String, String> metadata = field.getMetadata();
+                boolean isLabel = Boolean.parseBoolean(metadata.get(MetricDataFieldConstants.LABEL));
+                byte type = Byte.parseByte(metadata.get(MetricDataFieldConstants.TYPE));
+
+                if (isLabel) {
+                    tableSchemaBuilder.addTag(field.getName(), DataType.String);
+                } else {
+                    if (type == CommonConstants.TYPE_NUMBER) {
+                        tableSchemaBuilder.addField(field.getName(), DataType.Float64);
+                    } else if (type == CommonConstants.TYPE_STRING) {
+                        tableSchemaBuilder.addField(field.getName(), DataType.String);
                     }
                 }
+            }
+
+            Table table = Table.from(tableSchemaBuilder.build());
+            long now = System.currentTimeMillis();
+            Object[] values = new Object[2 + fieldList.size()];
+            values[0] = monitorId;
+            values[1] = now;
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                AtomicInteger index = new AtomicInteger(-1);
+                rowWrapper.foreachCell(cell -> {
+                    index.getAndIncrement();
+
+                    if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+                        values[2 + index.get()] = null;
+                        return;
+                    }
+
+                    Boolean label = cell.getBooleanMetaData(MetricDataFieldConstants.LABEL);
+                    Byte type = cell.getByteMetaData(MetricDataFieldConstants.TYPE);
+
+                    if (label) {
+                        values[2 + index.get()] = cell.getValue();
+                    } else {
+                        if (type == CommonConstants.TYPE_NUMBER) {
+                            values[2 + index.get()] = Double.parseDouble(cell.getValue());
+                        } else if (type == CommonConstants.TYPE_STRING) {
+                            values[2 + index.get()] = cell.getValue();
+                        }
+                    }
+                });
+
                 table.addRow(values);
             }
+
             CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
             try {
                 Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);

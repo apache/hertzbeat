@@ -70,7 +70,7 @@ public class NebulaGraphCollectImplTest {
         for (String validTimePeriod : validTimePeriods) {
             builder = CollectRep.MetricsData.newBuilder();
             Metrics metrics = Metrics.builder().nebulaGraph(NebulaGraphProtocol.builder().timePeriod(validTimePeriod).build()).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 nebulaGraphCollect.collect(metricsDataBuilder, metrics);
             }
@@ -81,7 +81,7 @@ public class NebulaGraphCollectImplTest {
         assertDoesNotThrow(() -> {
             builder = CollectRep.MetricsData.newBuilder();
             Metrics metrics = Metrics.builder().nebulaGraph(NebulaGraphProtocol.builder().timePeriod("invalid").build()).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 nebulaGraphCollect.collect(metricsDataBuilder, metrics);
             }
@@ -98,7 +98,7 @@ public class NebulaGraphCollectImplTest {
                 .url("example.com")
                 .timeout("1")
                 .build()).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 nebulaGraphCollect.collect(metricsDataBuilder, metrics);
             }

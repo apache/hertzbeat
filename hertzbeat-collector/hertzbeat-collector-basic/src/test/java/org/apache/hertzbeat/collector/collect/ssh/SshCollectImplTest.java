@@ -65,7 +65,7 @@ class SshCollectImplTest {
     void collect() {
         assertDoesNotThrow(() -> {
             Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 sshCollect.collect(metricsDataBuilder, metrics);
             }

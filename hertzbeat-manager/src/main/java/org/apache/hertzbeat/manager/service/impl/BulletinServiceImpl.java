@@ -161,7 +161,7 @@ public class BulletinServiceImpl implements BulletinService {
 
                         List<BulletinMetricsData.Field> rowFieldList = rowWrapper.map(cell -> BulletinMetricsData.Field.builder()
                                         .key(cell.getField().getName())
-                                        .unit(cell.getMetadata().get(MetricDataFieldConstants.UNIT))
+                                        .unit(cell.getStringMetaData(MetricDataFieldConstants.UNIT))
                                         .value(cell.getValue())
                                     .build())
                                 .stream()

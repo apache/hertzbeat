@@ -36,29 +36,8 @@ message MetricsData
     Code code = 7;
     // collect response error message
     string msg = 8;
-    // monitoring collect metric field
-    repeated Field fields = 9;
-    // monitoring collect metric data, mapping with the fields
-    repeated ValueRow values = 10;
-    bytes data = 11;
-}
-
-message Field
-{
-    // monitoring collect metric field name
-    string name = 1;
-    // monitoring collect metrics field type, 0-number 1-string
-    uint32 type = 2;
-    // monitoring collect metrics field unit, % MB GB TB S...
-    string unit = 3;
-    // is label field
-    bool label = 4;
-}
-
-message ValueRow
-{
-    // monitoring collect metrics value, mapping with the fields
-    repeated string columns = 1;
+    // collected metric data
+    bytes data = 9;
 }
 
 enum Code

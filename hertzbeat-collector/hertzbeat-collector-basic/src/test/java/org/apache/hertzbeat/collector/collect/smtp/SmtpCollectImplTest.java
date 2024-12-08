@@ -66,7 +66,7 @@ public class SmtpCollectImplTest {
             Metrics metrics = Metrics.builder()
                 .smtp(new SmtpProtocol())
                 .build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 smtpCollect.collect(metricsDataBuilder, metrics);
             }

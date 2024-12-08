@@ -33,7 +33,10 @@ import java.util.regex.Pattern;
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -113,7 +116,7 @@ public class NginxCollectImplTest {
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
 
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 nginxCollect.collect(metricsDataBuilder, metrics);
             }
@@ -123,7 +126,7 @@ public class NginxCollectImplTest {
     }
 
     @Test
-    public void testNginxStatusCollect() throws IOException {
+    public void testNginxStatusCollect() throws Exception {
         NginxProtocol nginxProtocol = NginxProtocol.builder()
                 .host("127.0.0.1")
                 .port("8080")
@@ -181,18 +184,26 @@ public class NginxCollectImplTest {
             try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 nginxCollect.collect(metricsDataBuilder, metrics);
-            }
-            assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
-            for (CollectRep.ValueRow row : builder.getValuesList()) {
-                assertEquals(row.getColumnsCount(), 2);
-                assertEquals(row.getColumns(0), connections);
-                assertEquals(row.getColumns(1), reading);
+
+                final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+                try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                    assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
+
+                    RowWrapper rowWrapper = arrowVectorReader.readRow();
+                    while (rowWrapper.hasNextRow()) {
+                        rowWrapper = rowWrapper.nextRow();
+
+                        assertEquals(2, rowWrapper.getFieldList().size());
+                        assertEquals(connections, rowWrapper.nextCell().getValue());
+                        assertEquals(reading, rowWrapper.nextCell().getValue());
+                    }
+                }
             }
         }
     }
 
     @Test
-    public void testNginxReqStatusCollect() throws IOException {
+    public void testNginxReqStatusCollect() throws Exception {
         NginxProtocol nginxProtocol = NginxProtocol.builder()
                 .host("127.0.0.1")
                 .port("8080")
@@ -251,21 +262,27 @@ public class NginxCollectImplTest {
             try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 nginxCollect.collect(metricsDataBuilder, metrics);
-            }
-            assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
-            assertEquals(builder.getValuesCount(), 2);
-            for (int i = 0; i < builder.getValuesList().size(); i++) {
-                CollectRep.ValueRow row = builder.getValues(i);
-                assertEquals(row.getColumnsCount(), 2);
-                if (i == 0) {
-                    assertEquals(row.getColumns(0), request0);
-                    assertEquals(row.getColumns(1), bandwidth0);
-                } else {
-                    assertEquals(row.getColumns(0), request1);
-                    assertEquals(row.getColumns(1), bandwidth1);
+
+                final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+                try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                    assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
+                    assertEquals(2, arrowVectorReader.getRowCount());
+
+                    RowWrapper rowWrapper = arrowVectorReader.readRow();
+                    while (rowWrapper.hasNextRow()) {
+                        rowWrapper = rowWrapper.nextRow();
+
+                        assertEquals(2, rowWrapper.getFieldList().size());
+                        if (rowWrapper.getRowIndex() == 0) {
+                            assertEquals(rowWrapper.nextCell().getValue(), request0);
+                            assertEquals(rowWrapper.nextCell().getValue(), bandwidth0);
+                        } else {
+                            assertEquals(rowWrapper.nextCell().getValue(), request1);
+                            assertEquals(rowWrapper.nextCell().getValue(), bandwidth1);
+                        }
+                    }
                 }
             }
-
         }
     }
 

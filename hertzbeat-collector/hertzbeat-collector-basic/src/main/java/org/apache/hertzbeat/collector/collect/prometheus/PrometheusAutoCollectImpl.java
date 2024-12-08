@@ -178,8 +178,7 @@ public class PrometheusAutoCollectImpl {
 
         for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
             builder.clearMetrics();
-            builder.clearFields();
-            builder.clearValues();
+            builder.clearData();
             String metricsName = entry.getKey();
             builder.setMetrics(metricsName);
             MetricFamily metricFamily = entry.getValue();

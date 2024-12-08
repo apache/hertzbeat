@@ -24,8 +24,15 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -174,38 +181,47 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getValuesList().isEmpty()) {
+        if (metricsData.getData().isEmpty()) {
             log.info("[warehouse iotdb] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         List<MeasurementSchema> schemaList = new ArrayList<>();
+        Map<String, Tablet> tabletMap = Maps.newHashMapWithExpectedSize(8);
 
         // todo Measurement schema is a data structure that is generated on the client side, and encoding and compression have no effect
-        List<CollectRep.Field> fieldsList = metricsData.getFieldsList();
-        for (CollectRep.Field field : fieldsList) {
-            MeasurementSchema schema = new MeasurementSchema();
-            schema.setMeasurementId(field.getName());
-            // handle field type
-            if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                schema.setType(TSDataType.DOUBLE);
-            } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                schema.setType(TSDataType.TEXT);
-            } else {
-                continue;
-            }
-            schemaList.add(schema);
-        }
-        Map<String, Tablet> tabletMap = new HashMap<>(8);
-        try {
-            long now = System.currentTimeMillis();
-            for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                Map<String, String> labels = new HashMap<>(8);
-                for (int i = 0; i < fieldsList.size(); i++) {
-                    CollectRep.Field field = fieldsList.get(i);
-                    if (field.getLabel() && !CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                        labels.put(field.getName(), valueRow.getColumns(i));
-                    }
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+            for (Field field : arrowVectorReader.getAllFields()) {
+                MeasurementSchema schema = new MeasurementSchema();
+                schema.setMeasurementId(field.getName());
+                byte type = Byte.parseByte(field.getMetadata().get(MetricDataFieldConstants.TYPE));
+
+                // handle field type
+                if (type == CommonConstants.TYPE_NUMBER) {
+                    schema.setType(TSDataType.DOUBLE);
+                } else if (type == CommonConstants.TYPE_STRING) {
+                    schema.setType(TSDataType.TEXT);
+                } else {
+                    continue;
                 }
+                schemaList.add(schema);
+            }
+
+
+            long now = System.currentTimeMillis();
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
+                rowWrapper.foreachCell(cell -> {
+                    if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL) && !CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+                        labels.put(cell.getField().getName(), cell.getValue());
+                    }
+                });
+                rowWrapper.resetCellIndex();
+
+
                 String label = JsonUtil.toJson(labels);
                 String deviceId = getDeviceId(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId(), label, false);
                 if (tabletMap.containsKey(label)) {
@@ -217,23 +233,28 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                 Tablet tablet = tabletMap.get(label);
                 int rowIndex = tablet.rowSize++;
                 tablet.addTimestamp(rowIndex, now);
-                for (int i = 0; i < fieldsList.size(); i++) {
-                    CollectRep.Field field = fieldsList.get(i);
-                    if (!CommonConstants.NULL_VALUE.equals(valueRow.getColumns(i))) {
-                        if (field.getType() == CommonConstants.TYPE_NUMBER) {
-                            tablet.addValue(field.getName(), rowIndex, Double.parseDouble(valueRow.getColumns(i)));
-                        } else if (field.getType() == CommonConstants.TYPE_STRING) {
-                            tablet.addValue(field.getName(), rowIndex, valueRow.getColumns(i));
-                        }
-                    } else {
-                        tablet.addValue(field.getName(), rowIndex, null);
+
+
+                rowWrapper.foreachCell(cell -> {
+                    if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+                        tablet.addValue(cell.getField().getName(), rowIndex, null);
+                        return;
                     }
-                }
+
+                    Byte type = cell.getByteMetaData(MetricDataFieldConstants.TYPE);
+                    if (type == CommonConstants.TYPE_NUMBER) {
+                        tablet.addValue(cell.getField().getName(), rowIndex, Double.parseDouble(cell.getValue()));
+                    } else if (type == CommonConstants.TYPE_STRING) {
+                        tablet.addValue(cell.getField().getName(), rowIndex, cell.getValue());
+                    }
+                });
             }
+
+
             for (Tablet tablet : tabletMap.values()) {
                 this.sessionPool.insertTablet(tablet, true);
             }
-        } catch (StatementExecutionException | IoTDBConnectionException e) {
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
         } finally {
             for (Tablet tablet : tabletMap.values()) {
@@ -241,6 +262,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
             }
             tabletMap.clear();
         }
+
     }
 
     @Override

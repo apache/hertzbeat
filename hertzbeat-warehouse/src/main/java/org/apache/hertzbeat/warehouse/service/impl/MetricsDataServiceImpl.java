@@ -94,14 +94,14 @@ public class MetricsDataServiceImpl implements MetricsDataService {
                 Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
 
                 List<Value> values = new ArrayList<>();
-                rowWrapper.foreach(cell -> {
+                rowWrapper.foreachCell(cell -> {
                     String origin = cell.getValue();
 
                     if (CommonConstants.NULL_VALUE.equals(origin)) {
                         values.add(new Value());
                     } else {
                         values.add(new Value(origin));
-                        if (Boolean.parseBoolean(cell.getMetadata().get(MetricDataFieldConstants.LABEL))) {
+                        if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL)) {
                             labels.put(cell.getField().getName(), origin);
                         }
                     }

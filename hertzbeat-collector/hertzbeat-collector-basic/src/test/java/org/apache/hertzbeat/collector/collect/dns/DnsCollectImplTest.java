@@ -26,6 +26,8 @@ import java.util.Collections;
 
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
@@ -80,7 +82,7 @@ public class DnsCollectImplTest {
     }
 
     @Test
-    public void testCollect() {
+    public void testCollect() throws Exception {
         long monitorId = 666;
         String app = "testDNS";
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder()
@@ -94,7 +96,7 @@ public class DnsCollectImplTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             dnsCollect.collect(metricsDataBuilder, metrics);
-            assertNotNull(builder.getValues(0).getColumns(0));
+
 
             // dns is null, no exception throws
             assertDoesNotThrow(() -> dnsCollect.collect(metricsDataBuilder, null));
@@ -108,6 +110,11 @@ public class DnsCollectImplTest {
 
                 dnsCollect.collect(metricsDataBuilder, metrics1);
             });
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertNotNull(arrowVectorReader.readRow().nextRow().nextCell());
+            }
         }
     }
 

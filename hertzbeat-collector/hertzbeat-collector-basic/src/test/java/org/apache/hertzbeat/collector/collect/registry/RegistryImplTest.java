@@ -27,7 +27,10 @@ import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClient
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClientManagement;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServiceInstance;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -55,7 +58,7 @@ class RegistryImplTest {
     private DiscoveryClientManagement discoveryClientManagement;
 
     @Test
-    void testServerCollect() {
+    void testServerCollect() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
 
         String port = "123";
@@ -86,16 +89,23 @@ class RegistryImplTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             registry.collect(metricsDataBuilder, metrics);
-        }
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(host, valueRow.getColumns(0));
-            assertEquals(port, valueRow.getColumns(1));
-            assertNotNull(valueRow.getColumns(2));
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertEquals(host, rowWrapper.nextCell().getValue());
+                    assertEquals(port, rowWrapper.nextCell().getValue());
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                }
+            }
         }
     }
 
     @Test
-    void testServiceCollect() {
+    void testServiceCollect() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
 
         String port = "123";
@@ -133,13 +143,21 @@ class RegistryImplTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             registry.collect(metricsDataBuilder, metrics);
-        }
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(serviceId, valueRow.getColumns(0));
-            assertEquals(serviceName, valueRow.getColumns(1));
-            assertEquals(host, valueRow.getColumns(2));
-            assertEquals(port, valueRow.getColumns(3));
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(arrowVectorReader.getRowCount(), 1);
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertEquals(serviceId, rowWrapper.nextCell().getValue());
+                    assertEquals(serviceName, rowWrapper.nextCell().getValue());
+                    assertEquals(host, rowWrapper.nextCell().getValue());
+                    assertEquals(port, rowWrapper.nextCell().getValue());
+                }
+            }
         }
     }
 

@@ -89,7 +89,7 @@ class JdbcCommonCollectTest {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder()
                     .setId(1L)
                     .setApp("test");
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 jdbcCommonCollect.collect(metricsDataBuilder, metrics);
             }
@@ -114,7 +114,7 @@ class JdbcCommonCollectTest {
                 CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder()
                         .setId(1L)
                         .setApp("test");
-                try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                     final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                     jdbcCommonCollect.collect(metricsDataBuilder, metrics);
                 }
@@ -131,7 +131,7 @@ class JdbcCommonCollectTest {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder()
                     .setId(1L)
                     .setApp("test");
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 jdbcCommonCollect.collect(metricsDataBuilder, metrics);
             }

@@ -85,7 +85,7 @@ public class KafkaCollectTest {
             KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
             Metrics metrics = Metrics.builder().kclient(kafka).build();
 
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 collect.collect(metricsDataBuilder, metrics);
             }

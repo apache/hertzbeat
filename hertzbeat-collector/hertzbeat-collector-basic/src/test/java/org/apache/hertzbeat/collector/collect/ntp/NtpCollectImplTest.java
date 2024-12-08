@@ -28,7 +28,10 @@ import org.apache.commons.net.ntp.NtpV3Packet;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -49,7 +52,7 @@ class NtpCollectImplTest {
     private NtpCollectImpl ntpCollect;
 
     @Test
-    void testCollect() {
+    void testCollect() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         NtpProtocol telnetProtocol = NtpProtocol.builder()
                 .host("192.168.77.100")
@@ -83,11 +86,19 @@ class NtpCollectImplTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             ntpCollect.collect(metricsDataBuilder, metrics);
-        }
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertNotNull(valueRow.getColumns(0));
-            assertEquals(valueRow.getColumns(1), String.valueOf(version));
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                    assertEquals(String.valueOf(version), rowWrapper.nextCell().getValue());
+                }
+            }
         }
 
         mocked.close();

@@ -61,7 +61,7 @@ public class PushCollectImplTest {
     void collect() {
         assertDoesNotThrow(() -> {
             final Metrics metrics = Metrics.builder().push(push).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 pushCollect.collect(metricsDataBuilder, metrics);
             }

@@ -112,7 +112,7 @@ public class ScriptCollectImplTest {
             metrics.setScript(scriptProtocol);
 
             builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("app");
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 scriptCollect.collect(metricsDataBuilder, metrics);
             }
@@ -127,7 +127,7 @@ public class ScriptCollectImplTest {
             metrics.setScript(scriptProtocol);
 
             builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("app");
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 scriptCollect.collect(metricsDataBuilder, metrics);
             }
@@ -141,7 +141,7 @@ public class ScriptCollectImplTest {
             metrics.setScript(scriptProtocol);
 
             builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("app");
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 scriptCollect.collect(metricsDataBuilder, metrics);
             }

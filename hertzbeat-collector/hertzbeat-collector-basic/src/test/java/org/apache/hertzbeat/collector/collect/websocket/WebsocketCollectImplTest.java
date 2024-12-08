@@ -29,7 +29,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -50,7 +53,7 @@ class WebsocketCollectImplTest {
     private WebsocketCollectImpl websocketCollectImpl;
 
     @Test
-    void testCollect() {
+    void testCollect() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         WebsocketProtocol websocketProtocol = WebsocketProtocol.builder()
                 .host("127.0.0.1")
@@ -94,12 +97,20 @@ class WebsocketCollectImplTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             websocketCollectImpl.collect(metricsDataBuilder, metrics);
-        }
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(valueRow.getColumns(0), "HTTP/1.1");
-            assertNotNull(valueRow.getColumns(1));
-            assertEquals(valueRow.getColumns(2), "200");
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertEquals("HTTP/1.1", rowWrapper.nextCell().getValue());
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                    assertEquals("200", rowWrapper.nextCell().getValue());
+                }
+            }
         }
 
         socketMockedConstruction.close();

@@ -56,7 +56,7 @@ public class ArrowVectorReaderImpl implements ArrowVectorReader {
             throw new NoSuchElementException("No data found! ");
         }
 
-        return new RowWrapper(null, rowIterator, getAllFields());
+        return new RowWrapper(null, rowIterator, getAllFields(), -1);
     }
 
     @Override

@@ -201,7 +201,7 @@ public class CalculateAlarm {
                         rowWrapper = rowWrapper.nextRow();
 
                         String finalApp = app;
-                        rowWrapper.foreach(cell -> {
+                        rowWrapper.foreachCell(cell -> {
                             fieldValueMap.clear();
                             fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, arrowVectorReader.getRowCount());
                             StringBuilder tagBuilder = new StringBuilder();
@@ -212,7 +212,7 @@ public class CalculateAlarm {
                             }
 
                             final String fieldName = cell.getField().getName();
-                            final int fieldType = Integer.parseInt(cell.getMetadata().get(MetricDataFieldConstants.TYPE));
+                            final int fieldType = cell.getIntMetaData(MetricDataFieldConstants.TYPE);
 
                             if (fieldType == CommonConstants.TYPE_NUMBER) {
                                 final Double doubleValue;
@@ -230,7 +230,7 @@ public class CalculateAlarm {
                                 }
                             }
 
-                            if (Boolean.parseBoolean(cell.getMetadata().get(MetricDataFieldConstants.LABEL))) {
+                            if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL)) {
                                 tagBuilder.append("-").append(valueStr);
                             }
                             try {

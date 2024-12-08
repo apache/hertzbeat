@@ -158,9 +158,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
                     List<Metrics.Field> fields = rowWrapper.map(cell -> Metrics.Field.builder()
                             .field(cell.getField().getName())
-                            .type(Integer.valueOf(cell.getMetadata().get(MetricDataFieldConstants.TYPE)).byteValue())
-                            .label(Boolean.parseBoolean(cell.getMetadata().get(MetricDataFieldConstants.LABEL)))
-                            .unit(cell.getMetadata().get(MetricDataFieldConstants.UNIT))
+                            .type(cell.getIntMetaData(MetricDataFieldConstants.TYPE).byteValue())
+                            .label(cell.getBooleanMetaData(MetricDataFieldConstants.LABEL))
+                            .unit(cell.getStringMetaData(MetricDataFieldConstants.UNIT))
                             .build());
 
                     Metrics metrics = Metrics.builder()

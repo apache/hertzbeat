@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.collect.ftp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.net.ftp.FTPClient;
@@ -126,7 +127,7 @@ class FtpCollectImplTest {
     }
 
     @Test
-    void testAnonymousCollect() {
+    void testAnonymousCollect() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         FtpProtocol ftpProtocol = FtpProtocol.builder()
                 .host("127.0.0.1")
@@ -155,12 +156,21 @@ class FtpCollectImplTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             ftpCollectImpl.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(arrowVectorReader.getRowCount(), 1);
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertEquals(Boolean.toString(isActive), rowWrapper.nextCell().getValue());
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                }
+            }
         }
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertEquals(Boolean.toString(isActive), valueRow.getColumns(0));
-            assertNotNull(valueRow.getColumns(1));
-        }
+
         mocked.close();
 
     }

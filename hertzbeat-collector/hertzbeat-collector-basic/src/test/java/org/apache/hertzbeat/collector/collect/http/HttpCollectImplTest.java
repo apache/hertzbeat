@@ -57,7 +57,7 @@ class HttpCollectImplTest {
                 .build();
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
 
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             httpCollectImpl.collect(metricsDataBuilder, metrics);
         }

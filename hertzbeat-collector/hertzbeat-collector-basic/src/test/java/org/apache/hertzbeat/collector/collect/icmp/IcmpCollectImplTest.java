@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
@@ -94,8 +96,12 @@ class IcmpCollectImplTest {
 
             MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             assertDoesNotThrow(() -> icmpCollect.collect(metricsDataBuilder, metrics));
-            assertEquals(1, builder.getValuesCount());
-            assertNotNull(builder.getValues(0).getColumns(0));
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+                assertNotNull(arrowVectorReader.readRow().nextRow().nextCell());
+            }
         }
     }
 

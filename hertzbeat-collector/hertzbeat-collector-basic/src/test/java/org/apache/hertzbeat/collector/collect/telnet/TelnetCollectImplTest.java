@@ -31,7 +31,10 @@ import java.util.List;
 import org.apache.commons.net.telnet.TelnetClient;
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -52,7 +55,7 @@ class TelnetCollectImplTest {
     private TelnetCollectImpl telnetCollect;
 
     @Test
-    void testCollectWithEquals() {
+    void testCollectWithEquals() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         TelnetProtocol telnetProtocol = TelnetProtocol.builder()
                 .timeout("10")
@@ -97,19 +100,28 @@ class TelnetCollectImplTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             telnetCollect.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                    assertEquals("SomeValue", rowWrapper.nextCell().getValue());
+                    assertEquals("AnotherValue", rowWrapper.nextCell().getValue());
+                    assertEquals("YetAnotherValue", rowWrapper.nextCell().getValue());
+                }
+            }
         }
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertNotNull(valueRow.getColumns(0));
-            assertEquals(valueRow.getColumns(1), "SomeValue");
-            assertEquals(valueRow.getColumns(2), "AnotherValue");
-            assertEquals(valueRow.getColumns(3), "YetAnotherValue");
-        }
+
         mocked.close();
     }
 
     @Test
-    void testCollectWithTab() {
+    void testCollectWithTab() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         TelnetProtocol telnetProtocol = TelnetProtocol.builder()
                 .timeout("10")
@@ -154,14 +166,23 @@ class TelnetCollectImplTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             telnetCollect.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                    assertEquals("SomeValue", rowWrapper.nextCell().getValue());
+                    assertEquals("AnotherValue", rowWrapper.nextCell().getValue());
+                    assertEquals("YetAnotherValue", rowWrapper.nextCell().getValue());
+                }
+            }
         }
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertNotNull(valueRow.getColumns(0));
-            assertEquals(valueRow.getColumns(1), "SomeValue");
-            assertEquals(valueRow.getColumns(2), "AnotherValue");
-            assertEquals(valueRow.getColumns(3), "YetAnotherValue");
-        }
+
         mocked.close();
     }
 

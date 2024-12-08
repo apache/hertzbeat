@@ -94,7 +94,7 @@ class SnmpCollectImplTest {
     @Test
     void collect() {
         assertDoesNotThrow(() -> {
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 snmpCollect.collect(metricsDataBuilder, metrics);
             }

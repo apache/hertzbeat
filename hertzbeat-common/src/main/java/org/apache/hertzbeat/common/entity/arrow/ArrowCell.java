@@ -36,4 +36,20 @@ public class ArrowCell {
         this.value = row.getVarCharObj(field.getName());
         this.metadata = field.getMetadata();
     }
+
+    public String getStringMetaData(String key) {
+        return metadata.get(key);
+    }
+
+    public Boolean getBooleanMetaData(String key) {
+        return Boolean.parseBoolean(metadata.get(key));
+    }
+
+    public Byte getByteMetaData(String key) {
+        return Byte.parseByte(metadata.get(key));
+    }
+
+    public Integer getIntMetaData(String key) {
+        return Integer.parseInt(metadata.get(key));
+    }
 }

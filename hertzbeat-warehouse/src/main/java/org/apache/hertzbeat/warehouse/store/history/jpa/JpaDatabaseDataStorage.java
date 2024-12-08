@@ -143,7 +143,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 rowWrapper = rowWrapper.nextRow();
                 List<History> singleHistoryList = new ArrayList<>();
 
-                rowWrapper.foreach(cell -> singleHistoryList.add(buildHistory(metricsData, cell, monitorType, metrics, labels)));
+                rowWrapper.foreachCell(cell -> singleHistoryList.add(buildHistory(metricsData, cell, monitorType, metrics, labels)));
                 singleHistoryList.forEach(history -> history.setInstance(JsonUtil.toJson(labels)));
 
                 allHistoryList.addAll(singleHistoryList);
@@ -164,7 +164,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 .metric(cell.getField().getName());
 
         final String columnValue = cell.getValue();
-        final int fieldType = Integer.parseInt(cell.getMetadata().get(MetricDataFieldConstants.TYPE));
+        final int fieldType = cell.getIntMetaData(MetricDataFieldConstants.TYPE);
         if (CommonConstants.NULL_VALUE.equals(columnValue)) {
             switch (fieldType) {
                 case CommonConstants.TYPE_NUMBER ->
@@ -188,8 +188,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                         .dou(Double.parseDouble(columnValue));
             }
 
-            final String label = cell.getMetadata().get(MetricDataFieldConstants.LABEL);
-            if (StringUtils.isNotBlank(label) && Boolean.parseBoolean(label)) {
+            if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL)) {
                 labels.put(cell.getField().getName(), columnValue);
             }
         }

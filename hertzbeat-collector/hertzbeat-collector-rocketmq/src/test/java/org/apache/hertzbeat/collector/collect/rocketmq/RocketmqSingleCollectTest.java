@@ -88,7 +88,7 @@ public class RocketmqSingleCollectTest {
             CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
             RocketmqProtocol mq = RocketmqProtocol.builder().namesrvHost("127.0.0.1").namesrvPort("9876").build();
             Metrics metrics = Metrics.builder().rocketmq(mq).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
                 final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
                 collect.collect(metricsDataBuilder, metrics);
             }

@@ -35,13 +35,16 @@ public class RowWrapper {
     private final Iterator<Row> rowIterator;
     @Getter
     private final List<Field> fieldList;
-    private int index;
+    @Getter
+    private int rowIndex;
+    private int fieldIndex;
 
-    public RowWrapper(Row row, Iterator<Row> rowIterator, List<Field> fieldList) {
+    public RowWrapper(Row row, Iterator<Row> rowIterator, List<Field> fieldList, int rowIndex) {
         this.currentRow = row;
         this.rowIterator = rowIterator;
         this.fieldList = fieldList;
-        this.index = 0;
+        this.fieldIndex = 0;
+        this.rowIndex = rowIndex;
     }
 
     public boolean hasNextRow() {
@@ -49,7 +52,7 @@ public class RowWrapper {
     }
 
     public RowWrapper nextRow() {
-        return new RowWrapper(rowIterator.next(), rowIterator, fieldList);
+        return new RowWrapper(rowIterator.next(), rowIterator, fieldList, ++rowIndex);
     }
 
     public ArrowCell nextCell() {
@@ -57,10 +60,10 @@ public class RowWrapper {
             throw new NoSuchElementException("No more cells in current row");
         }
 
-        return new ArrowCell(fieldList.get(index++), currentRow);
+        return new ArrowCell(fieldList.get(fieldIndex++), currentRow);
     }
 
-    public void foreach(Consumer<ArrowCell> cellConsumer) {
+    public void foreachCell(Consumer<ArrowCell> cellConsumer) {
         while (hasNextCell()) {
             cellConsumer.accept(nextCell());
         }
@@ -77,7 +80,10 @@ public class RowWrapper {
     }
 
     public boolean hasNextCell() {
-        return index < fieldList.size();
+        return fieldIndex < fieldList.size();
     }
 
+    public void resetCellIndex() {
+        this.fieldIndex = 0;
+    }
 }
