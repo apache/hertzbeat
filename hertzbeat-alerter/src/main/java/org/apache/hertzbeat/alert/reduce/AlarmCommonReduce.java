@@ -46,7 +46,6 @@ public class AlarmCommonReduce {
     private final AlertMonitorDao alertMonitorDao;
 
     public void reduceAndSendAlarm(Alert alert) {
-        alert.setTimes(1);
         Map<String, String> tags = alert.getTags();
         if (tags == null) {
             tags = new HashMap<>(8);
