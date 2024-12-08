@@ -30,7 +30,6 @@ import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -68,16 +67,15 @@ public class UdpCollectImpl extends AbstractCollect {
             byte[] responseBuffer = new byte[1];
             DatagramPacket response = new DatagramPacket(responseBuffer, responseBuffer.length);
             socket.receive(response);
+
             long responseTime = System.currentTimeMillis() - startTime;
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : metrics.getAliasFields()) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(Long.toString(responseTime));
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    metricsDataBuilder.getArrowVectorWriter().setNull(alias);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
         } catch (SocketTimeoutException timeoutException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(timeoutException);
             log.info(errorMsg);

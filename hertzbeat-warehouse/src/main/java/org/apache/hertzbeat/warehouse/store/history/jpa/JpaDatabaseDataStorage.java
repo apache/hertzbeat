@@ -143,7 +143,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 rowWrapper = rowWrapper.nextRow();
                 List<History> singleHistoryList = new ArrayList<>();
 
-                rowWrapper.handleRestCells(cell -> singleHistoryList.add(buildHistory(metricsData, cell, monitorType, metrics, labels)));
+                rowWrapper.foreach(cell -> singleHistoryList.add(buildHistory(metricsData, cell, monitorType, metrics, labels)));
                 singleHistoryList.forEach(history -> history.setInstance(JsonUtil.toJson(labels)));
 
                 allHistoryList.addAll(singleHistoryList);

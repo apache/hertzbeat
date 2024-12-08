@@ -27,6 +27,9 @@ import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -48,7 +51,7 @@ class WebsocketCollectImplTest {
 
     @Test
     void testCollect() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         WebsocketProtocol websocketProtocol = WebsocketProtocol.builder()
                 .host("127.0.0.1")
                 .path("/")
@@ -87,7 +90,11 @@ class WebsocketCollectImplTest {
         metrics.setWebsocket(websocketProtocol);
         metrics.setAliasFields(aliasField);
         websocketCollectImpl.preCheck(metrics);
-        websocketCollectImpl.collect(builder, 1L, "test", metrics);
+
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            websocketCollectImpl.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertEquals(valueRow.getColumns(0), "HTTP/1.1");

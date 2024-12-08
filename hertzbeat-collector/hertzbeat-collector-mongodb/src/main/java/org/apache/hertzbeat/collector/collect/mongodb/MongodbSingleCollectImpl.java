@@ -47,8 +47,8 @@ import org.springframework.util.Assert;
 
 /**
  * Mongodb single collect
- * see also https://www.mongodb.com/languages/java,
- * https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
+ * see also <a href="https://www.mongodb.com/languages/java">href="https://www.mongodb.com/languages/java</a>,
+ * <a href="https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics">https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics</a>
  */
 @Slf4j
 public class MongodbSingleCollectImpl extends AbstractCollect {
@@ -120,7 +120,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             identifier = getIdentifier(metrics.getMongodb());
             mongoClient = getClient(metrics, identifier);
             MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
             Document document = mongoDatabase.runCommand(new Document(command, 1));
             for (int i = 1; i < metricsParts.length; i++) {
                 document = (Document) document.get(metricsParts[i]);
@@ -128,8 +128,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             if (document == null) {
                 throw new RuntimeException("the document get from command " + metrics.getMongodb().getCommand() + " is null.");
             }
-            fillBuilder(metrics, valueRowBuilder, document);
-            builder.addValues(valueRowBuilder.build());
+            fillBuilder(metrics, metricsDataBuilder, document);
         } catch (MongoServerUnavailableException | MongoTimeoutException unavailableException) {
             connectionCommonCache.removeCache(identifier);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
@@ -151,17 +150,15 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     /**
      * Populate the valueRowBuilder with the collection metrics configured in Metrics and the documentation returned by executing the mongodb command
      */
-    private void fillBuilder(Metrics metrics, CollectRep.ValueRow.Builder valueRowBuilder, Document document) {
+    private void fillBuilder(Metrics metrics, MetricsDataBuilder metricsDataBuilder, Document document) {
         metrics.getAliasFields().forEach(it -> {
             if (document.containsKey(it)) {
                 Object fieldValue = document.get(it);
-                if (fieldValue == null) {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                } else {
-                    valueRowBuilder.addColumns(fieldValue.toString());
-                }
+                metricsDataBuilder.getArrowVectorWriter().setValue(it, fieldValue == null
+                        ? CommonConstants.NULL_VALUE
+                        : fieldValue.toString());
             } else {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                metricsDataBuilder.getArrowVectorWriter().setNull(it);
             }
         });
     }
@@ -192,7 +189,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             return mongoClient;
         }
 
-        String url = null;
+        String url;
         if (CollectorConstants.MONGO_DB_ATLAS_MODEL.equals(mongodbProtocol.getModel())) {
             if (StringUtils.isBlank(mongodbProtocol.getUsername()) && StringUtils.isBlank(mongodbProtocol.getPassword())) {
                 // Anonymous access for MongoDB Atlas

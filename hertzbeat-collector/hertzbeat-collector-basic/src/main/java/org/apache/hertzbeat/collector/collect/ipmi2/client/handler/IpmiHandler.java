@@ -18,15 +18,16 @@
 package org.apache.hertzbeat.collector.collect.ipmi2.client.handler;
 
 import java.io.IOException;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiSession;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.UdpConnection;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * IpmiHandler interface
  */
 public interface IpmiHandler {
-    void handler(IpmiSession session, UdpConnection connection, CollectRep.MetricsData.Builder builder, Metrics metrics) throws IOException;
+    void handler(IpmiSession session, UdpConnection connection, MetricsDataBuilder metricsDataBuilder, Metrics metrics) throws IOException;
 
 }

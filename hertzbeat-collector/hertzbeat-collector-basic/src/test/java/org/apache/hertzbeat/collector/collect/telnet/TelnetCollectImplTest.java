@@ -29,7 +29,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.net.telnet.TelnetClient;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.TelnetProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -51,7 +53,7 @@ class TelnetCollectImplTest {
 
     @Test
     void testCollectWithEquals() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         TelnetProtocol telnetProtocol = TelnetProtocol.builder()
                 .timeout("10")
                 .port("21")
@@ -91,7 +93,11 @@ class TelnetCollectImplTest {
         metrics.setTelnet(telnetProtocol);
         metrics.setAliasFields(aliasField);
         telnetCollect.preCheck(metrics);
-        telnetCollect.collect(builder, 1L, "test", metrics);
+
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            telnetCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));
@@ -104,7 +110,7 @@ class TelnetCollectImplTest {
 
     @Test
     void testCollectWithTab() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         TelnetProtocol telnetProtocol = TelnetProtocol.builder()
                 .timeout("10")
                 .port("21")
@@ -144,7 +150,11 @@ class TelnetCollectImplTest {
         metrics.setTelnet(telnetProtocol);
         metrics.setAliasFields(aliasField);
         telnetCollect.preCheck(metrics);
-        telnetCollect.collect(builder, 1L, "test", metrics);
+
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            telnetCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getValuesCount(), 1);
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));

@@ -27,7 +27,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -66,7 +68,7 @@ class NgqlCollectImplTest {
         String ngql = "SHOW COLLATION;";
         String charset = "utf8";
         String collation = "utf8_bin";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         ngqlProtocol.setCommands(Collections.singletonList(ngql));
         ngqlProtocol.setParseType("oneRow");
         List<String> aliasField = Arrays.asList("Collation", "Charset");
@@ -88,7 +90,10 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ngqlCollect.collect(metricsDataBuilder, metrics);
+        }
         Assertions.assertEquals(builder.getValuesCount(), 1);
         Assertions.assertEquals(builder.getValues(0).getColumns(0), collation);
         Assertions.assertEquals(builder.getValues(0).getColumns(1), charset);
@@ -98,7 +103,7 @@ class NgqlCollectImplTest {
     @Test
     void testFilterCountCollect() {
         String command = "offline#SHOW HOSTS#Status#OFFLINE";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         ngqlProtocol.setCommands(Collections.singletonList(command));
         ngqlProtocol.setParseType("filterCount");
         List<String> aliasField = Collections.singletonList("offline");
@@ -122,7 +127,10 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ngqlCollect.collect(metricsDataBuilder, metrics);
+        }
         Assertions.assertEquals(1, builder.getValuesCount());
         Assertions.assertEquals("1", builder.getValues(0).getColumns(0));
         mocked.close();
@@ -131,7 +139,7 @@ class NgqlCollectImplTest {
     @Test
     void testMultiRowCollect() {
         String command = "SHOW HOSTS";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         ngqlProtocol.setCommands(Collections.singletonList(command));
         ngqlProtocol.setParseType("multiRow");
         List<String> aliasField = Arrays.asList("Host", "Port", "Status");
@@ -155,7 +163,10 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ngqlCollect.collect(metricsDataBuilder, metrics);
+        }
         Assertions.assertEquals(3, builder.getValuesCount());
         for (int i = 0; i < result.size(); i++) {
             List<Map.Entry<String, Object>> list = new ArrayList<>(result.get(i).entrySet());
@@ -169,7 +180,7 @@ class NgqlCollectImplTest {
     @Test
     void testColumnsCollect() {
         String command = "SHOW HOSTS";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         ngqlProtocol.setCommands(Collections.singletonList(command));
         ngqlProtocol.setParseType("columns");
         List<String> aliasField = Arrays.asList("graph0", "graph1", "graph2");
@@ -193,7 +204,10 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ngqlCollect.collect(metricsDataBuilder, metrics);
+        }
         Assertions.assertEquals(1, builder.getValuesCount());
         for (int i = 0; i < 3; i++) {
             Assertions.assertEquals("9669" + i, builder.getValues(0).getColumns(i));

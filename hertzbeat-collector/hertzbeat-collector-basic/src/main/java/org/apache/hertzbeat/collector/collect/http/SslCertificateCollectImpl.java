@@ -39,7 +39,6 @@ import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -80,7 +79,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
 
         HttpsURLConnection urlConnection = null;
         try {
-            String uri = "";
+            String uri;
             if (IpDomainUtil.isHasSchema(httpProtocol.getHost())) {
                 uri = httpProtocol.getHost() + ":" + httpProtocol.getPort();
             } else {
@@ -109,27 +108,26 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                 Date now = new Date();
                 Date deadline = x509Certificate.getNotAfter();
                 boolean expired = deadline != null && now.after(deadline);
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
                 for (String alias : metrics.getAliasFields()) {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Long.toString(responseTime));
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
                     } else if (NAME_SUBJECT.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(x509Certificate.getSubjectX500Principal().getName());
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, x509Certificate.getSubjectX500Principal().getName());
                     } else if (NAME_EXPIRED.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Boolean.toString(expired));
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, Boolean.toString(expired));
                     } else if (NAME_START_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(x509Certificate.getNotBefore().toLocaleString());
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, x509Certificate.getNotBefore().toString());
                     } else if (NAME_START_TIMESTAMP.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(String.valueOf(x509Certificate.getNotBefore().getTime()));
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(x509Certificate.getNotBefore().getTime()));
                     } else if (NAME_END_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(x509Certificate.getNotAfter().toLocaleString());
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, x509Certificate.getNotAfter().toString());
                     } else if (NAME_END_TIMESTAMP.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(String.valueOf(x509Certificate.getNotAfter().getTime()));
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(x509Certificate.getNotAfter().getTime()));
                     } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        metricsDataBuilder.getArrowVectorWriter().setNull(alias);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
             }
         } catch (SSLPeerUnverifiedException e1) {
             String errorMsg = "Ssl certificate does not exist.";
@@ -171,9 +169,6 @@ public class SslCertificateCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SSL_CERT;
     }
 
-    private void validateParams(Metrics metrics) {
-
-    }
 
     public SSLContext createIgnoreVerifySslContext() throws NoSuchAlgorithmException, KeyManagementException {
         SSLContext sc = SSLContext.getInstance("TLS");

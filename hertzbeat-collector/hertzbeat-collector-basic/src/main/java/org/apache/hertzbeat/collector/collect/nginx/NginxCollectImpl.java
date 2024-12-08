@@ -38,7 +38,6 @@ import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
@@ -110,9 +109,9 @@ public class NginxCollectImpl extends AbstractCollect {
             Long responseTime = System.currentTimeMillis() - startTime;
             // call different parsing methods based on the metrics name
             if (StringUtils.equalsAny(metrics.getName(), NGINX_STATUS_NAME, AVAILABLE)) {
-                parseNginxStatusResponse(builder, resp, metrics, responseTime);
+                parseNginxStatusResponse(metricsDataBuilder, resp, metrics, responseTime);
             } else if (REQ_STATUS_NAME.equals(metrics.getName())) {
-                parseReqStatusResponse(builder, resp, metrics, responseTime);
+                parseReqStatusResponse(metricsDataBuilder, resp, metrics, responseTime);
             }
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
@@ -179,12 +178,12 @@ public class NginxCollectImpl extends AbstractCollect {
     /**
      * analyze the information exposed by nginx's built-in ngx_http_stub_status_module
      *
-     * @param builder builder
+     * @param metricsDataBuilder metricsDataBuilder
      * @param resp resp
      * @param metrics metrics
      * @param responseTime responseTime
      */
-    private void parseNginxStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
+    private void parseNginxStatusResponse(MetricsDataBuilder metricsDataBuilder, String resp, Metrics metrics,
                                           Long responseTime) {
         //example
         //Active connections: 2
@@ -193,33 +192,31 @@ public class NginxCollectImpl extends AbstractCollect {
         //Reading: 0 Writing: 1 Waiting: 1
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, Object> metricMap = regexNginxStatusMatch(resp, metrics.getAliasFields().size());
+
         // Returned data
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
             Object value = metricMap.get(alias);
             if (value != null) {
-                valueRowBuilder.addColumns(String.valueOf(value));
+                metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(value));
             } else {
                 if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    metricsDataBuilder.getArrowVectorWriter().setNull(alias);
                 }
             }
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
     /**
      * Analyze the information exposed by the ngx_http_reqstat_module module
      *
-     * @param builder builder
+     * @param metricsDataBuilder metricsDataBuilder
      * @param resp resp
      * @param metrics metrics
      * @param responseTime responseTime
      */
-    private void parseReqStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
-                                        Long responseTime) {
+    private void parseReqStatusResponse(MetricsDataBuilder metricsDataBuilder, String resp, Metrics metrics, Long responseTime) {
         //example
         //zone_name       key                    max_active      max_bw  traffic   requests   active  bandwidth
         //imgstore_appid  43                     27              6M      63G       374063     0       0
@@ -236,25 +233,22 @@ public class NginxCollectImpl extends AbstractCollect {
         List<String> aliasFields = metrics.getAliasFields();
 
         for (ReqStatusResponse reqStatusResponse : reqStatusResponses) {
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (NetworkConstants.RESPONSE_TIME.equals(alias)) {
-                    valueRowBuilder.addColumns(String.valueOf(responseTime));
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(responseTime));
                 } else {
                     try {
                         String methodName = reqStatusResponse.getFieldMethodName(alias);
                         Object value = reflect(reqStatusResponse, methodName);
-                        value = value == null ? CommonConstants.NULL_VALUE : value;
-                        valueRowBuilder.addColumns(String.valueOf(value));
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(value));
                     } catch (Exception e) {
                         String errorMsg = CommonUtil.getMessageFromThrowable(e);
                         log.error(errorMsg);
-                        builder.setCode(CollectRep.Code.FAIL);
-                        builder.setMsg(errorMsg);
+                        metricsDataBuilder.getBuilder().setCode(CollectRep.Code.FAIL);
+                        metricsDataBuilder.getBuilder().setMsg(errorMsg);
                     }
                 }
             }
-            builder.addValues(valueRowBuilder.build());
         }
     }
 

@@ -139,10 +139,14 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 .setTenantId(tenantId);
         // for prometheus auto
         if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
-            List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl
-                .getInstance().collect(response, metrics);
-            validateMetricsData(metricsData.stream().findFirst().orElse(null));
-            collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
+            try (final ArrowVectorWriter arrowVectorWriter = new ArrowVectorWriterImpl()) {
+                List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl.getInstance()
+                        .collect(new MetricsDataBuilder(response, arrowVectorWriter), metrics);
+                validateMetricsData(metricsData.stream().findFirst().orElse(null));
+
+                collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
+            }
+
             return;
         }
         response.setMetrics(metrics.getName());
@@ -156,10 +160,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             response.setMsg("not support " + app + ", "
                 + metrics.getName() + ", " + metrics.getProtocol());
         } else {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(response, new ArrowVectorWriterImpl(metrics.getAliasFields()));
             try {
                 abstractCollect.preCheck(metrics);
 
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(response, new ArrowVectorWriterImpl(metrics.getAliasFields()));
                 abstractCollect.collect(metricsDataBuilder, metrics);
 
                 // Alias attribute expression replacement calculation
@@ -184,6 +188,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
                 if (msg != null) {
                     response.setMsg(msg);
                 }
+            } finally {
+                metricsDataBuilder.getArrowVectorWriter().close();
             }
         }
     }
@@ -239,7 +245,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();
 
-                rowWrapper.handleRestCells(cell -> {
+                rowWrapper.foreach(cell -> {
                     String aliasFieldValue = cell.getValue();
                     String aliasField = cell.getField().getName();
                     if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {

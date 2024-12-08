@@ -18,8 +18,9 @@
 package org.apache.hertzbeat.collector.collect.http.promethus;
 
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * prometheus parse abstract class
@@ -53,26 +54,22 @@ public abstract class AbstractPrometheusParse {
      * @param resp The returned data
      * @param aliasFields alias fields
      * @param http httpProtocol
-     * @param builder builder
+     * @param metricsDataBuilder metricsDataBuilder
      */
-    abstract void parse(String resp, List<String> aliasFields, HttpProtocol http,
-                        CollectRep.MetricsData.Builder builder);
+    abstract void parse(String resp, List<String> aliasFields, HttpProtocol http, MetricsDataBuilder metricsDataBuilder);
 
     /**
      * Processing prom interface response data
      * @param resp resp
      * @param aliasFields alias fields
      * @param http http
-     * @param builder builder
+     * @param metricsDataBuilder metricsDataBuilder
      */
-    public void handle(String resp, List<String> aliasFields, HttpProtocol http,
-                       CollectRep.MetricsData.Builder builder) {
+    public void handle(String resp, List<String> aliasFields, HttpProtocol http, MetricsDataBuilder metricsDataBuilder) {
         if (checkType(resp)) {
-            parse(resp, aliasFields, http,
-                    builder);
+            parse(resp, aliasFields, http, metricsDataBuilder);
         } else {
-            prometheusParse.handle(resp, aliasFields, http,
-                    builder);
+            prometheusParse.handle(resp, aliasFields, http, metricsDataBuilder);
         }
     }
 

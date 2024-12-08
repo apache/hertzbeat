@@ -21,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -36,7 +38,7 @@ public class ScriptCollectImplTest {
     private CollectRep.MetricsData.Builder builder;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         scriptCollect = new ScriptCollectImpl();
         builder = CollectRep.MetricsData.newBuilder();
     }
@@ -44,9 +46,7 @@ public class ScriptCollectImplTest {
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> {
-            scriptCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> scriptCollect.preCheck(null));
 
         // protocol is null
         assertThrows(IllegalArgumentException.class, () -> {
@@ -111,8 +111,11 @@ public class ScriptCollectImplTest {
             Metrics metrics = new Metrics();
             metrics.setScript(scriptProtocol);
 
-            builder = CollectRep.MetricsData.newBuilder();
-            scriptCollect.collect(builder, 0, "app", metrics);
+            builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("app");
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                scriptCollect.collect(metricsDataBuilder, metrics);
+            }
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
 
@@ -123,8 +126,11 @@ public class ScriptCollectImplTest {
             Metrics metrics = new Metrics();
             metrics.setScript(scriptProtocol);
 
-            builder = CollectRep.MetricsData.newBuilder();
-            scriptCollect.collect(builder, 0, "app", metrics);
+            builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("app");
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                scriptCollect.collect(metricsDataBuilder, metrics);
+            }
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
 
@@ -134,8 +140,11 @@ public class ScriptCollectImplTest {
             Metrics metrics = new Metrics();
             metrics.setScript(scriptProtocol);
 
-            builder = CollectRep.MetricsData.newBuilder();
-            scriptCollect.collect(builder, 0, "app", metrics);
+            builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("app");
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                scriptCollect.collect(metricsDataBuilder, metrics);
+            }
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

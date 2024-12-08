@@ -32,7 +32,6 @@ import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -118,13 +117,12 @@ public class NebulaGraphCollectImpl extends AbstractCollect {
             } else if (STORAGE_API.equals(nebulaGraph.getUrl())) {
                 parseStorageResponse(resp, resultMap);
             }
+
             List<String> aliasFields = metrics.getAliasFields();
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String field : aliasFields) {
                 String fieldValue = resultMap.get(field);
-                valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
             }
-            builder.addValues(valueRowBuilder.build());
         } catch (IOException e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.info(errorMsg);

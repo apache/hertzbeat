@@ -26,6 +26,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -71,7 +74,7 @@ class IcmpCollectImplTest {
         metrics.setName("test");
         metrics.setIcmp(icmpProtocol);
         metrics.setAliasFields(aliasField);
-        builder = CollectRep.MetricsData.newBuilder();
+        builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
     }
 
     @Test
@@ -84,22 +87,27 @@ class IcmpCollectImplTest {
 
     @Test
     void testCollect() throws Exception {
-        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
+        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class);
+             ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenReturn(inetAddress);
             Mockito.when(inetAddress.isReachable(Mockito.anyInt())).thenReturn(true);
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+
+            MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            assertDoesNotThrow(() -> icmpCollect.collect(metricsDataBuilder, metrics));
             assertEquals(1, builder.getValuesCount());
             assertNotNull(builder.getValues(0).getColumns(0));
-
         }
     }
 
     @Test
     void testUnreachable() throws Exception {
-        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
+        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class);
+             ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenReturn(inetAddress);
             Mockito.when(inetAddress.isReachable(Mockito.anyInt())).thenReturn(false);
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+
+            MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            assertDoesNotThrow(() -> icmpCollect.collect(metricsDataBuilder, metrics));
             assertEquals(CollectRep.Code.UN_REACHABLE, builder.getCode());
             assertNotNull(builder.getMsg());
         }
@@ -107,9 +115,12 @@ class IcmpCollectImplTest {
 
     @Test
     void testUnknownHostException() {
-        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
+        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class);
+             ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenThrow(new UnknownHostException("Mocked exception"));
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+
+            MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            assertDoesNotThrow(() -> icmpCollect.collect(metricsDataBuilder, metrics));
             assertEquals(CollectRep.Code.UN_REACHABLE, builder.getCode());
             assertNotNull(builder.getMsg());
         }
@@ -117,10 +128,13 @@ class IcmpCollectImplTest {
 
     @Test
     void testIoException() throws Exception {
-        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
+        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class);
+             ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenReturn(inetAddress);
             Mockito.when(inetAddress.isReachable(Mockito.anyInt())).thenThrow(new IOException("Mocked exception"));
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+
+            MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            assertDoesNotThrow(() -> icmpCollect.collect(metricsDataBuilder, metrics));
             assertEquals(CollectRep.Code.UN_REACHABLE, builder.getCode());
             assertNotNull(builder.getMsg());
         }
@@ -128,10 +142,13 @@ class IcmpCollectImplTest {
 
     @Test
     void testException() throws Exception {
-        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class)) {
+        try (MockedStatic<InetAddress> mockedInetAddress = Mockito.mockStatic(InetAddress.class);
+             ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             mockedInetAddress.when(() -> InetAddress.getByName(Mockito.anyString())).thenReturn(inetAddress);
             Mockito.when(inetAddress.isReachable(Mockito.anyInt())).thenThrow(new RuntimeException("Mocked exception"));
-            assertDoesNotThrow(() -> icmpCollect.collect(builder, 1L, "app", metrics));
+
+            MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            assertDoesNotThrow(() -> icmpCollect.collect(metricsDataBuilder, metrics));
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
             assertNotNull(builder.getMsg());
         }

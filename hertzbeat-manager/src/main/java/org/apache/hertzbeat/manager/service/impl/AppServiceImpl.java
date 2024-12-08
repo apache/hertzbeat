@@ -156,7 +156,7 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 while (rowWrapper.hasNextRow()) {
                     rowWrapper = rowWrapper.nextRow();
 
-                    List<Metrics.Field> fields = rowWrapper.mapRestCells(cell -> Metrics.Field.builder()
+                    List<Metrics.Field> fields = rowWrapper.map(cell -> Metrics.Field.builder()
                             .field(cell.getField().getName())
                             .type(Integer.valueOf(cell.getMetadata().get(MetricDataFieldConstants.TYPE)).byteValue())
                             .label(Boolean.parseBoolean(cell.getMetadata().get(MetricDataFieldConstants.LABEL)))

@@ -159,7 +159,7 @@ public class BulletinServiceImpl implements BulletinService {
                     while (rowWrapper.hasNextRow()) {
                         rowWrapper = rowWrapper.nextRow();
 
-                        List<BulletinMetricsData.Field> rowFieldList = rowWrapper.mapRestCells(cell -> BulletinMetricsData.Field.builder()
+                        List<BulletinMetricsData.Field> rowFieldList = rowWrapper.map(cell -> BulletinMetricsData.Field.builder()
                                         .key(cell.getField().getName())
                                         .unit(cell.getMetadata().get(MetricDataFieldConstants.UNIT))
                                         .value(cell.getValue())

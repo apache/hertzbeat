@@ -201,7 +201,7 @@ public class CalculateAlarm {
                         rowWrapper = rowWrapper.nextRow();
 
                         String finalApp = app;
-                        rowWrapper.handleRestCells(cell -> {
+                        rowWrapper.foreach(cell -> {
                             fieldValueMap.clear();
                             fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, arrowVectorReader.getRowCount());
                             StringBuilder tagBuilder = new StringBuilder();

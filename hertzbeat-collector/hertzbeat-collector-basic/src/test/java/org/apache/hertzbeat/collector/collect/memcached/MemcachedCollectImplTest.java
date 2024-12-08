@@ -27,6 +27,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -64,7 +67,7 @@ public class MemcachedCollectImplTest {
         metrics.setName("server_info");
         metrics.setMemcached(memcachedProtocol);
         metrics.setAliasFields(List.of("responseTime", "pid", "uptime", "item_size", "item_count", "curr_items"));
-        builder = CollectRep.MetricsData.newBuilder();
+        builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
     }
 
     @Test
@@ -93,7 +96,10 @@ public class MemcachedCollectImplTest {
                     Mockito.when(socket.getInputStream()).thenReturn(inputStream);
                 });
 
-        memcachedCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            memcachedCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(1, builder.getValuesCount());
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));

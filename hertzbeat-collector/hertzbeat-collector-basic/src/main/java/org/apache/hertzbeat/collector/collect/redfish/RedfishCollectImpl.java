@@ -82,14 +82,14 @@ public class RedfishCollectImpl extends AbstractCollect {
             return;
         }
         for (String uri : resourcesUri) {
-            String resp = null;
+            String resp;
             try {
                 resp = connectSession.getRedfishResource(uri);
             } catch (Exception e) {
                 log.error("Get redfish {} detail resource error: {}", uri, e.getMessage());
                 continue;
             }
-            parseRedfishResource(builder, resp, metrics);
+            parseRedfishResource(metricsDataBuilder, resp, metrics);
         }
     }
 
@@ -132,7 +132,7 @@ public class RedfishCollectImpl extends AbstractCollect {
         if (!StringUtils.hasText(schema)) {
             return null;
         }
-        String pattern = "\\{\\w+\\}";
+        String pattern = "\\{\\w+}";
         Pattern r = Pattern.compile(pattern);
         String[] fragment = r.split(schema);
         List<String> res = new ArrayList<>();
@@ -164,7 +164,7 @@ public class RedfishCollectImpl extends AbstractCollect {
     }
 
     private List<String> getCollectionResource(String uri, ConnectSession connectSession) {
-        String resp = null;
+        String resp;
         try {
             resp = connectSession.getRedfishResource(uri);
         } catch (Exception e) {
@@ -174,21 +174,21 @@ public class RedfishCollectImpl extends AbstractCollect {
         return parseCollectionResource(resp);
     }
 
-    private void parseRedfishResource(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics) {
+    private void parseRedfishResource(MetricsDataBuilder metricsDataBuilder, String resp, Metrics metrics) {
         if (!StringUtils.hasText(resp)) {
             return;
         }
+
         List<String> jsonPaths = metrics.getRedfish().getJsonPath();
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-        for (String path : jsonPaths) {
-            List<Object> res = JsonPathParser.parseContentWithJsonPath(resp, path);
+        for (int index = 0; index < jsonPaths.size(); index++) {
+            List<Object> res = JsonPathParser.parseContentWithJsonPath(resp, jsonPaths.get(index));
             if (res != null && !res.isEmpty()) {
                 Object value = res.get(0);
-                valueRowBuilder.addColumns(value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
+                metricsDataBuilder.getArrowVectorWriter().setValue(metrics.getAliasFields().get(index),
+                        value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
             } else {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                metricsDataBuilder.getArrowVectorWriter().setNull(metrics.getAliasFields().get(index));
             }
         }
-        builder.addValues(valueRowBuilder.build());
     }
 }

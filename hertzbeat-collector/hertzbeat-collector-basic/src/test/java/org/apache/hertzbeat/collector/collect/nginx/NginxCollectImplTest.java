@@ -29,8 +29,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -76,19 +79,13 @@ public class NginxCollectImplTest {
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> {
-            nginxCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> nginxCollect.preCheck(null));
 
         // nginx protocol is null
-        assertThrows(IllegalArgumentException.class, () -> {
-            nginxCollect.preCheck(Metrics.builder().build());
-        });
+        assertThrows(IllegalArgumentException.class, () -> nginxCollect.preCheck(Metrics.builder().build()));
 
         // nginx protocol is invalid
-        assertThrows(IllegalArgumentException.class, () -> {
-            nginxCollect.preCheck(Metrics.builder().nginx(NginxProtocol.builder().build()).build());
-        });
+        assertThrows(IllegalArgumentException.class, () -> nginxCollect.preCheck(Metrics.builder().nginx(NginxProtocol.builder().build()).build()));
     }
 
     @Test
@@ -108,14 +105,18 @@ public class NginxCollectImplTest {
             StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("http", 1, 1),
                     500, "fail");
             Mockito.when(mockHttpResponse.getStatusLine()).thenReturn(statusLine);
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             long monitorId = 999;
             String app = "testNginx";
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(monitorId).setApp(app);
             Metrics metrics = new Metrics();
             metrics.setName("nginx_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-            nginxCollect.collect(builder, monitorId, app, metrics);
+
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                nginxCollect.collect(metricsDataBuilder, metrics);
+            }
             assertEquals(builder.getCode(), CollectRep.Code.FAIL);
         }
 
@@ -152,9 +153,9 @@ public class NginxCollectImplTest {
             HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
             Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
 
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             long monitorId = 999;
             String app = "testNginx";
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(monitorId).setApp(app);
 
             Metrics metrics = new Metrics();
             List<String> aliasField = new ArrayList<>();
@@ -176,7 +177,11 @@ public class NginxCollectImplTest {
             metrics.setName("nginx_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-            nginxCollect.collect(builder, monitorId, app, metrics);
+
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                nginxCollect.collect(metricsDataBuilder, metrics);
+            }
             assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
             for (CollectRep.ValueRow row : builder.getValuesList()) {
                 assertEquals(row.getColumnsCount(), 2);
@@ -218,9 +223,9 @@ public class NginxCollectImplTest {
             HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
             Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
 
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             long monitorId = 999;
             String app = "testNginx";
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(monitorId).setApp(app);
 
             Metrics metrics = new Metrics();
             List<String> aliasField = new ArrayList<>();
@@ -242,7 +247,11 @@ public class NginxCollectImplTest {
             metrics.setName("req_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-            nginxCollect.collect(builder, monitorId, app, metrics);
+
+            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+                nginxCollect.collect(metricsDataBuilder, metrics);
+            }
             assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
             assertEquals(builder.getValuesCount(), 2);
             for (int i = 0; i < builder.getValuesList().size(); i++) {

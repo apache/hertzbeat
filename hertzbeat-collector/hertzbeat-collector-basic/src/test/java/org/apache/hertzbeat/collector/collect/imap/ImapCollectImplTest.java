@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import org.apache.commons.net.imap.IMAPClient;
 import org.apache.commons.net.imap.IMAPSClient;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -63,7 +65,7 @@ public class ImapCollectImplTest {
         metrics.setName("testMailboxInfo");
         metrics.setImap(imapProtocol);
         metrics.setAliasFields(List.of("responseTime", "testFolderTotalMessageCount", "testFolderRecentMessageCount", "testFolderUnseenMessageCount"));
-        builder = CollectRep.MetricsData.newBuilder();
+        builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("testIMAP");
     }
 
     @Test
@@ -89,7 +91,10 @@ public class ImapCollectImplTest {
                 });
 
         imapCollect.preCheck(metrics);
-        imapCollect.collect(builder, 1L, "testIMAP", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            imapCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(1, builder.getValuesCount());
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));
@@ -117,7 +122,10 @@ public class ImapCollectImplTest {
                 });
 
         imapCollect.preCheck(metrics);
-        imapCollect.collect(builder, 1L, "testIMAP", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            imapCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(1, builder.getValuesCount());
         for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
             assertNotNull(valueRow.getColumns(0));

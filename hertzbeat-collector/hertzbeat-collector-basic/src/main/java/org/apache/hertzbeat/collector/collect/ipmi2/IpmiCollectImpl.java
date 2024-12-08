@@ -66,7 +66,7 @@ public class IpmiCollectImpl extends AbstractCollect {
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
         final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
-        IpmiConnection connection = null;
+        IpmiConnection connection;
         try {
             connection = getIpmiConnection(metrics.getIpmi());
         } catch (Exception e) {
@@ -76,7 +76,7 @@ public class IpmiCollectImpl extends AbstractCollect {
             return;
         }
         try {
-            connection.getResource(builder, metrics);
+            connection.getResource(metricsDataBuilder, metrics);
         } catch (IOException e) {
             log.error("Get Ipmi {} detail resource error: {}", metrics.getName(), e.getMessage());
         }

@@ -19,13 +19,11 @@ package org.apache.hertzbeat.collector.collect.ftp;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -66,25 +64,14 @@ public class FtpCollectImpl extends AbstractCollect {
         // Set timeout
         ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
 
-        // Collect data to load in CollectRep.ValueRow.Builder's object
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         Map<String, String> valueMap;
         try {
             valueMap = collectValue(ftpClient, ftpProtocol);
-            metrics.getAliasFields().forEach(it -> {
-                if (valueMap.containsKey(it)) {
-                    String fieldValue = valueMap.get(it);
-                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
-                } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                }
-            });
+            metrics.getAliasFields().forEach(it -> metricsDataBuilder.getArrowVectorWriter().setValue(it, valueMap.get(it)));
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg(e.getMessage());
-            return;
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
     /**

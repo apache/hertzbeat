@@ -23,7 +23,6 @@ import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
@@ -57,7 +56,6 @@ public class KafkaCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         try {
             KafkaProtocol kafkaProtocol = metrics.getKclient();
             String command = kafkaProtocol.getCommand();
@@ -73,13 +71,13 @@ public class KafkaCollectImpl extends AbstractCollect {
             // Execute the appropriate collection method based on the command
             switch (SupportedCommand.fromCommand(command)) {
                 case TOPIC_DESCRIBE:
-                    collectTopicDescribe(builder, adminClient);
+                    collectTopicDescribe(metricsDataBuilder, adminClient, metrics.getAliasFields());
                     break;
                 case TOPIC_LIST:
-                    collectTopicList(builder, adminClient);
+                    collectTopicList(metricsDataBuilder, adminClient, metrics.getAliasFields());
                     break;
                 case TOPIC_OFFSET:
-                    collectTopicOffset(builder, adminClient);
+                    collectTopicOffset(metricsDataBuilder, adminClient, metrics.getAliasFields());
                     break;
                 default:
                     log.error("Unsupported command: {}", command);
@@ -93,35 +91,36 @@ public class KafkaCollectImpl extends AbstractCollect {
     /**
      * Collect the earliest and latest offsets for each topic
      *
-     * @param builder     The MetricsData builder
+     * @param metricsDataBuilder     The MetricsData builder
      * @param adminClient The AdminClient
      * @throws InterruptedException If the thread is interrupted
      * @throws ExecutionException   If an error occurs during execution
      */
-    private void collectTopicOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
+    private void collectTopicOffset(MetricsDataBuilder metricsDataBuilder, AdminClient adminClient, List<String> aliasFieldList) throws InterruptedException, ExecutionException {
         ListTopicsResult listTopicsResult = adminClient.listTopics(new ListTopicsOptions().listInternal(true));
         Set<String> names = listTopicsResult.names().get();
         names.forEach(name -> {
             try {
                 Map<String, TopicDescription> map = adminClient.describeTopics(Collections.singleton(name)).all().get(3L, TimeUnit.SECONDS);
-                map.forEach((key, value) -> value.partitions().forEach(info -> extractedOffset(builder, adminClient, name, value, info)));
+                map.forEach((key, value) -> value.partitions().forEach(info -> extractedOffset(metricsDataBuilder, adminClient, name, value, info, aliasFieldList)));
             } catch (TimeoutException | InterruptedException | ExecutionException e) {
                 log.warn("Topic {} get offset fail", name);
             }
         });
     }
 
-    private void extractedOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient, String name, TopicDescription value, TopicPartitionInfo info) {
+    private void extractedOffset(MetricsDataBuilder metricsDataBuilder, AdminClient adminClient, String name,
+                                 TopicDescription value, TopicPartitionInfo info, List<String> aliasFieldList) {
         try {
             TopicPartition topicPartition = new TopicPartition(value.name(), info.partition());
             long earliestOffset = getEarliestOffset(adminClient, topicPartition);
             long latestOffset = getLatestOffset(adminClient, topicPartition);
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-            valueRowBuilder.addColumns(value.name());
-            valueRowBuilder.addColumns(String.valueOf(info.partition()));
-            valueRowBuilder.addColumns(String.valueOf(earliestOffset));
-            valueRowBuilder.addColumns(String.valueOf(latestOffset));
-            builder.addValues(valueRowBuilder.build());
+
+            int index = 0;
+            metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), value.name());
+            metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(info.partition()));
+            metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(earliestOffset));
+            metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index), String.valueOf(latestOffset));
         } catch (TimeoutException | InterruptedException | ExecutionException e) {
             log.warn("Topic {} get offset fail", name);
         }
@@ -164,25 +163,22 @@ public class KafkaCollectImpl extends AbstractCollect {
     /**
      * Collect the list of topics
      *
-     * @param builder     The MetricsData builder
+     * @param metricsDataBuilder     The MetricsData builder
      * @param adminClient The AdminClient
      */
-    private static void collectTopicList(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
+    private static void collectTopicList(MetricsDataBuilder metricsDataBuilder, AdminClient adminClient, List<String> aliasFieldList) throws InterruptedException, ExecutionException {
         ListTopicsOptions options = new ListTopicsOptions().listInternal(true);
         Set<String> names = adminClient.listTopics(options).names().get();
-        names.forEach(name -> {
-            CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder().addColumns(name).build();
-            builder.addValues(valueRow);
-        });
+        names.forEach(name -> metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(0), name));
     }
 
     /**
      * Collect the description of each topic
      *
-     * @param builder     The MetricsData builder
+     * @param metricsDataBuilder     The MetricsData builder
      * @param adminClient The AdminClient
      */
-    private static void collectTopicDescribe(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
+    private static void collectTopicDescribe(MetricsDataBuilder metricsDataBuilder, AdminClient adminClient, List<String> aliasFieldList) throws InterruptedException, ExecutionException {
         ListTopicsOptions options = new ListTopicsOptions();
         options.listInternal(true);
         ListTopicsResult listTopicsResult = adminClient.listTopics(options);
@@ -192,15 +188,14 @@ public class KafkaCollectImpl extends AbstractCollect {
         map.forEach((key, value) -> {
             List<TopicPartitionInfo> listp = value.partitions();
             listp.forEach(info -> {
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                valueRowBuilder.addColumns(value.name());
-                valueRowBuilder.addColumns(String.valueOf(value.partitions().size()));
-                valueRowBuilder.addColumns(String.valueOf(info.partition()));
-                valueRowBuilder.addColumns(info.leader().host());
-                valueRowBuilder.addColumns(String.valueOf(info.leader().port()));
-                valueRowBuilder.addColumns(String.valueOf(info.replicas().size()));
-                valueRowBuilder.addColumns(String.valueOf(info.replicas()));
-                builder.addValues(valueRowBuilder.build());
+                int index = 0;
+                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), value.name());
+                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(value.partitions().size()));
+                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(info.partition()));
+                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), info.leader().host());
+                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(info.leader().port()));
+                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(info.replicas().size()));
+                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index), String.valueOf(info.replicas()));
             });
         });
     }

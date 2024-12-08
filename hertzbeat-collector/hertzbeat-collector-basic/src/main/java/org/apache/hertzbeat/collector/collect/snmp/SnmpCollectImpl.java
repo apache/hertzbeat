@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +29,6 @@ import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -147,6 +145,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                         .build();
                 target.setSecurityModel(SecurityModel.SECURITY_MODEL_SNMPv2c);
             }
+
             String operation = snmpProtocol.getOperation();
             operation = StringUtils.hasText(operation) ? operation : OPERATION_GET;
             if (OPERATION_GET.equalsIgnoreCase(operation)) {
@@ -169,17 +168,16 @@ public class SnmpCollectImpl extends AbstractCollect {
                         oidsValueMap.put(binding.getOid().toDottedString(), binding.toValueString());
                     }
                 }
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
                 for (String alias : metrics.getAliasFields()) {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumns(Long.toString(responseTime));
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
                     } else {
                         String oid = oidsMap.get(alias);
                         String value = oidsValueMap.get(oid);
-                        valueRowBuilder.addColumns(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, value);
                     }
                 }
-                builder.addValues(valueRowBuilder.build());
             } else if (OPERATION_WALK.equalsIgnoreCase(operation)) {
                 Map<String, String> oidMap = snmpProtocol.getOids();
                 Assert.notEmpty(oidMap, "snmp oids is required when operation is walk.");
@@ -210,10 +208,10 @@ public class SnmpCollectImpl extends AbstractCollect {
                     if (oidsValueMap.size() < metrics.getAliasFields().size() / 2) {
                         continue;
                     }
-                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
                     for (String alias : metrics.getAliasFields()) {
                         if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                            valueRowBuilder.addColumns(Long.toString(responseTime));
+                            metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
                         } else {
                             String oid = oidMap.get(alias);
                             String value = oidsValueMap.get(oid);
@@ -226,10 +224,9 @@ public class SnmpCollectImpl extends AbstractCollect {
                                     }
                                 }
                             }
-                            valueRowBuilder.addColumns(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
+                            metricsDataBuilder.getArrowVectorWriter().setValue(alias, value);
                         }
                     }
-                    builder.addValues(valueRowBuilder.build());
                 }
             }
         } catch (ExecutionException | InterruptedException ex) {

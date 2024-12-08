@@ -33,14 +33,12 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -73,7 +71,7 @@ public class WebsocketCollectImpl extends AbstractCollect {
         checkParam(websocketProtocol);
         String host = websocketProtocol.getHost();
         String port = websocketProtocol.getPort();
-        Socket socket = null;
+        Socket socket;
         try {
             socket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(host, Integer.parseInt(port));
@@ -93,12 +91,11 @@ public class WebsocketCollectImpl extends AbstractCollect {
                 out.close();
                 socket.close();
                 List<String> aliasFields = metrics.getAliasFields();
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
                 for (String field : aliasFields) {
                     String fieldValue = resultMap.get(field);
-                    valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                    metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
                 }
-                builder.addValues(valueRowBuilder.build());
             } else {
                 builder.setCode(CollectRep.Code.UN_CONNECTABLE);
                 builder.setMsg("Peer connect failed:");
