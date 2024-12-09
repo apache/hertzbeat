@@ -249,7 +249,7 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();
 
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     String aliasFieldValue = cell.getValue();
                     String aliasField = cell.getField().getName();
                     if (!CommonConstants.NULL_VALUE.equals(aliasFieldValue)) {

@@ -214,7 +214,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                 rowWrapper = rowWrapper.nextRow();
 
                 Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL) && !CommonConstants.NULL_VALUE.equals(cell.getValue())) {
                         labels.put(cell.getField().getName(), cell.getValue());
                     }
@@ -234,7 +234,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                 tablet.addTimestamp(rowIndex, now);
 
 
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
                         tablet.addValue(cell.getField().getName(), rowIndex, null);
                         return;

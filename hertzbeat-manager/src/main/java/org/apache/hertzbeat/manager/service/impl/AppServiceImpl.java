@@ -156,12 +156,13 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                 while (rowWrapper.hasNextRow()) {
                     rowWrapper = rowWrapper.nextRow();
 
-                    List<Metrics.Field> fields = rowWrapper.map(cell -> Metrics.Field.builder()
+                    List<Metrics.Field> fields = rowWrapper.cellStream().map(cell -> Metrics.Field.builder()
                             .field(cell.getField().getName())
                             .type(cell.getIntMetaData(MetricDataFieldConstants.TYPE).byteValue())
                             .label(cell.getBooleanMetaData(MetricDataFieldConstants.LABEL))
                             .unit(cell.getStringMetaData(MetricDataFieldConstants.UNIT))
-                            .build());
+                            .build())
+                            .toList();
 
                     Metrics metrics = Metrics.builder()
                             .visible(true)

@@ -94,7 +94,7 @@ public class MetricsDataServiceImpl implements MetricsDataService {
                 Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
 
                 List<Value> values = new ArrayList<>();
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     String origin = cell.getValue();
 
                     if (CommonConstants.NULL_VALUE.equals(origin)) {

@@ -203,7 +203,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
 
                 AtomicInteger index = new AtomicInteger(-1);
                 int fieldMaxSize = rowWrapper.getFieldList().size();
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     index.getAndIncrement();
                     String value = cell.getValue();
                     final int fieldType;

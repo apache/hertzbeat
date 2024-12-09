@@ -21,12 +21,10 @@ import lombok.Getter;
 import org.apache.arrow.vector.table.Row;
 import org.apache.arrow.vector.types.pojo.Field;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * A wrapper of row, which contains row info, fields info in this row and each cell of field.
@@ -71,30 +69,8 @@ public class RowWrapper {
         return new ArrowCell(fieldList.get(fieldIndex++), currentRow);
     }
 
-    /**
-     * <p>Performs an action for each cell of this RowWrapper.
-     * <p>Field index will be set to the ending, which means can not call {@link RowWrapper#nextCell()} except calling {@link RowWrapper#resetCellIndex()} to reset field index to the beginning.
-     */
-    public void foreachCell(Consumer<ArrowCell> cellConsumer) {
-        resetCellIndex();
-
-        while (hasNextCell()) {
-            cellConsumer.accept(nextCell());
-        }
-    }
-
-    /**
-     * Returns a List consisting of the results of applying the given function to the rest cell of this RowWrapper.
-     */
-    public <R> List<R> map(Function<ArrowCell, R> function) {
-        resetCellIndex();
-        List<R> result = new ArrayList<>();
-
-        while (hasNextCell()) {
-            result.add(function.apply(nextCell()));
-        }
-
-        return result;
+    public Stream<ArrowCell> cellStream() {
+        return fieldList.stream().map(field -> new ArrowCell(field, currentRow));
     }
 
     public boolean hasNextCell() {

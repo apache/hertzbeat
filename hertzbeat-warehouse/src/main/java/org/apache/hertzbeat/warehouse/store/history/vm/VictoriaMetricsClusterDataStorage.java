@@ -166,7 +166,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
                 fieldsValue.clear();
                 labels.clear();
 
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     String value = cell.getValue();
                     Byte type = cell.getByteMetaData(MetricDataFieldConstants.TYPE);
                     Boolean label = cell.getBooleanMetaData(MetricDataFieldConstants.LABEL);

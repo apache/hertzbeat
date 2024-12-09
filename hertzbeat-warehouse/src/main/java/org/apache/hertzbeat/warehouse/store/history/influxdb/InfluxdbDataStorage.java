@@ -171,7 +171,7 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
                 builder.time(metricsData.getTime(), TimeUnit.MILLISECONDS);
                 Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
 
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
                         builder.addField(cell.getField().getName(), "");
                         return;

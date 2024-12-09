@@ -163,7 +163,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
                 rowWrapper = rowWrapper.nextRow();
 
                 AtomicInteger index = new AtomicInteger(-1);
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     index.getAndIncrement();
 
                     if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {

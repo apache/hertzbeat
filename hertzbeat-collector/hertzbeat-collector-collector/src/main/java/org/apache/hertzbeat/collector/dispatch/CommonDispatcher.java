@@ -330,7 +330,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();
 
-                rowWrapper.foreachCell(cell -> log.debug("Field-->{},Value-->{}", cell.getField().getName(), cell.getValue()));
+                rowWrapper.cellStream().forEach(cell -> log.debug("Field-->{},Value-->{}", cell.getField().getName(), cell.getValue()));
             }
         } catch (Exception ignored) {
         }
@@ -381,7 +381,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 }
 
                 Map<String, Configmap> configmapMap = Maps.newHashMapWithExpectedSize(rowWrapper.getFieldList().size());
-                rowWrapper.foreachCell(cell -> {
+                rowWrapper.cellStream().forEach(cell -> {
                     String value = cell.getValue();
                     Configmap configmap = new Configmap(cell.getField().getName(), value, cell.getIntMetaData(MetricDataFieldConstants.TYPE).byteValue());
                     configmapMap.put(cell.getField().getName(), configmap);
