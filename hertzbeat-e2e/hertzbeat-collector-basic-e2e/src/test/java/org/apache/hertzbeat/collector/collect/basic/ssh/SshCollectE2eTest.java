@@ -118,9 +118,8 @@ public class SshCollectE2eTest {
 
     private void testMetricsCollection(Metrics metricsDef) throws Exception {
         String name = metricsDef.getName();
-        MetricsDataBuilder metricsDataBuilder = executeCollection(metricsDef);
 
-        final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+        final CollectRep.MetricsData metricsData = executeCollection(metricsDef);
         try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
             Assertions.assertTrue(arrowVectorReader.getRowCount() > 0, name + " metrics values should not be empty");
 
@@ -133,7 +132,7 @@ public class SshCollectE2eTest {
         log.info("{} metrics validation passed", name);
     }
 
-    private MetricsDataBuilder executeCollection(Metrics metricsDef) {
+    private CollectRep.MetricsData executeCollection(Metrics metricsDef) {
         // Build SSH protocol configuration
         SshProtocol sshProtocol = buildSshProtocol(metricsDef);
         metrics.setSsh(sshProtocol);
@@ -149,7 +148,7 @@ public class SshCollectE2eTest {
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             sshCollect.collect(metricsDataBuilder, metrics);
-            return metricsDataBuilder;
+            return metricsDataBuilder.build();
         }
     }
 
