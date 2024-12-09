@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.common.entity.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,6 +30,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
@@ -298,16 +301,14 @@ public class Metrics {
             if (subTaskDataRef.get() == null) {
                 subTaskDataRef.set(metricsData);
             } else {
-                if (metricsData.getValuesCount() >= 1) {
-                    CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataRef.get());
-                    for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                        if (valueRow.getColumnsCount() == dataBuilder.getFieldsCount()) {
-                            dataBuilder.addValues(valueRow);
-                        } else {
-                            log.error("consume subTask data value not mapping filed");
-                        }
+                try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                    if (arrowVectorReader.getRowCount() >= 1) {
+                        CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataRef.get());
+                        dataBuilder.setData(metricsData.getData());
+
+                        subTaskDataRef.set(dataBuilder.build());
                     }
-                    subTaskDataRef.set(dataBuilder.build());
+                } catch (Exception ignored) {
                 }
             }
             return index == 0;

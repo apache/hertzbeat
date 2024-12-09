@@ -24,6 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import org.apache.commons.net.imap.IMAPClient;
 import org.apache.commons.net.imap.IMAPSClient;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -63,7 +68,7 @@ public class ImapCollectImplTest {
         metrics.setName("testMailboxInfo");
         metrics.setImap(imapProtocol);
         metrics.setAliasFields(List.of("responseTime", "testFolderTotalMessageCount", "testFolderRecentMessageCount", "testFolderUnseenMessageCount"));
-        builder = CollectRep.MetricsData.newBuilder();
+        builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("testIMAP");
     }
 
     @Test
@@ -75,7 +80,7 @@ public class ImapCollectImplTest {
     }
 
     @Test
-    void enableSslCollect() {
+    void enableSslCollect() throws Exception {
         String response = "* STATUS \"testFolder\" (MESSAGES 3 RECENT 2 UNSEEN 1)";
         MockedConstruction<IMAPSClient> mocked = Mockito.mockConstruction(IMAPSClient.class,
                 (imapsClient, context) -> {
@@ -89,20 +94,31 @@ public class ImapCollectImplTest {
                 });
 
         imapCollect.preCheck(metrics);
-        imapCollect.collect(builder, 1L, "testIMAP", metrics);
-        assertEquals(1, builder.getValuesCount());
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertNotNull(valueRow.getColumns(0));
-            assertEquals("3", valueRow.getColumns(1));
-            assertEquals("2", valueRow.getColumns(2));
-            assertEquals("1", valueRow.getColumns(3));
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            imapCollect.collect(metricsDataBuilder, metrics);
 
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                    assertEquals("3", rowWrapper.nextCell().getValue());
+                    assertEquals("2", rowWrapper.nextCell().getValue());
+                    assertEquals("1", rowWrapper.nextCell().getValue());
+                }
+            }
         }
+
         mocked.close();
     }
 
     @Test
-    void disableSslCollect() {
+    void disableSslCollect() throws Exception {
         metrics.getImap().setSsl("false");
         String response = "* STATUS \"testFolder\" (MESSAGES 3 RECENT 2 UNSEEN 1)";
         MockedConstruction<IMAPClient> mocked = Mockito.mockConstruction(IMAPClient.class,
@@ -117,15 +133,26 @@ public class ImapCollectImplTest {
                 });
 
         imapCollect.preCheck(metrics);
-        imapCollect.collect(builder, 1L, "testIMAP", metrics);
-        assertEquals(1, builder.getValuesCount());
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertNotNull(valueRow.getColumns(0));
-            assertEquals("3", valueRow.getColumns(1));
-            assertEquals("2", valueRow.getColumns(2));
-            assertEquals("1", valueRow.getColumns(3));
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            imapCollect.collect(metricsDataBuilder, metrics);
 
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                    assertEquals("3", rowWrapper.nextCell().getValue());
+                    assertEquals("2", rowWrapper.nextCell().getValue());
+                    assertEquals("1", rowWrapper.nextCell().getValue());
+                }
+            }
         }
+
         mocked.close();
     }
 

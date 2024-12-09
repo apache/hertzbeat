@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -119,7 +120,8 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         DefaultMQAdminExt mqAdminExt = null;
         try {
             mqAdminExt = this.createMqAdminExt(metrics);
@@ -128,7 +130,7 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
             RocketmqCollectData rocketmqCollectData = new RocketmqCollectData();
             this.collectData(mqAdminExt, rocketmqCollectData);
 
-            this.fillBuilder(rocketmqCollectData, builder, metrics.getAliasFields(), metrics.getRocketmq().getParseScript());
+            this.fillBuilder(rocketmqCollectData, metricsDataBuilder, metrics.getAliasFields(), metrics.getRocketmq().getParseScript());
 
         } catch (Exception e) {
             builder.setCode(CollectRep.Code.FAIL);
@@ -348,25 +350,23 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
      * fill data to builder
      *
      * @param rocketmqCollectData rocketmq data
-     * @param builder             metrics data builder
+     * @param metricsDataBuilder  metrics data builder
      * @param aliasFields         alia fields
      * @param parseScript         JSON base path
      */
-    private void fillBuilder(RocketmqCollectData rocketmqCollectData, CollectRep.MetricsData.Builder builder, List<String> aliasFields, String parseScript) {
+    private void fillBuilder(RocketmqCollectData rocketmqCollectData, MetricsDataBuilder metricsDataBuilder, List<String> aliasFields, String parseScript) {
         String dataJson = JSONObject.toJSONString(rocketmqCollectData);
         List<Object> results = JsonPathParser.parseContentWithJsonPath(dataJson, parseScript);
         for (int i = 0; i < results.size(); i++) {
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String aliasField : aliasFields) {
                 List<Object> valueList = JsonPathParser.parseContentWithJsonPath(dataJson, parseScript + aliasField);
                 if (CollectionUtils.isNotEmpty(valueList) && valueList.size() > i) {
                     Object value = valueList.get(i);
-                    valueRowBuilder.addColumns(value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
+                    metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    metricsDataBuilder.getArrowVectorWriter().setNull(aliasField);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
         }
     }
 }
