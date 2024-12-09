@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.kafka;
 
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
@@ -125,6 +126,7 @@ public class KafkaCollectE2eTest {
 
         // Verify the information of topic list monitoring
         builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("kafka");
+        metrics.setAliasFields(Lists.newArrayList("TopicName"));
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
             kafkaCollect.collect(metricsDataBuilder, metrics);
@@ -145,6 +147,7 @@ public class KafkaCollectE2eTest {
 
         // Verify the information monitored by topic description
         kafkaProtocol.setCommand("topic-describe");
+        metrics.setAliasFields(Lists.newArrayList("TopicName", "PartitionNum", "PartitionLeader", "BrokerHost", "BrokerPort", "ReplicationFactorSize", "ReplicationFactor"));
         builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("kafka");
         try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
             final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
