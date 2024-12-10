@@ -27,6 +27,12 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -64,7 +70,7 @@ public class MemcachedCollectImplTest {
         metrics.setName("server_info");
         metrics.setMemcached(memcachedProtocol);
         metrics.setAliasFields(List.of("responseTime", "pid", "uptime", "item_size", "item_count", "curr_items"));
-        builder = CollectRep.MetricsData.newBuilder();
+        builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
     }
 
     @Test
@@ -76,7 +82,7 @@ public class MemcachedCollectImplTest {
     }
 
     @Test
-    void testCollectCmdResponse() {
+    void testCollectCmdResponse() throws Exception {
         String httpResponse =
                 """
                         STAT pid 1
@@ -93,12 +99,23 @@ public class MemcachedCollectImplTest {
                     Mockito.when(socket.getInputStream()).thenReturn(inputStream);
                 });
 
-        memcachedCollect.collect(builder, 1L, "test", metrics);
-        assertEquals(1, builder.getValuesCount());
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertNotNull(valueRow.getColumns(0));
-            assertEquals(valueRow.getColumns(1), "1");
-            assertEquals(valueRow.getColumns(2), "2");
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            memcachedCollect.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+
+                    assertNotNull(rowWrapper.nextCell().getValue());
+                    assertEquals("1", rowWrapper.nextCell().getValue());
+                    assertEquals("2", rowWrapper.nextCell().getValue());
+                }
+            }
         }
         mocked.close();
     }

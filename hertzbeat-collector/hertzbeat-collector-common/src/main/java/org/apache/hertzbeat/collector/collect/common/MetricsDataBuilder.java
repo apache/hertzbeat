@@ -15,19 +15,26 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.ipmi2.client.handler;
+package org.apache.hertzbeat.collector.collect.common;
 
-import java.io.IOException;
-
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
-import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiSession;
-import org.apache.hertzbeat.collector.collect.ipmi2.client.UdpConnection;
-import org.apache.hertzbeat.common.entity.job.Metrics;
+import com.google.protobuf.ByteString;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriter;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
- * IpmiHandler interface
  */
-public interface IpmiHandler {
-    void handler(IpmiSession session, UdpConnection connection, MetricsDataBuilder metricsDataBuilder, Metrics metrics) throws IOException;
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MetricsDataBuilder {
+    private CollectRep.MetricsData.Builder builder;
+    private ArrowVectorWriter arrowVectorWriter;
 
+    public CollectRep.MetricsData build() {
+        builder.setData(ByteString.copyFrom(arrowVectorWriter.toByteArray()));
+        return builder.build();
+    }
 }

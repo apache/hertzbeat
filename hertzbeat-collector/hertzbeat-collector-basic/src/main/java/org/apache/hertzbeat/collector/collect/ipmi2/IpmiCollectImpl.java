@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.collect.ipmi2;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.ipmi2.cache.IpmiConnect;
@@ -63,8 +64,9 @@ public class IpmiCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        IpmiConnection connection = null;
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
+        IpmiConnection connection;
         try {
             connection = getIpmiConnection(metrics.getIpmi());
         } catch (Exception e) {
@@ -74,7 +76,7 @@ public class IpmiCollectImpl extends AbstractCollect {
             return;
         }
         try {
-            connection.getResource(builder, metrics);
+            connection.getResource(metricsDataBuilder, metrics);
         } catch (IOException e) {
             log.error("Get Ipmi {} detail resource error: {}", metrics.getName(), e.getMessage());
         }

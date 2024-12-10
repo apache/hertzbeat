@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.collector.collect;
 
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * Specific metrics collection implementation abstract class
@@ -35,12 +35,10 @@ public abstract class AbstractCollect {
 
     /**
      * Real acquisition implementation interface
-     * @param builder response builder
-     * @param monitorId  monitor id   
-     * @param app monitor type 
+     * @param metricsDataBuilder response builder
      * @param metrics metric configuration
      */
-    public abstract void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics);
+    public abstract void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics);
 
     /**
      * the protocol this collect instance support

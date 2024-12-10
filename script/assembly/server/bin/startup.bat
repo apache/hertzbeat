@@ -52,7 +52,7 @@ if not exist %LOGS_DIR% (
 
 rem JVM Configuration
 
-set JAVA_OPTS= -Duser.timezone=Asia/Shanghai -Doracle.jdbc.timezoneAsRegion=false
+set JAVA_OPTS= -Duser.timezone=Asia/Shanghai -Doracle.jdbc.timezoneAsRegion=false --add-opens=java.base/java.nio=org.apache.arrow.memory.core,ALL-UNNAMED
 
 set JAVA_MEM_OPTS= -server -XX:SurvivorRatio=6 -XX:+UseParallelGC -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=%LOGS_DIR%
 

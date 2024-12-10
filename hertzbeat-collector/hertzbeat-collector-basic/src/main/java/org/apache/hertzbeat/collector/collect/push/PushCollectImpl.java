@@ -19,12 +19,11 @@ package org.apache.hertzbeat.collector.collect.push;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
@@ -74,8 +73,9 @@ public class PushCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder,
-                        long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
+        final long monitorId = builder.getId();
         long curTime = System.currentTimeMillis();
 
         PushProtocol pushProtocol = metrics.getPush();
@@ -96,7 +96,7 @@ public class PushCollectImpl extends AbstractCollect {
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
 
-            parseResponse(builder, resp, metrics);
+            parseResponse(metricsDataBuilder, resp, metrics);
 
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
@@ -158,7 +158,7 @@ public class PushCollectImpl extends AbstractCollect {
         return requestBuilder.build();
     }
 
-    private void parseResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metric) {
+    private void parseResponse(MetricsDataBuilder metricsDataBuilder, String resp, Metrics metric) {
         Message<PushMetricsDto> msg = JsonUtil.fromJson(resp, new TypeReference<>() {
         });
         if (msg == null) {
@@ -169,20 +169,13 @@ public class PushCollectImpl extends AbstractCollect {
             throw new NullPointerException("parse result is null");
         }
         for (PushMetricsDto.Metrics pushMetrics : pushMetricsDto.getMetricsList()) {
-            List<CollectRep.ValueRow> rows = new ArrayList<>();
             for (Map<String, String> metrics : pushMetrics.getMetrics()) {
-                List<String> metricColumn = new ArrayList<>();
                 for (Metrics.Field field : metric.getFields()) {
-                    metricColumn.add(metrics.get(field.getField()));
+                    metricsDataBuilder.getArrowVectorWriter().setValue(field.getField(), metrics.get(field.getField()));
                 }
-                CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder()
-                        .addAllColumns(metricColumn).build();
-                rows.add(valueRow);
             }
-
-
-            builder.addAllValues(rows);
         }
-        builder.setTime(System.currentTimeMillis());
+
+        metricsDataBuilder.getBuilder().setTime(System.currentTimeMillis());
     }
 }
