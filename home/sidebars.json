@@ -92,7 +92,8 @@
             "help/dns",
             "help/ftp",
             "help/websocket",
-            "help/mqtt"
+            "help/mqtt",
+            "help/modbus"
           ]
         },
         {
