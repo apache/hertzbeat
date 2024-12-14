@@ -154,7 +154,7 @@ module.exports = {
             },
             {
               label: 'Security',
-              href: 'https://www.apache.org/security/',
+              to: '/docs/help/security_model',
             },
             {
               label: 'Sponsorship',
