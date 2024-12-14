@@ -32,7 +32,7 @@ References:
 
 #### Metric set：system
 
-| Metric name  | Metric unit |   Metric help description    |
+| Metric name  | Metric unit | Metric help description      |
 |--------------|-------------|------------------------------|
 | name         | none        | Host name                    |
 | descr        | none        | Operating system description |
@@ -41,3 +41,74 @@ References:
 | services     | number      | Current number of services   |
 | processes    | number      | Current number of processes  |
 | responseTime | ms          | Collection response time     |
+| location     | none        | Location                     |
+| memory       | GB          | System memory                |
+
+#### Metric set: process
+
+| Field name        | Metric unit | Metric help description |
+|-------------------|-------------|-------------------------|
+| hrSWRunIndex      | none        | Index                   |
+| hrSWRunName       | none        | Process name            |
+| hrSWRunID         | none        | Process ID              |
+| hrSWRunPath       | none        | Process path            |
+| hrSWRunParameters | none        | Process parameters      |
+| hrSWRunType       | none        | Process type            |
+| hrSWRunStatus     | none        | Process status          |
+| hrSWRunPerfCPU    | s           | Process CPU usage       |
+| hrSWRunPerfMem    | KB          | Process memory usage    |
+
+#### Metric set: service
+
+| Field name            | Metric unit | Metric help description |
+|-----------------------|-------------|-------------------------|
+| svSvcName             | none        | Service name            |
+| svSvcInstalledState   | none        | Service installed state |
+| svSvcOperatingState   | none        | Service operating state |
+| svSvcCanBeUninstalled | none        | Can be uninstalled      |
+| svSvcCanBePaused      | none        | Can be paused           |
+
+#### Metric set: installation
+
+| Field name         | Metric unit | Metric help description |
+|--------------------|-------------|-------------------------|
+| hrSWInstalledIndex | none        | Index                   |
+| hrSWInstalledName  | none        | Installed name          |
+| hrSWInstalledID    | none        | Installed ID            |
+| hrSWInstalledType  | none        | Installed type          |
+
+#### Metric set: storage
+
+| Field name | Metric unit | Metric help description |
+|------------|-------------|-------------------------|
+| index      | none        | Index                   |
+| descr      | none        | Storage description     |
+| size       | Mb          | Storage size            |
+| free       | Mb          | Free space              |
+| used       | Mb          | Used space              |
+| usage      | %           | Usage percentage        |
+
+#### Metric set: interface details
+
+| Field name   | Metric unit | Metric help description    |
+|--------------|-------------|----------------------------|
+| index        | none        | Index                      |
+| descr        | none        | Interface name             |
+| speed        | Mbps        | Interface speed            |
+| in_octets    | Kbps        | Inbound traffic            |
+| out_octets   | Kbps        | Outbound traffic           |
+| admin_status | none        | Administrative status      |
+| oper_status  | none        | Operational status         |
+| mtu          | B           | MTU                        |
+| in_discards  | number      | Inbound discarded packets  |
+| in_errors    | number      | Inbound error packets      |
+| out_discards | number      | Outbound discarded packets |
+| out_errors   | number      | Outbound error packets     |
+
+#### Metric set: device
+
+| Field name | Metric unit | Metric help description |
+|------------|-------------|-------------------------|
+| index      | none        | Index                   |
+| descr      | none        | Description             |
+| status     | none        | Status                  |

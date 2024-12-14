@@ -8,6 +8,7 @@ keywords: [open source monitoring system, open source network monitoring, using 
 ### Preparation
 
 > To monitor the local machine, simply deploy Hertzbeat. To monitor other hosts, you need to deploy a collector on the target host. Refer to [this link](https://github.com/apache/hertzbeat?tab=readme-ov-file#2install-via-package) for step 5 of the installation process.
+> If the collector is installed using Docker, it will cause the collector to be unable to monitor the process information on the host machine, because Docker containers run in an isolated environment, with each container having its own process space.
 > When creating a monitoring task and selecting a collector, choose the corresponding collector deployed on the target host.
 
 ### Configuration Parameters
