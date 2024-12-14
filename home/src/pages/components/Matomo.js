@@ -16,3 +16,7 @@ if (ExecutionEnvironment.canUseDOM) {
     })();
     /*  End Matomo Code */
 }
+
+export default function Matomo() {
+    return this;
+}
