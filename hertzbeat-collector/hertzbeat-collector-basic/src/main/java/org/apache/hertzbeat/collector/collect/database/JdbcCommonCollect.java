@@ -159,7 +159,6 @@ public class JdbcCommonCollect extends AbstractCollect {
                     if (statement != null) {
                         statement.close();
                     }
-                    jdbcConnect.close();
                 } catch (Exception e2) {
                     log.error(e2.getMessage());
                 }

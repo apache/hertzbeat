@@ -199,13 +199,10 @@ public class CalculateAlarm {
                     RowWrapper rowWrapper = arrowVectorReader.readRow();
                     while (rowWrapper.hasNextRow()) {
                         rowWrapper = rowWrapper.nextRow();
-
-                        String finalApp = app;
+                        StringBuilder tagBuilder = new StringBuilder();
+                        fieldValueMap.clear();
+                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, arrowVectorReader.getRowCount());
                         rowWrapper.cellStream().forEach(cell -> {
-                            fieldValueMap.clear();
-                            fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, arrowVectorReader.getRowCount());
-                            StringBuilder tagBuilder = new StringBuilder();
-
                             String valueStr = cell.getValue();
                             if (CommonConstants.NULL_VALUE.equals(valueStr)) {
                                 return;
@@ -233,24 +230,24 @@ public class CalculateAlarm {
                             if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL)) {
                                 tagBuilder.append("-").append(valueStr);
                             }
-                            try {
-                                boolean match = execAlertExpression(fieldValueMap, expr);
-                                try {
-                                    if (match) {
-                                        // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
-                                        afterThresholdRuleMatch(currentTimeMilli, monitorId, finalApp, metrics, tagBuilder.toString(), fieldValueMap, define);
-                                    } else {
-                                        String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
-                                        triggeredAlertMap.remove(alarmKey);
-                                        if (define.isRecoverNotice()) {
-                                            handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    log.error(e.getMessage(), e);
-                                }
-                            } catch (Exception ignored) {}
                         });
+                        try {
+                            boolean match = execAlertExpression(fieldValueMap, expr);
+                            try {
+                                if (match) {
+                                    // If the threshold rule matches, the number of times the threshold has been triggered is determined and an alarm is triggered
+                                    afterThresholdRuleMatch(currentTimeMilli, monitorId, app, metrics, tagBuilder.toString(), fieldValueMap, define);
+                                } else {
+                                    String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
+                                    triggeredAlertMap.remove(alarmKey);
+                                    if (define.isRecoverNotice()) {
+                                        handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                log.error(e.getMessage(), e);
+                            }
+                        } catch (Exception ignored) {}
                     }
                 }
             }
