@@ -296,7 +296,8 @@ public class JdbcCommonCollect extends AbstractCollect {
             // check whether the parameter is valid
             if (url.contains("create trigger") || url.contains("create alias") || url.contains("runscript from")
                     || url.contains("allowloadlocalinfile") || url.contains("allowloadlocalinfileinpath")
-                    || url.contains("uselocalinfile")) {
+                    || url.contains("uselocalinfile") || url.contains("autodeserialize") || url.contains("detectcustomcollations")
+                    || url.contains("serverstatusdiffinterceptor")) {
                 throw new IllegalArgumentException("Invalid JDBC URL: contains malicious characters.");
             }
             // when has config jdbc url, use it 
