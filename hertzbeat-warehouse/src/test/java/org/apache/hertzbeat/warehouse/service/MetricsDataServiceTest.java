@@ -26,7 +26,6 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -88,8 +87,6 @@ public class MetricsDataServiceTest {
         CollectRep.MetricsData storageData = CollectRep.MetricsData.newBuilder()
                 .setId(monitorId)
                 .setMetrics(metrics)
-                .addAllFields(new ArrayList<>())
-                .addAllValues(new ArrayList<>())
                 .build();
         when(realTimeDataReader.isServerAvailable()).thenReturn(true);
         when(realTimeDataReader.getCurrentMetricsData(eq(monitorId), eq(metrics))).thenReturn(storageData);

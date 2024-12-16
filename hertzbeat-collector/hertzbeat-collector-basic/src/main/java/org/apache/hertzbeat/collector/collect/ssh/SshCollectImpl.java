@@ -29,12 +29,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.SshConnect;
@@ -85,7 +85,8 @@ public class SshCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
 
         long startTime = System.currentTimeMillis();
         SshProtocol sshProtocol = metrics.getSsh();
@@ -124,10 +125,10 @@ public class SshCollectImpl extends AbstractCollect {
                 return;
             }
             switch (sshProtocol.getParseType()) {
-                case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 default -> {
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("Ssh collect not support this parse type: " + sshProtocol.getParseType());
@@ -182,26 +183,24 @@ public class SshCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SSH;
     }
 
-    private void parseResponseDataByLog(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void parseResponseDataByLog(String result, List<String> aliasFields, MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
             return;
         }
         for (String line : lines) {
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
                 } else {
-                    valueRowBuilder.addColumns(line);
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, line);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
         }
     }
 
-    private void parseResponseDataByNetcat(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void parseResponseDataByNetcat(String result, List<String> aliasFields, MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
@@ -219,41 +218,37 @@ public class SshCollectImpl extends AbstractCollect {
                 .filter(item -> item.length == 2)
                 .collect(Collectors.toMap(x -> x[0], x -> x[1]));
 
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = mapValue.get(field);
-            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+            metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
-    private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void parseResponseDataByOne(String result, List<String> aliasFields, MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
             return;
         }
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int aliasIndex = 0;
         int lineIndex = 0;
         while (aliasIndex < aliasFields.size()) {
-            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
-                valueRowBuilder.addColumns(responseTime.toString());
+            final String fieldName = aliasFields.get(aliasIndex);
+
+            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(fieldName)) {
+                metricsDataBuilder.getArrowVectorWriter().setValue(fieldName, responseTime.toString());
             } else {
-                if (lineIndex < lines.length) {
-                    valueRowBuilder.addColumns(lines[lineIndex].trim());
-                } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                }
+                metricsDataBuilder.getArrowVectorWriter().setValue(fieldName, lineIndex < lines.length
+                        ? lines[lineIndex].trim()
+                        : CommonConstants.NULL_VALUE);
                 lineIndex++;
             }
             aliasIndex++;
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
     private void parseResponseDataByMulti(String result, List<String> aliasFields,
-                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
+                                          MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length <= 1) {
             log.error("ssh response data only has header: {}", result);
@@ -266,29 +261,17 @@ public class SshCollectImpl extends AbstractCollect {
         }
         for (int i = 1; i < lines.length; i++) {
             String[] values = lines[i].split(" ");
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
                 } else {
                     Integer index = fieldMapping.get(alias.toLowerCase());
-                    if (index != null && index < values.length) {
-                        valueRowBuilder.addColumns(values[index]);
-                    } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                    }
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, index != null && index < values.length
+                            ? values[index]
+                            : CommonConstants.NULL_VALUE);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
         }
-    }
-
-    private void removeConnectSessionCache(SshProtocol sshProtocol) {
-        CacheIdentifier identifier = CacheIdentifier.builder()
-                .ip(sshProtocol.getHost()).port(sshProtocol.getPort())
-                .username(sshProtocol.getUsername()).password(sshProtocol.getPassword())
-                .build();
-        connectionCommonCache.removeCache(identifier);
     }
 
     private ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection)

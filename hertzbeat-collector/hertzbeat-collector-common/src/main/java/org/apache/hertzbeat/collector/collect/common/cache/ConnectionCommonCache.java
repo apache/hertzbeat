@@ -64,7 +64,7 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
                 .listener((key, value) -> {
                     timeoutMap.remove(key);
                     try {
-                        value.close();
+                        value.closeConnection();
                     } catch (Exception e) {
                         log.error("connection close error: {}.", e.getMessage(), e);
                     }
@@ -95,7 +95,7 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
                     timeoutMap.remove(key);
                     cacheMap.remove(key);
                     try {
-                        value.close();
+                        value.closeConnection();
                     } catch (Exception e) {
                         log.error("clean connection close error: {}.", e.getMessage(), e);
                     }
@@ -178,7 +178,7 @@ public class ConnectionCommonCache<T, C extends AbstractConnection<?>> {
             if (value == null) {
                 return;
             }
-            value.close();
+            value.closeConnection();
         } catch (Exception e) {
             log.error("connection close error: {}.", e.getMessage(), e);
         }

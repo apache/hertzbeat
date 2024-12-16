@@ -15,23 +15,26 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.common.cache;
+package org.apache.hertzbeat.collector.collect.common;
 
-import lombok.extern.slf4j.Slf4j;
+import com.google.protobuf.ByteString;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriter;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
- * AbstractConnection
  */
-@Slf4j
-public abstract class AbstractConnection<T> {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MetricsDataBuilder {
+    private CollectRep.MetricsData.Builder builder;
+    private ArrowVectorWriter arrowVectorWriter;
 
-    /**
-     * @return Returns the connection.
-     */
-    public abstract T getConnection();
-
-    /**
-     * Close connection
-     */
-    public abstract void closeConnection() throws Exception;
+    public CollectRep.MetricsData build() {
+        builder.setData(ByteString.copyFrom(arrowVectorWriter.toByteArray()));
+        return builder.build();
+    }
 }

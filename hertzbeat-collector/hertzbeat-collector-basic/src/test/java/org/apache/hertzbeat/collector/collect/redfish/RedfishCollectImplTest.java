@@ -23,7 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -66,7 +72,7 @@ public class RedfishCollectImplTest {
 
     @Test
     void collect() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         List<String> jsonPath = new ArrayList<>();
         jsonPath.add("$.Id");
         Metrics metrics = new Metrics();
@@ -75,12 +81,16 @@ public class RedfishCollectImplTest {
         metrics.setName("Chassis");
         RedfishClient.create(redfishProtocol);
         redfishCollect.preCheck(metrics);
-        redfishCollect.collect(builder, 1L, "test", metrics);
+
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            redfishCollect.collect(metricsDataBuilder, metrics);
+        }
     }
 
     @Test
     void mockCollect() throws Exception {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         List<String> jsonPath = new ArrayList<>();
         jsonPath.add("$.['@odata.id']");
         redfishProtocol.setSchema("/redfish/v1/Chassis/{ChassisId}/PowerSubsystem/PowerSupplies");
@@ -168,16 +178,28 @@ public class RedfishCollectImplTest {
         MockedStatic<RedfishClient> clientMockedStatic = Mockito.mockStatic(RedfishClient.class);
         clientMockedStatic.when(() -> RedfishClient.create(redfishProtocol)).thenReturn(redfishClient);
         Mockito.when(redfishClient.connect()).thenReturn(redfishConnectSession);
+
         redfishCollect.preCheck(metrics);
-        redfishCollect.collect(builder, 1L, "test", metrics);
-        assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(0).getColumns(0));
-        assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(1).getColumns(0));
-        assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1", builder.getValues(2).getColumns(0));
-        assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2", builder.getValues(3).getColumns(0));
+        metrics.setAliasFields(Lists.newArrayList("id"));
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            redfishCollect.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+
+                assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay1", rowWrapper.nextRow().nextCell().getValue());
+                assertEquals("/redfish/v1/Chassis/1U/PowerSubsystem/PowerSupplies/Bay2", rowWrapper.nextRow().nextCell().getValue());
+                assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay1", rowWrapper.nextRow().nextCell().getValue());
+                assertEquals("/redfish/v1/Chassis/2U/PowerSubsystem/PowerSupplies/Bay2", rowWrapper.nextRow().nextCell().getValue());
+            }
+        }
+
     }
 
     @Test
-    void preCheck() throws Exception {
+    void preCheck() {
         // metrics is null
         assertThrows(IllegalArgumentException.class, () -> redfishCollect.preCheck(null));
 

@@ -15,23 +15,13 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.common.cache;
-
-import lombok.extern.slf4j.Slf4j;
+package org.apache.hertzbeat.common.constants;
 
 /**
- * AbstractConnection
+ * Metric Data Field Constants
  */
-@Slf4j
-public abstract class AbstractConnection<T> {
-
-    /**
-     * @return Returns the connection.
-     */
-    public abstract T getConnection();
-
-    /**
-     * Close connection
-     */
-    public abstract void closeConnection() throws Exception;
+public interface MetricDataFieldConstants {
+    String TYPE = "type";
+    String LABEL = "label";
+    String UNIT = "unit";
 }

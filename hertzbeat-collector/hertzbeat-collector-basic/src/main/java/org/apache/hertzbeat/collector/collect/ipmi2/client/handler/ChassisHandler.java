@@ -20,13 +20,13 @@ package org.apache.hertzbeat.collector.collect.ipmi2.client.handler;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiSession;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.UdpConnection;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.chassis.GetChassisStatusRequest;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.chassis.GetChassisStatusResponse;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * ChassisHandler
@@ -36,18 +36,13 @@ public class ChassisHandler implements IpmiHandler {
     Map<String, String> parseValue = new HashMap<>();
 
     @Override
-    public void handler(IpmiSession session, UdpConnection connection, CollectRep.MetricsData.Builder builder, Metrics metrics) throws IOException {
+    public void handler(IpmiSession session, UdpConnection connection, MetricsDataBuilder metricsDataBuilder, Metrics metrics) throws IOException {
         GetChassisStatusResponse getChassisStatusResponse = connection.get(session, new GetChassisStatusRequest(), GetChassisStatusResponse.class);
         parseFieldToMap(getChassisStatusResponse);
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
         for (Metrics.Field field : metrics.getFields()) {
-            if (!parseValue.containsKey(field.getField())) {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-                continue;
-            }
-            valueRowBuilder.addColumns(parseValue.get(field.getField()));
+            metricsDataBuilder.getArrowVectorWriter().setValue(field.getField(), parseValue.get(field.getField()));
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
     public void parseFieldToMap(GetChassisStatusResponse getChassisStatusResponse) {

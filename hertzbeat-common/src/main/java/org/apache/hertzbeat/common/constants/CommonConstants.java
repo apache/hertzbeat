@@ -400,14 +400,4 @@ public interface CommonConstants {
      * status page incident state resolved
      */
     byte STATUS_PAGE_INCIDENT_STATE_RESOLVED = 3;
-
-    /**
-     * host column for service discovery
-     */
-    int SD_HOST_COLUMN = 0;
-
-    /**
-     * port column for service discovery
-     */
-    int SD_PORT_COLUMN = 1;
 }
