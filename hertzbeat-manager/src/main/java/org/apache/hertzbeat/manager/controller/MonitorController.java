@@ -103,14 +103,6 @@ public class MonitorController {
         return ResponseEntity.ok(Message.success("Detect success."));
     }
 
-    @PostMapping("/optional")
-    @Operation(summary = "Add a monitor that can select metrics", description = "Add a monitor that can select metrics")
-    public ResponseEntity<Message<Void>> addNewMonitorOptionalMetrics(@Valid @RequestBody MonitorDto monitorDto) {
-        monitorService.validate(monitorDto, false);
-        monitorService.addNewMonitorOptionalMetrics(monitorDto.getMetrics(), monitorDto.getMonitor(), monitorDto.getParams());
-        return ResponseEntity.ok(Message.success("Add success"));
-    }
-
     @GetMapping(value = {"/metric/{app}", "/metric"})
     @Operation(summary = "get app metric", description = "Obtain indicators that can be monitored by the app based on the app name")
     public ResponseEntity<Message<List<String>>> getMonitorMetrics(

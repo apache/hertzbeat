@@ -203,6 +203,11 @@ public interface CommonConstants {
     byte AUTH_TYPE_GITEE = 5;
 
     /**
+     * inner default label key __instance__
+     */
+    String LABEL_INNER_KEY_INSTANCE = "__instance__";
+    
+    /**
      * Inside the tag: monitorId Monitor task ID
      */
     String TAG_MONITOR_ID = "monitorId";

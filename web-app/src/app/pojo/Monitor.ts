@@ -28,6 +28,8 @@ export class Monitor {
   // Monitoring status 0: Paused, 1: Up, 2: Down
   status!: number;
   description!: string;
+  labels!: Record<string, string>;
+  annotations!: Record<string, string>;
   creator!: string;
   modifier!: string;
   gmtCreate!: number;

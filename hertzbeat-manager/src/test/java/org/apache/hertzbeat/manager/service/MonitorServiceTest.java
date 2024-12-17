@@ -38,7 +38,6 @@ import org.apache.hertzbeat.alert.dao.AlertDefineBindDao;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.job.Job;
-import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
@@ -48,14 +47,12 @@ import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
 import org.apache.hertzbeat.manager.dao.ParamDao;
-import org.apache.hertzbeat.manager.dao.TagMonitorBindDao;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
-import org.apache.hertzbeat.manager.support.exception.MonitorMetricsException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -115,9 +112,6 @@ class MonitorServiceTest {
 
     @Mock
     private AlertDefineBindDao alertDefineBindDao;
-
-    @Mock
-    private TagMonitorBindDao tagMonitorBindDao;
 
     @Mock
     private MonitorBindDao monitorBindDao;
@@ -733,38 +727,6 @@ class MonitorServiceTest {
     @Test
     void getAppMonitors() {
         assertDoesNotThrow(() -> monitorDao.findMonitorsByAppEquals("test"));
-    }
-
-    @Test
-    void addNewMonitorOptionalMetrics() {
-        Monitor monitor = Monitor.builder()
-                .id(1L)
-                .intervals(1)
-                .name("memory")
-                .app("demoApp")
-                .build();
-        Job job = new Job();
-        job.setMetrics(new ArrayList<>());
-        when(appService.getAppDefine(monitor.getApp())).thenReturn(job);
-
-        List<Param> params = Collections.singletonList(new Param());
-        List<String> metrics = List.of();
-        try {
-            monitorService.addNewMonitorOptionalMetrics(metrics, monitor, params);
-        } catch (MonitorMetricsException e) {
-            assertEquals("no select metrics or select illegal metrics", e.getMessage());
-        }
-        reset();
-        when(monitorDao.save(monitor)).thenThrow(RuntimeException.class);
-        metrics = List.of("metric-001");
-        List<Metrics> metricsDefine = new ArrayList<>();
-        Metrics e = new Metrics();
-        e.setName("metric-001");
-        metricsDefine.add(e);
-        job.setMetrics(metricsDefine);
-        List<String> finalMetrics = metrics;
-        assertThrows(MonitorDatabaseException.class, () -> monitorService.addNewMonitorOptionalMetrics(finalMetrics, monitor, params));
-
     }
 
     @Test

@@ -83,7 +83,7 @@ class AlarmCommonReduceTest {
         alarmCommonReduce.reduceAndSendAlarm(testAlert);
 
         verify(dataQueue).sendAlertsData(testAlert);
-        verify(alertMonitorDao, never()).findMonitorIdBindTags(anyLong());
+        verify(alertMonitorDao, never()).findMonitorById(anyLong());
     }
 
     @Test
@@ -98,7 +98,7 @@ class AlarmCommonReduceTest {
                         .name("newTag")
                         .tagValue("tagValue")
                         .build())
-        ).when(alertMonitorDao).findMonitorIdBindTags(123L);
+        ).when(alertMonitorDao).findMonitorById(123L);
         when(alarmConvergeReduce.filterConverge(testAlert)).thenReturn(true);
         when(alarmSilenceReduce.filterSilence(testAlert)).thenReturn(true);
 

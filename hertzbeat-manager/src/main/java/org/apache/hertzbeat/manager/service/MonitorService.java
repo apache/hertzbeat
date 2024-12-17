@@ -154,14 +154,6 @@ public interface MonitorService {
     List<Monitor> getAppMonitors(String app);
 
     /**
-     * add a new monitor with optional metrics
-     * @param metrics user metrics
-     * @param monitor Monitoring prompt
-     * @param params  configuration parameters
-     */
-    void addNewMonitorOptionalMetrics(List<String> metrics, Monitor monitor, List<Param> params);
-
-    /**
      * Get monitor able metrics based on App name, not passed to get all metrics
      * @param app app name
      * @return metrics

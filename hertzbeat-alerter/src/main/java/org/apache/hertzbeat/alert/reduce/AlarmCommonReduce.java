@@ -20,11 +20,13 @@ package org.apache.hertzbeat.alert.reduce;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.dao.AlertMonitorDao;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Tag;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.stereotype.Service;
@@ -57,10 +59,10 @@ public class AlarmCommonReduce {
             log.debug("receiver extern alarm message: {}", alert);
         } else {
             long monitorId = Long.parseLong(monitorIdStr);
-            List<Tag> tagList = alertMonitorDao.findMonitorIdBindTags(monitorId);
-            for (Tag tag : tagList) {
-                if (!tags.containsKey(tag.getName())) {
-                    tags.put(tag.getName(), tag.getTagValue());
+            Optional<Monitor> monitorOptional = alertMonitorDao.findMonitorById(monitorId);
+            if (monitorOptional.isPresent()) {
+                if (monitorOptional.get().getLabels() != null) {
+                    tags.putAll(monitorOptional.get().getLabels());    
                 }
             }
         }

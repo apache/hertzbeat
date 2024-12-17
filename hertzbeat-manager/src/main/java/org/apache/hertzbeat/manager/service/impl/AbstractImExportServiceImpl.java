@@ -28,6 +28,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.Data;
@@ -101,10 +102,6 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var exportMonitor = new ExportMonitorDTO();
         var monitor = new MonitorDTO();
         BeanUtils.copyProperties(dto.getMonitor(), monitor);
-        if (!CollectionUtils.isEmpty(dto.getMonitor().getTags())) {
-            monitor.setTags(dto.getMonitor().getTags().stream()
-                    .map(Tag::getId).toList());
-        }
         exportMonitor.setMonitor(monitor);
         exportMonitor.setParams(dto.getParams().stream()
                 .map(it -> {
@@ -128,16 +125,9 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         var monitorDto = new MonitorDto();
         var monitor = new Monitor();
         log.debug("exportMonitor.monitor{}", exportMonitor.monitor);
-        if (exportMonitor.monitor != null) { // Add one more null check
+        if (exportMonitor.monitor != null) { 
+            // Add one more null check
             BeanUtils.copyProperties(exportMonitor.monitor, monitor);
-            if (exportMonitor.monitor.tags != null && !exportMonitor.monitor.tags.isEmpty()) {
-                monitor.setTags(tagService.listTag(new HashSet<>(exportMonitor.monitor.tags))
-                        .stream()
-                        .filter(tag -> !(tag.getName().equals(CommonConstants.TAG_MONITOR_ID) || tag.getName().equals(CommonConstants.TAG_MONITOR_NAME)))
-                        .collect(Collectors.toList()));
-            } else {
-                monitor.setTags(Collections.emptyList());
-            }
         }
         monitorDto.setMonitor(monitor);
         if (exportMonitor.getMonitor() != null) {
@@ -194,8 +184,8 @@ public abstract class AbstractImExportServiceImpl implements ImExportService {
         private Byte status;
         @Excel(name = "Description")
         private String description;
-        @Excel(name = "Tags")
-        private List<Long> tags;
+        @Excel(name = "labels")
+        private Map<String, String> labels;
         @Excel(name = "Collector")
         private String collector;
     }

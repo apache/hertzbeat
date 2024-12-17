@@ -172,19 +172,6 @@ class MonitorControllerTest {
     }
 
     @Test
-    void addNewMonitorOptionalMetrics() throws Exception {
-        MonitorDto monitorDto = dataTest();
-
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/api/monitor/optional")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonUtil.toJson(monitorDto)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE))
-                .andExpect(jsonPath("$.msg").value("Add success"))
-                .andReturn();
-    }
-
-    @Test
     void getMonitorMetrics() throws Exception {
 
         List<String> metricNames = new ArrayList<>();
