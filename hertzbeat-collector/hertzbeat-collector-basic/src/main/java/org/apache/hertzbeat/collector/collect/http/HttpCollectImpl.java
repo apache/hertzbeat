@@ -156,6 +156,8 @@ public class HttpCollectImpl extends AbstractCollect {
                             parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, response);
                     case DispatchConstants.PARSE_SITE_MAP ->
                             parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
+                    case DispatchConstants.PARSE_HEADER ->
+                            parseResponseByHeader(builder, metrics.getAliasFields(), response);
                     default ->
                             parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 }
@@ -196,6 +198,24 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
+    private void parseResponseByHeader(CollectRep.MetricsData.Builder builder, List<String> aliases, CloseableHttpResponse response) {
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        for (String alias : aliases) {
+            if (!StringUtils.hasText(alias)) {
+                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                continue;
+            }
+            final Header firstHeader = response.getFirstHeader(alias);
+            if (Objects.isNull(firstHeader)) {
+                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                continue;
+            }
+
+            valueRowBuilder.addColumns(firstHeader.getValue());
+        }
+        builder.addValues(valueRowBuilder.build());
+    }
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_HTTP;
@@ -207,28 +227,9 @@ public class HttpCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : metrics.getAliasFields()) {
-            if ("summary".equalsIgnoreCase(metrics.getName())) {
-                addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
-            } else if ("header".equalsIgnoreCase(metrics.getName())) {
-                addColumnFromHeader(valueRowBuilder, alias, response);
-            }
+            addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
         }
         builder.addValues(valueRowBuilder.build());
-    }
-
-    private void addColumnFromHeader(CollectRep.ValueRow.Builder valueRowBuilder, String alias, CloseableHttpResponse response) {
-        if (!StringUtils.hasText(alias)) {
-            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            return;
-        }
-
-        final Header firstHeader = response.getFirstHeader(alias);
-        if (Objects.isNull(firstHeader)) {
-            valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
-            return;
-        }
-
-        valueRowBuilder.addColumns(firstHeader.getValue());
     }
 
     private void addColumnForSummary(Long responseTime, CollectRep.ValueRow.Builder valueRowBuilder, int keywordNum, String alias) {
