@@ -234,6 +234,20 @@ export class MonitorDataChartComponent implements OnInit {
     this.loadData();
   }
 
+  private getAllGradientColors(): Array<[string, string]> {
+    const gradientPairs: Array<[string, string]> = [];
+    Object.values(this.colors).forEach(colorPair => {
+      gradientPairs.push([colorPair[0], colorPair[1]]);
+    });
+    return gradientPairs;
+  }
+
+  private getRandomGradientPair(): [string, string] {
+    const allColors = this.getAllGradientColors();
+    const randomIndex = Math.floor(Math.random() * allColors.length);
+    return allColors[randomIndex];
+  }
+
   loadData(timePeriod?: string, isInterval?: boolean) {
     if (timePeriod != undefined) {
       this.timePeriod = timePeriod;
@@ -273,6 +287,7 @@ export class MonitorDataChartComponent implements OnInit {
                 };
               }
               this.lineHistoryTheme.series = [];
+              const usedColors = new Set<string>();
               let valueKeyArr = Object.keys(values);
               for (let index = 0; index < valueKeyArr.length; index++) {
                 let key = valueKeyArr[index];
@@ -282,6 +297,48 @@ export class MonitorDataChartComponent implements OnInit {
                     value: [item.time, item.origin]
                   });
                 });
+
+                // Define line color based on number of series
+                let lineStyle: any;
+                if (valueKeyArr.length === 1) {
+                  // Single line - use gradient color
+                  lineStyle = {
+                    color: {
+                      type: 'linear',
+                      x: 0,
+                      y: 0,
+                      x2: 1,
+                      y2: 0,
+                      colorStops: [
+                        { offset: 0, color: '#56CCF2' },
+                        { offset: 1, color: '#2F80ED' }
+                      ]
+                    }
+                  };
+                } else {
+                  // Multiple lines - use random gradient
+                  let gradientColors: [string, string];
+                  do {
+                    gradientColors = this.getRandomGradientPair();
+                  } while (usedColors.has(gradientColors[0]));
+
+                  usedColors.add(gradientColors[0]);
+
+                  lineStyle = {
+                    color: {
+                      type: 'linear',
+                      x: 0,
+                      y: 0,
+                      x2: 1,
+                      y2: 0,
+                      colorStops: [
+                        { offset: 0, color: gradientColors[0] },
+                        { offset: 1, color: gradientColors[1] }
+                      ]
+                    }
+                  };
+                }
+
                 this.lineHistoryTheme.series.push({
                   name: key,
                   type: 'line',
@@ -290,18 +347,10 @@ export class MonitorDataChartComponent implements OnInit {
                   emphasis: {
                     focus: 'series'
                   },
-                  lineStyle: {
-                    color: {
-                      type: 'linear',
-                      x: 0,
-                      y: 0,
-                      x2: 1,
-                      y2: 0,
-                      colorStops: [
-                        { offset: 0, color: '#BB73DF' },
-                        { offset: 1, color: '#FF8FFB' }
-                      ]
-                    }
+                  lineStyle: lineStyle,
+                  // Add itemStyle to match the line color in the legend
+                  itemStyle: {
+                    color: valueKeyArr.length === 1 ? '#2F80ED' : lineStyle.color.colorStops[0].color
                   },
                   data: seriesData
                 });
@@ -397,4 +446,159 @@ export class MonitorDataChartComponent implements OnInit {
   onChartInit(ec: any) {
     this.echartsInstance = ec;
   }
+
+  private colors = {
+    // 蓝色系列
+    blue1: ['#2E5B9F', '#89C4F4'], // 深蓝到天蓝
+    blue2: ['#1B4F72', '#5DADE2'], // 海军蓝到亮蓝
+    blue3: ['#21618C', '#85C1E9'], // 普鲁士蓝到浅蓝
+    blue4: ['#2874A6', '#AED6F1'], // 钴蓝到粉蓝
+    blue5: ['#2E86C1', '#D6EAF8'], // 深天蓝到淡蓝
+
+    // 绿色系列
+    green1: ['#186A3B', '#82E0AA'], // 森林绿到薄荷绿
+    green2: ['#0B5345', '#76D7C4'], // 墨绿到青绿
+    green3: ['#196F3D', '#A9DFBF'], // 深绿到淡绿
+    green4: ['#1E8449', '#D4EFDF'], // 翠绿到薄荷奶绿
+    green5: ['#28B463', '#EAFAF1'], // 青葱绿到清新绿
+
+    // 紫色系列
+    purple1: ['#4A235A', '#BB8FCE'], // 深紫到淡紫
+    purple2: ['#6C3483', '#D2B4DE'], // 皇室紫到薰衣草
+    purple3: ['#8E44AD', '#E8DAEF'], // 紫罗兰到浅紫
+    purple4: ['#7D3C98', '#EBDEF0'], // 葡萄紫到粉紫
+    purple5: ['#9B59B6', '#F4ECF7'], // 兰花紫到淡粉紫
+
+    // 红色系列
+    red1: ['#922B21', '#F1948A'], // 深红到粉红
+    red2: ['#B03A2E', '#F5B7B1'], // 砖红到浅粉
+    red3: ['#C0392B', '#FADBD8'], // 红砖到淡粉
+    red4: ['#CD6155', '#FDEDEC'], // 珊瑚红到浅粉红
+    red5: ['#E74C3C', '#FEF5E7'], // 鲜红到粉白
+
+    // 橙色系列
+    orange1: ['#CA6F1E', '#F8C471'], // 赭石到杏黄
+    orange2: ['#D35400', '#FAD7A0'], // 南瓜橙到淡橙
+    orange3: ['#E67E22', '#FCF3CF'], // 胡萝卜橙到米黄
+    orange4: ['#EB984E', '#FEF9E7'], // 芒果橙到淡黄
+    orange5: ['#F39C12', '#FEF5E7'], // 明橙到米白
+
+    pink1: ['#D81B60', '#F48FB1'],
+    pink2: ['#E91E63', '#F8BBD0'],
+    pink3: ['#EC407A', '#FCE4EC'],
+    pink4: ['#F06292', '#FFF1F5'],
+    pink5: ['#F48FB1', '#FFF5F8'],
+
+    // 青色系列
+    cyan1: ['#006064', '#80DEEA'],
+    cyan2: ['#0097A7', '#B2EBF2'],
+    cyan3: ['#00ACC1', '#E0F7FA'],
+    cyan4: ['#00BCD4', '#F0FFFF'],
+    cyan5: ['#26C6DA', '#F5FFFF'],
+
+    // 棕色系列
+    brown1: ['#3E2723', '#BCAAA4'],
+    brown2: ['#4E342E', '#D7CCC8'],
+    brown3: ['#5D4037', '#EFEBE9'],
+    brown4: ['#6D4C41', '#F5F5F5'],
+    brown5: ['#795548', '#FAFAFA'],
+
+    // 灰色系列
+    grey1: ['#212121', '#BDBDBD'],
+    grey2: ['#424242', '#E0E0E0'],
+    grey3: ['#616161', '#EEEEEE'],
+    grey4: ['#757575', '#F5F5F5'],
+    grey5: ['#9E9E9E', '#FAFAFA'],
+
+    // 现代商务配色
+    business1: ['#1A237E', '#7986CB'], // 靛蓝到薰衣草
+    business2: ['#0D47A1', '#64B5F6'], // 皇家蓝到天蓝
+    business3: ['#006064', '#4DD0E1'], // 墨青到碧蓝
+    business4: ['#004D40', '#4DB6AC'], // 墨绿到青绿
+    business5: ['#311B92', '#9575CD'], // 深紫到淡紫
+
+    // 科技感配色
+    tech1: ['#01579B', '#03A9F4'],
+    tech2: ['#006064', '#00BCD4'],
+    tech3: ['#1A237E', '#3F51B5'],
+    tech4: ['#311B92', '#673AB7'],
+    tech5: ['#880E4F', '#E91E63'],
+
+    // 自然色系
+    nature1: ['#1B5E20', '#81C784'],
+    nature2: ['#004D40', '#80CBC4'],
+    nature3: ['#827717', '#DCE775'],
+    nature4: ['#3E2723', '#A1887F'],
+    nature5: ['#BF360C', '#FF8A65'],
+
+    // 海洋色系
+    ocean1: ['#01579B', '#4FC3F7'],
+    ocean2: ['#006064', '#4DD0E1'],
+    ocean3: ['#0277BD', '#81D4FA'],
+    ocean4: ['#00838F', '#80DEEA'],
+    ocean5: ['#0288D1', '#B3E5FC'],
+
+    // 日落色系
+    sunset1: ['#BF360C', '#FFAB91'],
+    sunset2: ['#D84315', '#FFCCBC'],
+    sunset3: ['#E65100', '#FFB74D'],
+    sunset4: ['#F57C00', '#FFE0B2'],
+    sunset5: ['#FF6F00', '#FFE082'],
+
+    // 梦幻色系
+    dream1: ['#AA00FF', '#EA80FC'],
+    dream2: ['#C51162', '#FF4081'],
+    dream3: ['#6200EA', '#B388FF'],
+    dream4: ['#2962FF', '#82B1FF'], // 深蓝到亮蓝
+    dream5: ['#00BFA5', '#64FFDA'], // 青绿到薄荷
+
+    // 浪漫色系
+    romantic1: ['#C2185B', '#F48FB1'], // 玫红到粉红
+    romantic2: ['#D81B60', '#F8BBD0'], // 深粉到浅粉
+    romantic3: ['#AD1457', '#EC407A'], // 紫粉到玫粉
+    romantic4: ['#880E4F', '#E91E63'], // 深粉到亮粉
+    romantic5: ['#BC477B', '#FFB6C1'], // 玫瑰粉到浅粉
+
+    // 糖果色系
+    candy1: ['#FF1744', '#FF8A80'], // 亮红到粉红
+    candy2: ['#F50057', '#FF80AB'], // 玫红到粉红
+    candy3: ['#D500F9', '#EA80FC'], // 紫到亮紫
+    candy4: ['#651FFF', '#B388FF'], // 深紫到淡紫
+    candy5: ['#3D5AFE', '#8C9EFF'], // 靛蓝到淡蓝
+
+    // 秋季色系
+    autumn1: ['#BF360C', '#FFAB91'], // 深橙到淡橙
+    autumn2: ['#8D6E63', '#D7CCC8'], // 棕色到米色
+    autumn3: ['#6D4C41', '#BCAAA4'], // 深棕到浅棕
+    autumn4: ['#795548', '#A1887F'], // 棕褐到浅褐
+    autumn5: ['#4E342E', '#8D6E63'], // 深褐到褐色
+
+    // 冬季色系
+    winter1: ['#263238', '#B0BEC5'], // 深灰到浅灰
+    winter2: ['#37474F', '#CFD8DC'], // 青灰到银灰
+    winter3: ['#455A64', '#ECEFF1'], // 钢青到浅灰
+    winter4: ['#546E7A', '#F5F5F5'], // 灰蓝到白
+    winter5: ['#607D8B', '#FAFAFA'], // 蓝灰到纯白
+
+    // 春季色系
+    spring1: ['#2E7D32', '#A5D6A7'], // 绿到嫩绿
+    spring2: ['#558B2F', '#C5E1A5'], // 草绿到浅绿
+    spring3: ['#0288D1', '#81D4FA'], // 天蓝到浅蓝
+    spring4: ['#00897B', '#80CBC4'], // 青绿到浅青
+    spring5: ['#F9A825', '#FFF59D'], // 金黄到浅黄
+
+    // 夏季色系
+    summer1: ['#00B8D4', '#84FFFF'], // 湖蓝到浅青
+    summer2: ['#00E5FF', '#18FFFF'], // 亮青到浅青
+    summer3: ['#1DE9B6', '#A7FFEB'], // 碧绿到浅绿
+    summer4: ['#00E676', '#B9F6CA'], // 翠绿到浅绿
+    summer5: ['#76FF03', '#F4FF81'], // 青柠到浅黄
+
+    // 高端商务
+    business6: ['#283593', '#5C6BC0'], // 深蓝到靛蓝
+    business7: ['#1565C0', '#42A5F5'], // 蓝到亮蓝
+    business8: ['#0097A7', '#26C6DA'], // 青到亮青
+    business9: ['#00796B', '#26A69A'], // 青绿到浅绿
+    business10: ['#2E7D32', '#66BB6A'] // 绿到亮绿
+  };
 }
