@@ -213,7 +213,19 @@ export class MonitorDataChartComponent implements OnInit {
         splitLine: {
           show: true
         }
-      }
+      },
+      dataZoom: [
+        {
+          type: 'slider',
+          start: 0,
+          end: 100
+        },
+        {
+          type: 'inside',
+          start: 0,
+          end: 100
+        }
+      ]
     };
     if (this.unit != undefined || this.unit != null) {
       // @ts-ignore
@@ -275,9 +287,21 @@ export class MonitorDataChartComponent implements OnInit {
                   type: 'line',
                   smooth: true,
                   showSymbol: false,
-                  areaStyle: {},
                   emphasis: {
                     focus: 'series'
+                  },
+                  lineStyle: {
+                    color: {
+                      type: 'linear',
+                      x: 0,
+                      y: 0,
+                      x2: 1,
+                      y2: 0,
+                      colorStops: [
+                        { offset: 0, color: '#BB73DF' },
+                        { offset: 1, color: '#FF8FFB' }
+                      ]
+                    }
                   },
                   data: seriesData
                 });
@@ -313,7 +337,6 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
-                areaStyle: {},
                 emphasis: {
                   focus: 'series'
                 },
@@ -324,7 +347,6 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
-                areaStyle: {},
                 emphasis: {
                   focus: 'series'
                 },
@@ -335,7 +357,6 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
-                areaStyle: {},
                 emphasis: {
                   focus: 'series'
                 },
