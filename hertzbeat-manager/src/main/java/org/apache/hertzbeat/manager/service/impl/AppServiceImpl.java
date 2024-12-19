@@ -41,9 +41,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
@@ -158,9 +158,9 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
 
                     List<Metrics.Field> fields = rowWrapper.cellStream().map(cell -> Metrics.Field.builder()
                             .field(cell.getField().getName())
-                            .type(cell.getIntMetaData(MetricDataFieldConstants.TYPE).byteValue())
-                            .label(cell.getBooleanMetaData(MetricDataFieldConstants.LABEL))
-                            .unit(cell.getStringMetaData(MetricDataFieldConstants.UNIT))
+                            .type(cell.getMetadataAsInteger(MetricDataConstants.TYPE).byteValue())
+                            .label(cell.getMetadataAsBoolean(MetricDataConstants.LABEL))
+                            .unit(cell.getMetadataAsString(MetricDataConstants.UNIT))
                             .build())
                             .toList();
 
@@ -333,8 +333,8 @@ public class AppServiceImpl implements AppService, CommandLineRunner {
                                     hierarchyField.setValue(item.getName());
                                     hierarchyField.setLabel(item.getName());
                                     hierarchyField.setIsLeaf(true);
-                                    hierarchyField.setType(Integer.valueOf(item.getMetadata().get(MetricDataFieldConstants.TYPE)).byteValue());
-                                    hierarchyField.setUnit(item.getMetadata().get(MetricDataFieldConstants.UNIT));
+                                    hierarchyField.setType(Integer.valueOf(item.getMetadata().get(MetricDataConstants.TYPE)).byteValue());
+                                    hierarchyField.setUnit(item.getMetadata().get(MetricDataConstants.UNIT));
                                     return hierarchyField;
                                 })
                                 .collect(Collectors.toList());

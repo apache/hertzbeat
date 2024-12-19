@@ -32,13 +32,13 @@ import org.apache.commons.net.ntp.NtpV3Packet;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -56,7 +56,6 @@ public class NtpCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
         NtpProtocol ntpProtocol = metrics.getNtp();
         String host = ntpProtocol.getHost();
@@ -88,23 +87,23 @@ public class NtpCollectImpl extends AbstractCollect {
         } catch (SocketException socketException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(socketException);
             log.debug(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("NTPUDPClient open is fail: " + errorMsg);
+            metricsDataBuilder.setFailedMsg("NTPUDPClient open is fail: " + errorMsg);
+
         } catch (UnknownHostException unknownHostException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
             log.debug(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("NTPServerAddress is unknownHost: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "NTPServerAddress is unknownHost: " + errorMsg);
+
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Receive timed out: " + timeout + "ms");
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Receive timed out: " + timeout + "ms");
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } finally {
             if (client != null) {
                 try {

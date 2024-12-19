@@ -29,15 +29,16 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
@@ -85,13 +86,13 @@ public class ServiceDiscoveryWorker implements InitializingBean {
         @Override
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    final CollectRep.MetricsData serviceDiscoveryData = dataQueue.pollServiceDiscoveryData();
-                    if (Objects.isNull(serviceDiscoveryData)) {
+                try (final ArrowVector arrowVector = dataQueue.pollServiceDiscoveryData()) {
+                    if (Objects.isNull(arrowVector)) {
                         continue;
                     }
 
-                    final Monitor mainMonitor = monitorDao.findMonitorsByIdIn(Sets.newHashSet(serviceDiscoveryData.getId())).get(0);
+                    Long monitorId = arrowVector.getMetadataAsLong(MetricDataConstants.MONITOR_ID);
+                    final Monitor mainMonitor = monitorDao.findMonitorsByIdIn(Sets.newHashSet(monitorId)).get(0);
                     mainMonitor.setTags(mainMonitor.getTags().stream().filter(tag -> tag.getType() != CommonConstants.TAG_TYPE_AUTO_GENERATE).collect(Collectors.toList()));
                     // collector
                     final Optional<CollectorMonitorBind> collectorBind = collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(mainMonitor.getId());
@@ -100,7 +101,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                     List<Param> mainMonitorParamList = paramDao.findParamsByMonitorId(mainMonitor.getId());
                     mainMonitorParamList = SdMonitorOperator.removeSdParam(mainMonitorParamList);
 
-                    final Set<Long> subMonitorIdSet = monitorBindDao.findMonitorBindByBizIdAndType(serviceDiscoveryData.getId(), CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR)
+                    final Set<Long> subMonitorIdSet = monitorBindDao.findMonitorBindByBizIdAndType(monitorId, CommonConstants.MONITOR_BIND_TYPE_SD_SUB_MONITOR)
                             .stream()
                             .map(MonitorBind::getMonitorId)
                             .collect(Collectors.toSet());
@@ -108,7 +109,7 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             ? Maps.newHashMap()
                             : monitorDao.findMonitorsByIdIn(subMonitorIdSet).stream().collect(Collectors.groupingBy(Monitor::getHost));
 
-                    try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(serviceDiscoveryData.getData().toByteArray())) {
+                    try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVector)) {
                         RowWrapper rowWrapper = arrowVectorReader.readRow();
 
                         while (rowWrapper.hasNextRow()) {

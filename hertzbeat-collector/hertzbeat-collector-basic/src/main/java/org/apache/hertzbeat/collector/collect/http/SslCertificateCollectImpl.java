@@ -36,12 +36,12 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.springframework.util.StringUtils;
@@ -68,7 +68,6 @@ public class SslCertificateCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
 
         HttpProtocol httpProtocol = metrics.getHttp();
@@ -97,8 +96,7 @@ public class SslCertificateCollectImpl extends AbstractCollect {
             urlConnection.connect();
             Certificate[] certificates = urlConnection.getServerCertificates();
             if (certificates == null || certificates.length == 0) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("Ssl certificate does not exist.");
+                metricsDataBuilder.setFailedMsg("Ssl certificate does not exist.");
                 return;
             }
 
@@ -135,28 +133,28 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                 errorMsg = e1.getMessage();
                 log.error(errorMsg);
             }
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } catch (UnknownHostException e2) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("unknown host:" + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "unknown host:" + errorMsg);
+
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e3);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, errorMsg);
+
         } catch (IOException e4) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e4);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();

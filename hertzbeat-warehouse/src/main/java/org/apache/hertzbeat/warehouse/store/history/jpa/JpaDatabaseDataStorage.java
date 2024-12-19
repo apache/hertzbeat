@@ -40,10 +40,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.arrow.ArrowCell;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -164,7 +164,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                 .metric(cell.getField().getName());
 
         final String columnValue = cell.getValue();
-        final int fieldType = cell.getIntMetaData(MetricDataFieldConstants.TYPE);
+        final int fieldType = cell.getMetadataAsInteger(MetricDataConstants.TYPE);
         if (CommonConstants.NULL_VALUE.equals(columnValue)) {
             switch (fieldType) {
                 case CommonConstants.TYPE_NUMBER ->
@@ -188,7 +188,7 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
                         .dou(Double.parseDouble(columnValue));
             }
 
-            if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL)) {
+            if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
                 labels.put(cell.getField().getName(), columnValue);
             }
         }

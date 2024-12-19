@@ -20,7 +20,7 @@ package org.apache.hertzbeat.collector.collect.http.promethus;
 import java.util.List;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 
 /**

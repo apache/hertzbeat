@@ -38,17 +38,17 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.RedisConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.MapCapUtil;
 import org.springframework.util.Assert;
@@ -84,8 +84,6 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
-
         try {
             if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 List<Map<String, String>> redisInfoList = getClusterRedisInfo(metrics);
@@ -97,13 +95,12 @@ public class RedisCommonCollectImpl extends AbstractCollect {
         } catch (RedisConnectionException connectionException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(connectionException);
             log.info("[redis connection] error: {}", errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("[redis collect] error: {}", e.getMessage(), e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         }
     }
 

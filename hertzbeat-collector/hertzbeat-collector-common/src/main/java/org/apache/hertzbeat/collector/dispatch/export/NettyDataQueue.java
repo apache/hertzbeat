@@ -20,6 +20,7 @@ package org.apache.hertzbeat.collector.dispatch.export;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -68,32 +69,32 @@ public class NettyDataQueue implements CommonDataQueue {
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
+    public ArrowVector pollMetricsDataToAlerter() throws InterruptedException {
         return null;
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
+    public ArrowVector pollMetricsDataToPersistentStorage() throws InterruptedException {
         return null;
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
+    public ArrowVector pollMetricsDataToRealTimeStorage() throws InterruptedException {
         return null;
     }
 
     @Override
-    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
+    public ArrowVector pollServiceDiscoveryData() throws InterruptedException {
         return null;
     }
 
     @Override
-    public void sendMetricsData(CollectRep.MetricsData metricsData) {
-        collectJobService.sendAsyncCollectData(metricsData);
+    public void sendMetricsData(ArrowVector arrowVector) {
+        collectJobService.sendAsyncCollectData(arrowVector);
     }
 
     @Override
-    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
-        collectJobService.sendAsyncServiceDiscoveryData(metricsData);
+    public void sendServiceDiscoveryData(ArrowVector arrowVector) {
+        collectJobService.sendAsyncServiceDiscoveryData(arrowVector);
     }
 }

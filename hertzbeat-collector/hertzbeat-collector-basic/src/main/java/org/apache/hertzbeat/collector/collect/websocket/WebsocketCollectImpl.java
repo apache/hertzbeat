@@ -36,12 +36,12 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.springframework.util.Assert;
 
@@ -60,7 +60,6 @@ public class WebsocketCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
 
         WebsocketProtocol websocketProtocol = metrics.getWebsocket();
@@ -77,44 +76,43 @@ public class WebsocketCollectImpl extends AbstractCollect {
             SocketAddress socketAddress = new InetSocketAddress(host, Integer.parseInt(port));
             socket.connect(socketAddress);
 
-            if (socket.isConnected()) {
-                long responseTime = System.currentTimeMillis() - startTime;
-                OutputStream out = socket.getOutputStream();
-                InputStream in = socket.getInputStream();
-                
-                send(out, websocketProtocol);
-                Map<String, String> resultMap = readHeaders(in);
-                resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
+            if (!socket.isConnected()) {
+                metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer connect failed:");
+                return;
+            }
 
-                // Close the output stream and socket connection
-                in.close();
-                out.close();
-                socket.close();
-                List<String> aliasFields = metrics.getAliasFields();
+            long responseTime = System.currentTimeMillis() - startTime;
+            OutputStream out = socket.getOutputStream();
+            InputStream in = socket.getInputStream();
 
-                for (String field : aliasFields) {
-                    String fieldValue = resultMap.get(field);
-                    metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
-                }
-            } else {
-                builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-                builder.setMsg("Peer connect failed:");
+            send(out, websocketProtocol);
+            Map<String, String> resultMap = readHeaders(in);
+            resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
+
+            // Close the output stream and socket connection
+            in.close();
+            out.close();
+            socket.close();
+            List<String> aliasFields = metrics.getAliasFields();
+
+            for (String field : aliasFields) {
+                String fieldValue = resultMap.get(field);
+                metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
             }
         } catch (UnknownHostException unknownHostException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("UnknownHost:" + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "UnknownHost: " + errorMsg);
+
         } catch (SocketTimeoutException socketTimeoutException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(socketTimeoutException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Socket connect timeout: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Socket connect timeout: " + errorMsg);
+
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Connect may fail:" + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Connect may fail:" + errorMsg);
         }
     }
 

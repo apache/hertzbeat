@@ -44,14 +44,14 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JmxConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -91,7 +91,6 @@ public class JmxCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
@@ -127,13 +126,13 @@ public class JmxCollectImpl extends AbstractCollect {
         } catch (IOException exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.error("JMX IOException :{}", errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error("JMX Error :{}", errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } finally {
             Thread.currentThread().setContextClassLoader(currentClassLoader);
         }

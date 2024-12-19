@@ -15,26 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.arrow;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.apache.arrow.vector.table.Row;
-import org.apache.arrow.vector.types.pojo.Field;
-import org.apache.hertzbeat.common.entity.arrow.reader.DefaultMetadataReader;
+package org.apache.hertzbeat.common.entity.arrow.reader;
 
 /**
- * A cell consisting of {@link Field} and value
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class ArrowCell extends DefaultMetadataReader {
-    private final String value;
-    private final Field field;
+public interface MetadataReader {
+    String getMetadataAsString(String key);
 
-    public ArrowCell(Field field, Row row) {
-        this.field = field;
-        this.value = row.getVarCharObj(field.getName());
-        this.metadata = field.getMetadata();
-    }
+    Boolean getMetadataAsBoolean(String key);
+
+    Byte getMetadataAsByte(String key);
+
+    Integer getMetadataAsInteger(String key);
+
+    Long getMetadataAsLong(String key);
 }

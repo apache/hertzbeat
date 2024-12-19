@@ -15,26 +15,22 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.collector.collect.common;
-
-import com.google.protobuf.ByteString;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriter;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
+package org.apache.hertzbeat.common.constants;
 
 /**
+ * collect code
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class MetricsDataBuilder {
-    private CollectRep.MetricsData.Builder builder;
-    private ArrowVectorWriter arrowVectorWriter;
-
-    public CollectRep.MetricsData build() {
-        builder.setData(ByteString.copyFrom(arrowVectorWriter.toByteArray()));
-        return builder.build();
-    }
+public interface CollectCodeConstants {
+    /** collect success **/
+    String SUCCESS = "0";
+    /** collector not available **/
+    String UN_AVAILABLE = "1";
+    /** peer network un reachable(icmp) **/
+    String UN_REACHABLE = "2";
+    /** peer network server un connectable(tcp,udp...) **/
+    String UN_CONNECTABLE = "3";
+    /** collect metrics data failed(http,ssh,snmp...) **/
+    String FAILED = "4";
+    /** collect metrics data timeout **/
+    String TIMEOUT = "5";
 }

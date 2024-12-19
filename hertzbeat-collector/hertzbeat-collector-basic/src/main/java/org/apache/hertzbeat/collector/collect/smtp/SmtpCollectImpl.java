@@ -26,13 +26,13 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.smtp.SMTP;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SmtpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -50,7 +50,6 @@ public class SmtpCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
         SmtpProtocol smtpProtocol = metrics.getSmtp();
         String host = smtpProtocol.getHost();
@@ -62,44 +61,43 @@ public class SmtpCollectImpl extends AbstractCollect {
             smtp.setConnectTimeout(timeout);
             smtp.setCharset(StandardCharsets.UTF_8);
             smtp.connect(host, Integer.parseInt(port));
-            if (smtp.isConnected()) {
-                long responseTime = System.currentTimeMillis() - startTime;
-                List<String> aliasFields = metrics.getAliasFields();
-
-                Map<String, String> resultMap = execCmdAndParseResult(smtp, smtpProtocol.getCmd(), smtpProtocol);
-                resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
-                if (resultMap.size() < aliasFields.size()) {
-                    log.error("smtp response data not enough: {}", resultMap);
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("The cmd execution results do not match the expected number of metrics.");
-                    return;
-                }
-
-                for (String field : aliasFields) {
-                    String fieldValue = resultMap.get(field);
-                    metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
-                }
-            } else {
-                builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-                builder.setMsg("Peer connect failed，Timeout " + timeout + "ms");
+            if (!smtp.isConnected()) {
+                metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer connect failed，Timeout " + timeout + "ms");
                 return;
             }
+
+            long responseTime = System.currentTimeMillis() - startTime;
+            List<String> aliasFields = metrics.getAliasFields();
+
+            Map<String, String> resultMap = execCmdAndParseResult(smtp, smtpProtocol.getCmd(), smtpProtocol);
+            resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
+            if (resultMap.size() < aliasFields.size()) {
+                log.error("smtp response data not enough: {}", resultMap);
+                metricsDataBuilder.setFailedMsg("The cmd execution results do not match the expected number of metrics.");
+                return;
+            }
+
+            for (String field : aliasFields) {
+                String fieldValue = resultMap.get(field);
+                metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
+            }
+
             smtp.disconnect();
         } catch (SocketException socketException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(socketException);
             log.debug(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("The peer refused to connect: service port does not listening or firewall: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE,
+                    "The peer refused to connect: service port does not listening or firewall: " + errorMsg);
+
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Peer connect failed: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer connect failed: " + errorMsg);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         } finally {
             if (smtp != null) {
                 try {

@@ -43,7 +43,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.util.Base64;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
 import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreator;
@@ -54,12 +54,13 @@ import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
 import org.apache.hertzbeat.collector.util.TimeExpressionUtil;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.Header;
@@ -110,7 +111,6 @@ public class HttpCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
 
         HttpProtocol httpProtocol = metrics.getHttp();
@@ -129,8 +129,7 @@ public class HttpCollectImpl extends AbstractCollect {
             boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
+                metricsDataBuilder.setFailedMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return;
             }
             // todo This code converts an InputStream directly to a String. For large data in Prometheus exporters,
@@ -162,34 +161,33 @@ public class HttpCollectImpl extends AbstractCollect {
                 }
             } catch (Exception e) {
                 log.info("parse error: {}.", e.getMessage(), e);
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("parse response data error:" + e.getMessage());
+                metricsDataBuilder.setFailedMsg("parse response data error:" + e.getMessage());
             }
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
+
         } catch (UnknownHostException e2) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("unknown host:" + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "unknown host:" + errorMsg);
+
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e3);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
+
         } catch (IOException e4) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e4);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } finally {
             if (request != null) {
                 request.abort();
@@ -380,39 +378,41 @@ public class HttpCollectImpl extends AbstractCollect {
 
     private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
                                                    MetricsDataBuilder metricsDataBuilder) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
-        if (!EXPORTER_PARSER_TABLE.containsKey(builder.getId())) {
-            EXPORTER_PARSER_TABLE.put(builder.getId(), new ExporterParser());
+        Long monitorId = metricsDataBuilder.getMonitorId();
+        if (!EXPORTER_PARSER_TABLE.containsKey(monitorId)) {
+            EXPORTER_PARSER_TABLE.put(monitorId, new ExporterParser());
         }
-        ExporterParser parser = EXPORTER_PARSER_TABLE.get(builder.getId());
+        ExporterParser parser = EXPORTER_PARSER_TABLE.get(monitorId);
         Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
-        String metrics = builder.getMetrics();
-        if (metricFamilyMap.containsKey(metrics)) {
-            MetricFamily metricFamily = metricFamilyMap.get(metrics);
-            for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
-                Map<String, String> labelMap = metric.getLabelPair()
-                        .stream()
-                        .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
+        String metrics = metricsDataBuilder.getMetrics();
+        if (!metricFamilyMap.containsKey(metrics)) {
+            return;
+        }
 
-                for (String aliasField : aliasFields) {
-                    if ("value".equals(aliasField)) {
-                        if (metric.getCounter() != null) {
-                            metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getCounter().getValue()));
-                        } else if (metric.getGauge() != null) {
-                            metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getGauge().getValue()));
-                        } else if (metric.getUntyped() != null) {
-                            metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getUntyped().getValue()));
-                        } else if (metric.getInfo() != null) {
-                            metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getInfo().getValue()));
-                        } else if (metric.getSummary() != null) {
-                            metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getSummary().getValue()));
-                        } else if (metric.getHistogram() != null) {
-                            metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getHistogram().getValue()));
-                        }
-                    } else {
-                        String columnValue = labelMap.get(aliasField);
-                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, columnValue);
+        MetricFamily metricFamily = metricFamilyMap.get(metrics);
+        for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
+            Map<String, String> labelMap = metric.getLabelPair()
+                    .stream()
+                    .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
+
+            for (String aliasField : aliasFields) {
+                if ("value".equals(aliasField)) {
+                    if (metric.getCounter() != null) {
+                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getCounter().getValue()));
+                    } else if (metric.getGauge() != null) {
+                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getGauge().getValue()));
+                    } else if (metric.getUntyped() != null) {
+                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getUntyped().getValue()));
+                    } else if (metric.getInfo() != null) {
+                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getInfo().getValue()));
+                    } else if (metric.getSummary() != null) {
+                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getSummary().getValue()));
+                    } else if (metric.getHistogram() != null) {
+                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getHistogram().getValue()));
                     }
+                } else {
+                    String columnValue = labelMap.get(aliasField);
+                    metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, columnValue);
                 }
             }
         }

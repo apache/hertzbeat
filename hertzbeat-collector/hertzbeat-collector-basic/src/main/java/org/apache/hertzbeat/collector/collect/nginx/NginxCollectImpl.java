@@ -34,14 +34,13 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpHeaders;
@@ -85,7 +84,6 @@ public class NginxCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
 
         NginxProtocol nginxProtocol = metrics.getNginx();
@@ -100,8 +98,7 @@ public class NginxCollectImpl extends AbstractCollect {
             // send an HTTP request and get the response data
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg(NetworkConstants.STATUS_CODE + statusCode);
+                metricsDataBuilder.setFailedMsg(NetworkConstants.STATUS_CODE + statusCode);
                 return;
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
@@ -116,8 +113,7 @@ public class NginxCollectImpl extends AbstractCollect {
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         } finally {
             if (request != null) {
                 request.abort();
@@ -244,8 +240,7 @@ public class NginxCollectImpl extends AbstractCollect {
                     } catch (Exception e) {
                         String errorMsg = CommonUtil.getMessageFromThrowable(e);
                         log.error(errorMsg);
-                        metricsDataBuilder.getBuilder().setCode(CollectRep.Code.FAIL);
-                        metricsDataBuilder.getBuilder().setMsg(errorMsg);
+                        metricsDataBuilder.setFailedMsg(errorMsg);
                     }
                 }
             }

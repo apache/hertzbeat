@@ -17,7 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect;
 
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 
 /**

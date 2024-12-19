@@ -23,16 +23,16 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.push.PushMetricsDto;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
@@ -74,8 +74,7 @@ public class PushCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
-        final long monitorId = builder.getId();
+        final long monitorId = metricsDataBuilder.getMonitorId();
         long curTime = System.currentTimeMillis();
 
         PushProtocol pushProtocol = metrics.getPush();
@@ -90,8 +89,7 @@ public class PushCollectImpl extends AbstractCollect {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
+                metricsDataBuilder.setFailedMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return;
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
@@ -101,8 +99,7 @@ public class PushCollectImpl extends AbstractCollect {
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         }
 
     }
@@ -176,6 +173,6 @@ public class PushCollectImpl extends AbstractCollect {
             }
         }
 
-        metricsDataBuilder.getBuilder().setTime(System.currentTimeMillis());
+        metricsDataBuilder.setTime(System.currentTimeMillis());
     }
 }

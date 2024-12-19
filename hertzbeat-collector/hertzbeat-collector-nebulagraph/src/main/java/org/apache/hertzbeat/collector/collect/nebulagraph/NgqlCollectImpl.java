@@ -26,14 +26,12 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
-import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
 import org.springframework.util.Assert;
 import org.springframework.util.StopWatch;
 
@@ -63,7 +61,6 @@ public class NgqlCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final Builder builder = metricsDataBuilder.getBuilder();
         NgqlProtocol ngql = metrics.getNgql();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -71,13 +68,11 @@ public class NgqlCollectImpl extends AbstractCollect {
         try {
             boolean initSuccess = nebulaTemplate.initSession(ngql);
             if (!initSuccess) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("Failed to connect Nebula Graph");
+                metricsDataBuilder.setFailedMsg("Failed to connect Nebula Graph");
                 return;
             }
         } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
+            metricsDataBuilder.setFailedMsg(e.getMessage());
             return;
         }
 
@@ -108,7 +103,6 @@ public class NgqlCollectImpl extends AbstractCollect {
      */
     private void filterCount(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns,
                              MetricsDataBuilder metricsDataBuilder, Long responseTime) {
-        final Builder builder = metricsDataBuilder.getBuilder();
         Map<String, String> data = new HashMap<>();
 
         for (String command : protocol.getCommands()) {
@@ -120,9 +114,9 @@ public class NgqlCollectImpl extends AbstractCollect {
 
             String[] parts = command.split("#", -1);
             if (parts.length != 4) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("The command:[" + command + "] does not meet the requirements");
+                metricsDataBuilder.setFailedMsg("The command:[" + command + "] does not meet the requirements");
             }
+
             String fieldName = parts[0];
             String ngql = parts[1];
             String filterName = parts[2];
@@ -136,8 +130,7 @@ public class NgqlCollectImpl extends AbstractCollect {
                 long count = stream.count();
                 data.put(fieldName, Long.toString(count));
             } catch (Exception e) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("Query error:[" + ngql + "],Msg:[" + e.getMessage() + "]");
+                metricsDataBuilder.setFailedMsg("Query error:[" + ngql + "],Msg:[" + e.getMessage() + "]");
             }
 
         }
@@ -171,7 +164,6 @@ public class NgqlCollectImpl extends AbstractCollect {
 
     private void queryMultiRow(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns,
                                MetricsDataBuilder metricsDataBuilder, Long responseTime) {
-        final Builder builder = metricsDataBuilder.getBuilder();
         String command = commands.get(0);
         try {
             List<Map<String, Object>> result = nebulaTemplate.executeCommand(command);
@@ -179,23 +171,20 @@ public class NgqlCollectImpl extends AbstractCollect {
                 inflateData(columns, responseTime, row, metricsDataBuilder);
             }
         } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
+            metricsDataBuilder.setFailedMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
         }
 
     }
 
     private void queryColumns(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns,
                               MetricsDataBuilder metricsDataBuilder, Long responseTime) {
-        final Builder builder = metricsDataBuilder.getBuilder();
         Map<String, Object> resultMap = new HashMap<>();
 
         for (String command : commands) {
             try {
                 List<Map<String, Object>> result = nebulaTemplate.executeCommand(command);
                 if (!result.isEmpty() && result.get(0).size() < 2) {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Parsing type columns requires the result set to contain at least two columns");
+                    metricsDataBuilder.setFailedMsg("Parsing type columns requires the result set to contain at least two columns");
                     return;
                 }
                 for (Map<String, Object> map : result) {
@@ -203,8 +192,7 @@ public class NgqlCollectImpl extends AbstractCollect {
                     resultMap.put(Objects.toString(data.get(0).getValue()), data.get(1).getValue());
                 }
             } catch (Exception e) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
+                metricsDataBuilder.setFailedMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
             }
         }
         inflateData(columns, responseTime, resultMap, metricsDataBuilder);

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.arrow;
+package org.apache.hertzbeat.common.entity.arrow.reader;
 
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
@@ -26,6 +26,8 @@ import org.apache.arrow.vector.ipc.ArrowStreamReader;
 import org.apache.arrow.vector.table.Row;
 import org.apache.arrow.vector.table.Table;
 import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -34,19 +36,30 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
+ * implementation of ArrowVectorReader
  */
 public class ArrowVectorReaderImpl implements ArrowVectorReader {
-    private final BufferAllocator allocator;
-    private final ArrowStreamReader streamReader;
-    private final VectorSchemaRoot schemaRoot;
+    private final ArrowVector arrowVector;
+    private ArrowStreamReader streamReader;
     private final Table table;
 
+    /**
+     * todo to be deleted
+     */
+    @Deprecated
     public ArrowVectorReaderImpl(byte[] bytes) throws IOException {
-        this.allocator = new RootAllocator();
-        this.streamReader = new ArrowStreamReader(new ByteArrayInputStream(bytes), allocator);
+        BufferAllocator bufferAllocator = new RootAllocator();
+        this.streamReader = new ArrowStreamReader(new ByteArrayInputStream(bytes), bufferAllocator);
         this.streamReader.loadNextBatch();
-        this.schemaRoot = this.streamReader.getVectorSchemaRoot();
+        VectorSchemaRoot schemaRoot = this.streamReader.getVectorSchemaRoot();
+
+        this.arrowVector = new ArrowVector(bufferAllocator, schemaRoot);
         this.table = new Table(schemaRoot);
+    }
+
+    public ArrowVectorReaderImpl(ArrowVector arrowVector) {
+        this.arrowVector = arrowVector;
+        this.table = new Table(arrowVector.getSchemaRoot());
     }
 
     @Override
@@ -61,7 +74,7 @@ public class ArrowVectorReaderImpl implements ArrowVectorReader {
 
     @Override
     public List<Field> getAllFields() {
-        return schemaRoot.getFieldVectors().stream()
+        return arrowVector.getSchemaRoot().getFieldVectors().stream()
                 .map(valueVectors -> (VarCharVector) valueVectors)
                 .map(BaseVariableWidthVector::getField)
                 .toList();
@@ -73,9 +86,17 @@ public class ArrowVectorReaderImpl implements ArrowVectorReader {
     }
 
     @Override
-    public void close() throws Exception {
-        this.table.close();
-        this.streamReader.close();
-        this.allocator.close();
+    public void close() throws IOException {
+        close(false);
+    }
+
+    public void close(boolean closeSource) throws IOException {
+        if (this.streamReader != null) {
+            this.streamReader.close();
+        }
+
+        if (closeSource) {
+            this.arrowVector.close();
+        }
     }
 }

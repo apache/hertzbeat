@@ -32,15 +32,15 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.bson.Document;
 import org.springframework.util.Assert;
@@ -100,8 +100,6 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
-
         // The command naming convention is the command supported by the above mongodb diagnostic. Support subdocument
         // If the command does not include., execute the command directly and use the document it returns;
         // otherwise, you need to execute the metricsParts[0] command first and then obtain the related subdocument
@@ -110,10 +108,10 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         String command = metricsParts[0];
         // Check whether the first part of the. Split is a command supported by the mongodb diagnostic
         if (Arrays.stream(SUPPORTED_MONGODB_DIAGNOSTIC_COMMANDS).noneMatch(command::equals)) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("unsupported mongodb diagnostic command: " + command);
+            metricsDataBuilder.setFailedMsg("unsupported mongodb diagnostic command: " + command);
             return;
         }
+
         MongoClient mongoClient;
         CacheIdentifier identifier = null;
         try {
@@ -131,13 +129,12 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             fillBuilder(metrics, metricsDataBuilder, document);
         } catch (MongoServerUnavailableException | MongoTimeoutException unavailableException) {
             connectionCommonCache.removeCache(identifier);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             String message = CommonUtil.getMessageFromThrowable(unavailableException);
-            builder.setMsg(message);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, message);
+
         } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
             String message = CommonUtil.getMessageFromThrowable(e);
-            builder.setMsg(message);
+            metricsDataBuilder.setFailedMsg(message);
             log.warn(message, e);
         }
     }

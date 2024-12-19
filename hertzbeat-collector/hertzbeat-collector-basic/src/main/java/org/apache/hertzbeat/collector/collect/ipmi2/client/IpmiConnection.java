@@ -20,7 +20,7 @@ package org.apache.hertzbeat.collector.collect.ipmi2.client;
 import java.io.IOException;
 
 import lombok.Getter;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.handler.IpmiHandler;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.CloseSessionRequest;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.CloseSessionResponse;

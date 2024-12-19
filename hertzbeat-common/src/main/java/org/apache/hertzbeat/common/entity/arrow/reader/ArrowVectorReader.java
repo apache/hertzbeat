@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.arrow;
+package org.apache.hertzbeat.common.entity.arrow.reader;
 
 
 import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 
 import java.util.List;
 

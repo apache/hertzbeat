@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.SshConnect;
@@ -44,10 +44,10 @@ import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.util.PrivateKeyUtils;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ClientChannel;
@@ -86,8 +86,6 @@ public class SshCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
-
         long startTime = System.currentTimeMillis();
         SshProtocol sshProtocol = metrics.getSsh();
         boolean reuseConnection = Boolean.parseBoolean(sshProtocol.getReuseConnection());
@@ -97,11 +95,11 @@ public class SshCollectImpl extends AbstractCollect {
         try {
             clientSession = getConnectSession(sshProtocol, timeout, reuseConnection);
             if (CommonSshBlacklist.isCommandBlacklisted(sshProtocol.getScript())) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("The command is blacklisted: " + sshProtocol.getScript());
+                metricsDataBuilder.setFailedMsg("The command is blacklisted: " + sshProtocol.getScript());
                 log.warn("The command is blacklisted: {}", sshProtocol.getScript());
                 return;
             }
+
             channel = clientSession.createExecChannel(sshProtocol.getScript());
             ByteArrayOutputStream response = new ByteArrayOutputStream();
             channel.setOut(response);
@@ -120,43 +118,41 @@ public class SshCollectImpl extends AbstractCollect {
             Long responseTime = System.currentTimeMillis() - startTime;
             String result = response.toString();
             if (!StringUtils.hasText(result)) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("ssh shell response data is null");
+                metricsDataBuilder.setFailedMsg("ssh shell response data is null");
                 return;
             }
+
             switch (sshProtocol.getParseType()) {
                 case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
-                default -> {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Ssh collect not support this parse type: " + sshProtocol.getParseType());
-                }
+                default -> metricsDataBuilder.setFailedMsg("Ssh collect not support this parse type: " + sshProtocol.getParseType());
             }
         } catch (ConnectException connectException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(connectException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("The peer refused to connect: service port does not listening or firewall: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE,
+                    "The peer refused to connect: service port does not listening or firewall: " + errorMsg);
+
         } catch (SshException sshException) {
             Throwable throwable = sshException.getCause();
             if (throwable instanceof SshChannelOpenException) {
                 log.warn("Remote ssh server no more session channel, please increase sshd_config MaxSessions.");
             }
             String errorMsg = CommonUtil.getMessageFromThrowable(sshException);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Peer ssh connection failed: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer ssh connection failed: " + errorMsg);
+
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Peer io connection failed: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer io connection failed: " + errorMsg);
+
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg, exception);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } finally {
             if (channel != null && channel.isOpen()) {
                 try {

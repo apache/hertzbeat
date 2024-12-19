@@ -25,9 +25,9 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Bulletin;
@@ -162,7 +162,7 @@ public class BulletinServiceImpl implements BulletinService {
                         List<BulletinMetricsData.Field> rowFieldList = rowWrapper.cellStream()
                                 .map(cell -> BulletinMetricsData.Field.builder()
                                         .key(cell.getField().getName())
-                                        .unit(cell.getStringMetaData(MetricDataFieldConstants.UNIT))
+                                        .unit(cell.getMetadataAsString(MetricDataConstants.UNIT))
                                         .value(cell.getValue())
                                     .build())
                                 .filter(field -> fields.contains(field.getKey()))

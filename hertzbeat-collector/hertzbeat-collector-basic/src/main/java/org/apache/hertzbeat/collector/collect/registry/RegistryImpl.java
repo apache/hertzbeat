@@ -27,7 +27,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClientManagement;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
@@ -35,7 +35,6 @@ import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -59,7 +58,6 @@ public class RegistryImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         RegistryProtocol registryProtocol = metrics.getRegistry();
 
         try (DiscoveryClient discoveryClient = discoveryClientManagement.getClient(registryProtocol)) {
@@ -67,13 +65,12 @@ public class RegistryImpl extends AbstractCollect {
         } catch (TransportException e1) {
             String errorMsg = "Consul " + CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         }
     }
 

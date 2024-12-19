@@ -24,9 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Field;
 import org.apache.hertzbeat.common.entity.dto.MetricsData;
@@ -81,9 +81,9 @@ public class MetricsDataServiceImpl implements MetricsDataService {
                         final Map<String, String> metadata = field.getMetadata();
 
                         return Field.builder().name(field.getName())
-                                .type(Integer.valueOf(metadata.get(MetricDataFieldConstants.TYPE)).byteValue())
-                                .label(Boolean.valueOf(metadata.get(MetricDataFieldConstants.LABEL)))
-                                .unit(metadata.get(MetricDataFieldConstants.UNIT))
+                                .type(Integer.valueOf(metadata.get(MetricDataConstants.TYPE)).byteValue())
+                                .label(Boolean.valueOf(metadata.get(MetricDataConstants.LABEL)))
+                                .unit(metadata.get(MetricDataConstants.UNIT))
                                 .build();
                     }).toList());
 
@@ -101,7 +101,7 @@ public class MetricsDataServiceImpl implements MetricsDataService {
                         values.add(new Value());
                     } else {
                         values.add(new Value(origin));
-                        if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL)) {
+                        if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
                             labels.put(cell.getField().getName(), origin);
                         }
                     }

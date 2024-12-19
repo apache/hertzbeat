@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.redfish.cache.RedfishConnect;
@@ -35,7 +35,6 @@ import org.apache.hertzbeat.collector.util.JsonPathParser;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedfishProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -65,20 +64,17 @@ public class RedfishCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         ConnectSession connectSession;
         try {
             connectSession = getRedfishConnectSession(metrics.getRedfish());
         } catch (Exception e) {
             log.error("Redfish session create error: {}", e.getMessage());
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
+            metricsDataBuilder.setFailedMsg(e.getMessage());
             return;
         }
         List<String> resourcesUri = getResourcesUri(metrics, connectSession);
         if (resourcesUri == null || resourcesUri.isEmpty()) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Get redfish resources uri error");
+            metricsDataBuilder.setFailedMsg("Get redfish resources uri error");
             return;
         }
         for (String uri : resourcesUri) {

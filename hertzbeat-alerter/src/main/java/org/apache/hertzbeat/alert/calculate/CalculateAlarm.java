@@ -48,11 +48,11 @@ import org.apache.hertzbeat.alert.service.AlertDefineService;
 import org.apache.hertzbeat.alert.service.AlertService;
 import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
@@ -209,7 +209,7 @@ public class CalculateAlarm {
                             }
 
                             final String fieldName = cell.getField().getName();
-                            final int fieldType = cell.getIntMetaData(MetricDataFieldConstants.TYPE);
+                            final int fieldType = cell.getMetadataAsInteger(MetricDataConstants.TYPE);
 
                             if (fieldType == CommonConstants.TYPE_NUMBER) {
                                 final Double doubleValue;
@@ -227,7 +227,7 @@ public class CalculateAlarm {
                                 }
                             }
 
-                            if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL)) {
+                            if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
                                 tagBuilder.append("-").append(valueStr);
                             }
                         });

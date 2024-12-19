@@ -26,12 +26,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.imap.IMAPClient;
 import org.apache.commons.net.imap.IMAPSClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.springframework.util.Assert;
 
@@ -66,7 +66,6 @@ public class ImapCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
         ImapProtocol imapProtocol = metrics.getImap();
         IMAPClient imapClient = null;
@@ -75,19 +74,18 @@ public class ImapCollectImpl extends AbstractCollect {
         try {
             imapClient = createImapClient(imapProtocol, ssl);
             // if Connected, then collect metrics
-            if (imapClient.isConnected()) {
-                long responseTime = System.currentTimeMillis() - startTime;
-                String folderName = imapProtocol.getFolderName();
-                collectImapMetrics(metricsDataBuilder, imapClient, metrics.getAliasFields(), folderName, responseTime);
-            } else {
-                builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-                builder.setMsg("Peer connect failed，Timeout " + imapProtocol.getTimeout() + "ms");
+            if (!imapClient.isConnected()) {
+                metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer connect failed，Timeout " + imapProtocol.getTimeout() + "ms");
+                return;
             }
+
+            long responseTime = System.currentTimeMillis() - startTime;
+            String folderName = imapProtocol.getFolderName();
+            collectImapMetrics(metricsDataBuilder, imapClient, metrics.getAliasFields(), folderName, responseTime);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         } finally {
             if (imapClient != null) {
                 try {
@@ -96,8 +94,7 @@ public class ImapCollectImpl extends AbstractCollect {
                 } catch (IOException e) {
                     String errorMsg = CommonUtil.getMessageFromThrowable(e);
                     log.error(errorMsg);
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg(errorMsg);
+                    metricsDataBuilder.setFailedMsg(errorMsg);
                 }
             }
         }

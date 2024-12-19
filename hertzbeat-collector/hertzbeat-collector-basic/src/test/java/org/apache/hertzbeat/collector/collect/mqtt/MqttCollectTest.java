@@ -18,9 +18,9 @@
 package org.apache.hertzbeat.collector.collect.mqtt;
 
 import com.hivemq.client.mqtt.MqttVersion;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;

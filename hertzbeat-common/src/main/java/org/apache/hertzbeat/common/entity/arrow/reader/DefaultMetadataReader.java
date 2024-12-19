@@ -15,26 +15,38 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.arrow;
+package org.apache.hertzbeat.common.entity.arrow.reader;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.apache.arrow.vector.table.Row;
-import org.apache.arrow.vector.types.pojo.Field;
-import org.apache.hertzbeat.common.entity.arrow.reader.DefaultMetadataReader;
+import java.util.Map;
 
 /**
- * A cell consisting of {@link Field} and value
+ * implementation of MetadataOperator
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class ArrowCell extends DefaultMetadataReader {
-    private final String value;
-    private final Field field;
+public class DefaultMetadataReader implements MetadataReader {
+    protected Map<String, String> metadata;
 
-    public ArrowCell(Field field, Row row) {
-        this.field = field;
-        this.value = row.getVarCharObj(field.getName());
-        this.metadata = field.getMetadata();
+    @Override
+    public String getMetadataAsString(String key) {
+        return metadata.get(key);
+    }
+
+    @Override
+    public Boolean getMetadataAsBoolean(String key) {
+        return Boolean.parseBoolean(metadata.get(key));
+    }
+
+    @Override
+    public Byte getMetadataAsByte(String key) {
+        return Byte.parseByte(metadata.get(key));
+    }
+
+    @Override
+    public Integer getMetadataAsInteger(String key) {
+        return Integer.parseInt(metadata.get(key));
+    }
+
+    @Override
+    public Long getMetadataAsLong(String key) {
+        return Long.parseLong(metadata.get(key));
     }
 }

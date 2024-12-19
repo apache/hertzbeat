@@ -19,8 +19,8 @@ package org.apache.hertzbeat.collector.collect.http;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;

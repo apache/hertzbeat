@@ -43,9 +43,9 @@ import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -208,7 +208,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     String value = cell.getValue();
                     final int fieldType;
 
-                    if ((fieldType = cell.getByteMetaData(MetricDataFieldConstants.TYPE)) == CommonConstants.TYPE_NUMBER || fieldType == CommonConstants.TYPE_TIME) {
+                    if ((fieldType = cell.getMetadataAsByte(MetricDataConstants.TYPE)) == CommonConstants.TYPE_NUMBER || fieldType == CommonConstants.TYPE_TIME) {
                         // number data
                         if (CommonConstants.NULL_VALUE.equals(value)) {
                             sqlRowBuffer.append("NULL");
@@ -234,7 +234,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                         }
                     }
 
-                    if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL) && !CommonConstants.NULL_VALUE.equals(value)) {
+                    if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL) && !CommonConstants.NULL_VALUE.equals(value)) {
                         labels.put(cell.getField().getName(), formatStringValue(value));
                     }
                     if (index.get() != fieldMaxSize - 1) {
@@ -268,7 +268,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     for (int index = 0; index < arrowVectorReader.getAllFields().size(); index++) {
                         Field field = arrowVectorReader.getAllFields().get(index);
                         String fieldName = field.getName();
-                        final int fieldType = Byte.parseByte(field.getMetadata().get(MetricDataFieldConstants.TYPE));
+                        final int fieldType = Byte.parseByte(field.getMetadata().get(MetricDataConstants.TYPE));
 
                         if (fieldType == CommonConstants.TYPE_NUMBER || fieldType == CommonConstants.TYPE_TIME) {
                             fieldSqlBuilder.append("`").append(fieldName).append("` ").append("DOUBLE");

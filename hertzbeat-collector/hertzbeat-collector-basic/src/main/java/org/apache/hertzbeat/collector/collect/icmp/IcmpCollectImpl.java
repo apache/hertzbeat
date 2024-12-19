@@ -22,12 +22,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -45,7 +45,6 @@ public class IcmpCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
 
         IcmpProtocol icmp = metrics.getIcmp();
@@ -63,8 +62,7 @@ public class IcmpCollectImpl extends AbstractCollect {
             boolean status = InetAddress.getByName(icmp.getHost()).isReachable(timeout);
             long responseTime = System.currentTimeMillis() - startTime;
             if (!status) {
-                builder.setCode(CollectRep.Code.UN_REACHABLE);
-                builder.setMsg("Un Reachable, Timeout " + timeout + "ms");
+                metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "Un Reachable, Timeout " + timeout + "ms");
                 return;
             }
 
@@ -77,17 +75,16 @@ public class IcmpCollectImpl extends AbstractCollect {
             }
         } catch (UnknownHostException unknownHostException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
-            builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("UnknownHost " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "UnknownHost " + errorMsg);
+
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
-            builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("IOException " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "IOException " + errorMsg);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         }
 
     }

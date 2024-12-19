@@ -26,13 +26,13 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -52,7 +52,6 @@ public class UdpCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
         UdpProtocol udpProtocol = metrics.getUdp();
         int timeout = CollectUtil.getTimeout(udpProtocol.getTimeout());
@@ -79,18 +78,17 @@ public class UdpCollectImpl extends AbstractCollect {
         } catch (SocketTimeoutException timeoutException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(timeoutException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Peer connect failed: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer connect failed: " + errorMsg);
+
         } catch (PortUnreachableException portUnreachableException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(portUnreachableException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("Peer port unreachable");
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "Peer port unreachable");
+
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg, exception);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         }
     }
 

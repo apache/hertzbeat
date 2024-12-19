@@ -30,8 +30,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
@@ -263,7 +264,7 @@ public class Metrics {
      * collector use - Temporarily store subTask metrics response data
      */
     @JsonIgnore
-    private transient AtomicReference<CollectRep.MetricsData> subTaskDataRef;
+    private transient AtomicReference<ArrowVector> subTaskDataRef;
 
     /**
      * collector use - Temporarily store subTask running num
@@ -289,24 +290,21 @@ public class Metrics {
     /**
      * consume subTask
      *
-     * @param metricsData response data
+     * @param arrowVector collected data
      * @return is last task?
      */
-    public boolean consumeSubTaskResponse(CollectRep.MetricsData metricsData) {
+    public boolean consumeSubTaskResponse(ArrowVector arrowVector) {
         if (subTaskNum == null) {
             return true;
         }
         synchronized (subTaskNum) {
             int index = subTaskNum.decrementAndGet();
             if (subTaskDataRef.get() == null) {
-                subTaskDataRef.set(metricsData);
+                subTaskDataRef.set(arrowVector);
             } else {
-                try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVector)) {
                     if (arrowVectorReader.getRowCount() >= 1) {
-                        CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataRef.get());
-                        dataBuilder.setData(metricsData.getData());
-
-                        subTaskDataRef.set(dataBuilder.build());
+                        subTaskDataRef.set(arrowVector);
                     }
                 } catch (Exception ignored) {
                 }

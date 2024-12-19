@@ -20,8 +20,19 @@ package org.apache.hertzbeat.common.constants;
 /**
  * Metric Data Field Constants
  */
-public interface MetricDataFieldConstants {
+public interface MetricDataConstants {
+    // key in Field
     String TYPE = "type";
     String LABEL = "label";
     String UNIT = "unit";
+
+    // key in Schema metadata
+    String MONITOR_ID = "monitorId";
+    String TENANT_ID = "tenantId";
+    String APP = "app";
+    String METRICS = "metrics";
+    String PRIORITY = "priority";
+    String TIME = "time";
+    String CODE = "code";
+    String MSG = "msg";
 }

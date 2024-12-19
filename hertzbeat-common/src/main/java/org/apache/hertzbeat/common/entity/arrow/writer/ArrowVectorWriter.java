@@ -15,12 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.hertzbeat.common.entity.arrow;
+package org.apache.hertzbeat.common.entity.arrow.writer;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+
+import java.util.Map;
 
 /**
  * <p>Used for writing data as Arrow and generating bytes that can be set in {@link org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData}.
@@ -48,10 +52,16 @@ public interface ArrowVectorWriter extends AutoCloseable {
     void setNull(String fieldName);
 
     /**
-     * Generate bytes arr
-     * @return bytes arr
+     * get metadata of Schema
      */
-    byte[] toByteArray();
+    @NotNull
+    Map<String, String> getSchemaMetadata();
+
+    /**
+     * Generate ArrowVector
+     * @return ArrowVector
+     */
+    ArrowVector doWrite();
 
     /**
      * Check if is empty.

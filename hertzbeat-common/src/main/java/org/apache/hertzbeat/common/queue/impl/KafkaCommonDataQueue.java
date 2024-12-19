@@ -27,12 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.serialize.AlertDeserializer;
 import org.apache.hertzbeat.common.serialize.AlertSerializer;
-import org.apache.hertzbeat.common.serialize.KafkaMetricsDataDeserializer;
-import org.apache.hertzbeat.common.serialize.KafkaMetricsDataSerializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -40,6 +38,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.ByteArrayDeserializer;
+import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.LongDeserializer;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.springframework.beans.factory.DisposableBean;
@@ -65,18 +65,18 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     private final ReentrantLock metricDataToRealTimeStorageLock = new ReentrantLock();
     private final ReentrantLock serviceDiscoveryDataLock = new ReentrantLock();
     private final LinkedBlockingQueue<Alert> alertDataQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
+    private final LinkedBlockingQueue<byte[]> metricsDataToAlertQueue;
+    private final LinkedBlockingQueue<byte[]> metricsDataToPersistentStorageQueue;
+    private final LinkedBlockingQueue<byte[]> metricsDataToRealTimeStorageQueue;
+    private final LinkedBlockingQueue<byte[]> serviceDiscoveryDataQueue;
     private final CommonProperties.KafkaProperties kafka;
-    private KafkaProducer<Long, CollectRep.MetricsData> metricsDataProducer;
+    private KafkaProducer<Long, byte[]> metricsDataProducer;
     private KafkaProducer<Long, Alert> alertDataProducer;
     private KafkaConsumer<Long, Alert> alertDataConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToAlertConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToPersistentStorageConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> metricsDataToRealTimeStorageConsumer;
-    private KafkaConsumer<Long, CollectRep.MetricsData> serviceDiscoveryDataConsumer;
+    private KafkaConsumer<Long, byte[]> metricsDataToAlertConsumer;
+    private KafkaConsumer<Long, byte[]> metricsDataToPersistentStorageConsumer;
+    private KafkaConsumer<Long, byte[]> metricsDataToRealTimeStorageConsumer;
+    private KafkaConsumer<Long, byte[]> serviceDiscoveryDataConsumer;
 
     public KafkaCommonDataQueue(CommonProperties properties) {
         if (properties == null || properties.getQueue() == null || properties.getQueue().getKafka() == null) {
@@ -98,7 +98,7 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
             producerConfig.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka.getServers());
             producerConfig.put(ProducerConfig.ACKS_CONFIG, "all");
             producerConfig.put(ProducerConfig.RETRIES_CONFIG, 3);
-            metricsDataProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new KafkaMetricsDataSerializer());
+            metricsDataProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new ByteArraySerializer());
             alertDataProducer = new KafkaProducer<>(producerConfig, new LongSerializer(), new AlertSerializer());
 
             Map<String, Object> consumerConfig = new HashMap<>(4);
@@ -116,23 +116,23 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
 
             Map<String, Object> metricsToAlertConsumerConfig = new HashMap<>(consumerConfig);
             metricsToAlertConsumerConfig.put("group.id", "metrics-alert-consumer");
-            metricsDataToAlertConsumer = new KafkaConsumer<>(metricsToAlertConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToAlertConsumer = new KafkaConsumer<>(metricsToAlertConsumerConfig, new LongDeserializer(), new ByteArrayDeserializer());
             metricsDataToAlertConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
 
             Map<String, Object> metricsToPersistentConsumerConfig = new HashMap<>(consumerConfig);
             metricsToPersistentConsumerConfig.put("group.id", "metrics-persistent-consumer");
-            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToPersistentStorageConsumer = new KafkaConsumer<>(metricsToPersistentConsumerConfig, new LongDeserializer(), new ByteArrayDeserializer());
             metricsDataToPersistentStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
 
             Map<String, Object> metricsToRealTimeConsumerConfig = new HashMap<>(consumerConfig);
             metricsToRealTimeConsumerConfig.put("group.id", "metrics-memory-consumer");
-            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(), new KafkaMetricsDataDeserializer());
+            metricsDataToRealTimeStorageConsumer = new KafkaConsumer<>(metricsToRealTimeConsumerConfig, new LongDeserializer(), new ByteArrayDeserializer());
             metricsDataToRealTimeStorageConsumer.subscribe(Collections.singletonList(kafka.getMetricsDataTopic()));
 
             Map<String, Object> serviceDiscoveryDataConsumerConfig = new HashMap<>(consumerConfig);
             serviceDiscoveryDataConsumerConfig.put("group.id", "service-discovery-data-consumer");
             serviceDiscoveryDataConsumer = new KafkaConsumer<>(serviceDiscoveryDataConsumerConfig, new LongDeserializer(),
-                    new KafkaMetricsDataDeserializer());
+                    new ByteArrayDeserializer());
             serviceDiscoveryDataConsumer.subscribe(Collections.singletonList(kafka.getServiceDiscoveryDataTopic()));
         } catch (Exception e) {
             log.error("please config common.queue.kafka props correctly", e);
@@ -150,8 +150,8 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
-        return genericPollDataFunction(serviceDiscoveryDataQueue, serviceDiscoveryDataConsumer, serviceDiscoveryDataLock);
+    public ArrowVector pollServiceDiscoveryData() throws InterruptedException {
+        return ArrowVector.fromByteArr(genericPollDataFunction(serviceDiscoveryDataQueue, serviceDiscoveryDataConsumer, serviceDiscoveryDataLock));
     }
 
     @Override
@@ -161,19 +161,19 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
-        return genericPollDataFunction(metricsDataToAlertQueue, metricsDataToAlertConsumer, metricDataToAlertLock);
+    public ArrowVector pollMetricsDataToAlerter() throws InterruptedException {
+        return ArrowVector.fromByteArr(genericPollDataFunction(metricsDataToAlertQueue, metricsDataToAlertConsumer, metricDataToAlertLock));
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        return genericPollDataFunction(metricsDataToPersistentStorageQueue, metricsDataToPersistentStorageConsumer, metricDataToPersistentLock);
+    public ArrowVector pollMetricsDataToPersistentStorage() throws InterruptedException {
+        return ArrowVector.fromByteArr(genericPollDataFunction(metricsDataToPersistentStorageQueue, metricsDataToPersistentStorageConsumer, metricDataToPersistentLock));
     }
 
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        return genericPollDataFunction(metricsDataToRealTimeStorageQueue, metricsDataToRealTimeStorageConsumer, metricDataToRealTimeStorageLock);
+    public ArrowVector pollMetricsDataToRealTimeStorage() throws InterruptedException {
+        return ArrowVector.fromByteArr(genericPollDataFunction(metricsDataToRealTimeStorageQueue, metricsDataToRealTimeStorageConsumer, metricDataToRealTimeStorageLock));
     }
 
 
@@ -205,18 +205,18 @@ public class KafkaCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public void sendMetricsData(CollectRep.MetricsData metricsData) {
+    public void sendMetricsData(ArrowVector arrowVector) {
         if (metricsDataProducer != null) {
-            metricsDataProducer.send(new ProducerRecord<>(kafka.getMetricsDataTopic(), metricsData));
+            metricsDataProducer.send(new ProducerRecord<>(kafka.getMetricsDataTopic(), arrowVector.toByteArray()));
         } else {
             log.error("metricsDataProducer is not enabled");
         }
     }
 
     @Override
-    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+    public void sendServiceDiscoveryData(ArrowVector arrowVector) {
         if (metricsDataProducer != null) {
-            metricsDataProducer.send(new ProducerRecord<>(kafka.getServiceDiscoveryDataTopic(), metricsData));
+            metricsDataProducer.send(new ProducerRecord<>(kafka.getServiceDiscoveryDataTopic(), arrowVector.toByteArray()));
         } else {
             log.error("metricsDataProducer is not enabled");
         }

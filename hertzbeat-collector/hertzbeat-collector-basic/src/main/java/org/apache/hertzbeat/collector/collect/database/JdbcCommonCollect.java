@@ -28,16 +28,16 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JdbcConnect;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.postgresql.util.PSQLException;
 import org.springframework.core.io.FileSystemResource;
@@ -79,7 +79,6 @@ public class JdbcCommonCollect extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         long startTime = System.currentTimeMillis();
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
@@ -98,28 +97,25 @@ public class JdbcCommonCollect extends AbstractCollect {
                     ScriptUtils.executeSqlScript(connection, rc);
                 }
                 default -> {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Not support database query type: " + jdbcProtocol.getQueryType());
+                    metricsDataBuilder.setFailedMsg("Not support database query type: " + jdbcProtocol.getQueryType());
                 }
             }
         } catch (PSQLException psqlException) {
             // for PostgreSQL 08001
-            if (CollectorConstants.POSTGRESQL_UN_REACHABLE_CODE.equals(psqlException.getSQLState())) {
-                // Peer connection failed, unreachable
-                builder.setCode(CollectRep.Code.UN_REACHABLE);
-            } else {
-                builder.setCode(CollectRep.Code.FAIL);
-            }
-            builder.setMsg("Error: " + psqlException.getMessage() + " Code: " + psqlException.getSQLState());
+            metricsDataBuilder.setCodeAndMsg(CollectorConstants.POSTGRESQL_UN_REACHABLE_CODE.equals(psqlException.getSQLState())
+                    ? CollectCodeConstants.UN_REACHABLE
+                    : CollectCodeConstants.FAILED,
+                    "Error: " + psqlException.getMessage() + " Code: " + psqlException.getSQLState());
+
         } catch (SQLException sqlException) {
             log.warn("Jdbc sql error: {}, code: {}.", sqlException.getMessage(), sqlException.getErrorCode());
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Query Error: " + sqlException.getMessage() + " Code: " + sqlException.getErrorCode());
+            metricsDataBuilder.setFailedMsg("Query Error: " + sqlException.getMessage() + " Code: " + sqlException.getErrorCode());
+
         } catch (Exception e) {
             String errorMessage = CommonUtil.getMessageFromThrowable(e);
             log.error("Jdbc error: {}.", errorMessage, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Query Error: " + errorMessage);
+            metricsDataBuilder.setFailedMsg("Query Error: " + errorMessage);
+
         } finally {
             if (statement != null) {
                 try {

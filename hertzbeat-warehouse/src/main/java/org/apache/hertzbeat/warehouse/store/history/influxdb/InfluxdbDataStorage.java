@@ -40,10 +40,10 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -177,14 +177,14 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
                         return;
                     }
 
-                    Byte type = cell.getByteMetaData(MetricDataFieldConstants.TYPE);
+                    Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
                     if (type == CommonConstants.TYPE_NUMBER) {
                         builder.addField(cell.getField().getName(), Double.parseDouble(cell.getValue()));
                     } else if (type == CommonConstants.TYPE_STRING) {
                         builder.addField(cell.getField().getName(), cell.getValue());
                     }
 
-                    if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL)) {
+                    if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
                         labels.put(cell.getField().getName(), cell.getValue());
                     }
                 });

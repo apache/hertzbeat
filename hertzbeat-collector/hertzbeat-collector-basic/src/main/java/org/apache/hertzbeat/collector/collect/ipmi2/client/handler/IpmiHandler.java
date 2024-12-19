@@ -19,7 +19,7 @@ package org.apache.hertzbeat.collector.collect.ipmi2.client.handler;
 
 import java.io.IOException;
 
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiSession;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.UdpConnection;
 import org.apache.hertzbeat.common.entity.job.Metrics;

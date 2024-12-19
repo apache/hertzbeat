@@ -20,9 +20,12 @@ package org.apache.hertzbeat.common.queue.impl;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.beans.factory.DisposableBean;
@@ -45,10 +48,10 @@ import org.springframework.context.annotation.Primary;
 public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     private final LinkedBlockingQueue<Alert> alertDataQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToAlertQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToPersistentStorageQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> metricsDataToRealTimeStorageQueue;
-    private final LinkedBlockingQueue<CollectRep.MetricsData> serviceDiscoveryDataQueue;
+    private final LinkedBlockingQueue<byte[]> metricsDataToAlertQueue;
+    private final LinkedBlockingQueue<byte[]> metricsDataToPersistentStorageQueue;
+    private final LinkedBlockingQueue<byte[]> metricsDataToRealTimeStorageQueue;
+    private final LinkedBlockingQueue<byte[]> serviceDiscoveryDataQueue;
 
     public InMemoryCommonDataQueue() {
         alertDataQueue = new LinkedBlockingQueue<>();
@@ -59,7 +62,7 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     }
 
     public Map<String, Integer> getQueueSizeMetricsInfo() {
-        Map<String, Integer> metrics = new HashMap<>(8);
+        Map<String, Integer> metrics = Maps.newHashMapWithExpectedSize(8);
         metrics.put("alertDataQueue", alertDataQueue.size());
         metrics.put("metricsDataToAlertQueue", metricsDataToAlertQueue.size());
         metrics.put("metricsDataToPersistentStorageQueue", metricsDataToPersistentStorageQueue.size());
@@ -73,8 +76,8 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     }
 
     @Override
-    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
-        return serviceDiscoveryDataQueue.take();
+    public ArrowVector pollServiceDiscoveryData() throws InterruptedException {
+        return ArrowVector.fromByteArr(serviceDiscoveryDataQueue.take());
     }
 
     @Override
@@ -83,30 +86,31 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
-        return metricsDataToAlertQueue.take();
+    public ArrowVector pollMetricsDataToAlerter() throws InterruptedException {
+        return ArrowVector.fromByteArr(metricsDataToAlertQueue.take());
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-        return metricsDataToPersistentStorageQueue.take();
+    public ArrowVector pollMetricsDataToPersistentStorage() throws InterruptedException {
+        return ArrowVector.fromByteArr(metricsDataToPersistentStorageQueue.take());
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        return metricsDataToRealTimeStorageQueue.take();
+    public ArrowVector pollMetricsDataToRealTimeStorage() throws InterruptedException {
+        return ArrowVector.fromByteArr(metricsDataToRealTimeStorageQueue.take());
     }
 
     @Override
-    public void sendMetricsData(CollectRep.MetricsData metricsData) {
-        metricsDataToAlertQueue.offer(metricsData);
-        metricsDataToPersistentStorageQueue.offer(metricsData);
-        metricsDataToRealTimeStorageQueue.offer(metricsData);
+    public void sendMetricsData(ArrowVector arrowVector) {
+        byte[] byteArray = arrowVector.toByteArray();
+        metricsDataToAlertQueue.offer(byteArray);
+        metricsDataToPersistentStorageQueue.offer(byteArray);
+        metricsDataToRealTimeStorageQueue.offer(byteArray);
     }
 
     @Override
-    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
-        serviceDiscoveryDataQueue.offer(metricsData);
+    public void sendServiceDiscoveryData(ArrowVector arrowVector) {
+        serviceDiscoveryDataQueue.offer(arrowVector.toByteArray());
     }
 
     @Override

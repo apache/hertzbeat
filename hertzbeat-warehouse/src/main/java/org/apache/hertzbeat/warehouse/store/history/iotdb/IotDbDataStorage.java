@@ -29,9 +29,9 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -193,7 +193,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
             for (Field field : arrowVectorReader.getAllFields()) {
                 MeasurementSchema schema = new MeasurementSchema();
                 schema.setMeasurementId(field.getName());
-                byte type = Byte.parseByte(field.getMetadata().get(MetricDataFieldConstants.TYPE));
+                byte type = Byte.parseByte(field.getMetadata().get(MetricDataConstants.TYPE));
 
                 // handle field type
                 if (type == CommonConstants.TYPE_NUMBER) {
@@ -215,7 +215,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
 
                 Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
                 rowWrapper.cellStream().forEach(cell -> {
-                    if (cell.getBooleanMetaData(MetricDataFieldConstants.LABEL) && !CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+                    if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL) && !CommonConstants.NULL_VALUE.equals(cell.getValue())) {
                         labels.put(cell.getField().getName(), cell.getValue());
                     }
                 });
@@ -240,7 +240,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
                         return;
                     }
 
-                    Byte type = cell.getByteMetaData(MetricDataFieldConstants.TYPE);
+                    Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
                     if (type == CommonConstants.TYPE_NUMBER) {
                         tablet.addValue(cell.getField().getName(), rowIndex, Double.parseDouble(cell.getValue()));
                     } else if (type == CommonConstants.TYPE_STRING) {

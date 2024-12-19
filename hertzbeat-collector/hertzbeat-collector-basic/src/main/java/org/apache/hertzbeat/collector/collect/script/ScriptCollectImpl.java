@@ -29,12 +29,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -71,7 +70,6 @@ public class ScriptCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         ScriptProtocol scriptProtocol = metrics.getScript();
         long startTime = System.currentTimeMillis();
         ProcessBuilder processBuilder;
@@ -82,8 +80,7 @@ public class ScriptCollectImpl extends AbstractCollect {
                 case CMD -> processBuilder = new ProcessBuilder(CMD, CMD_C, scriptProtocol.getScriptCommand().trim());
                 case POWERSHELL -> processBuilder = new ProcessBuilder("powershell.exe", POWERSHELL_C, scriptProtocol.getScriptCommand().trim());
                 default -> {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Not support script tool:" + scriptProtocol.getScriptTool());
+                    metricsDataBuilder.setFailedMsg("Not support script tool:" + scriptProtocol.getScriptTool());
                     return;
                 }
             }
@@ -94,16 +91,15 @@ public class ScriptCollectImpl extends AbstractCollect {
                 case CMD -> processBuilder = new ProcessBuilder(CMD,  scriptProtocol.getScriptPath().trim());
                 case POWERSHELL -> processBuilder = new ProcessBuilder(POWERSHELL, POWERSHELL_FILE, scriptProtocol.getScriptPath().trim());
                 default -> {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Not support script tool:" + scriptProtocol.getScriptTool());
+                    metricsDataBuilder.setFailedMsg("Not support script tool:" + scriptProtocol.getScriptTool());
                     return;
                 }
             }
         } else {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("At least one script command or script path is required.");
+            metricsDataBuilder.setFailedMsg("At least one script command or script path is required.");
             return;
         }
+
         // set work directory
         String workDirectory = scriptProtocol.getWorkDirectory();
         if (StringUtils.hasText(workDirectory)) {
@@ -124,35 +120,33 @@ public class ScriptCollectImpl extends AbstractCollect {
             Long responseTime = System.currentTimeMillis() - startTime;
             String result = String.valueOf(response);
             if (!StringUtils.hasText(result)) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("Script response data is null");
+                metricsDataBuilder.setFailedMsg("Script response data is null");
                 return;
             }
+
             switch (scriptProtocol.getParseType()) {
                 case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 default -> {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Script collect not support this parse type: " + scriptProtocol.getParseType());
+                    metricsDataBuilder.setFailedMsg("Script collect not support this parse type: " + scriptProtocol.getParseType());
                 }
             }
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.warn(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Peer io failed: " + errorMsg);
+            metricsDataBuilder.setFailedMsg("Peer io failed: " + errorMsg);
+
         } catch (InterruptedException interruptedException){
             String errorMsg = CommonUtil.getMessageFromThrowable(interruptedException);
             log.warn(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Peer interrupt this script: " + errorMsg);
+            metricsDataBuilder.setFailedMsg("Peer io interrupted: " + errorMsg);
+
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         }
     }
 

@@ -21,11 +21,12 @@ import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.jexl3.JexlExpression;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriter;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriter;
+import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.collector.collect.strategy.CollectStrategyFactory;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.prometheus.PrometheusAutoCollectImpl;
@@ -37,7 +38,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.JexlExpressionRunner;
 import org.apache.hertzbeat.common.util.Pair;
@@ -138,64 +138,63 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
     public void run() {
         this.startTime = System.currentTimeMillis();
         setNewThreadName(monitorId, app, startTime, metrics);
-        CollectRep.MetricsData.Builder response = CollectRep.MetricsData.newBuilder()
-                .setApp(app)
-                .setId(monitorId)
-                .setTenantId(tenantId);
-        // for prometheus auto
-        if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
-            try (final ArrowVectorWriter arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                List<CollectRep.MetricsData> metricsData = PrometheusAutoCollectImpl.getInstance()
-                        .collect(new MetricsDataBuilder(response, arrowVectorWriter), metrics);
-                validateMetricsData(metricsData.stream().findFirst().orElse(null));
 
-                collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
+        try (ArrowVectorWriter arrowVectorWriter = ArrowVectorWriterImpl.of(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(arrowVectorWriter);
+            metricsDataBuilder.setApp(app);
+            metricsDataBuilder.setMonitorId(monitorId);
+            metricsDataBuilder.setTenantId(tenantId);
+
+            // for prometheus auto
+            if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(metrics.getProtocol())) {
+                PrometheusAutoCollectImpl.getInstance().collect(new MetricsDataBuilder(arrowVectorWriter), metrics);
+                ArrowVector arrowVector = validateMetricsData(metricsDataBuilder);
+
+                collectDataDispatch.dispatchCollectData(timeout, metrics, arrowVector, metricsDataBuilder.isFailed());
+                return;
+            }
+            metricsDataBuilder.setMetrics(metrics.getName());
+
+            // According to the metrics collection protocol, application type, etc.,
+            // dispatch to the real application metrics collection implementation class
+            AbstractCollect abstractCollect = CollectStrategyFactory.invoke(metrics.getProtocol());
+            if (abstractCollect == null) {
+                log.error("[Dispatcher] - not support this: app: {}, metrics: {}, protocol: {}.",
+                        app, metrics.getName(), metrics.getProtocol());
+                metricsDataBuilder.setFailedMsg("not support " + app + ", " + metrics.getName() + ", " + metrics.getProtocol());
+                return;
             }
 
-            return;
+            doCollectAndDispatchMetricsData(abstractCollect, metricsDataBuilder);
         }
-        response.setMetrics(metrics.getName());
-        // According to the metrics collection protocol, application type, etc.,
-        // dispatch to the real application metrics collection implementation class
-        AbstractCollect abstractCollect = CollectStrategyFactory.invoke(metrics.getProtocol());
-        if (abstractCollect == null) {
-            log.error("[Dispatcher] - not support this: app: {}, metrics: {}, protocol: {}.",
-                app, metrics.getName(), metrics.getProtocol());
-            response.setCode(CollectRep.Code.FAIL);
-            response.setMsg("not support " + app + ", "
-                + metrics.getName() + ", " + metrics.getProtocol());
-        } else {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(response, new ArrowVectorWriterImpl(metrics.getAliasFields()));
-            try {
-                abstractCollect.preCheck(metrics);
+    }
 
-                abstractCollect.collect(metricsDataBuilder, metrics);
+    private void doCollectAndDispatchMetricsData(AbstractCollect abstractCollect, MetricsDataBuilder metricsDataBuilder) {
+        try {
+            abstractCollect.preCheck(metrics);
 
-                // Alias attribute expression replacement calculation
-                if (fastFailed()) {
-                    return;
-                }
+            abstractCollect.collect(metricsDataBuilder, metrics);
 
-                calculateFields(metrics, response, metricsDataBuilder);
-                CollectRep.MetricsData metricsData = validateMetricsData(metricsDataBuilder);
-                collectDataDispatch.dispatchCollectData(timeout, metrics, metricsData);
-            } catch (Exception e) {
-                String msg = e.getMessage();
-                if (msg == null && e.getCause() != null) {
-                    msg = e.getCause().getMessage();
-                }
-                if (e instanceof IllegalArgumentException) {
-                    log.error("[Metrics PreCheck]: {}.", msg, e);
-                } else {
-                    log.error("[Metrics Collect]: {}.", msg, e);
-                }
-                response.setCode(CollectRep.Code.FAIL);
-                if (msg != null) {
-                    response.setMsg(msg);
-                }
-            } finally {
-                metricsDataBuilder.getArrowVectorWriter().close();
+            // Alias attribute expression replacement calculation
+            if (fastFailed()) {
+                return;
             }
+
+            calculateFields(metrics, metricsDataBuilder);
+            try (ArrowVector arrowVector = validateMetricsData(metricsDataBuilder)) {
+                collectDataDispatch.dispatchCollectData(timeout, metrics, arrowVector, metricsDataBuilder.isFailed());
+            }
+        } catch (Exception e) {
+            String msg = e.getMessage();
+            if (msg == null && e.getCause() != null) {
+                msg = e.getCause().getMessage();
+            }
+            if (e instanceof IllegalArgumentException) {
+                log.error("[Metrics PreCheck]: {}.", msg, e);
+            } else {
+                log.error("[Metrics Collect]: {}.", msg, e);
+            }
+            metricsDataBuilder.setFailedMsg(msg == null ? "" : msg);
         }
     }
 
@@ -203,10 +202,10 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
      * Calculate the real metrics value according to the calculates and aliasFields configuration
      *
      * @param metrics     Metrics configuration
-     * @param collectData Data collection
+     * @param metricsDataBuilder collected data
      */
-    private void calculateFields(Metrics metrics, CollectRep.MetricsData.Builder collectData, MetricsDataBuilder metricsDataBuilder) throws Exception {
-        collectData.setPriority(metrics.getPriority());
+    private void calculateFields(Metrics metrics, MetricsDataBuilder metricsDataBuilder) throws Exception {
+        metricsDataBuilder.setPriority(metrics.getPriority());
 
         final ArrowVectorWriter arrowVectorWriter = metricsDataBuilder.getArrowVectorWriter();
         if (arrowVectorWriter.isEmpty()) {
@@ -217,7 +216,8 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
             metrics.setCalculates(Collections.emptyList());
         }
 
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVectorWriter.toByteArray())) {
+        try (ArrowVector arrowVector = metricsDataBuilder.build();
+             ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVector)) {
             arrowVectorWriter.close();
             ArrowVectorWriter writer = new ArrowVectorWriterImpl(metrics.getFields());
             metricsDataBuilder.setArrowVectorWriter(writer);
@@ -400,40 +400,22 @@ public class MetricsCollect implements Runnable, Comparable<MetricsCollect> {
         return this.timeout == null || this.timeout.isCancelled();
     }
 
-    private CollectRep.MetricsData validateMetricsData(MetricsDataBuilder metricsDataBuilder) {
-
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
+    private ArrowVector validateMetricsData(MetricsDataBuilder metricsDataBuilder) {
         long endTime = System.currentTimeMillis();
-        builder.setTime(endTime);
+        metricsDataBuilder.setTime(endTime);
         long runningTime = endTime - startTime;
         long allTime = endTime - newTime;
+
         if (startTime - newTime >= WARN_DISPATCH_TIME) {
             log.warn("[Collector Dispatch Warn, Dispatch Use {}ms.", startTime - newTime);
         }
-        if (builder.getCode() != CollectRep.Code.SUCCESS) {
-            log.info("[Collect Failed, Run {}ms, All {}ms] Reason: {}", runningTime, allTime, builder.getMsg());
+        if (metricsDataBuilder.isFailed()) {
+            log.info("[Collect Failed, Run {}ms, All {}ms] Reason: {}", runningTime, allTime, metricsDataBuilder.getMsg());
         } else {
             log.info("[Collect Success, Run {}ms, All {}ms].", runningTime, allTime);
         }
+
         return metricsDataBuilder.build();
-    }
-
-    private void validateMetricsData(CollectRep.MetricsData metricsData) {
-        if (metricsData == null) {
-            log.error("[Collect Failed] Response metrics data is null.");
-            return;
-        }
-        long endTime = System.currentTimeMillis();
-        long runningTime = endTime - startTime;
-        long allTime = endTime - newTime;
-        if (startTime - newTime >= WARN_DISPATCH_TIME) {
-            log.warn("[Collector Dispatch Warn, Dispatch Use {}ms.", startTime - newTime);
-        }
-        if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
-            log.info("[Collect Failed, Run {}ms, All {}ms] Reason: {}", runningTime, allTime, metricsData.getMsg());
-        } else {
-            log.info("[Collect Success, Run {}ms, All {}ms].", runningTime, allTime);
-        }
     }
 
     private void setNewThreadName(long monitorId, String app, long startTime, Metrics metrics) {

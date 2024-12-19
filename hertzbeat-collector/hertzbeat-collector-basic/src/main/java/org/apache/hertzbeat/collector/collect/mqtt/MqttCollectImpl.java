@@ -39,12 +39,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -97,8 +96,7 @@ public class MqttCollectImpl extends AbstractCollect {
             try {
                 connectFuture.get(Long.parseLong(mqttProtocol.getTimeout()), TimeUnit.MILLISECONDS);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                metricsDataBuilder.getBuilder().setCode(CollectRep.Code.FAIL);
-                metricsDataBuilder.getBuilder().setMsg(getErrorMessage(e.getMessage()));
+                metricsDataBuilder.setFailedMsg(getErrorMessage(e.getMessage()));
             }
         });
         testDescribeAndPublish5(client, mqttProtocol, data);
@@ -118,8 +116,7 @@ public class MqttCollectImpl extends AbstractCollect {
             try {
                 connectFuture.get(Long.parseLong(mqttProtocol.getTimeout()), TimeUnit.MILLISECONDS);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                metricsDataBuilder.getBuilder().setCode(CollectRep.Code.FAIL);
-                metricsDataBuilder.getBuilder().setMsg(getErrorMessage(e.getMessage()));
+                metricsDataBuilder.setFailedMsg(getErrorMessage(e.getMessage()));
             }
         });
         testDescribeAndPublish3(client, mqttProtocol, data);

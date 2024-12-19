@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -32,17 +34,17 @@ public interface CollectDataDispatch {
      * Processing and distributing collection result data
      * @param timeout     time wheel timeout        
      * @param metrics     The following metrics collection tasks   
-     * @param metricsData Collect result data       
+     * @param arrowVector Collected result data
      */
-    void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData);
+    void dispatchCollectData(Timeout timeout, Metrics metrics, ArrowVector arrowVector, boolean isCollectFailed);
 
     /**
      * Processing and distributing collection result data
      *
      * @param timeout     time wheel timeout        
      * @param metrics     The following metrics collection tasks    
-     * @param metricsDataList Collect result data       
+     * @param arrowVectorList Collect result data
      */
-    void dispatchCollectData(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList);
+    void dispatchCollectData(Timeout timeout, Metrics metrics, List<ArrowVector> arrowVectorList);
 
 }

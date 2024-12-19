@@ -38,13 +38,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.rocketmq.acl.common.AclClientRPCHook;
 import org.apache.rocketmq.acl.common.SessionCredentials;
@@ -121,7 +120,6 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
 
     @Override
     public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
         DefaultMQAdminExt mqAdminExt = null;
         try {
             mqAdminExt = this.createMqAdminExt(metrics);
@@ -133,9 +131,8 @@ public class RocketmqSingleCollectImpl extends AbstractCollect implements Dispos
             this.fillBuilder(rocketmqCollectData, metricsDataBuilder, metrics.getAliasFields(), metrics.getRocketmq().getParseScript());
 
         } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
             String message = CommonUtil.getMessageFromThrowable(e);
-            builder.setMsg(message);
+            metricsDataBuilder.setFailedMsg(message);
         } finally {
             if (mqAdminExt != null) {
                 mqAdminExt.shutdown();

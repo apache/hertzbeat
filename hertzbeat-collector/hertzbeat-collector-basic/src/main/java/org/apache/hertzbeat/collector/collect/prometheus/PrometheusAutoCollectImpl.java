@@ -23,7 +23,6 @@ import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,18 +32,18 @@ import java.util.stream.Stream;
 import javax.net.ssl.SSLException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.util.Base64;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.MetricFamily;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.TextParser;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpHeaders;
@@ -79,16 +78,14 @@ public class PrometheusAutoCollectImpl {
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
     
-    public List<CollectRep.MetricsData> collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
-
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
         try {
             validateParams(metrics);
         } catch (Exception e) {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
-            return null;
+            metricsDataBuilder.setFailedMsg(e.getMessage());
+            return;
         }
+
         HttpContext httpContext = createHttpContext(metrics.getPrometheus());
         HttpUriRequest request = createHttpRequest(metrics.getPrometheus());
         try {
@@ -97,9 +94,8 @@ public class PrometheusAutoCollectImpl {
             boolean isSuccessInvoke = defaultSuccessStatusCodes.contains(statusCode);
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
-                return null;
+                metricsDataBuilder.setFailedMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
+                return;
             }
 
             // todo: The InputStream is directly converted to a String here
@@ -108,51 +104,48 @@ public class PrometheusAutoCollectImpl {
             //       Option two: Manually trigger garbage collection, which can be referenced from Dubbo for long i
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             long collectTime = System.currentTimeMillis();
-            builder.setTime(collectTime);
+            metricsDataBuilder.setTime(collectTime);
             if (!StringUtils.hasText(resp)) {
                 log.error("http response content is empty, status: {}.", statusCode);
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("http response content is empty");
+                metricsDataBuilder.setFailedMsg("http response content is empty");
             } else {
                 try {
-                    return parseResponseByPrometheusExporter(resp, metricsDataBuilder);
+                    parseResponseByPrometheusExporter(resp, metricsDataBuilder);
                 } catch (Exception e) {
                     log.info("parse error: {}.", e.getMessage(), e);
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("parse response data error:" + e.getMessage());
-                }   
+                    metricsDataBuilder.setFailedMsg("parse response data error:" + e.getMessage());
+                }
             }
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
+
         } catch (UnknownHostException e2) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_REACHABLE);
-            builder.setMsg("unknown host:" + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "unknown host:" + errorMsg);
+
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e3);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
+
         } catch (IOException e4) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e4);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } finally {
             if (request != null) {
                 request.abort();
             }
         }
-        return Collections.singletonList(builder.build());
     }
     
     public String supportProtocol() {
@@ -171,16 +164,10 @@ public class PrometheusAutoCollectImpl {
         }
     }
     
-    private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(String resp, MetricsDataBuilder metricsDataBuilder) {
+    private void parseResponseByPrometheusExporter(String resp, MetricsDataBuilder metricsDataBuilder) {
         Map<String, MetricFamily> metricFamilyMap = TextParser.textToMetricFamilies(resp);
-        List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
-        final CollectRep.MetricsData.Builder builder = metricsDataBuilder.getBuilder();
 
         for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
-            builder.clearMetrics();
-            builder.clearData();
-            String metricsName = entry.getKey();
-            builder.setMetrics(metricsName);
             MetricFamily metricFamily = entry.getValue();
             if (!metricFamily.getMetricList().isEmpty()) {
                 List<String> metricsFields = new LinkedList<>();
@@ -210,10 +197,8 @@ public class PrometheusAutoCollectImpl {
                         metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
                     }
                 }
-                metricsDataList.add(metricsDataBuilder.build());
             }
         }
-        return metricsDataList;
     }
     
     /**

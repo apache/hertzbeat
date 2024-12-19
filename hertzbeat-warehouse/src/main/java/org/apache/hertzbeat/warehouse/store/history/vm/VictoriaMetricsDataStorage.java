@@ -41,11 +41,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataFieldConstants;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -170,8 +170,8 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
 
                 rowWrapper.cellStream().forEach(cell -> {
                     String value = cell.getValue();
-                    boolean isLabel = cell.getBooleanMetaData(MetricDataFieldConstants.LABEL);
-                    byte type = cell.getByteMetaData(MetricDataFieldConstants.TYPE);
+                    boolean isLabel = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+                    byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
 
                     if (type == CommonConstants.TYPE_NUMBER && !isLabel) {
                         // number metrics data

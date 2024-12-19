@@ -21,7 +21,7 @@ import com.google.gson.JsonElement;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.collector.collect.common.MetricsDataBuilder;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
