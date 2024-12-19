@@ -25,7 +25,6 @@ import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_METRIC;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_METRICS;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_APP;
 import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_ID;
-import static org.apache.hertzbeat.common.constants.CommonConstants.TAG_MONITOR_NAME;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +46,6 @@ import org.apache.hertzbeat.alert.util.AlertTemplateUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
@@ -69,7 +67,7 @@ import org.springframework.util.CollectionUtils;
 public class CalculateAlarm {
 
     private static final String SYSTEM_VALUE_ROW_COUNT = "system_value_row_count";
-    
+
     private static final int CALCULATE_THREADS = 3;
 
     /**
@@ -101,18 +99,6 @@ public class CalculateAlarm {
         this.bundle = ResourceBundleUtil.getBundle("alerter");
         this.triggeredAlertMap = new ConcurrentHashMap<>(16);
         this.notRecoveredAlertMap = new ConcurrentHashMap<>(16);
-        // Initialize stateAlertMap
-        List<Monitor> monitors = monitorDao.findMonitorsByStatus(CommonConstants.MONITOR_DOWN_CODE);
-        if (monitors != null) {
-            for (Monitor monitor : monitors) {
-                HashMap<String, String> tags = new HashMap<>(8);
-                tags.put(TAG_MONITOR_ID, String.valueOf(monitor.getId()));
-                tags.put(TAG_MONITOR_NAME, monitor.getName());
-                tags.put(TAG_MONITOR_APP, monitor.getApp());
-                this.notRecoveredAlertMap.put(monitor.getId() + CommonConstants.AVAILABILITY,
-                        Alert.builder().tags(tags).target(CommonConstants.AVAILABILITY).status(ALERT_STATUS_CODE_PENDING).build());
-            }
-        }
         startCalculate();
     }
 
@@ -181,6 +167,7 @@ public class CalculateAlarm {
                                 if (define.isRecoverNotice()) {
                                     handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
                                 }
+                                notRecoveredAlertMap.remove(alarmKey);
                             }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
@@ -236,6 +223,7 @@ public class CalculateAlarm {
                                 if (define.isRecoverNotice()) {
                                     handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
                                 }
+                                notRecoveredAlertMap.remove(alarmKey);
                             }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
@@ -258,8 +246,10 @@ public class CalculateAlarm {
                     .content(content)
                     .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
                     .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
-                    .firstAlarmTime(currentTimeMilli)
-                    .lastAlarmTime(notResolvedAlert.getLastAlarmTime())
+                    //only update the alarm time without increasing the alarm count
+                    .firstAlarmTime(notResolvedAlert.getFirstAlarmTime())
+                    .lastAlarmTime(currentTimeMilli)
+                    .times(notResolvedAlert.getTimes())
                     .triggerTimes(1)
                     .build();
             alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
@@ -270,15 +260,27 @@ public class CalculateAlarm {
                                          Map<String, Object> fieldValueMap, AlertDefine define) {
         String alarmKey = String.valueOf(monitorId) + define.getId() + tagStr;
         Alert triggeredAlert = triggeredAlertMap.get(alarmKey);
+        Alert notResolvedAlert = notRecoveredAlertMap.get(alarmKey);
+        if (triggeredAlert == null && notResolvedAlert != null) {
+            //an alarm has been triggered, entering a new triggering cycle
+            triggeredAlert = notResolvedAlert.clone();
+            triggeredAlert.setTriggerTimes(0);
+            triggeredAlertMap.put(alarmKey, triggeredAlert);
+        }
         if (triggeredAlert != null) {
             int times = triggeredAlert.getTriggerTimes() + 1;
             triggeredAlert.setTriggerTimes(times);
-            triggeredAlert.setFirstAlarmTime(currentTimeMilli);
             triggeredAlert.setLastAlarmTime(currentTimeMilli);
+            if (notResolvedAlert == null) {
+                //The first alarm
+                triggeredAlert.setFirstAlarmTime(currentTimeMilli);
+            }
             int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
             if (times >= defineTimes) {
+                int alertTimes = triggeredAlert.getTimes() == null ? 0 : triggeredAlert.getTimes();
                 triggeredAlert.setStatus(ALERT_STATUS_CODE_PENDING);
                 triggeredAlertMap.remove(alarmKey);
+                triggeredAlert.setTimes(alertTimes + 1);
                 notRecoveredAlertMap.put(alarmKey, triggeredAlert);
                 alarmCommonReduce.reduceAndSendAlarm(triggeredAlert.clone());
             }
@@ -310,6 +312,8 @@ public class CalculateAlarm {
             int defineTimes = define.getTimes() == null ? 1 : define.getTimes();
             if (1 >= defineTimes) {
                 alert.setStatus(ALERT_STATUS_CODE_PENDING);
+                //The first alarm
+                alert.setTimes(1);
                 notRecoveredAlertMap.put(alarmKey, alert);
                 alarmCommonReduce.reduceAndSendAlarm(alert.clone());
             } else {
@@ -370,6 +374,14 @@ public class CalculateAlarm {
                     tags.put(tagItem.getName(), tagItem.getValue());
                 }
             }
+            String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
+            Alert notResolvedAlert = notRecoveredAlertMap.get(notResolvedAlertKey);
+            if (preAlert == null && notResolvedAlert != null) {
+                // Previously triggered an availability alarm, entering a new triggering cycle
+                preAlert = notResolvedAlert.clone();
+                preAlert.setTriggerTimes(0);
+                triggeredAlertMap.put(String.valueOf(monitorId), preAlert);
+            }
             if (preAlert == null) {
                 Alert.AlertBuilder alertBuilder = Alert.builder()
                         .tags(tags)
@@ -381,8 +393,8 @@ public class CalculateAlarm {
                         .lastAlarmTime(currentTimeMill)
                         .triggerTimes(1);
                 if (avaAlertDefine.getTimes() == null || avaAlertDefine.getTimes() <= 1) {
-                    String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
                     alertBuilder.status(ALERT_STATUS_CODE_PENDING);
+                    alertBuilder.times(1);
                     notRecoveredAlertMap.put(notResolvedAlertKey, alertBuilder.build());
                     alarmCommonReduce.reduceAndSendAlarm(alertBuilder.build());
                 } else {
@@ -391,12 +403,16 @@ public class CalculateAlarm {
             } else {
                 int times = preAlert.getTriggerTimes() + 1;
                 preAlert.setTriggerTimes(times);
-                preAlert.setFirstAlarmTime(currentTimeMill);
+                if (notResolvedAlert == null) {
+                    //The first alarm
+                    preAlert.setFirstAlarmTime(currentTimeMill);
+                }
                 preAlert.setLastAlarmTime(currentTimeMill);
                 int defineTimes = avaAlertDefine.getTimes() == null ? 1 : avaAlertDefine.getTimes();
                 if (times >= defineTimes) {
+                    int alertTimes = preAlert.getTimes() == null ? 0 : preAlert.getTimes();
+                    preAlert.setTimes(alertTimes + 1);
                     preAlert.setStatus(ALERT_STATUS_CODE_PENDING);
-                    String notResolvedAlertKey = monitorId + CommonConstants.AVAILABILITY;
                     notRecoveredAlertMap.put(notResolvedAlertKey, preAlert.clone());
                     alarmCommonReduce.reduceAndSendAlarm(preAlert.clone());
                     triggeredAlertMap.remove(String.valueOf(monitorId));
@@ -421,8 +437,10 @@ public class CalculateAlarm {
                         .content(content)
                         .priority(CommonConstants.ALERT_PRIORITY_CODE_WARNING)
                         .status(CommonConstants.ALERT_STATUS_CODE_RESTORED)
-                        .firstAlarmTime(currentTimeMill)
-                        .lastAlarmTime(notResolvedAlert.getLastAlarmTime())
+                        //For recovery alarms, only update the alarm time without increasing the alarm count
+                        .firstAlarmTime(notResolvedAlert.getFirstAlarmTime())
+                        .lastAlarmTime(currentTimeMill)
+                        .times(notResolvedAlert.getTimes())
                         .triggerTimes(1)
                         .build();
                 alarmCommonReduce.reduceAndSendAlarm(resumeAlert);
