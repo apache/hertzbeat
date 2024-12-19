@@ -56,8 +56,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class KafkaCollectImpl extends AbstractCollect {
 
-    private static final String LAG_NUM= "lag_num";
-    private static final String PARTITION_OFFSET= "Partition_offset";
+    private static final String LAG_NUM = "lag_num";
+    private static final String PARTITION_OFFSET = "Partition_offset";
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
