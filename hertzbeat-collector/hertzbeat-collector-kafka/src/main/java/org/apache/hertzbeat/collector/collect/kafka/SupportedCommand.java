@@ -27,7 +27,8 @@ public enum SupportedCommand {
 
     TOPIC_DESCRIBE("topic-describe"),
     TOPIC_LIST("topic-list"),
-    TOPIC_OFFSET("topic-offset");
+    TOPIC_OFFSET("topic-offset"),
+    CONSUMER_DETAIL("consumer-detail");
 
     private static Set<String> SUPPORTED_COMMAND = new HashSet<>();
 
