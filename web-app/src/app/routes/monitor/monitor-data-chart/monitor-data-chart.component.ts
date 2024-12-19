@@ -273,7 +273,6 @@ export class MonitorDataChartComponent implements OnInit {
                 this.lineHistoryTheme.series.push({
                   name: key,
                   type: 'line',
-                  stack: 'Total',
                   smooth: true,
                   showSymbol: false,
                   areaStyle: {},
@@ -314,7 +313,6 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
-                stack: 'Total',
                 areaStyle: {},
                 emphasis: {
                   focus: 'series'
@@ -326,7 +324,6 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
-                stack: 'Total',
                 areaStyle: {},
                 emphasis: {
                   focus: 'series'
@@ -338,7 +335,6 @@ export class MonitorDataChartComponent implements OnInit {
                 type: 'line',
                 smooth: true,
                 showSymbol: false,
-                stack: 'Total',
                 areaStyle: {},
                 emphasis: {
                   focus: 'series'
