@@ -390,16 +390,41 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
-      - field: metric
+      - field: rchar
         type: 1
         i18n:
-          zh-CN: 监控指标名称
-          en-US: metric
-      - field: value
+          zh-CN: 字符读取数
+          en-US: rchar
+      - field: wchar
         type: 1
         i18n:
-          zh-CN: 监控指标值
-          en-US: value
+          zh-CN: 字符写入数
+          en-US: wchar
+      - field: syscr
+        type: 1
+        i18n:
+          zh-CN: 系统读取次数
+          en-US: syscr
+      - field: syscw
+        type: 1
+        i18n:
+          zh-CN: 系统写入次数
+          en-US: syscw
+      - field: read_bytes
+        type: 1
+        i18n:
+          zh-CN: 读取字节数
+          en-US: read_bytes
+      - field: write_bytes
+        type: 1
+        i18n:
+          zh-CN: 写入字节数
+          en-US: write_bytes
+      - field: cancelled_write_bytes
+        type: 1
+        i18n:
+          zh-CN: 取消写入字节数
+          en-US: cancelled_write_bytes
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh
@@ -418,6 +443,6 @@ metrics:
       reuseConnection: ^_^reuseConnection^_^
       # ssh run collect script
       # ssh response data parse type: oneRow, multiRow
-      script: echo "pid metric value" ; ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd}' | while read pid _; do cat "/proc/$pid/io" | sed -e "s/rchar:/rchar(进程从磁盘或其他文件读取的总字节数):/g" -e "s/wchar:/wchar(进程写入到磁盘或其他文件的总字节数):/g" -e "s/syscr:/syscr(进程发起的读取操作的次数):/g" -e "s/syscw:/syscw(进程发起的写入操作的次数):/g" -e "s/read_bytes:/read_bytes(进程从磁盘实际读取的字节数):/g" -e "s/write_bytes:/write_bytes(进程写入到磁盘的实际字节数):/g" -e "s/cancelled_write_bytes:/cancelled_write_bytes(进程写入但被取消的字节数):/g" | sed "s/^/$pid /" ; done
+      script: echo -e "pid rchar wchar syscr syscw read_bytes write_bytes cancelled_write_bytes";ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{ cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd }' | while read pid _; do echo -n "$pid ";cat /proc/$pid/io | awk -F ':' '{gsub(/^ +| +$/, "", $2); print $2}' | paste -d' ' -s -;done
       parseType: multiRow
 
