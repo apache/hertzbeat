@@ -104,7 +104,7 @@ params:
 # collect metrics config list
 metrics:
   # metrics - ping_available
-  - name: ping_available
+  - name: summary
     i18n:
       zh-CN: ping的可用性
       en-US: ping_available
