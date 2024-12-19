@@ -110,7 +110,7 @@ class AlertDefinesControllerTest {
         //                return false;
         //            }
         //        }))).thenReturn(new PageImpl<AlertDefine>(new ArrayList<AlertDefine>()));
-        AlertDefine define = AlertDefine.builder().id(9L).app("linux").metric("disk").field("usage").expr("x").times(1).tags(new LinkedList<>()).build();
+        AlertDefine define = AlertDefine.builder().id(9L).app("linux").metric("disk").field("usage").expr("x").times(1).build();
         Mockito.when(alertDefineService.getAlertDefines(null, null, null, "id", "desc", 1, 10)).thenReturn(new PageImpl<>(Collections.singletonList(define)));
 
         mockMvc.perform(MockMvcRequestBuilders.get(

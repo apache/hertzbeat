@@ -23,12 +23,13 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.apache.hertzbeat.alert.dao.AlertSilenceDao;
+import org.apache.hertzbeat.alert.notice.DispatcherAlarm;
 import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertSilence;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.springframework.stereotype.Service;
 
 /**
@@ -39,6 +40,7 @@ import org.springframework.stereotype.Service;
 public class AlarmSilenceReduce {
 
     private final AlertSilenceDao alertSilenceDao;
+    private final DispatcherAlarm dispatcherAlarm;
 
     /**
      * alert silence filter data
@@ -60,12 +62,12 @@ public class AlarmSilenceReduce {
             // if match the silence rule, return
             boolean match = alertSilence.isMatchAll();
             if (!match) {
-                List<TagItem> tags = alertSilence.getTags();
+                Map<String, String> labels = alertSilence.getLabels();
                 if (alert.getTags() != null && !alert.getTags().isEmpty()) {
                     Map<String, String> alertTagMap = alert.getTags();
-                    match = tags.stream().anyMatch(item -> {
-                        if (alertTagMap.containsKey(item.getName())) {
-                            String tagValue = alertTagMap.get(item.getName());
+                    match = labels.entrySet().stream().anyMatch(item -> {
+                        if (alertTagMap.containsKey(item.getKey())) {
+                            String tagValue = alertTagMap.get(item.getKey());
                             if (tagValue == null && item.getValue() == null) {
                                 return true;
                             } else {
@@ -77,9 +79,6 @@ public class AlarmSilenceReduce {
                     });
                 } else {
                     match = true;
-                }
-                if (match && alertSilence.getPriorities() != null && !alertSilence.getPriorities().isEmpty()) {
-                    match = alertSilence.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
                 }
             }
             if (match) {
@@ -119,7 +118,64 @@ public class AlarmSilenceReduce {
             alertSilenceDao.save(alertSilence);
             return false;
         }
-
         return true;
+    }
+
+    public void silenceAlarm(GroupAlert groupAlert) {
+        CommonCacheService<String, Object> silenceCache = CacheFactory.getAlertSilenceCache();
+        List<AlertSilence> alertSilenceList = (List<AlertSilence>) silenceCache.get(CommonConstants.CACHE_ALERT_SILENCE);
+        if (alertSilenceList == null) {
+            alertSilenceList = alertSilenceDao.findAll();
+            silenceCache.put(CommonConstants.CACHE_ALERT_SILENCE, alertSilenceList);
+        }
+        for (AlertSilence alertSilence : alertSilenceList) {
+            if (!alertSilence.isEnable()) {
+                continue;
+            }
+            // if match the silence rule, return
+            boolean match = alertSilence.isMatchAll();
+            if (!match) {
+                Map<String, String> labels = alertSilence.getLabels();
+                if (groupAlert.getGroupLabels() != null && !groupAlert.getGroupLabels().isEmpty()) {
+                    Map<String, String> alertLabels = groupAlert.getGroupLabels();
+                    match = labels.entrySet().stream().anyMatch(item -> {
+                        if (alertLabels.containsKey(item.getKey())) {
+                            String tagValue = alertLabels.get(item.getKey());
+                            if (tagValue == null && item.getValue() == null) {
+                                return true;
+                            } else {
+                                return tagValue != null && tagValue.equals(item.getValue());
+                            }
+                        } else {
+                            return false;
+                        }
+                    });
+                } else {
+                    match = true;
+                }
+            }
+            if (match) {
+                if (alertSilence.getType() == 0) {
+                    // once time
+                    if (checkAndSave(LocalDateTime.now(), alertSilence)) {
+                        dispatcherAlarm.dispatchAlarm(groupAlert);
+                    } else {
+                        return;
+                    }
+                } else if (alertSilence.getType() == 1) {
+                    // cyc time
+                    int currentDayOfWeek = LocalDateTime.now().toLocalDate().getDayOfWeek().getValue();
+                    if (alertSilence.getDays() != null && !alertSilence.getDays().isEmpty()) {
+                        boolean dayMatch = alertSilence.getDays().stream().anyMatch(item -> item == currentDayOfWeek);
+                        if (dayMatch && checkAndSave(LocalDateTime.now(), alertSilence)) {
+                            dispatcherAlarm.dispatchAlarm(groupAlert);
+                        } else {
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        dispatcherAlarm.dispatchAlarm(groupAlert);
     }
 }

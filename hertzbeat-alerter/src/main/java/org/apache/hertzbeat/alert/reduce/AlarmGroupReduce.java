@@ -1,0 +1,291 @@
+package org.apache.hertzbeat.alert.reduce;
+
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.entity.alerter.AlertGroupConverge;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+
+/**
+ * Alarm group reduce
+ */
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class AlarmGroupReduce {
+
+    /**
+     * Default initial group wait time 30s
+     */
+    private static final long DEFAULT_GROUP_WAIT = 30 * 1000L;
+    
+    /**
+     * Default group send interval 5min
+     */
+    private static final long DEFAULT_GROUP_INTERVAL = 5 * 60 * 1000L;  
+    
+    /**
+     * Default repeat interval 4h
+     */
+    private static final long DEFAULT_REPEAT_INTERVAL = 4 * 60 * 60 * 1000L;
+    
+    private final AlarmInhibitReduce alarmInhibitReduce;
+    
+    /**
+     * Group define rules
+     * key: rule name
+     * value: group rule configuration
+     */
+    private final Map<String, AlertGroupConverge> groupDefines = new HashMap<>();
+    
+    /**
+     * Alert cache grouped by labels
+     * key: groupDefineKey:groupKey
+     * value: GroupAlertCache
+     */
+    private final Map<String, GroupAlertCache> groupCacheMap = new ConcurrentHashMap<>(16);
+    
+    /**
+     * Configure group define rules
+     * @param groupDefines map of group rule configurations
+     */
+    public void configureGroupDefines(List<AlertGroupConverge> groupDefines) {
+        this.groupDefines.clear();
+        groupDefines.forEach(define -> this.groupDefines.put(define.getName(), define));
+    }
+    
+    @Scheduled(fixedRate = 1000)
+    public void checkAndSendGroups() {
+        long now = System.currentTimeMillis();
+        groupCacheMap.forEach((groupKey, cache) -> {
+            if (shouldSendGroup(cache, now)) {
+                sendGroupAlert(cache);
+                cache.setLastSendTime(now);
+                cache.getAlerts().clear();
+            }
+        });
+    }
+    
+    /**
+     * Process single alert and group by defined rules
+     */
+    public void processGroupAlert(SingleAlert alert) {
+        Map<String, String> labels = alert.getLabels();
+        if (labels == null || labels.isEmpty() || groupDefines.isEmpty()) {
+            sendSingleAlert(alert);
+            return;
+        }
+        
+        // Process each group define rule
+        boolean matched = false;
+        for (Map.Entry<String, AlertGroupConverge> define : groupDefines.entrySet()) {
+            String defineName = define.getKey();
+            AlertGroupConverge ruleConfig = define.getValue();
+            
+            // Check if alert has all required group labels
+            if (hasRequiredLabels(labels, ruleConfig.getGroupLabels())) {
+                matched = true;
+                processAlertByGroupDefine(alert, defineName, ruleConfig);
+            }
+        }
+        
+        if (!matched) {
+            sendSingleAlert(alert);
+        }
+    }
+    
+    private boolean hasRequiredLabels(Map<String, String> labels, List<String> requiredLabels) {
+        return requiredLabels.stream().allMatch(labels::containsKey);
+    }
+    
+    private void processAlertByGroupDefine(SingleAlert alert, String defineName, AlertGroupConverge ruleConfig) {
+        // Extract group labels based on define
+        Map<String, String> extractedLabels = new HashMap<>();
+        for (String labelKey : ruleConfig.getGroupLabels()) {
+            extractedLabels.put(labelKey, alert.getLabels().get(labelKey));
+        }
+        
+        // Generate group key with define name prefix
+        String groupKey = defineName + ":" + generateGroupKey(extractedLabels);
+        
+        // Get or create group cache
+        GroupAlertCache cache = groupCacheMap.computeIfAbsent(groupKey, k -> {
+            GroupAlertCache newCache = new GroupAlertCache();
+            newCache.setGroupLabels(extractedLabels);
+            newCache.setGroupDefineName(defineName);
+            newCache.setCreateTime(System.currentTimeMillis());
+            newCache.setAlertFingerprints(new HashMap<>());
+            return newCache;
+        });
+        
+        // Generate alert fingerprint
+        String fingerprint = generateAlertFingerprint(alert);
+        
+        // Check if this is a duplicate alert
+        SingleAlert existingAlert = cache.getAlertFingerprints().get(fingerprint);
+        if (existingAlert != null) {
+            // Update existing alert timestamp
+            existingAlert.setActiveAt(System.currentTimeMillis());
+            return;
+        }
+        
+        // Add new alert
+        cache.getAlertFingerprints().put(fingerprint, alert);
+        cache.getAlerts().add(alert);
+        
+        if (shouldSendGroupImmediately(cache)) {
+            sendGroupAlert(cache);
+            cache.setLastSendTime(System.currentTimeMillis());
+            cache.getAlerts().clear();
+            cache.getAlertFingerprints().clear();
+        }
+    }
+    
+    /**
+     * Generate fingerprint for alert to identify duplicates
+     * Fingerprint is based on labels and annotations excluding timestamp related fields
+     */
+    private String generateAlertFingerprint(SingleAlert alert) {
+        Map<String, String> labels = new HashMap<>(alert.getLabels());
+        // Remove timestamp related fields
+        labels.remove("timestamp");
+        labels.remove("start_at");
+        labels.remove("active_at");
+        
+        Map<String, String> annotations = alert.getAnnotations();
+        
+        return labels.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + ":" + e.getValue())
+                .collect(Collectors.joining(","))
+                + "#"
+                + (annotations != null ? annotations.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + ":" + e.getValue())
+                .collect(Collectors.joining(",")) : "");
+    }
+    
+    private void sendGroupAlert(GroupAlertCache cache) {
+        if (cache.getAlerts().isEmpty()) {
+            return;
+        }
+        
+        long now = System.currentTimeMillis();
+        String status = determineGroupStatus(cache.getAlerts());
+        
+        // For firing alerts, check repeat interval
+        if ("firing".equals(status)) {
+            AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
+            long repeatInterval = ruleConfig != null ? ruleConfig.getRepeatInterval() : DEFAULT_REPEAT_INTERVAL;
+            
+            // Skip if within repeat interval
+            if (cache.getLastRepeatTime() > 0 
+                && now - cache.getLastRepeatTime() < repeatInterval) {
+                return;
+            }
+            cache.setLastRepeatTime(now);
+        }
+        
+        GroupAlert groupAlert = GroupAlert.builder()
+                .groupLabels(cache.getGroupLabels())
+                .commonLabels(extractCommonLabels(cache.getAlerts()))
+                .commonAnnotations(extractCommonAnnotations(cache.getAlerts()))
+                .alerts(new ArrayList<>(cache.getAlerts()))
+                .status(status)
+                .build();
+
+        alarmInhibitReduce.inhibitAlarm(groupAlert);
+    }
+    
+    private boolean shouldSendGroup(GroupAlertCache cache, long now) {
+        AlertGroupConverge ruleConfig = groupDefines.get(cache.getGroupDefineName());
+        long groupWait = ruleConfig != null ? ruleConfig.getGroupWait() : DEFAULT_GROUP_WAIT;
+        long groupInterval = ruleConfig != null ? ruleConfig.getGroupInterval() : DEFAULT_GROUP_INTERVAL;
+        
+        // First wait time reached
+        if (cache.getLastSendTime() == 0 
+            && now - cache.getCreateTime() >= groupWait) {
+            return true;
+        }
+        // Group interval time reached
+        return cache.getLastSendTime() > 0 
+            && now - cache.getLastSendTime() >= groupInterval;
+    }
+    
+    private boolean shouldSendGroupImmediately(GroupAlertCache cache) {
+        // Check if all alerts are resolved
+        return cache.getAlerts().stream()
+                .allMatch(alert -> "resolved".equals(alert.getStatus()));
+    }
+    
+    private void sendSingleAlert(SingleAlert alert) {
+        // Wrap single alert as group alert
+        GroupAlert groupAlert = GroupAlert.builder()
+                .groupLabels(alert.getLabels())
+                .commonLabels(alert.getLabels())
+                .commonAnnotations(alert.getAnnotations())
+                .alerts(Collections.singletonList(alert))
+                .status(alert.getStatus())
+                .build();
+
+        alarmInhibitReduce.inhibitAlarm(groupAlert);
+    }
+    
+    private String generateGroupKey(Map<String, String> labels) {
+        return labels.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getKey() + ":" + e.getValue())
+                .collect(Collectors.joining(","));
+    }
+    
+    private Map<String, String> extractCommonLabels(List<SingleAlert> alerts) {
+        // Extract common labels from all alerts
+        Map<String, String> common = new HashMap<>(alerts.get(0).getLabels());
+        alerts.forEach(alert -> {
+            common.keySet().removeIf(key -> 
+                !alert.getLabels().containsKey(key) 
+                || !common.get(key).equals(alert.getLabels().get(key)));
+        });
+        return common;
+    }
+    
+    private Map<String, String> extractCommonAnnotations(List<SingleAlert> alerts) {
+        // Extract common annotations from all alerts
+        Map<String, String> common = new HashMap<>(alerts.get(0).getAnnotations());
+        alerts.forEach(alert -> {
+            common.keySet().removeIf(key -> 
+                !alert.getAnnotations().containsKey(key) 
+                || !common.get(key).equals(alert.getAnnotations().get(key)));
+        });
+        return common;
+    }
+    
+    private String determineGroupStatus(List<SingleAlert> alerts) {
+        // If any alert is firing, group is firing
+        return alerts.stream()
+                .anyMatch(alert -> "firing".equals(alert.getStatus())) 
+                ? "firing" : "resolved";
+    }
+    
+    @Data
+    private static class GroupAlertCache {
+        private String groupDefineName;
+        private Map<String, String> groupLabels;
+        private List<SingleAlert> alerts = new ArrayList<>();
+        private Map<String, SingleAlert> alertFingerprints = new HashMap<>();
+        private long createTime;
+        private long lastSendTime;
+        private long lastRepeatTime;
+    }
+}

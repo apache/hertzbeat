@@ -55,8 +55,7 @@ public class AvailableAlertDefineInit implements CommandLineRunner {
                             .metric(CommonConstants.AVAILABILITY)
                             .preset(true)
                             .times(2)
-                            .enable(true)
-                            .recoverNotice(false)
+                            .enabled(true)
                             .priority(CommonConstants.ALERT_PRIORITY_CODE_EMERGENCY)
                             .template("${app} monitoring availability alert, code is ${code}")
                             .build();

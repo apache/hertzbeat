@@ -33,9 +33,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.apache.hertzbeat.common.entity.manager.NoticeRule;
-import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
+import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
+import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
+import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.service.impl.NoticeConfigServiceImpl;
@@ -67,11 +67,9 @@ class NoticeConfigControllerTest {
 
 
     public NoticeRule getNoticeRule() {
-        List<TagItem> tags = new ArrayList<>();
         TagItem tagItem = new TagItem();
         tagItem.setName("key1");
         tagItem.setValue("value1");
-        tags.add(tagItem);
 
         NoticeRule noticeRule = new NoticeRule();
         noticeRule.setId(87584674384L);
@@ -82,7 +80,6 @@ class NoticeConfigControllerTest {
         noticeRule.setTemplateName("test");
         noticeRule.setCreator("tom");
         noticeRule.setModifier("tom");
-        noticeRule.setTags(tags);
 
         return noticeRule;
     }

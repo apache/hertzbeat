@@ -48,7 +48,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
-import org.apache.hertzbeat.common.entity.manager.TagItem;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.support.event.MonitorDeletedEvent;
@@ -178,9 +177,7 @@ public class CalculateAlarm {
                             } else {
                                 String alarmKey = String.valueOf(monitorId) + define.getId();
                                 triggeredAlertMap.remove(alarmKey);
-                                if (define.isRecoverNotice()) {
-                                    handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
-                                }
+                                handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
                             }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
@@ -233,9 +230,7 @@ public class CalculateAlarm {
                             } else {
                                 String alarmKey = String.valueOf(monitorId) + define.getId() + tagBuilder;
                                 triggeredAlertMap.remove(alarmKey);
-                                if (define.isRecoverNotice()) {
-                                    handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
-                                }
+                                handleRecoveredAlert(currentTimeMilli, define, expr, alarmKey);
                             }
                         } catch (Exception e) {
                             log.error(e.getMessage(), e);
@@ -290,11 +285,9 @@ public class CalculateAlarm {
             tags.put(TAG_MONITOR_ID, String.valueOf(monitorId));
             tags.put(TAG_MONITOR_APP, app);
             tags.put(CommonConstants.TAG_THRESHOLD_ID, String.valueOf(define.getId()));
-            if (!CollectionUtils.isEmpty(define.getTags())) {
-                for (TagItem tagItem : define.getTags()) {
-                    fieldValueMap.put(tagItem.getName(), tagItem.getValue());
-                    tags.put(tagItem.getName(), tagItem.getValue());
-                }
+            if (!CollectionUtils.isEmpty(define.getLabels())) {
+                fieldValueMap.putAll(define.getLabels());
+                tags.putAll(define.getLabels());
             }
             Alert alert = Alert.builder()
                     .tags(tags)
@@ -364,11 +357,9 @@ public class CalculateAlarm {
             Map<String, Object> valueMap = tags.entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-            if (!CollectionUtils.isEmpty(avaAlertDefine.getTags())) {
-                for (TagItem tagItem : avaAlertDefine.getTags()) {
-                    valueMap.put(tagItem.getName(), tagItem.getValue());
-                    tags.put(tagItem.getName(), tagItem.getValue());
-                }
+            if (!CollectionUtils.isEmpty(avaAlertDefine.getLabels())) {
+                valueMap.putAll(avaAlertDefine.getLabels());
+                tags.putAll(avaAlertDefine.getLabels());
             }
             if (preAlert == null) {
                 Alert.AlertBuilder alertBuilder = Alert.builder()
@@ -411,9 +402,6 @@ public class CalculateAlarm {
             if (notResolvedAlert != null) {
                 // Sending an alarm Restore
                 Map<String, String> tags = notResolvedAlert.getTags();
-                if (!avaAlertDefine.isRecoverNotice()) {
-                    tags.put(CommonConstants.IGNORE, CommonConstants.IGNORE);
-                }
                 String content = this.bundle.getString("alerter.availability.recover");
                 Alert resumeAlert = Alert.builder()
                         .tags(tags)

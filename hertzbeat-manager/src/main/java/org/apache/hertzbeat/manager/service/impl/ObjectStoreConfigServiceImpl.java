@@ -24,7 +24,7 @@ import java.lang.reflect.Type;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
-import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreConfigChangeEvent;
 import org.apache.hertzbeat.manager.pojo.dto.ObjectStoreDTO;
 import org.springframework.beans.factory.InitializingBean;

@@ -37,14 +37,16 @@ import org.apache.hertzbeat.common.cache.CacheFactory;
 import org.apache.hertzbeat.common.cache.CommonCacheService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.manager.NoticeReceiver;
-import org.apache.hertzbeat.common.entity.manager.NoticeRule;
-import org.apache.hertzbeat.common.entity.manager.NoticeTemplate;
-import org.apache.hertzbeat.manager.component.alerter.DispatcherAlarm;
-import org.apache.hertzbeat.manager.dao.NoticeReceiverDao;
-import org.apache.hertzbeat.manager.dao.NoticeRuleDao;
-import org.apache.hertzbeat.manager.dao.NoticeTemplateDao;
-import org.apache.hertzbeat.manager.service.NoticeConfigService;
+import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
+import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
+import org.apache.hertzbeat.common.entity.alerter.NoticeRule;
+import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.alert.notice.DispatcherAlarm;
+import org.apache.hertzbeat.alert.dao.NoticeReceiverDao;
+import org.apache.hertzbeat.alert.dao.NoticeRuleDao;
+import org.apache.hertzbeat.alert.dao.NoticeTemplateDao;
+import org.apache.hertzbeat.alert.service.NoticeConfigService;
+import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Lazy;
@@ -160,7 +162,7 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     @SuppressWarnings("unchecked")
-    public List<NoticeRule> getReceiverFilterRule(Alert alert) {
+    public List<NoticeRule> getReceiverFilterRule(GroupAlert alert) {
         // use cache
         CommonCacheService<String, Object> noticeCache = CacheFactory.getNoticeCache();
         List<NoticeRule> rules = (List<NoticeRule>) noticeCache.get(CommonConstants.CACHE_NOTICE_RULE);
@@ -173,23 +175,16 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
         return rules.stream()
                 .filter(rule -> {
                     if (!rule.isFilterAll()) {
-                        // filter priorities
-                        if (rule.getPriorities() != null && !rule.getPriorities().isEmpty()) {
-                            boolean priorityMatch = rule.getPriorities().stream().anyMatch(item -> item != null && item == alert.getPriority());
-                            if (!priorityMatch) {
-                                return false;
-                            }
-                        }
-                        // filter tags
-                        if (rule.getTags() != null && !rule.getTags().isEmpty()) {
-                            boolean tagMatch = rule.getTags().stream().anyMatch(tagItem -> {
-                                if (!alert.getTags().containsKey(tagItem.getName())) {
+                        // filter labels
+                        if (rule.getLabels() != null && !rule.getLabels().isEmpty()) {
+                            boolean labelMatch = rule.getLabels().entrySet().stream().allMatch(labelItem -> {
+                                if (!alert.getCommonLabels().containsKey(labelItem.getKey())) {
                                     return false;
                                 }
-                                String alertTagValue = alert.getTags().get(tagItem.getName());
-                                return Objects.equals(tagItem.getValue(), alertTagValue);
+                                String alertLabelValue = alert.getCommonLabels().get(labelItem.getKey());
+                                return Objects.equals(labelItem.getValue(), alertLabelValue);
                             });
-                            if (!tagMatch) {
+                            if (!labelMatch) {
                                 return false;
                             }
                         }
@@ -267,23 +262,27 @@ public class NoticeConfigServiceImpl implements NoticeConfigService, CommandLine
 
     @Override
     public boolean sendTestMsg(NoticeReceiver noticeReceiver) {
-        Map<String, String> tags = new HashMap<>(8);
-        tags.put(CommonConstants.TAG_MONITOR_ID, "100");
-        tags.put(CommonConstants.TAG_MONITOR_NAME, "100Name");
-        tags.put(CommonConstants.TAG_MONITOR_HOST, "127.0.0.1");
-        tags.put(CommonConstants.TAG_THRESHOLD_ID, "200");
-        Alert alert = Alert.builder()
-                .tags(tags)
-                .id(1003445L)
-                .target(ALERT_TEST_TARGET)
-                .priority(CommonConstants.ALERT_PRIORITY_CODE_CRITICAL)
-                .content(ALERT_TEST_CONTENT)
-                .alertDefineId(200L)
-                .times(2)
-                .status((byte) 0)
-                .firstAlarmTime(System.currentTimeMillis())
-                .lastAlarmTime(System.currentTimeMillis()).build();
-        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, alert);
+        Map<String, String> labels = new HashMap<>(8);
+        labels.put(CommonConstants.TAG_MONITOR_ID, "100");
+        labels.put(CommonConstants.TAG_MONITOR_NAME, "100Name");
+        labels.put(CommonConstants.TAG_MONITOR_HOST, "127.0.0.1");
+        labels.put(CommonConstants.TAG_THRESHOLD_ID, "200");
+        SingleAlert singleAlert = SingleAlert.builder()
+                .labels(labels)
+                .content("test send msg! \\n This is the test data. It is proved that it can be received successfully")
+                .startAt(System.currentTimeMillis())
+                .endAt(System.currentTimeMillis())
+                .triggerTimes(2)
+                .annotations(labels)
+                .status("firing")
+                .build();
+        GroupAlert groupAlert = GroupAlert.builder()
+                .commonLabels(singleAlert.getLabels())
+                .commonAnnotations(singleAlert.getAnnotations())
+                .alerts(List.of(singleAlert))
+                .status("firing")
+                .build();
+        return dispatcherAlarm.sendNoticeMsg(noticeReceiver, null, groupAlert);
     }
 
     private void clearNoticeRulesCache() {

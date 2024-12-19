@@ -21,8 +21,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.lang.reflect.Type;
 import org.apache.hertzbeat.common.constants.GeneralConfigTypeEnum;
-import org.apache.hertzbeat.manager.dao.GeneralConfigDao;
-import org.apache.hertzbeat.manager.pojo.dto.EmailNoticeSender;
+import org.apache.hertzbeat.base.dao.GeneralConfigDao;
+import org.apache.hertzbeat.alert.dto.MailServerConfig;
 import org.springframework.stereotype.Service;
 
 /**
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Service;
  */
 
 @Service
-public class MailGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<EmailNoticeSender> {
+public class MailGeneralConfigServiceImpl extends AbstractGeneralConfigServiceImpl<MailServerConfig> {
 
     /**
      * MailGeneralConfigServiceImpl's constructor creates an instance of this class
@@ -55,11 +55,11 @@ public class MailGeneralConfigServiceImpl extends AbstractGeneralConfigServiceIm
      * a TypeReference of NoticeSender type
      */
     @Override
-    public TypeReference<EmailNoticeSender> getTypeReference() {
+    public TypeReference<MailServerConfig> getTypeReference() {
         return new TypeReference<>() {
             @Override
             public Type getType() {
-                return EmailNoticeSender.class;
+                return MailServerConfig.class;
             }
         };
     }
