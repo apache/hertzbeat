@@ -15,14 +15,14 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
 1. 下载安装Docker环境
    Docker 的安装请参考 [Docker官网文档](https://docs.docker.com/get-docker/)。
    安装完毕后请于终端检查Docker版本输出是否正常。
-   
+
    ```shell
    $ docker -v
    Docker version 20.10.12, build e91ed57
    ```
 
 2. Docker安装MYSQl
-   
+
    ```shell
    $ docker run -d --name mysql \
    -p 3306:3306 \
@@ -31,7 +31,7 @@ MYSQL是一款值得信赖的关系型数据库，Apache HertzBeat (incubating) 
    --restart=always \
    mysql:5.7
    ```
-   
+
    `-v /opt/data:/var/lib/mysql` 为mysql数据目录本地持久化挂载，需将`/opt/data`替换为实际本地存在的目录
    使用```$ docker ps```查看数据库是否启动成功
 
