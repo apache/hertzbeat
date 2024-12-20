@@ -243,7 +243,7 @@ public class KafkaCollectImpl extends AbstractCollect {
                                 DescribeConsumerGroupsResult describeResult = adminClient.describeConsumerGroups(Collections.singletonList(groupId));
                                 Map<String, ConsumerGroupDescription> consumerGroupDescriptions = describeResult.all().get();
                                 ConsumerGroupDescription description = consumerGroupDescriptions.get(groupId);
-                                Map<String, String> offsetAndLagNum = getOffsetAndLagNum(topic, groupId, adminClient);
+                                Map<String, String> offsetAndLagNum = getConsumerGroupMetrics(topic, groupId, adminClient);
                                 return CollectRep.ValueRow.newBuilder()
                                         .addColumns(groupId)
                                         .addColumns(String.valueOf(description.members().size()))
@@ -279,7 +279,7 @@ public class KafkaCollectImpl extends AbstractCollect {
         return topicConsumerGroupsMap;
     }
 
-    private static Map<String, String> getOffsetAndLagNum(String topic, String groupId, AdminClient adminClient)
+    private static Map<String, String> getConsumerGroupMetrics(String topic, String groupId, AdminClient adminClient)
             throws ExecutionException, InterruptedException {
         // Get the offset for each groupId for the specified topic
         ListConsumerGroupOffsetsResult consumerGroupOffsetsResult = adminClient.listConsumerGroupOffsets(groupId);
