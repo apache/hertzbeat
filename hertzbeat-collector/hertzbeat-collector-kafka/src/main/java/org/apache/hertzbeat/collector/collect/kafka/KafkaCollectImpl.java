@@ -302,7 +302,10 @@ public class KafkaCollectImpl extends AbstractCollect {
         String partitionOffsets = topicOffsets.entrySet().stream()
                 .filter(entry -> entry.getKey().topic().equals(topic))
                 .map(entry -> String.valueOf(entry.getValue().offset()))
-                .collect(Collectors.joining("、"));
+                .collect(Collectors.collectingAndThen(
+                        Collectors.joining(","),
+                        result -> "[" + result + "]"
+                ));
         Map<String, String> res = new HashMap<>();
         res.put(LAG_NUM, String.valueOf(totalLag));
         res.put(PARTITION_OFFSET, partitionOffsets);
