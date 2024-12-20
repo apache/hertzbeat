@@ -215,11 +215,92 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
-      - field: metric
+      - field: VmPeak
         type: 1
+        label: true
         i18n:
-          zh-CN: 详细监控指标
-          en-US: detail
+          zh-CN: 虚拟内存峰值
+          en-US: VmPeak
+        unit: kB
+      - field: VmSize
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 虚拟内存
+          en-US: VmSize
+        unit: kB
+      - field: VmLck
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 锁定内存
+          en-US: VmLck
+        unit: kB
+      - field: VmPin
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 固定内存
+          en-US: VmPin
+        unit: kB
+      - field: VmHWM
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 物理内存峰值
+          en-US: VmHWM
+        unit: kB
+      - field: VmRSS
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 物理内存使用
+          en-US: VmRSS
+        unit: kB
+      - field: VmData
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 数据段大小
+          en-US: VmData
+        unit: kB
+      - field: VmStk
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 堆栈大小
+          en-US: VmStk
+        unit: kB
+      - field: VmExe
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 代码大小
+          en-US: VmExe
+        unit: kB
+      - field: VmLib
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 共享库大小
+          en-US: VmLib
+        unit: kB
+      - field: VmPTE
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 页表项大小
+          en-US: VmPTE
+        unit: kB
+      - field: VmSwap
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 交换空间
+          en-US: VmSwap
+        unit: kB
+
+
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh
@@ -238,7 +319,7 @@ metrics:
       reuseConnection: ^_^reuseConnection^_^
       # ssh run collect script
       # ssh response data parse type: oneRow, multiRow
-      script: echo "pid metric" ; ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd}' | while read pid _; do cat "/proc/$pid/status" | sed 's/ / /g'| grep Vm | sed -e "s/VmPeak:/虚拟内存峰值:/g" -e "s/VmSize:/当前虚拟内存使用:/g" -e "s/VmLck:/锁定内存:/g" -e "s/VmPin:/固定内存:/g" -e "s/VmHWM:/物理内存峰值:/g" -e "s/VmRSS:/当前物理内存使用:/g" -e "s/VmData:/数据段大小:/g" -e "s/VmStk:/堆栈大小:/g" -e "s/VmExe:/代码大小:/g" -e "s/VmLib:/共享库大小:/g" -e "s/VmPTE:/页表项大小:/g" -e "s/VmSwap:/交换空间使用:/g" | sed "s/^/$pid /" ; done
+      script: echo -e "pid VmPeak VmSize VmLck VmPin VmHWM VmRSS VmData VmStk VmExe VmLib VmPTE VmSwap";ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{ cmd=substr($0, index($0, $3)); sub(/ /, " ", cmd); print $1, cmd }' | while read pid _; do echo -n "$pid ";cat /proc/$pid/status | grep Vm | awk -F ':\t' '{gsub(/^ +| +$/, "", $2); print $2}' | paste -d' ' -s - | sed 's/[[:space:]]*[kKMmGg]*B//g';done
       parseType: multiRow
 
   - name: other
@@ -309,16 +390,41 @@ metrics:
         i18n:
           zh-CN: 进程ID
           en-US: PID
-      - field: metric
+      - field: rchar
         type: 1
         i18n:
-          zh-CN: 监控指标名称
-          en-US: metric
-      - field: value
+          zh-CN: 字符读取数
+          en-US: rchar
+      - field: wchar
         type: 1
         i18n:
-          zh-CN: 监控指标值
-          en-US: value
+          zh-CN: 字符写入数
+          en-US: wchar
+      - field: syscr
+        type: 1
+        i18n:
+          zh-CN: 系统读取次数
+          en-US: syscr
+      - field: syscw
+        type: 1
+        i18n:
+          zh-CN: 系统写入次数
+          en-US: syscw
+      - field: read_bytes
+        type: 1
+        i18n:
+          zh-CN: 读取字节数
+          en-US: read_bytes
+      - field: write_bytes
+        type: 1
+        i18n:
+          zh-CN: 写入字节数
+          en-US: write_bytes
+      - field: cancelled_write_bytes
+        type: 1
+        i18n:
+          zh-CN: 取消写入字节数
+          en-US: cancelled_write_bytes
     # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
     protocol: ssh
     # the config content when protocol is ssh
@@ -337,6 +443,6 @@ metrics:
       reuseConnection: ^_^reuseConnection^_^
       # ssh run collect script
       # ssh response data parse type: oneRow, multiRow
-      script: echo "pid metric value" ; ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd}' | while read pid _; do cat "/proc/$pid/io" | sed -e "s/rchar:/rchar(进程从磁盘或其他文件读取的总字节数):/g" -e "s/wchar:/wchar(进程写入到磁盘或其他文件的总字节数):/g" -e "s/syscr:/syscr(进程发起的读取操作的次数):/g" -e "s/syscw:/syscw(进程发起的写入操作的次数):/g" -e "s/read_bytes:/read_bytes(进程从磁盘实际读取的字节数):/g" -e "s/write_bytes:/write_bytes(进程写入到磁盘的实际字节数):/g" -e "s/cancelled_write_bytes:/cancelled_write_bytes(进程写入但被取消的字节数):/g" | sed "s/^/$pid /" ; done
+      script: echo -e "pid rchar wchar syscr syscw read_bytes write_bytes cancelled_write_bytes";ps -eo pid,cmd | grep -v grep | grep '^_^process_name^_^' | awk '{ cmd=substr($0, index($0, $3)); gsub(/ /, " ", cmd); print $1, cmd }' | while read pid _; do echo -n "$pid ";cat /proc/$pid/io | awk -F ':' '{gsub(/^ +| +$/, "", $2); print $2}' | paste -d' ' -s -;done
       parseType: multiRow
 
