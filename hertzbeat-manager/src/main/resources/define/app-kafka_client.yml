@@ -123,7 +123,7 @@ metrics:
       - field: PartitionNum
         type: 1
         i18n:
-          zh-CN: 分区数量
+          zh-CN: 分区号
           en-US: Partition Num
       - field: earliest
         type: 0
@@ -140,4 +140,41 @@ metrics:
       host: ^_^host^_^
       port: ^_^port^_^
       command: topic-offset
-
+  - name: consumer_detail
+    i18n:
+      zh-CN: 消费者组情况
+      en-US: Consumer Detail Info
+    priority: 3
+    # Kafka offset does not need to be obtained frequently, as getting it too quickly will affect performance
+    interval: 300
+    fields:
+      - field: GroupId
+        type: 1
+        i18n:
+          zh-CN: 消费者组ID
+          en-US: Consumer Group ID
+      - field: Group Member Num
+        type: 1
+        i18n:
+          zh-CN: 消费者实例数量
+          en-US: Group Member Num
+      - field: Topic
+        type: 1
+        i18n:
+          zh-CN: 订阅主题名称
+          en-US: Subscribed Topic Name
+      - field: Offset of Each Partition
+        type: 1
+        i18n:
+          zh-CN: 各分区偏移量
+          en-US: Offset of Each Partition
+      - field: Lag
+        type: 0
+        i18n:
+          zh-CN: 落后偏移量
+          en-US: Total Lag
+    protocol: kclient
+    kclient:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      command: consumer-detail
