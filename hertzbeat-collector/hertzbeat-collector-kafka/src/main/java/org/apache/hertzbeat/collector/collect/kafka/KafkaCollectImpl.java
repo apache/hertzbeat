@@ -24,25 +24,40 @@ import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.ConsumerGroupDescription;
+import org.apache.kafka.clients.admin.ConsumerGroupListing;
+import org.apache.kafka.clients.admin.DescribeConsumerGroupsResult;
 import org.apache.kafka.clients.admin.DescribeTopicsResult;
+import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
+import org.apache.kafka.clients.admin.ListConsumerGroupsResult;
+import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.ListTopicsOptions;
 import org.apache.kafka.clients.admin.ListTopicsResult;
 import org.apache.kafka.clients.admin.OffsetSpec;
 import org.apache.kafka.clients.admin.TopicDescription;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.TopicPartitionInfo;
 import org.springframework.util.Assert;
-
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class KafkaCollectImpl extends AbstractCollect {
+
+    private static final String LAG_NUM = "lag_num";
+    private static final String PARTITION_OFFSET = "Partition_offset";
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -78,6 +93,9 @@ public class KafkaCollectImpl extends AbstractCollect {
                     break;
                 case TOPIC_OFFSET:
                     collectTopicOffset(metricsDataBuilder, adminClient, metrics.getAliasFields());
+                    break;
+                case CONSUMER_DETAIL:
+                    collectTopicConsumerGroups(builder, adminClient);
                     break;
                 default:
                     log.error("Unsupported command: {}", command);
@@ -199,6 +217,98 @@ public class KafkaCollectImpl extends AbstractCollect {
             });
         });
     }
+
+    /**
+     * Collect Topic ConsumerGroups Message
+     *
+     * @param builder     The MetricsData builder
+     * @param adminClient The AdminClient
+     */
+    private static void collectTopicConsumerGroups(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
+        ListTopicsOptions options = new ListTopicsOptions();
+        options.listInternal(true);
+        // Get all consumer groups
+        ListConsumerGroupsResult consumerGroupsResult = adminClient.listConsumerGroups();
+        Collection<ConsumerGroupListing> consumerGroups = consumerGroupsResult.all().get();
+        // Get the list of consumer groups for each topic
+        Map<String, Set<String>> topicConsumerGroupsMap = getTopicConsumerGroupsMap(consumerGroups, adminClient);
+        topicConsumerGroupsMap.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream()
+                        .map(groupId -> {
+                            try {
+                                String topic = entry.getKey();
+                                DescribeConsumerGroupsResult describeResult = adminClient.describeConsumerGroups(Collections.singletonList(groupId));
+                                Map<String, ConsumerGroupDescription> consumerGroupDescriptions = describeResult.all().get();
+                                ConsumerGroupDescription description = consumerGroupDescriptions.get(groupId);
+                                Map<String, String> offsetAndLagNum = getConsumerGroupMetrics(topic, groupId, adminClient);
+                                return CollectRep.ValueRow.newBuilder()
+                                        .addColumns(groupId)
+                                        .addColumns(String.valueOf(description.members().size()))
+                                        .addColumns(topic)
+                                        .addColumns(offsetAndLagNum.get(PARTITION_OFFSET))
+                                        .addColumns(offsetAndLagNum.get(LAG_NUM))
+                                        .build();
+                            } catch (InterruptedException | ExecutionException e) {
+                                log.warn("group {} get message fail", groupId);
+                                return null;
+                            }
+                        })
+                )
+                .filter(Objects::nonNull)
+                .forEach(builder::addValues);
+    }
+
+    private static Map<String, Set<String>> getTopicConsumerGroupsMap(Collection<ConsumerGroupListing> consumerGroups,
+            AdminClient adminClient)
+            throws ExecutionException, InterruptedException {
+        Map<String, Set<String>> topicConsumerGroupsMap = new HashMap<>();
+        for (ConsumerGroupListing consumerGroup : consumerGroups) {
+            String groupId = consumerGroup.groupId();
+            // Get the offset information for the consumer group
+            ListConsumerGroupOffsetsResult consumerGroupOffsetsResult = adminClient.listConsumerGroupOffsets(groupId);
+            Map<TopicPartition, OffsetAndMetadata> topicOffsets = consumerGroupOffsetsResult.partitionsToOffsetAndMetadata().get();
+            // Iterate over all TopicPartitions consumed by the consumer group
+            for (Map.Entry<TopicPartition, OffsetAndMetadata> entry : topicOffsets.entrySet()) {
+                String topic = entry.getKey().topic();
+                topicConsumerGroupsMap.computeIfAbsent(topic, k -> new HashSet<>()).add(groupId);
+            }
+        }
+        return topicConsumerGroupsMap;
+    }
+
+    private static Map<String, String> getConsumerGroupMetrics(String topic, String groupId, AdminClient adminClient)
+            throws ExecutionException, InterruptedException {
+        // Get the offset for each groupId for the specified topic
+        ListConsumerGroupOffsetsResult consumerGroupOffsetsResult = adminClient.listConsumerGroupOffsets(groupId);
+        Map<TopicPartition, OffsetAndMetadata> topicOffsets = consumerGroupOffsetsResult.partitionsToOffsetAndMetadata().get();
+        long totalLag = 0L;
+        for (Entry<TopicPartition, OffsetAndMetadata> topicPartitionOffsetAndMetadataEntry : topicOffsets.entrySet()) {
+            if (topicPartitionOffsetAndMetadataEntry.getKey().topic().equals(topic)) {
+                OffsetAndMetadata offsetMetadata = topicPartitionOffsetAndMetadataEntry.getValue();
+                TopicPartition partition = topicPartitionOffsetAndMetadataEntry.getKey();
+                // Get the latest offset for each TopicPartition
+                ListOffsetsResultInfo resultInfo = adminClient.listOffsets(
+                        Collections.singletonMap(partition, OffsetSpec.latest())).all().get().get(partition);
+                long latestOffset = resultInfo.offset();
+                // Accumulate the lag for each partition
+                long l = latestOffset - offsetMetadata.offset();
+                totalLag += l;
+            }
+        }
+        // Get all offsets and convert them to a string, joined by "、"
+        String partitionOffsets = topicOffsets.entrySet().stream()
+                .filter(entry -> entry.getKey().topic().equals(topic))
+                .map(entry -> String.valueOf(entry.getValue().offset()))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.joining(","),
+                        result -> "[" + result + "]"
+                ));
+        Map<String, String> res = new HashMap<>();
+        res.put(LAG_NUM, String.valueOf(totalLag));
+        res.put(PARTITION_OFFSET, partitionOffsets);
+        return res;
+    }
+
 
     @Override
     public String supportProtocol() {

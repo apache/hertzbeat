@@ -156,6 +156,8 @@ public class HttpCollectImpl extends AbstractCollect {
                             parseResponseByWebsite(resp, metrics, metrics.getHttp(), metricsDataBuilder, responseTime, response);
                     case DispatchConstants.PARSE_SITE_MAP ->
                             parseResponseBySiteMap(resp, metrics.getAliasFields(), metricsDataBuilder);
+                    case DispatchConstants.PARSE_HEADER ->
+                            parseResponseByHeader(builder, metrics.getAliasFields(), response);
                     default ->
                             parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), metricsDataBuilder, responseTime);
                 }
@@ -195,6 +197,24 @@ public class HttpCollectImpl extends AbstractCollect {
         }
     }
 
+    private void parseResponseByHeader(CollectRep.MetricsData.Builder builder, List<String> aliases, CloseableHttpResponse response) {
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        for (String alias : aliases) {
+            if (!StringUtils.hasText(alias)) {
+                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                continue;
+            }
+            final Header firstHeader = response.getFirstHeader(alias);
+            if (Objects.isNull(firstHeader)) {
+                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                continue;
+            }
+
+            valueRowBuilder.addColumns(firstHeader.getValue());
+        }
+        builder.addValues(valueRowBuilder.build());
+    }
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_HTTP;
@@ -229,6 +249,7 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     private void addColumnForSummary(Long responseTime, MetricsDataBuilder metricsDataBuilder, int keywordNum, String alias) {
+
         if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
             metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
         } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {

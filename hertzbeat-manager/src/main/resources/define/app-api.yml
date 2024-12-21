@@ -352,5 +352,5 @@ metrics:
         digestAuthUsername: ^_^username^_^
         digestAuthPassword: ^_^password^_^
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
-      parseType: website
+      parseType: header
       keyword: ^_^keyword^_^
