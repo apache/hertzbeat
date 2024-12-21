@@ -195,6 +195,10 @@ public interface DispatchConstants {
      */
     String PARSE_SITE_MAP = "sitemap";
     /**
+     * Analysis method resolution: response header
+     */
+    String PARSE_HEADER = "header";
+    /**
      * Parsing method prometheus exporter data
      */
     String PARSE_PROMETHEUS = "prometheus";
