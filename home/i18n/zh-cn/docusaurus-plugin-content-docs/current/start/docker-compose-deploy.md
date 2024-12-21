@@ -15,7 +15,7 @@ sidebar_label: Docker Compose方式安装
 
 1. 下载启动脚本包
 
-   从 [下载地址](https://github.com/apache/hertzbeat/releases/download/v1.6.0/apache-hertzbeat-1.6.0-incubating-docker-compose.tar.gz) 下载安装脚本包 `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz`
+   从 [下载地址](/docs/download) 下载安装脚本包 `apache-hertzbeat-xxx-incubating-docker-compose.tar.gz`
 
 2. 选择使用 HertzBeat + PostgreSQL + VictoriaMetrics 方案
 

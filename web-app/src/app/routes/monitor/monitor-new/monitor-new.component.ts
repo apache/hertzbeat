@@ -49,7 +49,6 @@ export class MonitorNewComponent implements OnInit {
   monitor!: Monitor;
   collectors!: Collector[];
   collector: string = '';
-  detected: boolean = false;
   grafanaDashboard!: GrafanaDashboard;
   // whether it is loading
   isSpinning: boolean = false;
@@ -78,7 +77,6 @@ export class MonitorNewComponent implements OnInit {
             this.router.navigateByUrl('/monitors/new?app=website');
           }
           this.titleSvc.setTitleByI18n(`monitor.app.${this.monitor.app}`);
-          this.detected = false;
           this.isSpinning = true;
           return this.appDefineSvc.getAppParamsDefine(this.monitor.app);
         })
@@ -163,17 +161,12 @@ export class MonitorNewComponent implements OnInit {
 
   onSubmit(info: any) {
     let addMonitor = {
-      detected: this.detected,
       monitor: info.monitor,
       collector: info.collector,
       params: info.params.concat(info.advancedParams),
       grafanaDashboard: info.grafanaDashboard
     };
-    if (this.detected) {
-      this.spinningTip = this.i18nSvc.fanyi('monitors.spinning-tip.detecting');
-    } else {
-      this.spinningTip = 'Loading...';
-    }
+    this.spinningTip = 'Loading...';
     this.isSpinning = true;
     this.monitorSvc.newMonitor(addMonitor).subscribe(
       message => {
@@ -194,7 +187,6 @@ export class MonitorNewComponent implements OnInit {
 
   onDetect(info: any) {
     let detectMonitor = {
-      detected: true,
       monitor: info.monitor,
       collector: info.collector,
       params: info.params.concat(info.advancedParams)

@@ -1,0 +1,346 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: db
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: mongodb_atlas
+# The monitoring i18n name
+name:
+  zh-CN: MongoDB Atlas 数据库
+  en-US: MongoDB Atlas Database
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 MongoDB Atlas 数据库的通用指标进行测量监控。<br>您可以点击 “<i>新建 MongoDB Atlas 数据库</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat monitors MongoDB Atlas general performance metrics. You could click the "<i>New MongoDB Atlas</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 對 MongoDB Atlas 數據庫的通用指標進行測量監控。<br>您可以點擊 “<i>新建 MongoDB Atlas 數據庫</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/mongodb
+  en-US: https://hertzbeat.apache.org/docs/help/mongodb
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 50
+    required: false
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+  - field: database
+    name:
+      zh-CN: 数据库
+      en-US: database
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    required: true
+    defaultValue: 'test'
+  - field: authenticationDatabase
+    name:
+      zh-CN: 认证数据库
+      en-US: authenticationDatabase
+    type: text
+    limit: 50
+    required: true
+    defaultValue: 'admin'
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 连接超时时间(ms)
+      en-US: Connect Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,100000]'
+    # required-true or false
+    required: true
+    # default value 6000
+    defaultValue: 6000
+  # field-param field key
+  - field: model
+    hide: true
+    defaultValue: 'mongodb-atlas'
+    # name-param field display i18n name
+    name:
+      zh-CN: 集群模式
+      en-US: Cluster Model
+    # type-param field type(most mapping the html input type)
+    type: text
+# can get status information and other config params of MongoDB by running Diagnostic Commands
+# https://www.mongodb.com/docs/manual/reference/command/nav-diagnostic/
+# name must be Diagnostic Commands 's name,support . way to get subdocument, should be careful about if the user that need connection have the right to run command
+
+# collect metrics config list
+metrics:
+  # https://www.mongodb.com/docs/manual/reference/command/buildInfo/#usage
+  # metrics - buildInfo
+  - name: buildInfo
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    i18n:
+      zh-CN: 构建信息
+      en-US: Build Info
+    # monitoring metrics list
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+      - field: gitVersion
+        type: 1
+        i18n:
+          zh-CN: git版本
+          en-US: Git Version
+      - field: sysInfo
+        type: 1
+        i18n:
+          zh-CN: 系统信息
+          en-US: Sys Info
+      - field: allocator
+        type: 1
+        i18n:
+          zh-CN: 分配器
+          en-US: Allocator
+      - field: javascriptEngine
+        type: 1
+        i18n:
+          zh-CN: JavaScript引擎
+          en-US: JavaScript Engine
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: mongodb
+    # the config content when protocol is mongodb
+    mongodb:
+      #mongodb host:
+      host: ^_^host^_^
+      #mongodb port
+      port: ^_^port^_^
+      #user's username
+      username: ^_^username^_^
+      #user's password
+      password: ^_^password^_^
+      #mongodb's database
+      database: ^_^database^_^
+      #mongodb's model
+      model: ^_^model^_^
+      #Specifies the database in which the User is created
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      #The buildInfo command is an administrative command which returns a build summary for the current mongod.
+      command: buildInfo
+      # timeout unit：ms
+      timeout: ^_^timeout^_^
+
+  # https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
+  - name: server_document
+    priority: 1
+    i18n:
+      zh-CN: 服务器文档
+      en-US: Server Document
+    fields:
+      - field: delete
+        type: 0
+        i18n:
+          zh-CN: 已删除数
+          en-US: delete
+      - field: insert
+        type: 0
+        i18n:
+          zh-CN: 已插入数
+          en-US: insert
+      - field: update
+        type: 0
+        i18n:
+          zh-CN: 更新数
+          en-US: update
+      - field: query
+        type: 0
+        i18n:
+          zh-CN: 查询数
+          en-US: query
+      - field: getmore
+        type: 0
+        i18n:
+          zh-CN: 光标中剩余文档的请求数
+          en-US: getmore
+      - field: command
+        type: 0
+        i18n:
+          zh-CN: 执行命令操作的总数
+          en-US: command
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      model: ^_^model^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: serverStatus.opcounters
+      timeout: ^_^timeout^_^
+
+  - name: network
+    priority: 2
+    i18n:
+      zh-CN: 网络操作
+      en-US: Network Operation
+    fields:
+      - field: bytesIn
+        type: 0
+        i18n:
+          zh-CN: 读取字节数
+          en-US: Bytes In
+      - field: bytesOut
+        type: 0
+        i18n:
+          zh-CN: 写入字节数
+          en-US: Bytes Out
+      - field: numRequests
+        type: 0
+        i18n:
+          zh-CN: 请求数
+          en-US: Request Num
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      model: ^_^model^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: serverStatus.network
+      timeout: ^_^timeout^_^
+
+  - name: connections
+    priority: 3
+    i18n:
+      zh-CN: 连接信息
+      en-US: Connection Info
+    fields:
+      - field: current
+        type: 0
+        i18n:
+          zh-CN: 当前正在进行连接数
+          en-US: Current Connections
+      - field: available
+        type: 0
+        i18n:
+          zh-CN: 可用连接数
+          en-US: Available Connections
+      - field: totalCreated
+        type: 0
+        i18n:
+          zh-CN: 总创建连接数
+          en-US: Total Created Connections
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      model: ^_^model^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: serverStatus.connections
+      timeout: ^_^timeout^_^
+
+  - name: dbstats
+    priority: 4
+    i18n:
+      zh-CN: 数据库统计
+      en-US: Database Statistics
+    fields:
+      - field: db
+        type: 1
+        i18n:
+          zh-CN: 数据库名称
+          en-US: Database Name
+      - field: collections
+        type: 0
+        i18n:
+          zh-CN: 集合数
+          en-US: Collections
+      - field: views
+        type: 0
+        i18n:
+          zh-CN: 视图数
+          en-US: Views
+      - field: objects
+        type: 0
+        i18n:
+          zh-CN: 文档数
+          en-US: Objects
+      - field: avgObjSize
+        type: 0
+        unit: Bytes
+        i18n:
+          zh-CN: 文档平均大小
+          en-US: Document Avg Size
+      - field: dataSize
+        type: 0
+        unit: Bytes
+        i18n:
+          zh-CN: 文档大小
+          en-US: Document Size
+      - field: storageSize
+        type: 0
+        unit: Bytes
+        i18n:
+          zh-CN: 使用存储空间大小
+          en-US: Storage Size
+      - field: indexes
+        type: 0
+        i18n:
+          zh-CN: 索引数
+          en-US: Indexes
+      - field: indexSize
+        type: 0
+        unit: Bytes
+        i18n:
+          zh-CN: 索引大小
+          en-US: Index Size
+    protocol: mongodb
+    mongodb:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      username: ^_^username^_^
+      password: ^_^password^_^
+      database: ^_^database^_^
+      model: ^_^model^_^
+      authenticationDatabase: ^_^authenticationDatabase^_^
+      command: dbStats
+      timeout: ^_^timeout^_^

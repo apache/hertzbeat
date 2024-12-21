@@ -1,0 +1,335 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category: service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: prestodb
+# The app api i18n name
+name:
+  zh-CN: PrestoDB
+  en-US: PrestoDB
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 对 PrestoDB 数据库平台的性能指标进行监测。您可以点击“新增 PrestoDB”按钮并进行配置，或在“更多操作”中导入已有配置。
+  en-US: Hertzbeat monitors performance metrics of the PrestoDB database platform. You can click the "Add PrestoDB" button and proceed with the configuration or import an existing setup through the "More Actions" menu.
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/prestodb
+  en-US: https://hertzbeat.apache.org/docs/help/prestodb
+params:
+  - field: host
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+  - field: ssl
+    name:
+      zh-CN: 启用HTTPS
+      en-US: HTTPS
+    type: boolean
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    type: number
+    required: false
+    hide: true
+    defaultValue: 6000
+
+metrics:
+  - name: cluster
+    i18n:
+      zh-CN: 集群状态
+      en-US: Cluster Status
+    priority: 0
+    fields:
+      - field: activeWorkers
+        type: 0
+        i18n:
+          zh-CN: 活跃节点数
+          en-US: Active Workers
+      - field: runningQueries
+        type: 0
+        i18n:
+          zh-CN: 运行中的查询数
+          en-US: Running Queries
+      - field: queuedQueries
+        type: 0
+        i18n:
+          zh-CN: 队列中的查询数
+          en-US: Queued Queries
+      - field: blockedQueries
+        type: 0
+        i18n:
+          zh-CN: 阻塞的查询数
+          en-US: Blocked Queries
+      - field: runningDrivers
+        type: 0
+        i18n:
+          zh-CN: 运行中的驱动数
+          en-US: Running Drivers
+      - field: runningTasks
+        type: 0
+        i18n:
+          zh-CN: 运行中的任务数
+          en-US: Running Tasks
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /v1/cluster
+      timeout: ^_^timeout^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: node
+    i18n:
+      zh-CN: 节点信息
+      en-US: Node Info
+    priority: 1
+    fields:
+      - field: uri
+        type: 1
+        i18n:
+          zh-CN: 节点链接
+          en-US: Node Uri
+      - field: recentRequests
+        type: 0
+        i18n:
+          zh-CN: 最近一段时间内的请求数量
+          en-US: Recent Requests
+      - field: recentFailures
+        type: 0
+        i18n:
+          zh-CN: 最近一段时间内的失败请求数量
+          en-US: Recent Failures
+      - field: recentSuccesses
+        type: 0
+        i18n:
+          zh-CN: 最近一段时间内的成功请求数量
+          en-US: Recent Successes
+      - field: lastRequestTime
+        type: 1
+        i18n:
+          zh-CN: 最近一次请求的时间
+          en-US: Last Request Time
+      - field: lastResponseTime
+        type: 1
+        i18n:
+          zh-CN: 最近一次响应的时间
+          en-US: Last Response Time
+      - field: age
+        type: 0
+        i18n:
+          zh-CN: 持续时间
+          en-US: Age
+      - field: recentFailureRatio
+        type: 0
+        i18n:
+          zh-CN: 最近一段时间内的失败
+          en-US: Recent Failure Ratio
+
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /v1/node
+      timeout: ^_^timeout^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      parseType: jsonPath
+      parseScript: '$[*]'
+
+  - name: status
+    i18n:
+      zh-CN: 节点状态
+      en-US: Node Status
+    priority: 2
+    fields:
+      - field: nodeId
+        type: 1
+        i18n:
+          zh-CN: 节点ID
+          en-US: Node ID
+      - field: nodeVersion
+        type: 1
+        i18n:
+          zh-CN: 节点版本
+          en-US: Node Version
+      - field: environment
+        type: 1
+        i18n:
+          zh-CN: 环境
+          en-US: Environment
+      - field: coordinator
+        type: 1
+        i18n:
+          zh-CN: 是否为协调节点
+          en-US: Is Coordinator
+      - field: uptime
+        type: 1
+        i18n:
+          zh-CN: 正常运行时间
+          en-US: Uptime
+      - field: externalAddress
+        type: 1
+        i18n:
+          zh-CN: 外部地址
+          en-US: External Address
+      - field: internalAddress
+        type: 1
+        i18n:
+          zh-CN: 内部地址
+          en-US: Internal Address
+      - field: processors
+        type: 0
+        i18n:
+          zh-CN: 处理器数量
+          en-US: Processors
+      - field: processCpuLoad
+        type: 0
+        i18n:
+          zh-CN: 进程CPU负载
+          en-US: Process CPU Load
+      - field: systemCpuLoad
+        type: 0
+        i18n:
+          zh-CN: 系统CPU负载
+          en-US: System CPU Load
+      - field: heapUsed
+        type: 0
+        i18n:
+          zh-CN: 已使用堆内存
+          en-US: Heap Memory Used
+        unit: MB
+      - field: heapAvailable
+        type: 0
+        i18n:
+          zh-CN: 可用堆内存
+          en-US: Heap Memory Available
+        unit: MB
+      - field: nonHeapUsed
+        type: 0
+        i18n:
+          zh-CN: 已使用非堆内存
+          en-US: Non-Heap Memory Used
+        unit: MB
+    units:
+      - heapUsed=B->MB
+      - heapAvailable=B->MB
+      - nonHeapUsed=B->MB
+    aliasFields:
+      - $.nodeId
+      - $.nodeVersion.version
+      - $.environment
+      - $.coordinator
+      - $.uptime
+      - $.externalAddress
+      - $.internalAddress
+      - $.processors
+      - $.processCpuLoad
+      - $.systemCpuLoad
+      - $.heapUsed
+      - $.heapAvailable
+      - $.nonHeapUsed
+    calculates:
+      - nodeId = $.nodeId
+      - nodeVersion = $.nodeVersion.version
+      - environment = $.environment
+      - coordinator = $.coordinator
+      - uptime = $.uptime
+      - externalAddress = $.externalAddress
+      - internalAddress = $.internalAddress
+      - processors = $.processors
+      - processCpuLoad = $.processCpuLoad
+      - systemCpuLoad = $.systemCpuLoad
+      - heapUsed = $.heapUsed
+      - heapAvailable = $.heapAvailable
+      - nonHeapUsed = $.nonHeapUsed
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /v1/status
+      timeout: ^_^timeout^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$'
+
+  - name: task
+    i18n:
+      zh-CN: 任务查询
+      en-US: Task Query
+    priority: 3
+    fields:
+      - field: taskId
+        type: 1
+        i18n:
+          zh-CN: 任务ID
+          en-US: Task ID
+      - field: version
+        type: 1
+        i18n:
+          zh-CN: 版本
+          en-US: Version
+      - field: state
+        type: 1
+        i18n:
+          zh-CN: 状态
+          en-US: State
+      - field: self
+        type: 1
+        i18n:
+          zh-CN: 自身
+          en-US: Self
+      - field: lastHeartbeat
+        type: 1
+        i18n:
+          zh-CN: 最后心跳时间
+          en-US: Last Heartbeat
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: /v1/task
+      timeout: ^_^timeout^_^
+      method: GET
+      ssl: ^_^ssl^_^
+      authorization:
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      parseType: jsonPath
+      parseScript: '$[*]'

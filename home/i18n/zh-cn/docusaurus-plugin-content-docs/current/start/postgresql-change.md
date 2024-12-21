@@ -23,7 +23,7 @@ PostgreSQL 是一个功能强大，开源的关系型数据库管理系统（RDB
 2. Docker 安装 PostgreSQL
 
    ```shell
-   docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgresql:15       
+   docker run -d --name postgresql -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=123456 -e TZ=Asia/Shanghai postgres:15       
    ```
 
    使用 ```$ docker ps``` 查看数据库是否启动成功
@@ -97,5 +97,7 @@ spring:
         logging:
           level: SEVERE
 ```
+
+> 注意：上述是针对下载安装包的方式，对于本地切换数据源，只需完成[数据库创建](./postgresql-change#数据库创建)以及修改`hertzbeat-manager/src/main/resources/application.yml`中的配置即可。
 
 **启动 HertzBeat 浏览器访问 <http://ip:1157/> 开始使用HertzBeat进行监控告警，默认账户密码 admin/hertzbeat**

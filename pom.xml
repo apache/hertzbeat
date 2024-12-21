@@ -79,15 +79,16 @@
     
     
     <modules>
-        <module>manager</module>
-        <module>alerter</module>
-        <module>common</module>
-        <module>collector</module>
-        <module>warehouse</module>
-        <module>remoting</module>
-        <module>push</module>
-        <module>plugin</module>
-        <module>grafana</module>
+        <module>hertzbeat-manager</module>
+        <module>hertzbeat-alerter</module>
+        <module>hertzbeat-common</module>
+        <module>hertzbeat-collector</module>
+        <module>hertzbeat-warehouse</module>
+        <module>hertzbeat-remoting</module>
+        <module>hertzbeat-push</module>
+        <module>hertzbeat-plugin</module>
+        <module>hertzbeat-grafana</module>
+        <module>hertzbeat-e2e</module>
     </modules>
 
     <properties>
@@ -167,7 +168,7 @@
         <influxdb.version>2.23</influxdb.version>
         <spring-cloud-starter-openfeign.version>3.0.5</spring-cloud-starter-openfeign.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
-        <greptimedb.version>0.7.3</greptimedb.version>
+        <greptimedb.version>0.9.1</greptimedb.version>
         <mysql-jdbcdriver.version>8.0.33</mysql-jdbcdriver.version>
     </properties>
 
@@ -272,11 +273,6 @@
                 <version>${protobuf.version}</version>
             </dependency>
             <!-- commons-net -->
-            <dependency>
-                <groupId>commons-net</groupId>
-                <artifactId>commons-net</artifactId>
-                <version>${commons-net}</version>
-            </dependency>
             <dependency>
                 <groupId>commons-net</groupId>
                 <artifactId>commons-net</artifactId>

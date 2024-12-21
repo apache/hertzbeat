@@ -1,7 +1,7 @@
 ---
 id: kafka  
 title: 监控：Kafka监控      
-sidebar_label: Kafka监控
+sidebar_label: Apache Kafka 监控
 keywords: [开源监控系统, 开源消息中间件监控, Kafka监控]
 ---
 

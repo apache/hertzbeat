@@ -147,8 +147,7 @@
     "monitor.type": "Monitor Type",
     "monitor.name": "Monitor Task Name",
     "monitor.metrics": "Monitor Metrics",
-    "help.message.content": "Custom Monitoring Bulletin",
-    "help.content": "Custom monitoring bulletin, displaying selected metrics of a specific monitor in table form",
+    "help.content": "Custom monitoring bulletin(beta), displaying selected metrics of a specific monitor in table form",
     "help.link": ""
   },
   "question.link": "https://hertzbeat.apache.org/docs/help/issue/",

@@ -1,0 +1,385 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category: service-application service monitoring, db-database monitoring, custom-custom monitoring.
+category: custom
+# The monitoring application type name (consistent with the file name)
+app: influxdb_promql
+name:
+  zh-CN: InfluxDB-PromQL
+  en-US: InfluxDB-PromQL
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 使用 Prometheus PromQL 从 Prometheus 服务器中查询到 InfluxDB 的通用指标数据来进行监控。此方案适用于 Prometheus 已监控 InfluxDB，需要从 Prometheus 服务器抓取 InfluxDB 的监控数据。<br>您可以点击 “<i>新建 InfluxDB-PromQL</i>” 并进行配置，或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: HertzBeat uses Prometheus PromQL query metrics data from Prometheus Server to monitoring InfluxDB. This solution is suitable for Prometheus to monitor InfluxDB, and it need to capture InfluxDB monitoring data from the Prometheus server. <br>You could click the "<i>New InfluxDB-PromQL</i>" button and proceed with the configuration or import an existing setup through the "<i>More Actions</i>" menu.
+  zh-TW: Hertzbeat 使用 Prometheus PromQL 從 Prometheus 服務器中查詢到 InfluxDB 的通用指標數據來進行監控。此方案適用于 Prometheus 已監控 InfluxDB，需要從 Prometheus 服務器抓取 InfluxDB 的監控數據。<br>您可以點擊 “<i>新建 InfluxDB-PromQL</i>” 並進行配置，或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/influxdb_promql
+  en-US: https://hertzbeat.apache.org/docs/help/influxdb_promql
+params:
+  - field: host
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    type: host
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    type: number
+    range: '[0,65535]'
+    required: true
+    defaultValue: 9090
+  - field: method
+    name:
+      zh-CN: 请求方式
+      en-US: Method
+    type: radio
+    required: true
+    options:
+      - label: GET请求
+        value: GET
+      - label: POST请求
+        value: POST
+      - label: PUT请求
+        value: PUT
+      - label: DELETE请求
+        value: DELETE
+    defaultValue: GET
+  - field: uri
+    name:
+      zh-CN: 相对路径
+      en-US: URI
+    type: text
+    limit: 200
+    required: true
+    placeholder: 'API地址除IP端口外的路径 例如:/v2/book/bar'
+    defaultValue: /api/v1/query
+  - field: ssl
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+    type: boolean
+    required: false
+  - field: headers
+    name:
+      zh-CN: 请求Headers
+      en-US: Headers
+    type: key-value
+    required: false
+    keyAlias: Header Name
+    valueAlias: Header Value
+  - field: params
+    name:
+      zh-CN: 查询Params
+      en-US: Params
+    type: key-value
+    required: false
+    keyAlias: Param Key
+    valueAlias: Param Value
+  - field: contentType
+    name:
+      zh-CN: Content-Type
+      en-US: Content-Type
+    type: text
+    placeholder: '请求BODY资源类型'
+    required: false
+    hide: true
+  - field: payload
+    name:
+      zh-CN: 请求BODY
+      en-US: BODY
+    type: textarea
+    placeholder: 'POST PUT请求时有效'
+    required: false
+    hide: true
+  - field: authType
+    name:
+      zh-CN: 认证方式
+      en-US: Auth Type
+    type: radio
+    required: false
+    hide: true
+    options:
+      - label: Basic Auth
+        value: Basic Auth
+      - label: Digest Auth
+        value: Digest Auth
+  - field: username
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    type: text
+    limit: 50
+    required: false
+    hide: true
+  - field: password
+    name:
+      zh-CN: 密码
+      en-US: Password
+    type: password
+    required: false
+    hide: true
+
+metrics:
+  # The first monitoring metrics basic_influxdb_memstats_alloc.
+  # Note: Built-in monitoring metrics include (responseTime - response time)
+  - name: basic_influxdb_memstats_alloc
+    i18n:
+      zh-CN: InfluxDB内存分配
+      en-US: InfluxDB Memory Allocation
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # metrics fields list.
+    fields:
+      # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
+      - field: instance
+        type: 1
+        i18n:
+          zh-CN: 实例
+          en-US: Instance
+      - field: timestamp
+        type: 1
+        i18n:
+          zh-CN: 时间戳
+          en-US: Timestamp
+      - field: value
+        type: 1
+        i18n:
+          zh-CN: 值
+          en-US: Value
+# Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
+    protocol: http
+# When the protocol is HTTP, the specific collection configuration is as follows
+    http:
+      # Host: IPv4, IPv6 or domain name of the host.
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      #URL request path.
+      url: ^_^uri^_^
+      # request methods:GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # Header content
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # Request parameter content
+      params:
+        ^_^params^_^: ^_^params^_^
+      # authorization
+      authorization:
+        # Authentication method: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
+      # todo xmlPath-xmlPath script, PromQL-PromQL data rule
+      parseType: PromQL
+
+  - name: influxdb_database_numMeasurements
+    i18n:
+      zh-CN: InfluxDB数据库测量值
+      en-US: InfluxDB Database Measurements
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 1
+    # metrics fields list.
+    fields:
+      # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
+      - field: job
+        type: 1
+        i18n:
+          zh-CN: 任务
+          en-US: Job
+      - field: instance
+        type: 1
+        i18n:
+          zh-CN: 实例
+          en-US: Instance
+      - field: database
+        type: 1
+        i18n:
+          zh-CN: 数据库
+          en-US: Database
+      - field: timestamp
+        type: 1
+        i18n:
+          zh-CN: 时间戳
+          en-US: Timestamp
+      - field: value
+        type: 1
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
+    protocol: http
+    # When the protocol is HTTP, the specific collection configuration is as follows
+    http:
+      # Host: IPv4, IPv6 or domain name of the host.
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      #URL request path.
+      url: ^_^uri^_^
+      # request methods:GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # Header content
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # Request parameter content
+      params:
+        query: influxdb_database_numMeasurements
+      # Authentication
+      authorization:
+        # Authentication method: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
+      # todo xmlPath-xmlPath script, PromQL-PromQL data rule
+      parseType: PromQL
+
+  - name: influxdb_query_rate_seconds    # Query rate per second
+    i18n:
+      zh-CN: 每秒查询速率
+      en-US: Query Rate Per Second
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 2
+    # metrics fields list.
+    fields:
+      # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
+      - field: instance
+        type: 1
+        i18n:
+          zh-CN: 实例
+          en-US: Instance
+      - field: timestamp
+        type: 1
+        i18n:
+          zh-CN: 时间戳
+          en-US: Timestamp
+      - field: value
+        type: 1
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
+    protocol: http
+    # When the protocol is HTTP, the specific collection configuration is as follows
+    http:
+      # Host: IPv4, IPv6 or domain name of the host.
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      #URL request path.
+      url: ^_^uri^_^
+      # request methods:GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # Header content
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # Request parameter content
+      params:
+        query: irate(influxdb_queryExecutor_queriesFinished[5m])
+      # authorization
+      authorization:
+        # Authentication method: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
+      # todo xmlPath-xmlPath script, PromQL-PromQL data rule
+      parseType: PromQL
+
+  - name: influxdb_queryExecutor_queriesFinished_10s    # Query rate per second
+    
+    i18n:
+      zh-CN: 查询执行器每10秒查询完成数
+      en-US: Query Executor Queries Finished Every 10 Seconds
+    # metrics scheduling priority(0->127), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 3
+    # metrics fields list.
+    fields:
+      # Metric information includes the following: Field name, Type: 0-number, 1-string, instance: indicates whether the metric is the primary key, unit: the unit of the metric
+      - field: instance
+        type: 1
+        i18n:
+          zh-CN: 实例
+          en-US: Instance
+      - field: timestamp
+        type: 1
+        i18n:
+          zh-CN: 时间戳
+          en-US: Timestamp
+      - field: value
+        type: 1
+        i18n:
+          zh-CN: 值
+          en-US: Value
+    # Monitoring protocol used for data collection, e.g. sql, ssh, http, telnet, wmi, snmp, sdk.
+    protocol: http
+    # When the protocol is HTTP, the specific collection configuration is as follows
+    http:
+      # Host: IPv4, IPv6 or domain name of the host.
+      host: ^_^host^_^
+      # port
+      port: ^_^port^_^
+      #URL request path.
+      url: ^_^uri^_^
+      # request methods:GET POST PUT DELETE PATCH
+      method: ^_^method^_^
+      # Whether to enable SSL/TLS, i.e. whether it is HTTP or HTTPS, default is false.
+      ssl: ^_^ssl^_^
+      payload: ^_^payload^_^
+      # Header content
+      headers:
+        content-type: ^_^contentType^_^
+        ^_^headers^_^: ^_^headers^_^
+      # Request parameter content
+      params:
+        query: influxdb_queryExecutor_queriesFinished[10s]
+      # authorization
+      authorization:
+        # Authentication method: Basic Auth, Digest Auth, Bearer Token
+        type: ^_^authType^_^
+        basicAuthUsername: ^_^username^_^
+        basicAuthPassword: ^_^password^_^
+        digestAuthUsername: ^_^username^_^
+        digestAuthPassword: ^_^password^_^
+      # Response data parsing method: default - system rules, jsonPath - jsonPath script, website - API availability monitoring.
+      # todo xmlPath-xmlPath script,PromQL-PromQL data rule
+      parseType: PromQL

@@ -99,4 +99,6 @@ spring:
 
 - It is recommended to set the host field in the MySQL URL to the public IP address when using Hertzbeat in docker.
 
+> Note: The above applies to the method of downloading and installing the package. For local data source switching, simply complete the [Database creation](./mysql-change#database-creation) and modify the configuration in `hertzbeat-manager/src/main/resources/application.yml`.
+
 **Start HertzBeat  visit <http://ip:1157/> on the browser  You can use HertzBeat monitoring alarm, default account and password are admin/hertzbeat**

@@ -58,11 +58,15 @@ resourceRole:
   - /api/status/page/**===post===[admin,user]
   - /api/status/page/**===put===[admin,user]
   - /api/status/page/**===delete===[admin]
+  - /api/grafana/**===get===[admin,user,guest]
+  - /api/grafana/**===post===[admin,user]
+  - /api/grafana/**===put===[admin,user]
+  - /api/grafana/**===delete===[admin]
   - /api/bulletin/**===get===[admin,user,guest]
   - /api/bulletin/**===post===[admin,user]
   - /api/bulletin/**===put===[admin,user]
   - /api/bulletin/**===delete===[admin]
-  
+
 # config the resource restful api that need bypass auth protection
 # rule: api===method 
 # eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.

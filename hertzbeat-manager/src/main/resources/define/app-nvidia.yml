@@ -1,0 +1,198 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+category: server
+# The monitoring type eg: linux windows tomcat mysql aws...
+app: nvidia
+# The monitoring i18n name
+name:
+  zh-CN: NVIDIA
+  en-US: NVIDIA
+# The description and help of this monitoring type
+help:
+  zh-CN: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'> SSH 协议</a> 对 NVIDIA GPU显卡的通用性能指标进行采集监控。<br>您可以点击“<i>新建 NVIDIA</i>”并配置HOST端口账户等相关参数进行添加，支持SSH账户密码或密钥认证。或者选择“<i>更多操作</i>”，导入已有配置。
+  en-US: Hertzbeat uses the <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH protocol</a> to collect and monitor general performance metrics of NVIDIA GPUs. <br> You can click " <i>Create NVIDIA</i> " to add and configure parameters such as HOST, port, account, etc., supporting SSH account password or key authentication. Alternatively, you can select " <i>More Actions</i> " to import an existing configuration.
+  zh-TW: Hertzbeat 使用 <a class='help_module_content' href='https://hertzbeat.apache.org/docs/advanced/extend-ssh'>SSH 協議</a> 對 NVIDIA GPU 顯卡的通用性能指標進行採集監控。<br>您可以點擊“<i>新建 NVIDIA</i>”並配置 HOST、端口、帳戶等相關參數進行添加，支持 SSH 帳戶密碼或密鑰認證。或者選擇“<i>更多操作</i>”，導入已有配置。
+helpLink:
+  zh-CN: https://hertzbeat.apache.org/zh-cn/docs/help/nvidia/
+  en-US: https://hertzbeat.apache.org/docs/help/nvidia/
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  - field: host
+    # name-param field display i18n name
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    type: host
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: port
+    # name-param field display i18n name
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[0,65535]'
+    # required-true or false
+    required: true
+    # default value
+    defaultValue: 22
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[400,200000]'
+    # required-true or false
+    required: false
+    # default value
+    # 默认值
+    defaultValue: 6000
+  # field-param field key
+  - field: reuseConnection
+    # name-param field display i18n name
+    name:
+      zh-CN: 复用连接
+      en-US: Reuse Connection
+    # type-param field type(most mapping the html input type)
+    type: boolean
+    # required-true or false
+    required: true
+    defaultValue: true
+  # field-param field key
+  - field: username
+    # name-param field display i18n name
+    name:
+      zh-CN: 用户名
+      en-US: Username
+    # type-param field type(most mapping the html input type)
+    type: text
+    # when type is text, use limit to limit string length
+    limit: 50
+    # required-true or false
+    required: true
+  # field-param field key
+  - field: password
+    # name-param field display i18n name
+    name:
+      zh-CN: 密码
+      en-US: Password
+    # type-param field type(most mapping the html input tag)
+    type: password
+    # required-true or false
+    required: false
+  # field-param field key
+  - field: privateKey
+    # name-param field display i18n name
+    name:
+      zh-CN: 私钥
+      en-US: PrivateKey
+    # type-param field type(most mapping the html input type)
+    type: textarea
+    placeholder: -----BEGIN RSA PRIVATE KEY-----
+    # required-true or false
+    required: false
+    # hide param-true or false
+    hide: true
+# collect metrics config list
+metrics:
+  # metrics - basic, inner monitoring metrics (responseTime - response time)
+  - name: basic
+    i18n:
+      zh-CN: 显卡基本信息
+      en-US: Basic Information
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    priority: 0
+    # collect metrics content
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      - field: index
+        type: 1
+        label: true
+        i18n:
+          zh-CN: 显卡索引
+          en-US: Host Name
+      - field: name
+        type: 1
+        i18n:
+          zh-CN: 显卡名称
+          en-US: System Version
+      - field: utilization.gpu [%]
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: GPU利用率
+          en-US: GPU Utilization
+      - field: utilization.memory [%]
+        type: 0
+        unit: '%'
+        i18n:
+          zh-CN: 显存利用率
+          en-US: Memory Utilization
+      - field: memory.total [MiB]
+        type: 1
+        unit: 'MiB'
+        i18n:
+          zh-CN: 总显存
+          en-US: Total Memory
+      - field: memory.used [MiB]
+        type: 0
+        unit: 'MiB'
+        i18n:
+          zh-CN: 已用显存
+          en-US: Used Memory
+      - field: memory.free [MiB]
+        type: 0
+        unit: 'MiB'
+        i18n:
+          zh-CN: 空闲显存
+          en-US: Free Memory
+      - field: temperature.gpu
+        type: 1
+        unit: '°C'
+        i18n:
+          zh-CN: 显卡温度
+          en-US: GPU Temperature
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: ssh
+    # the config content when protocol is ssh
+    ssh:
+      # ssh host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # ssh port
+      port: ^_^port^_^
+      # ssh username
+      username: ^_^username^_^
+      # ssh password
+      password: ^_^password^_^
+      # ssh private key
+      privateKey: ^_^privateKey^_^
+      timeout: ^_^timeout^_^
+      reuseConnection: ^_^reuseConnection^_^
+      # ssh run collect script
+      script: nvidia-smi --query-gpu=index,name,utilization.gpu,utilization.memory,memory.total,memory.used,memory.free,temperature.gpu --format=csv,nounits | sed 's/ *, */,/g' | sed 's/ / /g' | sed 's/,/ /g'
+      # ssh response data parse type: oneRow, multiRow
+      parseType: multiRow

@@ -1,0 +1,393 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# The monitoring type category：service-application service monitoring db-database monitoring custom-custom monitoring os-operating system monitoring
+# 监控类型所属类别：service-应用服务 program-应用程序 db-数据库 custom-自定义 os-操作系统 bigdata-大数据 mid-中间件 webserver-web服务器 cache-缓存 cn-云原生 network-网络监控等等
+category: bigdata
+# The monitoring type eg: linux windows tomcat mysql aws...
+# 监控类型 eg: linux windows tomcat mysql aws...
+app: influxdb
+# The monitoring i18n name
+# 监控类型国际化名称
+name:
+  zh-CN: InfluxDB
+  en-US: InfluxDB
+# The description and help of this monitoring type
+# 监控类型的帮助描述信息
+help:
+  zh-CN: HertzBeat 对 InfluxDB 时序数据库进行监控。<br><span class='help_module_span'><a class='help_module_content' href='https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/measurements-internal'>点击查看开启步骤</a>。</span>
+  en-US: HertzBeat monitors the InfluxDB time series database. <br><span class='help_module_span'><a class='help_module_content' href='https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/measurements-internal '>Click to view the activation steps</a>. </span>
+  zh-TW: HertzBeat 對 InfluxDB 時序資料庫進行監控。<br><span class='help_module_span'><a class='help_module_content' href='https://docs.influxdata.com/platform/monitoring/influxdata-platform/tools/measurements-internal'>點擊查看開啓步驟</a>。</span>
+helpLink:
+  zh-CN: https://hertzbeat.com/zh-cn/docs/help/influxdb/
+  en-US: https://hertzbeat.com/docs/help/influxdb/
+# 监控所需输入参数定义(根据定义渲染页面UI)
+# Input params define for monitoring(render web ui by the definition)
+params:
+  # field-param field key
+  # field-变量字段标识符
+  - field: host
+    # name-param field display i18n name
+    # name-参数字段显示名称
+    name:
+      zh-CN: 目标Host
+      en-US: Target Host
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: host
+    # required-true or false
+    # required-是否是必输项 true-必填 false-可选
+    required: true
+  - field: port
+    name:
+      zh-CN: 端口
+      en-US: Port
+    # type-param field type(most mapping the html input type)
+    # type-字段类型,样式(大部分映射input标签type属性)
+    type: number
+    # when type is number, range is required
+    # 当type为number时,用range表示范围
+    range: '[0,65535]'
+    # default value
+    defaultValue: 8086
+    required: true
+  - field: timeout
+    name:
+      zh-CN: 查询超时时间
+      en-US: Query Timeout
+    type: number
+    required: false
+    # hide param-true or false
+    # 是否隐藏字段 true or false
+    hide: true
+    defaultValue: 6000
+
+# collect metrics config list
+# 采集指标配置列表
+metrics:
+  # metrics - cluster_node_status
+  # 监控指标 - cluster_node_status
+
+  - name: influxdb_info
+    i18n:
+      zh-CN: influxdb 基本信息
+      en-US: influxdb_info
+    priority: 0
+    fields:
+      - field: build_date
+        i18n:
+          zh-CN: 创建日期
+          en-US: build_date
+        type: 1
+        label: true
+      - field: os
+        i18n:
+          zh-CN: 操作系统
+          en-US: os
+        type: 1
+      - field: cpus
+        i18n:
+          zh-CN: cpus
+          en-US: cpus
+        type: 1
+      - field: version
+        i18n:
+          zh-CN: 版本
+          en-US: version
+        type: 1
+    aliasFields:
+      - build_date
+      - os
+      - cpus
+      - version
+    calculates:
+      - build_date=build_date
+      - os=os
+      - cpus=cpus
+      - version=version
+    protocol: http
+    http:
+      host: ^_^host^_^
+      port: ^_^port^_^
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      method: GET
+      parseType: prometheus
+
+  - name: http_api_request_duration_seconds
+    i18n:
+      zh-CN: http 响应时间
+      en-US: http_api_request_duration_seconds
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 1
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: handler
+        i18n:
+          zh-CN: handler
+          en-US: handler
+        type: 1
+      - field: path
+        i18n:
+          zh-CN: 路径
+          en-US: path
+        type: 1
+      - field: response_code
+        i18n:
+          zh-CN: 返回 code
+          en-US: response_code
+        type: 1
+      - field: method
+        i18n:
+          zh-CN: 方法
+          en-US: method
+        type: 1
+      - field: user_agent
+        i18n:
+          zh-CN: 用户代理
+          en-US: user_agent
+        type: 1
+      - field: status
+        i18n:
+          zh-CN: 状态
+          en-US: status
+        type: 1
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - handler
+      - path
+      - response_code
+      - method
+      - user_agent
+      - status
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - handler=handler
+      - path=path
+      - response_code=response_code
+      - method=method
+      - user_agent=user_agent
+      - status=status
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
+      parseType: prometheus
+
+  - name: storage_compactions_queued
+    i18n:
+      zh-CN: 正在排队的 TSM 数
+      en-US: storage_compactions_queued
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 2
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: bucket
+        i18n:
+          zh-CN: 存储桶
+          en-US: bucket
+        type: 1
+      - field: engine
+        i18n:
+          zh-CN: 引擎类型
+          en-US: engine
+        type: 1
+      - field: id
+        i18n:
+          zh-CN: 标识符
+          en-US: id
+        type: 1
+      - field: level
+        i18n:
+          zh-CN: 级别
+          en-US: level
+        type: 1
+      - field: path
+        i18n:
+          zh-CN: 数据文件路径
+          en-US: path
+        type: 1
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - bucket
+      - engine
+      - id
+      - level
+      - path
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - bucket=bucket
+      - engine=engine
+      - id=id
+      - level=level
+      - path=path
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
+      parseType: prometheus
+
+  - name: http_write_request_bytes
+    i18n:
+      zh-CN: HTTP写入请求的字节数量
+      en-US: http_write_request_bytes
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 3
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: endpoint
+        i18n:
+          zh-CN: 终点
+          en-US: endpoint
+        type: 1
+      - field: org_id
+        i18n:
+          zh-CN: 组织标识符
+          en-US: org_id
+        type: 1
+      - field: status
+        i18n:
+          zh-CN: 状态
+          en-US: status
+        type: 1
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - endpoint
+      - org_id
+      - status
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - endpoint=endpoint
+      - org_id=org_id
+      - status=status
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
+      parseType: prometheus
+
+  - name: qc_requests_total
+    i18n:
+      zh-CN: 质量控制请求总数
+      en-US: qc_requests_total
+    # metrics scheduling priority(0->127)->(high->low), metrics with the same priority will be scheduled in parallel
+    # priority 0's metrics is availability metrics, it will be scheduled first, only availability metrics collect success will the scheduling continue
+    # 指标采集调度优先级(0->127)->(优先级高->低) 优先级低的指标会等优先级高的指标采集完成后才会被调度, 相同优先级的指标会并行调度采集
+    # 优先级为0的指标为可用性指标,即它会被首先调度,采集成功才会继续调度其它指标,采集失败则中断调度
+    priority: 3
+    # collect metrics content
+    # 具体监控指标列表
+    fields:
+      # field-metric name, type-metric type(0-number,1-string), unit-metric unit('%','ms','MB'), label-whether it is a metrics label field
+      # field-指标名称, type-指标类型(0-number数字,1-string字符串), unit-指标单位('%','ms','MB'), label-是否是指标标签字段
+      - field: result
+        i18n:
+          zh-CN: 结果
+          en-US: result
+        type: 1
+      - field: org
+        i18n:
+          zh-CN: 组织标识符
+          en-US: org
+        type: 1
+    # (optional)metrics field alias name, it is used as an alias field to map and convert the collected data and metrics field
+    # (可选)监控指标别名, 做为中间字段与采集数据字段和指标字段映射转换
+    aliasFields:
+      - result
+      - org
+    # mapping and conversion expressions, use these and aliasField above to calculate metrics value
+    # (可选)指标映射转换计算表达式,与上面的别名一起作用,计算出最终需要的指标值
+    # eg: cores=core1+core2, usage=usage, waitTime=allTime-runningTime
+    calculates:
+      - result=result
+      - org=org
+    # the protocol used for monitoring, eg: sql, ssh, http, telnet, wmi, snmp, sdk
+    protocol: http
+    # the config content when protocol is http
+    http:
+      # http host: ipv4 ipv6 domain
+      host: ^_^host^_^
+      # http port
+      port: ^_^port^_^
+      # http url
+      url: '/metrics'
+      timeout: ^_^timeout^_^
+      # http method: GET POST PUT DELETE PATCH
+      method: GET
+      # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
+      # http 响应数据解析方式: default-系统规则, jsonPath-jsonPath脚本, website-网站可用性指标监控, prometheus-Prometheus数据规则
+      parseType: prometheus
+
+
