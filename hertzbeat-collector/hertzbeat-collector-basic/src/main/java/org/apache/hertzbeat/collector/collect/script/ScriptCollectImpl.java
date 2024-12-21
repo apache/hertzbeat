@@ -26,16 +26,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -71,7 +69,7 @@ public class ScriptCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
         ScriptProtocol scriptProtocol = metrics.getScript();
         long startTime = System.currentTimeMillis();
         ProcessBuilder processBuilder;
@@ -82,8 +80,7 @@ public class ScriptCollectImpl extends AbstractCollect {
                 case CMD -> processBuilder = new ProcessBuilder(CMD, CMD_C, scriptProtocol.getScriptCommand().trim());
                 case POWERSHELL -> processBuilder = new ProcessBuilder("powershell.exe", POWERSHELL_C, scriptProtocol.getScriptCommand().trim());
                 default -> {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Not support script tool:" + scriptProtocol.getScriptTool());
+                    metricsDataBuilder.setFailedMsg("Not support script tool:" + scriptProtocol.getScriptTool());
                     return;
                 }
             }
@@ -94,16 +91,15 @@ public class ScriptCollectImpl extends AbstractCollect {
                 case CMD -> processBuilder = new ProcessBuilder(CMD,  scriptProtocol.getScriptPath().trim());
                 case POWERSHELL -> processBuilder = new ProcessBuilder(POWERSHELL, POWERSHELL_FILE, scriptProtocol.getScriptPath().trim());
                 default -> {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Not support script tool:" + scriptProtocol.getScriptTool());
+                    metricsDataBuilder.setFailedMsg("Not support script tool:" + scriptProtocol.getScriptTool());
                     return;
                 }
             }
         } else {
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("At least one script command or script path is required.");
+            metricsDataBuilder.setFailedMsg("At least one script command or script path is required.");
             return;
         }
+
         // set work directory
         String workDirectory = scriptProtocol.getWorkDirectory();
         if (StringUtils.hasText(workDirectory)) {
@@ -124,35 +120,33 @@ public class ScriptCollectImpl extends AbstractCollect {
             Long responseTime = System.currentTimeMillis() - startTime;
             String result = String.valueOf(response);
             if (!StringUtils.hasText(result)) {
-                builder.setCode(CollectRep.Code.FAIL);
-                builder.setMsg("Script response data is null");
+                metricsDataBuilder.setFailedMsg("Script response data is null");
                 return;
             }
+
             switch (scriptProtocol.getParseType()) {
-                case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), builder, responseTime);
-                case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_LOG -> parseResponseDataByLog(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_NETCAT -> parseResponseDataByNetcat(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_ONE_ROW -> parseResponseDataByOne(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_MULTI_ROW -> parseResponseDataByMulti(result, metrics.getAliasFields(), metricsDataBuilder, responseTime);
                 default -> {
-                    builder.setCode(CollectRep.Code.FAIL);
-                    builder.setMsg("Script collect not support this parse type: " + scriptProtocol.getParseType());
+                    metricsDataBuilder.setFailedMsg("Script collect not support this parse type: " + scriptProtocol.getParseType());
                 }
             }
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.warn(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Peer io failed: " + errorMsg);
+            metricsDataBuilder.setFailedMsg("Peer io failed: " + errorMsg);
+
         } catch (InterruptedException interruptedException){
             String errorMsg = CommonUtil.getMessageFromThrowable(interruptedException);
             log.warn(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("Peer interrupt this script: " + errorMsg);
+            metricsDataBuilder.setFailedMsg("Peer io interrupted: " + errorMsg);
+
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
         }
     }
 
@@ -161,26 +155,24 @@ public class ScriptCollectImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_SCRIPT;
     }
 
-    private void parseResponseDataByLog(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void parseResponseDataByLog(String result, List<String> aliasFields, MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("Response data not enough: {}", result);
             return;
         }
         for (String line : lines) {
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
                 } else {
-                    valueRowBuilder.addColumns(line);
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, line);
                 }
             }
-            builder.addValues(valueRowBuilder.build());
         }
     }
 
-    private void parseResponseDataByNetcat(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void parseResponseDataByNetcat(String result, List<String> aliasFields, MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
@@ -198,41 +190,37 @@ public class ScriptCollectImpl extends AbstractCollect {
                 .filter(item -> item.length == 2)
                 .collect(Collectors.toMap(x -> x[0], x -> x[1]));
 
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
             String fieldValue = mapValue.get(field);
-            valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+            metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
-    private void parseResponseDataByOne(String result, List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void parseResponseDataByOne(String result, List<String> aliasFields, MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length + 1 < aliasFields.size()) {
             log.error("ssh response data not enough: {}", result);
             return;
         }
-        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+
         int aliasIndex = 0;
         int lineIndex = 0;
         while (aliasIndex < aliasFields.size()) {
             if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(aliasFields.get(aliasIndex))) {
-                valueRowBuilder.addColumns(responseTime.toString());
+                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFields.get(aliasIndex), responseTime.toString());
             } else {
                 if (lineIndex < lines.length) {
-                    valueRowBuilder.addColumns(lines[lineIndex].trim());
+                    metricsDataBuilder.getArrowVectorWriter().setValue(aliasFields.get(aliasIndex), lines[lineIndex].trim());
                 } else {
-                    valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                    metricsDataBuilder.getArrowVectorWriter().setNull(aliasFields.get(aliasIndex));
                 }
                 lineIndex++;
             }
             aliasIndex++;
         }
-        builder.addValues(valueRowBuilder.build());
     }
 
-    private void parseResponseDataByMulti(String result, List<String> aliasFields,
-                                          CollectRep.MetricsData.Builder builder, Long responseTime) {
+    private void parseResponseDataByMulti(String result, List<String> aliasFields, MetricsDataBuilder metricsDataBuilder, Long responseTime) {
         String[] lines = result.split("\n");
         if (lines.length <= 1) {
             log.error("ssh response data only has header: {}", result);
@@ -245,20 +233,18 @@ public class ScriptCollectImpl extends AbstractCollect {
         }
         for (int i = 1; i < lines.length; i++) {
             String[] values = lines[i].split("\\s+");
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    valueRowBuilder.addColumns(responseTime.toString());
+                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
                 } else {
                     Integer index = fieldMapping.get(alias.toLowerCase());
                     if (index != null && index < values.length) {
-                        valueRowBuilder.addColumns(values[index]);
+                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, values[index]);
                     } else {
-                        valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                        metricsDataBuilder.getArrowVectorWriter().setNull(alias);
                     }
                 }
             }
-            builder.addValues(valueRowBuilder.build());
         }
     }
 }

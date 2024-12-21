@@ -17,27 +17,36 @@
 
 package org.apache.hertzbeat.collector.dispatch;
 
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.collector.dispatch.timer.Timeout;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.collector.dispatch.timer.WheelTimerTask;
 import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.MetricDataConstants;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
+import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriter;
+import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -157,19 +166,23 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                 if (metricsTime.getStartTime() < deadline) {
                     // Metrics collection timeout  
                     WheelTimerTask timerJob = (WheelTimerTask) metricsTime.getTimeout().task();
-                    CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
-                            .setId(timerJob.getJob().getMonitorId())
-                            .setTenantId(timerJob.getJob().getTenantId())
-                            .setApp(timerJob.getJob().getApp())
-                            .setMetrics(metricsTime.getMetrics().getName())
-                            .setPriority(metricsTime.getMetrics().getPriority())
-                            .setTime(System.currentTimeMillis())
-                            .setCode(CollectRep.Code.TIMEOUT).setMsg("collect timeout").build();
-                    log.error("[Collect Timeout]: \n{}", metricsData);
-                    if (metricsData.getPriority() == 0) {
-                        dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsData);
+                    try (ArrowVectorWriter arrowVectorWriter = new ArrowVectorWriterImpl(ArrowVector.empty())) {
+                        MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(arrowVectorWriter);
+                        metricsDataBuilder.setMonitorId(timerJob.getJob().getMonitorId());
+                        metricsDataBuilder.setTenantId(timerJob.getJob().getTenantId());
+                        metricsDataBuilder.setApp(timerJob.getJob().getApp());
+                        metricsDataBuilder.setMetrics(metricsTime.getMetrics().getName());
+                        metricsDataBuilder.setPriority(metricsTime.getMetrics().getPriority());
+                        metricsDataBuilder.setTime(System.currentTimeMillis());
+                        metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.TIMEOUT, "collect timeout");
+
+                        log.error("[Collect Timeout]: \n{}", metricsDataBuilder);
+                        if (metricsDataBuilder.getPriority() == 0) {
+                            dispatchCollectData(metricsTime.timeout, metricsTime.getMetrics(), metricsDataBuilder.build(), true);
+                        }
+                        metricsTimeoutMonitorMap.remove(entry.getKey());
                     }
-                    metricsTimeoutMonitorMap.remove(entry.getKey());
+
                 }
             }
         } catch (Exception e) {
@@ -200,14 +213,14 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
     }
 
     @Override
-    public void dispatchCollectData(Timeout timeout, Metrics metrics, CollectRep.MetricsData metricsData) {
+    public void dispatchCollectData(Timeout timeout, Metrics metrics, ArrowVector arrowVector, boolean isCollectFailed) {
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
         if (metrics.isHasSubTask()) {
             metricsTimeoutMonitorMap.remove(job.getId() + "-" + metrics.getName() + "-sub-" + metrics.getSubTaskId());
-            boolean isLastTask = metrics.consumeSubTaskResponse(metricsData);
+            boolean isLastTask = metrics.consumeSubTaskResponse(arrowVector);
             if (isLastTask) {
-                metricsData = metrics.getSubTaskDataRef().get();
+                arrowVector = metrics.getSubTaskDataRef().get();
             } else {
                 return;
             }
@@ -217,24 +230,20 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         Set<Metrics> metricsSet = job.getNextCollectMetrics(metrics, false);
         if (job.isCyclic()) {
             if (job.isSd()) {
-                commonDataQueue.sendServiceDiscoveryData(metricsData);
+                commonDataQueue.sendServiceDiscoveryData(arrowVector);
             }
 
             // If it is an asynchronous periodic cyclic task, directly response the collected data
-            commonDataQueue.sendMetricsData(metricsData);
+            commonDataQueue.sendMetricsData(arrowVector);
             if (log.isDebugEnabled()) {
-                log.debug("Cyclic Job: {} - {} - {}", job.getMonitorId(), job.getApp(), metricsData.getMetrics());
-                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                    for (CollectRep.Field field : metricsData.getFieldsList()) {
-                        log.debug("Field-->{},Value-->{}", field.getName(), valueRow.getColumns(metricsData.getFieldsList().indexOf(field)));
-                    }
-                }
+                log.debug("Cyclic Job: {} - {} - {}", job.getMonitorId(), job.getApp(), arrowVector.getMetadataAsString(MetricDataConstants.METRICS));
+                debugLogFieldAndValue(arrowVector);
             }
 
             // If metricsSet is null, it means that the execution is completed or whether the priority of the collection metrics is 0, that is, the availability collection metrics.
             // If the availability collection fails, the next metrics scheduling will be cancelled and the next round of scheduling will be entered directly.
             boolean isAvailableCollectFailed = metricsSet != null && !metricsSet.isEmpty()
-                    && metrics.getPriority() == (byte) 0 && metricsData.getCode() != CollectRep.Code.SUCCESS;
+                    && metrics.getPriority() == (byte) 0 && isCollectFailed;
             if (metricsSet == null || isAvailableCollectFailed || job.isSd()) {
                 // The collection and execution task of this job are completed.
                 // The periodic task pushes the task to the time wheel again.
@@ -251,7 +260,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
             } else if (!metricsSet.isEmpty()) {
                 // The execution of the current level metrics is completed, and the execution of the next level metrics starts
                 // use pre collect metrics data to replace next metrics config params
-                List<Map<String, Configmap>> configmapList = getConfigmapFromPreCollectData(metricsData);
+                List<Map<String, Configmap>> configmapList = getConfigmapFromPreCollectData(arrowVector);
                 if (configmapList.size() == ENV_CONFIG_SIZE) {
                     job.addEnvConfigmaps(configmapList.get(0));
                 }
@@ -268,7 +277,7 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
                     boolean isSubTask = configmapList.stream().anyMatch(map -> map.keySet().stream().anyMatch(cryPlaceholderFields::contains));
                     int subTaskNum = isSubTask ? Math.min(configmapList.size(), MAX_SUB_TASK_NUM) : 1;
                     AtomicInteger subTaskNumAtomic = new AtomicInteger(subTaskNum);
-                    AtomicReference<CollectRep.MetricsData> metricsDataReference = new AtomicReference<>();
+                    AtomicReference<ArrowVector> metricsDataReference = new AtomicReference<>();
                     for (int index = 0; index < subTaskNum; index++) {
                         Map<String, Configmap> configmap = new HashMap<>(job.getEnvConfigmaps());
                         if (isSubTask) {
@@ -296,14 +305,10 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         } else {
             // If it is a temporary one-time task, you need to wait for the collected data of all metrics task to be packaged and returned.
             // Insert the current metrics data into the job for unified assembly
-            job.addCollectMetricsData(metricsData);
+            job.addCollectMetricsData(arrowVector);
             if (log.isDebugEnabled()) {
-                log.debug("One-time Job: {}", metricsData.getMetrics());
-                for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-                    for (CollectRep.Field field : metricsData.getFieldsList()) {
-                        log.debug("Field-->{},Value-->{}", field.getName(), valueRow.getColumns(metricsData.getFieldsList().indexOf(field)));
-                    }
-                }
+                log.debug("One-time Job: {}", arrowVector.getMetadataAsString(MetricDataConstants.METRICS));
+                debugLogFieldAndValue(arrowVector);
             }
 
             if (job.isSd() || metricsSet == null) {
@@ -326,14 +331,27 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
     }
 
+    private void debugLogFieldAndValue(ArrowVector arrowVector) {
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVector)) {
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                rowWrapper.cellStream().forEach(cell -> log.debug("Field-->{},Value-->{}", cell.getField().getName(), cell.getValue()));
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     @Override
-    public void dispatchCollectData(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList) {
+    public void dispatchCollectData(Timeout timeout, Metrics metrics, List<ArrowVector> arrowVectorList) {
         WheelTimerTask timerJob = (WheelTimerTask) timeout.task();
         Job job = timerJob.getJob();
         metricsTimeoutMonitorMap.remove(String.valueOf(job.getId()));
         if (job.isCyclic()) {
             // If it is an asynchronous periodic cyclic task, directly response the collected data
-            metricsDataList.forEach(commonDataQueue::sendMetricsData);
+            arrowVectorList.forEach(commonDataQueue::sendMetricsData);
             // The collection and execution of all task of this job are completed.
             // The periodic task pushes the task to the time wheel again.
             // First, determine the execution time of the task and the task collection interval.
@@ -349,31 +367,41 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         } else {
             // The collection and execution of all metrics of this job are completed
             // and the result listener is notified of the combination of all metrics data
-            timerDispatch.responseSyncJobData(job.getId(), metricsDataList);
+            timerDispatch.responseSyncJobData(job.getId(), arrowVectorList);
         }
         
     }
 
-    private List<Map<String, Configmap>> getConfigmapFromPreCollectData(CollectRep.MetricsData metricsData) {
-        if (metricsData.getValuesCount() <= 0 || metricsData.getFieldsCount() <= 0) {
-            return new LinkedList<>();
-        }
-        List<Map<String, Configmap>> mapList = new LinkedList<>();
-        for (CollectRep.ValueRow valueRow : metricsData.getValuesList()) {
-            if (valueRow.getColumnsCount() != metricsData.getFieldsCount()) {
-                continue;
+    private List<Map<String, Configmap>> getConfigmapFromPreCollectData(ArrowVector arrowVector) {
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVector)) {
+            if (arrowVectorReader.getRowCount() <= 0 || arrowVectorReader.getAllFields().isEmpty()) {
+                return new ArrayList<>();
             }
-            Map<String, Configmap> configmapMap = new HashMap<>(valueRow.getColumnsCount());
-            int index = 0;
-            for (CollectRep.Field field : metricsData.getFieldsList()) {
-                String value = valueRow.getColumns(index);
-                index++;
-                Configmap configmap = new Configmap(field.getName(), value, Integer.valueOf(field.getType()).byteValue());
-                configmapMap.put(field.getName(), configmap);
+
+            List<Map<String, Configmap>> mapList = new ArrayList<>();
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                if (rowWrapper.getFieldList().size() != arrowVectorReader.getAllFields().size()) {
+                    continue;
+                }
+
+                Map<String, Configmap> configmapMap = Maps.newHashMapWithExpectedSize(rowWrapper.getFieldList().size());
+                rowWrapper.cellStream().forEach(cell -> {
+                    String value = cell.getValue();
+                    Configmap configmap = new Configmap(cell.getField().getName(), value, cell.getMetadataAsInteger(MetricDataConstants.TYPE).byteValue());
+                    configmapMap.put(cell.getField().getName(), configmap);
+                });
+                mapList.add(configmapMap);
             }
-            mapList.add(configmapMap);
+
+            return mapList;
+        } catch (Exception ignored) {
         }
-        return mapList;
+
+        return new ArrayList<>();
     }
 
     /**

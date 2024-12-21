@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.common.queue;
 
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
@@ -37,21 +39,21 @@ public interface CommonDataQueue {
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
-    CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException;
+    ArrowVector pollMetricsDataToAlerter() throws InterruptedException;
 
     /**
      * poll collect metrics data for Persistent Storage
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
-    CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException;
+    ArrowVector pollMetricsDataToPersistentStorage() throws InterruptedException;
 
     /**
      * poll collect metrics data for real-time Storage
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
-    CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException;
+    ArrowVector pollMetricsDataToRealTimeStorage() throws InterruptedException;
     
     /**
      * offer alert data
@@ -64,17 +66,17 @@ public interface CommonDataQueue {
      * @return metrics data
      * @throws InterruptedException when poll timeout
      */
-    CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException;
+    ArrowVector pollServiceDiscoveryData() throws InterruptedException;
 
     /**
      * send collect metrics data
-     * @param metricsData metrics data
+     * @param bytes metrics data
      */
-    void sendMetricsData(CollectRep.MetricsData metricsData);
+    void sendMetricsData(ArrowVector arrowVector);
 
     /**
      * send service discovery data
-     * @param metricsData service discovery data
+     * @param bytes service discovery data
      */
-    void sendServiceDiscoveryData(CollectRep.MetricsData metricsData);
+    void sendServiceDiscoveryData(ArrowVector arrowVector);
 }

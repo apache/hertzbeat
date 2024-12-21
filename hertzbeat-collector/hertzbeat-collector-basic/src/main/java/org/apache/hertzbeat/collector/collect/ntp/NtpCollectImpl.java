@@ -26,20 +26,19 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.NtpV3Packet;
 import org.apache.commons.net.ntp.TimeInfo;
 import org.apache.commons.net.ntp.TimeStamp;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CommonConstants;
+import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NtpProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -56,7 +55,7 @@ public class NtpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         NtpProtocol ntpProtocol = metrics.getNtp();
         String host = ntpProtocol.getHost();
@@ -79,33 +78,32 @@ public class NtpCollectImpl extends AbstractCollect {
             resultMap.put(CollectorConstants.RESPONSE_TIME, Long.toString(responseTime));
 
             List<String> aliasFields = metrics.getAliasFields();
-            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String field : aliasFields) {
                 String fieldValue = resultMap.get(field);
-                valueRowBuilder.addColumns(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
             }
-            builder.addValues(valueRowBuilder.build());
+
             client.close();
         } catch (SocketException socketException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(socketException);
             log.debug(errorMsg);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg("NTPUDPClient open is fail: " + errorMsg);
+            metricsDataBuilder.setFailedMsg("NTPUDPClient open is fail: " + errorMsg);
+
         } catch (UnknownHostException unknownHostException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
             log.debug(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("NTPServerAddress is unknownHost: " + errorMsg);
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "NTPServerAddress is unknownHost: " + errorMsg);
+
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
-            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
-            builder.setMsg("Receive timed out: " + timeout + "ms");
+            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Receive timed out: " + timeout + "ms");
+
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn(errorMsg, e);
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(errorMsg);
+            metricsDataBuilder.setFailedMsg(errorMsg);
+
         } finally {
             if (client != null) {
                 try {

@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
+import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -95,48 +96,18 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToAlerter() {
-
-        try {
-            String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToAlerter);
-            if (metricsDataJson != null) {
-                return (CollectRep.MetricsData) ProtoJsonUtil.toProtobuf(metricsDataJson, CollectRep.MetricsData.newBuilder());
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
-        return null;
+    public ArrowVector pollMetricsDataToAlerter() {
+        return getArrowVectorFromQueue(metricsDataQueueNameToAlerter);
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToPersistentStorage() throws InterruptedException {
-
-        try {
-            String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToPersistentStorage);
-            if (metricsDataJson != null) {
-                return JsonUtil.fromJson(metricsDataJson, CollectRep.MetricsData.class);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
-        return null;
+    public ArrowVector pollMetricsDataToPersistentStorage() throws InterruptedException {
+        return getArrowVectorFromQueue(metricsDataQueueNameToPersistentStorage);
     }
 
     @Override
-    public CollectRep.MetricsData pollMetricsDataToRealTimeStorage() throws InterruptedException {
-
-        try {
-            String metricsDataJson = syncCommands.rpop(metricsDataQueueNameToRealTimeStorage);
-            if (metricsDataJson != null) {
-                return JsonUtil.fromJson(metricsDataJson, CollectRep.MetricsData.class);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
-        return null;
+    public ArrowVector pollMetricsDataToRealTimeStorage() throws InterruptedException {
+        return getArrowVectorFromQueue(metricsDataQueueNameToRealTimeStorage);
     }
 
     @Override
@@ -152,24 +123,15 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
-        try {
-            String metricsDataJson = syncCommands.rpop(metricsDataQueueNameForServiceDiscovery);
-            if (metricsDataJson != null) {
-                return JsonUtil.fromJson(metricsDataJson, CollectRep.MetricsData.class);
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
-        }
-        return null;
+    public ArrowVector pollServiceDiscoveryData() throws InterruptedException {
+        return getArrowVectorFromQueue(metricsDataQueueNameForServiceDiscovery);
     }
 
     @Override
-    public void sendMetricsData(CollectRep.MetricsData metricsData) {
+    public void sendMetricsData(ArrowVector arrowVector) {
 
         try {
-            String metricsDataJson = ProtoJsonUtil.toJsonStr(metricsData);
+            String metricsDataJson = new String(arrowVector.toByteArray());
             syncCommands.lpush(metricsDataQueueNameToAlerter, metricsDataJson);
             syncCommands.lpush(metricsDataQueueNameToPersistentStorage, metricsDataJson);
             syncCommands.lpush(metricsDataQueueNameToRealTimeStorage, metricsDataJson);
@@ -180,14 +142,27 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
     }
 
     @Override
-    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+    public void sendServiceDiscoveryData(ArrowVector arrowVector) {
         try {
-            String metricsDataJson = ProtoJsonUtil.toJsonStr(metricsData);
+            String metricsDataJson = new String(arrowVector.toByteArray());
             syncCommands.lpush(metricsDataQueueNameForServiceDiscovery, metricsDataJson);
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new RuntimeException(e);
         }
+    }
+
+    private ArrowVector getArrowVectorFromQueue(String queueName) {
+        try {
+            String metricsDataJson = syncCommands.rpop(queueName);
+            if (metricsDataJson != null) {
+                return ArrowVector.fromByteArr(metricsDataJson.getBytes());
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException(e);
+        }
+        return null;
     }
 
     @Override

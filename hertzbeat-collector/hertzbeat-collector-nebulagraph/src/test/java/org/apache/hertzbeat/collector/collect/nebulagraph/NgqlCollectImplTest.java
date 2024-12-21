@@ -27,7 +27,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -62,11 +67,11 @@ class NgqlCollectImplTest {
     }
 
     @Test
-    void testOneRowCollect() {
+    void testOneRowCollect() throws Exception {
         String ngql = "SHOW COLLATION;";
         String charset = "utf8";
         String collation = "utf8_bin";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         ngqlProtocol.setCommands(Collections.singletonList(ngql));
         ngqlProtocol.setParseType("oneRow");
         List<String> aliasField = Arrays.asList("Collation", "Charset");
@@ -88,17 +93,29 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
-        Assertions.assertEquals(builder.getValuesCount(), 1);
-        Assertions.assertEquals(builder.getValues(0).getColumns(0), collation);
-        Assertions.assertEquals(builder.getValues(0).getColumns(1), charset);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ngqlCollect.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                rowWrapper = rowWrapper.nextRow();
+
+                assertEquals(collation, rowWrapper.nextCell().getValue());
+                assertEquals(charset, rowWrapper.nextCell().getValue());
+            }
+        }
+
         mocked.close();
     }
 
     @Test
-    void testFilterCountCollect() {
+    void testFilterCountCollect() throws Exception {
         String command = "offline#SHOW HOSTS#Status#OFFLINE";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         ngqlProtocol.setCommands(Collections.singletonList(command));
         ngqlProtocol.setParseType("filterCount");
         List<String> aliasField = Collections.singletonList("offline");
@@ -122,16 +139,28 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
-        Assertions.assertEquals(1, builder.getValuesCount());
-        Assertions.assertEquals("1", builder.getValues(0).getColumns(0));
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ngqlCollect.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                rowWrapper = rowWrapper.nextRow();
+
+                assertEquals("1", rowWrapper.nextCell().getValue());
+            }
+        }
+
         mocked.close();
     }
 
     @Test
-    void testMultiRowCollect() {
+    void testMultiRowCollect() throws Exception {
         String command = "SHOW HOSTS";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         ngqlProtocol.setCommands(Collections.singletonList(command));
         ngqlProtocol.setParseType("multiRow");
         List<String> aliasField = Arrays.asList("Host", "Port", "Status");
@@ -155,21 +184,32 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
-        Assertions.assertEquals(3, builder.getValuesCount());
-        for (int i = 0; i < result.size(); i++) {
-            List<Map.Entry<String, Object>> list = new ArrayList<>(result.get(i).entrySet());
-            for (int j = 0; j < list.size(); j++) {
-                Assertions.assertEquals(list.get(j).getValue().toString(), builder.getValues(i).getColumns(j));
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ngqlCollect.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(3, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+
+                for (int i = 0; i < result.size(); i++) {
+                    rowWrapper = rowWrapper.nextRow();
+                    List<Map.Entry<String, Object>> list = new ArrayList<>(result.get(i).entrySet());
+                    for (int j = 0; j < list.size(); j++) {
+                        Assertions.assertEquals(list.get(j).getValue().toString(), rowWrapper.nextCell().getValue());
+                    }
+                }
             }
         }
         mocked.close();
     }
 
     @Test
-    void testColumnsCollect() {
+    void testColumnsCollect() throws Exception {
         String command = "SHOW HOSTS";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         ngqlProtocol.setCommands(Collections.singletonList(command));
         ngqlProtocol.setParseType("columns");
         List<String> aliasField = Arrays.asList("graph0", "graph1", "graph2");
@@ -193,11 +233,23 @@ class NgqlCollectImplTest {
         metrics.setNgql(ngqlProtocol);
         metrics.setAliasFields(aliasField);
         ngqlCollect.preCheck(metrics);
-        ngqlCollect.collect(builder, 1L, "test", metrics);
-        Assertions.assertEquals(1, builder.getValuesCount());
-        for (int i = 0; i < 3; i++) {
-            Assertions.assertEquals("9669" + i, builder.getValues(0).getColumns(i));
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            ngqlCollect.collect(metricsDataBuilder, metrics);
+
+            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+                assertEquals(1, arrowVectorReader.getRowCount());
+
+                RowWrapper rowWrapper = arrowVectorReader.readRow();
+                rowWrapper = rowWrapper.nextRow();
+
+                for (int i = 0; i < 3; i++) {
+                    Assertions.assertEquals("9669" + i, rowWrapper.nextCell().getValue());
+                }
+            }
         }
+
         mocked.close();
     }
 

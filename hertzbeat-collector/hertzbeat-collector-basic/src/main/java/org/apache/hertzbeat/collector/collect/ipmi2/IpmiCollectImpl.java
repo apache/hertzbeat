@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.collect.ipmi2;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.ipmi2.cache.IpmiConnect;
@@ -28,7 +29,6 @@ import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiHandlerManager;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
-import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
@@ -63,18 +63,17 @@ public class IpmiCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(CollectRep.MetricsData.Builder builder, long monitorId, String app, Metrics metrics) {
-        IpmiConnection connection = null;
+    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+        IpmiConnection connection;
         try {
             connection = getIpmiConnection(metrics.getIpmi());
         } catch (Exception e) {
             log.error("Ipmi session create error: {}", e.getMessage());
-            builder.setCode(CollectRep.Code.FAIL);
-            builder.setMsg(e.getMessage());
+            metricsDataBuilder.setFailedMsg(e.getMessage());
             return;
         }
         try {
-            connection.getResource(builder, metrics);
+            connection.getResource(metricsDataBuilder, metrics);
         } catch (IOException e) {
             log.error("Get Ipmi {} detail resource error: {}", metrics.getName(), e.getMessage());
         }

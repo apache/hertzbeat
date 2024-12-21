@@ -28,7 +28,12 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
+import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
+import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
+import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -57,9 +62,7 @@ class UdpCollectImplTest {
         assertThrows(IllegalArgumentException.class, () -> udpCollect.preCheck(metrics));
 
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> {
-            udpCollect.preCheck(null);
-        });
+        assertThrows(IllegalArgumentException.class, () -> udpCollect.preCheck(null));
 
         // everything is ok
         assertDoesNotThrow(() -> {
@@ -69,7 +72,7 @@ class UdpCollectImplTest {
     }
 
     @Test
-    void testCollect() {
+    void testCollect() throws Exception {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         UdpProtocol udpProtocol = UdpProtocol.builder()
                 .timeout("10")
@@ -90,13 +93,27 @@ class UdpCollectImplTest {
         metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
-        udpCollect.collect(builder, 1L, "test", metrics);
-        assertEquals(builder.getValuesCount(), 1);
-        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
-            assertNotNull(valueRow.getColumns(0));
+
+        final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields());
+        MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+        builder.setId(1L);
+        builder.setApp("test");
+        udpCollect.collect(metricsDataBuilder, metrics);
+
+        final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
+        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+            assertEquals(1, arrowVectorReader.getRowCount());
+
+            RowWrapper rowWrapper = arrowVectorReader.readRow();
+            while (rowWrapper.hasNextRow()) {
+                rowWrapper = rowWrapper.nextRow();
+
+                assertNotNull(rowWrapper.nextCell().getValue());
+            }
         }
 
         socketMockedConstruction.close();
+        arrowVectorWriter.close();
     }
 
     @Test
@@ -119,7 +136,10 @@ class UdpCollectImplTest {
         metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
-        udpCollect.collect(builder, 1L, "test", metrics);
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            udpCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getCode(), CollectRep.Code.UN_CONNECTABLE);
 
         socketMockedConstruction.close();
@@ -127,7 +147,7 @@ class UdpCollectImplTest {
 
     @Test
     void testCollectWithPortUnreachableException() {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
         UdpProtocol udpProtocol = UdpProtocol.builder()
                 .timeout("10")
                 .port("21")
@@ -145,7 +165,11 @@ class UdpCollectImplTest {
         metrics.setUdp(udpProtocol);
         metrics.setAliasFields(aliasField);
         udpCollect.preCheck(metrics);
-        udpCollect.collect(builder, 1L, "test", metrics);
+
+        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
+            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
+            udpCollect.collect(metricsDataBuilder, metrics);
+        }
         assertEquals(builder.getCode(), CollectRep.Code.UN_REACHABLE);
 
         socketMockedConstruction.close();
