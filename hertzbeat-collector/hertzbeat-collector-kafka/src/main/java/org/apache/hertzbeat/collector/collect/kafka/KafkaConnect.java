@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.kafka;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -31,6 +32,8 @@ public class KafkaConnect extends AbstractConnection<AdminClient> {
 
 
     private static AdminClient adminClient;
+
+    private static String preUrl;
 
     public KafkaConnect(String brokerList) {
         Properties properties = new Properties();
@@ -53,10 +56,12 @@ public class KafkaConnect extends AbstractConnection<AdminClient> {
     }
 
     public static synchronized AdminClient getAdminClient(String brokerList) {
-        if (adminClient == null) {
+        if (StringUtils.isBlank(preUrl) || !brokerList.equals(preUrl)) {
             Properties properties = new Properties();
             properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
             adminClient = KafkaAdminClient.create(properties);
+            preUrl = brokerList;
+            return adminClient;
         }
         return adminClient;
     }
