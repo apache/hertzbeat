@@ -61,7 +61,6 @@ public class KafkaConnect extends AbstractConnection<AdminClient> {
             properties.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, brokerList);
             adminClient = KafkaAdminClient.create(properties);
             preUrl = brokerList;
-            return adminClient;
         }
         return adminClient;
     }
