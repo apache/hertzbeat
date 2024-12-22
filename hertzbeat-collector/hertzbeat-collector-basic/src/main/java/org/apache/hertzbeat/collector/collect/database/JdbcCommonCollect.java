@@ -28,16 +28,16 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JdbcConnect;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JdbcProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.postgresql.util.PSQLException;
 import org.springframework.core.io.FileSystemResource;
@@ -78,7 +78,7 @@ public class JdbcCommonCollect extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         JdbcProtocol jdbcProtocol = metrics.getJdbc();
         String databaseUrl = constructDatabaseUrl(jdbcProtocol);
@@ -88,34 +88,37 @@ public class JdbcCommonCollect extends AbstractCollect {
             statement = getConnection(jdbcProtocol.getUsername(),
                     jdbcProtocol.getPassword(), databaseUrl, timeout);
             switch (jdbcProtocol.getQueryType()) {
-                case QUERY_TYPE_ONE_ROW -> queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), metricsDataBuilder, startTime);
-                case QUERY_TYPE_MULTI_ROW -> queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), metricsDataBuilder, startTime);
-                case QUERY_TYPE_COLUMNS -> queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), metricsDataBuilder, startTime);
+                case QUERY_TYPE_ONE_ROW -> queryOneRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_MULTI_ROW -> queryMultiRow(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
+                case QUERY_TYPE_COLUMNS -> queryOneRowByMatchTwoColumns(statement, jdbcProtocol.getSql(), metrics.getAliasFields(), builder, startTime);
                 case RUN_SCRIPT -> {
                     Connection connection = statement.getConnection();
                     FileSystemResource rc = new FileSystemResource(jdbcProtocol.getSql());
                     ScriptUtils.executeSqlScript(connection, rc);
                 }
                 default -> {
-                    metricsDataBuilder.setFailedMsg("Not support database query type: " + jdbcProtocol.getQueryType());
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg("Not support database query type: " + jdbcProtocol.getQueryType());
                 }
             }
         } catch (PSQLException psqlException) {
             // for PostgreSQL 08001
-            metricsDataBuilder.setCodeAndMsg(CollectorConstants.POSTGRESQL_UN_REACHABLE_CODE.equals(psqlException.getSQLState())
-                    ? CollectCodeConstants.UN_REACHABLE
-                    : CollectCodeConstants.FAILED,
-                    "Error: " + psqlException.getMessage() + " Code: " + psqlException.getSQLState());
-
+            if (CollectorConstants.POSTGRESQL_UN_REACHABLE_CODE.equals(psqlException.getSQLState())) {
+                // Peer connection failed, unreachable
+                builder.setCode(CollectRep.Code.UN_REACHABLE);
+            } else {
+                builder.setCode(CollectRep.Code.FAIL);
+            }
+            builder.setMsg("Error: " + psqlException.getMessage() + " Code: " + psqlException.getSQLState());
         } catch (SQLException sqlException) {
             log.warn("Jdbc sql error: {}, code: {}.", sqlException.getMessage(), sqlException.getErrorCode());
-            metricsDataBuilder.setFailedMsg("Query Error: " + sqlException.getMessage() + " Code: " + sqlException.getErrorCode());
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("Query Error: " + sqlException.getMessage() + " Code: " + sqlException.getErrorCode());
         } catch (Exception e) {
             String errorMessage = CommonUtil.getMessageFromThrowable(e);
             log.error("Jdbc error: {}.", errorMessage, e);
-            metricsDataBuilder.setFailedMsg("Query Error: " + errorMessage);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("Query Error: " + errorMessage);
         } finally {
             if (statement != null) {
                 try {
@@ -155,6 +158,7 @@ public class JdbcCommonCollect extends AbstractCollect {
                     if (statement != null) {
                         statement.close();
                     }
+                    jdbcConnect.close();
                 } catch (Exception e2) {
                     log.error(e2.getMessage());
                 }
@@ -189,11 +193,22 @@ public class JdbcCommonCollect extends AbstractCollect {
      * @throws Exception when error happen
      */
     private void queryOneRow(Statement statement, String sql, List<String> columns,
-                             MetricsDataBuilder metricsDataBuilder, long startTime) throws Exception {
+                                           CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
         statement.setMaxRows(1);
         try (ResultSet resultSet = statement.executeQuery(sql)) {
             if (resultSet.next()) {
-                addMetricsDataByResultSet(columns, metricsDataBuilder, startTime, resultSet);
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String column : columns) {
+                    if (CollectorConstants.RESPONSE_TIME.equals(column)) {
+                        long time = System.currentTimeMillis() - startTime;
+                        valueRowBuilder.addColumn(String.valueOf(time));
+                    } else {
+                        String value = resultSet.getString(column);
+                        value = value == null ? CommonConstants.NULL_VALUE : value;
+                        valueRowBuilder.addColumn(value);
+                    }
+                }
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
@@ -214,7 +229,7 @@ public class JdbcCommonCollect extends AbstractCollect {
      * @throws Exception when error happen
      */
     private void queryOneRowByMatchTwoColumns(Statement statement, String sql, List<String> columns,
-                                              MetricsDataBuilder metricsDataBuilder, long startTime) throws Exception {
+                                              CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
         try (ResultSet resultSet = statement.executeQuery(sql)) {
             HashMap<String, String> values = new HashMap<>(columns.size());
             while (resultSet.next()) {
@@ -222,27 +237,18 @@ public class JdbcCommonCollect extends AbstractCollect {
                     values.put(resultSet.getString(1).toLowerCase().trim(), resultSet.getString(2));
                 }
             }
-
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String column : columns) {
                 if (CollectorConstants.RESPONSE_TIME.equals(column)) {
                     long time = System.currentTimeMillis() - startTime;
-                    metricsDataBuilder.getArrowVectorWriter().setValue(column, String.valueOf(time));
+                    valueRowBuilder.addColumn(String.valueOf(time));
                 } else {
                     String value = values.get(column.toLowerCase());
-                    metricsDataBuilder.getArrowVectorWriter().setValue(column, value);
+                    value = value == null ? CommonConstants.NULL_VALUE : value;
+                    valueRowBuilder.addColumn(value);
                 }
             }
-        }
-    }
-
-    private void addMetricsDataByResultSet(List<String> columns, MetricsDataBuilder metricsDataBuilder, long startTime, ResultSet resultSet) throws SQLException {
-        for (String column : columns) {
-            if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(column)) {
-                long time = System.currentTimeMillis() - startTime;
-                metricsDataBuilder.getArrowVectorWriter().setValue(column, String.valueOf(time));
-            } else {
-                metricsDataBuilder.getArrowVectorWriter().setValue(column, resultSet.getString(column));
-            }
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -258,10 +264,21 @@ public class JdbcCommonCollect extends AbstractCollect {
      * @throws Exception when error happen
      */
     private void queryMultiRow(Statement statement, String sql, List<String> columns,
-                               MetricsDataBuilder metricsDataBuilder, long startTime) throws Exception {
+                               CollectRep.MetricsData.Builder builder, long startTime) throws Exception {
         try (ResultSet resultSet = statement.executeQuery(sql)) {
             while (resultSet.next()) {
-                addMetricsDataByResultSet(columns, metricsDataBuilder, startTime, resultSet);
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String column : columns) {
+                    if (CollectorConstants.RESPONSE_TIME.equals(column)) {
+                        long time = System.currentTimeMillis() - startTime;
+                        valueRowBuilder.addColumn(String.valueOf(time));
+                    } else {
+                        String value = resultSet.getString(column);
+                        value = value == null ? CommonConstants.NULL_VALUE : value;
+                        valueRowBuilder.addColumn(value);
+                    }
+                }
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }

@@ -21,12 +21,12 @@ import com.google.gson.JsonElement;
 import java.math.BigDecimal;
 import java.util.List;
 import lombok.NoArgsConstructor;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.dto.PromVectorOrMatrix;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
 
 /**
@@ -48,7 +48,7 @@ public class PrometheusMatrixParser extends AbstractPrometheusParse {
     }
 
     @Override
-    public void parse(String resp, List<String> aliasFields, HttpProtocol http, MetricsDataBuilder metricsDataBuilder) {
+    public void parse(String resp, List<String> aliasFields, HttpProtocol http, CollectRep.MetricsData.Builder builder) {
         PromVectorOrMatrix promVectorOrMatrix = JsonUtil.fromJson(resp, PromVectorOrMatrix.class);
         if (promVectorOrMatrix == null){
             return;
@@ -58,38 +58,40 @@ public class PrometheusMatrixParser extends AbstractPrometheusParse {
             for (List<Object> value : r.getValues()) {
                 boolean setTimeFlag = false;
                 boolean setValueFlag = false;
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String aliasField : aliasFields) {
                     if (!CollectUtil.assertPromRequireField(aliasField)) {
                         JsonElement jsonElement = r.getMetric().get(aliasField);
                         if (jsonElement != null) {
-                            metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, jsonElement.getAsString());
+                            valueRowBuilder.addColumn(jsonElement.getAsString());
                         } else {
-                            metricsDataBuilder.getArrowVectorWriter().setNull(aliasField);
+                            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                         }
                     } else {
                         if (CommonConstants.PROM_TIME.equals(aliasField)) {
                             for (Object o : value) {
                                 if (o instanceof Double time) {
-                                    metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(BigDecimal.valueOf(time * 1000L)));
+                                    valueRowBuilder.addColumn(String.valueOf(BigDecimal.valueOf(time * 1000)));
                                     setTimeFlag = true;
                                 }
                             }
                             if (!setTimeFlag) {
-                                metricsDataBuilder.getArrowVectorWriter().setNull(aliasField);
+                                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                             }
                         } else {
                             for (Object o : value) {
                                 if (o instanceof String str) {
-                                    metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, str);
+                                    valueRowBuilder.addColumn(str);
                                     setValueFlag = true;
                                 }
                             }
                             if (!setValueFlag) {
-                                metricsDataBuilder.getArrowVectorWriter().setNull(aliasField);
+                                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                             }
                         }
                     }
                 }
+                builder.addValue(valueRowBuilder);
             }
 
         }

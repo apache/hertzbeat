@@ -18,8 +18,6 @@
 package org.apache.hertzbeat.collector.collect.mongodb;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -28,16 +26,11 @@ import com.mongodb.client.MongoDatabase;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
-import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.bson.Document;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -79,8 +72,8 @@ public class MongoCollectImplTest {
     }
 
     @Test
-    void mockTest() throws Exception {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
+    void mockTest() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         mongodbProtocol.setCommand("hostInfo.os");
         Metrics metrics = new Metrics();
         metrics.setAliasFields(List.of("type", "name", "version"));
@@ -106,21 +99,10 @@ public class MongoCollectImplTest {
                         b.serverSelectionTimeout(Long.parseLong(mongodbProtocol.getTimeout()), MILLISECONDS))
                 .build();
         mongoClientsMockedStatic.when(() -> MongoClients.create(settings)).thenReturn(mongoClient);
-
         mongodbSingleCollect.preCheck(metrics);
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-            mongodbSingleCollect.collect(metricsDataBuilder, metrics);
-
-            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
-            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-                RowWrapper rowWrapper = arrowVectorReader.readRow();
-                rowWrapper = rowWrapper.nextRow();
-
-                assertEquals("Linux", rowWrapper.nextCell().getValue());
-                assertEquals("Ubuntu", rowWrapper.nextCell().getValue());
-                assertEquals("22.04", rowWrapper.nextCell().getValue());
-            }
-        }
+        mongodbSingleCollect.collect(builder, metrics);
+        Assertions.assertEquals("Linux", builder.getValues(0).getColumns(0));
+        Assertions.assertEquals("Ubuntu", builder.getValues(0).getColumns(1));
+        Assertions.assertEquals("22.04", builder.getValues(0).getColumns(2));
     }
 }

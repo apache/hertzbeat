@@ -34,11 +34,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.springframework.util.StopWatch;
 import org.xbill.DNS.DClass;
@@ -103,7 +103,7 @@ public class DnsCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
 
         DnsResolveResult dnsResolveResult;
         try {
@@ -111,27 +111,34 @@ public class DnsCollectImpl extends AbstractCollect {
             dnsResolveResult = dig(metrics.getDns());
         } catch (IOException e) {
             log.info(CommonUtil.getMessageFromThrowable(e));
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, e.getMessage());
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(e.getMessage());
             return;
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("[dns collect] error: {}", e.getMessage(), e);
-            metricsDataBuilder.setFailedMsg(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
             return;
         }
 
         // build dns metrics data
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         if (StringUtils.equals(HEADER, metrics.getName())) {
             // add header columns
             Map<String, String> headerInfo = dnsResolveResult.getHeaderInfo();
-            metrics.getAliasFields().forEach(field -> metricsDataBuilder.getArrowVectorWriter().setValue(field, headerInfo.get(field)));
+            metrics.getAliasFields().forEach(field -> valueRowBuilder.addColumn(headerInfo.getOrDefault(field, CommonConstants.NULL_VALUE)));
         } else {
             // add question/answer/authority/additional columns
             List<String> currentMetricsResolveResultList = dnsResolveResult.getList(metrics.getName());
             for (int index = 0; index < metrics.getAliasFields().size(); index++) {
-                metricsDataBuilder.getArrowVectorWriter().setValue(metrics.getAliasFields().get(index), currentMetricsResolveResultList.get(index));
+                valueRowBuilder.addColumn(index >= currentMetricsResolveResultList.size()
+                        ? CommonConstants.NULL_VALUE
+                        : currentMetricsResolveResultList.get(index));
             }
         }
+
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     @Override

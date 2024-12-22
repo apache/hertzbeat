@@ -65,7 +65,6 @@ public class RowWrapper {
         if (!hasNextCell() || currentRow == null) {
             throw new NoSuchElementException("No more cells in current row");
         }
-
         return new ArrowCell(fieldList.get(fieldIndex++), currentRow);
     }
 

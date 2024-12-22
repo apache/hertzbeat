@@ -27,24 +27,25 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClient;
 import org.apache.hertzbeat.collector.collect.registry.discovery.DiscoveryClientManagement;
 import org.apache.hertzbeat.collector.collect.registry.discovery.entity.ServerInfo;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
  * registry protocol collection implementation
  */
-@Setter
 @Slf4j
 public class RegistryImpl extends AbstractCollect {
     private static final String SERVER = "server";
 
+    @Setter
     @VisibleForTesting
     private DiscoveryClientManagement discoveryClientManagement = new DiscoveryClientManagement();
 
@@ -57,40 +58,46 @@ public class RegistryImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         RegistryProtocol registryProtocol = metrics.getRegistry();
 
         try (DiscoveryClient discoveryClient = discoveryClientManagement.getClient(registryProtocol)) {
-            collectMetrics(metricsDataBuilder, metrics, discoveryClient);
+            collectMetrics(builder, metrics, discoveryClient);
         } catch (TransportException e1) {
             String errorMsg = "Consul " + CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
-            metricsDataBuilder.setFailedMsg(errorMsg);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            metricsDataBuilder.setFailedMsg(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         }
     }
 
-    private void collectMetrics(MetricsDataBuilder metricsDataBuilder, Metrics metrics, DiscoveryClient discoveryClient) {
+    private void collectMetrics(CollectRep.MetricsData.Builder builder, Metrics metrics, DiscoveryClient discoveryClient) {
         long beginTime = System.currentTimeMillis();
         // Available and Server monitor
         if (StringUtils.equals(metrics.getName(), SERVER)) {
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             ServerInfo serverInfo = discoveryClient.getServerInfo();
             metrics.getAliasFields().forEach(fieldName -> {
                 if (StringUtils.equalsAnyIgnoreCase(CollectorConstants.RESPONSE_TIME, fieldName)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(fieldName, String.valueOf(System.currentTimeMillis() - beginTime));
+                    valueRowBuilder.addColumn(String.valueOf(System.currentTimeMillis() - beginTime));
                 } else {
-                    addColumnIfMatched(fieldName, serverInfo, metricsDataBuilder);
+                    addColumnIfMatched(fieldName, serverInfo, valueRowBuilder);
                 }
             });
 
+            builder.addValueRow(valueRowBuilder.build());
         } else {
             // Service instances monitor
-            discoveryClient.getServices().forEach(serviceInstance ->
-                    metrics.getAliasFields().forEach(fieldName -> addColumnIfMatched(fieldName, serviceInstance, metricsDataBuilder)));
+            discoveryClient.getServices().forEach(serviceInstance -> {
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                metrics.getAliasFields().forEach(fieldName -> addColumnIfMatched(fieldName, serviceInstance, valueRowBuilder));
+                builder.addValueRow(valueRowBuilder.build());
+            });
         }
     }
 
@@ -99,7 +106,7 @@ public class RegistryImpl extends AbstractCollect {
         return DispatchConstants.PROTOCOL_REGISTRY;
     }
 
-    private void addColumnIfMatched(String fieldName, Object sourceObj, MetricsDataBuilder metricsDataBuilder) {
+    private void addColumnIfMatched(String fieldName, Object sourceObj, CollectRep.ValueRow.Builder valueRowBuilder) {
         String columnValue = null;
         try {
             Field declaredField = sourceObj.getClass().getDeclaredField(fieldName);
@@ -109,6 +116,8 @@ public class RegistryImpl extends AbstractCollect {
             log.warn("No such field for {}", fieldName);
         }
 
-        metricsDataBuilder.getArrowVectorWriter().setValue(fieldName, columnValue);
+        valueRowBuilder.addColumn(StringUtils.isBlank(columnValue)
+                ? CommonConstants.NULL_VALUE
+                : columnValue);
     }
 }

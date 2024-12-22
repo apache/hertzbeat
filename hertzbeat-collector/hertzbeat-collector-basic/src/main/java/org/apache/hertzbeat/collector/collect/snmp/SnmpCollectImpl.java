@@ -25,18 +25,19 @@ import java.nio.charset.CharsetDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.snmp4j.PDU;
 import org.snmp4j.Snmp;
@@ -98,7 +99,7 @@ public class SnmpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         SnmpProtocol snmpProtocol = metrics.getSnmp();
         int timeout = CollectUtil.getTimeout(snmpProtocol.getTimeout());
@@ -147,7 +148,6 @@ public class SnmpCollectImpl extends AbstractCollect {
                         .build();
                 target.setSecurityModel(SecurityModel.SECURITY_MODEL_SNMPv2c);
             }
-
             String operation = snmpProtocol.getOperation();
             operation = StringUtils.hasText(operation) ? operation : OPERATION_GET;
             if (OPERATION_GET.equalsIgnoreCase(operation)) {
@@ -170,16 +170,17 @@ public class SnmpCollectImpl extends AbstractCollect {
                         oidsValueMap.put(binding.getOid().toDottedString(), binding.toValueString());
                     }
                 }
-
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : metrics.getAliasFields()) {
                     if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
+                        valueRowBuilder.addColumn(Long.toString(responseTime));
                     } else {
                         String oid = oidsMap.get(alias);
                         String value = oidsValueMap.get(oid);
-                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, value);
+                        valueRowBuilder.addColumn(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
                     }
                 }
+                builder.addValueRow(valueRowBuilder.build());
             } else if (OPERATION_WALK.equalsIgnoreCase(operation)) {
                 Map<String, String> oidMap = snmpProtocol.getOids();
                 Assert.notEmpty(oidMap, "snmp oids is required when operation is walk.");
@@ -210,10 +211,10 @@ public class SnmpCollectImpl extends AbstractCollect {
                     if (oidsValueMap.size() < metrics.getAliasFields().size() / 2) {
                         continue;
                     }
-
+                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                     for (String alias : metrics.getAliasFields()) {
                         if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                            metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
+                            valueRowBuilder.addColumn(Long.toString(responseTime));
                         } else {
                             String oid = oidMap.get(alias);
                             String value = oidsValueMap.get(oid);
@@ -226,21 +227,22 @@ public class SnmpCollectImpl extends AbstractCollect {
                                     }
                                 }
                             }
-                            metricsDataBuilder.getArrowVectorWriter().setValue(alias, value);
+                            valueRowBuilder.addColumn(Objects.requireNonNullElse(value, CommonConstants.NULL_VALUE));
                         }
                     }
+                    builder.addValueRow(valueRowBuilder.build());
                 }
             }
         } catch (ExecutionException | InterruptedException ex) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ex);
             log.warn("[snmp collect] error: {}", errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("[snmp collect] error: {}", errorMsg, e);
-            metricsDataBuilder.setFailedMsg(errorMsg);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } finally {
             if (snmpService != null) {
                 if (snmpVersion == SnmpConstants.version3) {

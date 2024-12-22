@@ -18,9 +18,7 @@
 package org.apache.hertzbeat.collector.collect.mqtt;
 
 import com.hivemq.client.mqtt.MqttVersion;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -48,13 +46,15 @@ public class MqttCollectTest {
         metrics = Metrics.builder()
                 .mqtt(mqtt)
                 .build();
-        builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
+        builder = CollectRep.MetricsData.newBuilder();
     }
 
     @Test
     void preCheck() {
         // host is empty
-        assertThrows(IllegalArgumentException.class, () -> mqttCollect.preCheck(metrics));
+        assertThrows(IllegalArgumentException.class, () -> {
+            mqttCollect.preCheck(metrics);
+        });
 
         // port is empty
         assertThrows(IllegalArgumentException.class, () -> {
@@ -103,10 +103,7 @@ public class MqttCollectTest {
             metrics.setMqtt(mqtt);
             metrics.setAliasFields(new ArrayList<>());
 
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                mqttCollect.collect(metricsDataBuilder, metrics);
-            }
+            mqttCollect.collect(builder, metrics);
         });
 
         
@@ -121,10 +118,7 @@ public class MqttCollectTest {
             metrics.setMqtt(mqtt);
             metrics.setAliasFields(new ArrayList<>());
 
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                mqttCollect.collect(metricsDataBuilder, metrics);
-            }
+            mqttCollect.collect(builder, metrics);
         });
     }
 }

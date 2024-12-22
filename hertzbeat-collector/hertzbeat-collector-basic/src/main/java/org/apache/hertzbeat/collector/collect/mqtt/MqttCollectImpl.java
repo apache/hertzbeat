@@ -39,11 +39,13 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MqttProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
@@ -68,14 +70,14 @@ public class MqttCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(Builder builder, Metrics metrics) {
         MqttProtocol mqtt = metrics.getMqtt();
         String protocolVersion = mqtt.getProtocolVersion();
         MqttVersion mqttVersion = MqttVersion.valueOf(protocolVersion);
         if (mqttVersion == MqttVersion.MQTT_3_1_1) {
-            collectWithVersion3(metrics, metricsDataBuilder);
+            collectWithVersion3(metrics, builder);
         } else if (mqttVersion == MqttVersion.MQTT_5_0) {
-            collectWithVersion5(metrics, metricsDataBuilder);
+            collectWithVersion5(metrics, builder);
         }
     }
 
@@ -87,7 +89,7 @@ public class MqttCollectImpl extends AbstractCollect {
     /**
      * collecting data of MQTT 5
      */
-    private void collectWithVersion5(Metrics metrics, MetricsDataBuilder metricsDataBuilder) {
+    private void collectWithVersion5(Metrics metrics, Builder builder) {
         MqttProtocol mqttProtocol = metrics.getMqtt();
         Map<Object, String> data = new HashMap<>();
         Mqtt5AsyncClient client = buildMqtt5Client(mqttProtocol);
@@ -96,18 +98,19 @@ public class MqttCollectImpl extends AbstractCollect {
             try {
                 connectFuture.get(Long.parseLong(mqttProtocol.getTimeout()), TimeUnit.MILLISECONDS);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                metricsDataBuilder.setFailedMsg(getErrorMessage(e.getMessage()));
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg(getErrorMessage(e.getMessage()));
             }
         });
         testDescribeAndPublish5(client, mqttProtocol, data);
-        convertToMetricsData(metricsDataBuilder, metrics, responseTime, data);
+        convertToMetricsData(builder, metrics, responseTime, data);
         client.disconnect();
     }
 
     /**
      * collecting data of MQTT 3.1.1
      */
-    private void collectWithVersion3(Metrics metrics, MetricsDataBuilder metricsDataBuilder) {
+    private void collectWithVersion3(Metrics metrics, Builder builder) {
         MqttProtocol mqttProtocol = metrics.getMqtt();
         Map<Object, String> data = new HashMap<>();
         Mqtt3AsyncClient client = buildMqtt3Client(mqttProtocol);
@@ -116,11 +119,12 @@ public class MqttCollectImpl extends AbstractCollect {
             try {
                 connectFuture.get(Long.parseLong(mqttProtocol.getTimeout()), TimeUnit.MILLISECONDS);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                metricsDataBuilder.setFailedMsg(getErrorMessage(e.getMessage()));
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg(getErrorMessage(e.getMessage()));
             }
         });
         testDescribeAndPublish3(client, mqttProtocol, data);
-        convertToMetricsData(metricsDataBuilder, metrics, responseTime, data);
+        convertToMetricsData(builder, metrics, responseTime, data);
         client.disconnect();
     }
 
@@ -189,15 +193,18 @@ public class MqttCollectImpl extends AbstractCollect {
         return stopWatch.getTotalTimeMillis();
     }
 
-    private void convertToMetricsData(MetricsDataBuilder metricsDataBuilder, Metrics metrics, long responseTime, Map<Object, String> data) {
+    private void convertToMetricsData(Builder builder, Metrics metrics, long responseTime, Map<Object, String> data) {
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String column : metrics.getAliasFields()) {
             if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                metricsDataBuilder.getArrowVectorWriter().setValue(column, String.valueOf(responseTime));
+                valueRowBuilder.addColumn(String.valueOf(responseTime));
             } else {
                 String value = data.get(column);
-                metricsDataBuilder.getArrowVectorWriter().setValue(column, value);
+                value = value == null ? CommonConstants.NULL_VALUE : value;
+                valueRowBuilder.addColumn(value);
             }
         }
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     private Boolean test(Runnable runnable, String operationName) {

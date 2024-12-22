@@ -17,14 +17,8 @@
 
 package org.apache.hertzbeat.collector.collect.basic.ssh;
 
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.ssh.SshCollectImpl;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
-import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
@@ -48,6 +42,8 @@ import org.testcontainers.utility.DockerImageName;
 import java.time.Duration;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -101,9 +97,8 @@ public class SshCollectE2eTest {
         log.info("Container started successfully with mapped port: {}", mappedPort);
     }
 
-    @SneakyThrows
     @Test
-    public void testSshCollect() {
+    public void testSshCollect() throws ExecutionException, InterruptedException, TimeoutException {
         // Verify container running status
         Assertions.assertTrue(linuxContainer.isRunning(), "Ubuntu container should be running");
 
@@ -111,28 +106,27 @@ public class SshCollectE2eTest {
         Job ubuntuJob = appService.getAppDefine("ubuntu");
         List<Metrics> metricsDefinitions = ubuntuJob.getMetrics();
 
-        for (Metrics metricsDefinition : metricsDefinitions) {
-            testMetricsCollection(metricsDefinition);
-        }
+        metricsDefinitions.forEach(this::testMetricsCollection);
     }
 
-    private void testMetricsCollection(Metrics metricsDef) throws Exception {
+    private void testMetricsCollection(Metrics metricsDef) {
         String name = metricsDef.getName();
+        CollectRep.MetricsData.Builder builder = executeCollection(metricsDef);
 
-        final CollectRep.MetricsData metricsData = executeCollection(metricsDef);
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-            Assertions.assertTrue(arrowVectorReader.getRowCount() > 0, name + " metrics values should not be empty");
+        // Verify CPU metrics
+        Assertions.assertTrue(builder.getValuesList().size() > 0, name + " metrics values should not be empty");
+        CollectRep.ValueRow valueRow = builder.getValuesList().get(0);
 
-            // Verify CPU metrics
-            RowWrapper firstRowWrapper = arrowVectorReader.readRow().nextRow();
-            firstRowWrapper.cellStream().forEach(cell -> Assertions.assertFalse(cell.getValue().isEmpty(),
-                    String.format("%s metric column %s should not be empty", name, cell.getField().getName())));
+        // Verify all columns have values
+        for (int i = 0; i < valueRow.getColumnsCount(); i++) {
+            Assertions.assertFalse(valueRow.getColumns(i).isEmpty(),
+                    String.format("%s metric column %d should not be empty", name, i));
         }
 
-        log.info("{} metrics validation passed", name);
+        log.info(name + " metrics validation passed");
     }
 
-    private CollectRep.MetricsData executeCollection(Metrics metricsDef) {
+    private CollectRep.MetricsData.Builder executeCollection(Metrics metricsDef) {
         // Build SSH protocol configuration
         SshProtocol sshProtocol = buildSshProtocol(metricsDef);
         metrics.setSsh(sshProtocol);
@@ -144,12 +138,9 @@ public class SshCollectE2eTest {
                 metricsDef.getAliasFields());
 
         // Execute collection
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("ubuntu");
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-            sshCollect.collect(metricsDataBuilder, metrics);
-            return metricsDataBuilder.build();
-        }
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        sshCollect.collect(builder, metrics);
+        return builder;
     }
 
     private SshProtocol buildSshProtocol(Metrics metricsDef) {

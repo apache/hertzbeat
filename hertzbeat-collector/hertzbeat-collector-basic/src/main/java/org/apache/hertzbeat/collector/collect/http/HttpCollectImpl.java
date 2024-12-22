@@ -43,7 +43,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.util.Base64;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.http.promethus.AbstractPrometheusParse;
 import org.apache.hertzbeat.collector.collect.http.promethus.PrometheusParseCreator;
@@ -54,13 +53,12 @@ import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.util.JsonPathParser;
 import org.apache.hertzbeat.collector.util.TimeExpressionUtil;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.Header;
@@ -110,7 +108,7 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         HttpProtocol httpProtocol = metrics.getHttp();
@@ -129,7 +127,8 @@ public class HttpCollectImpl extends AbstractCollect {
             boolean isSuccessInvoke = checkSuccessInvoke(metrics, statusCode);
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
-                metricsDataBuilder.setFailedMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return;
             }
             // todo This code converts an InputStream directly to a String. For large data in Prometheus exporters,
@@ -145,51 +144,52 @@ public class HttpCollectImpl extends AbstractCollect {
             try {
                 switch (parseType) {
                     case DispatchConstants.PARSE_JSON_PATH ->
-                            parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), metricsDataBuilder, responseTime);
+                            parseResponseByJsonPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                     case DispatchConstants.PARSE_PROM_QL ->
-                            parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), metricsDataBuilder);
+                            parseResponseByPromQl(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     case DispatchConstants.PARSE_PROMETHEUS ->
-                            parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), metricsDataBuilder);
+                            parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
                     case DispatchConstants.PARSE_XML_PATH ->
-                            parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), metricsDataBuilder);
+                            parseResponseByXmlPath(resp, metrics.getAliasFields(), metrics.getHttp(), builder);
                     case DispatchConstants.PARSE_WEBSITE ->
-                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), metricsDataBuilder, responseTime, response);
+                            parseResponseByWebsite(resp, metrics, metrics.getHttp(), builder, responseTime, response);
                     case DispatchConstants.PARSE_SITE_MAP ->
-                            parseResponseBySiteMap(resp, metrics.getAliasFields(), metricsDataBuilder);
+                            parseResponseBySiteMap(resp, metrics.getAliasFields(), builder);
                     case DispatchConstants.PARSE_HEADER ->
                             parseResponseByHeader(builder, metrics.getAliasFields(), response);
                     default ->
-                            parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), metricsDataBuilder, responseTime);
+                            parseResponseByDefault(resp, metrics.getAliasFields(), metrics.getHttp(), builder, responseTime);
                 }
             } catch (Exception e) {
                 log.info("parse error: {}.", e.getMessage(), e);
-                metricsDataBuilder.setFailedMsg("parse response data error:" + e.getMessage());
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("parse response data error:" + e.getMessage());
             }
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(errorMsg);
         } catch (UnknownHostException e2) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "unknown host:" + errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_REACHABLE);
+            builder.setMsg("unknown host:" + errorMsg);
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e3);
             log.info(errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(errorMsg);
         } catch (IOException e4) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e4);
             log.info(errorMsg);
-            metricsDataBuilder.setFailedMsg(errorMsg);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            metricsDataBuilder.setFailedMsg(errorMsg);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } finally {
             if (request != null) {
                 request.abort();
@@ -201,18 +201,18 @@ public class HttpCollectImpl extends AbstractCollect {
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliases) {
             if (!StringUtils.hasText(alias)) {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 continue;
             }
             final Header firstHeader = response.getFirstHeader(alias);
             if (Objects.isNull(firstHeader)) {
-                valueRowBuilder.addColumns(CommonConstants.NULL_VALUE);
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 continue;
             }
 
-            valueRowBuilder.addColumns(firstHeader.getValue());
+            valueRowBuilder.addColumn(firstHeader.getValue());
         }
-        builder.addValues(valueRowBuilder.build());
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     @Override
@@ -221,46 +221,28 @@ public class HttpCollectImpl extends AbstractCollect {
     }
 
     private void parseResponseByWebsite(String resp, Metrics metrics, HttpProtocol http,
-                                        MetricsDataBuilder metricsDataBuilder, Long responseTime,
+                                        CollectRep.MetricsData.Builder builder, Long responseTime,
                                         CloseableHttpResponse response) {
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (String alias : metrics.getAliasFields()) {
-            if ("summary".equalsIgnoreCase(metrics.getName())) {
-                addColumnForSummary(responseTime, metricsDataBuilder, keywordNum, alias);
-            } else if ("header".equalsIgnoreCase(metrics.getName())) {
-                addColumnFromHeader(metricsDataBuilder, alias, response);
-            }
+            addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
         }
+        builder.addValueRow(valueRowBuilder.build());
     }
 
-    private void addColumnFromHeader(MetricsDataBuilder metricsDataBuilder, String alias, CloseableHttpResponse response) {
-        if (!StringUtils.hasText(alias)) {
-            metricsDataBuilder.getArrowVectorWriter().setNull(alias);
-            return;
-        }
-
-        final Header firstHeader = response.getFirstHeader(alias);
-        if (Objects.isNull(firstHeader)) {
-            metricsDataBuilder.getArrowVectorWriter().setNull(alias);
-            return;
-        }
-
-        metricsDataBuilder.getArrowVectorWriter().setValue(alias, firstHeader.getValue());
-    }
-
-    private void addColumnForSummary(Long responseTime, MetricsDataBuilder metricsDataBuilder, int keywordNum, String alias) {
-
+    private void addColumnForSummary(Long responseTime, CollectRep.ValueRow.Builder valueRowBuilder, int keywordNum, String alias) {
         if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-            metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
+            valueRowBuilder.addColumn(responseTime.toString());
         } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-            metricsDataBuilder.getArrowVectorWriter().setValue(alias, Integer.toString(keywordNum));
+            valueRowBuilder.addColumn(Integer.toString(keywordNum));
         } else {
-            metricsDataBuilder.getArrowVectorWriter().setNull(alias);
+            valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
         }
     }
 
     private void parseResponseBySiteMap(String resp, List<String> aliasFields,
-                                        MetricsDataBuilder metricsDataBuilder) {
+                                        CollectRep.MetricsData.Builder builder) {
         List<String> siteUrls = new LinkedList<>();
         boolean isXmlFormat = true;
         try {
@@ -322,32 +304,32 @@ public class HttpCollectImpl extends AbstractCollect {
             } catch (Exception e) {
                 errorMsg = "error: " + e.getMessage();
             }
-
             long responseTime = System.currentTimeMillis() - startTime;
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (NetworkConstants.URL.equalsIgnoreCase(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, siteUrl);
+                    valueRowBuilder.addColumn(siteUrl);
                 } else if (NetworkConstants.STATUS_CODE.equalsIgnoreCase(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, statusCode == null
-                            ? CommonConstants.NULL_VALUE
-                            : String.valueOf(statusCode));
+                    valueRowBuilder.addColumn(statusCode == null
+                            ? CommonConstants.NULL_VALUE : String.valueOf(statusCode));
                 } else if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(responseTime));
+                    valueRowBuilder.addColumn(String.valueOf(responseTime));
                 } else if (NetworkConstants.ERROR_MSG.equalsIgnoreCase(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, errorMsg);
+                    valueRowBuilder.addColumn(errorMsg);
                 } else {
-                    metricsDataBuilder.getArrowVectorWriter().setNull(alias);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
     private void parseResponseByXmlPath(String resp, List<String> aliasFields, HttpProtocol http,
-                                        MetricsDataBuilder metricsDataBuilder) {
+                                        CollectRep.MetricsData.Builder builder) {
     }
 
     private void parseResponseByJsonPath(String resp, List<String> aliasFields, HttpProtocol http,
-                                         MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+                                         CollectRep.MetricsData.Builder builder, Long responseTime) {
         List<Object> results = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript());
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         for (int i = 0; i < results.size(); i++) {
@@ -358,113 +340,116 @@ public class HttpCollectImpl extends AbstractCollect {
             }
             if (objectValue instanceof Map) {
                 Map<String, Object> stringMap = (Map<String, Object>) objectValue;
-
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : aliasFields) {
                     Object value = stringMap.get(alias);
                     if (value != null) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(value));
+                        valueRowBuilder.addColumn(String.valueOf(value));
                     } else {
                         if (alias.startsWith("$.")) {
                             List<Object> subResults = JsonPathParser.parseContentWithJsonPath(resp, http.getParseScript() + alias.substring(1));
                             if (subResults != null && subResults.size() > i) {
                                 Object resultValue = subResults.get(i);
-                                metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(resultValue));
+                                valueRowBuilder.addColumn(resultValue == null ? CommonConstants.NULL_VALUE : String.valueOf(resultValue));
                             } else {
-                                metricsDataBuilder.getArrowVectorWriter().setNull(alias);
+                                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                             }
                         } else {
-                            addColumnForSummary(responseTime, metricsDataBuilder, keywordNum, alias);
+                            addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                         }
                     }
                 }
+                builder.addValueRow(valueRowBuilder.build());
             } else if (objectValue instanceof String stringValue) {
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : aliasFields) {
                     if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
+                        valueRowBuilder.addColumn(responseTime.toString());
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, Integer.toString(keywordNum));
+                        valueRowBuilder.addColumn(Integer.toString(keywordNum));
                     } else {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, stringValue);
+                        valueRowBuilder.addColumn(stringValue);
                     }
                 }
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
 
     private void parseResponseByPromQl(String resp, List<String> aliasFields, HttpProtocol http,
-                                       MetricsDataBuilder metricsDataBuilder) {
+                                       CollectRep.MetricsData.Builder builder) {
         AbstractPrometheusParse prometheusParser = PrometheusParseCreator.getPrometheusParse();
-        prometheusParser.handle(resp, aliasFields, http, metricsDataBuilder);
+        prometheusParser.handle(resp, aliasFields, http, builder);
     }
 
     private void parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
-                                                   MetricsDataBuilder metricsDataBuilder) {
-        Long monitorId = metricsDataBuilder.getMonitorId();
-        if (!EXPORTER_PARSER_TABLE.containsKey(monitorId)) {
-            EXPORTER_PARSER_TABLE.put(monitorId, new ExporterParser());
+                                                   CollectRep.MetricsData.Builder builder) {
+        if (!EXPORTER_PARSER_TABLE.containsKey(builder.getId())) {
+            EXPORTER_PARSER_TABLE.put(builder.getId(), new ExporterParser());
         }
-        ExporterParser parser = EXPORTER_PARSER_TABLE.get(monitorId);
+        ExporterParser parser = EXPORTER_PARSER_TABLE.get(builder.getId());
         Map<String, MetricFamily> metricFamilyMap = parser.textToMetric(resp);
-        String metrics = metricsDataBuilder.getMetrics();
-        if (!metricFamilyMap.containsKey(metrics)) {
-            return;
-        }
-
-        MetricFamily metricFamily = metricFamilyMap.get(metrics);
-        for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
-            Map<String, String> labelMap = metric.getLabelPair()
-                    .stream()
-                    .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
-
-            for (String aliasField : aliasFields) {
-                if ("value".equals(aliasField)) {
-                    if (metric.getCounter() != null) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getCounter().getValue()));
-                    } else if (metric.getGauge() != null) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getGauge().getValue()));
-                    } else if (metric.getUntyped() != null) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getUntyped().getValue()));
-                    } else if (metric.getInfo() != null) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getInfo().getValue()));
-                    } else if (metric.getSummary() != null) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getSummary().getValue()));
-                    } else if (metric.getHistogram() != null) {
-                        metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, String.valueOf(metric.getHistogram().getValue()));
+        String metrics = builder.getMetrics();
+        if (metricFamilyMap.containsKey(metrics)) {
+            MetricFamily metricFamily = metricFamilyMap.get(metrics);
+            for (MetricFamily.Metric metric : metricFamily.getMetricList()) {
+                Map<String, String> labelMap = metric.getLabelPair()
+                        .stream()
+                        .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                for (String aliasField : aliasFields) {
+                    if ("value".equals(aliasField)) {
+                        if (metric.getCounter() != null) {
+                            valueRowBuilder.addColumn(String.valueOf(metric.getCounter().getValue()));
+                        } else if (metric.getGauge() != null) {
+                            valueRowBuilder.addColumn(String.valueOf(metric.getGauge().getValue()));
+                        } else if (metric.getUntyped() != null) {
+                            valueRowBuilder.addColumn(String.valueOf(metric.getUntyped().getValue()));
+                        } else if (metric.getInfo() != null) {
+                            valueRowBuilder.addColumn(String.valueOf(metric.getInfo().getValue()));
+                        } else if (metric.getSummary() != null) {
+                            valueRowBuilder.addColumn(String.valueOf(metric.getSummary().getValue()));
+                        } else if (metric.getHistogram() != null) {
+                            valueRowBuilder.addColumn(String.valueOf(metric.getHistogram().getValue()));
+                        }
+                    } else {
+                        String columnValue = labelMap.get(aliasField);
+                        valueRowBuilder.addColumn(columnValue == null ? CommonConstants.NULL_VALUE : columnValue);
                     }
-                } else {
-                    String columnValue = labelMap.get(aliasField);
-                    metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, columnValue);
                 }
+                builder.addValueRow(valueRowBuilder.build());
             }
         }
     }
 
     private void parseResponseByDefault(String resp, List<String> aliasFields, HttpProtocol http,
-                                        MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+                                        CollectRep.MetricsData.Builder builder, Long responseTime) {
         JsonElement element = JsonParser.parseString(resp);
         int keywordNum = CollectUtil.countMatchKeyword(resp, http.getKeyword());
         if (element.isJsonArray()) {
             JsonArray array = element.getAsJsonArray();
             for (JsonElement jsonElement : array) {
-                getValueFromJson(aliasFields, metricsDataBuilder, responseTime, jsonElement, keywordNum);
+                getValueFromJson(aliasFields, builder, responseTime, jsonElement, keywordNum);
             }
         } else {
-            getValueFromJson(aliasFields, metricsDataBuilder, responseTime, element, keywordNum);
+            getValueFromJson(aliasFields, builder, responseTime, element, keywordNum);
         }
     }
 
-    private void getValueFromJson(List<String> aliasFields, MetricsDataBuilder metricsDataBuilder, Long responseTime, JsonElement element, int keywordNum) {
+    private void getValueFromJson(List<String> aliasFields, CollectRep.MetricsData.Builder builder, Long responseTime, JsonElement element, int keywordNum) {
         if (element.isJsonObject()) {
             JsonObject object = element.getAsJsonObject();
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 JsonElement valueElement = object.get(alias);
                 if (valueElement != null) {
                     String value = valueElement.getAsString();
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, value);
+                    valueRowBuilder.addColumn(value);
                 } else {
-                    addColumnForSummary(responseTime, metricsDataBuilder, keywordNum, alias);
+                    addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
                 }
             }
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 

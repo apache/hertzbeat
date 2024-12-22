@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiSession;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.UdpConnection;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.GetSdrRequest;
@@ -32,7 +31,9 @@ import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.Re
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.ReserveSdrRepositoryResponse;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.sdr.code.IpmiReadingTypeCode;
 import org.apache.hertzbeat.collector.collect.ipmi2.utils.ByteConvertUtils;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  *  SensorHandler
@@ -41,7 +42,7 @@ import org.apache.hertzbeat.common.entity.job.Metrics;
 public class SensorHandler implements IpmiHandler {
 
     @Override
-    public void handler(IpmiSession session, UdpConnection connection, MetricsDataBuilder metricsDataBuilder, Metrics metrics) throws IOException {
+    public void handler(IpmiSession session, UdpConnection connection, CollectRep.MetricsData.Builder builder, Metrics metrics) throws IOException {
         ReserveSdrRepositoryResponse response = connection.get(session, new ReserveSdrRepositoryRequest(), ReserveSdrRepositoryResponse.class);
         int reserveId = response.reserveId;
         int recordId = GetSdrRequest.RECORD_ID_START;
@@ -74,10 +75,15 @@ public class SensorHandler implements IpmiHandler {
             parseValue.put("sensor_id", getSdrBodyResponse.sensorIdString);
             parseValue.put("entity_id", getSdrBodyResponse.entityIdCode.getDescription());
             parseValue.put("sensor_type", getSdrBodyResponse.sensorTypeCode.getDescription());
-
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (Metrics.Field field : metrics.getFields()) {
-                metricsDataBuilder.getArrowVectorWriter().setValue(field.getField(), parseValue.get(field.getField()));
+                if (!parseValue.containsKey(field.getField())) {
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                    continue;
+                }
+                valueRowBuilder.addColumn(parseValue.get(field.getField()));
             }
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 
@@ -88,7 +94,10 @@ public class SensorHandler implements IpmiHandler {
         if (response.readingTypeCode != IpmiReadingTypeCode.Threshold) {
             return false;
         }
-        return response.analogDataFormat != 0x03;
+        if (response.analogDataFormat == 0x03) {
+            return false;
+        }
+        return true;
     }
 
     public double calcSensorValue(GetSdrResponse response, int raw) {

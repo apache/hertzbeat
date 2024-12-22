@@ -18,13 +18,11 @@
 package org.apache.hertzbeat.collector.collect.ipmi2.client;
 
 import java.io.IOException;
-
-import lombok.Getter;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.handler.IpmiHandler;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.CloseSessionRequest;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.messaging.CloseSessionResponse;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 
 /**
  * IpmiConnection used for sending ipmi request
@@ -37,7 +35,6 @@ public class IpmiConnection implements AutoCloseable {
 
     IpmiHandlerManager handlerManager = new IpmiHandlerManager();
 
-    @Getter
     private volatile boolean active = true;
 
     IpmiConnection(IpmiSession session, UdpConnection udpConnection) {
@@ -45,12 +42,12 @@ public class IpmiConnection implements AutoCloseable {
         this.udpConnection = udpConnection;
     }
 
-    public void getResource(MetricsDataBuilder metricsDataBuilder, Metrics metrics) throws IOException {
+    public void getResource(CollectRep.MetricsData.Builder builder, Metrics metrics) throws IOException {
         IpmiHandler handler = handlerManager.getHandler(metrics.getName());
         if (handler == null) {
             throw new RuntimeException("no handler for " + metrics.getIpmi().getType());
         }
-        handler.handler(session, udpConnection, metricsDataBuilder, metrics);
+        handler.handler(session, udpConnection, builder, metrics);
     }
 
 
@@ -62,4 +59,7 @@ public class IpmiConnection implements AutoCloseable {
         active = false;
     }
 
+    public boolean isActive() {
+        return this.active;
+    }
 }

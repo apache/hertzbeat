@@ -25,11 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.config.CommonProperties;
 import org.apache.hertzbeat.common.constants.DataQueueConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
-import org.apache.hertzbeat.common.util.JsonUtil;
-import org.apache.hertzbeat.common.util.ProtoJsonUtil;
+import org.apache.hertzbeat.common.serialize.RedisMetricsDataCodec;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
@@ -47,13 +45,11 @@ import org.springframework.context.annotation.Configuration;
 public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
 
     private final RedisClient redisClient;
-    private final StatefulRedisConnection<String, String> connection;
-    private final RedisCommands<String, String> syncCommands;
-    private final String metricsDataQueueNameToAlerter;
-    private final String metricsDataQueueNameToPersistentStorage;
-    private final String metricsDataQueueNameToRealTimeStorage;
+    private final StatefulRedisConnection<String, CollectRep.MetricsData> connection;
+    private final RedisCommands<String, CollectRep.MetricsData> syncCommands;
+    private final String metricsDataQueueNameToStorage;
     private final String metricsDataQueueNameForServiceDiscovery;
-    private final String alertsDataQueueName;
+    private final String metricsDataQueueNameToAlerter;
     private final CommonProperties.RedisProperties redisProperties;
 
     public RedisCommonDataQueue(CommonProperties properties) {
@@ -71,103 +67,84 @@ public class RedisCommonDataQueue implements CommonDataQueue, DisposableBean {
                         .withPort(redisProperties.getRedisPort())
                         .build()
         );
-        this.connection = redisClient.connect();
+        RedisMetricsDataCodec codec = new RedisMetricsDataCodec();
+        this.connection = redisClient.connect(codec);
         this.syncCommands = connection.sync();
-        this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
-        this.metricsDataQueueNameToPersistentStorage = redisProperties.getMetricsDataQueueNameToPersistentStorage();
-        this.metricsDataQueueNameToRealTimeStorage = redisProperties.getMetricsDataQueueNameToRealTimeStorage();
+        this.metricsDataQueueNameToStorage = redisProperties.getMetricsDataQueueNameToPersistentStorage();
         this.metricsDataQueueNameForServiceDiscovery = redisProperties.getMetricsDataQueueNameForServiceDiscovery();
-        this.alertsDataQueueName = redisProperties.getAlertsDataQueueName();
+        this.metricsDataQueueNameToAlerter = redisProperties.getMetricsDataQueueNameToAlerter();
     }
 
     @Override
     public Alert pollAlertsData() {
-
-        try {
-            String alertJson = syncCommands.rpop(alertsDataQueueName);
-            if (alertJson != null) {
-                return JsonUtil.fromJson(alertJson, Alert.class);
-            }
-        } catch (Exception e) {
-            log.error("please config common.queue.redis props correctly", e);
-            throw new RuntimeException(e);
-        }
+        // todo will remove this
         return null;
     }
 
     @Override
-    public ArrowVector pollMetricsDataToAlerter() {
-        return getArrowVectorFromQueue(metricsDataQueueNameToAlerter);
+    public CollectRep.MetricsData pollMetricsDataToAlerter() {
+        try {
+            return syncCommands.rpop(metricsDataQueueNameToAlerter);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return null;
+        }
     }
 
     @Override
-    public ArrowVector pollMetricsDataToPersistentStorage() throws InterruptedException {
-        return getArrowVectorFromQueue(metricsDataQueueNameToPersistentStorage);
-    }
-
-    @Override
-    public ArrowVector pollMetricsDataToRealTimeStorage() throws InterruptedException {
-        return getArrowVectorFromQueue(metricsDataQueueNameToRealTimeStorage);
+    public CollectRep.MetricsData pollMetricsDataToStorage() throws InterruptedException {
+        try {
+            return syncCommands.rpop(metricsDataQueueNameToStorage);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return null;
+        }
     }
 
     @Override
     public void sendAlertsData(Alert alert) {
+        // will remove this todo
+    }
 
+    @Override
+    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
         try {
-            String alertJson = JsonUtil.toJson(alert);
-            syncCommands.lpush(alertsDataQueueName, alertJson);
+            return syncCommands.rpop(metricsDataQueueNameForServiceDiscovery);
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
     @Override
-    public ArrowVector pollServiceDiscoveryData() throws InterruptedException {
-        return getArrowVectorFromQueue(metricsDataQueueNameForServiceDiscovery);
-    }
-
-    @Override
-    public void sendMetricsData(ArrowVector arrowVector) {
-
+    public void sendMetricsData(CollectRep.MetricsData metricsData) {
         try {
-            String metricsDataJson = new String(arrowVector.toByteArray());
-            syncCommands.lpush(metricsDataQueueNameToAlerter, metricsDataJson);
-            syncCommands.lpush(metricsDataQueueNameToPersistentStorage, metricsDataJson);
-            syncCommands.lpush(metricsDataQueueNameToRealTimeStorage, metricsDataJson);
+            syncCommands.lpush(metricsDataQueueNameToAlerter, metricsData);
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void sendServiceDiscoveryData(ArrowVector arrowVector) {
+    public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
         try {
-            String metricsDataJson = new String(arrowVector.toByteArray());
-            syncCommands.lpush(metricsDataQueueNameForServiceDiscovery, metricsDataJson);
+            syncCommands.lpush(metricsDataQueueNameToStorage, metricsData);
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new RuntimeException(e);
         }
     }
 
-    private ArrowVector getArrowVectorFromQueue(String queueName) {
+    @Override
+    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
         try {
-            String metricsDataJson = syncCommands.rpop(queueName);
-            if (metricsDataJson != null) {
-                return ArrowVector.fromByteArr(metricsDataJson.getBytes());
-            }
+            syncCommands.lpush(metricsDataQueueNameForServiceDiscovery, metricsData);
         } catch (Exception e) {
             log.error(e.getMessage());
-            throw new RuntimeException(e);
         }
-        return null;
     }
 
     @Override
     public void destroy() {
-
         connection.close();
         redisClient.shutdown();
     }

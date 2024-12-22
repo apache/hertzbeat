@@ -17,13 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.kafka;
 
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
-import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -44,11 +38,12 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.DockerLoggerFactory;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 /**
@@ -100,7 +95,7 @@ public class KafkaCollectE2eTest {
     }
 
     @Test
-    public void testKafkaCollect() throws Exception {
+    public void testKafkaCollect() throws ExecutionException, InterruptedException, TimeoutException {
 
         Assertions.assertTrue(zookeeperContainer.isRunning(), "Zookeeper container should be running");
         Assertions.assertTrue(kafkaContainer.isRunning(), "Kafka container should be running");
@@ -125,47 +120,24 @@ public class KafkaCollectE2eTest {
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get(60, TimeUnit.SECONDS);
 
         // Verify the information of topic list monitoring
-        builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("kafka");
-        metrics.setAliasFields(Lists.newArrayList("TopicName"));
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-            kafkaCollect.collect(metricsDataBuilder, metrics);
-
-            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
-            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-                RowWrapper rowWrapper = arrowVectorReader.readRow();
-
-                List<String> topicNameList = new ArrayList<>();
-                while (rowWrapper.hasNextRow()) {
-                    rowWrapper = rowWrapper.nextRow();
-
-                    topicNameList.add(rowWrapper.nextCell().getValue());
-                }
-                Assertions.assertTrue(topicNameList.contains(topicName));
-            }
-        }
+        builder = CollectRep.MetricsData.newBuilder();
+        kafkaCollect.collect(builder, metrics);
+        Assertions.assertTrue(builder.getValuesList().stream()
+                .anyMatch(valueRow -> valueRow.getColumns(0).equals(topicName)));
 
         // Verify the information monitored by topic description
+        builder = CollectRep.MetricsData.newBuilder();
         kafkaProtocol.setCommand("topic-describe");
-        metrics.setAliasFields(Lists.newArrayList("TopicName", "PartitionNum", "PartitionLeader", "BrokerHost", "BrokerPort", "ReplicationFactorSize", "ReplicationFactor"));
-        builder = CollectRep.MetricsData.newBuilder().setId(0L).setApp("kafka");
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-            kafkaCollect.collect(metricsDataBuilder, metrics);
-
-            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
-            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-                RowWrapper firstRowWrapper = arrowVectorReader.readRow().nextRow();
-
-                Assertions.assertAll(
-                        () -> Assertions.assertEquals(topicName, firstRowWrapper.nextCell().getValue()),
-                        () -> Assertions.assertEquals(String.valueOf(numPartitions), firstRowWrapper.nextCell().getValue()),
-                        () -> Assertions.assertEquals("0", firstRowWrapper.nextCell().getValue()),
-                        () -> Assertions.assertEquals(kafkaProtocol.getHost(), firstRowWrapper.nextCell().getValue()),
-                        () -> Assertions.assertEquals(kafkaProtocol.getPort(), firstRowWrapper.nextCell().getValue()),
-                        () -> Assertions.assertEquals(String.valueOf(replicationFactor), firstRowWrapper.nextCell().getValue())
-                );
-            }
-        }
+        kafkaCollect.collect(builder, metrics);
+        List<CollectRep.ValueRow> topicDescribeList = builder.getValuesList();
+        CollectRep.ValueRow firstRow = topicDescribeList.get(0);
+        Assertions.assertAll(
+                () -> Assertions.assertEquals(topicName, firstRow.getColumns(0)),
+                () -> Assertions.assertEquals(String.valueOf(numPartitions), firstRow.getColumns(1)),
+                () -> Assertions.assertEquals("0", firstRow.getColumns(2)),
+                () -> Assertions.assertEquals(kafkaProtocol.getHost(), firstRow.getColumns(3)),
+                () -> Assertions.assertEquals(kafkaProtocol.getPort(), firstRow.getColumns(4)),
+                () -> Assertions.assertEquals(String.valueOf(replicationFactor), firstRow.getColumns(5))
+        );
     }
 }

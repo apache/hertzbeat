@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  * AbstractConnection
  */
 @Slf4j
-public abstract class AbstractConnection<T> {
+public abstract class AbstractConnection<T> implements AutoCloseable {
 
     /**
      * @return Returns the connection.
@@ -34,4 +34,9 @@ public abstract class AbstractConnection<T> {
      * Close connection
      */
     public abstract void closeConnection() throws Exception;
+
+    @Override
+    public void close() throws Exception{
+        closeConnection();
+    }
 }

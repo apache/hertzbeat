@@ -38,17 +38,16 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.RedisConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.MapCapUtil;
 import org.springframework.util.Assert;
@@ -83,24 +82,25 @@ public class RedisCommonCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         try {
             if (Objects.nonNull(metrics.getRedis().getPattern()) && Objects.equals(metrics.getRedis().getPattern(), CLUSTER)) {
                 List<Map<String, String>> redisInfoList = getClusterRedisInfo(metrics);
-                doMetricsDataList(metricsDataBuilder, redisInfoList, metrics);
+                doMetricsDataList(builder, redisInfoList, metrics);
             } else {
                 Map<String, String> redisInfo = getSingleRedisInfo(metrics);
-                doMetricsData(metricsDataBuilder, redisInfo, metrics);
+                doMetricsData(builder, redisInfo, metrics);
             }
         } catch (RedisConnectionException connectionException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(connectionException);
             log.info("[redis connection] error: {}", errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("[redis collect] error: {}", e.getMessage(), e);
-            metricsDataBuilder.setFailedMsg(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         }
     }
 
@@ -147,22 +147,31 @@ public class RedisCommonCollectImpl extends AbstractCollect {
 
     /**
      * Build monitoring parameters according to redis info
-     * @param metricsDataBuilder metricsDataBuilder
+     * @param builder builder
      * @param valueMapList map list
      * @param metrics metrics
      */
-    private void doMetricsDataList(MetricsDataBuilder metricsDataBuilder, List<Map<String, String>> valueMapList, Metrics metrics) {
-        valueMapList.forEach(e -> doMetricsData(metricsDataBuilder, e, metrics));
+    private void doMetricsDataList(CollectRep.MetricsData.Builder builder, List<Map<String, String>> valueMapList, Metrics metrics) {
+        valueMapList.forEach(e -> doMetricsData(builder, e, metrics));
     }
 
     /**
      * Build monitoring parameters according to redis info
-     * @param metricsDataBuilder metricsDataBuilder
+     * @param builder builder
      * @param valueMap map value
      * @param metrics metrics
      */
-    private void doMetricsData(MetricsDataBuilder metricsDataBuilder, Map<String, String> valueMap, Metrics metrics) {
-        metrics.getAliasFields().forEach(it -> metricsDataBuilder.getArrowVectorWriter().setValue(it, valueMap.get(it)));
+    private void doMetricsData(CollectRep.MetricsData.Builder builder, Map<String, String> valueMap, Metrics metrics) {
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+        metrics.getAliasFields().forEach(it -> {
+            if (valueMap.containsKey(it)) {
+                String fieldValue = valueMap.get(it);
+                valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+            } else {
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+            }
+        });
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     /**

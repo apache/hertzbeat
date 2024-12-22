@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.common.entity.job;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,9 +29,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
@@ -264,7 +260,7 @@ public class Metrics {
      * collector use - Temporarily store subTask metrics response data
      */
     @JsonIgnore
-    private transient AtomicReference<ArrowVector> subTaskDataRef;
+    private transient AtomicReference<CollectRep.MetricsData> subTaskDataRef;
 
     /**
      * collector use - Temporarily store subTask running num
@@ -290,23 +286,28 @@ public class Metrics {
     /**
      * consume subTask
      *
-     * @param arrowVector collected data
+     * @param metricsData response data
      * @return is last task?
      */
-    public boolean consumeSubTaskResponse(ArrowVector arrowVector) {
+    public boolean consumeSubTaskResponse(CollectRep.MetricsData metricsData) {
         if (subTaskNum == null) {
             return true;
         }
         synchronized (subTaskNum) {
             int index = subTaskNum.decrementAndGet();
             if (subTaskDataRef.get() == null) {
-                subTaskDataRef.set(arrowVector);
+                subTaskDataRef.set(metricsData);
             } else {
-                try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVector)) {
-                    if (arrowVectorReader.getRowCount() >= 1) {
-                        subTaskDataRef.set(arrowVector);
+                if (metricsData.getValuesCount() >= 1) {
+                    CollectRep.MetricsData.Builder dataBuilder = CollectRep.MetricsData.newBuilder(subTaskDataRef.get());
+                    for (CollectRep.ValueRow valueRow : metricsData.getValues()) {
+                        if (valueRow.getColumnsCount() == dataBuilder.getFieldsCount()) {
+                            dataBuilder.addValueRow(valueRow);
+                        } else {
+                            log.error("consume subTask data value not mapping filed");
+                        }
                     }
-                } catch (Exception ignored) {
+                    subTaskDataRef.set(dataBuilder.build());
                 }
             }
             return index == 0;

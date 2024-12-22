@@ -22,23 +22,19 @@ import com.google.common.collect.Sets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.constants.MetricDataConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.manager.SdMonitorParam;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.apache.hertzbeat.common.util.SdMonitorOperator;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
@@ -86,12 +82,9 @@ public class ServiceDiscoveryWorker implements InitializingBean {
         @Override
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
-                try (final ArrowVector arrowVector = dataQueue.pollServiceDiscoveryData()) {
-                    if (Objects.isNull(arrowVector)) {
-                        continue;
-                    }
+                try (final CollectRep.MetricsData metricsData = dataQueue.pollServiceDiscoveryData()) {
 
-                    Long monitorId = arrowVector.getMetadataAsLong(MetricDataConstants.MONITOR_ID);
+                    Long monitorId = metricsData.getId();
                     final Monitor mainMonitor = monitorDao.findMonitorsByIdIn(Sets.newHashSet(monitorId)).get(0);
                     mainMonitor.setTags(mainMonitor.getTags().stream().filter(tag -> tag.getType() != CommonConstants.TAG_TYPE_AUTO_GENERATE).collect(Collectors.toList()));
                     // collector
@@ -109,47 +102,45 @@ public class ServiceDiscoveryWorker implements InitializingBean {
                             ? Maps.newHashMap()
                             : monitorDao.findMonitorsByIdIn(subMonitorIdSet).stream().collect(Collectors.groupingBy(Monitor::getHost));
 
-                    try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(arrowVector)) {
-                        RowWrapper rowWrapper = arrowVectorReader.readRow();
+                    RowWrapper rowWrapper = metricsData.readRow();
 
-                        while (rowWrapper.hasNextRow()) {
-                            rowWrapper = rowWrapper.nextRow();
+                    while (rowWrapper.hasNextRow()) {
+                        rowWrapper = rowWrapper.nextRow();
 
 
-                            final String host = rowWrapper.nextCell().getValue();
-                            final String port = rowWrapper.nextCell().getValue();
-                            final List<Monitor> monitorList = hostMonitorMap.get(host);
-                            if (CollectionUtils.isEmpty(monitorList)) {
+                        final String host = rowWrapper.nextCell().getValue();
+                        final String port = rowWrapper.nextCell().getValue();
+                        final List<Monitor> monitorList = hostMonitorMap.get(host);
+                        if (CollectionUtils.isEmpty(monitorList)) {
+                            monitorService.addAndSaveMonitorJob(mainMonitor.clone(), SdMonitorOperator.cloneParamList(mainMonitorParamList), collector,
+                                    SdMonitorParam.builder()
+                                            .detectedHost(host)
+                                            .detectedPort(port)
+                                            .bizId(mainMonitor.getId())
+                                            .build(), null);
+                            return;
+                        }
+
+                        for (Monitor monitor : monitorList) {
+                            // make sure monitor that has the same host and port is not existed.
+                            final Optional<Param> samePortParam = paramDao.findParamsByMonitorId(monitor.getId()).stream()
+                                    .filter(param -> StringUtils.equals(param.getField(), "port"))
+                                    .filter(param -> StringUtils.equals(param.getParamValue(), port))
+                                    .findFirst();
+                            if (samePortParam.isEmpty()) {
                                 monitorService.addAndSaveMonitorJob(mainMonitor.clone(), SdMonitorOperator.cloneParamList(mainMonitorParamList), collector,
                                         SdMonitorParam.builder()
                                                 .detectedHost(host)
                                                 .detectedPort(port)
                                                 .bizId(mainMonitor.getId())
                                                 .build(), null);
-                                return;
+                            } else {
+                                monitorService.enableManageMonitors(Sets.newHashSet(monitor.getId()));
                             }
-
-                            for (Monitor monitor : monitorList) {
-                                // make sure monitor that has the same host and port is not existed.
-                                final Optional<Param> samePortParam = paramDao.findParamsByMonitorId(monitor.getId()).stream()
-                                        .filter(param -> StringUtils.equals(param.getField(), "port"))
-                                        .filter(param -> StringUtils.equals(param.getParamValue(), port))
-                                        .findFirst();
-                                if (samePortParam.isEmpty()) {
-                                    monitorService.addAndSaveMonitorJob(mainMonitor.clone(), SdMonitorOperator.cloneParamList(mainMonitorParamList), collector,
-                                            SdMonitorParam.builder()
-                                                    .detectedHost(host)
-                                                    .detectedPort(port)
-                                                    .bizId(mainMonitor.getId())
-                                                    .build(), null);
-                                } else {
-                                    monitorService.enableManageMonitors(Sets.newHashSet(monitor.getId()));
-                                }
-                            }
-
-                            // make sure hostMonitorMap contains monitors that have not judged yet.
-                            hostMonitorMap.remove(host);
                         }
+
+                        // make sure hostMonitorMap contains monitors that have not judged yet.
+                        hostMonitorMap.remove(host);
                     }
 
                     // hostMonitorMap only contains monitors which are already existed but not in service discovery data

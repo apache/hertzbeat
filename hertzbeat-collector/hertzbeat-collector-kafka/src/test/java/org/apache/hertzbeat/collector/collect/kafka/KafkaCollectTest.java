@@ -17,9 +17,7 @@
 
 package org.apache.hertzbeat.collector.collect.kafka;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -44,10 +42,14 @@ public class KafkaCollectTest {
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(NullPointerException.class, () -> collect.preCheck(null));
+        assertThrows(NullPointerException.class, () -> {
+            collect.preCheck(null);
+        });
 
         // kafka is null
-        assertThrows(IllegalArgumentException.class, () -> collect.preCheck(Metrics.builder().build()));
+        assertThrows(IllegalArgumentException.class, () -> {
+            collect.preCheck(Metrics.builder().build());
+        });
 
         // kafka srv host is null
         assertThrows(IllegalArgumentException.class, () -> {
@@ -72,23 +74,15 @@ public class KafkaCollectTest {
     void collect() {
         // metrics is null
         assertThrows(NullPointerException.class, () -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
-
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                collect.collect(metricsDataBuilder, null);
-            }
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            collect.collect(builder, null);
         });
 
         assertDoesNotThrow(() -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             KafkaProtocol kafka = KafkaProtocol.builder().host("127.0.0.1").port("9092").build();
             Metrics metrics = Metrics.builder().kclient(kafka).build();
-
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                collect.collect(metricsDataBuilder, metrics);
-            }
+            collect.collect(builder, metrics);
         });
     }
 

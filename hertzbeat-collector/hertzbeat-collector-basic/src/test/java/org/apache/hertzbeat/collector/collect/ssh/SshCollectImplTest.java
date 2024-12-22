@@ -21,9 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -40,13 +38,15 @@ class SshCollectImplTest {
     @BeforeEach
     void setUp() {
         sshCollect = new SshCollectImpl();
-        builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
+        builder = CollectRep.MetricsData.newBuilder();
     }
 
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> sshCollect.preCheck(null));
+        assertThrows(IllegalArgumentException.class, () -> {
+            sshCollect.preCheck(null);
+        });
 
         // ssh protocol is null
         assertThrows(IllegalArgumentException.class, () -> {
@@ -65,10 +65,7 @@ class SshCollectImplTest {
     void collect() {
         assertDoesNotThrow(() -> {
             Metrics metrics = Metrics.builder().ssh(new SshProtocol()).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                sshCollect.collect(metricsDataBuilder, metrics);
-            }
+            sshCollect.collect(builder, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

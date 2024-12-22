@@ -124,7 +124,7 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getData().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse greptime] flush metrics data {} {}is null, ignore.", metricsData.getId(), metricsData.getMetrics());
             return;
         }
@@ -134,73 +134,63 @@ public class GreptimeDbDataStorage extends AbstractHistoryDataStorage {
 
         tableSchemaBuilder.addTag("instance", DataType.String)
                 .addTimestamp("ts", DataType.TimestampMillisecond);
+        List<CollectRep.Field> fields = metricsData.getFields();
+        fields.forEach(field -> {
+            if (field.getLabel()) {
+                tableSchemaBuilder.addTag(field.getName(), DataType.String);
+            } else {
+                if (field.getType() == CommonConstants.TYPE_NUMBER) {
+                    tableSchemaBuilder.addField(field.getName(), DataType.Float64);
+                } else if (field.getType() == CommonConstants.TYPE_STRING) {
+                    tableSchemaBuilder.addField(field.getName(), DataType.String);
+                }
+            }
+        });
+        Table table = Table.from(tableSchemaBuilder.build());
+        long now = System.currentTimeMillis();
+        Object[] values = new Object[2 + fields.size()];
+        values[0] = monitorId;
+        values[1] = now;
+        RowWrapper rowWrapper = metricsData.readRow();
+        while (rowWrapper.hasNextRow()) {
+            rowWrapper = rowWrapper.nextRow();
 
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-            List<Field> fieldList = arrowVectorReader.getAllFields();
-            for (Field field : fieldList) {
-                Map<String, String> metadata = field.getMetadata();
-                boolean isLabel = Boolean.parseBoolean(metadata.get(MetricDataConstants.LABEL));
-                byte type = Byte.parseByte(metadata.get(MetricDataConstants.TYPE));
+            AtomicInteger index = new AtomicInteger(-1);
+            rowWrapper.cellStream().forEach(cell -> {
+                index.getAndIncrement();
 
-                if (isLabel) {
-                    tableSchemaBuilder.addTag(field.getName(), DataType.String);
+                if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
+                    values[2 + index.get()] = null;
+                    return;
+                }
+
+                Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
+                Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
+
+                if (label) {
+                    values[2 + index.get()] = cell.getValue();
                 } else {
                     if (type == CommonConstants.TYPE_NUMBER) {
-                        tableSchemaBuilder.addField(field.getName(), DataType.Float64);
+                        values[2 + index.get()] = Double.parseDouble(cell.getValue());
                     } else if (type == CommonConstants.TYPE_STRING) {
-                        tableSchemaBuilder.addField(field.getName(), DataType.String);
-                    }
-                }
-            }
-
-            Table table = Table.from(tableSchemaBuilder.build());
-            long now = System.currentTimeMillis();
-            Object[] values = new Object[2 + fieldList.size()];
-            values[0] = monitorId;
-            values[1] = now;
-            RowWrapper rowWrapper = arrowVectorReader.readRow();
-            while (rowWrapper.hasNextRow()) {
-                rowWrapper = rowWrapper.nextRow();
-
-                AtomicInteger index = new AtomicInteger(-1);
-                rowWrapper.cellStream().forEach(cell -> {
-                    index.getAndIncrement();
-
-                    if (CommonConstants.NULL_VALUE.equals(cell.getValue())) {
-                        values[2 + index.get()] = null;
-                        return;
-                    }
-
-                    Boolean label = cell.getMetadataAsBoolean(MetricDataConstants.LABEL);
-                    Byte type = cell.getMetadataAsByte(MetricDataConstants.TYPE);
-
-                    if (label) {
                         values[2 + index.get()] = cell.getValue();
-                    } else {
-                        if (type == CommonConstants.TYPE_NUMBER) {
-                            values[2 + index.get()] = Double.parseDouble(cell.getValue());
-                        } else if (type == CommonConstants.TYPE_STRING) {
-                            values[2 + index.get()] = cell.getValue();
-                        }
                     }
-                });
-
-                table.addRow(values);
-            }
-
-            CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
-            try {
-                Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
-                if (result.isOk()) {
-                    log.debug("[warehouse greptime]-Write successful");
-                } else {
-                    log.warn("[warehouse greptime]--Write failed: {}", result.getErr());
                 }
-            } catch (Throwable throwable) {
-                log.error("[warehouse greptime]--Error occurred: {}", throwable.getMessage());
+            });
+
+            table.addRow(values);
+        }
+
+        CompletableFuture<Result<WriteOk, Err>> writeFuture = greptimeDb.write(table);
+        try {
+            Result<WriteOk, Err> result = writeFuture.get(10, TimeUnit.SECONDS);
+            if (result.isOk()) {
+                log.debug("[warehouse greptime]-Write successful");
+            } else {
+                log.warn("[warehouse greptime]--Write failed: {}", result.getErr());
             }
-        } catch (Exception e) {
-            log.error("[warehouse greptime]--Error: {}", e.getMessage(), e);
+        } catch (Throwable throwable) {
+            log.error("[warehouse greptime]--Error occurred: {}", throwable.getMessage());
         }
     }
 

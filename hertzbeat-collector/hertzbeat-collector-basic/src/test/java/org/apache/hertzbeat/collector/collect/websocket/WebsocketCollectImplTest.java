@@ -27,12 +27,6 @@ import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
-import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -53,8 +47,8 @@ class WebsocketCollectImplTest {
     private WebsocketCollectImpl websocketCollectImpl;
 
     @Test
-    void testCollect() throws Exception {
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
+    void testCollect() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         WebsocketProtocol websocketProtocol = WebsocketProtocol.builder()
                 .host("127.0.0.1")
                 .path("/")
@@ -93,24 +87,12 @@ class WebsocketCollectImplTest {
         metrics.setWebsocket(websocketProtocol);
         metrics.setAliasFields(aliasField);
         websocketCollectImpl.preCheck(metrics);
-
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-            websocketCollectImpl.collect(metricsDataBuilder, metrics);
-
-            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
-            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-                assertEquals(1, arrowVectorReader.getRowCount());
-
-                RowWrapper rowWrapper = arrowVectorReader.readRow();
-                while (rowWrapper.hasNextRow()) {
-                    rowWrapper = rowWrapper.nextRow();
-
-                    assertEquals("HTTP/1.1", rowWrapper.nextCell().getValue());
-                    assertNotNull(rowWrapper.nextCell().getValue());
-                    assertEquals("200", rowWrapper.nextCell().getValue());
-                }
-            }
+        websocketCollectImpl.collect(builder, metrics);
+        assertEquals(builder.getValuesCount(), 1);
+        for (CollectRep.ValueRow valueRow : builder.getValuesList()) {
+            assertEquals(valueRow.getColumns(0), "HTTP/1.1");
+            assertNotNull(valueRow.getColumns(1));
+            assertEquals(valueRow.getColumns(2), "200");
         }
 
         socketMockedConstruction.close();

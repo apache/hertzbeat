@@ -21,9 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NebulaGraphProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -41,13 +39,15 @@ public class NebulaGraphCollectImplTest {
     @BeforeEach
     void setUp() {
         nebulaGraphCollect = new NebulaGraphCollectImpl();
-        builder = CollectRep.MetricsData.newBuilder().setId(0L);
+        builder = CollectRep.MetricsData.newBuilder();
     }
 
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> nebulaGraphCollect.preCheck(null));
+        assertThrows(IllegalArgumentException.class, () -> {
+            nebulaGraphCollect.preCheck(null);
+        });
 
         // nebulaGraph is null
         assertThrows(IllegalArgumentException.class, () -> {
@@ -70,10 +70,7 @@ public class NebulaGraphCollectImplTest {
         for (String validTimePeriod : validTimePeriods) {
             builder = CollectRep.MetricsData.newBuilder();
             Metrics metrics = Metrics.builder().nebulaGraph(NebulaGraphProtocol.builder().timePeriod(validTimePeriod).build()).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                nebulaGraphCollect.collect(metricsDataBuilder, metrics);
-            }
+            nebulaGraphCollect.collect(builder, metrics);
             Assertions.assertEquals(CollectRep.Code.FAIL, builder.getCode());
         }
 
@@ -81,10 +78,7 @@ public class NebulaGraphCollectImplTest {
         assertDoesNotThrow(() -> {
             builder = CollectRep.MetricsData.newBuilder();
             Metrics metrics = Metrics.builder().nebulaGraph(NebulaGraphProtocol.builder().timePeriod("invalid").build()).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                nebulaGraphCollect.collect(metricsDataBuilder, metrics);
-            }
+            nebulaGraphCollect.collect(builder, metrics);
             Assertions.assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
 
@@ -98,10 +92,7 @@ public class NebulaGraphCollectImplTest {
                 .url("example.com")
                 .timeout("1")
                 .build()).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                nebulaGraphCollect.collect(metricsDataBuilder, metrics);
-            }
+            nebulaGraphCollect.collect(builder, metrics);
             Assertions.assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

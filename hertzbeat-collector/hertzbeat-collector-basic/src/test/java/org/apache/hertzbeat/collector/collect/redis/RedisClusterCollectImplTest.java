@@ -19,7 +19,6 @@ package org.apache.hertzbeat.collector.collect.redis;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.TYPE_STRING;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.cluster.RedisClusterClient;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
@@ -29,12 +28,6 @@ import io.lettuce.core.cluster.models.partitions.RedisClusterNode;
 import io.lettuce.core.resource.ClientResources;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
-import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RedisProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -77,7 +70,7 @@ public class RedisClusterCollectImplTest {
     }
 
     @Test
-    void testCollect() throws Exception {
+    void testCollect() {
         RedisProtocol redisProtocol = RedisProtocol.builder()
                 .host("127.0.0.1")
                 .port("6379")
@@ -96,7 +89,7 @@ public class RedisClusterCollectImplTest {
                 cluster_known_nodes:%s
                 """;
         String clusterInfo = String.format(clusterInfoTemp, clusterKnownNodes);
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("test");
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         List<String> aliasField = new ArrayList<>();
         aliasField.add("cluster_known_nodes");
         aliasField.add("cluster_enabled");
@@ -139,29 +132,21 @@ public class RedisClusterCollectImplTest {
         Mockito.when(cmd.clusterInfo()).thenReturn(clusterInfo);
 
         redisClusterCollect.preCheck(metrics);
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-            redisClusterCollect.collect(metricsDataBuilder, metrics);
+        redisClusterCollect.collect(builder, metrics);
 
-            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
-            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-                assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
-                assertEquals(2, arrowVectorReader.getRowCount());
-
-                RowWrapper rowWrapper = arrowVectorReader.readRow();
-                while (rowWrapper.hasNextRow()) {
-                    rowWrapper = rowWrapper.nextRow();
-
-                    assertEquals(rowWrapper.getFieldList().size(), 3);
-                    assertEquals(rowWrapper.nextCell().getValue(), clusterKnownNodes);
-                    assertEquals(rowWrapper.nextCell().getValue(), clusterEnabled);
-                    if (rowWrapper.getRowIndex() == 0) {
-                        assertEquals(rowWrapper.nextCell().getValue(), uri1);
-                    } else {
-                        assertEquals(rowWrapper.nextCell().getValue(), uri2);
-                    }
-                }
+        assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
+        assertEquals(builder.getValuesCount(), 2);
+        for (int i = 0; i < builder.getValuesList().size(); i++) {
+            CollectRep.ValueRow row = builder.getValues(i);
+            assertEquals(row.getColumnsCount(), 3);
+            assertEquals(row.getColumns(0), clusterKnownNodes);
+            assertEquals(row.getColumns(1), clusterEnabled);
+            if (i == 0) {
+                assertEquals(row.getColumns(2), uri1);
+            } else {
+                assertEquals(row.getColumns(2), uri2);
             }
         }
+
     }
 }

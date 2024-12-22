@@ -19,14 +19,15 @@ package org.apache.hertzbeat.collector.collect.ftp;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -57,19 +58,31 @@ public class FtpCollectImpl extends AbstractCollect {
 
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         FTPClient ftpClient = new FTPClient();
         FtpProtocol ftpProtocol = metrics.getFtp();
         // Set timeout
         ftpClient.setControlKeepAliveReplyTimeout(Integer.parseInt(ftpProtocol.getTimeout()));
 
+        // Collect data to load in CollectRep.ValueRow.Builder's object
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         Map<String, String> valueMap;
         try {
             valueMap = collectValue(ftpClient, ftpProtocol);
-            metrics.getAliasFields().forEach(it -> metricsDataBuilder.getArrowVectorWriter().setValue(it, valueMap.get(it)));
+            metrics.getAliasFields().forEach(it -> {
+                if (valueMap.containsKey(it)) {
+                    String fieldValue = valueMap.get(it);
+                    valueRowBuilder.addColumn(Objects.requireNonNullElse(fieldValue, CommonConstants.NULL_VALUE));
+                } else {
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                }
+            });
         } catch (Exception e) {
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, e.getMessage());
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(e.getMessage());
+            return;
         }
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     /**

@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.collector.dispatch.timer;
 
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectResponseEventListener;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 
@@ -66,7 +65,7 @@ public interface TimerDispatch {
     /**
      * response sync collect task data
      * @param jobId            jobId
-     * @param arrowVectorList collected data
+     * @param metricsDataTemps collect data
      */
-    void responseSyncJobData(long jobId, List<ArrowVector> arrowVectorList);
+    void responseSyncJobData(long jobId, List<CollectRep.MetricsData> metricsDataTemps);
 }

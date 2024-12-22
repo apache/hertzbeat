@@ -23,6 +23,7 @@ import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -32,18 +33,17 @@ import java.util.stream.Stream;
 import javax.net.ssl.SSLException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.net.util.Base64;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.MetricFamily;
 import org.apache.hertzbeat.collector.collect.prometheus.parser.TextParser;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PrometheusProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpHeaders;
@@ -78,74 +78,79 @@ public class PrometheusAutoCollectImpl {
             HttpStatus.SC_ACCEPTED, HttpStatus.SC_MULTIPLE_CHOICES, HttpStatus.SC_MOVED_PERMANENTLY,
             HttpStatus.SC_MOVED_TEMPORARILY).collect(Collectors.toSet());
     
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public List<CollectRep.MetricsData> collect(CollectRep.MetricsData.Builder builder,
+                                                Metrics metrics) {
         try {
             validateParams(metrics);
         } catch (Exception e) {
-            metricsDataBuilder.setFailedMsg(e.getMessage());
-            return;
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(e.getMessage());
+            return null;
         }
-
         HttpContext httpContext = createHttpContext(metrics.getPrometheus());
         HttpUriRequest request = createHttpRequest(metrics.getPrometheus());
         try {
-            CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
+            CloseableHttpResponse response = CommonHttpClient.getHttpClient()
+                                                     .execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             boolean isSuccessInvoke = defaultSuccessStatusCodes.contains(statusCode);
             log.debug("http response status: {}", statusCode);
             if (!isSuccessInvoke) {
-                metricsDataBuilder.setFailedMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
-                return;
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
+                return null;
             }
-
             // todo: The InputStream is directly converted to a String here
             //       For large data in the Prometheus exporter, this can generate large objects, which could severely impact JVM memory space
             // todo: Option one: Use InputStream for parsing, but this requires significant code changes
             //       Option two: Manually trigger garbage collection, which can be referenced from Dubbo for long i
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
             long collectTime = System.currentTimeMillis();
-            metricsDataBuilder.setTime(collectTime);
-            if (!StringUtils.hasText(resp)) {
+            builder.setTime(collectTime);
+            if (resp == null || !StringUtils.hasText(resp)) {
                 log.error("http response content is empty, status: {}.", statusCode);
-                metricsDataBuilder.setFailedMsg("http response content is empty");
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("http response content is empty");
             } else {
                 try {
-                    parseResponseByPrometheusExporter(resp, metricsDataBuilder);
+                    return parseResponseByPrometheusExporter(resp, metrics.getAliasFields(), builder);
                 } catch (Exception e) {
                     log.info("parse error: {}.", e.getMessage(), e);
-                    metricsDataBuilder.setFailedMsg("parse response data error:" + e.getMessage());
-                }
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg("parse response data error:" + e.getMessage());
+                }   
             }
         } catch (ClientProtocolException e1) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e1);
             log.error(errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(errorMsg);
         } catch (UnknownHostException e2) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "unknown host:" + errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_REACHABLE);
+            builder.setMsg("unknown host:" + errorMsg);
         } catch (InterruptedIOException | ConnectException | SSLException e3) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e3);
             log.info(errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(errorMsg);
         } catch (IOException e4) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e4);
             log.info(errorMsg);
-            metricsDataBuilder.setFailedMsg(errorMsg);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            metricsDataBuilder.setFailedMsg(errorMsg);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } finally {
             if (request != null) {
                 request.abort();
             }
         }
+        return Collections.singletonList(builder.build());
     }
     
     public String supportProtocol() {
@@ -164,10 +169,16 @@ public class PrometheusAutoCollectImpl {
         }
     }
     
-    private void parseResponseByPrometheusExporter(String resp, MetricsDataBuilder metricsDataBuilder) {
+    private List<CollectRep.MetricsData> parseResponseByPrometheusExporter(String resp, List<String> aliasFields,
+                                                                           CollectRep.MetricsData.Builder builder) {
         Map<String, MetricFamily> metricFamilyMap = TextParser.textToMetricFamilies(resp);
-
+        List<CollectRep.MetricsData> metricsDataList = new LinkedList<>();
         for (Map.Entry<String, MetricFamily> entry : metricFamilyMap.entrySet()) {
+            builder.clearMetrics();
+            builder.clearFields();
+            builder.clearValues();
+            String metricsName = entry.getKey();
+            builder.setMetrics(metricsName);
             MetricFamily metricFamily = entry.getValue();
             if (!metricFamily.getMetricList().isEmpty()) {
                 List<String> metricsFields = new LinkedList<>();
@@ -176,29 +187,27 @@ public class PrometheusAutoCollectImpl {
                     if (index == 0) {
                         metric.getLabels().forEach(label -> {
                             metricsFields.add(label.getName());
-                            metricsDataBuilder.getArrowVectorWriter().addField(Metrics.Field.builder()
-                                    .field(label.getName())
-                                    .type(CommonConstants.TYPE_STRING)
-                                    .label(true)
-                                    .build());
+                            builder.addFields(CollectRep.Field.newBuilder().setName(label.getName())
+                                    .setType(CommonConstants.TYPE_STRING).setLabel(true).build());
                         });
-                        metricsDataBuilder.getArrowVectorWriter().addField(Metrics.Field.builder()
-                                .field("value")
-                                .type(CommonConstants.TYPE_NUMBER)
-                                .label(false)
-                                .build());
+                        builder.addFields(CollectRep.Field.newBuilder().setName("value")
+                                .setType(CommonConstants.TYPE_NUMBER).setLabel(false).build());
                     }
-
                     Map<String, String> labelMap = metric.getLabels()
                             .stream()
                             .collect(Collectors.toMap(MetricFamily.Label::getName, MetricFamily.Label::getValue));
+                    CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                     for (String field : metricsFields) {
                         String fieldValue = labelMap.get(field);
-                        metricsDataBuilder.getArrowVectorWriter().setValue(field, fieldValue);
+                        valueRowBuilder.addColumn(fieldValue == null ? CommonConstants.NULL_VALUE : fieldValue);
                     }
+                    valueRowBuilder.addColumn(String.valueOf(metric.getValue()));
+                    builder.addValueRow(valueRowBuilder.build());
                 }
+                metricsDataList.add(builder.build());
             }
         }
+        return metricsDataList;
     }
     
     /**

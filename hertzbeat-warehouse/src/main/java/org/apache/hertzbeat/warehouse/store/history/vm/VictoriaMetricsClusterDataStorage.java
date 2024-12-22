@@ -132,7 +132,7 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getData().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse victoria-metrics] flush metrics data {} {} {} is null, ignore.",
                     metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
@@ -152,15 +152,15 @@ public class VictoriaMetricsClusterDataStorage extends AbstractHistoryDataStorag
         defaultLabels.put(LABEL_KEY_INSTANCE, String.valueOf(metricsData.getId()));
 
 
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-            List<Field> fieldList = arrowVectorReader.getAllFields();
+        try {
+            List<CollectRep.Field> fieldList = metricsData.getFields();
             Long[] timestamp = new Long[]{metricsData.getTime()};
             Map<String, Double> fieldsValue = Maps.newHashMapWithExpectedSize(fieldList.size());
             Map<String, String> labels = Maps.newHashMapWithExpectedSize(fieldList.size());
             List<VictoriaMetricsDataStorage.VictoriaMetricsContent> contentList = new LinkedList<>();
 
 
-            RowWrapper rowWrapper = arrowVectorReader.readRow();
+            RowWrapper rowWrapper = metricsData.readRow();
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();
                 fieldsValue.clear();

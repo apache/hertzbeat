@@ -26,12 +26,13 @@ import java.util.Objects;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NgqlProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.hertzbeat.common.entity.message.CollectRep.MetricsData.Builder;
 import org.springframework.util.Assert;
 import org.springframework.util.StopWatch;
 
@@ -60,7 +61,7 @@ public class NgqlCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(Builder builder, Metrics metrics) {
         NgqlProtocol ngql = metrics.getNgql();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
@@ -68,11 +69,13 @@ public class NgqlCollectImpl extends AbstractCollect {
         try {
             boolean initSuccess = nebulaTemplate.initSession(ngql);
             if (!initSuccess) {
-                metricsDataBuilder.setFailedMsg("Failed to connect Nebula Graph");
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("Failed to connect Nebula Graph");
                 return;
             }
         } catch (Exception e) {
-            metricsDataBuilder.setFailedMsg(e.getMessage());
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(e.getMessage());
             return;
         }
 
@@ -80,10 +83,10 @@ public class NgqlCollectImpl extends AbstractCollect {
         long responseTime = stopWatch.getTotalTimeMillis();
         try {
             switch (ngql.getParseType()) {
-                case PARSE_TYPE_FILTER_COUNT -> filterCount(nebulaTemplate, ngql, metrics.getAliasFields(), metricsDataBuilder, responseTime);
-                case PARSE_TYPE_ONE_ROW -> queryOneRow(nebulaTemplate, ngql, metrics.getAliasFields(), metricsDataBuilder, responseTime);
-                case PARSE_TYPE_MULTI_ROW -> queryMultiRow(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), metricsDataBuilder, responseTime);
-                case PARSE_TYPE_COLUMNS -> queryColumns(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), metricsDataBuilder, responseTime);
+                case PARSE_TYPE_FILTER_COUNT -> filterCount(nebulaTemplate, ngql, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_ONE_ROW -> queryOneRow(nebulaTemplate, ngql, metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_MULTI_ROW -> queryMultiRow(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
+                case PARSE_TYPE_COLUMNS -> queryColumns(nebulaTemplate, ngql.getCommands(), metrics.getAliasFields(), builder, responseTime);
                 default -> {
                 }
             }
@@ -101,10 +104,8 @@ public class NgqlCollectImpl extends AbstractCollect {
      * @param columns        metrics aliasField
      * @param responseTime   cost time for connect to nebula graph
      */
-    private void filterCount(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns,
-                             MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+    private void filterCount(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
         Map<String, String> data = new HashMap<>();
-
         for (String command : protocol.getCommands()) {
             Map<String, String> showJobs = showJobs(nebulaTemplate, protocol.getSpaceName(), command);
             if (Objects.nonNull(showJobs)) {
@@ -114,9 +115,9 @@ public class NgqlCollectImpl extends AbstractCollect {
 
             String[] parts = command.split("#", -1);
             if (parts.length != 4) {
-                metricsDataBuilder.setFailedMsg("The command:[" + command + "] does not meet the requirements");
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("The command:[" + command + "] does not meet the requirements");
             }
-
             String fieldName = parts[0];
             String ngql = parts[1];
             String filterName = parts[2];
@@ -130,23 +131,25 @@ public class NgqlCollectImpl extends AbstractCollect {
                 long count = stream.count();
                 data.put(fieldName, Long.toString(count));
             } catch (Exception e) {
-                metricsDataBuilder.setFailedMsg("Query error:[" + ngql + "],Msg:[" + e.getMessage() + "]");
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("Query error:[" + ngql + "],Msg:[" + e.getMessage() + "]");
             }
 
         }
-
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String column : columns) {
             if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                metricsDataBuilder.getArrowVectorWriter().setValue(column, String.valueOf(responseTime));
+                valueRowBuilder.addColumn(String.valueOf(responseTime));
             } else {
                 String value = data.get(column);
-                metricsDataBuilder.getArrowVectorWriter().setValue(column, value);
+                value = value == null ? CommonConstants.NULL_VALUE : value;
+                valueRowBuilder.addColumn(value);
             }
         }
+        builder.addValueRow(valueRowBuilder.build());
     }
 
-    private void queryOneRow(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns,
-                             MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+    private void queryOneRow(NebulaTemplate nebulaTemplate, NgqlProtocol protocol, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
         Map<String, Object> queryResult = new HashMap<>();
         for (String command : protocol.getCommands()) {
             Map<String, String> showJobs = showJobs(nebulaTemplate, protocol.getSpaceName(), command);
@@ -159,32 +162,31 @@ public class NgqlCollectImpl extends AbstractCollect {
                 queryResult.putAll(maps.get(0));
             }
         }
-        inflateData(columns, responseTime, queryResult, metricsDataBuilder);
+        inflateData(columns, responseTime, queryResult, builder);
     }
 
-    private void queryMultiRow(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns,
-                               MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+    private void queryMultiRow(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
         String command = commands.get(0);
         try {
             List<Map<String, Object>> result = nebulaTemplate.executeCommand(command);
             for (Map<String, Object> row : result) {
-                inflateData(columns, responseTime, row, metricsDataBuilder);
+                inflateData(columns, responseTime, row, builder);
             }
         } catch (Exception e) {
-            metricsDataBuilder.setFailedMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
         }
 
     }
 
-    private void queryColumns(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns,
-                              MetricsDataBuilder metricsDataBuilder, Long responseTime) {
+    private void queryColumns(NebulaTemplate nebulaTemplate, List<String> commands, List<String> columns, CollectRep.MetricsData.Builder builder, Long responseTime) {
         Map<String, Object> resultMap = new HashMap<>();
-
         for (String command : commands) {
             try {
                 List<Map<String, Object>> result = nebulaTemplate.executeCommand(command);
                 if (!result.isEmpty() && result.get(0).size() < 2) {
-                    metricsDataBuilder.setFailedMsg("Parsing type columns requires the result set to contain at least two columns");
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg("Parsing type columns requires the result set to contain at least two columns");
                     return;
                 }
                 for (Map<String, Object> map : result) {
@@ -192,21 +194,25 @@ public class NgqlCollectImpl extends AbstractCollect {
                     resultMap.put(Objects.toString(data.get(0).getValue()), data.get(1).getValue());
                 }
             } catch (Exception e) {
-                metricsDataBuilder.setFailedMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg("Query error:[" + command + "],Msg:[" + e.getMessage() + "]");
             }
         }
-        inflateData(columns, responseTime, resultMap, metricsDataBuilder);
+        inflateData(columns, responseTime, resultMap, builder);
     }
 
-    private void inflateData(List<String> columns, Long responseTime, Map<String, Object> dataFromDb, MetricsDataBuilder metricsDataBuilder) {
+    private void inflateData(List<String> columns, Long responseTime, Map<String, Object> dataFromDb, CollectRep.MetricsData.Builder builder) {
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String column : columns) {
             if (CollectorConstants.RESPONSE_TIME.equals(column)) {
-                metricsDataBuilder.getArrowVectorWriter().setValue(column, String.valueOf(responseTime));
+                valueRowBuilder.addColumn(String.valueOf(responseTime));
             } else {
                 Object value = dataFromDb.get(column);
-                metricsDataBuilder.getArrowVectorWriter().setValue(column, value == null ? CommonConstants.NULL_VALUE : String.valueOf(value));
+                value = value == null ? CommonConstants.NULL_VALUE : value;
+                valueRowBuilder.addColumn(Objects.toString(value));
             }
         }
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     @Override

@@ -175,7 +175,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getData().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
 
             if (log.isInfoEnabled()) {
                 log.info("[warehouse tdengine] flush metrics data {} is null, ignore.", metricsData.getId());
@@ -190,8 +190,8 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
         StringBuilder sqlBuffer = new StringBuilder();
         int i = 0;
 
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-            RowWrapper rowWrapper = arrowVectorReader.readRow();
+        try {
+            RowWrapper rowWrapper = metricsData.readRow();
 
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();
@@ -265,10 +265,10 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                     StringBuilder fieldSqlBuilder = new StringBuilder("(");
                     fieldSqlBuilder.append("ts TIMESTAMP, ");
                     fieldSqlBuilder.append("instance NCHAR(").append(tableStrColumnDefineMaxLength).append("), ");
-                    for (int index = 0; index < arrowVectorReader.getAllFields().size(); index++) {
-                        Field field = arrowVectorReader.getAllFields().get(index);
+                    for (int index = 0; index < metricsData.getFields().size(); index++) {
+                        CollectRep.Field field = metricsData.getFields().get(index);
                         String fieldName = field.getName();
-                        final int fieldType = Byte.parseByte(field.getMetadata().get(MetricDataConstants.TYPE));
+                        final int fieldType = field.getType();
 
                         if (fieldType == CommonConstants.TYPE_NUMBER || fieldType == CommonConstants.TYPE_TIME) {
                             fieldSqlBuilder.append("`").append(fieldName).append("` ").append("DOUBLE");
@@ -276,7 +276,7 @@ public class TdEngineDataStorage extends AbstractHistoryDataStorage {
                             fieldSqlBuilder.append("`").append(fieldName).append("` ").append("NCHAR(")
                                     .append(tableStrColumnDefineMaxLength).append(")");
                         }
-                        if (index != arrowVectorReader.getAllFields().size() - 1) {
+                        if (index != metricsData.getFields().size() - 1) {
                             fieldSqlBuilder.append(", ");
                         }
                     }

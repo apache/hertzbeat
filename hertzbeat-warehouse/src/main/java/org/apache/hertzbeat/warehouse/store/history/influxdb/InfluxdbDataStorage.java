@@ -154,16 +154,16 @@ public class InfluxdbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getData().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse influxdb] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
 
         String table = this.generateTable(metricsData.getApp(), metricsData.getMetrics(), metricsData.getId());
         List<Point> points = new ArrayList<>();
-
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-            RowWrapper rowWrapper = arrowVectorReader.readRow();
+        
+        try {
+            RowWrapper rowWrapper = metricsData.readRow();
 
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();

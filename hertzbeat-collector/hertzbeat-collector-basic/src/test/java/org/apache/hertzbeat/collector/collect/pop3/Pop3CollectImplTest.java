@@ -21,9 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -37,14 +35,16 @@ public class Pop3CollectImplTest {
     private Pop3CollectImpl pop3Collect;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         pop3Collect = new Pop3CollectImpl();
     }
 
     @Test
-    void preCheck() {
+    void preCheck() throws Exception {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> pop3Collect.preCheck(null));
+        assertThrows(IllegalArgumentException.class, () -> {
+            pop3Collect.preCheck(null);
+        });
 
         // protocol is null
         assertThrows(IllegalArgumentException.class, () -> {
@@ -75,7 +75,7 @@ public class Pop3CollectImplTest {
     }
 
     @Test
-    void collect() {
+    void collect() throws Exception {
         Pop3Protocol pop3 = Pop3Protocol.builder()
             .host("localhost")
             .port("110")
@@ -87,11 +87,8 @@ public class Pop3CollectImplTest {
         Metrics metrics = Metrics.builder().pop3(pop3).build();
 
         assertDoesNotThrow(() -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                pop3Collect.collect(metricsDataBuilder, metrics);
-            }
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            pop3Collect.collect(builder, metrics);
         });
     }
 

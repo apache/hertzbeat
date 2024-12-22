@@ -25,10 +25,10 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.sd.ConnectionConfig;
 import org.apache.hertzbeat.common.entity.sd.ServiceDiscoveryResponseEntity;
 import org.apache.hertzbeat.common.util.CommonUtil;
@@ -50,7 +50,7 @@ public class HttpSdCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         List<ConnectionConfig> configList = Lists.newArrayList();
         HttpUriRequest request = RequestBuilder.get().setUri(metrics.getSdProtocol().getSdSource()).build();
 
@@ -58,7 +58,8 @@ public class HttpSdCollectImpl extends AbstractCollect {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != 200) {
                 log.warn("Failed to fetch sd...");
-                metricsDataBuilder.setFailedMsg("StatusCode " + statusCode);
+                builder.setMsg("StatusCode " + statusCode);
+                builder.setCode(CollectRep.Code.FAIL);
                 return;
             }
 
@@ -75,13 +76,16 @@ public class HttpSdCollectImpl extends AbstractCollect {
 
 
             configList.forEach(config -> {
-                metricsDataBuilder.getArrowVectorWriter().setValue("host", config.getHost());
-                metricsDataBuilder.getArrowVectorWriter().setValue("port", config.getPort());
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                valueRowBuilder.addColumn(config.getHost());
+                valueRowBuilder.addColumn(config.getPort());
+                builder.addValueRow(valueRowBuilder.build());
             });
         } catch (IOException e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.warn("Failed to fetch sd... {}", errorMsg);
-            metricsDataBuilder.setFailedMsg(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         }
     }
 

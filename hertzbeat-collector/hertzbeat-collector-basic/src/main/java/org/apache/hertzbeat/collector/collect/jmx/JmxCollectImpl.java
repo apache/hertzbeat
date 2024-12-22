@@ -44,14 +44,14 @@ import javax.naming.Context;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.collect.common.cache.JmxConnect;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.JmxProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -90,7 +90,7 @@ public class JmxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(jmxClassLoader);
         try {
@@ -117,22 +117,23 @@ public class JmxCollectImpl extends AbstractCollect {
                 AttributeList attributeList = serverConnection.getAttributes(currentObjectName, attributes);
 
                 Map<String, String> attributeValueMap = extractAttributeValue(attributeList);
-
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String aliasField : metrics.getAliasFields()) {
                     String fieldValue = attributeValueMap.get(aliasField);
-                    metricsDataBuilder.getArrowVectorWriter().setValue(aliasField, fieldValue);
+                    valueRowBuilder.addColumn(fieldValue != null ? fieldValue : CommonConstants.NULL_VALUE);
                 }
+                builder.addValueRow(valueRowBuilder.build());
             }
         } catch (IOException exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.error("JMX IOException :{}", errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error("JMX Error :{}", errorMsg);
-            metricsDataBuilder.setFailedMsg(errorMsg);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } finally {
             Thread.currentThread().setContextClassLoader(currentClassLoader);
         }

@@ -22,12 +22,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -44,7 +44,7 @@ public class IcmpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         IcmpProtocol icmp = metrics.getIcmp();
@@ -62,29 +62,32 @@ public class IcmpCollectImpl extends AbstractCollect {
             boolean status = InetAddress.getByName(icmp.getHost()).isReachable(timeout);
             long responseTime = System.currentTimeMillis() - startTime;
             if (!status) {
-                metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "Un Reachable, Timeout " + timeout + "ms");
+                builder.setCode(CollectRep.Code.UN_REACHABLE);
+                builder.setMsg("Un Reachable, Timeout " + timeout + "ms");
                 return;
             }
-
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : metrics.getAliasFields()) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
+                    valueRowBuilder.addColumn(Long.toString(responseTime));
                 } else {
-                    metricsDataBuilder.getArrowVectorWriter().setNull(alias);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
+            builder.addValueRow(valueRowBuilder.build());
         } catch (UnknownHostException unknownHostException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(unknownHostException);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "UnknownHost " + errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_REACHABLE);
+            builder.setMsg("UnknownHost " + errorMsg);
         } catch (IOException ioException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "IOException " + errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_REACHABLE);
+            builder.setMsg("IOException " + errorMsg);
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            metricsDataBuilder.setFailedMsg(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         }
 
     }

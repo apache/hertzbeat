@@ -44,8 +44,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.dto.Value;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -136,7 +134,7 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getData().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse victoria-metrics] flush metrics data {} {} {} is null, ignore.", 
                     metricsData.getId(), metricsData.getApp(), metricsData.getMetrics());
             return;
@@ -156,13 +154,13 @@ public class VictoriaMetricsDataStorage extends AbstractHistoryDataStorage {
 
 
         List<VictoriaMetricsContent> contentList = new LinkedList<>();
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-            final int fieldSize = arrowVectorReader.getAllFields().size();
+        try {
+            final int fieldSize = metricsData.getFields().size();
             Long[] timestamp = new Long[]{metricsData.getTime()};
             Map<String, Double> fieldsValue = Maps.newHashMapWithExpectedSize(fieldSize);
             Map<String, String> labels = Maps.newHashMapWithExpectedSize(fieldSize);
 
-            RowWrapper rowWrapper = arrowVectorReader.readRow();
+            RowWrapper rowWrapper = metricsData.readRow();
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();
                 fieldsValue.clear();

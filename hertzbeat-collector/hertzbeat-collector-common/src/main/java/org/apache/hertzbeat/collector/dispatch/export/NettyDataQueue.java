@@ -20,7 +20,6 @@ package org.apache.hertzbeat.collector.dispatch.export;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.dispatch.entrance.internal.CollectJobService;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -69,32 +68,32 @@ public class NettyDataQueue implements CommonDataQueue {
     }
 
     @Override
-    public ArrowVector pollMetricsDataToAlerter() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToAlerter() throws InterruptedException {
         return null;
     }
 
     @Override
-    public ArrowVector pollMetricsDataToPersistentStorage() throws InterruptedException {
+    public CollectRep.MetricsData pollMetricsDataToStorage() throws InterruptedException {
         return null;
     }
 
     @Override
-    public ArrowVector pollMetricsDataToRealTimeStorage() throws InterruptedException {
+    public CollectRep.MetricsData pollServiceDiscoveryData() throws InterruptedException {
         return null;
     }
 
     @Override
-    public ArrowVector pollServiceDiscoveryData() throws InterruptedException {
-        return null;
+    public void sendMetricsData(CollectRep.MetricsData metricsData) {
+        collectJobService.sendAsyncCollectData(metricsData);
     }
 
     @Override
-    public void sendMetricsData(ArrowVector arrowVector) {
-        collectJobService.sendAsyncCollectData(arrowVector);
+    public void sendMetricsDataToStorage(CollectRep.MetricsData metricsData) {
+        
     }
 
     @Override
-    public void sendServiceDiscoveryData(ArrowVector arrowVector) {
-        collectJobService.sendAsyncServiceDiscoveryData(arrowVector);
+    public void sendServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+        collectJobService.sendAsyncServiceDiscoveryData(metricsData);
     }
 }

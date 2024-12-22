@@ -26,13 +26,13 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.UdpProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -51,7 +51,7 @@ public class UdpCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
         UdpProtocol udpProtocol = metrics.getUdp();
         int timeout = CollectUtil.getTimeout(udpProtocol.getTimeout());
@@ -66,29 +66,31 @@ public class UdpCollectImpl extends AbstractCollect {
             byte[] responseBuffer = new byte[1];
             DatagramPacket response = new DatagramPacket(responseBuffer, responseBuffer.length);
             socket.receive(response);
-
             long responseTime = System.currentTimeMillis() - startTime;
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : metrics.getAliasFields()) {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, Long.toString(responseTime));
+                    valueRowBuilder.addColumn(Long.toString(responseTime));
                 } else {
-                    metricsDataBuilder.getArrowVectorWriter().setNull(alias);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
+            builder.addValueRow(valueRowBuilder.build());
         } catch (SocketTimeoutException timeoutException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(timeoutException);
             log.info(errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer connect failed: " + errorMsg);
-
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg("Peer connect failed: " + errorMsg);
         } catch (PortUnreachableException portUnreachableException) {
             String errorMsg = CommonUtil.getMessageFromThrowable(portUnreachableException);
             log.info(errorMsg);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_REACHABLE, "Peer port unreachable");
-
+            builder.setCode(CollectRep.Code.UN_REACHABLE);
+            builder.setMsg("Peer port unreachable");
         } catch (Exception exception) {
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg, exception);
-            metricsDataBuilder.setFailedMsg(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         }
     }
 

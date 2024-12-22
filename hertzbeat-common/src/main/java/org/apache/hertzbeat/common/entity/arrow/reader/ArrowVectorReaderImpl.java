@@ -65,6 +65,7 @@ public class ArrowVectorReaderImpl implements ArrowVectorReader {
     @Override
     public RowWrapper readRow() {
         final Iterator<Row> rowIterator = table.iterator();
+        
         if (!rowIterator.hasNext()) {
             throw new NoSuchElementException("No data found! ");
         }

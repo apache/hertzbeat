@@ -19,20 +19,21 @@ package org.apache.hertzbeat.collector.collect.push;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
-import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.constants.SignConstants;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.entity.push.PushMetricsDto;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
@@ -73,8 +74,8 @@ public class PushCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
-        final long monitorId = metricsDataBuilder.getMonitorId();
+    public void collect(CollectRep.MetricsData.Builder builder,
+                        Metrics metrics) {
         long curTime = System.currentTimeMillis();
 
         PushProtocol pushProtocol = metrics.getPush();
@@ -89,17 +90,19 @@ public class PushCollectImpl extends AbstractCollect {
             CloseableHttpResponse response = CommonHttpClient.getHttpClient().execute(request, httpContext);
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != SUCCESS_CODE) {
-                metricsDataBuilder.setFailedMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg(NetworkConstants.STATUS_CODE + SignConstants.BLANK + statusCode);
                 return;
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
 
-            parseResponse(metricsDataBuilder, resp, metrics);
+            parseResponse(builder, resp, metrics);
 
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.error(errorMsg, e);
-            metricsDataBuilder.setFailedMsg(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         }
 
     }
@@ -155,7 +158,7 @@ public class PushCollectImpl extends AbstractCollect {
         return requestBuilder.build();
     }
 
-    private void parseResponse(MetricsDataBuilder metricsDataBuilder, String resp, Metrics metric) {
+    private void parseResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metric) {
         Message<PushMetricsDto> msg = JsonUtil.fromJson(resp, new TypeReference<>() {
         });
         if (msg == null) {
@@ -166,13 +169,20 @@ public class PushCollectImpl extends AbstractCollect {
             throw new NullPointerException("parse result is null");
         }
         for (PushMetricsDto.Metrics pushMetrics : pushMetricsDto.getMetricsList()) {
+            List<CollectRep.ValueRow> rows = new ArrayList<>();
             for (Map<String, String> metrics : pushMetrics.getMetrics()) {
+                List<String> metricColumn = new ArrayList<>();
                 for (Metrics.Field field : metric.getFields()) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(field.getField(), metrics.get(field.getField()));
+                    metricColumn.add(metrics.get(field.getField()));
                 }
+                CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder()
+                        .addAllColumns(metricColumn).build();
+                rows.add(valueRow);
             }
-        }
 
-        metricsDataBuilder.setTime(System.currentTimeMillis());
+
+            builder.addAllValues(rows);
+        }
+        builder.setTime(System.currentTimeMillis());
     }
 }

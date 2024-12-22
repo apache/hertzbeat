@@ -29,14 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
-import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -82,13 +76,19 @@ public class NginxCollectImplTest {
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> nginxCollect.preCheck(null));
+        assertThrows(IllegalArgumentException.class, () -> {
+            nginxCollect.preCheck(null);
+        });
 
         // nginx protocol is null
-        assertThrows(IllegalArgumentException.class, () -> nginxCollect.preCheck(Metrics.builder().build()));
+        assertThrows(IllegalArgumentException.class, () -> {
+            nginxCollect.preCheck(Metrics.builder().build());
+        });
 
         // nginx protocol is invalid
-        assertThrows(IllegalArgumentException.class, () -> nginxCollect.preCheck(Metrics.builder().nginx(NginxProtocol.builder().build()).build()));
+        assertThrows(IllegalArgumentException.class, () -> {
+            nginxCollect.preCheck(Metrics.builder().nginx(NginxProtocol.builder().build()).build());
+        });
     }
 
     @Test
@@ -108,25 +108,21 @@ public class NginxCollectImplTest {
             StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("http", 1, 1),
                     500, "fail");
             Mockito.when(mockHttpResponse.getStatusLine()).thenReturn(statusLine);
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             long monitorId = 999;
             String app = "testNginx";
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(monitorId).setApp(app);
             Metrics metrics = new Metrics();
             metrics.setName("nginx_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                nginxCollect.collect(metricsDataBuilder, metrics);
-            }
+            nginxCollect.collect(builder, metrics);
             assertEquals(builder.getCode(), CollectRep.Code.FAIL);
         }
 
     }
 
     @Test
-    public void testNginxStatusCollect() throws Exception {
+    public void testNginxStatusCollect() throws IOException {
         NginxProtocol nginxProtocol = NginxProtocol.builder()
                 .host("127.0.0.1")
                 .port("8080")
@@ -156,9 +152,9 @@ public class NginxCollectImplTest {
             HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
             Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
 
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             long monitorId = 999;
             String app = "testNginx";
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(monitorId).setApp(app);
 
             Metrics metrics = new Metrics();
             List<String> aliasField = new ArrayList<>();
@@ -180,30 +176,18 @@ public class NginxCollectImplTest {
             metrics.setName("nginx_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                nginxCollect.collect(metricsDataBuilder, metrics);
-
-                final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
-                try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-                    assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
-
-                    RowWrapper rowWrapper = arrowVectorReader.readRow();
-                    while (rowWrapper.hasNextRow()) {
-                        rowWrapper = rowWrapper.nextRow();
-
-                        assertEquals(2, rowWrapper.getFieldList().size());
-                        assertEquals(connections, rowWrapper.nextCell().getValue());
-                        assertEquals(reading, rowWrapper.nextCell().getValue());
-                    }
-                }
+            nginxCollect.collect(builder, metrics);
+            assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
+            for (CollectRep.ValueRow row : builder.getValuesList()) {
+                assertEquals(row.getColumnsCount(), 2);
+                assertEquals(row.getColumns(0), connections);
+                assertEquals(row.getColumns(1), reading);
             }
         }
     }
 
     @Test
-    public void testNginxReqStatusCollect() throws Exception {
+    public void testNginxReqStatusCollect() throws IOException {
         NginxProtocol nginxProtocol = NginxProtocol.builder()
                 .host("127.0.0.1")
                 .port("8080")
@@ -234,9 +218,9 @@ public class NginxCollectImplTest {
             HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
             Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
 
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             long monitorId = 999;
             String app = "testNginx";
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(monitorId).setApp(app);
 
             Metrics metrics = new Metrics();
             List<String> aliasField = new ArrayList<>();
@@ -258,31 +242,21 @@ public class NginxCollectImplTest {
             metrics.setName("req_status");
             metrics.setNginx(nginxProtocol);
             nginxCollect.preCheck(metrics);
-
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                nginxCollect.collect(metricsDataBuilder, metrics);
-
-                final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
-                try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-                    assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
-                    assertEquals(2, arrowVectorReader.getRowCount());
-
-                    RowWrapper rowWrapper = arrowVectorReader.readRow();
-                    while (rowWrapper.hasNextRow()) {
-                        rowWrapper = rowWrapper.nextRow();
-
-                        assertEquals(2, rowWrapper.getFieldList().size());
-                        if (rowWrapper.getRowIndex() == 0) {
-                            assertEquals(rowWrapper.nextCell().getValue(), request0);
-                            assertEquals(rowWrapper.nextCell().getValue(), bandwidth0);
-                        } else {
-                            assertEquals(rowWrapper.nextCell().getValue(), request1);
-                            assertEquals(rowWrapper.nextCell().getValue(), bandwidth1);
-                        }
-                    }
+            nginxCollect.collect(builder, metrics);
+            assertEquals(builder.getCode(), CollectRep.Code.SUCCESS);
+            assertEquals(builder.getValuesCount(), 2);
+            for (int i = 0; i < builder.getValuesList().size(); i++) {
+                CollectRep.ValueRow row = builder.getValues(i);
+                assertEquals(row.getColumnsCount(), 2);
+                if (i == 0) {
+                    assertEquals(row.getColumns(0), request0);
+                    assertEquals(row.getColumns(1), bandwidth0);
+                } else {
+                    assertEquals(row.getColumns(0), request1);
+                    assertEquals(row.getColumns(1), bandwidth1);
                 }
             }
+
         }
     }
 

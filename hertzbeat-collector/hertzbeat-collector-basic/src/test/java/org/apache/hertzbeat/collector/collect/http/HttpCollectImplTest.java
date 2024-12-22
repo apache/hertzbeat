@@ -19,8 +19,6 @@ package org.apache.hertzbeat.collector.collect.http;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -40,7 +38,9 @@ class HttpCollectImplTest {
 
     @Test
     void preCheck() {
-        assertThrows(IllegalArgumentException.class, () -> httpCollectImpl.preCheck(null));
+        assertThrows(IllegalArgumentException.class, () -> {
+            httpCollectImpl.preCheck(null);
+        });
         
         assertThrows(IllegalArgumentException.class, () -> {
             Metrics metrics = Metrics.builder().build();
@@ -55,12 +55,9 @@ class HttpCollectImplTest {
         Metrics metrics = Metrics.builder()
                 .http(http)
                 .build();
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
 
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-            httpCollectImpl.collect(metricsDataBuilder, metrics);
-        }
+        httpCollectImpl.collect(builder, metrics);
     }
 
     @Test

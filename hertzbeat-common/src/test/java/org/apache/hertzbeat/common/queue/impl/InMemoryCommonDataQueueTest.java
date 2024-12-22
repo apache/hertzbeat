@@ -64,12 +64,7 @@ class InMemoryCommonDataQueueTest {
         assertNotNull(polledMetricsData);
         assertEquals(metricsData, polledMetricsData);
 
-        polledMetricsData = queue.pollMetricsDataToPersistentStorage();
-
-        assertNotNull(polledMetricsData);
-        assertEquals(metricsData, polledMetricsData);
-
-        polledMetricsData = queue.pollMetricsDataToRealTimeStorage();
+        polledMetricsData = queue.pollMetricsDataToStorage();
 
         assertNotNull(polledMetricsData);
         assertEquals(metricsData, polledMetricsData);

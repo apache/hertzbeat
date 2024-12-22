@@ -127,17 +127,17 @@ public class JpaDatabaseDataStorage extends AbstractHistoryDataStorage {
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getData().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse jpa] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
         String monitorType = metricsData.getApp();
         String metrics = metricsData.getMetrics();
 
-        try (ArrowVectorReader reader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+        try {
             List<History> allHistoryList = Lists.newArrayList();
             Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
-            RowWrapper rowWrapper = reader.readRow();
+            RowWrapper rowWrapper = metricsData.readRow();
 
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();

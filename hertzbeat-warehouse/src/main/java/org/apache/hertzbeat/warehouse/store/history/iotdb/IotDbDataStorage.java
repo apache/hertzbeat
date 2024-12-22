@@ -181,7 +181,7 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
         if (!isServerAvailable() || metricsData.getCode() != CollectRep.Code.SUCCESS) {
             return;
         }
-        if (metricsData.getData().isEmpty()) {
+        if (metricsData.getValues().isEmpty()) {
             log.info("[warehouse iotdb] flush metrics data {} is null, ignore.", metricsData.getId());
             return;
         }
@@ -189,26 +189,23 @@ public class IotDbDataStorage extends AbstractHistoryDataStorage {
         Map<String, Tablet> tabletMap = Maps.newHashMapWithExpectedSize(8);
 
         // todo Measurement schema is a data structure that is generated on the client side, and encoding and compression have no effect
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-            for (Field field : arrowVectorReader.getAllFields()) {
+        try {
+            metricsData.getFields().forEach(field -> {
                 MeasurementSchema schema = new MeasurementSchema();
                 schema.setMeasurementId(field.getName());
-                byte type = Byte.parseByte(field.getMetadata().get(MetricDataConstants.TYPE));
+                byte type = (byte) field.getType();
 
                 // handle field type
                 if (type == CommonConstants.TYPE_NUMBER) {
                     schema.setType(TSDataType.DOUBLE);
                 } else if (type == CommonConstants.TYPE_STRING) {
                     schema.setType(TSDataType.TEXT);
-                } else {
-                    continue;
-                }
+                } 
                 schemaList.add(schema);
-            }
-
+            });
 
             long now = System.currentTimeMillis();
-            RowWrapper rowWrapper = arrowVectorReader.readRow();
+            RowWrapper rowWrapper = metricsData.readRow();
 
             while (rowWrapper.hasNextRow()) {
                 rowWrapper = rowWrapper.nextRow();

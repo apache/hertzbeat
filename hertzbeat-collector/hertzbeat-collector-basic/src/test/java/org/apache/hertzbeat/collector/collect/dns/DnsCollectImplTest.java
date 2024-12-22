@@ -24,11 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Collections;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -82,40 +78,30 @@ public class DnsCollectImplTest {
     }
 
     @Test
-    public void testCollect() throws Exception {
+    public void testCollect() {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         long monitorId = 666;
         String app = "testDNS";
-        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder()
-                .setId(monitorId)
-                .setApp(app);
         Metrics metrics = new Metrics();
         metrics.setName("question");
         metrics.setDns(dnsProtocol);
         metrics.setAliasFields(Collections.singletonList("section"));
+        dnsCollect.collect(builder, metrics);
+        assertNotNull(builder.getValues(0).getColumns(0));
 
-        try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl(metrics.getAliasFields())) {
-            final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-            dnsCollect.collect(metricsDataBuilder, metrics);
+        // dns is null, no exception throws
+        assertDoesNotThrow(() -> {
+            dnsCollect.collect(builder, null);
+        });
 
-
-            // dns is null, no exception throws
-            assertDoesNotThrow(() -> dnsCollect.collect(metricsDataBuilder, null));
-
-            // metric name is header
-            assertDoesNotThrow(() -> {
-                Metrics metrics1 = new Metrics();
-                metrics1.setName("header");
-                metrics1.setDns(dnsProtocol);
-                metrics1.setAliasFields(Collections.singletonList("section"));
-
-                dnsCollect.collect(metricsDataBuilder, metrics1);
-            });
-
-            final CollectRep.MetricsData metricsData = metricsDataBuilder.build();
-            try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
-                assertNotNull(arrowVectorReader.readRow().nextRow().nextCell());
-            }
-        }
+        // metric name is header
+        assertDoesNotThrow(() -> {
+            Metrics metrics1 = new Metrics();
+            metrics1.setName("header");
+            metrics1.setDns(dnsProtocol);
+            metrics1.setAliasFields(Collections.singletonList("section"));
+            dnsCollect.collect(builder, metrics1);
+        });
     }
 
     @Test

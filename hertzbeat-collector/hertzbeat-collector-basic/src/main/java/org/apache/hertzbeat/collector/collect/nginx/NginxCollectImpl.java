@@ -34,13 +34,14 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.http.CommonHttpClient;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.collector.util.CollectUtil;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.NginxProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.apache.http.HttpHeaders;
@@ -83,7 +84,7 @@ public class NginxCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         NginxProtocol nginxProtocol = metrics.getNginx();
@@ -98,7 +99,8 @@ public class NginxCollectImpl extends AbstractCollect {
             // send an HTTP request and get the response data
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK) {
-                metricsDataBuilder.setFailedMsg(NetworkConstants.STATUS_CODE + statusCode);
+                builder.setCode(CollectRep.Code.FAIL);
+                builder.setMsg(NetworkConstants.STATUS_CODE + statusCode);
                 return;
             }
             String resp = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
@@ -106,14 +108,15 @@ public class NginxCollectImpl extends AbstractCollect {
             Long responseTime = System.currentTimeMillis() - startTime;
             // call different parsing methods based on the metrics name
             if (StringUtils.equalsAny(metrics.getName(), NGINX_STATUS_NAME, AVAILABLE)) {
-                parseNginxStatusResponse(metricsDataBuilder, resp, metrics, responseTime);
+                parseNginxStatusResponse(builder, resp, metrics, responseTime);
             } else if (REQ_STATUS_NAME.equals(metrics.getName())) {
-                parseReqStatusResponse(metricsDataBuilder, resp, metrics, responseTime);
+                parseReqStatusResponse(builder, resp, metrics, responseTime);
             }
         } catch (Exception e) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e);
             log.info(errorMsg);
-            metricsDataBuilder.setFailedMsg(errorMsg);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } finally {
             if (request != null) {
                 request.abort();
@@ -174,12 +177,12 @@ public class NginxCollectImpl extends AbstractCollect {
     /**
      * analyze the information exposed by nginx's built-in ngx_http_stub_status_module
      *
-     * @param metricsDataBuilder metricsDataBuilder
+     * @param builder builder
      * @param resp resp
      * @param metrics metrics
      * @param responseTime responseTime
      */
-    private void parseNginxStatusResponse(MetricsDataBuilder metricsDataBuilder, String resp, Metrics metrics,
+    private void parseNginxStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
                                           Long responseTime) {
         //example
         //Active connections: 2
@@ -188,31 +191,33 @@ public class NginxCollectImpl extends AbstractCollect {
         //Reading: 0 Writing: 1 Waiting: 1
         List<String> aliasFields = metrics.getAliasFields();
         Map<String, Object> metricMap = regexNginxStatusMatch(resp, metrics.getAliasFields().size());
-
         // Returned data
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
             Object value = metricMap.get(alias);
             if (value != null) {
-                metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(value));
+                valueRowBuilder.addColumn(String.valueOf(value));
             } else {
                 if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, responseTime.toString());
+                    valueRowBuilder.addColumn(responseTime.toString());
                 } else {
-                    metricsDataBuilder.getArrowVectorWriter().setNull(alias);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
         }
+        builder.addValueRow(valueRowBuilder.build());
     }
 
     /**
      * Analyze the information exposed by the ngx_http_reqstat_module module
      *
-     * @param metricsDataBuilder metricsDataBuilder
+     * @param builder builder
      * @param resp resp
      * @param metrics metrics
      * @param responseTime responseTime
      */
-    private void parseReqStatusResponse(MetricsDataBuilder metricsDataBuilder, String resp, Metrics metrics, Long responseTime) {
+    private void parseReqStatusResponse(CollectRep.MetricsData.Builder builder, String resp, Metrics metrics,
+                                        Long responseTime) {
         //example
         //zone_name       key                    max_active      max_bw  traffic   requests   active  bandwidth
         //imgstore_appid  43                     27              6M      63G       374063     0       0
@@ -229,21 +234,25 @@ public class NginxCollectImpl extends AbstractCollect {
         List<String> aliasFields = metrics.getAliasFields();
 
         for (ReqStatusResponse reqStatusResponse : reqStatusResponses) {
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 if (NetworkConstants.RESPONSE_TIME.equals(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(responseTime));
+                    valueRowBuilder.addColumn(String.valueOf(responseTime));
                 } else {
                     try {
                         String methodName = reqStatusResponse.getFieldMethodName(alias);
                         Object value = reflect(reqStatusResponse, methodName);
-                        metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(value));
+                        value = value == null ? CommonConstants.NULL_VALUE : value;
+                        valueRowBuilder.addColumn(String.valueOf(value));
                     } catch (Exception e) {
                         String errorMsg = CommonUtil.getMessageFromThrowable(e);
                         log.error(errorMsg);
-                        metricsDataBuilder.setFailedMsg(errorMsg);
+                        builder.setCode(CollectRep.Code.FAIL);
+                        builder.setMsg(errorMsg);
                     }
                 }
             }
+            builder.addValueRow(valueRowBuilder.build());
         }
     }
 

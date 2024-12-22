@@ -21,6 +21,7 @@ package org.apache.hertzbeat.common.entity.job;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,16 +29,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
 import org.apache.hertzbeat.common.entity.manager.ParamDefine;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -131,7 +127,6 @@ public class Job {
     /**
      * the collect data response metrics as env configmap for other collect use. ^o^xxx^o^
      */
-    @Getter
     @JsonIgnore
     private Map<String, Configmap> envConfigmaps;
 
@@ -158,7 +153,7 @@ public class Job {
      * collector use - Temporarily store one-time task metrics response data
      */
     @JsonIgnore
-    private transient List<ArrowVector> responseDataTemp;
+    private transient List<CollectRep.MetricsData> responseDataTemp;
 
     /**
      * collector use - construct to initialize metrics execution view
@@ -191,7 +186,7 @@ public class Job {
             }
             return Byte.MAX_VALUE;
         }));
-        envConfigmaps = Maps.newHashMapWithExpectedSize(8);
+        envConfigmaps = new HashMap<>(8);
     }
 
     /**
@@ -237,11 +232,15 @@ public class Job {
         return Collections.emptySet();
     }
 
-    public void addCollectMetricsData(ArrowVector arrowVector) {
+    public void addCollectMetricsData(CollectRep.MetricsData metricsData) {
         if (responseDataTemp == null) {
             responseDataTemp = new LinkedList<>();
         }
-        responseDataTemp.add(arrowVector);
+        responseDataTemp.add(metricsData);
+    }
+
+    public Map<String, Configmap> getEnvConfigmaps() {
+        return envConfigmaps;
     }
 
     public void addEnvConfigmaps(Map<String, Configmap> envConfigmaps) {

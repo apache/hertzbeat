@@ -19,10 +19,10 @@ package org.apache.hertzbeat.collector.collect.kafka;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.KafkaProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.ConsumerGroupDescription;
 import org.apache.kafka.clients.admin.ConsumerGroupListing;
@@ -70,7 +70,7 @@ public class KafkaCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         try {
             KafkaProtocol kafkaProtocol = metrics.getKclient();
             String command = kafkaProtocol.getCommand();
@@ -86,13 +86,13 @@ public class KafkaCollectImpl extends AbstractCollect {
             // Execute the appropriate collection method based on the command
             switch (SupportedCommand.fromCommand(command)) {
                 case TOPIC_DESCRIBE:
-                    collectTopicDescribe(metricsDataBuilder, adminClient, metrics.getAliasFields());
+                    collectTopicDescribe(builder, adminClient);
                     break;
                 case TOPIC_LIST:
-                    collectTopicList(metricsDataBuilder, adminClient, metrics.getAliasFields());
+                    collectTopicList(builder, adminClient);
                     break;
                 case TOPIC_OFFSET:
-                    collectTopicOffset(metricsDataBuilder, adminClient, metrics.getAliasFields());
+                    collectTopicOffset(builder, adminClient);
                     break;
                 case CONSUMER_DETAIL:
                     collectTopicConsumerGroups(builder, adminClient);
@@ -109,36 +109,35 @@ public class KafkaCollectImpl extends AbstractCollect {
     /**
      * Collect the earliest and latest offsets for each topic
      *
-     * @param metricsDataBuilder     The MetricsData builder
+     * @param builder     The MetricsData builder
      * @param adminClient The AdminClient
      * @throws InterruptedException If the thread is interrupted
      * @throws ExecutionException   If an error occurs during execution
      */
-    private void collectTopicOffset(MetricsDataBuilder metricsDataBuilder, AdminClient adminClient, List<String> aliasFieldList) throws InterruptedException, ExecutionException {
+    private void collectTopicOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
         ListTopicsResult listTopicsResult = adminClient.listTopics(new ListTopicsOptions().listInternal(true));
         Set<String> names = listTopicsResult.names().get();
         names.forEach(name -> {
             try {
                 Map<String, TopicDescription> map = adminClient.describeTopics(Collections.singleton(name)).all().get(3L, TimeUnit.SECONDS);
-                map.forEach((key, value) -> value.partitions().forEach(info -> extractedOffset(metricsDataBuilder, adminClient, name, value, info, aliasFieldList)));
+                map.forEach((key, value) -> value.partitions().forEach(info -> extractedOffset(builder, adminClient, name, value, info)));
             } catch (TimeoutException | InterruptedException | ExecutionException e) {
                 log.warn("Topic {} get offset fail", name);
             }
         });
     }
 
-    private void extractedOffset(MetricsDataBuilder metricsDataBuilder, AdminClient adminClient, String name,
-                                 TopicDescription value, TopicPartitionInfo info, List<String> aliasFieldList) {
+    private void extractedOffset(CollectRep.MetricsData.Builder builder, AdminClient adminClient, String name, TopicDescription value, TopicPartitionInfo info) {
         try {
             TopicPartition topicPartition = new TopicPartition(value.name(), info.partition());
             long earliestOffset = getEarliestOffset(adminClient, topicPartition);
             long latestOffset = getLatestOffset(adminClient, topicPartition);
-
-            int index = 0;
-            metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), value.name());
-            metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(info.partition()));
-            metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(earliestOffset));
-            metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index), String.valueOf(latestOffset));
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+            valueRowBuilder.addColumn(value.name());
+            valueRowBuilder.addColumn(String.valueOf(info.partition()));
+            valueRowBuilder.addColumn(String.valueOf(earliestOffset));
+            valueRowBuilder.addColumn(String.valueOf(latestOffset));
+            builder.addValueRow(valueRowBuilder.build());
         } catch (TimeoutException | InterruptedException | ExecutionException e) {
             log.warn("Topic {} get offset fail", name);
         }
@@ -181,22 +180,25 @@ public class KafkaCollectImpl extends AbstractCollect {
     /**
      * Collect the list of topics
      *
-     * @param metricsDataBuilder     The MetricsData builder
+     * @param builder     The MetricsData builder
      * @param adminClient The AdminClient
      */
-    private static void collectTopicList(MetricsDataBuilder metricsDataBuilder, AdminClient adminClient, List<String> aliasFieldList) throws InterruptedException, ExecutionException {
+    private static void collectTopicList(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
         ListTopicsOptions options = new ListTopicsOptions().listInternal(true);
         Set<String> names = adminClient.listTopics(options).names().get();
-        names.forEach(name -> metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(0), name));
+        names.forEach(name -> {
+            CollectRep.ValueRow valueRow = CollectRep.ValueRow.newBuilder().addColumn(name).build();
+            builder.addValue(valueRow);
+        });
     }
 
     /**
      * Collect the description of each topic
      *
-     * @param metricsDataBuilder     The MetricsData builder
+     * @param builder     The MetricsData builder
      * @param adminClient The AdminClient
      */
-    private static void collectTopicDescribe(MetricsDataBuilder metricsDataBuilder, AdminClient adminClient, List<String> aliasFieldList) throws InterruptedException, ExecutionException {
+    private static void collectTopicDescribe(CollectRep.MetricsData.Builder builder, AdminClient adminClient) throws InterruptedException, ExecutionException {
         ListTopicsOptions options = new ListTopicsOptions();
         options.listInternal(true);
         ListTopicsResult listTopicsResult = adminClient.listTopics(options);
@@ -206,14 +208,15 @@ public class KafkaCollectImpl extends AbstractCollect {
         map.forEach((key, value) -> {
             List<TopicPartitionInfo> listp = value.partitions();
             listp.forEach(info -> {
-                int index = 0;
-                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), value.name());
-                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(value.partitions().size()));
-                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(info.partition()));
-                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), info.leader().host());
-                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(info.leader().port()));
-                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index++), String.valueOf(info.replicas().size()));
-                metricsDataBuilder.getArrowVectorWriter().setValue(aliasFieldList.get(index), String.valueOf(info.replicas()));
+                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
+                valueRowBuilder.addColumn(value.name());
+                valueRowBuilder.addColumn(String.valueOf(value.partitions().size()));
+                valueRowBuilder.addColumn(String.valueOf(info.partition()));
+                valueRowBuilder.addColumn(info.leader().host());
+                valueRowBuilder.addColumn(String.valueOf(info.leader().port()));
+                valueRowBuilder.addColumn(String.valueOf(info.replicas().size()));
+                valueRowBuilder.addColumn(String.valueOf(info.replicas()));
+                builder.addValueRow(valueRowBuilder.build());
             });
         });
     }
@@ -242,11 +245,11 @@ public class KafkaCollectImpl extends AbstractCollect {
                                 ConsumerGroupDescription description = consumerGroupDescriptions.get(groupId);
                                 Map<String, String> offsetAndLagNum = getConsumerGroupMetrics(topic, groupId, adminClient);
                                 return CollectRep.ValueRow.newBuilder()
-                                        .addColumns(groupId)
-                                        .addColumns(String.valueOf(description.members().size()))
-                                        .addColumns(topic)
-                                        .addColumns(offsetAndLagNum.get(PARTITION_OFFSET))
-                                        .addColumns(offsetAndLagNum.get(LAG_NUM))
+                                        .addColumn(groupId)
+                                        .addColumn(String.valueOf(description.members().size()))
+                                        .addColumn(topic)
+                                        .addColumn(offsetAndLagNum.get(PARTITION_OFFSET))
+                                        .addColumn(offsetAndLagNum.get(LAG_NUM))
                                         .build();
                             } catch (InterruptedException | ExecutionException e) {
                                 log.warn("group {} get message fail", groupId);
@@ -255,7 +258,7 @@ public class KafkaCollectImpl extends AbstractCollect {
                         })
                 )
                 .filter(Objects::nonNull)
-                .forEach(builder::addValues);
+                .forEach(builder::addValue);
     }
 
     private static Map<String, Set<String>> getTopicConsumerGroupsMap(Collection<ConsumerGroupListing> consumerGroups,

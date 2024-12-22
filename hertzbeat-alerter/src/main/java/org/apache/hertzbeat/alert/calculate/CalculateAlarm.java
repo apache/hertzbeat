@@ -51,8 +51,6 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.constants.MetricDataConstants;
 import org.apache.hertzbeat.common.entity.alerter.Alert;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReader;
-import org.apache.hertzbeat.common.entity.arrow.reader.ArrowVectorReaderImpl;
 import org.apache.hertzbeat.common.entity.arrow.RowWrapper;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.TagItem;
@@ -131,6 +129,7 @@ public class CalculateAlarm {
                     if (metricsData != null) {
                         calculate(metricsData);
                     }
+                    dataQueue.sendMetricsDataToStorage(metricsData);
                 } catch (InterruptedException ignored) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {
@@ -164,7 +163,7 @@ public class CalculateAlarm {
         }
         Map<String, Object> fieldValueMap = Maps.newHashMapWithExpectedSize(8);
 
-        try (ArrowVectorReader arrowVectorReader = new ArrowVectorReaderImpl(metricsData.getData().toByteArray())) {
+        try {
             for (Map.Entry<String, List<AlertDefine>> entry : defineMap.entrySet()) {
                 List<AlertDefine> defines = entry.getValue();
                 for (AlertDefine define : defines) {
@@ -173,8 +172,8 @@ public class CalculateAlarm {
                         continue;
                     }
 
-                    if (expr.contains(SYSTEM_VALUE_ROW_COUNT) && arrowVectorReader.getRowCount() == 0L) {
-                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, arrowVectorReader.getRowCount());
+                    if (expr.contains(SYSTEM_VALUE_ROW_COUNT) && metricsData.getValues().size() == 0L) {
+                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, 0);
                         try {
                             boolean match = execAlertExpression(fieldValueMap, expr);
                             try {
@@ -196,12 +195,12 @@ public class CalculateAlarm {
                         } catch (Exception ignored) {}
                     }
 
-                    RowWrapper rowWrapper = arrowVectorReader.readRow();
+                    RowWrapper rowWrapper = metricsData.readRow();
                     while (rowWrapper.hasNextRow()) {
                         rowWrapper = rowWrapper.nextRow();
                         StringBuilder tagBuilder = new StringBuilder();
                         fieldValueMap.clear();
-                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, arrowVectorReader.getRowCount());
+                        fieldValueMap.put(SYSTEM_VALUE_ROW_COUNT, metricsData.getValues().size());
                         rowWrapper.cellStream().forEach(cell -> {
                             String valueStr = cell.getValue();
                             if (CommonConstants.NULL_VALUE.equals(valueStr)) {

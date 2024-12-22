@@ -21,9 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.PushProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -42,11 +40,11 @@ public class PushCollectImplTest {
     public void setup() {
         pushCollect = new PushCollectImpl();
         push = PushProtocol.builder().uri("/metrics").host("example.com").port("60").build();
-        builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
+        builder = CollectRep.MetricsData.newBuilder();
     }
 
     @Test
-    void preCheck() {
+    void preCheck() throws Exception {
         // metrics is null
         assertThrows(IllegalArgumentException.class, () -> pushCollect.preCheck(null));
 
@@ -54,17 +52,15 @@ public class PushCollectImplTest {
         assertThrows(IllegalArgumentException.class, () -> pushCollect.preCheck(new Metrics()));
 
         // everyting is ok
-        assertDoesNotThrow(() -> pushCollect.preCheck(Metrics.builder().push(push).build()));
+        assertDoesNotThrow(() -> {
+            pushCollect.preCheck(Metrics.builder().push(push).build());
+        });
     }
 
     @Test
-    void collect() {
+    void collect() throws Exception {
         assertDoesNotThrow(() -> {
-            final Metrics metrics = Metrics.builder().push(push).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                pushCollect.collect(metricsDataBuilder, metrics);
-            }
+            pushCollect.collect(builder, Metrics.builder().push(push).build());
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

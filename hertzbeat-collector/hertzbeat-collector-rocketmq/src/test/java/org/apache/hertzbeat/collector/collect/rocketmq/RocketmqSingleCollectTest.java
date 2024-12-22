@@ -21,9 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.RocketmqProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -44,10 +42,14 @@ public class RocketmqSingleCollectTest {
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> collect.preCheck(null));
+        assertThrows(IllegalArgumentException.class, () -> {
+            collect.preCheck(null);
+        });
 
         // rocketmq is null
-        assertThrows(IllegalArgumentException.class, () -> collect.preCheck(Metrics.builder().build()));
+        assertThrows(IllegalArgumentException.class, () -> {
+            collect.preCheck(Metrics.builder().build());
+        });
 
         // rocketmq srv host is null
         assertThrows(IllegalArgumentException.class, () -> {
@@ -70,28 +72,24 @@ public class RocketmqSingleCollectTest {
 
     @Test
     void destroy() {
-        assertDoesNotThrow(() -> collect.destroy());
+        assertDoesNotThrow(() -> {
+            collect.destroy();
+        });
     }
 
     @Test
     void collect() {
         // metrics is null
         assertDoesNotThrow(() -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                collect.collect(metricsDataBuilder, null);
-            }
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            collect.collect(builder, null);
         });
 
         assertDoesNotThrow(() -> {
-            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder().setId(1L).setApp("app");
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
             RocketmqProtocol mq = RocketmqProtocol.builder().namesrvHost("127.0.0.1").namesrvPort("9876").build();
             Metrics metrics = Metrics.builder().rocketmq(mq).build();
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                collect.collect(metricsDataBuilder, metrics);
-            }
+            collect.collect(builder, metrics);
         });
     }
 

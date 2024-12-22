@@ -21,9 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.entity.arrow.writer.ArrowVectorWriterImpl;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SnmpProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -47,13 +45,15 @@ class SnmpCollectImplTest {
         snmap.setPort("161");
         snmap.setVersion("2c");
         metrics.setSnmp(snmap);
-        builder = CollectRep.MetricsData.newBuilder().setId(0L);
+        builder = CollectRep.MetricsData.newBuilder();
     }
 
     @Test
     void preCheck() {
         // metrics is null
-        assertThrows(IllegalArgumentException.class, () -> snmpCollect.preCheck(null));
+        assertThrows(IllegalArgumentException.class, () -> {
+            snmpCollect.preCheck(null);
+        });
 
         // snmp protocol is null
         assertThrows(IllegalArgumentException.class, () -> {
@@ -88,16 +88,15 @@ class SnmpCollectImplTest {
         });
 
         // everything is ok
-        assertDoesNotThrow(() -> snmpCollect.preCheck(metrics));
+        assertDoesNotThrow(() -> {
+            snmpCollect.preCheck(metrics);
+        });
     }
 
     @Test
     void collect() {
         assertDoesNotThrow(() -> {
-            try (final ArrowVectorWriterImpl arrowVectorWriter = new ArrowVectorWriterImpl()) {
-                final MetricsDataBuilder metricsDataBuilder = new MetricsDataBuilder(builder, arrowVectorWriter);
-                snmpCollect.collect(metricsDataBuilder, metrics);
-            }
+            snmpCollect.collect(builder, metrics);
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
         });
     }

@@ -17,8 +17,6 @@
 
 package org.apache.hertzbeat.collector.dispatch.entrance.internal;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.hertzbeat.collector.dispatch.DispatchProperties;
@@ -26,7 +24,6 @@ import org.apache.hertzbeat.collector.dispatch.WorkerPool;
 import org.apache.hertzbeat.collector.dispatch.entrance.CollectServer;
 import org.apache.hertzbeat.collector.dispatch.timer.TimerDispatch;
 import org.apache.hertzbeat.common.constants.CommonConstants;
-import org.apache.hertzbeat.common.entity.arrow.ArrowVector;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.message.ClusterMsg;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -56,12 +53,10 @@ public class CollectJobService {
 
     private final WorkerPool workerPool;
 
-    @Getter
     private final String collectorIdentity;
 
     private String mode = null;
 
-    @Setter
     private CollectServer collectServer;
 
     public CollectJobService(TimerDispatch timerDispatch, DispatchProperties properties, WorkerPool workerPool) {
@@ -162,10 +157,10 @@ public class CollectJobService {
     /**
      * send async collect response data
      *
-     * @param arrowVector collected data
+     * @param metricsData collect data
      */
-    public void sendAsyncCollectData(ArrowVector arrowVector) {
-        String data = new String(arrowVector.toByteArray());
+    public void sendAsyncCollectData(CollectRep.MetricsData metricsData) {
+        String data = ProtoJsonUtil.toJsonStr(metricsData);
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setIdentity(collectorIdentity)
                 .setMsg(data)
@@ -175,8 +170,8 @@ public class CollectJobService {
         this.collectServer.sendMsg(message);
     }
 
-    public void sendAsyncServiceDiscoveryData(ArrowVector arrowVector) {
-        String data = new String(arrowVector.toByteArray());
+    public void sendAsyncServiceDiscoveryData(CollectRep.MetricsData metricsData) {
+        String data = ProtoJsonUtil.toJsonStr(metricsData);
         ClusterMsg.Message message = ClusterMsg.Message.newBuilder()
                 .setIdentity(collectorIdentity)
                 .setMsg(data)
@@ -186,8 +181,15 @@ public class CollectJobService {
         this.collectServer.sendMsg(message);
     }
 
+    public String getCollectorIdentity() {
+        return collectorIdentity;
+    }
+
     public String getCollectorMode() {
         return mode;
     }
 
+    public void setCollectServer(CollectServer collectServer) {
+        this.collectServer = collectServer;
+    }
 }

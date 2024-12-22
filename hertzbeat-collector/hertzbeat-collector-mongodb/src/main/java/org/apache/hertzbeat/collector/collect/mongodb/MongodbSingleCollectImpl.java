@@ -32,23 +32,22 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.collect.common.cache.CacheIdentifier;
 import org.apache.hertzbeat.collector.collect.common.cache.ConnectionCommonCache;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MongodbProtocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 import org.bson.Document;
 import org.springframework.util.Assert;
 
 /**
  * Mongodb single collect
- * see also <a href="https://www.mongodb.com/languages/java">href="https://www.mongodb.com/languages/java</a>,
- * <a href="https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics">https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics</a>
+ * see also https://www.mongodb.com/languages/java,
+ * https://www.mongodb.com/docs/manual/reference/command/serverStatus/#metrics
  */
 @Slf4j
 public class MongodbSingleCollectImpl extends AbstractCollect {
@@ -99,7 +98,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         // The command naming convention is the command supported by the above mongodb diagnostic. Support subdocument
         // If the command does not include., execute the command directly and use the document it returns;
         // otherwise, you need to execute the metricsParts[0] command first and then obtain the related subdocument
@@ -108,17 +107,17 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
         String command = metricsParts[0];
         // Check whether the first part of the. Split is a command supported by the mongodb diagnostic
         if (Arrays.stream(SUPPORTED_MONGODB_DIAGNOSTIC_COMMANDS).noneMatch(command::equals)) {
-            metricsDataBuilder.setFailedMsg("unsupported mongodb diagnostic command: " + command);
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg("unsupported mongodb diagnostic command: " + command);
             return;
         }
-
         MongoClient mongoClient;
         CacheIdentifier identifier = null;
         try {
             identifier = getIdentifier(metrics.getMongodb());
             mongoClient = getClient(metrics, identifier);
             MongoDatabase mongoDatabase = mongoClient.getDatabase(metrics.getMongodb().getDatabase());
-
+            CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             Document document = mongoDatabase.runCommand(new Document(command, 1));
             for (int i = 1; i < metricsParts.length; i++) {
                 document = (Document) document.get(metricsParts[i]);
@@ -126,15 +125,17 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             if (document == null) {
                 throw new RuntimeException("the document get from command " + metrics.getMongodb().getCommand() + " is null.");
             }
-            fillBuilder(metrics, metricsDataBuilder, document);
+            fillBuilder(metrics, valueRowBuilder, document);
+            builder.addValueRow(valueRowBuilder.build());
         } catch (MongoServerUnavailableException | MongoTimeoutException unavailableException) {
             connectionCommonCache.removeCache(identifier);
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             String message = CommonUtil.getMessageFromThrowable(unavailableException);
-            metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, message);
-
+            builder.setMsg(message);
         } catch (Exception e) {
+            builder.setCode(CollectRep.Code.FAIL);
             String message = CommonUtil.getMessageFromThrowable(e);
-            metricsDataBuilder.setFailedMsg(message);
+            builder.setMsg(message);
             log.warn(message, e);
         }
     }
@@ -147,15 +148,17 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
     /**
      * Populate the valueRowBuilder with the collection metrics configured in Metrics and the documentation returned by executing the mongodb command
      */
-    private void fillBuilder(Metrics metrics, MetricsDataBuilder metricsDataBuilder, Document document) {
+    private void fillBuilder(Metrics metrics, CollectRep.ValueRow.Builder valueRowBuilder, Document document) {
         metrics.getAliasFields().forEach(it -> {
             if (document.containsKey(it)) {
                 Object fieldValue = document.get(it);
-                metricsDataBuilder.getArrowVectorWriter().setValue(it, fieldValue == null
-                        ? CommonConstants.NULL_VALUE
-                        : fieldValue.toString());
+                if (fieldValue == null) {
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
+                } else {
+                    valueRowBuilder.addColumn(fieldValue.toString());
+                }
             } else {
-                metricsDataBuilder.getArrowVectorWriter().setNull(it);
+                valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
             }
         });
     }
@@ -186,7 +189,7 @@ public class MongodbSingleCollectImpl extends AbstractCollect {
             return mongoClient;
         }
 
-        String url;
+        String url = null;
         if (CollectorConstants.MONGO_DB_ATLAS_MODEL.equals(mongodbProtocol.getModel())) {
             if (StringUtils.isBlank(mongodbProtocol.getUsername()) && StringUtils.isBlank(mongodbProtocol.getPassword())) {
                 // Anonymous access for MongoDB Atlas

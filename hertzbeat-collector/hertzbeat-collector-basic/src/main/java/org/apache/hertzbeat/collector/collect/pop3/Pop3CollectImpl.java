@@ -27,12 +27,12 @@ import org.apache.commons.net.pop3.POP3Client;
 import org.apache.commons.net.pop3.POP3MessageInfo;
 import org.apache.commons.net.pop3.POP3SClient;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
-import org.apache.hertzbeat.common.entity.arrow.MetricsDataBuilder;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
-import org.apache.hertzbeat.common.constants.CollectCodeConstants;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.Pop3Protocol;
+import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.CommonUtil;
 
 /**
@@ -53,7 +53,7 @@ public class Pop3CollectImpl extends AbstractCollect {
     }
 
     @Override
-    public void collect(MetricsDataBuilder metricsDataBuilder, Metrics metrics) {
+    public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         long startTime = System.currentTimeMillis();
 
         Pop3Protocol pop3Protocol = metrics.getPop3();
@@ -61,18 +61,21 @@ public class Pop3CollectImpl extends AbstractCollect {
         boolean ssl = Boolean.parseBoolean(pop3Protocol.getSsl());
         try {
             pop3Client = createPOP3Client(pop3Protocol, ssl);
-            if (!pop3Client.isConnected()) {
-                metricsDataBuilder.setCodeAndMsg(CollectCodeConstants.UN_CONNECTABLE, "Peer connect failed，Timeout " + pop3Protocol.getTimeout() + "ms");
-                return;
-            }
 
-            long responseTime = System.currentTimeMillis() - startTime;
-            obtainPop3Metrics(metricsDataBuilder, pop3Client, metrics.getAliasFields(), responseTime);
+            if (pop3Client.isConnected()) {
+                long responseTime = System.currentTimeMillis() - startTime;
+
+                obtainPop3Metrics(builder, pop3Client, metrics.getAliasFields(),
+                        responseTime);
+            } else {
+                builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+                builder.setMsg("Peer connect failed，Timeout " + pop3Protocol.getTimeout() + "ms");
+            }
         } catch (Exception e2) {
             String errorMsg = CommonUtil.getMessageFromThrowable(e2);
             log.info(errorMsg);
-            metricsDataBuilder.setFailedMsg(errorMsg);
-
+            builder.setCode(CollectRep.Code.FAIL);
+            builder.setMsg(errorMsg);
         } finally {
             if (pop3Client != null) {
                 try {
@@ -81,7 +84,8 @@ public class Pop3CollectImpl extends AbstractCollect {
                 } catch (IOException e) {
                     String errorMsg = CommonUtil.getMessageFromThrowable(e);
                     log.info(errorMsg);
-                    metricsDataBuilder.setFailedMsg(errorMsg);
+                    builder.setCode(CollectRep.Code.FAIL);
+                    builder.setMsg(errorMsg);
                 }
             }
         }
@@ -100,7 +104,7 @@ public class Pop3CollectImpl extends AbstractCollect {
      * @throws IOException IO Exception
      */
     private POP3Client createPOP3Client(Pop3Protocol pop3Protocol, boolean ssl) throws Exception {
-        POP3Client pop3Client;
+        POP3Client pop3Client = null;
         // determine whether to use SSL-encrypted connections
         if (ssl) {
             pop3Client = new POP3SClient(true);
@@ -129,34 +133,36 @@ public class Pop3CollectImpl extends AbstractCollect {
 
     /**
      * retrieve Pop3 metric information
-     * @param metricsDataBuilder metricsDataBuilder
+     * @param builder builder
      * @param pop3Client pop3 client
      * @param aliasFields alias Fields
      * @param responseTime response Time
      */
-    private void obtainPop3Metrics(MetricsDataBuilder metricsDataBuilder, POP3Client pop3Client,
-                                   List<String> aliasFields, long responseTime) throws IOException {
+    private void obtainPop3Metrics(CollectRep.MetricsData.Builder builder, POP3Client pop3Client,
+                                                 List<String> aliasFields, long responseTime) throws IOException {
         Map<String, Object> pop3Metrics = parsePop3Metrics(pop3Client, aliasFields);
 
+        CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String alias : aliasFields) {
             Object value = pop3Metrics.get(alias);
             if (value != null) {
-                metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(value));
+                valueRowBuilder.addColumn(String.valueOf(value));
             } else {
                 if (CollectorConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                    metricsDataBuilder.getArrowVectorWriter().setValue(alias, String.valueOf(responseTime));
+                    valueRowBuilder.addColumn(String.valueOf(responseTime));
                 } else {
-                    metricsDataBuilder.getArrowVectorWriter().setNull(alias);
+                    valueRowBuilder.addColumn(CommonConstants.NULL_VALUE);
                 }
             }
         }
+        builder.addValue(valueRowBuilder);
     }
 
     private Map<String, Object> parsePop3Metrics(POP3Client pop3Client, List<String> aliasFields) throws IOException {
         Map<String, Object> pop3Metrics = new HashMap<>(aliasFields.size());
         POP3MessageInfo status = pop3Client.status();
-        int emailCount;
-        double mailboxSize;
+        int emailCount = 0;
+        double mailboxSize = 0.0;
         if (status != null) {
             emailCount = status.number;
             // bytes to KB
