@@ -32,6 +32,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.job.protocol.DnsProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.FtpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.HttpProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.ModbusProtocol;
+import org.apache.hertzbeat.common.entity.job.protocol.PlcProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.RegistryProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.IcmpProtocol;
 import org.apache.hertzbeat.common.entity.job.protocol.ImapProtocol;
@@ -255,7 +257,14 @@ public class Metrics {
      * Collect sd data protocol
      */
     private ServiceDiscoveryProtocol sdProtocol;
-
+    /**
+     * Monitoring configuration information using the public plc protocol
+     */
+    private PlcProtocol plc;
+    /**
+     * Monitoring configuration information using the public modBus protocol
+     */
+    private ModbusProtocol modbus;
     /**
      * collector use - Temporarily store subTask metrics response data
      */
