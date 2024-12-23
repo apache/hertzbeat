@@ -77,7 +77,6 @@ class ArrowTableTest {
         assertEquals(1, t2.getRowCount());
         assertEquals(0, root.getRowCount());
         root2.close();
-        allocator.close();
     }
 
     @Test

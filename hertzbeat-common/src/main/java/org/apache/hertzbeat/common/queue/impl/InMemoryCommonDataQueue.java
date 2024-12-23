@@ -60,7 +60,7 @@ public class InMemoryCommonDataQueue implements CommonDataQueue, DisposableBean 
         Map<String, Integer> metrics = new HashMap<>(8);
         metrics.put("alertDataQueue", alertDataQueue.size());
         metrics.put("metricsDataToAlertQueue", metricsDataToAlertQueue.size());
-        metrics.put("metricsDataToPersistentStorageQueue", metricsDataToStorageQueue.size());
+        metrics.put("metricsDataToStorageQueue", metricsDataToStorageQueue.size());
         return metrics;
     }
 

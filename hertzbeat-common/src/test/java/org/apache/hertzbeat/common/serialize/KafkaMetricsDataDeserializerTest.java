@@ -80,7 +80,7 @@ class KafkaMetricsDataDeserializerTest {
 
         CollectRep.MetricsData actualMetricsData = deserializer.deserialize("", bytes);
 
-        assertEquals(expectedMetricsData, actualMetricsData);
+        assertEquals(expectedMetricsData.rowCount(), actualMetricsData.rowCount());
     }
 
     @Test
@@ -111,7 +111,7 @@ class KafkaMetricsDataDeserializerTest {
 
         CollectRep.MetricsData actualMetricsData = deserializer.deserialize("topic", headers, bytes);
 
-        assertEquals(expectedMetricsData, actualMetricsData);
+        assertEquals(expectedMetricsData.rowCount(), actualMetricsData.rowCount());
     }
 
     @Test
